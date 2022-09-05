@@ -41,6 +41,7 @@ const genRequestId = (humanityId: string, index: string) =>
 
 const Request: React.FC = () => {
   const { humanity, index, chain, old } = useParams();
+  console.log(useParams());
 
   const isV1 = old === "v1";
   const chainId = useMemo<ChainId | undefined>(
@@ -63,8 +64,6 @@ const Request: React.FC = () => {
   const fundRequest = useFundRequest();
   const totalCost = useRequestTotalCost();
 
-  console.log({ challengePeriodDuration });
-
   const challengePeriodEnd = useMemo(
     () =>
       challengePeriodDuration &&
@@ -73,6 +72,7 @@ const Request: React.FC = () => {
     [request, challengePeriodDuration]
   );
 
+  console.log(request, evidence, registration, humanity, index, chainId);
   if (!request || !evidence || !registration || !humanity || !index || !chainId)
     return <PageLoader />;
 
@@ -82,8 +82,6 @@ const Request: React.FC = () => {
     ? `${registration.firstName} ${registration.lastName}`
     : registration.name;
   const funded = !isV1 && request.challenges[0].rounds[0].requesterFunds;
-
-  console.log(request.status, challengePeriodEnd);
 
   return (
     <div

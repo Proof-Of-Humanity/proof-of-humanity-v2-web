@@ -15,7 +15,6 @@ const useCall = <C extends Contract, F extends keyof C["callStatic"]>(
   method: F,
   params: Parameters<C[F]> | null
 ): [AsyncReturnType<C[F]> | undefined, Omit<SWRResponse, "data">] => {
-  console.log({ contract });
   const { data, isValidating, mutate, error } = useSWR(
     contract && params !== null ? [contract.address, method, ...params] : null,
     call<C, F>(contract!)

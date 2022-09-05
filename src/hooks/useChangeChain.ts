@@ -7,8 +7,9 @@ const useChangeChain = () => {
 
   const changeChain = useCallback(
     async (desiredChainId?: ChainId) => {
-      if (account && ChainId.GNOSIS === chainId) return false;
-      await connector.activate(CHAIN_SETTING[ChainId.GNOSIS]);
+      if (!desiredChainId || (account && desiredChainId === chainId))
+        return false;
+      await connector.activate(CHAIN_SETTING[desiredChainId]);
       return true;
     },
     [chainId]

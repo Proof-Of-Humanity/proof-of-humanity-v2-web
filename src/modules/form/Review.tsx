@@ -7,7 +7,7 @@ import Field from "components/Field";
 import Image from "components/Image";
 import Label from "components/Label";
 import Video from "components/Video";
-import { ChainId } from "constants/chains";
+import { ChainId, FALLBACK_CHAIN } from "constants/chains";
 import useBalance from "hooks/useBalance";
 import useChangeChain from "hooks/useChangeChain";
 import { useGasFees } from "hooks/useGasFees";
@@ -54,7 +54,7 @@ const Review: React.FC<ReviewProps> = () => {
   }, [totalCost?.toString()]);
 
   const submit = async () => {
-    if (await changeChain(ChainId.GNOSIS)) return;
+    if (await changeChain(FALLBACK_CHAIN)) return;
     // if (estimationError) {
     //   toast.error("Transaction would revert");
     //   return;
@@ -191,7 +191,7 @@ const Review: React.FC<ReviewProps> = () => {
       </div>
 
       {loading.active ? (
-        <button className="btn-main">
+        <button className="btn-main animate-bounce">
           <POHLogoWhite className="w-6 h-6 animate-flip fill-white" />
           {loading.message}...
         </button>
