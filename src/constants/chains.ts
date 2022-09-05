@@ -46,7 +46,7 @@ export const CHAIN = {
     EXPLORER: "https://rinkeby.etherscan.io",
     CURRENCY: ETH,
   },
-  [ChainId.RINKEBY]: {
+  [ChainId.GOERLI]: {
     NAME: "Görli",
     Logo: TestnetLogo,
     RPC: RPC_ENDPOINT[ChainId.GOERLI],
