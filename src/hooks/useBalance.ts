@@ -3,7 +3,7 @@ import useKeepBlockDataLive from "./useKeepBlockDataLive";
 import useWeb3 from "./useWeb3";
 
 const useBalance = (suspense = false) => {
-  const { account, provider, chainId } = useWeb3();
+  const { account, provider, chainId } = useWeb3(false);
 
   const result = useSWR(
     account && !!provider ? ["ETHBalance", account, chainId] : null,

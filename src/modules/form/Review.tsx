@@ -7,7 +7,9 @@ import Field from "components/Field";
 import Image from "components/Image";
 import Label from "components/Label";
 import Video from "components/Video";
+import { ChainId } from "constants/chains";
 import useBalance from "hooks/useBalance";
+import useChangeChain from "hooks/useChangeChain";
 import { useGasFees } from "hooks/useGasFees";
 import { useLoading } from "hooks/useLoading";
 import {
@@ -24,7 +26,7 @@ import { useFormContext } from "./context";
 interface ReviewProps {}
 
 const Review: React.FC<ReviewProps> = () => {
-  const { account } = useWeb3();
+  const { account } = useWeb3(false);
   const {
     setStep,
     state: { humanityId, name, bio, photo, video, videoType },
@@ -41,6 +43,7 @@ const Review: React.FC<ReviewProps> = () => {
   );
   const [ipfsUri, setIpfsUri] = useState<string>();
   const balance = useBalance();
+  const changeChain = useChangeChain();
 
   useEffect(() => {
     if (!name) setStep(0);
@@ -48,13 +51,14 @@ const Review: React.FC<ReviewProps> = () => {
 
   useEffect(() => {
     if (totalCost) setSelfFunded(parseFloat(formatEther(totalCost || Zero)));
-  }, [totalCost]);
+  }, [totalCost?.toString()]);
 
   const submit = async () => {
-    if (estimationError) {
-      toast.error("Transaction would revert");
-      return;
-    }
+    if (await changeChain(ChainId.GNOSIS)) return;
+    // if (estimationError) {
+    //   toast.error("Transaction would revert");
+    //   return;
+    // }
 
     if (!photo || !video) return;
 

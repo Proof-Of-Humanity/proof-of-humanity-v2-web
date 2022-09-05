@@ -76,10 +76,10 @@ export const CHAIN_SETTING = {
   ...chainSetting(ChainId.GNOSIS),
 };
 
-export const FALLBACK_CHAIN = ChainId.MAINNET;
+export const FALLBACK_CHAIN = ChainId.GNOSIS;
 
 export const SUPPORTED_CHAIN_IDS = [
   // ChainId.MAINNET,
-  ChainId.RINKEBY,
+  // ChainId.RINKEBY,
   ChainId.GNOSIS,
 ];

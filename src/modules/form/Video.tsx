@@ -18,7 +18,7 @@ import { VideoType } from "./reducer";
 const MIN_DIMS = { width: 352, height: 352 };
 
 const VideoStep: React.FC = () => {
-  const { account } = useWeb3();
+  const { account } = useWeb3(false);
   const {
     advance,
     state: { video, videoType },

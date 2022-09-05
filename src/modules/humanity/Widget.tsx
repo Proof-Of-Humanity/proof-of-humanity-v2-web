@@ -11,7 +11,7 @@ interface HumanityWidgetProps {
 }
 
 const HumanityWidget: React.FC<HumanityWidgetProps> = ({ humanity }) => {
-  const { account } = useWeb3();
+  const { account } = useWeb3(false);
 
   return (
     <div className="px-8 pb-8 flex flex-col justify-center items-center rounded bg-white">

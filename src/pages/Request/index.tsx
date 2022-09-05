@@ -226,7 +226,7 @@ const Request: React.FC = () => {
                     }
                     disabled={challengePeriodEnd > Date.now() / 1000}
                   >
-                    Execute request
+                    Finalize request
                   </button>
 
                   <Label>

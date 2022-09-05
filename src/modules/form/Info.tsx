@@ -3,7 +3,7 @@ import useWeb3 from "hooks/useWeb3";
 import { useFormContext } from "./context";
 
 const Info: React.FC = () => {
-  const { account } = useWeb3();
+  const { account } = useWeb3(false);
   const {
     advance,
     tookNotice,

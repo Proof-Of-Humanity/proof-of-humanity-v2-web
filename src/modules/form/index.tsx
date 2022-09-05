@@ -16,7 +16,7 @@ const STEPS_LIST = ["Info", "Photo", "Video", "Review"];
 
 const Form: React.FC = () => {
   const { humanity } = useParams();
-  const { account } = useWeb3();
+  const { account } = useWeb3(false);
   const nav = useNavigate();
 
   const [tookNotice, setTookNotice] = useState(false);

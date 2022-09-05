@@ -7,7 +7,7 @@ import useWeb3 from "hooks/useWeb3";
 import SubmissionForm from "modules/form";
 
 const Claim: React.FC = () => {
-  const { account, isActive, connector } = useWeb3();
+  const { account, isActive, connector } = useWeb3(false);
   const changeChain = useChangeChain();
   const suggestedChain = useSuggestedChain();
 

@@ -81,6 +81,10 @@ export const useArbitrationCost = () => {
 export const useRequestTotalCost = () => {
   const [requestBaseDeposit] = useRequestBaseDeposit();
   const arbitrationCost = useArbitrationCost();
+  console.log({
+    requestBaseDeposit,
+    arbitrationCost,
+  });
   return arbitrationCost && requestBaseDeposit
     ? arbitrationCost.add(requestBaseDeposit)
     : null;

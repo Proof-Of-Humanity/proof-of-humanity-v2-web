@@ -59,7 +59,7 @@ const Webcam: React.FC<WebcamProps> = ({
   fullscreen,
   toggleFullscreen,
 }) => {
-  const { account } = useWeb3();
+  const { account } = useWeb3(false);
   const [devices, setDevices] = useState<MediaDeviceInfo[]>([]);
   const [currentCamera, setCurrentCamera] = useState("");
   const [cameraPermission, setCameraPermission] = useState(true);
