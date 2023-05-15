@@ -1,6 +1,4 @@
-import { Zero } from "@ethersproject/constants";
-import { BigNumber } from "ethers";
-import { formatEther, parseEther } from "ethers/lib/utils";
+import { formatEther, parseEther } from "ethers";
 import { useState } from "react";
 import { RequestQueryItem } from "api/types";
 import Field from "components/Field";
@@ -9,8 +7,8 @@ import { useFundRequest } from "hooks/useProofOfHumanity";
 import { formatEth } from "utils/misc";
 
 interface FundButtonProps {
-  totalCost?: BigNumber | null;
-  funded: BigNumber;
+  totalCost?: bigint;
+  funded: bigint;
   request: RequestQueryItem;
 }
 
@@ -21,10 +19,10 @@ const FundButton: React.FC<FundButtonProps> = ({
 }) => {
   const fundRequest = useFundRequest();
   const [funding, setFunding] = useState<number>(
-    parseFloat(formatEther(totalCost ? totalCost.sub(funded) : Zero))
+    parseFloat(formatEther(totalCost ? totalCost - funded : 0))
   );
 
-  if (!totalCost || totalCost.eq(funded)) return null;
+  if (!totalCost || totalCost == funded) return null;
 
   return (
     <Modal
@@ -34,14 +32,14 @@ const FundButton: React.FC<FundButtonProps> = ({
     >
       <div className="p-4 flex flex-col">
         <div className="w-full p-4 flex justify-center rounded font-bold">
-          {formatEth(totalCost.sub(funded))} Remaining ETH Deposit
+          {formatEth(totalCost - funded)} Remaining ETH Deposit
         </div>
         <Field
           type="number"
           className="no-spinner"
           label="Amount funding"
           min={0}
-          max={formatEther(totalCost.sub(funded).toNumber())}
+          max={formatEther(totalCost - funded)}
           step={0.01}
           value={funding}
           onChange={(event) => setFunding(parseFloat(event.target.value))}

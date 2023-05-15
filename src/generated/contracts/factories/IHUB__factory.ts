@@ -4,8 +4,7 @@
 
 /* eslint-disable */
 import type { IHUB, IHUBInterface } from "../IHUB";
-import type { Provider } from "@ethersproject/providers";
-import { Contract, Signer, utils } from "ethers";
+import { Contract, Interface, type ContractRunner } from "ethers";
 
 const _abi = [
   {
@@ -280,14 +279,14 @@ const _abi = [
     stateMutability: "view",
     type: "function",
   },
-];
+] as const;
 
 export class IHUB__factory {
   static readonly abi = _abi;
   static createInterface(): IHUBInterface {
-    return new utils.Interface(_abi) as IHUBInterface;
+    return new Interface(_abi) as IHUBInterface;
   }
-  static connect(address: string, signerOrProvider: Signer | Provider): IHUB {
-    return new Contract(address, _abi, signerOrProvider) as IHUB;
+  static connect(address: string, runner?: ContractRunner | null): IHUB {
+    return new Contract(address, _abi, runner) as unknown as IHUB;
   }
 }

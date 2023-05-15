@@ -23,7 +23,7 @@ import Update from "modules/crosschain/Update";
 import Revoke from "modules/humanity/Revoke";
 import TokenAccordion from "modules/token";
 import { explorerLink, shortenAddress } from "utils/address";
-import { machinifyId, shortenId } from "utils/identifier";
+import { machinifyId } from "utils/identifier";
 
 interface TransferState {
   foreignProxy: string;

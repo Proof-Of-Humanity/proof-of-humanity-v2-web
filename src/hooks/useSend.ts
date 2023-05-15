@@ -1,25 +1,36 @@
-import { TransactionReceipt } from "@ethersproject/providers";
 import { ChainId } from "enums/ChainId";
-import { Contract, ContractTransaction } from "ethers";
+import {
+  ContractTransactionReceipt,
+  ContractTransactionResponse,
+} from "ethers";
 import { useCallback } from "react";
 import { toast } from "react-toastify";
+import { SupportedContract } from "constants/contracts";
+import {
+  CrossChainProofOfHumanity,
+  ProofOfHumanity,
+} from "generated/contracts";
 import useSuggestedChain from "./useSuggestedChain";
 import useSwitchChain from "./useSwitchChain";
 
 interface TransactionEvents {
   withToast?: boolean;
   onPending?: () => void;
-  onConfirm?: (tx?: ContractTransaction) => void;
-  onSuccess?: (receipt?: TransactionReceipt) => void;
+  onConfirm?: (tx?: ContractTransactionResponse) => void;
+  onSuccess?: (receipt?: ContractTransactionReceipt | null) => void;
   onError?: () => void;
   chain?: ChainId;
 }
 
-type SendFunc<C extends Contract, F extends keyof C["callStatic"]> = (
-  ...params: Parameters<C[F]> | [...Parameters<C[F]>, ...[TransactionEvents]]
+type ContractMethod<C extends SupportedContract> = ArrayElement<
+  Parameters<C["interface"]["getFunction"]>
+>;
+
+type SendFunc<C extends SupportedContract, F extends ContractMethod<C>> = (
+  ...params: Parameters<C[F]> | [...Parameters<C[F]>, TransactionEvents]
 ) => Promise<void>;
 
-const useSend = <C extends Contract, F extends keyof C["callStatic"]>(
+const useSend = <C extends SupportedContract, F extends ContractMethod<C>>(
   contract: C | null,
   method: F
 ): SendFunc<C, F> => {
@@ -56,7 +67,9 @@ const useSend = <C extends Contract, F extends keyof C["callStatic"]>(
         onPending && onPending();
         withToast && toast.info("Sending transaction");
 
-        const tx: ContractTransaction = await contract[method](...params);
+        const tx: ContractTransactionResponse = await contract[method](
+          ...params
+        );
 
         onConfirm && onConfirm(tx);
         withToast && toast.info("Transaction pending");

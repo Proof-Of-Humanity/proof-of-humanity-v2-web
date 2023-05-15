@@ -1,6 +1,5 @@
 import { BigNumber } from "@ethersproject/bignumber/lib/bignumber";
-import { TransactionReceipt } from "@ethersproject/providers";
-import { isBytesLike } from "ethers/lib/utils";
+import { TransactionReceipt, isBytesLike } from "ethers";
 import React, { useEffect, useReducer, useState } from "react";
 import {
   Navigate,

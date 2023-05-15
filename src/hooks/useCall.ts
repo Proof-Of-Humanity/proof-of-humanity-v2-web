@@ -1,4 +1,4 @@
-import { Contract } from "ethers";
+import { ContractInterface } from "ethers";
 import useSWR, { SWRResponse } from "swr";
 
 type AsyncReturnType<T> = T extends (...args: any) => Promise<infer U>
@@ -6,11 +6,11 @@ type AsyncReturnType<T> = T extends (...args: any) => Promise<infer U>
   : any;
 
 const call =
-  <C extends Contract, F extends keyof C["callStatic"]>(contract: C) =>
+  <C extends ContractInterface, F extends keyof C>(contract: C) =>
   async (_: string, method: F, ...params: Parameters<C[F]>) =>
     await (contract[method](...params) as AsyncReturnType<C[F]>);
 
-const useCall = <C extends Contract, F extends keyof C["callStatic"]>(
+const useCall = <C extends ContractInterface, F extends keyof C>(
   contract: C | null,
   method: F,
   params: Parameters<C[F]> | null

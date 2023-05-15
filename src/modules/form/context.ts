@@ -1,4 +1,4 @@
-import { TransactionReceipt } from "@ethersproject/providers";
+import { TransactionReceipt } from "ethers";
 import { SetStateAction } from "jotai";
 import { Dispatch, createContext, useContext } from "react";
 import { SubmissionAction, SubmissionInfo, emptySubmission } from "./reducer";

@@ -4,86 +4,30 @@
 
 /* eslint-disable */
 import type {
-  TypedEventFilter,
-  TypedEvent,
+  TypedContractEvent,
+  TypedDeferredTopicFilter,
+  TypedEventLog,
+  TypedLogDescription,
   TypedListener,
-  OnEvent,
-  PromiseOrValue,
+  TypedContractMethod,
 } from "./common";
 import type {
-  FunctionFragment,
-  Result,
-  EventFragment,
-} from "@ethersproject/abi";
-import type { Listener, Provider } from "@ethersproject/providers";
-import type {
   BaseContract,
-  BigNumber,
   BigNumberish,
   BytesLike,
-  CallOverrides,
-  ContractTransaction,
-  Overrides,
-  PayableOverrides,
-  PopulatedTransaction,
-  Signer,
-  utils,
+  FunctionFragment,
+  Result,
+  Interface,
+  EventFragment,
+  AddressLike,
+  ContractRunner,
+  ContractMethod,
+  Listener,
 } from "ethers";
 
-export interface ProofOfHumanityOldInterface extends utils.Interface {
-  functions: {
-    "addSubmission(string,string)": FunctionFragment;
-    "addSubmissionManually(address[],string[],string[])": FunctionFragment;
-    "addVouch(address)": FunctionFragment;
-    "arbitratorDataList(uint256)": FunctionFragment;
-    "arbitratorDisputeIDToDisputeData(address,uint256)": FunctionFragment;
-    "challengePeriodDuration()": FunctionFragment;
-    "challengeRequest(address,uint8,address,string)": FunctionFragment;
-    "changeArbitrator(address,bytes)": FunctionFragment;
-    "changeDurations(uint64,uint64,uint64)": FunctionFragment;
-    "changeGovernor(address)": FunctionFragment;
-    "changeLoserStakeMultiplier(uint256)": FunctionFragment;
-    "changeMetaEvidence(string,string)": FunctionFragment;
-    "changeRequiredNumberOfVouches(uint64)": FunctionFragment;
-    "changeSharedStakeMultiplier(uint256)": FunctionFragment;
-    "changeStateToPending(address,address[],bytes[],uint256[])": FunctionFragment;
-    "changeSubmissionBaseDeposit(uint256)": FunctionFragment;
-    "changeWinnerStakeMultiplier(uint256)": FunctionFragment;
-    "checkRequestDuplicates(address,uint256,address)": FunctionFragment;
-    "executeRequest(address)": FunctionFragment;
-    "fundAppeal(address,uint256,uint8)": FunctionFragment;
-    "fundSubmission(address)": FunctionFragment;
-    "getArbitratorDataListCount()": FunctionFragment;
-    "getChallengeInfo(address,uint256,uint256)": FunctionFragment;
-    "getContributions(address,uint256,uint256,uint256,address)": FunctionFragment;
-    "getNumberOfVouches(address,uint256)": FunctionFragment;
-    "getRequestInfo(address,uint256)": FunctionFragment;
-    "getRoundInfo(address,uint256,uint256,uint256)": FunctionFragment;
-    "getSubmissionInfo(address)": FunctionFragment;
-    "governor()": FunctionFragment;
-    "isRegistered(address)": FunctionFragment;
-    "loserStakeMultiplier()": FunctionFragment;
-    "processVouches(address,uint256,uint256)": FunctionFragment;
-    "reapplySubmission(string,string)": FunctionFragment;
-    "removeSubmission(address,string)": FunctionFragment;
-    "removeSubmissionManually(address)": FunctionFragment;
-    "removeVouch(address)": FunctionFragment;
-    "renewalPeriodDuration()": FunctionFragment;
-    "requiredNumberOfVouches()": FunctionFragment;
-    "rule(uint256,uint256)": FunctionFragment;
-    "sharedStakeMultiplier()": FunctionFragment;
-    "submissionBaseDeposit()": FunctionFragment;
-    "submissionCounter()": FunctionFragment;
-    "submissionDuration()": FunctionFragment;
-    "submitEvidence(address,string)": FunctionFragment;
-    "vouches(address,address)": FunctionFragment;
-    "winnerStakeMultiplier()": FunctionFragment;
-    "withdrawFeesAndRewards(address,address,uint256,uint256,uint256)": FunctionFragment;
-    "withdrawSubmission()": FunctionFragment;
-  };
-
+export interface ProofOfHumanityOldInterface extends Interface {
   getFunction(
-    nameOrSignatureOrTopic:
+    nameOrSignature:
       | "addSubmission"
       | "addSubmissionManually"
       | "addVouch"
@@ -134,29 +78,43 @@ export interface ProofOfHumanityOldInterface extends utils.Interface {
       | "withdrawSubmission"
   ): FunctionFragment;
 
+  getEvent(
+    nameOrSignatureOrTopic:
+      | "AddSubmission"
+      | "AppealContribution"
+      | "ArbitratorComplete"
+      | "ChallengeResolved"
+      | "Dispute"
+      | "Evidence"
+      | "HasPaidAppealFee"
+      | "MetaEvidence"
+      | "ReapplySubmission"
+      | "RemoveSubmission"
+      | "Ruling"
+      | "SubmissionChallenged"
+      | "VouchAdded"
+      | "VouchRemoved"
+  ): EventFragment;
+
   encodeFunctionData(
     functionFragment: "addSubmission",
-    values: [PromiseOrValue<string>, PromiseOrValue<string>]
+    values: [string, string]
   ): string;
   encodeFunctionData(
     functionFragment: "addSubmissionManually",
-    values: [
-      PromiseOrValue<string>[],
-      PromiseOrValue<string>[],
-      PromiseOrValue<string>[]
-    ]
+    values: [AddressLike[], string[], string[]]
   ): string;
   encodeFunctionData(
     functionFragment: "addVouch",
-    values: [PromiseOrValue<string>]
+    values: [AddressLike]
   ): string;
   encodeFunctionData(
     functionFragment: "arbitratorDataList",
-    values: [PromiseOrValue<BigNumberish>]
+    values: [BigNumberish]
   ): string;
   encodeFunctionData(
     functionFragment: "arbitratorDisputeIDToDisputeData",
-    values: [PromiseOrValue<string>, PromiseOrValue<BigNumberish>]
+    values: [AddressLike, BigNumberish]
   ): string;
   encodeFunctionData(
     functionFragment: "challengePeriodDuration",
@@ -164,85 +122,63 @@ export interface ProofOfHumanityOldInterface extends utils.Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "challengeRequest",
-    values: [
-      PromiseOrValue<string>,
-      PromiseOrValue<BigNumberish>,
-      PromiseOrValue<string>,
-      PromiseOrValue<string>
-    ]
+    values: [AddressLike, BigNumberish, AddressLike, string]
   ): string;
   encodeFunctionData(
     functionFragment: "changeArbitrator",
-    values: [PromiseOrValue<string>, PromiseOrValue<BytesLike>]
+    values: [AddressLike, BytesLike]
   ): string;
   encodeFunctionData(
     functionFragment: "changeDurations",
-    values: [
-      PromiseOrValue<BigNumberish>,
-      PromiseOrValue<BigNumberish>,
-      PromiseOrValue<BigNumberish>
-    ]
+    values: [BigNumberish, BigNumberish, BigNumberish]
   ): string;
   encodeFunctionData(
     functionFragment: "changeGovernor",
-    values: [PromiseOrValue<string>]
+    values: [AddressLike]
   ): string;
   encodeFunctionData(
     functionFragment: "changeLoserStakeMultiplier",
-    values: [PromiseOrValue<BigNumberish>]
+    values: [BigNumberish]
   ): string;
   encodeFunctionData(
     functionFragment: "changeMetaEvidence",
-    values: [PromiseOrValue<string>, PromiseOrValue<string>]
+    values: [string, string]
   ): string;
   encodeFunctionData(
     functionFragment: "changeRequiredNumberOfVouches",
-    values: [PromiseOrValue<BigNumberish>]
+    values: [BigNumberish]
   ): string;
   encodeFunctionData(
     functionFragment: "changeSharedStakeMultiplier",
-    values: [PromiseOrValue<BigNumberish>]
+    values: [BigNumberish]
   ): string;
   encodeFunctionData(
     functionFragment: "changeStateToPending",
-    values: [
-      PromiseOrValue<string>,
-      PromiseOrValue<string>[],
-      PromiseOrValue<BytesLike>[],
-      PromiseOrValue<BigNumberish>[]
-    ]
+    values: [AddressLike, AddressLike[], BytesLike[], BigNumberish[]]
   ): string;
   encodeFunctionData(
     functionFragment: "changeSubmissionBaseDeposit",
-    values: [PromiseOrValue<BigNumberish>]
+    values: [BigNumberish]
   ): string;
   encodeFunctionData(
     functionFragment: "changeWinnerStakeMultiplier",
-    values: [PromiseOrValue<BigNumberish>]
+    values: [BigNumberish]
   ): string;
   encodeFunctionData(
     functionFragment: "checkRequestDuplicates",
-    values: [
-      PromiseOrValue<string>,
-      PromiseOrValue<BigNumberish>,
-      PromiseOrValue<string>
-    ]
+    values: [AddressLike, BigNumberish, AddressLike]
   ): string;
   encodeFunctionData(
     functionFragment: "executeRequest",
-    values: [PromiseOrValue<string>]
+    values: [AddressLike]
   ): string;
   encodeFunctionData(
     functionFragment: "fundAppeal",
-    values: [
-      PromiseOrValue<string>,
-      PromiseOrValue<BigNumberish>,
-      PromiseOrValue<BigNumberish>
-    ]
+    values: [AddressLike, BigNumberish, BigNumberish]
   ): string;
   encodeFunctionData(
     functionFragment: "fundSubmission",
-    values: [PromiseOrValue<string>]
+    values: [AddressLike]
   ): string;
   encodeFunctionData(
     functionFragment: "getArbitratorDataListCount",
@@ -250,47 +186,32 @@ export interface ProofOfHumanityOldInterface extends utils.Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "getChallengeInfo",
-    values: [
-      PromiseOrValue<string>,
-      PromiseOrValue<BigNumberish>,
-      PromiseOrValue<BigNumberish>
-    ]
+    values: [AddressLike, BigNumberish, BigNumberish]
   ): string;
   encodeFunctionData(
     functionFragment: "getContributions",
-    values: [
-      PromiseOrValue<string>,
-      PromiseOrValue<BigNumberish>,
-      PromiseOrValue<BigNumberish>,
-      PromiseOrValue<BigNumberish>,
-      PromiseOrValue<string>
-    ]
+    values: [AddressLike, BigNumberish, BigNumberish, BigNumberish, AddressLike]
   ): string;
   encodeFunctionData(
     functionFragment: "getNumberOfVouches",
-    values: [PromiseOrValue<string>, PromiseOrValue<BigNumberish>]
+    values: [AddressLike, BigNumberish]
   ): string;
   encodeFunctionData(
     functionFragment: "getRequestInfo",
-    values: [PromiseOrValue<string>, PromiseOrValue<BigNumberish>]
+    values: [AddressLike, BigNumberish]
   ): string;
   encodeFunctionData(
     functionFragment: "getRoundInfo",
-    values: [
-      PromiseOrValue<string>,
-      PromiseOrValue<BigNumberish>,
-      PromiseOrValue<BigNumberish>,
-      PromiseOrValue<BigNumberish>
-    ]
+    values: [AddressLike, BigNumberish, BigNumberish, BigNumberish]
   ): string;
   encodeFunctionData(
     functionFragment: "getSubmissionInfo",
-    values: [PromiseOrValue<string>]
+    values: [AddressLike]
   ): string;
   encodeFunctionData(functionFragment: "governor", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "isRegistered",
-    values: [PromiseOrValue<string>]
+    values: [AddressLike]
   ): string;
   encodeFunctionData(
     functionFragment: "loserStakeMultiplier",
@@ -298,27 +219,23 @@ export interface ProofOfHumanityOldInterface extends utils.Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "processVouches",
-    values: [
-      PromiseOrValue<string>,
-      PromiseOrValue<BigNumberish>,
-      PromiseOrValue<BigNumberish>
-    ]
+    values: [AddressLike, BigNumberish, BigNumberish]
   ): string;
   encodeFunctionData(
     functionFragment: "reapplySubmission",
-    values: [PromiseOrValue<string>, PromiseOrValue<string>]
+    values: [string, string]
   ): string;
   encodeFunctionData(
     functionFragment: "removeSubmission",
-    values: [PromiseOrValue<string>, PromiseOrValue<string>]
+    values: [AddressLike, string]
   ): string;
   encodeFunctionData(
     functionFragment: "removeSubmissionManually",
-    values: [PromiseOrValue<string>]
+    values: [AddressLike]
   ): string;
   encodeFunctionData(
     functionFragment: "removeVouch",
-    values: [PromiseOrValue<string>]
+    values: [AddressLike]
   ): string;
   encodeFunctionData(
     functionFragment: "renewalPeriodDuration",
@@ -330,7 +247,7 @@ export interface ProofOfHumanityOldInterface extends utils.Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "rule",
-    values: [PromiseOrValue<BigNumberish>, PromiseOrValue<BigNumberish>]
+    values: [BigNumberish, BigNumberish]
   ): string;
   encodeFunctionData(
     functionFragment: "sharedStakeMultiplier",
@@ -350,11 +267,11 @@ export interface ProofOfHumanityOldInterface extends utils.Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "submitEvidence",
-    values: [PromiseOrValue<string>, PromiseOrValue<string>]
+    values: [AddressLike, string]
   ): string;
   encodeFunctionData(
     functionFragment: "vouches",
-    values: [PromiseOrValue<string>, PromiseOrValue<string>]
+    values: [AddressLike, AddressLike]
   ): string;
   encodeFunctionData(
     functionFragment: "winnerStakeMultiplier",
@@ -362,13 +279,7 @@ export interface ProofOfHumanityOldInterface extends utils.Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "withdrawFeesAndRewards",
-    values: [
-      PromiseOrValue<string>,
-      PromiseOrValue<string>,
-      PromiseOrValue<BigNumberish>,
-      PromiseOrValue<BigNumberish>,
-      PromiseOrValue<BigNumberish>
-    ]
+    values: [AddressLike, AddressLike, BigNumberish, BigNumberish, BigNumberish]
   ): string;
   encodeFunctionData(
     functionFragment: "withdrawSubmission",
@@ -552,1845 +463,1302 @@ export interface ProofOfHumanityOldInterface extends utils.Interface {
     functionFragment: "withdrawSubmission",
     data: BytesLike
   ): Result;
-
-  events: {
-    "AddSubmission(address,uint256)": EventFragment;
-    "AppealContribution(address,uint256,uint8,address,uint256)": EventFragment;
-    "ArbitratorComplete(address,address,uint256,uint256,uint256,uint256,uint256,uint256,uint256)": EventFragment;
-    "ChallengeResolved(address,uint256,uint256)": EventFragment;
-    "Dispute(address,uint256,uint256,uint256)": EventFragment;
-    "Evidence(address,uint256,address,string)": EventFragment;
-    "HasPaidAppealFee(address,uint256,uint8)": EventFragment;
-    "MetaEvidence(uint256,string)": EventFragment;
-    "ReapplySubmission(address,uint256)": EventFragment;
-    "RemoveSubmission(address,address,uint256)": EventFragment;
-    "Ruling(address,uint256,uint256)": EventFragment;
-    "SubmissionChallenged(address,uint256,uint256)": EventFragment;
-    "VouchAdded(address,address)": EventFragment;
-    "VouchRemoved(address,address)": EventFragment;
-  };
-
-  getEvent(nameOrSignatureOrTopic: "AddSubmission"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "AppealContribution"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "ArbitratorComplete"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "ChallengeResolved"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "Dispute"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "Evidence"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "HasPaidAppealFee"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "MetaEvidence"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "ReapplySubmission"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "RemoveSubmission"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "Ruling"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "SubmissionChallenged"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "VouchAdded"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "VouchRemoved"): EventFragment;
 }
 
-export interface AddSubmissionEventObject {
-  _submissionID: string;
-  _requestID: BigNumber;
+export namespace AddSubmissionEvent {
+  export type InputTuple = [
+    _submissionID: AddressLike,
+    _requestID: BigNumberish
+  ];
+  export type OutputTuple = [_submissionID: string, _requestID: bigint];
+  export interface OutputObject {
+    _submissionID: string;
+    _requestID: bigint;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type AddSubmissionEvent = TypedEvent<
-  [string, BigNumber],
-  AddSubmissionEventObject
->;
 
-export type AddSubmissionEventFilter = TypedEventFilter<AddSubmissionEvent>;
-
-export interface AppealContributionEventObject {
-  _submissionID: string;
-  _challengeID: BigNumber;
-  _party: number;
-  _contributor: string;
-  _amount: BigNumber;
+export namespace AppealContributionEvent {
+  export type InputTuple = [
+    _submissionID: AddressLike,
+    _challengeID: BigNumberish,
+    _party: BigNumberish,
+    _contributor: AddressLike,
+    _amount: BigNumberish
+  ];
+  export type OutputTuple = [
+    _submissionID: string,
+    _challengeID: bigint,
+    _party: bigint,
+    _contributor: string,
+    _amount: bigint
+  ];
+  export interface OutputObject {
+    _submissionID: string;
+    _challengeID: bigint;
+    _party: bigint;
+    _contributor: string;
+    _amount: bigint;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type AppealContributionEvent = TypedEvent<
-  [string, BigNumber, number, string, BigNumber],
-  AppealContributionEventObject
->;
 
-export type AppealContributionEventFilter =
-  TypedEventFilter<AppealContributionEvent>;
-
-export interface ArbitratorCompleteEventObject {
-  _arbitrator: string;
-  _governor: string;
-  _submissionBaseDeposit: BigNumber;
-  _submissionDuration: BigNumber;
-  _challengePeriodDuration: BigNumber;
-  _requiredNumberOfVouches: BigNumber;
-  _sharedStakeMultiplier: BigNumber;
-  _winnerStakeMultiplier: BigNumber;
-  _loserStakeMultiplier: BigNumber;
+export namespace ArbitratorCompleteEvent {
+  export type InputTuple = [
+    _arbitrator: AddressLike,
+    _governor: AddressLike,
+    _submissionBaseDeposit: BigNumberish,
+    _submissionDuration: BigNumberish,
+    _challengePeriodDuration: BigNumberish,
+    _requiredNumberOfVouches: BigNumberish,
+    _sharedStakeMultiplier: BigNumberish,
+    _winnerStakeMultiplier: BigNumberish,
+    _loserStakeMultiplier: BigNumberish
+  ];
+  export type OutputTuple = [
+    _arbitrator: string,
+    _governor: string,
+    _submissionBaseDeposit: bigint,
+    _submissionDuration: bigint,
+    _challengePeriodDuration: bigint,
+    _requiredNumberOfVouches: bigint,
+    _sharedStakeMultiplier: bigint,
+    _winnerStakeMultiplier: bigint,
+    _loserStakeMultiplier: bigint
+  ];
+  export interface OutputObject {
+    _arbitrator: string;
+    _governor: string;
+    _submissionBaseDeposit: bigint;
+    _submissionDuration: bigint;
+    _challengePeriodDuration: bigint;
+    _requiredNumberOfVouches: bigint;
+    _sharedStakeMultiplier: bigint;
+    _winnerStakeMultiplier: bigint;
+    _loserStakeMultiplier: bigint;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type ArbitratorCompleteEvent = TypedEvent<
-  [
-    string,
-    string,
-    BigNumber,
-    BigNumber,
-    BigNumber,
-    BigNumber,
-    BigNumber,
-    BigNumber,
-    BigNumber
-  ],
-  ArbitratorCompleteEventObject
->;
 
-export type ArbitratorCompleteEventFilter =
-  TypedEventFilter<ArbitratorCompleteEvent>;
-
-export interface ChallengeResolvedEventObject {
-  _submissionID: string;
-  _requestID: BigNumber;
-  _challengeID: BigNumber;
+export namespace ChallengeResolvedEvent {
+  export type InputTuple = [
+    _submissionID: AddressLike,
+    _requestID: BigNumberish,
+    _challengeID: BigNumberish
+  ];
+  export type OutputTuple = [
+    _submissionID: string,
+    _requestID: bigint,
+    _challengeID: bigint
+  ];
+  export interface OutputObject {
+    _submissionID: string;
+    _requestID: bigint;
+    _challengeID: bigint;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type ChallengeResolvedEvent = TypedEvent<
-  [string, BigNumber, BigNumber],
-  ChallengeResolvedEventObject
->;
 
-export type ChallengeResolvedEventFilter =
-  TypedEventFilter<ChallengeResolvedEvent>;
-
-export interface DisputeEventObject {
-  _arbitrator: string;
-  _disputeID: BigNumber;
-  _metaEvidenceID: BigNumber;
-  _evidenceGroupID: BigNumber;
+export namespace DisputeEvent {
+  export type InputTuple = [
+    _arbitrator: AddressLike,
+    _disputeID: BigNumberish,
+    _metaEvidenceID: BigNumberish,
+    _evidenceGroupID: BigNumberish
+  ];
+  export type OutputTuple = [
+    _arbitrator: string,
+    _disputeID: bigint,
+    _metaEvidenceID: bigint,
+    _evidenceGroupID: bigint
+  ];
+  export interface OutputObject {
+    _arbitrator: string;
+    _disputeID: bigint;
+    _metaEvidenceID: bigint;
+    _evidenceGroupID: bigint;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type DisputeEvent = TypedEvent<
-  [string, BigNumber, BigNumber, BigNumber],
-  DisputeEventObject
->;
 
-export type DisputeEventFilter = TypedEventFilter<DisputeEvent>;
-
-export interface EvidenceEventObject {
-  _arbitrator: string;
-  _evidenceGroupID: BigNumber;
-  _party: string;
-  _evidence: string;
+export namespace EvidenceEvent {
+  export type InputTuple = [
+    _arbitrator: AddressLike,
+    _evidenceGroupID: BigNumberish,
+    _party: AddressLike,
+    _evidence: string
+  ];
+  export type OutputTuple = [
+    _arbitrator: string,
+    _evidenceGroupID: bigint,
+    _party: string,
+    _evidence: string
+  ];
+  export interface OutputObject {
+    _arbitrator: string;
+    _evidenceGroupID: bigint;
+    _party: string;
+    _evidence: string;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type EvidenceEvent = TypedEvent<
-  [string, BigNumber, string, string],
-  EvidenceEventObject
->;
 
-export type EvidenceEventFilter = TypedEventFilter<EvidenceEvent>;
-
-export interface HasPaidAppealFeeEventObject {
-  _submissionID: string;
-  _challengeID: BigNumber;
-  _side: number;
+export namespace HasPaidAppealFeeEvent {
+  export type InputTuple = [
+    _submissionID: AddressLike,
+    _challengeID: BigNumberish,
+    _side: BigNumberish
+  ];
+  export type OutputTuple = [
+    _submissionID: string,
+    _challengeID: bigint,
+    _side: bigint
+  ];
+  export interface OutputObject {
+    _submissionID: string;
+    _challengeID: bigint;
+    _side: bigint;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type HasPaidAppealFeeEvent = TypedEvent<
-  [string, BigNumber, number],
-  HasPaidAppealFeeEventObject
->;
 
-export type HasPaidAppealFeeEventFilter =
-  TypedEventFilter<HasPaidAppealFeeEvent>;
-
-export interface MetaEvidenceEventObject {
-  _metaEvidenceID: BigNumber;
-  _evidence: string;
+export namespace MetaEvidenceEvent {
+  export type InputTuple = [_metaEvidenceID: BigNumberish, _evidence: string];
+  export type OutputTuple = [_metaEvidenceID: bigint, _evidence: string];
+  export interface OutputObject {
+    _metaEvidenceID: bigint;
+    _evidence: string;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type MetaEvidenceEvent = TypedEvent<
-  [BigNumber, string],
-  MetaEvidenceEventObject
->;
 
-export type MetaEvidenceEventFilter = TypedEventFilter<MetaEvidenceEvent>;
-
-export interface ReapplySubmissionEventObject {
-  _submissionID: string;
-  _requestID: BigNumber;
+export namespace ReapplySubmissionEvent {
+  export type InputTuple = [
+    _submissionID: AddressLike,
+    _requestID: BigNumberish
+  ];
+  export type OutputTuple = [_submissionID: string, _requestID: bigint];
+  export interface OutputObject {
+    _submissionID: string;
+    _requestID: bigint;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type ReapplySubmissionEvent = TypedEvent<
-  [string, BigNumber],
-  ReapplySubmissionEventObject
->;
 
-export type ReapplySubmissionEventFilter =
-  TypedEventFilter<ReapplySubmissionEvent>;
-
-export interface RemoveSubmissionEventObject {
-  _requester: string;
-  _submissionID: string;
-  _requestID: BigNumber;
+export namespace RemoveSubmissionEvent {
+  export type InputTuple = [
+    _requester: AddressLike,
+    _submissionID: AddressLike,
+    _requestID: BigNumberish
+  ];
+  export type OutputTuple = [
+    _requester: string,
+    _submissionID: string,
+    _requestID: bigint
+  ];
+  export interface OutputObject {
+    _requester: string;
+    _submissionID: string;
+    _requestID: bigint;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type RemoveSubmissionEvent = TypedEvent<
-  [string, string, BigNumber],
-  RemoveSubmissionEventObject
->;
 
-export type RemoveSubmissionEventFilter =
-  TypedEventFilter<RemoveSubmissionEvent>;
-
-export interface RulingEventObject {
-  _arbitrator: string;
-  _disputeID: BigNumber;
-  _ruling: BigNumber;
+export namespace RulingEvent {
+  export type InputTuple = [
+    _arbitrator: AddressLike,
+    _disputeID: BigNumberish,
+    _ruling: BigNumberish
+  ];
+  export type OutputTuple = [
+    _arbitrator: string,
+    _disputeID: bigint,
+    _ruling: bigint
+  ];
+  export interface OutputObject {
+    _arbitrator: string;
+    _disputeID: bigint;
+    _ruling: bigint;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type RulingEvent = TypedEvent<
-  [string, BigNumber, BigNumber],
-  RulingEventObject
->;
 
-export type RulingEventFilter = TypedEventFilter<RulingEvent>;
-
-export interface SubmissionChallengedEventObject {
-  _submissionID: string;
-  _requestID: BigNumber;
-  _challengeID: BigNumber;
+export namespace SubmissionChallengedEvent {
+  export type InputTuple = [
+    _submissionID: AddressLike,
+    _requestID: BigNumberish,
+    _challengeID: BigNumberish
+  ];
+  export type OutputTuple = [
+    _submissionID: string,
+    _requestID: bigint,
+    _challengeID: bigint
+  ];
+  export interface OutputObject {
+    _submissionID: string;
+    _requestID: bigint;
+    _challengeID: bigint;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type SubmissionChallengedEvent = TypedEvent<
-  [string, BigNumber, BigNumber],
-  SubmissionChallengedEventObject
->;
 
-export type SubmissionChallengedEventFilter =
-  TypedEventFilter<SubmissionChallengedEvent>;
-
-export interface VouchAddedEventObject {
-  _submissionID: string;
-  _voucher: string;
+export namespace VouchAddedEvent {
+  export type InputTuple = [_submissionID: AddressLike, _voucher: AddressLike];
+  export type OutputTuple = [_submissionID: string, _voucher: string];
+  export interface OutputObject {
+    _submissionID: string;
+    _voucher: string;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type VouchAddedEvent = TypedEvent<
-  [string, string],
-  VouchAddedEventObject
->;
 
-export type VouchAddedEventFilter = TypedEventFilter<VouchAddedEvent>;
-
-export interface VouchRemovedEventObject {
-  _submissionID: string;
-  _voucher: string;
+export namespace VouchRemovedEvent {
+  export type InputTuple = [_submissionID: AddressLike, _voucher: AddressLike];
+  export type OutputTuple = [_submissionID: string, _voucher: string];
+  export interface OutputObject {
+    _submissionID: string;
+    _voucher: string;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type VouchRemovedEvent = TypedEvent<
-  [string, string],
-  VouchRemovedEventObject
->;
-
-export type VouchRemovedEventFilter = TypedEventFilter<VouchRemovedEvent>;
 
 export interface ProofOfHumanityOld extends BaseContract {
-  connect(signerOrProvider: Signer | Provider | string): this;
-  attach(addressOrName: string): this;
+  connect(runner?: ContractRunner | null): BaseContract;
+  attach(addressOrName: AddressLike): this;
   deployed(): Promise<this>;
 
   interface: ProofOfHumanityOldInterface;
 
-  queryFilter<TEvent extends TypedEvent>(
-    event: TypedEventFilter<TEvent>,
+  queryFilter<TCEvent extends TypedContractEvent>(
+    event: TCEvent,
     fromBlockOrBlockhash?: string | number | undefined,
     toBlock?: string | number | undefined
-  ): Promise<Array<TEvent>>;
+  ): Promise<Array<TypedEventLog<TCEvent>>>;
+  queryFilter<TCEvent extends TypedContractEvent>(
+    filter: TypedDeferredTopicFilter<TCEvent>,
+    fromBlockOrBlockhash?: string | number | undefined,
+    toBlock?: string | number | undefined
+  ): Promise<Array<TypedEventLog<TCEvent>>>;
 
-  listeners<TEvent extends TypedEvent>(
-    eventFilter?: TypedEventFilter<TEvent>
-  ): Array<TypedListener<TEvent>>;
-  listeners(eventName?: string): Array<Listener>;
-  removeAllListeners<TEvent extends TypedEvent>(
-    eventFilter: TypedEventFilter<TEvent>
-  ): this;
-  removeAllListeners(eventName?: string): this;
-  off: OnEvent<this>;
-  on: OnEvent<this>;
-  once: OnEvent<this>;
-  removeListener: OnEvent<this>;
+  on<TCEvent extends TypedContractEvent>(
+    event: TCEvent,
+    listener: TypedListener<TCEvent>
+  ): Promise<this>;
+  on<TCEvent extends TypedContractEvent>(
+    filter: TypedDeferredTopicFilter<TCEvent>,
+    listener: TypedListener<TCEvent>
+  ): Promise<this>;
 
-  functions: {
-    addSubmission(
-      _evidence: PromiseOrValue<string>,
-      _name: PromiseOrValue<string>,
-      overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
+  once<TCEvent extends TypedContractEvent>(
+    event: TCEvent,
+    listener: TypedListener<TCEvent>
+  ): Promise<this>;
+  once<TCEvent extends TypedContractEvent>(
+    filter: TypedDeferredTopicFilter<TCEvent>,
+    listener: TypedListener<TCEvent>
+  ): Promise<this>;
 
-    addSubmissionManually(
-      _submissionIDs: PromiseOrValue<string>[],
-      _evidence: PromiseOrValue<string>[],
-      _names: PromiseOrValue<string>[],
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
+  listeners<TCEvent extends TypedContractEvent>(
+    event: TCEvent
+  ): Promise<Array<TypedListener<TCEvent>>>;
+  listeners(eventName?: string): Promise<Array<Listener>>;
+  removeAllListeners<TCEvent extends TypedContractEvent>(
+    event?: TCEvent
+  ): Promise<this>;
 
-    addVouch(
-      _submissionID: PromiseOrValue<string>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
-
-    arbitratorDataList(
-      arg0: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<
-      [string, BigNumber, string] & {
-        arbitrator: string;
-        metaEvidenceUpdates: BigNumber;
-        arbitratorExtraData: string;
-      }
-    >;
-
-    arbitratorDisputeIDToDisputeData(
-      arg0: PromiseOrValue<string>,
-      arg1: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<
-      [BigNumber, string] & { challengeID: BigNumber; submissionID: string }
-    >;
-
-    challengePeriodDuration(overrides?: CallOverrides): Promise<[BigNumber]>;
-
-    challengeRequest(
-      _submissionID: PromiseOrValue<string>,
-      _reason: PromiseOrValue<BigNumberish>,
-      _duplicateID: PromiseOrValue<string>,
-      _evidence: PromiseOrValue<string>,
-      overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
-
-    changeArbitrator(
-      _arbitrator: PromiseOrValue<string>,
-      _arbitratorExtraData: PromiseOrValue<BytesLike>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
-
-    changeDurations(
-      _submissionDuration: PromiseOrValue<BigNumberish>,
-      _renewalPeriodDuration: PromiseOrValue<BigNumberish>,
-      _challengePeriodDuration: PromiseOrValue<BigNumberish>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
-
-    changeGovernor(
-      _governor: PromiseOrValue<string>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
-
-    changeLoserStakeMultiplier(
-      _loserStakeMultiplier: PromiseOrValue<BigNumberish>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
-
-    changeMetaEvidence(
-      _registrationMetaEvidence: PromiseOrValue<string>,
-      _clearingMetaEvidence: PromiseOrValue<string>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
-
-    changeRequiredNumberOfVouches(
-      _requiredNumberOfVouches: PromiseOrValue<BigNumberish>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
-
-    changeSharedStakeMultiplier(
-      _sharedStakeMultiplier: PromiseOrValue<BigNumberish>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
-
-    changeStateToPending(
-      _submissionID: PromiseOrValue<string>,
-      _vouches: PromiseOrValue<string>[],
-      _signatures: PromiseOrValue<BytesLike>[],
-      _expirationTimestamps: PromiseOrValue<BigNumberish>[],
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
-
-    changeSubmissionBaseDeposit(
-      _submissionBaseDeposit: PromiseOrValue<BigNumberish>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
-
-    changeWinnerStakeMultiplier(
-      _winnerStakeMultiplier: PromiseOrValue<BigNumberish>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
-
-    checkRequestDuplicates(
-      _submissionID: PromiseOrValue<string>,
-      _requestID: PromiseOrValue<BigNumberish>,
-      _duplicateID: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<[boolean]>;
-
-    executeRequest(
-      _submissionID: PromiseOrValue<string>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
-
-    fundAppeal(
-      _submissionID: PromiseOrValue<string>,
-      _challengeID: PromiseOrValue<BigNumberish>,
-      _side: PromiseOrValue<BigNumberish>,
-      overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
-
-    fundSubmission(
-      _submissionID: PromiseOrValue<string>,
-      overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
-
-    getArbitratorDataListCount(overrides?: CallOverrides): Promise<[BigNumber]>;
-
-    getChallengeInfo(
-      _submissionID: PromiseOrValue<string>,
-      _requestID: PromiseOrValue<BigNumberish>,
-      _challengeID: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<
-      [number, string, BigNumber, number, BigNumber] & {
-        lastRoundID: number;
-        challenger: string;
-        disputeID: BigNumber;
-        ruling: number;
-        duplicateSubmissionIndex: BigNumber;
-      }
-    >;
-
-    getContributions(
-      _submissionID: PromiseOrValue<string>,
-      _requestID: PromiseOrValue<BigNumberish>,
-      _challengeID: PromiseOrValue<BigNumberish>,
-      _round: PromiseOrValue<BigNumberish>,
-      _contributor: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<
-      [[BigNumber, BigNumber, BigNumber]] & {
-        contributions: [BigNumber, BigNumber, BigNumber];
-      }
-    >;
-
-    getNumberOfVouches(
-      _submissionID: PromiseOrValue<string>,
-      _requestID: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<[BigNumber]>;
-
-    getRequestInfo(
-      _submissionID: PromiseOrValue<string>,
-      _requestID: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<
-      [
-        boolean,
-        boolean,
-        boolean,
-        number,
-        number,
-        number,
-        number,
-        string,
-        string,
-        number
-      ] & {
-        disputed: boolean;
-        resolved: boolean;
-        requesterLost: boolean;
-        currentReason: number;
-        nbParallelDisputes: number;
-        lastChallengeID: number;
-        arbitratorDataID: number;
-        requester: string;
-        ultimateChallenger: string;
-        usedReasons: number;
-      }
-    >;
-
-    getRoundInfo(
-      _submissionID: PromiseOrValue<string>,
-      _requestID: PromiseOrValue<BigNumberish>,
-      _challengeID: PromiseOrValue<BigNumberish>,
-      _round: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<
-      [boolean, [BigNumber, BigNumber, BigNumber], number, BigNumber] & {
-        appealed: boolean;
-        paidFees: [BigNumber, BigNumber, BigNumber];
-        sideFunded: number;
-        feeRewards: BigNumber;
-      }
-    >;
-
-    getSubmissionInfo(
-      _submissionID: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<
-      [number, BigNumber, BigNumber, boolean, boolean, BigNumber] & {
-        status: number;
-        submissionTime: BigNumber;
-        index: BigNumber;
-        registered: boolean;
-        hasVouched: boolean;
-        numberOfRequests: BigNumber;
-      }
-    >;
-
-    governor(overrides?: CallOverrides): Promise<[string]>;
-
-    isRegistered(
-      _submissionID: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<[boolean]>;
-
-    loserStakeMultiplier(overrides?: CallOverrides): Promise<[BigNumber]>;
-
-    processVouches(
-      _submissionID: PromiseOrValue<string>,
-      _requestID: PromiseOrValue<BigNumberish>,
-      _iterations: PromiseOrValue<BigNumberish>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
-
-    reapplySubmission(
-      _evidence: PromiseOrValue<string>,
-      _name: PromiseOrValue<string>,
-      overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
-
-    removeSubmission(
-      _submissionID: PromiseOrValue<string>,
-      _evidence: PromiseOrValue<string>,
-      overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
-
-    removeSubmissionManually(
-      _submissionID: PromiseOrValue<string>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
-
-    removeVouch(
-      _submissionID: PromiseOrValue<string>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
-
-    renewalPeriodDuration(overrides?: CallOverrides): Promise<[BigNumber]>;
-
-    requiredNumberOfVouches(overrides?: CallOverrides): Promise<[BigNumber]>;
-
-    rule(
-      _disputeID: PromiseOrValue<BigNumberish>,
-      _ruling: PromiseOrValue<BigNumberish>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
-
-    sharedStakeMultiplier(overrides?: CallOverrides): Promise<[BigNumber]>;
-
-    submissionBaseDeposit(overrides?: CallOverrides): Promise<[BigNumber]>;
-
-    submissionCounter(overrides?: CallOverrides): Promise<[BigNumber]>;
-
-    submissionDuration(overrides?: CallOverrides): Promise<[BigNumber]>;
-
-    submitEvidence(
-      _submissionID: PromiseOrValue<string>,
-      _evidence: PromiseOrValue<string>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
-
-    vouches(
-      arg0: PromiseOrValue<string>,
-      arg1: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<[boolean]>;
-
-    winnerStakeMultiplier(overrides?: CallOverrides): Promise<[BigNumber]>;
-
-    withdrawFeesAndRewards(
-      _beneficiary: PromiseOrValue<string>,
-      _submissionID: PromiseOrValue<string>,
-      _requestID: PromiseOrValue<BigNumberish>,
-      _challengeID: PromiseOrValue<BigNumberish>,
-      _round: PromiseOrValue<BigNumberish>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
-
-    withdrawSubmission(
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
-  };
-
-  addSubmission(
-    _evidence: PromiseOrValue<string>,
-    _name: PromiseOrValue<string>,
-    overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
-
-  addSubmissionManually(
-    _submissionIDs: PromiseOrValue<string>[],
-    _evidence: PromiseOrValue<string>[],
-    _names: PromiseOrValue<string>[],
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
-
-  addVouch(
-    _submissionID: PromiseOrValue<string>,
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
-
-  arbitratorDataList(
-    arg0: PromiseOrValue<BigNumberish>,
-    overrides?: CallOverrides
-  ): Promise<
-    [string, BigNumber, string] & {
-      arbitrator: string;
-      metaEvidenceUpdates: BigNumber;
-      arbitratorExtraData: string;
-    }
+  addSubmission: TypedContractMethod<
+    [_evidence: string, _name: string],
+    [void],
+    "payable"
   >;
 
-  arbitratorDisputeIDToDisputeData(
-    arg0: PromiseOrValue<string>,
-    arg1: PromiseOrValue<BigNumberish>,
-    overrides?: CallOverrides
-  ): Promise<
-    [BigNumber, string] & { challengeID: BigNumber; submissionID: string }
+  addSubmissionManually: TypedContractMethod<
+    [_submissionIDs: AddressLike[], _evidence: string[], _names: string[]],
+    [void],
+    "nonpayable"
   >;
 
-  challengePeriodDuration(overrides?: CallOverrides): Promise<BigNumber>;
-
-  challengeRequest(
-    _submissionID: PromiseOrValue<string>,
-    _reason: PromiseOrValue<BigNumberish>,
-    _duplicateID: PromiseOrValue<string>,
-    _evidence: PromiseOrValue<string>,
-    overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
-
-  changeArbitrator(
-    _arbitrator: PromiseOrValue<string>,
-    _arbitratorExtraData: PromiseOrValue<BytesLike>,
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
-
-  changeDurations(
-    _submissionDuration: PromiseOrValue<BigNumberish>,
-    _renewalPeriodDuration: PromiseOrValue<BigNumberish>,
-    _challengePeriodDuration: PromiseOrValue<BigNumberish>,
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
-
-  changeGovernor(
-    _governor: PromiseOrValue<string>,
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
-
-  changeLoserStakeMultiplier(
-    _loserStakeMultiplier: PromiseOrValue<BigNumberish>,
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
-
-  changeMetaEvidence(
-    _registrationMetaEvidence: PromiseOrValue<string>,
-    _clearingMetaEvidence: PromiseOrValue<string>,
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
-
-  changeRequiredNumberOfVouches(
-    _requiredNumberOfVouches: PromiseOrValue<BigNumberish>,
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
-
-  changeSharedStakeMultiplier(
-    _sharedStakeMultiplier: PromiseOrValue<BigNumberish>,
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
-
-  changeStateToPending(
-    _submissionID: PromiseOrValue<string>,
-    _vouches: PromiseOrValue<string>[],
-    _signatures: PromiseOrValue<BytesLike>[],
-    _expirationTimestamps: PromiseOrValue<BigNumberish>[],
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
-
-  changeSubmissionBaseDeposit(
-    _submissionBaseDeposit: PromiseOrValue<BigNumberish>,
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
-
-  changeWinnerStakeMultiplier(
-    _winnerStakeMultiplier: PromiseOrValue<BigNumberish>,
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
-
-  checkRequestDuplicates(
-    _submissionID: PromiseOrValue<string>,
-    _requestID: PromiseOrValue<BigNumberish>,
-    _duplicateID: PromiseOrValue<string>,
-    overrides?: CallOverrides
-  ): Promise<boolean>;
-
-  executeRequest(
-    _submissionID: PromiseOrValue<string>,
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
-
-  fundAppeal(
-    _submissionID: PromiseOrValue<string>,
-    _challengeID: PromiseOrValue<BigNumberish>,
-    _side: PromiseOrValue<BigNumberish>,
-    overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
-
-  fundSubmission(
-    _submissionID: PromiseOrValue<string>,
-    overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
-
-  getArbitratorDataListCount(overrides?: CallOverrides): Promise<BigNumber>;
-
-  getChallengeInfo(
-    _submissionID: PromiseOrValue<string>,
-    _requestID: PromiseOrValue<BigNumberish>,
-    _challengeID: PromiseOrValue<BigNumberish>,
-    overrides?: CallOverrides
-  ): Promise<
-    [number, string, BigNumber, number, BigNumber] & {
-      lastRoundID: number;
-      challenger: string;
-      disputeID: BigNumber;
-      ruling: number;
-      duplicateSubmissionIndex: BigNumber;
-    }
+  addVouch: TypedContractMethod<
+    [_submissionID: AddressLike],
+    [void],
+    "nonpayable"
   >;
 
-  getContributions(
-    _submissionID: PromiseOrValue<string>,
-    _requestID: PromiseOrValue<BigNumberish>,
-    _challengeID: PromiseOrValue<BigNumberish>,
-    _round: PromiseOrValue<BigNumberish>,
-    _contributor: PromiseOrValue<string>,
-    overrides?: CallOverrides
-  ): Promise<[BigNumber, BigNumber, BigNumber]>;
-
-  getNumberOfVouches(
-    _submissionID: PromiseOrValue<string>,
-    _requestID: PromiseOrValue<BigNumberish>,
-    overrides?: CallOverrides
-  ): Promise<BigNumber>;
-
-  getRequestInfo(
-    _submissionID: PromiseOrValue<string>,
-    _requestID: PromiseOrValue<BigNumberish>,
-    overrides?: CallOverrides
-  ): Promise<
+  arbitratorDataList: TypedContractMethod<
+    [arg0: BigNumberish],
     [
-      boolean,
-      boolean,
-      boolean,
-      number,
-      number,
-      number,
-      number,
-      string,
-      string,
-      number
-    ] & {
-      disputed: boolean;
-      resolved: boolean;
-      requesterLost: boolean;
-      currentReason: number;
-      nbParallelDisputes: number;
-      lastChallengeID: number;
-      arbitratorDataID: number;
-      requester: string;
-      ultimateChallenger: string;
-      usedReasons: number;
-    }
-  >;
-
-  getRoundInfo(
-    _submissionID: PromiseOrValue<string>,
-    _requestID: PromiseOrValue<BigNumberish>,
-    _challengeID: PromiseOrValue<BigNumberish>,
-    _round: PromiseOrValue<BigNumberish>,
-    overrides?: CallOverrides
-  ): Promise<
-    [boolean, [BigNumber, BigNumber, BigNumber], number, BigNumber] & {
-      appealed: boolean;
-      paidFees: [BigNumber, BigNumber, BigNumber];
-      sideFunded: number;
-      feeRewards: BigNumber;
-    }
-  >;
-
-  getSubmissionInfo(
-    _submissionID: PromiseOrValue<string>,
-    overrides?: CallOverrides
-  ): Promise<
-    [number, BigNumber, BigNumber, boolean, boolean, BigNumber] & {
-      status: number;
-      submissionTime: BigNumber;
-      index: BigNumber;
-      registered: boolean;
-      hasVouched: boolean;
-      numberOfRequests: BigNumber;
-    }
-  >;
-
-  governor(overrides?: CallOverrides): Promise<string>;
-
-  isRegistered(
-    _submissionID: PromiseOrValue<string>,
-    overrides?: CallOverrides
-  ): Promise<boolean>;
-
-  loserStakeMultiplier(overrides?: CallOverrides): Promise<BigNumber>;
-
-  processVouches(
-    _submissionID: PromiseOrValue<string>,
-    _requestID: PromiseOrValue<BigNumberish>,
-    _iterations: PromiseOrValue<BigNumberish>,
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
-
-  reapplySubmission(
-    _evidence: PromiseOrValue<string>,
-    _name: PromiseOrValue<string>,
-    overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
-
-  removeSubmission(
-    _submissionID: PromiseOrValue<string>,
-    _evidence: PromiseOrValue<string>,
-    overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
-
-  removeSubmissionManually(
-    _submissionID: PromiseOrValue<string>,
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
-
-  removeVouch(
-    _submissionID: PromiseOrValue<string>,
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
-
-  renewalPeriodDuration(overrides?: CallOverrides): Promise<BigNumber>;
-
-  requiredNumberOfVouches(overrides?: CallOverrides): Promise<BigNumber>;
-
-  rule(
-    _disputeID: PromiseOrValue<BigNumberish>,
-    _ruling: PromiseOrValue<BigNumberish>,
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
-
-  sharedStakeMultiplier(overrides?: CallOverrides): Promise<BigNumber>;
-
-  submissionBaseDeposit(overrides?: CallOverrides): Promise<BigNumber>;
-
-  submissionCounter(overrides?: CallOverrides): Promise<BigNumber>;
-
-  submissionDuration(overrides?: CallOverrides): Promise<BigNumber>;
-
-  submitEvidence(
-    _submissionID: PromiseOrValue<string>,
-    _evidence: PromiseOrValue<string>,
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
-
-  vouches(
-    arg0: PromiseOrValue<string>,
-    arg1: PromiseOrValue<string>,
-    overrides?: CallOverrides
-  ): Promise<boolean>;
-
-  winnerStakeMultiplier(overrides?: CallOverrides): Promise<BigNumber>;
-
-  withdrawFeesAndRewards(
-    _beneficiary: PromiseOrValue<string>,
-    _submissionID: PromiseOrValue<string>,
-    _requestID: PromiseOrValue<BigNumberish>,
-    _challengeID: PromiseOrValue<BigNumberish>,
-    _round: PromiseOrValue<BigNumberish>,
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
-
-  withdrawSubmission(
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
-
-  callStatic: {
-    addSubmission(
-      _evidence: PromiseOrValue<string>,
-      _name: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<void>;
-
-    addSubmissionManually(
-      _submissionIDs: PromiseOrValue<string>[],
-      _evidence: PromiseOrValue<string>[],
-      _names: PromiseOrValue<string>[],
-      overrides?: CallOverrides
-    ): Promise<void>;
-
-    addVouch(
-      _submissionID: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<void>;
-
-    arbitratorDataList(
-      arg0: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<
-      [string, BigNumber, string] & {
+      [string, bigint, string] & {
         arbitrator: string;
-        metaEvidenceUpdates: BigNumber;
+        metaEvidenceUpdates: bigint;
         arbitratorExtraData: string;
       }
-    >;
+    ],
+    "view"
+  >;
 
-    arbitratorDisputeIDToDisputeData(
-      arg0: PromiseOrValue<string>,
-      arg1: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<
-      [BigNumber, string] & { challengeID: BigNumber; submissionID: string }
-    >;
+  arbitratorDisputeIDToDisputeData: TypedContractMethod<
+    [arg0: AddressLike, arg1: BigNumberish],
+    [[bigint, string] & { challengeID: bigint; submissionID: string }],
+    "view"
+  >;
 
-    challengePeriodDuration(overrides?: CallOverrides): Promise<BigNumber>;
+  challengePeriodDuration: TypedContractMethod<[], [bigint], "view">;
 
-    challengeRequest(
-      _submissionID: PromiseOrValue<string>,
-      _reason: PromiseOrValue<BigNumberish>,
-      _duplicateID: PromiseOrValue<string>,
-      _evidence: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<void>;
+  challengeRequest: TypedContractMethod<
+    [
+      _submissionID: AddressLike,
+      _reason: BigNumberish,
+      _duplicateID: AddressLike,
+      _evidence: string
+    ],
+    [void],
+    "payable"
+  >;
 
-    changeArbitrator(
-      _arbitrator: PromiseOrValue<string>,
-      _arbitratorExtraData: PromiseOrValue<BytesLike>,
-      overrides?: CallOverrides
-    ): Promise<void>;
+  changeArbitrator: TypedContractMethod<
+    [_arbitrator: AddressLike, _arbitratorExtraData: BytesLike],
+    [void],
+    "nonpayable"
+  >;
 
-    changeDurations(
-      _submissionDuration: PromiseOrValue<BigNumberish>,
-      _renewalPeriodDuration: PromiseOrValue<BigNumberish>,
-      _challengePeriodDuration: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<void>;
+  changeDurations: TypedContractMethod<
+    [
+      _submissionDuration: BigNumberish,
+      _renewalPeriodDuration: BigNumberish,
+      _challengePeriodDuration: BigNumberish
+    ],
+    [void],
+    "nonpayable"
+  >;
 
-    changeGovernor(
-      _governor: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<void>;
+  changeGovernor: TypedContractMethod<
+    [_governor: AddressLike],
+    [void],
+    "nonpayable"
+  >;
 
-    changeLoserStakeMultiplier(
-      _loserStakeMultiplier: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<void>;
+  changeLoserStakeMultiplier: TypedContractMethod<
+    [_loserStakeMultiplier: BigNumberish],
+    [void],
+    "nonpayable"
+  >;
 
-    changeMetaEvidence(
-      _registrationMetaEvidence: PromiseOrValue<string>,
-      _clearingMetaEvidence: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<void>;
+  changeMetaEvidence: TypedContractMethod<
+    [_registrationMetaEvidence: string, _clearingMetaEvidence: string],
+    [void],
+    "nonpayable"
+  >;
 
-    changeRequiredNumberOfVouches(
-      _requiredNumberOfVouches: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<void>;
+  changeRequiredNumberOfVouches: TypedContractMethod<
+    [_requiredNumberOfVouches: BigNumberish],
+    [void],
+    "nonpayable"
+  >;
 
-    changeSharedStakeMultiplier(
-      _sharedStakeMultiplier: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<void>;
+  changeSharedStakeMultiplier: TypedContractMethod<
+    [_sharedStakeMultiplier: BigNumberish],
+    [void],
+    "nonpayable"
+  >;
 
-    changeStateToPending(
-      _submissionID: PromiseOrValue<string>,
-      _vouches: PromiseOrValue<string>[],
-      _signatures: PromiseOrValue<BytesLike>[],
-      _expirationTimestamps: PromiseOrValue<BigNumberish>[],
-      overrides?: CallOverrides
-    ): Promise<void>;
+  changeStateToPending: TypedContractMethod<
+    [
+      _submissionID: AddressLike,
+      _vouches: AddressLike[],
+      _signatures: BytesLike[],
+      _expirationTimestamps: BigNumberish[]
+    ],
+    [void],
+    "nonpayable"
+  >;
 
-    changeSubmissionBaseDeposit(
-      _submissionBaseDeposit: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<void>;
+  changeSubmissionBaseDeposit: TypedContractMethod<
+    [_submissionBaseDeposit: BigNumberish],
+    [void],
+    "nonpayable"
+  >;
 
-    changeWinnerStakeMultiplier(
-      _winnerStakeMultiplier: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<void>;
+  changeWinnerStakeMultiplier: TypedContractMethod<
+    [_winnerStakeMultiplier: BigNumberish],
+    [void],
+    "nonpayable"
+  >;
 
-    checkRequestDuplicates(
-      _submissionID: PromiseOrValue<string>,
-      _requestID: PromiseOrValue<BigNumberish>,
-      _duplicateID: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<boolean>;
+  checkRequestDuplicates: TypedContractMethod<
+    [
+      _submissionID: AddressLike,
+      _requestID: BigNumberish,
+      _duplicateID: AddressLike
+    ],
+    [boolean],
+    "view"
+  >;
 
-    executeRequest(
-      _submissionID: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<void>;
+  executeRequest: TypedContractMethod<
+    [_submissionID: AddressLike],
+    [void],
+    "nonpayable"
+  >;
 
-    fundAppeal(
-      _submissionID: PromiseOrValue<string>,
-      _challengeID: PromiseOrValue<BigNumberish>,
-      _side: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<void>;
+  fundAppeal: TypedContractMethod<
+    [
+      _submissionID: AddressLike,
+      _challengeID: BigNumberish,
+      _side: BigNumberish
+    ],
+    [void],
+    "payable"
+  >;
 
-    fundSubmission(
-      _submissionID: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<void>;
+  fundSubmission: TypedContractMethod<
+    [_submissionID: AddressLike],
+    [void],
+    "payable"
+  >;
 
-    getArbitratorDataListCount(overrides?: CallOverrides): Promise<BigNumber>;
+  getArbitratorDataListCount: TypedContractMethod<[], [bigint], "view">;
 
-    getChallengeInfo(
-      _submissionID: PromiseOrValue<string>,
-      _requestID: PromiseOrValue<BigNumberish>,
-      _challengeID: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<
-      [number, string, BigNumber, number, BigNumber] & {
-        lastRoundID: number;
+  getChallengeInfo: TypedContractMethod<
+    [
+      _submissionID: AddressLike,
+      _requestID: BigNumberish,
+      _challengeID: BigNumberish
+    ],
+    [
+      [bigint, string, bigint, bigint, bigint] & {
+        lastRoundID: bigint;
         challenger: string;
-        disputeID: BigNumber;
-        ruling: number;
-        duplicateSubmissionIndex: BigNumber;
+        disputeID: bigint;
+        ruling: bigint;
+        duplicateSubmissionIndex: bigint;
       }
-    >;
+    ],
+    "view"
+  >;
 
-    getContributions(
-      _submissionID: PromiseOrValue<string>,
-      _requestID: PromiseOrValue<BigNumberish>,
-      _challengeID: PromiseOrValue<BigNumberish>,
-      _round: PromiseOrValue<BigNumberish>,
-      _contributor: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<[BigNumber, BigNumber, BigNumber]>;
+  getContributions: TypedContractMethod<
+    [
+      _submissionID: AddressLike,
+      _requestID: BigNumberish,
+      _challengeID: BigNumberish,
+      _round: BigNumberish,
+      _contributor: AddressLike
+    ],
+    [[bigint, bigint, bigint]],
+    "view"
+  >;
 
-    getNumberOfVouches(
-      _submissionID: PromiseOrValue<string>,
-      _requestID: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
+  getNumberOfVouches: TypedContractMethod<
+    [_submissionID: AddressLike, _requestID: BigNumberish],
+    [bigint],
+    "view"
+  >;
 
-    getRequestInfo(
-      _submissionID: PromiseOrValue<string>,
-      _requestID: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<
+  getRequestInfo: TypedContractMethod<
+    [_submissionID: AddressLike, _requestID: BigNumberish],
+    [
       [
         boolean,
         boolean,
         boolean,
-        number,
-        number,
-        number,
-        number,
+        bigint,
+        bigint,
+        bigint,
+        bigint,
         string,
         string,
-        number
+        bigint
       ] & {
         disputed: boolean;
         resolved: boolean;
         requesterLost: boolean;
-        currentReason: number;
-        nbParallelDisputes: number;
-        lastChallengeID: number;
-        arbitratorDataID: number;
+        currentReason: bigint;
+        nbParallelDisputes: bigint;
+        lastChallengeID: bigint;
+        arbitratorDataID: bigint;
         requester: string;
         ultimateChallenger: string;
-        usedReasons: number;
+        usedReasons: bigint;
       }
-    >;
+    ],
+    "view"
+  >;
 
-    getRoundInfo(
-      _submissionID: PromiseOrValue<string>,
-      _requestID: PromiseOrValue<BigNumberish>,
-      _challengeID: PromiseOrValue<BigNumberish>,
-      _round: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<
-      [boolean, [BigNumber, BigNumber, BigNumber], number, BigNumber] & {
+  getRoundInfo: TypedContractMethod<
+    [
+      _submissionID: AddressLike,
+      _requestID: BigNumberish,
+      _challengeID: BigNumberish,
+      _round: BigNumberish
+    ],
+    [
+      [boolean, [bigint, bigint, bigint], bigint, bigint] & {
         appealed: boolean;
-        paidFees: [BigNumber, BigNumber, BigNumber];
-        sideFunded: number;
-        feeRewards: BigNumber;
+        paidFees: [bigint, bigint, bigint];
+        sideFunded: bigint;
+        feeRewards: bigint;
       }
-    >;
+    ],
+    "view"
+  >;
 
-    getSubmissionInfo(
-      _submissionID: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<
-      [number, BigNumber, BigNumber, boolean, boolean, BigNumber] & {
-        status: number;
-        submissionTime: BigNumber;
-        index: BigNumber;
+  getSubmissionInfo: TypedContractMethod<
+    [_submissionID: AddressLike],
+    [
+      [bigint, bigint, bigint, boolean, boolean, bigint] & {
+        status: bigint;
+        submissionTime: bigint;
+        index: bigint;
         registered: boolean;
         hasVouched: boolean;
-        numberOfRequests: BigNumber;
+        numberOfRequests: bigint;
       }
-    >;
+    ],
+    "view"
+  >;
 
-    governor(overrides?: CallOverrides): Promise<string>;
+  governor: TypedContractMethod<[], [string], "view">;
 
-    isRegistered(
-      _submissionID: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<boolean>;
+  isRegistered: TypedContractMethod<
+    [_submissionID: AddressLike],
+    [boolean],
+    "view"
+  >;
 
-    loserStakeMultiplier(overrides?: CallOverrides): Promise<BigNumber>;
+  loserStakeMultiplier: TypedContractMethod<[], [bigint], "view">;
 
-    processVouches(
-      _submissionID: PromiseOrValue<string>,
-      _requestID: PromiseOrValue<BigNumberish>,
-      _iterations: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<void>;
+  processVouches: TypedContractMethod<
+    [
+      _submissionID: AddressLike,
+      _requestID: BigNumberish,
+      _iterations: BigNumberish
+    ],
+    [void],
+    "nonpayable"
+  >;
 
-    reapplySubmission(
-      _evidence: PromiseOrValue<string>,
-      _name: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<void>;
+  reapplySubmission: TypedContractMethod<
+    [_evidence: string, _name: string],
+    [void],
+    "payable"
+  >;
 
-    removeSubmission(
-      _submissionID: PromiseOrValue<string>,
-      _evidence: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<void>;
+  removeSubmission: TypedContractMethod<
+    [_submissionID: AddressLike, _evidence: string],
+    [void],
+    "payable"
+  >;
 
-    removeSubmissionManually(
-      _submissionID: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<void>;
+  removeSubmissionManually: TypedContractMethod<
+    [_submissionID: AddressLike],
+    [void],
+    "nonpayable"
+  >;
 
-    removeVouch(
-      _submissionID: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<void>;
+  removeVouch: TypedContractMethod<
+    [_submissionID: AddressLike],
+    [void],
+    "nonpayable"
+  >;
 
-    renewalPeriodDuration(overrides?: CallOverrides): Promise<BigNumber>;
+  renewalPeriodDuration: TypedContractMethod<[], [bigint], "view">;
 
-    requiredNumberOfVouches(overrides?: CallOverrides): Promise<BigNumber>;
+  requiredNumberOfVouches: TypedContractMethod<[], [bigint], "view">;
 
-    rule(
-      _disputeID: PromiseOrValue<BigNumberish>,
-      _ruling: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<void>;
+  rule: TypedContractMethod<
+    [_disputeID: BigNumberish, _ruling: BigNumberish],
+    [void],
+    "nonpayable"
+  >;
 
-    sharedStakeMultiplier(overrides?: CallOverrides): Promise<BigNumber>;
+  sharedStakeMultiplier: TypedContractMethod<[], [bigint], "view">;
 
-    submissionBaseDeposit(overrides?: CallOverrides): Promise<BigNumber>;
+  submissionBaseDeposit: TypedContractMethod<[], [bigint], "view">;
 
-    submissionCounter(overrides?: CallOverrides): Promise<BigNumber>;
+  submissionCounter: TypedContractMethod<[], [bigint], "view">;
 
-    submissionDuration(overrides?: CallOverrides): Promise<BigNumber>;
+  submissionDuration: TypedContractMethod<[], [bigint], "view">;
 
-    submitEvidence(
-      _submissionID: PromiseOrValue<string>,
-      _evidence: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<void>;
+  submitEvidence: TypedContractMethod<
+    [_submissionID: AddressLike, _evidence: string],
+    [void],
+    "nonpayable"
+  >;
 
-    vouches(
-      arg0: PromiseOrValue<string>,
-      arg1: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<boolean>;
+  vouches: TypedContractMethod<
+    [arg0: AddressLike, arg1: AddressLike],
+    [boolean],
+    "view"
+  >;
 
-    winnerStakeMultiplier(overrides?: CallOverrides): Promise<BigNumber>;
+  winnerStakeMultiplier: TypedContractMethod<[], [bigint], "view">;
 
-    withdrawFeesAndRewards(
-      _beneficiary: PromiseOrValue<string>,
-      _submissionID: PromiseOrValue<string>,
-      _requestID: PromiseOrValue<BigNumberish>,
-      _challengeID: PromiseOrValue<BigNumberish>,
-      _round: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<void>;
+  withdrawFeesAndRewards: TypedContractMethod<
+    [
+      _beneficiary: AddressLike,
+      _submissionID: AddressLike,
+      _requestID: BigNumberish,
+      _challengeID: BigNumberish,
+      _round: BigNumberish
+    ],
+    [void],
+    "nonpayable"
+  >;
 
-    withdrawSubmission(overrides?: CallOverrides): Promise<void>;
-  };
+  withdrawSubmission: TypedContractMethod<[], [void], "nonpayable">;
+
+  getFunction<T extends ContractMethod = ContractMethod>(
+    key: string | FunctionFragment
+  ): T;
+
+  getFunction(
+    nameOrSignature: "addSubmission"
+  ): TypedContractMethod<[_evidence: string, _name: string], [void], "payable">;
+  getFunction(
+    nameOrSignature: "addSubmissionManually"
+  ): TypedContractMethod<
+    [_submissionIDs: AddressLike[], _evidence: string[], _names: string[]],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "addVouch"
+  ): TypedContractMethod<[_submissionID: AddressLike], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "arbitratorDataList"
+  ): TypedContractMethod<
+    [arg0: BigNumberish],
+    [
+      [string, bigint, string] & {
+        arbitrator: string;
+        metaEvidenceUpdates: bigint;
+        arbitratorExtraData: string;
+      }
+    ],
+    "view"
+  >;
+  getFunction(
+    nameOrSignature: "arbitratorDisputeIDToDisputeData"
+  ): TypedContractMethod<
+    [arg0: AddressLike, arg1: BigNumberish],
+    [[bigint, string] & { challengeID: bigint; submissionID: string }],
+    "view"
+  >;
+  getFunction(
+    nameOrSignature: "challengePeriodDuration"
+  ): TypedContractMethod<[], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "challengeRequest"
+  ): TypedContractMethod<
+    [
+      _submissionID: AddressLike,
+      _reason: BigNumberish,
+      _duplicateID: AddressLike,
+      _evidence: string
+    ],
+    [void],
+    "payable"
+  >;
+  getFunction(
+    nameOrSignature: "changeArbitrator"
+  ): TypedContractMethod<
+    [_arbitrator: AddressLike, _arbitratorExtraData: BytesLike],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "changeDurations"
+  ): TypedContractMethod<
+    [
+      _submissionDuration: BigNumberish,
+      _renewalPeriodDuration: BigNumberish,
+      _challengePeriodDuration: BigNumberish
+    ],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "changeGovernor"
+  ): TypedContractMethod<[_governor: AddressLike], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "changeLoserStakeMultiplier"
+  ): TypedContractMethod<
+    [_loserStakeMultiplier: BigNumberish],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "changeMetaEvidence"
+  ): TypedContractMethod<
+    [_registrationMetaEvidence: string, _clearingMetaEvidence: string],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "changeRequiredNumberOfVouches"
+  ): TypedContractMethod<
+    [_requiredNumberOfVouches: BigNumberish],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "changeSharedStakeMultiplier"
+  ): TypedContractMethod<
+    [_sharedStakeMultiplier: BigNumberish],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "changeStateToPending"
+  ): TypedContractMethod<
+    [
+      _submissionID: AddressLike,
+      _vouches: AddressLike[],
+      _signatures: BytesLike[],
+      _expirationTimestamps: BigNumberish[]
+    ],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "changeSubmissionBaseDeposit"
+  ): TypedContractMethod<
+    [_submissionBaseDeposit: BigNumberish],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "changeWinnerStakeMultiplier"
+  ): TypedContractMethod<
+    [_winnerStakeMultiplier: BigNumberish],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "checkRequestDuplicates"
+  ): TypedContractMethod<
+    [
+      _submissionID: AddressLike,
+      _requestID: BigNumberish,
+      _duplicateID: AddressLike
+    ],
+    [boolean],
+    "view"
+  >;
+  getFunction(
+    nameOrSignature: "executeRequest"
+  ): TypedContractMethod<[_submissionID: AddressLike], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "fundAppeal"
+  ): TypedContractMethod<
+    [
+      _submissionID: AddressLike,
+      _challengeID: BigNumberish,
+      _side: BigNumberish
+    ],
+    [void],
+    "payable"
+  >;
+  getFunction(
+    nameOrSignature: "fundSubmission"
+  ): TypedContractMethod<[_submissionID: AddressLike], [void], "payable">;
+  getFunction(
+    nameOrSignature: "getArbitratorDataListCount"
+  ): TypedContractMethod<[], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "getChallengeInfo"
+  ): TypedContractMethod<
+    [
+      _submissionID: AddressLike,
+      _requestID: BigNumberish,
+      _challengeID: BigNumberish
+    ],
+    [
+      [bigint, string, bigint, bigint, bigint] & {
+        lastRoundID: bigint;
+        challenger: string;
+        disputeID: bigint;
+        ruling: bigint;
+        duplicateSubmissionIndex: bigint;
+      }
+    ],
+    "view"
+  >;
+  getFunction(
+    nameOrSignature: "getContributions"
+  ): TypedContractMethod<
+    [
+      _submissionID: AddressLike,
+      _requestID: BigNumberish,
+      _challengeID: BigNumberish,
+      _round: BigNumberish,
+      _contributor: AddressLike
+    ],
+    [[bigint, bigint, bigint]],
+    "view"
+  >;
+  getFunction(
+    nameOrSignature: "getNumberOfVouches"
+  ): TypedContractMethod<
+    [_submissionID: AddressLike, _requestID: BigNumberish],
+    [bigint],
+    "view"
+  >;
+  getFunction(
+    nameOrSignature: "getRequestInfo"
+  ): TypedContractMethod<
+    [_submissionID: AddressLike, _requestID: BigNumberish],
+    [
+      [
+        boolean,
+        boolean,
+        boolean,
+        bigint,
+        bigint,
+        bigint,
+        bigint,
+        string,
+        string,
+        bigint
+      ] & {
+        disputed: boolean;
+        resolved: boolean;
+        requesterLost: boolean;
+        currentReason: bigint;
+        nbParallelDisputes: bigint;
+        lastChallengeID: bigint;
+        arbitratorDataID: bigint;
+        requester: string;
+        ultimateChallenger: string;
+        usedReasons: bigint;
+      }
+    ],
+    "view"
+  >;
+  getFunction(
+    nameOrSignature: "getRoundInfo"
+  ): TypedContractMethod<
+    [
+      _submissionID: AddressLike,
+      _requestID: BigNumberish,
+      _challengeID: BigNumberish,
+      _round: BigNumberish
+    ],
+    [
+      [boolean, [bigint, bigint, bigint], bigint, bigint] & {
+        appealed: boolean;
+        paidFees: [bigint, bigint, bigint];
+        sideFunded: bigint;
+        feeRewards: bigint;
+      }
+    ],
+    "view"
+  >;
+  getFunction(
+    nameOrSignature: "getSubmissionInfo"
+  ): TypedContractMethod<
+    [_submissionID: AddressLike],
+    [
+      [bigint, bigint, bigint, boolean, boolean, bigint] & {
+        status: bigint;
+        submissionTime: bigint;
+        index: bigint;
+        registered: boolean;
+        hasVouched: boolean;
+        numberOfRequests: bigint;
+      }
+    ],
+    "view"
+  >;
+  getFunction(
+    nameOrSignature: "governor"
+  ): TypedContractMethod<[], [string], "view">;
+  getFunction(
+    nameOrSignature: "isRegistered"
+  ): TypedContractMethod<[_submissionID: AddressLike], [boolean], "view">;
+  getFunction(
+    nameOrSignature: "loserStakeMultiplier"
+  ): TypedContractMethod<[], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "processVouches"
+  ): TypedContractMethod<
+    [
+      _submissionID: AddressLike,
+      _requestID: BigNumberish,
+      _iterations: BigNumberish
+    ],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "reapplySubmission"
+  ): TypedContractMethod<[_evidence: string, _name: string], [void], "payable">;
+  getFunction(
+    nameOrSignature: "removeSubmission"
+  ): TypedContractMethod<
+    [_submissionID: AddressLike, _evidence: string],
+    [void],
+    "payable"
+  >;
+  getFunction(
+    nameOrSignature: "removeSubmissionManually"
+  ): TypedContractMethod<[_submissionID: AddressLike], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "removeVouch"
+  ): TypedContractMethod<[_submissionID: AddressLike], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "renewalPeriodDuration"
+  ): TypedContractMethod<[], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "requiredNumberOfVouches"
+  ): TypedContractMethod<[], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "rule"
+  ): TypedContractMethod<
+    [_disputeID: BigNumberish, _ruling: BigNumberish],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "sharedStakeMultiplier"
+  ): TypedContractMethod<[], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "submissionBaseDeposit"
+  ): TypedContractMethod<[], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "submissionCounter"
+  ): TypedContractMethod<[], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "submissionDuration"
+  ): TypedContractMethod<[], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "submitEvidence"
+  ): TypedContractMethod<
+    [_submissionID: AddressLike, _evidence: string],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "vouches"
+  ): TypedContractMethod<
+    [arg0: AddressLike, arg1: AddressLike],
+    [boolean],
+    "view"
+  >;
+  getFunction(
+    nameOrSignature: "winnerStakeMultiplier"
+  ): TypedContractMethod<[], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "withdrawFeesAndRewards"
+  ): TypedContractMethod<
+    [
+      _beneficiary: AddressLike,
+      _submissionID: AddressLike,
+      _requestID: BigNumberish,
+      _challengeID: BigNumberish,
+      _round: BigNumberish
+    ],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "withdrawSubmission"
+  ): TypedContractMethod<[], [void], "nonpayable">;
+
+  getEvent(
+    key: "AddSubmission"
+  ): TypedContractEvent<
+    AddSubmissionEvent.InputTuple,
+    AddSubmissionEvent.OutputTuple,
+    AddSubmissionEvent.OutputObject
+  >;
+  getEvent(
+    key: "AppealContribution"
+  ): TypedContractEvent<
+    AppealContributionEvent.InputTuple,
+    AppealContributionEvent.OutputTuple,
+    AppealContributionEvent.OutputObject
+  >;
+  getEvent(
+    key: "ArbitratorComplete"
+  ): TypedContractEvent<
+    ArbitratorCompleteEvent.InputTuple,
+    ArbitratorCompleteEvent.OutputTuple,
+    ArbitratorCompleteEvent.OutputObject
+  >;
+  getEvent(
+    key: "ChallengeResolved"
+  ): TypedContractEvent<
+    ChallengeResolvedEvent.InputTuple,
+    ChallengeResolvedEvent.OutputTuple,
+    ChallengeResolvedEvent.OutputObject
+  >;
+  getEvent(
+    key: "Dispute"
+  ): TypedContractEvent<
+    DisputeEvent.InputTuple,
+    DisputeEvent.OutputTuple,
+    DisputeEvent.OutputObject
+  >;
+  getEvent(
+    key: "Evidence"
+  ): TypedContractEvent<
+    EvidenceEvent.InputTuple,
+    EvidenceEvent.OutputTuple,
+    EvidenceEvent.OutputObject
+  >;
+  getEvent(
+    key: "HasPaidAppealFee"
+  ): TypedContractEvent<
+    HasPaidAppealFeeEvent.InputTuple,
+    HasPaidAppealFeeEvent.OutputTuple,
+    HasPaidAppealFeeEvent.OutputObject
+  >;
+  getEvent(
+    key: "MetaEvidence"
+  ): TypedContractEvent<
+    MetaEvidenceEvent.InputTuple,
+    MetaEvidenceEvent.OutputTuple,
+    MetaEvidenceEvent.OutputObject
+  >;
+  getEvent(
+    key: "ReapplySubmission"
+  ): TypedContractEvent<
+    ReapplySubmissionEvent.InputTuple,
+    ReapplySubmissionEvent.OutputTuple,
+    ReapplySubmissionEvent.OutputObject
+  >;
+  getEvent(
+    key: "RemoveSubmission"
+  ): TypedContractEvent<
+    RemoveSubmissionEvent.InputTuple,
+    RemoveSubmissionEvent.OutputTuple,
+    RemoveSubmissionEvent.OutputObject
+  >;
+  getEvent(
+    key: "Ruling"
+  ): TypedContractEvent<
+    RulingEvent.InputTuple,
+    RulingEvent.OutputTuple,
+    RulingEvent.OutputObject
+  >;
+  getEvent(
+    key: "SubmissionChallenged"
+  ): TypedContractEvent<
+    SubmissionChallengedEvent.InputTuple,
+    SubmissionChallengedEvent.OutputTuple,
+    SubmissionChallengedEvent.OutputObject
+  >;
+  getEvent(
+    key: "VouchAdded"
+  ): TypedContractEvent<
+    VouchAddedEvent.InputTuple,
+    VouchAddedEvent.OutputTuple,
+    VouchAddedEvent.OutputObject
+  >;
+  getEvent(
+    key: "VouchRemoved"
+  ): TypedContractEvent<
+    VouchRemovedEvent.InputTuple,
+    VouchRemovedEvent.OutputTuple,
+    VouchRemovedEvent.OutputObject
+  >;
 
   filters: {
-    "AddSubmission(address,uint256)"(
-      _submissionID?: PromiseOrValue<string> | null,
-      _requestID?: null
-    ): AddSubmissionEventFilter;
-    AddSubmission(
-      _submissionID?: PromiseOrValue<string> | null,
-      _requestID?: null
-    ): AddSubmissionEventFilter;
-
-    "AppealContribution(address,uint256,uint8,address,uint256)"(
-      _submissionID?: PromiseOrValue<string> | null,
-      _challengeID?: PromiseOrValue<BigNumberish> | null,
-      _party?: null,
-      _contributor?: PromiseOrValue<string> | null,
-      _amount?: null
-    ): AppealContributionEventFilter;
-    AppealContribution(
-      _submissionID?: PromiseOrValue<string> | null,
-      _challengeID?: PromiseOrValue<BigNumberish> | null,
-      _party?: null,
-      _contributor?: PromiseOrValue<string> | null,
-      _amount?: null
-    ): AppealContributionEventFilter;
-
-    "ArbitratorComplete(address,address,uint256,uint256,uint256,uint256,uint256,uint256,uint256)"(
-      _arbitrator?: null,
-      _governor?: PromiseOrValue<string> | null,
-      _submissionBaseDeposit?: null,
-      _submissionDuration?: null,
-      _challengePeriodDuration?: null,
-      _requiredNumberOfVouches?: null,
-      _sharedStakeMultiplier?: null,
-      _winnerStakeMultiplier?: null,
-      _loserStakeMultiplier?: null
-    ): ArbitratorCompleteEventFilter;
-    ArbitratorComplete(
-      _arbitrator?: null,
-      _governor?: PromiseOrValue<string> | null,
-      _submissionBaseDeposit?: null,
-      _submissionDuration?: null,
-      _challengePeriodDuration?: null,
-      _requiredNumberOfVouches?: null,
-      _sharedStakeMultiplier?: null,
-      _winnerStakeMultiplier?: null,
-      _loserStakeMultiplier?: null
-    ): ArbitratorCompleteEventFilter;
-
-    "ChallengeResolved(address,uint256,uint256)"(
-      _submissionID?: PromiseOrValue<string> | null,
-      _requestID?: PromiseOrValue<BigNumberish> | null,
-      _challengeID?: null
-    ): ChallengeResolvedEventFilter;
-    ChallengeResolved(
-      _submissionID?: PromiseOrValue<string> | null,
-      _requestID?: PromiseOrValue<BigNumberish> | null,
-      _challengeID?: null
-    ): ChallengeResolvedEventFilter;
-
-    "Dispute(address,uint256,uint256,uint256)"(
-      _arbitrator?: PromiseOrValue<string> | null,
-      _disputeID?: PromiseOrValue<BigNumberish> | null,
-      _metaEvidenceID?: null,
-      _evidenceGroupID?: null
-    ): DisputeEventFilter;
-    Dispute(
-      _arbitrator?: PromiseOrValue<string> | null,
-      _disputeID?: PromiseOrValue<BigNumberish> | null,
-      _metaEvidenceID?: null,
-      _evidenceGroupID?: null
-    ): DisputeEventFilter;
-
-    "Evidence(address,uint256,address,string)"(
-      _arbitrator?: PromiseOrValue<string> | null,
-      _evidenceGroupID?: PromiseOrValue<BigNumberish> | null,
-      _party?: PromiseOrValue<string> | null,
-      _evidence?: null
-    ): EvidenceEventFilter;
-    Evidence(
-      _arbitrator?: PromiseOrValue<string> | null,
-      _evidenceGroupID?: PromiseOrValue<BigNumberish> | null,
-      _party?: PromiseOrValue<string> | null,
-      _evidence?: null
-    ): EvidenceEventFilter;
-
-    "HasPaidAppealFee(address,uint256,uint8)"(
-      _submissionID?: PromiseOrValue<string> | null,
-      _challengeID?: PromiseOrValue<BigNumberish> | null,
-      _side?: null
-    ): HasPaidAppealFeeEventFilter;
-    HasPaidAppealFee(
-      _submissionID?: PromiseOrValue<string> | null,
-      _challengeID?: PromiseOrValue<BigNumberish> | null,
-      _side?: null
-    ): HasPaidAppealFeeEventFilter;
-
-    "MetaEvidence(uint256,string)"(
-      _metaEvidenceID?: PromiseOrValue<BigNumberish> | null,
-      _evidence?: null
-    ): MetaEvidenceEventFilter;
-    MetaEvidence(
-      _metaEvidenceID?: PromiseOrValue<BigNumberish> | null,
-      _evidence?: null
-    ): MetaEvidenceEventFilter;
-
-    "ReapplySubmission(address,uint256)"(
-      _submissionID?: PromiseOrValue<string> | null,
-      _requestID?: null
-    ): ReapplySubmissionEventFilter;
-    ReapplySubmission(
-      _submissionID?: PromiseOrValue<string> | null,
-      _requestID?: null
-    ): ReapplySubmissionEventFilter;
-
-    "RemoveSubmission(address,address,uint256)"(
-      _requester?: PromiseOrValue<string> | null,
-      _submissionID?: PromiseOrValue<string> | null,
-      _requestID?: null
-    ): RemoveSubmissionEventFilter;
-    RemoveSubmission(
-      _requester?: PromiseOrValue<string> | null,
-      _submissionID?: PromiseOrValue<string> | null,
-      _requestID?: null
-    ): RemoveSubmissionEventFilter;
-
-    "Ruling(address,uint256,uint256)"(
-      _arbitrator?: PromiseOrValue<string> | null,
-      _disputeID?: PromiseOrValue<BigNumberish> | null,
-      _ruling?: null
-    ): RulingEventFilter;
-    Ruling(
-      _arbitrator?: PromiseOrValue<string> | null,
-      _disputeID?: PromiseOrValue<BigNumberish> | null,
-      _ruling?: null
-    ): RulingEventFilter;
-
-    "SubmissionChallenged(address,uint256,uint256)"(
-      _submissionID?: PromiseOrValue<string> | null,
-      _requestID?: PromiseOrValue<BigNumberish> | null,
-      _challengeID?: null
-    ): SubmissionChallengedEventFilter;
-    SubmissionChallenged(
-      _submissionID?: PromiseOrValue<string> | null,
-      _requestID?: PromiseOrValue<BigNumberish> | null,
-      _challengeID?: null
-    ): SubmissionChallengedEventFilter;
-
-    "VouchAdded(address,address)"(
-      _submissionID?: PromiseOrValue<string> | null,
-      _voucher?: PromiseOrValue<string> | null
-    ): VouchAddedEventFilter;
-    VouchAdded(
-      _submissionID?: PromiseOrValue<string> | null,
-      _voucher?: PromiseOrValue<string> | null
-    ): VouchAddedEventFilter;
-
-    "VouchRemoved(address,address)"(
-      _submissionID?: PromiseOrValue<string> | null,
-      _voucher?: PromiseOrValue<string> | null
-    ): VouchRemovedEventFilter;
-    VouchRemoved(
-      _submissionID?: PromiseOrValue<string> | null,
-      _voucher?: PromiseOrValue<string> | null
-    ): VouchRemovedEventFilter;
-  };
-
-  estimateGas: {
-    addSubmission(
-      _evidence: PromiseOrValue<string>,
-      _name: PromiseOrValue<string>,
-      overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-
-    addSubmissionManually(
-      _submissionIDs: PromiseOrValue<string>[],
-      _evidence: PromiseOrValue<string>[],
-      _names: PromiseOrValue<string>[],
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-
-    addVouch(
-      _submissionID: PromiseOrValue<string>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-
-    arbitratorDataList(
-      arg0: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    arbitratorDisputeIDToDisputeData(
-      arg0: PromiseOrValue<string>,
-      arg1: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    challengePeriodDuration(overrides?: CallOverrides): Promise<BigNumber>;
-
-    challengeRequest(
-      _submissionID: PromiseOrValue<string>,
-      _reason: PromiseOrValue<BigNumberish>,
-      _duplicateID: PromiseOrValue<string>,
-      _evidence: PromiseOrValue<string>,
-      overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-
-    changeArbitrator(
-      _arbitrator: PromiseOrValue<string>,
-      _arbitratorExtraData: PromiseOrValue<BytesLike>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-
-    changeDurations(
-      _submissionDuration: PromiseOrValue<BigNumberish>,
-      _renewalPeriodDuration: PromiseOrValue<BigNumberish>,
-      _challengePeriodDuration: PromiseOrValue<BigNumberish>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-
-    changeGovernor(
-      _governor: PromiseOrValue<string>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-
-    changeLoserStakeMultiplier(
-      _loserStakeMultiplier: PromiseOrValue<BigNumberish>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-
-    changeMetaEvidence(
-      _registrationMetaEvidence: PromiseOrValue<string>,
-      _clearingMetaEvidence: PromiseOrValue<string>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-
-    changeRequiredNumberOfVouches(
-      _requiredNumberOfVouches: PromiseOrValue<BigNumberish>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-
-    changeSharedStakeMultiplier(
-      _sharedStakeMultiplier: PromiseOrValue<BigNumberish>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-
-    changeStateToPending(
-      _submissionID: PromiseOrValue<string>,
-      _vouches: PromiseOrValue<string>[],
-      _signatures: PromiseOrValue<BytesLike>[],
-      _expirationTimestamps: PromiseOrValue<BigNumberish>[],
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-
-    changeSubmissionBaseDeposit(
-      _submissionBaseDeposit: PromiseOrValue<BigNumberish>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-
-    changeWinnerStakeMultiplier(
-      _winnerStakeMultiplier: PromiseOrValue<BigNumberish>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-
-    checkRequestDuplicates(
-      _submissionID: PromiseOrValue<string>,
-      _requestID: PromiseOrValue<BigNumberish>,
-      _duplicateID: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    executeRequest(
-      _submissionID: PromiseOrValue<string>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-
-    fundAppeal(
-      _submissionID: PromiseOrValue<string>,
-      _challengeID: PromiseOrValue<BigNumberish>,
-      _side: PromiseOrValue<BigNumberish>,
-      overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-
-    fundSubmission(
-      _submissionID: PromiseOrValue<string>,
-      overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-
-    getArbitratorDataListCount(overrides?: CallOverrides): Promise<BigNumber>;
-
-    getChallengeInfo(
-      _submissionID: PromiseOrValue<string>,
-      _requestID: PromiseOrValue<BigNumberish>,
-      _challengeID: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    getContributions(
-      _submissionID: PromiseOrValue<string>,
-      _requestID: PromiseOrValue<BigNumberish>,
-      _challengeID: PromiseOrValue<BigNumberish>,
-      _round: PromiseOrValue<BigNumberish>,
-      _contributor: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    getNumberOfVouches(
-      _submissionID: PromiseOrValue<string>,
-      _requestID: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    getRequestInfo(
-      _submissionID: PromiseOrValue<string>,
-      _requestID: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    getRoundInfo(
-      _submissionID: PromiseOrValue<string>,
-      _requestID: PromiseOrValue<BigNumberish>,
-      _challengeID: PromiseOrValue<BigNumberish>,
-      _round: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    getSubmissionInfo(
-      _submissionID: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    governor(overrides?: CallOverrides): Promise<BigNumber>;
-
-    isRegistered(
-      _submissionID: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    loserStakeMultiplier(overrides?: CallOverrides): Promise<BigNumber>;
-
-    processVouches(
-      _submissionID: PromiseOrValue<string>,
-      _requestID: PromiseOrValue<BigNumberish>,
-      _iterations: PromiseOrValue<BigNumberish>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-
-    reapplySubmission(
-      _evidence: PromiseOrValue<string>,
-      _name: PromiseOrValue<string>,
-      overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-
-    removeSubmission(
-      _submissionID: PromiseOrValue<string>,
-      _evidence: PromiseOrValue<string>,
-      overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-
-    removeSubmissionManually(
-      _submissionID: PromiseOrValue<string>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-
-    removeVouch(
-      _submissionID: PromiseOrValue<string>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-
-    renewalPeriodDuration(overrides?: CallOverrides): Promise<BigNumber>;
-
-    requiredNumberOfVouches(overrides?: CallOverrides): Promise<BigNumber>;
-
-    rule(
-      _disputeID: PromiseOrValue<BigNumberish>,
-      _ruling: PromiseOrValue<BigNumberish>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-
-    sharedStakeMultiplier(overrides?: CallOverrides): Promise<BigNumber>;
-
-    submissionBaseDeposit(overrides?: CallOverrides): Promise<BigNumber>;
-
-    submissionCounter(overrides?: CallOverrides): Promise<BigNumber>;
-
-    submissionDuration(overrides?: CallOverrides): Promise<BigNumber>;
-
-    submitEvidence(
-      _submissionID: PromiseOrValue<string>,
-      _evidence: PromiseOrValue<string>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-
-    vouches(
-      arg0: PromiseOrValue<string>,
-      arg1: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    winnerStakeMultiplier(overrides?: CallOverrides): Promise<BigNumber>;
-
-    withdrawFeesAndRewards(
-      _beneficiary: PromiseOrValue<string>,
-      _submissionID: PromiseOrValue<string>,
-      _requestID: PromiseOrValue<BigNumberish>,
-      _challengeID: PromiseOrValue<BigNumberish>,
-      _round: PromiseOrValue<BigNumberish>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-
-    withdrawSubmission(
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-  };
-
-  populateTransaction: {
-    addSubmission(
-      _evidence: PromiseOrValue<string>,
-      _name: PromiseOrValue<string>,
-      overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
-
-    addSubmissionManually(
-      _submissionIDs: PromiseOrValue<string>[],
-      _evidence: PromiseOrValue<string>[],
-      _names: PromiseOrValue<string>[],
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
-
-    addVouch(
-      _submissionID: PromiseOrValue<string>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
-
-    arbitratorDataList(
-      arg0: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    arbitratorDisputeIDToDisputeData(
-      arg0: PromiseOrValue<string>,
-      arg1: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    challengePeriodDuration(
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    challengeRequest(
-      _submissionID: PromiseOrValue<string>,
-      _reason: PromiseOrValue<BigNumberish>,
-      _duplicateID: PromiseOrValue<string>,
-      _evidence: PromiseOrValue<string>,
-      overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
-
-    changeArbitrator(
-      _arbitrator: PromiseOrValue<string>,
-      _arbitratorExtraData: PromiseOrValue<BytesLike>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
-
-    changeDurations(
-      _submissionDuration: PromiseOrValue<BigNumberish>,
-      _renewalPeriodDuration: PromiseOrValue<BigNumberish>,
-      _challengePeriodDuration: PromiseOrValue<BigNumberish>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
-
-    changeGovernor(
-      _governor: PromiseOrValue<string>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
-
-    changeLoserStakeMultiplier(
-      _loserStakeMultiplier: PromiseOrValue<BigNumberish>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
-
-    changeMetaEvidence(
-      _registrationMetaEvidence: PromiseOrValue<string>,
-      _clearingMetaEvidence: PromiseOrValue<string>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
-
-    changeRequiredNumberOfVouches(
-      _requiredNumberOfVouches: PromiseOrValue<BigNumberish>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
-
-    changeSharedStakeMultiplier(
-      _sharedStakeMultiplier: PromiseOrValue<BigNumberish>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
-
-    changeStateToPending(
-      _submissionID: PromiseOrValue<string>,
-      _vouches: PromiseOrValue<string>[],
-      _signatures: PromiseOrValue<BytesLike>[],
-      _expirationTimestamps: PromiseOrValue<BigNumberish>[],
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
-
-    changeSubmissionBaseDeposit(
-      _submissionBaseDeposit: PromiseOrValue<BigNumberish>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
-
-    changeWinnerStakeMultiplier(
-      _winnerStakeMultiplier: PromiseOrValue<BigNumberish>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
-
-    checkRequestDuplicates(
-      _submissionID: PromiseOrValue<string>,
-      _requestID: PromiseOrValue<BigNumberish>,
-      _duplicateID: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    executeRequest(
-      _submissionID: PromiseOrValue<string>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
-
-    fundAppeal(
-      _submissionID: PromiseOrValue<string>,
-      _challengeID: PromiseOrValue<BigNumberish>,
-      _side: PromiseOrValue<BigNumberish>,
-      overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
-
-    fundSubmission(
-      _submissionID: PromiseOrValue<string>,
-      overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
-
-    getArbitratorDataListCount(
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    getChallengeInfo(
-      _submissionID: PromiseOrValue<string>,
-      _requestID: PromiseOrValue<BigNumberish>,
-      _challengeID: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    getContributions(
-      _submissionID: PromiseOrValue<string>,
-      _requestID: PromiseOrValue<BigNumberish>,
-      _challengeID: PromiseOrValue<BigNumberish>,
-      _round: PromiseOrValue<BigNumberish>,
-      _contributor: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    getNumberOfVouches(
-      _submissionID: PromiseOrValue<string>,
-      _requestID: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    getRequestInfo(
-      _submissionID: PromiseOrValue<string>,
-      _requestID: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    getRoundInfo(
-      _submissionID: PromiseOrValue<string>,
-      _requestID: PromiseOrValue<BigNumberish>,
-      _challengeID: PromiseOrValue<BigNumberish>,
-      _round: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    getSubmissionInfo(
-      _submissionID: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    governor(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    isRegistered(
-      _submissionID: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    loserStakeMultiplier(
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    processVouches(
-      _submissionID: PromiseOrValue<string>,
-      _requestID: PromiseOrValue<BigNumberish>,
-      _iterations: PromiseOrValue<BigNumberish>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
-
-    reapplySubmission(
-      _evidence: PromiseOrValue<string>,
-      _name: PromiseOrValue<string>,
-      overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
-
-    removeSubmission(
-      _submissionID: PromiseOrValue<string>,
-      _evidence: PromiseOrValue<string>,
-      overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
-
-    removeSubmissionManually(
-      _submissionID: PromiseOrValue<string>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
-
-    removeVouch(
-      _submissionID: PromiseOrValue<string>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
-
-    renewalPeriodDuration(
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    requiredNumberOfVouches(
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    rule(
-      _disputeID: PromiseOrValue<BigNumberish>,
-      _ruling: PromiseOrValue<BigNumberish>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
-
-    sharedStakeMultiplier(
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    submissionBaseDeposit(
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    submissionCounter(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    submissionDuration(
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    submitEvidence(
-      _submissionID: PromiseOrValue<string>,
-      _evidence: PromiseOrValue<string>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
-
-    vouches(
-      arg0: PromiseOrValue<string>,
-      arg1: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    winnerStakeMultiplier(
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    withdrawFeesAndRewards(
-      _beneficiary: PromiseOrValue<string>,
-      _submissionID: PromiseOrValue<string>,
-      _requestID: PromiseOrValue<BigNumberish>,
-      _challengeID: PromiseOrValue<BigNumberish>,
-      _round: PromiseOrValue<BigNumberish>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
-
-    withdrawSubmission(
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
+    "AddSubmission(address,uint256)": TypedContractEvent<
+      AddSubmissionEvent.InputTuple,
+      AddSubmissionEvent.OutputTuple,
+      AddSubmissionEvent.OutputObject
+    >;
+    AddSubmission: TypedContractEvent<
+      AddSubmissionEvent.InputTuple,
+      AddSubmissionEvent.OutputTuple,
+      AddSubmissionEvent.OutputObject
+    >;
+
+    "AppealContribution(address,uint256,uint8,address,uint256)": TypedContractEvent<
+      AppealContributionEvent.InputTuple,
+      AppealContributionEvent.OutputTuple,
+      AppealContributionEvent.OutputObject
+    >;
+    AppealContribution: TypedContractEvent<
+      AppealContributionEvent.InputTuple,
+      AppealContributionEvent.OutputTuple,
+      AppealContributionEvent.OutputObject
+    >;
+
+    "ArbitratorComplete(address,address,uint256,uint256,uint256,uint256,uint256,uint256,uint256)": TypedContractEvent<
+      ArbitratorCompleteEvent.InputTuple,
+      ArbitratorCompleteEvent.OutputTuple,
+      ArbitratorCompleteEvent.OutputObject
+    >;
+    ArbitratorComplete: TypedContractEvent<
+      ArbitratorCompleteEvent.InputTuple,
+      ArbitratorCompleteEvent.OutputTuple,
+      ArbitratorCompleteEvent.OutputObject
+    >;
+
+    "ChallengeResolved(address,uint256,uint256)": TypedContractEvent<
+      ChallengeResolvedEvent.InputTuple,
+      ChallengeResolvedEvent.OutputTuple,
+      ChallengeResolvedEvent.OutputObject
+    >;
+    ChallengeResolved: TypedContractEvent<
+      ChallengeResolvedEvent.InputTuple,
+      ChallengeResolvedEvent.OutputTuple,
+      ChallengeResolvedEvent.OutputObject
+    >;
+
+    "Dispute(address,uint256,uint256,uint256)": TypedContractEvent<
+      DisputeEvent.InputTuple,
+      DisputeEvent.OutputTuple,
+      DisputeEvent.OutputObject
+    >;
+    Dispute: TypedContractEvent<
+      DisputeEvent.InputTuple,
+      DisputeEvent.OutputTuple,
+      DisputeEvent.OutputObject
+    >;
+
+    "Evidence(address,uint256,address,string)": TypedContractEvent<
+      EvidenceEvent.InputTuple,
+      EvidenceEvent.OutputTuple,
+      EvidenceEvent.OutputObject
+    >;
+    Evidence: TypedContractEvent<
+      EvidenceEvent.InputTuple,
+      EvidenceEvent.OutputTuple,
+      EvidenceEvent.OutputObject
+    >;
+
+    "HasPaidAppealFee(address,uint256,uint8)": TypedContractEvent<
+      HasPaidAppealFeeEvent.InputTuple,
+      HasPaidAppealFeeEvent.OutputTuple,
+      HasPaidAppealFeeEvent.OutputObject
+    >;
+    HasPaidAppealFee: TypedContractEvent<
+      HasPaidAppealFeeEvent.InputTuple,
+      HasPaidAppealFeeEvent.OutputTuple,
+      HasPaidAppealFeeEvent.OutputObject
+    >;
+
+    "MetaEvidence(uint256,string)": TypedContractEvent<
+      MetaEvidenceEvent.InputTuple,
+      MetaEvidenceEvent.OutputTuple,
+      MetaEvidenceEvent.OutputObject
+    >;
+    MetaEvidence: TypedContractEvent<
+      MetaEvidenceEvent.InputTuple,
+      MetaEvidenceEvent.OutputTuple,
+      MetaEvidenceEvent.OutputObject
+    >;
+
+    "ReapplySubmission(address,uint256)": TypedContractEvent<
+      ReapplySubmissionEvent.InputTuple,
+      ReapplySubmissionEvent.OutputTuple,
+      ReapplySubmissionEvent.OutputObject
+    >;
+    ReapplySubmission: TypedContractEvent<
+      ReapplySubmissionEvent.InputTuple,
+      ReapplySubmissionEvent.OutputTuple,
+      ReapplySubmissionEvent.OutputObject
+    >;
+
+    "RemoveSubmission(address,address,uint256)": TypedContractEvent<
+      RemoveSubmissionEvent.InputTuple,
+      RemoveSubmissionEvent.OutputTuple,
+      RemoveSubmissionEvent.OutputObject
+    >;
+    RemoveSubmission: TypedContractEvent<
+      RemoveSubmissionEvent.InputTuple,
+      RemoveSubmissionEvent.OutputTuple,
+      RemoveSubmissionEvent.OutputObject
+    >;
+
+    "Ruling(address,uint256,uint256)": TypedContractEvent<
+      RulingEvent.InputTuple,
+      RulingEvent.OutputTuple,
+      RulingEvent.OutputObject
+    >;
+    Ruling: TypedContractEvent<
+      RulingEvent.InputTuple,
+      RulingEvent.OutputTuple,
+      RulingEvent.OutputObject
+    >;
+
+    "SubmissionChallenged(address,uint256,uint256)": TypedContractEvent<
+      SubmissionChallengedEvent.InputTuple,
+      SubmissionChallengedEvent.OutputTuple,
+      SubmissionChallengedEvent.OutputObject
+    >;
+    SubmissionChallenged: TypedContractEvent<
+      SubmissionChallengedEvent.InputTuple,
+      SubmissionChallengedEvent.OutputTuple,
+      SubmissionChallengedEvent.OutputObject
+    >;
+
+    "VouchAdded(address,address)": TypedContractEvent<
+      VouchAddedEvent.InputTuple,
+      VouchAddedEvent.OutputTuple,
+      VouchAddedEvent.OutputObject
+    >;
+    VouchAdded: TypedContractEvent<
+      VouchAddedEvent.InputTuple,
+      VouchAddedEvent.OutputTuple,
+      VouchAddedEvent.OutputObject
+    >;
+
+    "VouchRemoved(address,address)": TypedContractEvent<
+      VouchRemovedEvent.InputTuple,
+      VouchRemovedEvent.OutputTuple,
+      VouchRemovedEvent.OutputObject
+    >;
+    VouchRemoved: TypedContractEvent<
+      VouchRemovedEvent.InputTuple,
+      VouchRemovedEvent.OutputTuple,
+      VouchRemovedEvent.OutputObject
+    >;
   };
 }

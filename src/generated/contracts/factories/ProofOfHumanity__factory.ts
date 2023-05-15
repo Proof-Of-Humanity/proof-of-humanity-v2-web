@@ -7,8 +7,7 @@ import type {
   ProofOfHumanity,
   ProofOfHumanityInterface,
 } from "../ProofOfHumanity";
-import type { Provider } from "@ethersproject/providers";
-import { Contract, Signer, utils } from "ethers";
+import { Contract, Interface, type ContractRunner } from "ethers";
 
 const _abi = [
   {
@@ -1935,17 +1934,17 @@ const _abi = [
     stateMutability: "nonpayable",
     type: "function",
   },
-];
+] as const;
 
 export class ProofOfHumanity__factory {
   static readonly abi = _abi;
   static createInterface(): ProofOfHumanityInterface {
-    return new utils.Interface(_abi) as ProofOfHumanityInterface;
+    return new Interface(_abi) as ProofOfHumanityInterface;
   }
   static connect(
     address: string,
-    signerOrProvider: Signer | Provider
+    runner?: ContractRunner | null
   ): ProofOfHumanity {
-    return new Contract(address, _abi, signerOrProvider) as ProofOfHumanity;
+    return new Contract(address, _abi, runner) as unknown as ProofOfHumanity;
   }
 }

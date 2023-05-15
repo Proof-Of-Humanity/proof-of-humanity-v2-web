@@ -7,8 +7,7 @@ import type {
   PoHTokenManager,
   PoHTokenManagerInterface,
 } from "../PoHTokenManager";
-import type { Provider } from "@ethersproject/providers";
-import { Contract, Signer, utils } from "ethers";
+import { Contract, Interface, type ContractRunner } from "ethers";
 
 const _abi = [
   {
@@ -424,17 +423,17 @@ const _abi = [
     stateMutability: "nonpayable",
     type: "function",
   },
-];
+] as const;
 
 export class PoHTokenManager__factory {
   static readonly abi = _abi;
   static createInterface(): PoHTokenManagerInterface {
-    return new utils.Interface(_abi) as PoHTokenManagerInterface;
+    return new Interface(_abi) as PoHTokenManagerInterface;
   }
   static connect(
     address: string,
-    signerOrProvider: Signer | Provider
+    runner?: ContractRunner | null
   ): PoHTokenManager {
-    return new Contract(address, _abi, signerOrProvider) as PoHTokenManager;
+    return new Contract(address, _abi, runner) as unknown as PoHTokenManager;
   }
 }

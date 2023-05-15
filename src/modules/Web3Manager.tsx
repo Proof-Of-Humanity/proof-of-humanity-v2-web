@@ -1,6 +1,6 @@
-import { Web3Provider } from "@ethersproject/providers";
 import { Web3ReactProvider, useWeb3React } from "@web3-react/core";
 import { createWeb3ReactRoot } from "@web3-react/core";
+import { BrowserProvider } from "ethers";
 import { useEffect } from "react";
 import { NetworkContextName } from "constants/misc";
 import useEagerConnect from "hooks/useEagerConnect";
@@ -15,11 +15,8 @@ const Web3Connection = ({ children }: { children: JSX.Element }) => {
   const chainId = useSuggestedChain();
 
   const { active } = useWeb3React();
-  const {
-    // active: networkActive,
-    error: networkError,
-    activate: activateNetwork,
-  } = useWeb3React(NetworkContextName);
+  const { error: networkError, activate: activateNetwork } =
+    useWeb3React(NetworkContextName);
 
   const switchChainForNetwork = useSwitchChain(true);
 
@@ -48,8 +45,8 @@ const Web3Connection = ({ children }: { children: JSX.Element }) => {
   return children;
 };
 
-function getLibrary(provider: any): Web3Provider {
-  const library = new Web3Provider(
+function getLibrary(provider: any) {
+  const library = new BrowserProvider(
     provider,
     typeof provider.chainId === "number"
       ? provider.chainId

@@ -5,7 +5,7 @@ import useSWR from "swr";
 import { ProofOfHumanity } from "generated/contracts";
 import { useProofOfHumanity } from "./useContract";
 
-export const useGasFees = <F extends keyof ProofOfHumanity["callStatic"]>(
+export const useGasFees = <F extends keyof ProofOfHumanity>(
   method: F,
   params: Parameters<ProofOfHumanity[F]> | null
 ): [BigNumber | null, boolean] => {

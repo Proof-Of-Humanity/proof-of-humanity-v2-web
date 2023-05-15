@@ -23,7 +23,9 @@ const VouchButton: React.FC<VouchButtonProps> = ({ request }) => {
 
     const expiration = Math.floor(Date.now() / 1000) + 60 * 60 * 24 * 30 * 6;
 
-    const signature = await library.getSigner()._signTypedData(
+    const signature = await (
+      await library.getSigner()
+    ).signTypedData(
       {
         name: "Proof of Humanity",
         chainId: ChainId.GOERLI,
@@ -32,15 +34,15 @@ const VouchButton: React.FC<VouchButtonProps> = ({ request }) => {
       },
       {
         IsHumanVoucher: [
-          { name: "vouchedHuman", type: "address" },
+          { name: "vouched", type: "address" },
           { name: "humanityId", type: "bytes20" },
-          { name: "voucherExpirationTimestamp", type: "uint256" },
+          { name: "expirationTimestamp", type: "uint256" },
         ],
       },
       {
-        vouchedHuman: request.requester,
+        vouched: request.requester,
         humanityId: request.humanity.id,
-        voucherExpirationTimestamp: expiration,
+        expirationTimestamp: expiration,
       }
     );
 

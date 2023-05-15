@@ -1,6 +1,5 @@
 import { ChainId } from "enums/ChainId";
-import { BigNumber } from "ethers";
-import { concat, keccak256, toUtf8Bytes } from "ethers/lib/utils";
+import { concat, keccak256, toBeHex, toUtf8Bytes } from "ethers";
 import { ReactNode, useMemo } from "react";
 import { Link, useParams } from "react-router-dom";
 import useContractData from "api/useContractData";
@@ -39,7 +38,7 @@ const genRequestId = (humanityId: string, index: number) => {
   const requestId = keccak256(
     concat([
       machinifyId(humanityId),
-      index ? BigNumber.from(Math.abs(index)).toHexString() : "0x00000000",
+      index ? toBeHex(Math.abs(index)) : "0x00000000",
     ])
   );
   return index < 0
@@ -111,9 +110,10 @@ const Request: React.FC = () => {
   const challengePeriodEnd =
     contractData?.contract &&
     request &&
-    BigNumber.from(contractData.contract.challengePeriodDuration)
-      .add(request.lastStatusChange)
-      .toNumber();
+    Number(
+      BigInt(contractData.contract.challengePeriodDuration) +
+        BigInt(request.lastStatusChange)
+    );
 
   const action = useMemo(() => {
     if (!request || !contractData || !totalCost) return Action.NONE;
@@ -251,7 +251,9 @@ const Request: React.FC = () => {
               <>
                 <StatusDetail>
                   Challenge period end:{" "}
-                  {challengePeriodEnd && <TimeAgo time={challengePeriodEnd} />}
+                  {challengePeriodEnd && (
+                    <TimeAgo time={Number(challengePeriodEnd)} />
+                  )}
                 </StatusDetail>
 
                 <Challenge request={request} />

@@ -1,5 +1,4 @@
-import { BigNumber } from "ethers";
-import { formatEther } from "ethers/lib/utils";
+import { formatEther } from "ethers";
 import ABC2048 from "./base2048/words";
 
 export const shuffleArray = <T>(array: T[]): T[] => {
@@ -50,7 +49,7 @@ export const randomString = (length: number) =>
     ""
   );
 
-export const formatEth = (wei: BigNumber, precision: number = 4) =>
+export const formatEth = (wei: bigint, precision: number = 4) =>
   +parseFloat(formatEther(wei)).toFixed(precision);
 
 const genBase2048 = () => {

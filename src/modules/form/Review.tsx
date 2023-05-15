@@ -1,5 +1,5 @@
 import { Zero } from "@ethersproject/constants";
-import { formatEther, parseEther } from "ethers/lib/utils";
+import { formatEther, parseEther } from "ethers";
 import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import useContractData from "api/useContractData";

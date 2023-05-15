@@ -44,7 +44,7 @@ const filterOffChainVouches = async (
 ) => {
   const vouchCalls: Array<ProofOfHumanity.SignatureVouchStruct> = [];
   const offCVsHumanities = await Promise.all(
-    vouches.map((vouch) => poh.humans(vouch.voucher))
+    vouches.map((vouch) => poh.humanityOf(vouch.voucher))
   );
   const offCVsHumanitiesInfo = await Promise.all(
     offCVsHumanities.map((humanity) =>
@@ -65,7 +65,7 @@ const filterOffChainVouches = async (
       !vHumanityInfo ||
       vHumanityInfo.vouching ||
       vHumanityInfo.owner !== vouch.voucher ||
-      vHumanityInfo.expirationTime.toNumber() < Date.now() / 1000
+      vHumanityInfo.expirationTime < Date.now() / 1000
     )
       continue;
 

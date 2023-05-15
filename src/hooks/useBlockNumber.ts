@@ -1,8 +1,8 @@
-import type { Web3Provider } from "@ethersproject/providers";
+import { BrowserProvider } from "ethers";
 import useSWR from "swr";
 import useWeb3 from "./useWeb3";
 
-const getBlockNumber = (provider: Web3Provider) => async () =>
+const getBlockNumber = (provider: BrowserProvider) => async () =>
   provider.getBlockNumber();
 
 export default function useBlockNumber() {

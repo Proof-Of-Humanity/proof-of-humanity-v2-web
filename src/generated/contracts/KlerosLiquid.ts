@@ -4,96 +4,30 @@
 
 /* eslint-disable */
 import type {
-  TypedEventFilter,
-  TypedEvent,
+  TypedContractEvent,
+  TypedDeferredTopicFilter,
+  TypedEventLog,
+  TypedLogDescription,
   TypedListener,
-  OnEvent,
-  PromiseOrValue,
+  TypedContractMethod,
 } from "./common";
 import type {
-  FunctionFragment,
-  Result,
-  EventFragment,
-} from "@ethersproject/abi";
-import type { Listener, Provider } from "@ethersproject/providers";
-import type {
   BaseContract,
-  BigNumber,
   BigNumberish,
   BytesLike,
-  CallOverrides,
-  ContractTransaction,
-  Overrides,
-  PayableOverrides,
-  PopulatedTransaction,
-  Signer,
-  utils,
+  FunctionFragment,
+  Result,
+  Interface,
+  EventFragment,
+  AddressLike,
+  ContractRunner,
+  ContractMethod,
+  Listener,
 } from "ethers";
 
-export interface KlerosLiquidInterface extends utils.Interface {
-  functions: {
-    "changePinakion(address)": FunctionFragment;
-    "RNBlock()": FunctionFragment;
-    "disputesWithoutJurors()": FunctionFragment;
-    "passPhase()": FunctionFragment;
-    "governor()": FunctionFragment;
-    "lastDelayedSetStake()": FunctionFragment;
-    "disputeStatus(uint256)": FunctionFragment;
-    "passPeriod(uint256)": FunctionFragment;
-    "maxDrawingTime()": FunctionFragment;
-    "currentRuling(uint256)": FunctionFragment;
-    "courts(uint256)": FunctionFragment;
-    "execute(uint256,uint256,uint256)": FunctionFragment;
-    "ALPHA_DIVISOR()": FunctionFragment;
-    "castVote(uint256,uint256[],uint256,uint256)": FunctionFragment;
-    "changeSubcourtMinStake(uint96,uint256)": FunctionFragment;
-    "getSubcourt(uint96)": FunctionFragment;
-    "appeal(uint256,bytes)": FunctionFragment;
-    "onTransfer(address,address,uint256)": FunctionFragment;
-    "disputes(uint256)": FunctionFragment;
-    "changeSubcourtTimesPerPeriod(uint96,uint256[4])": FunctionFragment;
-    "changeSubcourtJurorFee(uint96,uint256)": FunctionFragment;
-    "changeSubcourtAlpha(uint96,uint256)": FunctionFragment;
-    "castCommit(uint256,uint256[],bytes32)": FunctionFragment;
-    "RN()": FunctionFragment;
-    "RNGenerator()": FunctionFragment;
-    "executeGovernorProposal(address,uint256,bytes)": FunctionFragment;
-    "changeMinStakingTime(uint256)": FunctionFragment;
-    "NON_PAYABLE_AMOUNT()": FunctionFragment;
-    "setStake(uint96,uint128)": FunctionFragment;
-    "executeRuling(uint256)": FunctionFragment;
-    "getVote(uint256,uint256,uint256)": FunctionFragment;
-    "changeRNGenerator(address)": FunctionFragment;
-    "executeDelayedSetStakes(uint256)": FunctionFragment;
-    "stakeOf(address,uint96)": FunctionFragment;
-    "changeSubcourtJurorsForJump(uint96,uint256)": FunctionFragment;
-    "appealPeriod(uint256)": FunctionFragment;
-    "phase()": FunctionFragment;
-    "MAX_STAKE_PATHS()": FunctionFragment;
-    "delayedSetStakes(uint256)": FunctionFragment;
-    "lastPhaseChange()": FunctionFragment;
-    "minStakingTime()": FunctionFragment;
-    "nextDelayedSetStake()": FunctionFragment;
-    "createDispute(uint256,bytes)": FunctionFragment;
-    "drawJurors(uint256,uint256)": FunctionFragment;
-    "createSubcourt(uint96,bool,uint256,uint256,uint256,uint256,uint256[4],uint256)": FunctionFragment;
-    "getJuror(address)": FunctionFragment;
-    "onApprove(address,address,uint256)": FunctionFragment;
-    "jurors(address)": FunctionFragment;
-    "changeMaxDrawingTime(uint256)": FunctionFragment;
-    "getDispute(uint256)": FunctionFragment;
-    "getVoteCounter(uint256,uint256)": FunctionFragment;
-    "changeGovernor(address)": FunctionFragment;
-    "MIN_JURORS()": FunctionFragment;
-    "appealCost(uint256,bytes)": FunctionFragment;
-    "proxyPayment(address)": FunctionFragment;
-    "lockInsolventTransfers()": FunctionFragment;
-    "arbitrationCost(bytes)": FunctionFragment;
-    "pinakion()": FunctionFragment;
-  };
-
+export interface KlerosLiquidInterface extends Interface {
   getFunction(
-    nameOrSignatureOrTopic:
+    nameOrSignature:
       | "changePinakion"
       | "RNBlock"
       | "disputesWithoutJurors"
@@ -154,9 +88,21 @@ export interface KlerosLiquidInterface extends utils.Interface {
       | "pinakion"
   ): FunctionFragment;
 
+  getEvent(
+    nameOrSignatureOrTopic:
+      | "NewPhase"
+      | "NewPeriod"
+      | "StakeSet"
+      | "Draw"
+      | "TokenAndETHShift"
+      | "DisputeCreation"
+      | "AppealPossible"
+      | "AppealDecision"
+  ): EventFragment;
+
   encodeFunctionData(
     functionFragment: "changePinakion",
-    values: [PromiseOrValue<string>]
+    values: [AddressLike]
   ): string;
   encodeFunctionData(functionFragment: "RNBlock", values?: undefined): string;
   encodeFunctionData(
@@ -171,11 +117,11 @@ export interface KlerosLiquidInterface extends utils.Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "disputeStatus",
-    values: [PromiseOrValue<BigNumberish>]
+    values: [BigNumberish]
   ): string;
   encodeFunctionData(
     functionFragment: "passPeriod",
-    values: [PromiseOrValue<BigNumberish>]
+    values: [BigNumberish]
   ): string;
   encodeFunctionData(
     functionFragment: "maxDrawingTime",
@@ -183,19 +129,15 @@ export interface KlerosLiquidInterface extends utils.Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "currentRuling",
-    values: [PromiseOrValue<BigNumberish>]
+    values: [BigNumberish]
   ): string;
   encodeFunctionData(
     functionFragment: "courts",
-    values: [PromiseOrValue<BigNumberish>]
+    values: [BigNumberish]
   ): string;
   encodeFunctionData(
     functionFragment: "execute",
-    values: [
-      PromiseOrValue<BigNumberish>,
-      PromiseOrValue<BigNumberish>,
-      PromiseOrValue<BigNumberish>
-    ]
+    values: [BigNumberish, BigNumberish, BigNumberish]
   ): string;
   encodeFunctionData(
     functionFragment: "ALPHA_DIVISOR",
@@ -203,64 +145,46 @@ export interface KlerosLiquidInterface extends utils.Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "castVote",
-    values: [
-      PromiseOrValue<BigNumberish>,
-      PromiseOrValue<BigNumberish>[],
-      PromiseOrValue<BigNumberish>,
-      PromiseOrValue<BigNumberish>
-    ]
+    values: [BigNumberish, BigNumberish[], BigNumberish, BigNumberish]
   ): string;
   encodeFunctionData(
     functionFragment: "changeSubcourtMinStake",
-    values: [PromiseOrValue<BigNumberish>, PromiseOrValue<BigNumberish>]
+    values: [BigNumberish, BigNumberish]
   ): string;
   encodeFunctionData(
     functionFragment: "getSubcourt",
-    values: [PromiseOrValue<BigNumberish>]
+    values: [BigNumberish]
   ): string;
   encodeFunctionData(
     functionFragment: "appeal",
-    values: [PromiseOrValue<BigNumberish>, PromiseOrValue<BytesLike>]
+    values: [BigNumberish, BytesLike]
   ): string;
   encodeFunctionData(
     functionFragment: "onTransfer",
-    values: [
-      PromiseOrValue<string>,
-      PromiseOrValue<string>,
-      PromiseOrValue<BigNumberish>
-    ]
+    values: [AddressLike, AddressLike, BigNumberish]
   ): string;
   encodeFunctionData(
     functionFragment: "disputes",
-    values: [PromiseOrValue<BigNumberish>]
+    values: [BigNumberish]
   ): string;
   encodeFunctionData(
     functionFragment: "changeSubcourtTimesPerPeriod",
     values: [
-      PromiseOrValue<BigNumberish>,
-      [
-        PromiseOrValue<BigNumberish>,
-        PromiseOrValue<BigNumberish>,
-        PromiseOrValue<BigNumberish>,
-        PromiseOrValue<BigNumberish>
-      ]
+      BigNumberish,
+      [BigNumberish, BigNumberish, BigNumberish, BigNumberish]
     ]
   ): string;
   encodeFunctionData(
     functionFragment: "changeSubcourtJurorFee",
-    values: [PromiseOrValue<BigNumberish>, PromiseOrValue<BigNumberish>]
+    values: [BigNumberish, BigNumberish]
   ): string;
   encodeFunctionData(
     functionFragment: "changeSubcourtAlpha",
-    values: [PromiseOrValue<BigNumberish>, PromiseOrValue<BigNumberish>]
+    values: [BigNumberish, BigNumberish]
   ): string;
   encodeFunctionData(
     functionFragment: "castCommit",
-    values: [
-      PromiseOrValue<BigNumberish>,
-      PromiseOrValue<BigNumberish>[],
-      PromiseOrValue<BytesLike>
-    ]
+    values: [BigNumberish, BigNumberish[], BytesLike]
   ): string;
   encodeFunctionData(functionFragment: "RN", values?: undefined): string;
   encodeFunctionData(
@@ -269,15 +193,11 @@ export interface KlerosLiquidInterface extends utils.Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "executeGovernorProposal",
-    values: [
-      PromiseOrValue<string>,
-      PromiseOrValue<BigNumberish>,
-      PromiseOrValue<BytesLike>
-    ]
+    values: [AddressLike, BigNumberish, BytesLike]
   ): string;
   encodeFunctionData(
     functionFragment: "changeMinStakingTime",
-    values: [PromiseOrValue<BigNumberish>]
+    values: [BigNumberish]
   ): string;
   encodeFunctionData(
     functionFragment: "NON_PAYABLE_AMOUNT",
@@ -285,39 +205,35 @@ export interface KlerosLiquidInterface extends utils.Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "setStake",
-    values: [PromiseOrValue<BigNumberish>, PromiseOrValue<BigNumberish>]
+    values: [BigNumberish, BigNumberish]
   ): string;
   encodeFunctionData(
     functionFragment: "executeRuling",
-    values: [PromiseOrValue<BigNumberish>]
+    values: [BigNumberish]
   ): string;
   encodeFunctionData(
     functionFragment: "getVote",
-    values: [
-      PromiseOrValue<BigNumberish>,
-      PromiseOrValue<BigNumberish>,
-      PromiseOrValue<BigNumberish>
-    ]
+    values: [BigNumberish, BigNumberish, BigNumberish]
   ): string;
   encodeFunctionData(
     functionFragment: "changeRNGenerator",
-    values: [PromiseOrValue<string>]
+    values: [AddressLike]
   ): string;
   encodeFunctionData(
     functionFragment: "executeDelayedSetStakes",
-    values: [PromiseOrValue<BigNumberish>]
+    values: [BigNumberish]
   ): string;
   encodeFunctionData(
     functionFragment: "stakeOf",
-    values: [PromiseOrValue<string>, PromiseOrValue<BigNumberish>]
+    values: [AddressLike, BigNumberish]
   ): string;
   encodeFunctionData(
     functionFragment: "changeSubcourtJurorsForJump",
-    values: [PromiseOrValue<BigNumberish>, PromiseOrValue<BigNumberish>]
+    values: [BigNumberish, BigNumberish]
   ): string;
   encodeFunctionData(
     functionFragment: "appealPeriod",
-    values: [PromiseOrValue<BigNumberish>]
+    values: [BigNumberish]
   ): string;
   encodeFunctionData(functionFragment: "phase", values?: undefined): string;
   encodeFunctionData(
@@ -326,7 +242,7 @@ export interface KlerosLiquidInterface extends utils.Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "delayedSetStakes",
-    values: [PromiseOrValue<BigNumberish>]
+    values: [BigNumberish]
   ): string;
   encodeFunctionData(
     functionFragment: "lastPhaseChange",
@@ -342,61 +258,49 @@ export interface KlerosLiquidInterface extends utils.Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "createDispute",
-    values: [PromiseOrValue<BigNumberish>, PromiseOrValue<BytesLike>]
+    values: [BigNumberish, BytesLike]
   ): string;
   encodeFunctionData(
     functionFragment: "drawJurors",
-    values: [PromiseOrValue<BigNumberish>, PromiseOrValue<BigNumberish>]
+    values: [BigNumberish, BigNumberish]
   ): string;
   encodeFunctionData(
     functionFragment: "createSubcourt",
     values: [
-      PromiseOrValue<BigNumberish>,
-      PromiseOrValue<boolean>,
-      PromiseOrValue<BigNumberish>,
-      PromiseOrValue<BigNumberish>,
-      PromiseOrValue<BigNumberish>,
-      PromiseOrValue<BigNumberish>,
-      [
-        PromiseOrValue<BigNumberish>,
-        PromiseOrValue<BigNumberish>,
-        PromiseOrValue<BigNumberish>,
-        PromiseOrValue<BigNumberish>
-      ],
-      PromiseOrValue<BigNumberish>
+      BigNumberish,
+      boolean,
+      BigNumberish,
+      BigNumberish,
+      BigNumberish,
+      BigNumberish,
+      [BigNumberish, BigNumberish, BigNumberish, BigNumberish],
+      BigNumberish
     ]
   ): string;
   encodeFunctionData(
     functionFragment: "getJuror",
-    values: [PromiseOrValue<string>]
+    values: [AddressLike]
   ): string;
   encodeFunctionData(
     functionFragment: "onApprove",
-    values: [
-      PromiseOrValue<string>,
-      PromiseOrValue<string>,
-      PromiseOrValue<BigNumberish>
-    ]
+    values: [AddressLike, AddressLike, BigNumberish]
   ): string;
-  encodeFunctionData(
-    functionFragment: "jurors",
-    values: [PromiseOrValue<string>]
-  ): string;
+  encodeFunctionData(functionFragment: "jurors", values: [AddressLike]): string;
   encodeFunctionData(
     functionFragment: "changeMaxDrawingTime",
-    values: [PromiseOrValue<BigNumberish>]
+    values: [BigNumberish]
   ): string;
   encodeFunctionData(
     functionFragment: "getDispute",
-    values: [PromiseOrValue<BigNumberish>]
+    values: [BigNumberish]
   ): string;
   encodeFunctionData(
     functionFragment: "getVoteCounter",
-    values: [PromiseOrValue<BigNumberish>, PromiseOrValue<BigNumberish>]
+    values: [BigNumberish, BigNumberish]
   ): string;
   encodeFunctionData(
     functionFragment: "changeGovernor",
-    values: [PromiseOrValue<string>]
+    values: [AddressLike]
   ): string;
   encodeFunctionData(
     functionFragment: "MIN_JURORS",
@@ -404,11 +308,11 @@ export interface KlerosLiquidInterface extends utils.Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "appealCost",
-    values: [PromiseOrValue<BigNumberish>, PromiseOrValue<BytesLike>]
+    values: [BigNumberish, BytesLike]
   ): string;
   encodeFunctionData(
     functionFragment: "proxyPayment",
-    values: [PromiseOrValue<string>]
+    values: [AddressLike]
   ): string;
   encodeFunctionData(
     functionFragment: "lockInsolventTransfers",
@@ -416,7 +320,7 @@ export interface KlerosLiquidInterface extends utils.Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "arbitrationCost",
-    values: [PromiseOrValue<BytesLike>]
+    values: [BytesLike]
   ): string;
   encodeFunctionData(functionFragment: "pinakion", values?: undefined): string;
 
@@ -580,1870 +484,1040 @@ export interface KlerosLiquidInterface extends utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "pinakion", data: BytesLike): Result;
-
-  events: {
-    "NewPhase(uint8)": EventFragment;
-    "NewPeriod(uint256,uint8)": EventFragment;
-    "StakeSet(address,uint256,uint128,uint256)": EventFragment;
-    "Draw(address,uint256,uint256,uint256)": EventFragment;
-    "TokenAndETHShift(address,uint256,int256,int256)": EventFragment;
-    "DisputeCreation(uint256,address)": EventFragment;
-    "AppealPossible(uint256,address)": EventFragment;
-    "AppealDecision(uint256,address)": EventFragment;
-  };
-
-  getEvent(nameOrSignatureOrTopic: "NewPhase"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "NewPeriod"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "StakeSet"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "Draw"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "TokenAndETHShift"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "DisputeCreation"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "AppealPossible"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "AppealDecision"): EventFragment;
 }
 
-export interface NewPhaseEventObject {
-  _phase: number;
+export namespace NewPhaseEvent {
+  export type InputTuple = [_phase: BigNumberish];
+  export type OutputTuple = [_phase: bigint];
+  export interface OutputObject {
+    _phase: bigint;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type NewPhaseEvent = TypedEvent<[number], NewPhaseEventObject>;
 
-export type NewPhaseEventFilter = TypedEventFilter<NewPhaseEvent>;
-
-export interface NewPeriodEventObject {
-  _disputeID: BigNumber;
-  _period: number;
+export namespace NewPeriodEvent {
+  export type InputTuple = [_disputeID: BigNumberish, _period: BigNumberish];
+  export type OutputTuple = [_disputeID: bigint, _period: bigint];
+  export interface OutputObject {
+    _disputeID: bigint;
+    _period: bigint;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type NewPeriodEvent = TypedEvent<
-  [BigNumber, number],
-  NewPeriodEventObject
->;
 
-export type NewPeriodEventFilter = TypedEventFilter<NewPeriodEvent>;
-
-export interface StakeSetEventObject {
-  _address: string;
-  _subcourtID: BigNumber;
-  _stake: BigNumber;
-  _newTotalStake: BigNumber;
+export namespace StakeSetEvent {
+  export type InputTuple = [
+    _address: AddressLike,
+    _subcourtID: BigNumberish,
+    _stake: BigNumberish,
+    _newTotalStake: BigNumberish
+  ];
+  export type OutputTuple = [
+    _address: string,
+    _subcourtID: bigint,
+    _stake: bigint,
+    _newTotalStake: bigint
+  ];
+  export interface OutputObject {
+    _address: string;
+    _subcourtID: bigint;
+    _stake: bigint;
+    _newTotalStake: bigint;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type StakeSetEvent = TypedEvent<
-  [string, BigNumber, BigNumber, BigNumber],
-  StakeSetEventObject
->;
 
-export type StakeSetEventFilter = TypedEventFilter<StakeSetEvent>;
-
-export interface DrawEventObject {
-  _address: string;
-  _disputeID: BigNumber;
-  _appeal: BigNumber;
-  _voteID: BigNumber;
+export namespace DrawEvent {
+  export type InputTuple = [
+    _address: AddressLike,
+    _disputeID: BigNumberish,
+    _appeal: BigNumberish,
+    _voteID: BigNumberish
+  ];
+  export type OutputTuple = [
+    _address: string,
+    _disputeID: bigint,
+    _appeal: bigint,
+    _voteID: bigint
+  ];
+  export interface OutputObject {
+    _address: string;
+    _disputeID: bigint;
+    _appeal: bigint;
+    _voteID: bigint;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type DrawEvent = TypedEvent<
-  [string, BigNumber, BigNumber, BigNumber],
-  DrawEventObject
->;
 
-export type DrawEventFilter = TypedEventFilter<DrawEvent>;
-
-export interface TokenAndETHShiftEventObject {
-  _address: string;
-  _disputeID: BigNumber;
-  _tokenAmount: BigNumber;
-  _ETHAmount: BigNumber;
+export namespace TokenAndETHShiftEvent {
+  export type InputTuple = [
+    _address: AddressLike,
+    _disputeID: BigNumberish,
+    _tokenAmount: BigNumberish,
+    _ETHAmount: BigNumberish
+  ];
+  export type OutputTuple = [
+    _address: string,
+    _disputeID: bigint,
+    _tokenAmount: bigint,
+    _ETHAmount: bigint
+  ];
+  export interface OutputObject {
+    _address: string;
+    _disputeID: bigint;
+    _tokenAmount: bigint;
+    _ETHAmount: bigint;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type TokenAndETHShiftEvent = TypedEvent<
-  [string, BigNumber, BigNumber, BigNumber],
-  TokenAndETHShiftEventObject
->;
 
-export type TokenAndETHShiftEventFilter =
-  TypedEventFilter<TokenAndETHShiftEvent>;
-
-export interface DisputeCreationEventObject {
-  _disputeID: BigNumber;
-  _arbitrable: string;
+export namespace DisputeCreationEvent {
+  export type InputTuple = [_disputeID: BigNumberish, _arbitrable: AddressLike];
+  export type OutputTuple = [_disputeID: bigint, _arbitrable: string];
+  export interface OutputObject {
+    _disputeID: bigint;
+    _arbitrable: string;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type DisputeCreationEvent = TypedEvent<
-  [BigNumber, string],
-  DisputeCreationEventObject
->;
 
-export type DisputeCreationEventFilter = TypedEventFilter<DisputeCreationEvent>;
-
-export interface AppealPossibleEventObject {
-  _disputeID: BigNumber;
-  _arbitrable: string;
+export namespace AppealPossibleEvent {
+  export type InputTuple = [_disputeID: BigNumberish, _arbitrable: AddressLike];
+  export type OutputTuple = [_disputeID: bigint, _arbitrable: string];
+  export interface OutputObject {
+    _disputeID: bigint;
+    _arbitrable: string;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type AppealPossibleEvent = TypedEvent<
-  [BigNumber, string],
-  AppealPossibleEventObject
->;
 
-export type AppealPossibleEventFilter = TypedEventFilter<AppealPossibleEvent>;
-
-export interface AppealDecisionEventObject {
-  _disputeID: BigNumber;
-  _arbitrable: string;
+export namespace AppealDecisionEvent {
+  export type InputTuple = [_disputeID: BigNumberish, _arbitrable: AddressLike];
+  export type OutputTuple = [_disputeID: bigint, _arbitrable: string];
+  export interface OutputObject {
+    _disputeID: bigint;
+    _arbitrable: string;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type AppealDecisionEvent = TypedEvent<
-  [BigNumber, string],
-  AppealDecisionEventObject
->;
-
-export type AppealDecisionEventFilter = TypedEventFilter<AppealDecisionEvent>;
 
 export interface KlerosLiquid extends BaseContract {
-  connect(signerOrProvider: Signer | Provider | string): this;
-  attach(addressOrName: string): this;
+  connect(runner?: ContractRunner | null): BaseContract;
+  attach(addressOrName: AddressLike): this;
   deployed(): Promise<this>;
 
   interface: KlerosLiquidInterface;
 
-  queryFilter<TEvent extends TypedEvent>(
-    event: TypedEventFilter<TEvent>,
+  queryFilter<TCEvent extends TypedContractEvent>(
+    event: TCEvent,
     fromBlockOrBlockhash?: string | number | undefined,
     toBlock?: string | number | undefined
-  ): Promise<Array<TEvent>>;
+  ): Promise<Array<TypedEventLog<TCEvent>>>;
+  queryFilter<TCEvent extends TypedContractEvent>(
+    filter: TypedDeferredTopicFilter<TCEvent>,
+    fromBlockOrBlockhash?: string | number | undefined,
+    toBlock?: string | number | undefined
+  ): Promise<Array<TypedEventLog<TCEvent>>>;
 
-  listeners<TEvent extends TypedEvent>(
-    eventFilter?: TypedEventFilter<TEvent>
-  ): Array<TypedListener<TEvent>>;
-  listeners(eventName?: string): Array<Listener>;
-  removeAllListeners<TEvent extends TypedEvent>(
-    eventFilter: TypedEventFilter<TEvent>
-  ): this;
-  removeAllListeners(eventName?: string): this;
-  off: OnEvent<this>;
-  on: OnEvent<this>;
-  once: OnEvent<this>;
-  removeListener: OnEvent<this>;
+  on<TCEvent extends TypedContractEvent>(
+    event: TCEvent,
+    listener: TypedListener<TCEvent>
+  ): Promise<this>;
+  on<TCEvent extends TypedContractEvent>(
+    filter: TypedDeferredTopicFilter<TCEvent>,
+    listener: TypedListener<TCEvent>
+  ): Promise<this>;
 
-  functions: {
-    changePinakion(
-      _pinakion: PromiseOrValue<string>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
+  once<TCEvent extends TypedContractEvent>(
+    event: TCEvent,
+    listener: TypedListener<TCEvent>
+  ): Promise<this>;
+  once<TCEvent extends TypedContractEvent>(
+    filter: TypedDeferredTopicFilter<TCEvent>,
+    listener: TypedListener<TCEvent>
+  ): Promise<this>;
 
-    RNBlock(overrides?: CallOverrides): Promise<[BigNumber]>;
+  listeners<TCEvent extends TypedContractEvent>(
+    event: TCEvent
+  ): Promise<Array<TypedListener<TCEvent>>>;
+  listeners(eventName?: string): Promise<Array<Listener>>;
+  removeAllListeners<TCEvent extends TypedContractEvent>(
+    event?: TCEvent
+  ): Promise<this>;
 
-    disputesWithoutJurors(overrides?: CallOverrides): Promise<[BigNumber]>;
+  changePinakion: TypedContractMethod<
+    [_pinakion: AddressLike],
+    [void],
+    "nonpayable"
+  >;
 
-    passPhase(
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
+  RNBlock: TypedContractMethod<[], [bigint], "view">;
 
-    governor(overrides?: CallOverrides): Promise<[string]>;
+  disputesWithoutJurors: TypedContractMethod<[], [bigint], "view">;
 
-    lastDelayedSetStake(overrides?: CallOverrides): Promise<[BigNumber]>;
+  passPhase: TypedContractMethod<[], [void], "nonpayable">;
 
-    disputeStatus(
-      _disputeID: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<[number] & { status: number }>;
+  governor: TypedContractMethod<[], [string], "view">;
 
-    passPeriod(
-      _disputeID: PromiseOrValue<BigNumberish>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
+  lastDelayedSetStake: TypedContractMethod<[], [bigint], "view">;
 
-    maxDrawingTime(overrides?: CallOverrides): Promise<[BigNumber]>;
+  disputeStatus: TypedContractMethod<
+    [_disputeID: BigNumberish],
+    [bigint],
+    "view"
+  >;
 
-    currentRuling(
-      _disputeID: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<[BigNumber] & { ruling: BigNumber }>;
+  passPeriod: TypedContractMethod<
+    [_disputeID: BigNumberish],
+    [void],
+    "nonpayable"
+  >;
 
-    courts(
-      arg0: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<
-      [BigNumber, boolean, BigNumber, BigNumber, BigNumber, BigNumber] & {
-        parent: BigNumber;
+  maxDrawingTime: TypedContractMethod<[], [bigint], "view">;
+
+  currentRuling: TypedContractMethod<
+    [_disputeID: BigNumberish],
+    [bigint],
+    "view"
+  >;
+
+  courts: TypedContractMethod<
+    [arg0: BigNumberish],
+    [
+      [bigint, boolean, bigint, bigint, bigint, bigint] & {
+        parent: bigint;
         hiddenVotes: boolean;
-        minStake: BigNumber;
-        alpha: BigNumber;
-        feeForJuror: BigNumber;
-        jurorsForCourtJump: BigNumber;
+        minStake: bigint;
+        alpha: bigint;
+        feeForJuror: bigint;
+        jurorsForCourtJump: bigint;
       }
-    >;
+    ],
+    "view"
+  >;
 
-    execute(
-      _disputeID: PromiseOrValue<BigNumberish>,
-      _appeal: PromiseOrValue<BigNumberish>,
-      _iterations: PromiseOrValue<BigNumberish>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
+  execute: TypedContractMethod<
+    [
+      _disputeID: BigNumberish,
+      _appeal: BigNumberish,
+      _iterations: BigNumberish
+    ],
+    [void],
+    "nonpayable"
+  >;
 
-    ALPHA_DIVISOR(overrides?: CallOverrides): Promise<[BigNumber]>;
+  ALPHA_DIVISOR: TypedContractMethod<[], [bigint], "view">;
 
-    castVote(
-      _disputeID: PromiseOrValue<BigNumberish>,
-      _voteIDs: PromiseOrValue<BigNumberish>[],
-      _choice: PromiseOrValue<BigNumberish>,
-      _salt: PromiseOrValue<BigNumberish>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
+  castVote: TypedContractMethod<
+    [
+      _disputeID: BigNumberish,
+      _voteIDs: BigNumberish[],
+      _choice: BigNumberish,
+      _salt: BigNumberish
+    ],
+    [void],
+    "nonpayable"
+  >;
 
-    changeSubcourtMinStake(
-      _subcourtID: PromiseOrValue<BigNumberish>,
-      _minStake: PromiseOrValue<BigNumberish>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
+  changeSubcourtMinStake: TypedContractMethod<
+    [_subcourtID: BigNumberish, _minStake: BigNumberish],
+    [void],
+    "nonpayable"
+  >;
 
-    getSubcourt(
-      _subcourtID: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<
-      [BigNumber[], [BigNumber, BigNumber, BigNumber, BigNumber]] & {
-        children: BigNumber[];
-        timesPerPeriod: [BigNumber, BigNumber, BigNumber, BigNumber];
+  getSubcourt: TypedContractMethod<
+    [_subcourtID: BigNumberish],
+    [
+      [bigint[], [bigint, bigint, bigint, bigint]] & {
+        children: bigint[];
+        timesPerPeriod: [bigint, bigint, bigint, bigint];
       }
-    >;
+    ],
+    "view"
+  >;
 
-    appeal(
-      _disputeID: PromiseOrValue<BigNumberish>,
-      _extraData: PromiseOrValue<BytesLike>,
-      overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
+  appeal: TypedContractMethod<
+    [_disputeID: BigNumberish, _extraData: BytesLike],
+    [void],
+    "payable"
+  >;
 
-    onTransfer(
-      _from: PromiseOrValue<string>,
-      _to: PromiseOrValue<string>,
-      _amount: PromiseOrValue<BigNumberish>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
+  onTransfer: TypedContractMethod<
+    [_from: AddressLike, _to: AddressLike, _amount: BigNumberish],
+    [boolean],
+    "nonpayable"
+  >;
 
-    disputes(
-      arg0: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<
-      [
-        BigNumber,
-        string,
-        BigNumber,
-        number,
-        BigNumber,
-        BigNumber,
-        BigNumber,
-        boolean
-      ] & {
-        subcourtID: BigNumber;
+  disputes: TypedContractMethod<
+    [arg0: BigNumberish],
+    [
+      [bigint, string, bigint, bigint, bigint, bigint, bigint, boolean] & {
+        subcourtID: bigint;
         arbitrated: string;
-        numberOfChoices: BigNumber;
-        period: number;
-        lastPeriodChange: BigNumber;
-        drawsInRound: BigNumber;
-        commitsInRound: BigNumber;
+        numberOfChoices: bigint;
+        period: bigint;
+        lastPeriodChange: bigint;
+        drawsInRound: bigint;
+        commitsInRound: bigint;
         ruled: boolean;
       }
-    >;
+    ],
+    "view"
+  >;
 
-    changeSubcourtTimesPerPeriod(
-      _subcourtID: PromiseOrValue<BigNumberish>,
-      _timesPerPeriod: [
-        PromiseOrValue<BigNumberish>,
-        PromiseOrValue<BigNumberish>,
-        PromiseOrValue<BigNumberish>,
-        PromiseOrValue<BigNumberish>
-      ],
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
+  changeSubcourtTimesPerPeriod: TypedContractMethod<
+    [
+      _subcourtID: BigNumberish,
+      _timesPerPeriod: [BigNumberish, BigNumberish, BigNumberish, BigNumberish]
+    ],
+    [void],
+    "nonpayable"
+  >;
 
-    changeSubcourtJurorFee(
-      _subcourtID: PromiseOrValue<BigNumberish>,
-      _feeForJuror: PromiseOrValue<BigNumberish>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
+  changeSubcourtJurorFee: TypedContractMethod<
+    [_subcourtID: BigNumberish, _feeForJuror: BigNumberish],
+    [void],
+    "nonpayable"
+  >;
 
-    changeSubcourtAlpha(
-      _subcourtID: PromiseOrValue<BigNumberish>,
-      _alpha: PromiseOrValue<BigNumberish>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
+  changeSubcourtAlpha: TypedContractMethod<
+    [_subcourtID: BigNumberish, _alpha: BigNumberish],
+    [void],
+    "nonpayable"
+  >;
 
-    castCommit(
-      _disputeID: PromiseOrValue<BigNumberish>,
-      _voteIDs: PromiseOrValue<BigNumberish>[],
-      _commit: PromiseOrValue<BytesLike>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
+  castCommit: TypedContractMethod<
+    [_disputeID: BigNumberish, _voteIDs: BigNumberish[], _commit: BytesLike],
+    [void],
+    "nonpayable"
+  >;
 
-    RN(overrides?: CallOverrides): Promise<[BigNumber]>;
+  RN: TypedContractMethod<[], [bigint], "view">;
 
-    RNGenerator(overrides?: CallOverrides): Promise<[string]>;
+  RNGenerator: TypedContractMethod<[], [string], "view">;
 
-    executeGovernorProposal(
-      _destination: PromiseOrValue<string>,
-      _amount: PromiseOrValue<BigNumberish>,
-      _data: PromiseOrValue<BytesLike>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
+  executeGovernorProposal: TypedContractMethod<
+    [_destination: AddressLike, _amount: BigNumberish, _data: BytesLike],
+    [void],
+    "nonpayable"
+  >;
 
-    changeMinStakingTime(
-      _minStakingTime: PromiseOrValue<BigNumberish>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
+  changeMinStakingTime: TypedContractMethod<
+    [_minStakingTime: BigNumberish],
+    [void],
+    "nonpayable"
+  >;
 
-    NON_PAYABLE_AMOUNT(overrides?: CallOverrides): Promise<[BigNumber]>;
+  NON_PAYABLE_AMOUNT: TypedContractMethod<[], [bigint], "view">;
 
-    setStake(
-      _subcourtID: PromiseOrValue<BigNumberish>,
-      _stake: PromiseOrValue<BigNumberish>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
+  setStake: TypedContractMethod<
+    [_subcourtID: BigNumberish, _stake: BigNumberish],
+    [void],
+    "nonpayable"
+  >;
 
-    executeRuling(
-      _disputeID: PromiseOrValue<BigNumberish>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
+  executeRuling: TypedContractMethod<
+    [_disputeID: BigNumberish],
+    [void],
+    "nonpayable"
+  >;
 
-    getVote(
-      _disputeID: PromiseOrValue<BigNumberish>,
-      _appeal: PromiseOrValue<BigNumberish>,
-      _voteID: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<
-      [string, string, BigNumber, boolean] & {
+  getVote: TypedContractMethod<
+    [_disputeID: BigNumberish, _appeal: BigNumberish, _voteID: BigNumberish],
+    [
+      [string, string, bigint, boolean] & {
         account: string;
         commit: string;
-        choice: BigNumber;
+        choice: bigint;
         voted: boolean;
       }
-    >;
+    ],
+    "view"
+  >;
 
-    changeRNGenerator(
-      _RNGenerator: PromiseOrValue<string>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
+  changeRNGenerator: TypedContractMethod<
+    [_RNGenerator: AddressLike],
+    [void],
+    "nonpayable"
+  >;
 
-    executeDelayedSetStakes(
-      _iterations: PromiseOrValue<BigNumberish>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
+  executeDelayedSetStakes: TypedContractMethod<
+    [_iterations: BigNumberish],
+    [void],
+    "nonpayable"
+  >;
 
-    stakeOf(
-      _account: PromiseOrValue<string>,
-      _subcourtID: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<[BigNumber] & { stake: BigNumber }>;
+  stakeOf: TypedContractMethod<
+    [_account: AddressLike, _subcourtID: BigNumberish],
+    [bigint],
+    "view"
+  >;
 
-    changeSubcourtJurorsForJump(
-      _subcourtID: PromiseOrValue<BigNumberish>,
-      _jurorsForCourtJump: PromiseOrValue<BigNumberish>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
+  changeSubcourtJurorsForJump: TypedContractMethod<
+    [_subcourtID: BigNumberish, _jurorsForCourtJump: BigNumberish],
+    [void],
+    "nonpayable"
+  >;
 
-    appealPeriod(
-      _disputeID: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<[BigNumber, BigNumber] & { start: BigNumber; end: BigNumber }>;
+  appealPeriod: TypedContractMethod<
+    [_disputeID: BigNumberish],
+    [[bigint, bigint] & { start: bigint; end: bigint }],
+    "view"
+  >;
 
-    phase(overrides?: CallOverrides): Promise<[number]>;
+  phase: TypedContractMethod<[], [bigint], "view">;
 
-    MAX_STAKE_PATHS(overrides?: CallOverrides): Promise<[BigNumber]>;
+  MAX_STAKE_PATHS: TypedContractMethod<[], [bigint], "view">;
 
-    delayedSetStakes(
-      arg0: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<
-      [string, BigNumber, BigNumber] & {
+  delayedSetStakes: TypedContractMethod<
+    [arg0: BigNumberish],
+    [
+      [string, bigint, bigint] & {
         account: string;
-        subcourtID: BigNumber;
-        stake: BigNumber;
+        subcourtID: bigint;
+        stake: bigint;
       }
-    >;
+    ],
+    "view"
+  >;
 
-    lastPhaseChange(overrides?: CallOverrides): Promise<[BigNumber]>;
+  lastPhaseChange: TypedContractMethod<[], [bigint], "view">;
 
-    minStakingTime(overrides?: CallOverrides): Promise<[BigNumber]>;
+  minStakingTime: TypedContractMethod<[], [bigint], "view">;
 
-    nextDelayedSetStake(overrides?: CallOverrides): Promise<[BigNumber]>;
+  nextDelayedSetStake: TypedContractMethod<[], [bigint], "view">;
 
-    createDispute(
-      _numberOfChoices: PromiseOrValue<BigNumberish>,
-      _extraData: PromiseOrValue<BytesLike>,
-      overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
+  createDispute: TypedContractMethod<
+    [_numberOfChoices: BigNumberish, _extraData: BytesLike],
+    [bigint],
+    "payable"
+  >;
 
-    drawJurors(
-      _disputeID: PromiseOrValue<BigNumberish>,
-      _iterations: PromiseOrValue<BigNumberish>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
+  drawJurors: TypedContractMethod<
+    [_disputeID: BigNumberish, _iterations: BigNumberish],
+    [void],
+    "nonpayable"
+  >;
 
-    createSubcourt(
-      _parent: PromiseOrValue<BigNumberish>,
-      _hiddenVotes: PromiseOrValue<boolean>,
-      _minStake: PromiseOrValue<BigNumberish>,
-      _alpha: PromiseOrValue<BigNumberish>,
-      _feeForJuror: PromiseOrValue<BigNumberish>,
-      _jurorsForCourtJump: PromiseOrValue<BigNumberish>,
-      _timesPerPeriod: [
-        PromiseOrValue<BigNumberish>,
-        PromiseOrValue<BigNumberish>,
-        PromiseOrValue<BigNumberish>,
-        PromiseOrValue<BigNumberish>
-      ],
-      _sortitionSumTreeK: PromiseOrValue<BigNumberish>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
+  createSubcourt: TypedContractMethod<
+    [
+      _parent: BigNumberish,
+      _hiddenVotes: boolean,
+      _minStake: BigNumberish,
+      _alpha: BigNumberish,
+      _feeForJuror: BigNumberish,
+      _jurorsForCourtJump: BigNumberish,
+      _timesPerPeriod: [BigNumberish, BigNumberish, BigNumberish, BigNumberish],
+      _sortitionSumTreeK: BigNumberish
+    ],
+    [void],
+    "nonpayable"
+  >;
 
-    getJuror(
-      _account: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<[BigNumber[]] & { subcourtIDs: BigNumber[] }>;
+  getJuror: TypedContractMethod<[_account: AddressLike], [bigint[]], "view">;
 
-    onApprove(
-      _owner: PromiseOrValue<string>,
-      _spender: PromiseOrValue<string>,
-      _amount: PromiseOrValue<BigNumberish>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
+  onApprove: TypedContractMethod<
+    [_owner: AddressLike, _spender: AddressLike, _amount: BigNumberish],
+    [boolean],
+    "nonpayable"
+  >;
 
-    jurors(
-      arg0: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<
-      [BigNumber, BigNumber] & {
-        stakedTokens: BigNumber;
-        lockedTokens: BigNumber;
+  jurors: TypedContractMethod<
+    [arg0: AddressLike],
+    [[bigint, bigint] & { stakedTokens: bigint; lockedTokens: bigint }],
+    "view"
+  >;
+
+  changeMaxDrawingTime: TypedContractMethod<
+    [_maxDrawingTime: BigNumberish],
+    [void],
+    "nonpayable"
+  >;
+
+  getDispute: TypedContractMethod<
+    [_disputeID: BigNumberish],
+    [
+      [bigint[], bigint[], bigint[], bigint[], bigint[], bigint[]] & {
+        votesLengths: bigint[];
+        tokensAtStakePerJuror: bigint[];
+        totalFeesForJurors: bigint[];
+        votesInEachRound: bigint[];
+        repartitionsInEachRound: bigint[];
+        penaltiesInEachRound: bigint[];
       }
-    >;
+    ],
+    "view"
+  >;
 
-    changeMaxDrawingTime(
-      _maxDrawingTime: PromiseOrValue<BigNumberish>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
-
-    getDispute(
-      _disputeID: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<
-      [
-        BigNumber[],
-        BigNumber[],
-        BigNumber[],
-        BigNumber[],
-        BigNumber[],
-        BigNumber[]
-      ] & {
-        votesLengths: BigNumber[];
-        tokensAtStakePerJuror: BigNumber[];
-        totalFeesForJurors: BigNumber[];
-        votesInEachRound: BigNumber[];
-        repartitionsInEachRound: BigNumber[];
-        penaltiesInEachRound: BigNumber[];
-      }
-    >;
-
-    getVoteCounter(
-      _disputeID: PromiseOrValue<BigNumberish>,
-      _appeal: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<
-      [BigNumber, BigNumber[], boolean] & {
-        winningChoice: BigNumber;
-        counts: BigNumber[];
+  getVoteCounter: TypedContractMethod<
+    [_disputeID: BigNumberish, _appeal: BigNumberish],
+    [
+      [bigint, bigint[], boolean] & {
+        winningChoice: bigint;
+        counts: bigint[];
         tied: boolean;
       }
-    >;
-
-    changeGovernor(
-      _governor: PromiseOrValue<string>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
-
-    MIN_JURORS(overrides?: CallOverrides): Promise<[BigNumber]>;
-
-    appealCost(
-      _disputeID: PromiseOrValue<BigNumberish>,
-      _extraData: PromiseOrValue<BytesLike>,
-      overrides?: CallOverrides
-    ): Promise<[BigNumber] & { cost: BigNumber }>;
-
-    proxyPayment(
-      _owner: PromiseOrValue<string>,
-      overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
-
-    lockInsolventTransfers(overrides?: CallOverrides): Promise<[boolean]>;
-
-    arbitrationCost(
-      _extraData: PromiseOrValue<BytesLike>,
-      overrides?: CallOverrides
-    ): Promise<[BigNumber] & { cost: BigNumber }>;
-
-    pinakion(overrides?: CallOverrides): Promise<[string]>;
-  };
-
-  changePinakion(
-    _pinakion: PromiseOrValue<string>,
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
-
-  RNBlock(overrides?: CallOverrides): Promise<BigNumber>;
-
-  disputesWithoutJurors(overrides?: CallOverrides): Promise<BigNumber>;
-
-  passPhase(
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
-
-  governor(overrides?: CallOverrides): Promise<string>;
-
-  lastDelayedSetStake(overrides?: CallOverrides): Promise<BigNumber>;
-
-  disputeStatus(
-    _disputeID: PromiseOrValue<BigNumberish>,
-    overrides?: CallOverrides
-  ): Promise<number>;
-
-  passPeriod(
-    _disputeID: PromiseOrValue<BigNumberish>,
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
-
-  maxDrawingTime(overrides?: CallOverrides): Promise<BigNumber>;
-
-  currentRuling(
-    _disputeID: PromiseOrValue<BigNumberish>,
-    overrides?: CallOverrides
-  ): Promise<BigNumber>;
-
-  courts(
-    arg0: PromiseOrValue<BigNumberish>,
-    overrides?: CallOverrides
-  ): Promise<
-    [BigNumber, boolean, BigNumber, BigNumber, BigNumber, BigNumber] & {
-      parent: BigNumber;
-      hiddenVotes: boolean;
-      minStake: BigNumber;
-      alpha: BigNumber;
-      feeForJuror: BigNumber;
-      jurorsForCourtJump: BigNumber;
-    }
-  >;
-
-  execute(
-    _disputeID: PromiseOrValue<BigNumberish>,
-    _appeal: PromiseOrValue<BigNumberish>,
-    _iterations: PromiseOrValue<BigNumberish>,
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
-
-  ALPHA_DIVISOR(overrides?: CallOverrides): Promise<BigNumber>;
-
-  castVote(
-    _disputeID: PromiseOrValue<BigNumberish>,
-    _voteIDs: PromiseOrValue<BigNumberish>[],
-    _choice: PromiseOrValue<BigNumberish>,
-    _salt: PromiseOrValue<BigNumberish>,
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
-
-  changeSubcourtMinStake(
-    _subcourtID: PromiseOrValue<BigNumberish>,
-    _minStake: PromiseOrValue<BigNumberish>,
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
-
-  getSubcourt(
-    _subcourtID: PromiseOrValue<BigNumberish>,
-    overrides?: CallOverrides
-  ): Promise<
-    [BigNumber[], [BigNumber, BigNumber, BigNumber, BigNumber]] & {
-      children: BigNumber[];
-      timesPerPeriod: [BigNumber, BigNumber, BigNumber, BigNumber];
-    }
-  >;
-
-  appeal(
-    _disputeID: PromiseOrValue<BigNumberish>,
-    _extraData: PromiseOrValue<BytesLike>,
-    overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
-
-  onTransfer(
-    _from: PromiseOrValue<string>,
-    _to: PromiseOrValue<string>,
-    _amount: PromiseOrValue<BigNumberish>,
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
-
-  disputes(
-    arg0: PromiseOrValue<BigNumberish>,
-    overrides?: CallOverrides
-  ): Promise<
-    [
-      BigNumber,
-      string,
-      BigNumber,
-      number,
-      BigNumber,
-      BigNumber,
-      BigNumber,
-      boolean
-    ] & {
-      subcourtID: BigNumber;
-      arbitrated: string;
-      numberOfChoices: BigNumber;
-      period: number;
-      lastPeriodChange: BigNumber;
-      drawsInRound: BigNumber;
-      commitsInRound: BigNumber;
-      ruled: boolean;
-    }
-  >;
-
-  changeSubcourtTimesPerPeriod(
-    _subcourtID: PromiseOrValue<BigNumberish>,
-    _timesPerPeriod: [
-      PromiseOrValue<BigNumberish>,
-      PromiseOrValue<BigNumberish>,
-      PromiseOrValue<BigNumberish>,
-      PromiseOrValue<BigNumberish>
     ],
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
-
-  changeSubcourtJurorFee(
-    _subcourtID: PromiseOrValue<BigNumberish>,
-    _feeForJuror: PromiseOrValue<BigNumberish>,
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
-
-  changeSubcourtAlpha(
-    _subcourtID: PromiseOrValue<BigNumberish>,
-    _alpha: PromiseOrValue<BigNumberish>,
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
-
-  castCommit(
-    _disputeID: PromiseOrValue<BigNumberish>,
-    _voteIDs: PromiseOrValue<BigNumberish>[],
-    _commit: PromiseOrValue<BytesLike>,
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
-
-  RN(overrides?: CallOverrides): Promise<BigNumber>;
-
-  RNGenerator(overrides?: CallOverrides): Promise<string>;
-
-  executeGovernorProposal(
-    _destination: PromiseOrValue<string>,
-    _amount: PromiseOrValue<BigNumberish>,
-    _data: PromiseOrValue<BytesLike>,
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
-
-  changeMinStakingTime(
-    _minStakingTime: PromiseOrValue<BigNumberish>,
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
-
-  NON_PAYABLE_AMOUNT(overrides?: CallOverrides): Promise<BigNumber>;
-
-  setStake(
-    _subcourtID: PromiseOrValue<BigNumberish>,
-    _stake: PromiseOrValue<BigNumberish>,
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
-
-  executeRuling(
-    _disputeID: PromiseOrValue<BigNumberish>,
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
-
-  getVote(
-    _disputeID: PromiseOrValue<BigNumberish>,
-    _appeal: PromiseOrValue<BigNumberish>,
-    _voteID: PromiseOrValue<BigNumberish>,
-    overrides?: CallOverrides
-  ): Promise<
-    [string, string, BigNumber, boolean] & {
-      account: string;
-      commit: string;
-      choice: BigNumber;
-      voted: boolean;
-    }
+    "view"
   >;
 
-  changeRNGenerator(
-    _RNGenerator: PromiseOrValue<string>,
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
-
-  executeDelayedSetStakes(
-    _iterations: PromiseOrValue<BigNumberish>,
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
-
-  stakeOf(
-    _account: PromiseOrValue<string>,
-    _subcourtID: PromiseOrValue<BigNumberish>,
-    overrides?: CallOverrides
-  ): Promise<BigNumber>;
-
-  changeSubcourtJurorsForJump(
-    _subcourtID: PromiseOrValue<BigNumberish>,
-    _jurorsForCourtJump: PromiseOrValue<BigNumberish>,
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
-
-  appealPeriod(
-    _disputeID: PromiseOrValue<BigNumberish>,
-    overrides?: CallOverrides
-  ): Promise<[BigNumber, BigNumber] & { start: BigNumber; end: BigNumber }>;
-
-  phase(overrides?: CallOverrides): Promise<number>;
-
-  MAX_STAKE_PATHS(overrides?: CallOverrides): Promise<BigNumber>;
-
-  delayedSetStakes(
-    arg0: PromiseOrValue<BigNumberish>,
-    overrides?: CallOverrides
-  ): Promise<
-    [string, BigNumber, BigNumber] & {
-      account: string;
-      subcourtID: BigNumber;
-      stake: BigNumber;
-    }
+  changeGovernor: TypedContractMethod<
+    [_governor: AddressLike],
+    [void],
+    "nonpayable"
   >;
 
-  lastPhaseChange(overrides?: CallOverrides): Promise<BigNumber>;
+  MIN_JURORS: TypedContractMethod<[], [bigint], "view">;
 
-  minStakingTime(overrides?: CallOverrides): Promise<BigNumber>;
-
-  nextDelayedSetStake(overrides?: CallOverrides): Promise<BigNumber>;
-
-  createDispute(
-    _numberOfChoices: PromiseOrValue<BigNumberish>,
-    _extraData: PromiseOrValue<BytesLike>,
-    overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
-
-  drawJurors(
-    _disputeID: PromiseOrValue<BigNumberish>,
-    _iterations: PromiseOrValue<BigNumberish>,
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
-
-  createSubcourt(
-    _parent: PromiseOrValue<BigNumberish>,
-    _hiddenVotes: PromiseOrValue<boolean>,
-    _minStake: PromiseOrValue<BigNumberish>,
-    _alpha: PromiseOrValue<BigNumberish>,
-    _feeForJuror: PromiseOrValue<BigNumberish>,
-    _jurorsForCourtJump: PromiseOrValue<BigNumberish>,
-    _timesPerPeriod: [
-      PromiseOrValue<BigNumberish>,
-      PromiseOrValue<BigNumberish>,
-      PromiseOrValue<BigNumberish>,
-      PromiseOrValue<BigNumberish>
-    ],
-    _sortitionSumTreeK: PromiseOrValue<BigNumberish>,
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
-
-  getJuror(
-    _account: PromiseOrValue<string>,
-    overrides?: CallOverrides
-  ): Promise<BigNumber[]>;
-
-  onApprove(
-    _owner: PromiseOrValue<string>,
-    _spender: PromiseOrValue<string>,
-    _amount: PromiseOrValue<BigNumberish>,
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
-
-  jurors(
-    arg0: PromiseOrValue<string>,
-    overrides?: CallOverrides
-  ): Promise<
-    [BigNumber, BigNumber] & {
-      stakedTokens: BigNumber;
-      lockedTokens: BigNumber;
-    }
+  appealCost: TypedContractMethod<
+    [_disputeID: BigNumberish, _extraData: BytesLike],
+    [bigint],
+    "view"
   >;
 
-  changeMaxDrawingTime(
-    _maxDrawingTime: PromiseOrValue<BigNumberish>,
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
+  proxyPayment: TypedContractMethod<
+    [_owner: AddressLike],
+    [boolean],
+    "payable"
+  >;
 
-  getDispute(
-    _disputeID: PromiseOrValue<BigNumberish>,
-    overrides?: CallOverrides
-  ): Promise<
+  lockInsolventTransfers: TypedContractMethod<[], [boolean], "view">;
+
+  arbitrationCost: TypedContractMethod<
+    [_extraData: BytesLike],
+    [bigint],
+    "view"
+  >;
+
+  pinakion: TypedContractMethod<[], [string], "view">;
+
+  getFunction<T extends ContractMethod = ContractMethod>(
+    key: string | FunctionFragment
+  ): T;
+
+  getFunction(
+    nameOrSignature: "changePinakion"
+  ): TypedContractMethod<[_pinakion: AddressLike], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "RNBlock"
+  ): TypedContractMethod<[], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "disputesWithoutJurors"
+  ): TypedContractMethod<[], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "passPhase"
+  ): TypedContractMethod<[], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "governor"
+  ): TypedContractMethod<[], [string], "view">;
+  getFunction(
+    nameOrSignature: "lastDelayedSetStake"
+  ): TypedContractMethod<[], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "disputeStatus"
+  ): TypedContractMethod<[_disputeID: BigNumberish], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "passPeriod"
+  ): TypedContractMethod<[_disputeID: BigNumberish], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "maxDrawingTime"
+  ): TypedContractMethod<[], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "currentRuling"
+  ): TypedContractMethod<[_disputeID: BigNumberish], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "courts"
+  ): TypedContractMethod<
+    [arg0: BigNumberish],
     [
-      BigNumber[],
-      BigNumber[],
-      BigNumber[],
-      BigNumber[],
-      BigNumber[],
-      BigNumber[]
-    ] & {
-      votesLengths: BigNumber[];
-      tokensAtStakePerJuror: BigNumber[];
-      totalFeesForJurors: BigNumber[];
-      votesInEachRound: BigNumber[];
-      repartitionsInEachRound: BigNumber[];
-      penaltiesInEachRound: BigNumber[];
-    }
-  >;
-
-  getVoteCounter(
-    _disputeID: PromiseOrValue<BigNumberish>,
-    _appeal: PromiseOrValue<BigNumberish>,
-    overrides?: CallOverrides
-  ): Promise<
-    [BigNumber, BigNumber[], boolean] & {
-      winningChoice: BigNumber;
-      counts: BigNumber[];
-      tied: boolean;
-    }
-  >;
-
-  changeGovernor(
-    _governor: PromiseOrValue<string>,
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
-
-  MIN_JURORS(overrides?: CallOverrides): Promise<BigNumber>;
-
-  appealCost(
-    _disputeID: PromiseOrValue<BigNumberish>,
-    _extraData: PromiseOrValue<BytesLike>,
-    overrides?: CallOverrides
-  ): Promise<BigNumber>;
-
-  proxyPayment(
-    _owner: PromiseOrValue<string>,
-    overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
-
-  lockInsolventTransfers(overrides?: CallOverrides): Promise<boolean>;
-
-  arbitrationCost(
-    _extraData: PromiseOrValue<BytesLike>,
-    overrides?: CallOverrides
-  ): Promise<BigNumber>;
-
-  pinakion(overrides?: CallOverrides): Promise<string>;
-
-  callStatic: {
-    changePinakion(
-      _pinakion: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<void>;
-
-    RNBlock(overrides?: CallOverrides): Promise<BigNumber>;
-
-    disputesWithoutJurors(overrides?: CallOverrides): Promise<BigNumber>;
-
-    passPhase(overrides?: CallOverrides): Promise<void>;
-
-    governor(overrides?: CallOverrides): Promise<string>;
-
-    lastDelayedSetStake(overrides?: CallOverrides): Promise<BigNumber>;
-
-    disputeStatus(
-      _disputeID: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<number>;
-
-    passPeriod(
-      _disputeID: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<void>;
-
-    maxDrawingTime(overrides?: CallOverrides): Promise<BigNumber>;
-
-    currentRuling(
-      _disputeID: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    courts(
-      arg0: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<
-      [BigNumber, boolean, BigNumber, BigNumber, BigNumber, BigNumber] & {
-        parent: BigNumber;
+      [bigint, boolean, bigint, bigint, bigint, bigint] & {
+        parent: bigint;
         hiddenVotes: boolean;
-        minStake: BigNumber;
-        alpha: BigNumber;
-        feeForJuror: BigNumber;
-        jurorsForCourtJump: BigNumber;
+        minStake: bigint;
+        alpha: bigint;
+        feeForJuror: bigint;
+        jurorsForCourtJump: bigint;
       }
-    >;
-
-    execute(
-      _disputeID: PromiseOrValue<BigNumberish>,
-      _appeal: PromiseOrValue<BigNumberish>,
-      _iterations: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<void>;
-
-    ALPHA_DIVISOR(overrides?: CallOverrides): Promise<BigNumber>;
-
-    castVote(
-      _disputeID: PromiseOrValue<BigNumberish>,
-      _voteIDs: PromiseOrValue<BigNumberish>[],
-      _choice: PromiseOrValue<BigNumberish>,
-      _salt: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<void>;
-
-    changeSubcourtMinStake(
-      _subcourtID: PromiseOrValue<BigNumberish>,
-      _minStake: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<void>;
-
-    getSubcourt(
-      _subcourtID: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<
-      [BigNumber[], [BigNumber, BigNumber, BigNumber, BigNumber]] & {
-        children: BigNumber[];
-        timesPerPeriod: [BigNumber, BigNumber, BigNumber, BigNumber];
+    ],
+    "view"
+  >;
+  getFunction(
+    nameOrSignature: "execute"
+  ): TypedContractMethod<
+    [
+      _disputeID: BigNumberish,
+      _appeal: BigNumberish,
+      _iterations: BigNumberish
+    ],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "ALPHA_DIVISOR"
+  ): TypedContractMethod<[], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "castVote"
+  ): TypedContractMethod<
+    [
+      _disputeID: BigNumberish,
+      _voteIDs: BigNumberish[],
+      _choice: BigNumberish,
+      _salt: BigNumberish
+    ],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "changeSubcourtMinStake"
+  ): TypedContractMethod<
+    [_subcourtID: BigNumberish, _minStake: BigNumberish],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "getSubcourt"
+  ): TypedContractMethod<
+    [_subcourtID: BigNumberish],
+    [
+      [bigint[], [bigint, bigint, bigint, bigint]] & {
+        children: bigint[];
+        timesPerPeriod: [bigint, bigint, bigint, bigint];
       }
-    >;
-
-    appeal(
-      _disputeID: PromiseOrValue<BigNumberish>,
-      _extraData: PromiseOrValue<BytesLike>,
-      overrides?: CallOverrides
-    ): Promise<void>;
-
-    onTransfer(
-      _from: PromiseOrValue<string>,
-      _to: PromiseOrValue<string>,
-      _amount: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<boolean>;
-
-    disputes(
-      arg0: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<
-      [
-        BigNumber,
-        string,
-        BigNumber,
-        number,
-        BigNumber,
-        BigNumber,
-        BigNumber,
-        boolean
-      ] & {
-        subcourtID: BigNumber;
+    ],
+    "view"
+  >;
+  getFunction(
+    nameOrSignature: "appeal"
+  ): TypedContractMethod<
+    [_disputeID: BigNumberish, _extraData: BytesLike],
+    [void],
+    "payable"
+  >;
+  getFunction(
+    nameOrSignature: "onTransfer"
+  ): TypedContractMethod<
+    [_from: AddressLike, _to: AddressLike, _amount: BigNumberish],
+    [boolean],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "disputes"
+  ): TypedContractMethod<
+    [arg0: BigNumberish],
+    [
+      [bigint, string, bigint, bigint, bigint, bigint, bigint, boolean] & {
+        subcourtID: bigint;
         arbitrated: string;
-        numberOfChoices: BigNumber;
-        period: number;
-        lastPeriodChange: BigNumber;
-        drawsInRound: BigNumber;
-        commitsInRound: BigNumber;
+        numberOfChoices: bigint;
+        period: bigint;
+        lastPeriodChange: bigint;
+        drawsInRound: bigint;
+        commitsInRound: bigint;
         ruled: boolean;
       }
-    >;
-
-    changeSubcourtTimesPerPeriod(
-      _subcourtID: PromiseOrValue<BigNumberish>,
-      _timesPerPeriod: [
-        PromiseOrValue<BigNumberish>,
-        PromiseOrValue<BigNumberish>,
-        PromiseOrValue<BigNumberish>,
-        PromiseOrValue<BigNumberish>
-      ],
-      overrides?: CallOverrides
-    ): Promise<void>;
-
-    changeSubcourtJurorFee(
-      _subcourtID: PromiseOrValue<BigNumberish>,
-      _feeForJuror: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<void>;
-
-    changeSubcourtAlpha(
-      _subcourtID: PromiseOrValue<BigNumberish>,
-      _alpha: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<void>;
-
-    castCommit(
-      _disputeID: PromiseOrValue<BigNumberish>,
-      _voteIDs: PromiseOrValue<BigNumberish>[],
-      _commit: PromiseOrValue<BytesLike>,
-      overrides?: CallOverrides
-    ): Promise<void>;
-
-    RN(overrides?: CallOverrides): Promise<BigNumber>;
-
-    RNGenerator(overrides?: CallOverrides): Promise<string>;
-
-    executeGovernorProposal(
-      _destination: PromiseOrValue<string>,
-      _amount: PromiseOrValue<BigNumberish>,
-      _data: PromiseOrValue<BytesLike>,
-      overrides?: CallOverrides
-    ): Promise<void>;
-
-    changeMinStakingTime(
-      _minStakingTime: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<void>;
-
-    NON_PAYABLE_AMOUNT(overrides?: CallOverrides): Promise<BigNumber>;
-
-    setStake(
-      _subcourtID: PromiseOrValue<BigNumberish>,
-      _stake: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<void>;
-
-    executeRuling(
-      _disputeID: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<void>;
-
-    getVote(
-      _disputeID: PromiseOrValue<BigNumberish>,
-      _appeal: PromiseOrValue<BigNumberish>,
-      _voteID: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<
-      [string, string, BigNumber, boolean] & {
+    ],
+    "view"
+  >;
+  getFunction(
+    nameOrSignature: "changeSubcourtTimesPerPeriod"
+  ): TypedContractMethod<
+    [
+      _subcourtID: BigNumberish,
+      _timesPerPeriod: [BigNumberish, BigNumberish, BigNumberish, BigNumberish]
+    ],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "changeSubcourtJurorFee"
+  ): TypedContractMethod<
+    [_subcourtID: BigNumberish, _feeForJuror: BigNumberish],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "changeSubcourtAlpha"
+  ): TypedContractMethod<
+    [_subcourtID: BigNumberish, _alpha: BigNumberish],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "castCommit"
+  ): TypedContractMethod<
+    [_disputeID: BigNumberish, _voteIDs: BigNumberish[], _commit: BytesLike],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(nameOrSignature: "RN"): TypedContractMethod<[], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "RNGenerator"
+  ): TypedContractMethod<[], [string], "view">;
+  getFunction(
+    nameOrSignature: "executeGovernorProposal"
+  ): TypedContractMethod<
+    [_destination: AddressLike, _amount: BigNumberish, _data: BytesLike],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "changeMinStakingTime"
+  ): TypedContractMethod<[_minStakingTime: BigNumberish], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "NON_PAYABLE_AMOUNT"
+  ): TypedContractMethod<[], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "setStake"
+  ): TypedContractMethod<
+    [_subcourtID: BigNumberish, _stake: BigNumberish],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "executeRuling"
+  ): TypedContractMethod<[_disputeID: BigNumberish], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "getVote"
+  ): TypedContractMethod<
+    [_disputeID: BigNumberish, _appeal: BigNumberish, _voteID: BigNumberish],
+    [
+      [string, string, bigint, boolean] & {
         account: string;
         commit: string;
-        choice: BigNumber;
+        choice: bigint;
         voted: boolean;
       }
-    >;
-
-    changeRNGenerator(
-      _RNGenerator: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<void>;
-
-    executeDelayedSetStakes(
-      _iterations: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<void>;
-
-    stakeOf(
-      _account: PromiseOrValue<string>,
-      _subcourtID: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    changeSubcourtJurorsForJump(
-      _subcourtID: PromiseOrValue<BigNumberish>,
-      _jurorsForCourtJump: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<void>;
-
-    appealPeriod(
-      _disputeID: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<[BigNumber, BigNumber] & { start: BigNumber; end: BigNumber }>;
-
-    phase(overrides?: CallOverrides): Promise<number>;
-
-    MAX_STAKE_PATHS(overrides?: CallOverrides): Promise<BigNumber>;
-
-    delayedSetStakes(
-      arg0: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<
-      [string, BigNumber, BigNumber] & {
+    ],
+    "view"
+  >;
+  getFunction(
+    nameOrSignature: "changeRNGenerator"
+  ): TypedContractMethod<[_RNGenerator: AddressLike], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "executeDelayedSetStakes"
+  ): TypedContractMethod<[_iterations: BigNumberish], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "stakeOf"
+  ): TypedContractMethod<
+    [_account: AddressLike, _subcourtID: BigNumberish],
+    [bigint],
+    "view"
+  >;
+  getFunction(
+    nameOrSignature: "changeSubcourtJurorsForJump"
+  ): TypedContractMethod<
+    [_subcourtID: BigNumberish, _jurorsForCourtJump: BigNumberish],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "appealPeriod"
+  ): TypedContractMethod<
+    [_disputeID: BigNumberish],
+    [[bigint, bigint] & { start: bigint; end: bigint }],
+    "view"
+  >;
+  getFunction(
+    nameOrSignature: "phase"
+  ): TypedContractMethod<[], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "MAX_STAKE_PATHS"
+  ): TypedContractMethod<[], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "delayedSetStakes"
+  ): TypedContractMethod<
+    [arg0: BigNumberish],
+    [
+      [string, bigint, bigint] & {
         account: string;
-        subcourtID: BigNumber;
-        stake: BigNumber;
+        subcourtID: bigint;
+        stake: bigint;
       }
-    >;
-
-    lastPhaseChange(overrides?: CallOverrides): Promise<BigNumber>;
-
-    minStakingTime(overrides?: CallOverrides): Promise<BigNumber>;
-
-    nextDelayedSetStake(overrides?: CallOverrides): Promise<BigNumber>;
-
-    createDispute(
-      _numberOfChoices: PromiseOrValue<BigNumberish>,
-      _extraData: PromiseOrValue<BytesLike>,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    drawJurors(
-      _disputeID: PromiseOrValue<BigNumberish>,
-      _iterations: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<void>;
-
-    createSubcourt(
-      _parent: PromiseOrValue<BigNumberish>,
-      _hiddenVotes: PromiseOrValue<boolean>,
-      _minStake: PromiseOrValue<BigNumberish>,
-      _alpha: PromiseOrValue<BigNumberish>,
-      _feeForJuror: PromiseOrValue<BigNumberish>,
-      _jurorsForCourtJump: PromiseOrValue<BigNumberish>,
-      _timesPerPeriod: [
-        PromiseOrValue<BigNumberish>,
-        PromiseOrValue<BigNumberish>,
-        PromiseOrValue<BigNumberish>,
-        PromiseOrValue<BigNumberish>
-      ],
-      _sortitionSumTreeK: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<void>;
-
-    getJuror(
-      _account: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<BigNumber[]>;
-
-    onApprove(
-      _owner: PromiseOrValue<string>,
-      _spender: PromiseOrValue<string>,
-      _amount: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<boolean>;
-
-    jurors(
-      arg0: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<
-      [BigNumber, BigNumber] & {
-        stakedTokens: BigNumber;
-        lockedTokens: BigNumber;
+    ],
+    "view"
+  >;
+  getFunction(
+    nameOrSignature: "lastPhaseChange"
+  ): TypedContractMethod<[], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "minStakingTime"
+  ): TypedContractMethod<[], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "nextDelayedSetStake"
+  ): TypedContractMethod<[], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "createDispute"
+  ): TypedContractMethod<
+    [_numberOfChoices: BigNumberish, _extraData: BytesLike],
+    [bigint],
+    "payable"
+  >;
+  getFunction(
+    nameOrSignature: "drawJurors"
+  ): TypedContractMethod<
+    [_disputeID: BigNumberish, _iterations: BigNumberish],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "createSubcourt"
+  ): TypedContractMethod<
+    [
+      _parent: BigNumberish,
+      _hiddenVotes: boolean,
+      _minStake: BigNumberish,
+      _alpha: BigNumberish,
+      _feeForJuror: BigNumberish,
+      _jurorsForCourtJump: BigNumberish,
+      _timesPerPeriod: [BigNumberish, BigNumberish, BigNumberish, BigNumberish],
+      _sortitionSumTreeK: BigNumberish
+    ],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "getJuror"
+  ): TypedContractMethod<[_account: AddressLike], [bigint[]], "view">;
+  getFunction(
+    nameOrSignature: "onApprove"
+  ): TypedContractMethod<
+    [_owner: AddressLike, _spender: AddressLike, _amount: BigNumberish],
+    [boolean],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "jurors"
+  ): TypedContractMethod<
+    [arg0: AddressLike],
+    [[bigint, bigint] & { stakedTokens: bigint; lockedTokens: bigint }],
+    "view"
+  >;
+  getFunction(
+    nameOrSignature: "changeMaxDrawingTime"
+  ): TypedContractMethod<[_maxDrawingTime: BigNumberish], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "getDispute"
+  ): TypedContractMethod<
+    [_disputeID: BigNumberish],
+    [
+      [bigint[], bigint[], bigint[], bigint[], bigint[], bigint[]] & {
+        votesLengths: bigint[];
+        tokensAtStakePerJuror: bigint[];
+        totalFeesForJurors: bigint[];
+        votesInEachRound: bigint[];
+        repartitionsInEachRound: bigint[];
+        penaltiesInEachRound: bigint[];
       }
-    >;
-
-    changeMaxDrawingTime(
-      _maxDrawingTime: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<void>;
-
-    getDispute(
-      _disputeID: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<
-      [
-        BigNumber[],
-        BigNumber[],
-        BigNumber[],
-        BigNumber[],
-        BigNumber[],
-        BigNumber[]
-      ] & {
-        votesLengths: BigNumber[];
-        tokensAtStakePerJuror: BigNumber[];
-        totalFeesForJurors: BigNumber[];
-        votesInEachRound: BigNumber[];
-        repartitionsInEachRound: BigNumber[];
-        penaltiesInEachRound: BigNumber[];
-      }
-    >;
-
-    getVoteCounter(
-      _disputeID: PromiseOrValue<BigNumberish>,
-      _appeal: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<
-      [BigNumber, BigNumber[], boolean] & {
-        winningChoice: BigNumber;
-        counts: BigNumber[];
+    ],
+    "view"
+  >;
+  getFunction(
+    nameOrSignature: "getVoteCounter"
+  ): TypedContractMethod<
+    [_disputeID: BigNumberish, _appeal: BigNumberish],
+    [
+      [bigint, bigint[], boolean] & {
+        winningChoice: bigint;
+        counts: bigint[];
         tied: boolean;
       }
-    >;
+    ],
+    "view"
+  >;
+  getFunction(
+    nameOrSignature: "changeGovernor"
+  ): TypedContractMethod<[_governor: AddressLike], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "MIN_JURORS"
+  ): TypedContractMethod<[], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "appealCost"
+  ): TypedContractMethod<
+    [_disputeID: BigNumberish, _extraData: BytesLike],
+    [bigint],
+    "view"
+  >;
+  getFunction(
+    nameOrSignature: "proxyPayment"
+  ): TypedContractMethod<[_owner: AddressLike], [boolean], "payable">;
+  getFunction(
+    nameOrSignature: "lockInsolventTransfers"
+  ): TypedContractMethod<[], [boolean], "view">;
+  getFunction(
+    nameOrSignature: "arbitrationCost"
+  ): TypedContractMethod<[_extraData: BytesLike], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "pinakion"
+  ): TypedContractMethod<[], [string], "view">;
 
-    changeGovernor(
-      _governor: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<void>;
-
-    MIN_JURORS(overrides?: CallOverrides): Promise<BigNumber>;
-
-    appealCost(
-      _disputeID: PromiseOrValue<BigNumberish>,
-      _extraData: PromiseOrValue<BytesLike>,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    proxyPayment(
-      _owner: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<boolean>;
-
-    lockInsolventTransfers(overrides?: CallOverrides): Promise<boolean>;
-
-    arbitrationCost(
-      _extraData: PromiseOrValue<BytesLike>,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    pinakion(overrides?: CallOverrides): Promise<string>;
-  };
+  getEvent(
+    key: "NewPhase"
+  ): TypedContractEvent<
+    NewPhaseEvent.InputTuple,
+    NewPhaseEvent.OutputTuple,
+    NewPhaseEvent.OutputObject
+  >;
+  getEvent(
+    key: "NewPeriod"
+  ): TypedContractEvent<
+    NewPeriodEvent.InputTuple,
+    NewPeriodEvent.OutputTuple,
+    NewPeriodEvent.OutputObject
+  >;
+  getEvent(
+    key: "StakeSet"
+  ): TypedContractEvent<
+    StakeSetEvent.InputTuple,
+    StakeSetEvent.OutputTuple,
+    StakeSetEvent.OutputObject
+  >;
+  getEvent(
+    key: "Draw"
+  ): TypedContractEvent<
+    DrawEvent.InputTuple,
+    DrawEvent.OutputTuple,
+    DrawEvent.OutputObject
+  >;
+  getEvent(
+    key: "TokenAndETHShift"
+  ): TypedContractEvent<
+    TokenAndETHShiftEvent.InputTuple,
+    TokenAndETHShiftEvent.OutputTuple,
+    TokenAndETHShiftEvent.OutputObject
+  >;
+  getEvent(
+    key: "DisputeCreation"
+  ): TypedContractEvent<
+    DisputeCreationEvent.InputTuple,
+    DisputeCreationEvent.OutputTuple,
+    DisputeCreationEvent.OutputObject
+  >;
+  getEvent(
+    key: "AppealPossible"
+  ): TypedContractEvent<
+    AppealPossibleEvent.InputTuple,
+    AppealPossibleEvent.OutputTuple,
+    AppealPossibleEvent.OutputObject
+  >;
+  getEvent(
+    key: "AppealDecision"
+  ): TypedContractEvent<
+    AppealDecisionEvent.InputTuple,
+    AppealDecisionEvent.OutputTuple,
+    AppealDecisionEvent.OutputObject
+  >;
 
   filters: {
-    "NewPhase(uint8)"(_phase?: null): NewPhaseEventFilter;
-    NewPhase(_phase?: null): NewPhaseEventFilter;
-
-    "NewPeriod(uint256,uint8)"(
-      _disputeID?: PromiseOrValue<BigNumberish> | null,
-      _period?: null
-    ): NewPeriodEventFilter;
-    NewPeriod(
-      _disputeID?: PromiseOrValue<BigNumberish> | null,
-      _period?: null
-    ): NewPeriodEventFilter;
-
-    "StakeSet(address,uint256,uint128,uint256)"(
-      _address?: PromiseOrValue<string> | null,
-      _subcourtID?: null,
-      _stake?: null,
-      _newTotalStake?: null
-    ): StakeSetEventFilter;
-    StakeSet(
-      _address?: PromiseOrValue<string> | null,
-      _subcourtID?: null,
-      _stake?: null,
-      _newTotalStake?: null
-    ): StakeSetEventFilter;
-
-    "Draw(address,uint256,uint256,uint256)"(
-      _address?: PromiseOrValue<string> | null,
-      _disputeID?: PromiseOrValue<BigNumberish> | null,
-      _appeal?: null,
-      _voteID?: null
-    ): DrawEventFilter;
-    Draw(
-      _address?: PromiseOrValue<string> | null,
-      _disputeID?: PromiseOrValue<BigNumberish> | null,
-      _appeal?: null,
-      _voteID?: null
-    ): DrawEventFilter;
-
-    "TokenAndETHShift(address,uint256,int256,int256)"(
-      _address?: PromiseOrValue<string> | null,
-      _disputeID?: PromiseOrValue<BigNumberish> | null,
-      _tokenAmount?: null,
-      _ETHAmount?: null
-    ): TokenAndETHShiftEventFilter;
-    TokenAndETHShift(
-      _address?: PromiseOrValue<string> | null,
-      _disputeID?: PromiseOrValue<BigNumberish> | null,
-      _tokenAmount?: null,
-      _ETHAmount?: null
-    ): TokenAndETHShiftEventFilter;
-
-    "DisputeCreation(uint256,address)"(
-      _disputeID?: PromiseOrValue<BigNumberish> | null,
-      _arbitrable?: PromiseOrValue<string> | null
-    ): DisputeCreationEventFilter;
-    DisputeCreation(
-      _disputeID?: PromiseOrValue<BigNumberish> | null,
-      _arbitrable?: PromiseOrValue<string> | null
-    ): DisputeCreationEventFilter;
-
-    "AppealPossible(uint256,address)"(
-      _disputeID?: PromiseOrValue<BigNumberish> | null,
-      _arbitrable?: PromiseOrValue<string> | null
-    ): AppealPossibleEventFilter;
-    AppealPossible(
-      _disputeID?: PromiseOrValue<BigNumberish> | null,
-      _arbitrable?: PromiseOrValue<string> | null
-    ): AppealPossibleEventFilter;
-
-    "AppealDecision(uint256,address)"(
-      _disputeID?: PromiseOrValue<BigNumberish> | null,
-      _arbitrable?: PromiseOrValue<string> | null
-    ): AppealDecisionEventFilter;
-    AppealDecision(
-      _disputeID?: PromiseOrValue<BigNumberish> | null,
-      _arbitrable?: PromiseOrValue<string> | null
-    ): AppealDecisionEventFilter;
-  };
-
-  estimateGas: {
-    changePinakion(
-      _pinakion: PromiseOrValue<string>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-
-    RNBlock(overrides?: CallOverrides): Promise<BigNumber>;
-
-    disputesWithoutJurors(overrides?: CallOverrides): Promise<BigNumber>;
-
-    passPhase(
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-
-    governor(overrides?: CallOverrides): Promise<BigNumber>;
-
-    lastDelayedSetStake(overrides?: CallOverrides): Promise<BigNumber>;
-
-    disputeStatus(
-      _disputeID: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    passPeriod(
-      _disputeID: PromiseOrValue<BigNumberish>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-
-    maxDrawingTime(overrides?: CallOverrides): Promise<BigNumber>;
-
-    currentRuling(
-      _disputeID: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    courts(
-      arg0: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    execute(
-      _disputeID: PromiseOrValue<BigNumberish>,
-      _appeal: PromiseOrValue<BigNumberish>,
-      _iterations: PromiseOrValue<BigNumberish>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-
-    ALPHA_DIVISOR(overrides?: CallOverrides): Promise<BigNumber>;
-
-    castVote(
-      _disputeID: PromiseOrValue<BigNumberish>,
-      _voteIDs: PromiseOrValue<BigNumberish>[],
-      _choice: PromiseOrValue<BigNumberish>,
-      _salt: PromiseOrValue<BigNumberish>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-
-    changeSubcourtMinStake(
-      _subcourtID: PromiseOrValue<BigNumberish>,
-      _minStake: PromiseOrValue<BigNumberish>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-
-    getSubcourt(
-      _subcourtID: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    appeal(
-      _disputeID: PromiseOrValue<BigNumberish>,
-      _extraData: PromiseOrValue<BytesLike>,
-      overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-
-    onTransfer(
-      _from: PromiseOrValue<string>,
-      _to: PromiseOrValue<string>,
-      _amount: PromiseOrValue<BigNumberish>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-
-    disputes(
-      arg0: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    changeSubcourtTimesPerPeriod(
-      _subcourtID: PromiseOrValue<BigNumberish>,
-      _timesPerPeriod: [
-        PromiseOrValue<BigNumberish>,
-        PromiseOrValue<BigNumberish>,
-        PromiseOrValue<BigNumberish>,
-        PromiseOrValue<BigNumberish>
-      ],
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-
-    changeSubcourtJurorFee(
-      _subcourtID: PromiseOrValue<BigNumberish>,
-      _feeForJuror: PromiseOrValue<BigNumberish>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-
-    changeSubcourtAlpha(
-      _subcourtID: PromiseOrValue<BigNumberish>,
-      _alpha: PromiseOrValue<BigNumberish>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-
-    castCommit(
-      _disputeID: PromiseOrValue<BigNumberish>,
-      _voteIDs: PromiseOrValue<BigNumberish>[],
-      _commit: PromiseOrValue<BytesLike>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-
-    RN(overrides?: CallOverrides): Promise<BigNumber>;
-
-    RNGenerator(overrides?: CallOverrides): Promise<BigNumber>;
-
-    executeGovernorProposal(
-      _destination: PromiseOrValue<string>,
-      _amount: PromiseOrValue<BigNumberish>,
-      _data: PromiseOrValue<BytesLike>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-
-    changeMinStakingTime(
-      _minStakingTime: PromiseOrValue<BigNumberish>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-
-    NON_PAYABLE_AMOUNT(overrides?: CallOverrides): Promise<BigNumber>;
-
-    setStake(
-      _subcourtID: PromiseOrValue<BigNumberish>,
-      _stake: PromiseOrValue<BigNumberish>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-
-    executeRuling(
-      _disputeID: PromiseOrValue<BigNumberish>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-
-    getVote(
-      _disputeID: PromiseOrValue<BigNumberish>,
-      _appeal: PromiseOrValue<BigNumberish>,
-      _voteID: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    changeRNGenerator(
-      _RNGenerator: PromiseOrValue<string>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-
-    executeDelayedSetStakes(
-      _iterations: PromiseOrValue<BigNumberish>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-
-    stakeOf(
-      _account: PromiseOrValue<string>,
-      _subcourtID: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    changeSubcourtJurorsForJump(
-      _subcourtID: PromiseOrValue<BigNumberish>,
-      _jurorsForCourtJump: PromiseOrValue<BigNumberish>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-
-    appealPeriod(
-      _disputeID: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    phase(overrides?: CallOverrides): Promise<BigNumber>;
-
-    MAX_STAKE_PATHS(overrides?: CallOverrides): Promise<BigNumber>;
-
-    delayedSetStakes(
-      arg0: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    lastPhaseChange(overrides?: CallOverrides): Promise<BigNumber>;
-
-    minStakingTime(overrides?: CallOverrides): Promise<BigNumber>;
-
-    nextDelayedSetStake(overrides?: CallOverrides): Promise<BigNumber>;
-
-    createDispute(
-      _numberOfChoices: PromiseOrValue<BigNumberish>,
-      _extraData: PromiseOrValue<BytesLike>,
-      overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-
-    drawJurors(
-      _disputeID: PromiseOrValue<BigNumberish>,
-      _iterations: PromiseOrValue<BigNumberish>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-
-    createSubcourt(
-      _parent: PromiseOrValue<BigNumberish>,
-      _hiddenVotes: PromiseOrValue<boolean>,
-      _minStake: PromiseOrValue<BigNumberish>,
-      _alpha: PromiseOrValue<BigNumberish>,
-      _feeForJuror: PromiseOrValue<BigNumberish>,
-      _jurorsForCourtJump: PromiseOrValue<BigNumberish>,
-      _timesPerPeriod: [
-        PromiseOrValue<BigNumberish>,
-        PromiseOrValue<BigNumberish>,
-        PromiseOrValue<BigNumberish>,
-        PromiseOrValue<BigNumberish>
-      ],
-      _sortitionSumTreeK: PromiseOrValue<BigNumberish>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-
-    getJuror(
-      _account: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    onApprove(
-      _owner: PromiseOrValue<string>,
-      _spender: PromiseOrValue<string>,
-      _amount: PromiseOrValue<BigNumberish>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-
-    jurors(
-      arg0: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    changeMaxDrawingTime(
-      _maxDrawingTime: PromiseOrValue<BigNumberish>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-
-    getDispute(
-      _disputeID: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    getVoteCounter(
-      _disputeID: PromiseOrValue<BigNumberish>,
-      _appeal: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    changeGovernor(
-      _governor: PromiseOrValue<string>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-
-    MIN_JURORS(overrides?: CallOverrides): Promise<BigNumber>;
-
-    appealCost(
-      _disputeID: PromiseOrValue<BigNumberish>,
-      _extraData: PromiseOrValue<BytesLike>,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    proxyPayment(
-      _owner: PromiseOrValue<string>,
-      overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-
-    lockInsolventTransfers(overrides?: CallOverrides): Promise<BigNumber>;
-
-    arbitrationCost(
-      _extraData: PromiseOrValue<BytesLike>,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    pinakion(overrides?: CallOverrides): Promise<BigNumber>;
-  };
-
-  populateTransaction: {
-    changePinakion(
-      _pinakion: PromiseOrValue<string>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
-
-    RNBlock(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    disputesWithoutJurors(
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    passPhase(
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
-
-    governor(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    lastDelayedSetStake(
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    disputeStatus(
-      _disputeID: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    passPeriod(
-      _disputeID: PromiseOrValue<BigNumberish>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
-
-    maxDrawingTime(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    currentRuling(
-      _disputeID: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    courts(
-      arg0: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    execute(
-      _disputeID: PromiseOrValue<BigNumberish>,
-      _appeal: PromiseOrValue<BigNumberish>,
-      _iterations: PromiseOrValue<BigNumberish>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
-
-    ALPHA_DIVISOR(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    castVote(
-      _disputeID: PromiseOrValue<BigNumberish>,
-      _voteIDs: PromiseOrValue<BigNumberish>[],
-      _choice: PromiseOrValue<BigNumberish>,
-      _salt: PromiseOrValue<BigNumberish>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
-
-    changeSubcourtMinStake(
-      _subcourtID: PromiseOrValue<BigNumberish>,
-      _minStake: PromiseOrValue<BigNumberish>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
-
-    getSubcourt(
-      _subcourtID: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    appeal(
-      _disputeID: PromiseOrValue<BigNumberish>,
-      _extraData: PromiseOrValue<BytesLike>,
-      overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
-
-    onTransfer(
-      _from: PromiseOrValue<string>,
-      _to: PromiseOrValue<string>,
-      _amount: PromiseOrValue<BigNumberish>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
-
-    disputes(
-      arg0: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    changeSubcourtTimesPerPeriod(
-      _subcourtID: PromiseOrValue<BigNumberish>,
-      _timesPerPeriod: [
-        PromiseOrValue<BigNumberish>,
-        PromiseOrValue<BigNumberish>,
-        PromiseOrValue<BigNumberish>,
-        PromiseOrValue<BigNumberish>
-      ],
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
-
-    changeSubcourtJurorFee(
-      _subcourtID: PromiseOrValue<BigNumberish>,
-      _feeForJuror: PromiseOrValue<BigNumberish>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
-
-    changeSubcourtAlpha(
-      _subcourtID: PromiseOrValue<BigNumberish>,
-      _alpha: PromiseOrValue<BigNumberish>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
-
-    castCommit(
-      _disputeID: PromiseOrValue<BigNumberish>,
-      _voteIDs: PromiseOrValue<BigNumberish>[],
-      _commit: PromiseOrValue<BytesLike>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
-
-    RN(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    RNGenerator(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    executeGovernorProposal(
-      _destination: PromiseOrValue<string>,
-      _amount: PromiseOrValue<BigNumberish>,
-      _data: PromiseOrValue<BytesLike>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
-
-    changeMinStakingTime(
-      _minStakingTime: PromiseOrValue<BigNumberish>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
-
-    NON_PAYABLE_AMOUNT(
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    setStake(
-      _subcourtID: PromiseOrValue<BigNumberish>,
-      _stake: PromiseOrValue<BigNumberish>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
-
-    executeRuling(
-      _disputeID: PromiseOrValue<BigNumberish>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
-
-    getVote(
-      _disputeID: PromiseOrValue<BigNumberish>,
-      _appeal: PromiseOrValue<BigNumberish>,
-      _voteID: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    changeRNGenerator(
-      _RNGenerator: PromiseOrValue<string>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
-
-    executeDelayedSetStakes(
-      _iterations: PromiseOrValue<BigNumberish>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
-
-    stakeOf(
-      _account: PromiseOrValue<string>,
-      _subcourtID: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    changeSubcourtJurorsForJump(
-      _subcourtID: PromiseOrValue<BigNumberish>,
-      _jurorsForCourtJump: PromiseOrValue<BigNumberish>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
-
-    appealPeriod(
-      _disputeID: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    phase(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    MAX_STAKE_PATHS(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    delayedSetStakes(
-      arg0: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    lastPhaseChange(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    minStakingTime(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    nextDelayedSetStake(
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    createDispute(
-      _numberOfChoices: PromiseOrValue<BigNumberish>,
-      _extraData: PromiseOrValue<BytesLike>,
-      overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
-
-    drawJurors(
-      _disputeID: PromiseOrValue<BigNumberish>,
-      _iterations: PromiseOrValue<BigNumberish>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
-
-    createSubcourt(
-      _parent: PromiseOrValue<BigNumberish>,
-      _hiddenVotes: PromiseOrValue<boolean>,
-      _minStake: PromiseOrValue<BigNumberish>,
-      _alpha: PromiseOrValue<BigNumberish>,
-      _feeForJuror: PromiseOrValue<BigNumberish>,
-      _jurorsForCourtJump: PromiseOrValue<BigNumberish>,
-      _timesPerPeriod: [
-        PromiseOrValue<BigNumberish>,
-        PromiseOrValue<BigNumberish>,
-        PromiseOrValue<BigNumberish>,
-        PromiseOrValue<BigNumberish>
-      ],
-      _sortitionSumTreeK: PromiseOrValue<BigNumberish>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
-
-    getJuror(
-      _account: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    onApprove(
-      _owner: PromiseOrValue<string>,
-      _spender: PromiseOrValue<string>,
-      _amount: PromiseOrValue<BigNumberish>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
-
-    jurors(
-      arg0: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    changeMaxDrawingTime(
-      _maxDrawingTime: PromiseOrValue<BigNumberish>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
-
-    getDispute(
-      _disputeID: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    getVoteCounter(
-      _disputeID: PromiseOrValue<BigNumberish>,
-      _appeal: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    changeGovernor(
-      _governor: PromiseOrValue<string>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
-
-    MIN_JURORS(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    appealCost(
-      _disputeID: PromiseOrValue<BigNumberish>,
-      _extraData: PromiseOrValue<BytesLike>,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    proxyPayment(
-      _owner: PromiseOrValue<string>,
-      overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
-
-    lockInsolventTransfers(
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    arbitrationCost(
-      _extraData: PromiseOrValue<BytesLike>,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    pinakion(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+    "NewPhase(uint8)": TypedContractEvent<
+      NewPhaseEvent.InputTuple,
+      NewPhaseEvent.OutputTuple,
+      NewPhaseEvent.OutputObject
+    >;
+    NewPhase: TypedContractEvent<
+      NewPhaseEvent.InputTuple,
+      NewPhaseEvent.OutputTuple,
+      NewPhaseEvent.OutputObject
+    >;
+
+    "NewPeriod(uint256,uint8)": TypedContractEvent<
+      NewPeriodEvent.InputTuple,
+      NewPeriodEvent.OutputTuple,
+      NewPeriodEvent.OutputObject
+    >;
+    NewPeriod: TypedContractEvent<
+      NewPeriodEvent.InputTuple,
+      NewPeriodEvent.OutputTuple,
+      NewPeriodEvent.OutputObject
+    >;
+
+    "StakeSet(address,uint256,uint128,uint256)": TypedContractEvent<
+      StakeSetEvent.InputTuple,
+      StakeSetEvent.OutputTuple,
+      StakeSetEvent.OutputObject
+    >;
+    StakeSet: TypedContractEvent<
+      StakeSetEvent.InputTuple,
+      StakeSetEvent.OutputTuple,
+      StakeSetEvent.OutputObject
+    >;
+
+    "Draw(address,uint256,uint256,uint256)": TypedContractEvent<
+      DrawEvent.InputTuple,
+      DrawEvent.OutputTuple,
+      DrawEvent.OutputObject
+    >;
+    Draw: TypedContractEvent<
+      DrawEvent.InputTuple,
+      DrawEvent.OutputTuple,
+      DrawEvent.OutputObject
+    >;
+
+    "TokenAndETHShift(address,uint256,int256,int256)": TypedContractEvent<
+      TokenAndETHShiftEvent.InputTuple,
+      TokenAndETHShiftEvent.OutputTuple,
+      TokenAndETHShiftEvent.OutputObject
+    >;
+    TokenAndETHShift: TypedContractEvent<
+      TokenAndETHShiftEvent.InputTuple,
+      TokenAndETHShiftEvent.OutputTuple,
+      TokenAndETHShiftEvent.OutputObject
+    >;
+
+    "DisputeCreation(uint256,address)": TypedContractEvent<
+      DisputeCreationEvent.InputTuple,
+      DisputeCreationEvent.OutputTuple,
+      DisputeCreationEvent.OutputObject
+    >;
+    DisputeCreation: TypedContractEvent<
+      DisputeCreationEvent.InputTuple,
+      DisputeCreationEvent.OutputTuple,
+      DisputeCreationEvent.OutputObject
+    >;
+
+    "AppealPossible(uint256,address)": TypedContractEvent<
+      AppealPossibleEvent.InputTuple,
+      AppealPossibleEvent.OutputTuple,
+      AppealPossibleEvent.OutputObject
+    >;
+    AppealPossible: TypedContractEvent<
+      AppealPossibleEvent.InputTuple,
+      AppealPossibleEvent.OutputTuple,
+      AppealPossibleEvent.OutputObject
+    >;
+
+    "AppealDecision(uint256,address)": TypedContractEvent<
+      AppealDecisionEvent.InputTuple,
+      AppealDecisionEvent.OutputTuple,
+      AppealDecisionEvent.OutputObject
+    >;
+    AppealDecision: TypedContractEvent<
+      AppealDecisionEvent.InputTuple,
+      AppealDecisionEvent.OutputTuple,
+      AppealDecisionEvent.OutputObject
+    >;
   };
 }

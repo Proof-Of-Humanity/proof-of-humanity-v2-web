@@ -4,50 +4,28 @@
 
 /* eslint-disable */
 import type {
-  TypedEventFilter,
-  TypedEvent,
+  TypedContractEvent,
+  TypedDeferredTopicFilter,
+  TypedEventLog,
   TypedListener,
-  OnEvent,
-  PromiseOrValue,
+  TypedContractMethod,
 } from "./common";
-import type { FunctionFragment, Result } from "@ethersproject/abi";
-import type { Listener, Provider } from "@ethersproject/providers";
 import type {
   BaseContract,
-  BigNumber,
   BigNumberish,
   BytesLike,
-  CallOverrides,
-  ContractTransaction,
-  Overrides,
-  PopulatedTransaction,
-  Signer,
-  utils,
+  FunctionFragment,
+  Result,
+  Interface,
+  AddressLike,
+  ContractRunner,
+  ContractMethod,
+  Listener,
 } from "ethers";
 
-export interface IHUBInterface extends utils.Interface {
-  functions: {
-    "deployedAt()": FunctionFragment;
-    "divisor()": FunctionFragment;
-    "inflate(uint256,uint256)": FunctionFragment;
-    "inflation()": FunctionFragment;
-    "issuance()": FunctionFragment;
-    "issuanceByStep(uint256)": FunctionFragment;
-    "limits(address,address)": FunctionFragment;
-    "name()": FunctionFragment;
-    "period()": FunctionFragment;
-    "periods()": FunctionFragment;
-    "pow(uint256,uint256)": FunctionFragment;
-    "signupBonus()": FunctionFragment;
-    "symbol()": FunctionFragment;
-    "timeout()": FunctionFragment;
-    "tokenToUser(address)": FunctionFragment;
-    "totalSupply()": FunctionFragment;
-    "userToToken(address)": FunctionFragment;
-  };
-
+export interface IHUBInterface extends Interface {
   getFunction(
-    nameOrSignatureOrTopic:
+    nameOrSignature:
       | "deployedAt"
       | "divisor"
       | "inflate"
@@ -74,24 +52,24 @@ export interface IHUBInterface extends utils.Interface {
   encodeFunctionData(functionFragment: "divisor", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "inflate",
-    values: [PromiseOrValue<BigNumberish>, PromiseOrValue<BigNumberish>]
+    values: [BigNumberish, BigNumberish]
   ): string;
   encodeFunctionData(functionFragment: "inflation", values?: undefined): string;
   encodeFunctionData(functionFragment: "issuance", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "issuanceByStep",
-    values: [PromiseOrValue<BigNumberish>]
+    values: [BigNumberish]
   ): string;
   encodeFunctionData(
     functionFragment: "limits",
-    values: [PromiseOrValue<string>, PromiseOrValue<string>]
+    values: [AddressLike, AddressLike]
   ): string;
   encodeFunctionData(functionFragment: "name", values?: undefined): string;
   encodeFunctionData(functionFragment: "period", values?: undefined): string;
   encodeFunctionData(functionFragment: "periods", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "pow",
-    values: [PromiseOrValue<BigNumberish>, PromiseOrValue<BigNumberish>]
+    values: [BigNumberish, BigNumberish]
   ): string;
   encodeFunctionData(
     functionFragment: "signupBonus",
@@ -101,7 +79,7 @@ export interface IHUBInterface extends utils.Interface {
   encodeFunctionData(functionFragment: "timeout", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "tokenToUser",
-    values: [PromiseOrValue<string>]
+    values: [AddressLike]
   ): string;
   encodeFunctionData(
     functionFragment: "totalSupply",
@@ -109,7 +87,7 @@ export interface IHUBInterface extends utils.Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "userToToken",
-    values: [PromiseOrValue<string>]
+    values: [AddressLike]
   ): string;
 
   decodeFunctionResult(functionFragment: "deployedAt", data: BytesLike): Result;
@@ -144,318 +122,165 @@ export interface IHUBInterface extends utils.Interface {
     functionFragment: "userToToken",
     data: BytesLike
   ): Result;
-
-  events: {};
 }
 
 export interface IHUB extends BaseContract {
-  connect(signerOrProvider: Signer | Provider | string): this;
-  attach(addressOrName: string): this;
+  connect(runner?: ContractRunner | null): BaseContract;
+  attach(addressOrName: AddressLike): this;
   deployed(): Promise<this>;
 
   interface: IHUBInterface;
 
-  queryFilter<TEvent extends TypedEvent>(
-    event: TypedEventFilter<TEvent>,
+  queryFilter<TCEvent extends TypedContractEvent>(
+    event: TCEvent,
     fromBlockOrBlockhash?: string | number | undefined,
     toBlock?: string | number | undefined
-  ): Promise<Array<TEvent>>;
+  ): Promise<Array<TypedEventLog<TCEvent>>>;
+  queryFilter<TCEvent extends TypedContractEvent>(
+    filter: TypedDeferredTopicFilter<TCEvent>,
+    fromBlockOrBlockhash?: string | number | undefined,
+    toBlock?: string | number | undefined
+  ): Promise<Array<TypedEventLog<TCEvent>>>;
 
-  listeners<TEvent extends TypedEvent>(
-    eventFilter?: TypedEventFilter<TEvent>
-  ): Array<TypedListener<TEvent>>;
-  listeners(eventName?: string): Array<Listener>;
-  removeAllListeners<TEvent extends TypedEvent>(
-    eventFilter: TypedEventFilter<TEvent>
-  ): this;
-  removeAllListeners(eventName?: string): this;
-  off: OnEvent<this>;
-  on: OnEvent<this>;
-  once: OnEvent<this>;
-  removeListener: OnEvent<this>;
+  on<TCEvent extends TypedContractEvent>(
+    event: TCEvent,
+    listener: TypedListener<TCEvent>
+  ): Promise<this>;
+  on<TCEvent extends TypedContractEvent>(
+    filter: TypedDeferredTopicFilter<TCEvent>,
+    listener: TypedListener<TCEvent>
+  ): Promise<this>;
 
-  functions: {
-    deployedAt(overrides?: CallOverrides): Promise<[BigNumber]>;
+  once<TCEvent extends TypedContractEvent>(
+    event: TCEvent,
+    listener: TypedListener<TCEvent>
+  ): Promise<this>;
+  once<TCEvent extends TypedContractEvent>(
+    filter: TypedDeferredTopicFilter<TCEvent>,
+    listener: TypedListener<TCEvent>
+  ): Promise<this>;
 
-    divisor(overrides?: CallOverrides): Promise<[BigNumber]>;
+  listeners<TCEvent extends TypedContractEvent>(
+    event: TCEvent
+  ): Promise<Array<TypedListener<TCEvent>>>;
+  listeners(eventName?: string): Promise<Array<Listener>>;
+  removeAllListeners<TCEvent extends TypedContractEvent>(
+    event?: TCEvent
+  ): Promise<this>;
 
-    inflate(
-      arg0: PromiseOrValue<BigNumberish>,
-      arg1: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<[BigNumber]>;
+  deployedAt: TypedContractMethod<[], [bigint], "view">;
 
-    inflation(overrides?: CallOverrides): Promise<[BigNumber]>;
+  divisor: TypedContractMethod<[], [bigint], "view">;
 
-    issuance(overrides?: CallOverrides): Promise<[BigNumber]>;
+  inflate: TypedContractMethod<
+    [arg0: BigNumberish, arg1: BigNumberish],
+    [bigint],
+    "view"
+  >;
 
-    issuanceByStep(
-      arg0: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<[BigNumber]>;
+  inflation: TypedContractMethod<[], [bigint], "view">;
 
-    limits(
-      arg0: PromiseOrValue<string>,
-      arg1: PromiseOrValue<string>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
+  issuance: TypedContractMethod<[], [bigint], "view">;
 
-    name(overrides?: CallOverrides): Promise<[string]>;
+  issuanceByStep: TypedContractMethod<[arg0: BigNumberish], [bigint], "view">;
 
-    period(overrides?: CallOverrides): Promise<[BigNumber]>;
+  limits: TypedContractMethod<
+    [arg0: AddressLike, arg1: AddressLike],
+    [bigint],
+    "nonpayable"
+  >;
 
-    periods(overrides?: CallOverrides): Promise<[BigNumber]>;
+  name: TypedContractMethod<[], [string], "view">;
 
-    pow(
-      arg0: PromiseOrValue<BigNumberish>,
-      arg1: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<[BigNumber]>;
+  period: TypedContractMethod<[], [bigint], "view">;
 
-    signupBonus(overrides?: CallOverrides): Promise<[BigNumber]>;
+  periods: TypedContractMethod<[], [bigint], "view">;
 
-    symbol(overrides?: CallOverrides): Promise<[string]>;
+  pow: TypedContractMethod<
+    [arg0: BigNumberish, arg1: BigNumberish],
+    [bigint],
+    "view"
+  >;
 
-    timeout(overrides?: CallOverrides): Promise<[BigNumber]>;
+  signupBonus: TypedContractMethod<[], [bigint], "view">;
 
-    tokenToUser(
-      arg0: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<[string]>;
+  symbol: TypedContractMethod<[], [string], "view">;
 
-    totalSupply(overrides?: CallOverrides): Promise<[BigNumber]>;
+  timeout: TypedContractMethod<[], [bigint], "view">;
 
-    userToToken(
-      arg0: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<[string]>;
-  };
+  tokenToUser: TypedContractMethod<[arg0: AddressLike], [string], "view">;
 
-  deployedAt(overrides?: CallOverrides): Promise<BigNumber>;
+  totalSupply: TypedContractMethod<[], [bigint], "view">;
 
-  divisor(overrides?: CallOverrides): Promise<BigNumber>;
+  userToToken: TypedContractMethod<[arg0: AddressLike], [string], "view">;
 
-  inflate(
-    arg0: PromiseOrValue<BigNumberish>,
-    arg1: PromiseOrValue<BigNumberish>,
-    overrides?: CallOverrides
-  ): Promise<BigNumber>;
+  getFunction<T extends ContractMethod = ContractMethod>(
+    key: string | FunctionFragment
+  ): T;
 
-  inflation(overrides?: CallOverrides): Promise<BigNumber>;
-
-  issuance(overrides?: CallOverrides): Promise<BigNumber>;
-
-  issuanceByStep(
-    arg0: PromiseOrValue<BigNumberish>,
-    overrides?: CallOverrides
-  ): Promise<BigNumber>;
-
-  limits(
-    arg0: PromiseOrValue<string>,
-    arg1: PromiseOrValue<string>,
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
-
-  name(overrides?: CallOverrides): Promise<string>;
-
-  period(overrides?: CallOverrides): Promise<BigNumber>;
-
-  periods(overrides?: CallOverrides): Promise<BigNumber>;
-
-  pow(
-    arg0: PromiseOrValue<BigNumberish>,
-    arg1: PromiseOrValue<BigNumberish>,
-    overrides?: CallOverrides
-  ): Promise<BigNumber>;
-
-  signupBonus(overrides?: CallOverrides): Promise<BigNumber>;
-
-  symbol(overrides?: CallOverrides): Promise<string>;
-
-  timeout(overrides?: CallOverrides): Promise<BigNumber>;
-
-  tokenToUser(
-    arg0: PromiseOrValue<string>,
-    overrides?: CallOverrides
-  ): Promise<string>;
-
-  totalSupply(overrides?: CallOverrides): Promise<BigNumber>;
-
-  userToToken(
-    arg0: PromiseOrValue<string>,
-    overrides?: CallOverrides
-  ): Promise<string>;
-
-  callStatic: {
-    deployedAt(overrides?: CallOverrides): Promise<BigNumber>;
-
-    divisor(overrides?: CallOverrides): Promise<BigNumber>;
-
-    inflate(
-      arg0: PromiseOrValue<BigNumberish>,
-      arg1: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    inflation(overrides?: CallOverrides): Promise<BigNumber>;
-
-    issuance(overrides?: CallOverrides): Promise<BigNumber>;
-
-    issuanceByStep(
-      arg0: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    limits(
-      arg0: PromiseOrValue<string>,
-      arg1: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    name(overrides?: CallOverrides): Promise<string>;
-
-    period(overrides?: CallOverrides): Promise<BigNumber>;
-
-    periods(overrides?: CallOverrides): Promise<BigNumber>;
-
-    pow(
-      arg0: PromiseOrValue<BigNumberish>,
-      arg1: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    signupBonus(overrides?: CallOverrides): Promise<BigNumber>;
-
-    symbol(overrides?: CallOverrides): Promise<string>;
-
-    timeout(overrides?: CallOverrides): Promise<BigNumber>;
-
-    tokenToUser(
-      arg0: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<string>;
-
-    totalSupply(overrides?: CallOverrides): Promise<BigNumber>;
-
-    userToToken(
-      arg0: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<string>;
-  };
+  getFunction(
+    nameOrSignature: "deployedAt"
+  ): TypedContractMethod<[], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "divisor"
+  ): TypedContractMethod<[], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "inflate"
+  ): TypedContractMethod<
+    [arg0: BigNumberish, arg1: BigNumberish],
+    [bigint],
+    "view"
+  >;
+  getFunction(
+    nameOrSignature: "inflation"
+  ): TypedContractMethod<[], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "issuance"
+  ): TypedContractMethod<[], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "issuanceByStep"
+  ): TypedContractMethod<[arg0: BigNumberish], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "limits"
+  ): TypedContractMethod<
+    [arg0: AddressLike, arg1: AddressLike],
+    [bigint],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "name"
+  ): TypedContractMethod<[], [string], "view">;
+  getFunction(
+    nameOrSignature: "period"
+  ): TypedContractMethod<[], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "periods"
+  ): TypedContractMethod<[], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "pow"
+  ): TypedContractMethod<
+    [arg0: BigNumberish, arg1: BigNumberish],
+    [bigint],
+    "view"
+  >;
+  getFunction(
+    nameOrSignature: "signupBonus"
+  ): TypedContractMethod<[], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "symbol"
+  ): TypedContractMethod<[], [string], "view">;
+  getFunction(
+    nameOrSignature: "timeout"
+  ): TypedContractMethod<[], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "tokenToUser"
+  ): TypedContractMethod<[arg0: AddressLike], [string], "view">;
+  getFunction(
+    nameOrSignature: "totalSupply"
+  ): TypedContractMethod<[], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "userToToken"
+  ): TypedContractMethod<[arg0: AddressLike], [string], "view">;
 
   filters: {};
-
-  estimateGas: {
-    deployedAt(overrides?: CallOverrides): Promise<BigNumber>;
-
-    divisor(overrides?: CallOverrides): Promise<BigNumber>;
-
-    inflate(
-      arg0: PromiseOrValue<BigNumberish>,
-      arg1: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    inflation(overrides?: CallOverrides): Promise<BigNumber>;
-
-    issuance(overrides?: CallOverrides): Promise<BigNumber>;
-
-    issuanceByStep(
-      arg0: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    limits(
-      arg0: PromiseOrValue<string>,
-      arg1: PromiseOrValue<string>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-
-    name(overrides?: CallOverrides): Promise<BigNumber>;
-
-    period(overrides?: CallOverrides): Promise<BigNumber>;
-
-    periods(overrides?: CallOverrides): Promise<BigNumber>;
-
-    pow(
-      arg0: PromiseOrValue<BigNumberish>,
-      arg1: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    signupBonus(overrides?: CallOverrides): Promise<BigNumber>;
-
-    symbol(overrides?: CallOverrides): Promise<BigNumber>;
-
-    timeout(overrides?: CallOverrides): Promise<BigNumber>;
-
-    tokenToUser(
-      arg0: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    totalSupply(overrides?: CallOverrides): Promise<BigNumber>;
-
-    userToToken(
-      arg0: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-  };
-
-  populateTransaction: {
-    deployedAt(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    divisor(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    inflate(
-      arg0: PromiseOrValue<BigNumberish>,
-      arg1: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    inflation(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    issuance(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    issuanceByStep(
-      arg0: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    limits(
-      arg0: PromiseOrValue<string>,
-      arg1: PromiseOrValue<string>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
-
-    name(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    period(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    periods(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    pow(
-      arg0: PromiseOrValue<BigNumberish>,
-      arg1: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    signupBonus(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    symbol(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    timeout(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    tokenToUser(
-      arg0: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    totalSupply(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    userToToken(
-      arg0: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-  };
 }

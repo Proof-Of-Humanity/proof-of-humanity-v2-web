@@ -12,7 +12,6 @@ import {
   useRevokeHumanity,
 } from "hooks/useProofOfHumanity";
 import useSwitchChain from "hooks/useSwitchChain";
-import { EvidenceFile } from "types/docs";
 import { machinifyId } from "utils/identifier";
 import { ipfs, uploadToIPFS } from "utils/ipfs";
 import { formatEth } from "utils/misc";

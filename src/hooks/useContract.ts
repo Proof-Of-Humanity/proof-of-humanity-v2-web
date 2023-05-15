@@ -1,7 +1,7 @@
 import { PoHContract } from "enums/PoHContract";
-import { BaseContract, Contract } from "ethers";
-import { useMemo } from "react";
-import { CONTRACT } from "constants/contracts";
+import { BaseContract } from "ethers";
+import { useEffect, useState } from "react";
+import { CONTRACT, SupportedContract } from "constants/contracts";
 import {
   CrossChainProofOfHumanity,
   GroupCurrencyToken,
@@ -10,25 +10,32 @@ import {
   PoHTokenManager,
   ProofOfHumanity,
   Token,
+  Token__factory,
 } from "generated/contracts";
-import TokenABI from "../assets/contracts/Token.json";
 import useWeb3 from "./useWeb3";
 
-const useContract = <T extends BaseContract = Contract>(
-  contract: PoHContract,
+const useContract = <T extends SupportedContract>(
+  pohContract: PoHContract,
   onlyNetwork: boolean = false
 ) => {
   const { account, chainId, library } = useWeb3(onlyNetwork);
+  const [contract, setContract] = useState<T | null>(null);
 
-  return useMemo(() => {
-    if (!library || !chainId) return null;
-
-    return new Contract(
-      CONTRACT[contract][chainId],
-      CONTRACT[contract].ABI,
-      account ? library.getSigner(account).connectUnchecked() : library
-    ) as T;
+  useEffect(() => {
+    (async () => {
+      setContract(
+        library && chainId
+          ? (new BaseContract(
+              CONTRACT[pohContract][chainId],
+              CONTRACT[pohContract].ABI,
+              account ? await library.getSigner(account) : library
+            ) as T)
+          : null
+      );
+    })();
   }, [library, chainId, account]);
+
+  return contract;
 };
 
 export default useContract;
@@ -55,14 +62,20 @@ export const usePoHTokenManager = (onlyNetwork = false) =>
 
 export const useToken = (address: string, onlyNetwork = false) => {
   const { account, library } = useWeb3(onlyNetwork);
+  const [contract, setContract] = useState<Token | null>(null);
 
-  return useMemo(() => {
-    if (!library) return null;
-
-    return new Contract(
-      address,
-      TokenABI,
-      account ? library.getSigner(account).connectUnchecked() : library
-    ) as Token;
+  useEffect(() => {
+    (async () => {
+      setContract(
+        library
+          ? Token__factory.connect(
+              address,
+              account ? await library.getSigner(account) : library
+            )
+          : null
+      );
+    })();
   }, [library, account]);
+
+  return contract;
 };

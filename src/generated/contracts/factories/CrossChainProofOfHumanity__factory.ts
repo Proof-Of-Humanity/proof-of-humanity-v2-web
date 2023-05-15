@@ -7,8 +7,7 @@ import type {
   CrossChainProofOfHumanity,
   CrossChainProofOfHumanityInterface,
 } from "../CrossChainProofOfHumanity";
-import type { Provider } from "@ethersproject/providers";
-import { Contract, Signer, utils } from "ethers";
+import { Contract, Interface, type ContractRunner } from "ethers";
 
 const _abi = [
   {
@@ -605,21 +604,21 @@ const _abi = [
     stateMutability: "nonpayable",
     type: "function",
   },
-];
+] as const;
 
 export class CrossChainProofOfHumanity__factory {
   static readonly abi = _abi;
   static createInterface(): CrossChainProofOfHumanityInterface {
-    return new utils.Interface(_abi) as CrossChainProofOfHumanityInterface;
+    return new Interface(_abi) as CrossChainProofOfHumanityInterface;
   }
   static connect(
     address: string,
-    signerOrProvider: Signer | Provider
+    runner?: ContractRunner | null
   ): CrossChainProofOfHumanity {
     return new Contract(
       address,
       _abi,
-      signerOrProvider
-    ) as CrossChainProofOfHumanity;
+      runner
+    ) as unknown as CrossChainProofOfHumanity;
   }
 }

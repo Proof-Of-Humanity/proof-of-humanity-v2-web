@@ -1,5 +1,5 @@
 import { PoHContract } from "enums/PoHContract";
-import { formatEther, parseEther } from "ethers/lib/utils";
+import { formatEther, parseEther } from "ethers";
 import { useState } from "react";
 import Field from "components/Field";
 import Label from "components/Label";

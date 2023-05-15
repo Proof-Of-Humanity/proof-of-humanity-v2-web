@@ -1,6 +1,16 @@
 import { ChainId } from "enums/ChainId";
 import { PoHContract } from "enums/PoHContract";
-import { ContractInterface } from "ethers";
+import { InterfaceAbi } from "ethers";
+import {
+  CrossChainProofOfHumanity,
+  GroupCurrencyToken,
+  IHUB,
+  KlerosLiquid,
+  PoHTokenManager,
+  ProofOfHumanity,
+  ProofOfHumanityOld,
+  Token,
+} from "generated/contracts";
 import CrossChainProofOfHumanityABI from "../assets/contracts/CrossChainProofOfHumanity.json";
 import GroupCurrencyTokenABI from "../assets/contracts/GroupCurrencyToken.json";
 import IHubABI from "../assets/contracts/IHUB.json";
@@ -11,7 +21,7 @@ import TokenABI from "../assets/contracts/Token.json";
 
 export const CONTRACT: Record<
   PoHContract,
-  { ABI: ContractInterface } & Record<number, string>
+  { ABI: InterfaceAbi } & Record<number, string>
 > = {
   [PoHContract.PROOF_OF_HUMANITY]: {
     ABI: ProofOfHumanityABI,
@@ -47,3 +57,13 @@ export const CONTRACT: Record<
     [ChainId.GNOSIS]: "0xfc81de412e3bf2d3ef25c341bc0b0e2717ae9efb",
   },
 };
+
+export type SupportedContract =
+  | ProofOfHumanity
+  | ProofOfHumanityOld
+  | CrossChainProofOfHumanity
+  | Token
+  | GroupCurrencyToken
+  | IHUB
+  | KlerosLiquid
+  | PoHTokenManager;
