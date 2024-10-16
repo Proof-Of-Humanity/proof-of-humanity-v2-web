@@ -5,7 +5,7 @@ import { useEffectOnce } from "@legendapp/state/react";
 import { colorForStatus } from "config/misc";
 import usePoHWrite from "contracts/hooks/usePoHWrite";
 import { ContractData } from "data/contract";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "react-toastify";
 import { Address, Hash, formatEther, hexToSignature } from "viem";
 import { useAccount, useChainId } from "wagmi";
@@ -94,8 +94,9 @@ export default withClientConnected<ActionBarProps>(function ActionBar({
   //   )
   // );
 
+  const errorRef = useRef(false);
+  const offChainRef = useRef(false);
   const [action, setAction] = useState(ActionType.NONE);
-
   const [didIVouchFor, setDidIVouchFor] = useState(false);
   const [isVouchOnchain, setIsVouchOnchain] = useState(false);
 
@@ -111,7 +112,16 @@ export default withClientConnected<ActionBarProps>(function ActionBar({
         return false;
       }) ||
         offChainVouches.some(
-          (voucher) => voucher.voucher.toLocaleLowerCase() === address?.toLocaleLowerCase()
+          (voucher) => {
+            if (voucher.voucher.toLocaleLowerCase() === address?.toLocaleLowerCase()) {
+              if (!offChainRef.current && userChainId === chain.id) {
+                toast.error("Off chain vouches cannot be removed");
+                offChainRef.current = true;
+              }
+              return true;
+            }
+            return false;
+          }
         ))
     );
   };
@@ -185,7 +195,8 @@ export default withClientConnected<ActionBarProps>(function ActionBar({
           toast.success("Request advanced to resolving state");
         },
         onFail() {
-          toast.error("No vouch is valid. Advance is not possible");
+          !errorRef.current && toast.error("No vouch is valid. Advance is not possible");
+          errorRef.current = true;
           setAction(ActionType.VOUCH);
         },
       }),
