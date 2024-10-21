@@ -1,6 +1,6 @@
-"use client";
+'use client';
 
-import Popup from "reactjs-popup";
+import Popup from 'reactjs-popup';
 
 interface ImageProps {
   uri: string;
@@ -8,11 +8,7 @@ interface ImageProps {
   trigger: JSX.Element | ((isOpen: boolean) => JSX.Element);
 }
 
-export default function Previewed({
-  uri,
-  trigger,
-  isVideo = false,
-}: ImageProps) {
+export default function Previewed({ uri, trigger, isVideo = false }: ImageProps) {
   return (
     <Popup trigger={trigger} modal nested>
       {(close) => (
@@ -20,14 +16,14 @@ export default function Previewed({
           <div className="backdrop" onClick={close}>
             {!isVideo && (
               <div
-                className="relative min-h-screen w-full bg-auto bg-no-repeat bg-center"
+                className="relative min-h-screen w-full bg-auto bg-center bg-no-repeat"
                 style={{ backgroundImage: `url(${uri})` }}
               />
             )}
           </div>
           {isVideo && (
             <video
-              className="fixed absolute-centered max-h-screen rounded z-30"
+              className="absolute-centered fixed z-30 max-h-screen rounded"
               src={uri}
               controls
               onEnded={close}

@@ -1,4 +1,4 @@
-import Popover from "components/Popover";
+import Popover from 'components/Popover';
 
 interface DropdownProps {
   title: string;
@@ -8,10 +8,12 @@ interface DropdownProps {
 const Dropdown: React.FC<DropdownProps> = ({ title, children }) => (
   <Popover
     trigger={
-      <button className="w-64 p-2 border text-primaryText rounded border-stroke bg-whiteBackground">{title}</button>
+      <button className="text-primaryText border-stroke bg-whiteBackground w-64 rounded border p-2">
+        {title}
+      </button>
     }
   >
-    <div className="flex flex-col bg-whiteBackground text-primaryText">{children}</div>
+    <div className="bg-whiteBackground text-primaryText flex flex-col">{children}</div>
   </Popover>
 );
 

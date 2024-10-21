@@ -1,24 +1,24 @@
-"use client";
+'use client';
 
-import { useState, useMemo } from "react";
-import ALink from "components/ExternalLink";
-import Field from "components/Field";
-import Label from "components/Label";
-import Modal from "components/Modal";
-import Uploader from "components/Uploader";
-import { ipfs, uploadToIPFS } from "utils/ipfs";
-import { formatEth } from "utils/misc";
-import { SupportedChain, SupportedChainId } from "config/chains";
-import usePoHWrite from "contracts/hooks/usePoHWrite";
-import { Hash } from "viem";
-import withClientConnected from "components/HighOrder/withClientConnected";
-import { useLoading } from "hooks/useLoading";
-import { toast } from "react-toastify";
-import DocumentIcon from "icons/NoteMajor.svg";
-import { enableReactUse } from "@legendapp/state/config/enableReactUse";
-import { useChainId, useSwitchNetwork } from "wagmi";
-import useWeb3Loaded from "hooks/useWeb3Loaded";
-import { ContractData } from "data/contract";
+import { useState, useMemo } from 'react';
+import ALink from 'components/ExternalLink';
+import Field from 'components/Field';
+import Label from 'components/Label';
+import Modal from 'components/Modal';
+import Uploader from 'components/Uploader';
+import { ipfs, uploadToIPFS } from 'utils/ipfs';
+import { formatEth } from 'utils/misc';
+import { SupportedChain, SupportedChainId } from 'config/chains';
+import usePoHWrite from 'contracts/hooks/usePoHWrite';
+import { Hash } from 'viem';
+import withClientConnected from 'components/HighOrder/withClientConnected';
+import { useLoading } from 'hooks/useLoading';
+import { toast } from 'react-toastify';
+import DocumentIcon from 'icons/NoteMajor.svg';
+import { enableReactUse } from '@legendapp/state/config/enableReactUse';
+import { useChainId, useSwitchNetwork } from 'wagmi';
+import useWeb3Loaded from 'hooks/useWeb3Loaded';
+import { ContractData } from 'data/contract';
 
 enableReactUse();
 
@@ -26,7 +26,7 @@ interface RevokeProps extends JSX.IntrinsicAttributes {
   cost: bigint;
   pohId: Hash;
   homeChain: SupportedChain;
-  arbitrationInfo: ContractData["arbitrationInfo"];
+  arbitrationInfo: ContractData['arbitrationInfo'];
 }
 
 export default withClientConnected<RevokeProps>(function Revoke({
@@ -35,45 +35,45 @@ export default withClientConnected<RevokeProps>(function Revoke({
   homeChain,
   arbitrationInfo,
 }) {
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
+  const [title, setTitle] = useState('');
+  const [description, setDescription] = useState('');
   const [file, setFile] = useState<File | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
-  const loading = useLoading(false, "Revoke");
+  const loading = useLoading(false, 'Revoke');
   const [pending] = loading.use();
   const connectedChainId = useChainId() as SupportedChainId;
   const web3Loaded = useWeb3Loaded();
   const { switchNetwork } = useSwitchNetwork();
 
   const [prepare] = usePoHWrite(
-    "revokeHumanity",
+    'revokeHumanity',
     useMemo(
       () => ({
         onReady(fire) {
           fire();
-          toast.info("Transaction pending");
+          toast.info('Transaction pending');
         },
         onError() {
           loading.stop();
-          toast.error("Transaction rejected");
+          toast.error('Transaction rejected');
         },
         onSuccess() {
           setModalOpen(false);
-          toast.success("Request created");
+          toast.success('Request created');
         },
       }),
-      [loading]
-    )
+      [loading],
+    ),
   );
 
   const submit = async () => {
     loading.start();
 
     const data = new FormData();
-    data.append("###", "evidence.json");
-    data.append("name", title);
-    data.append("description", description);
-    if (file) data.append("fileURI", file, file.name);
+    data.append('###', 'evidence.json');
+    data.append('name', title);
+    data.append('description', description);
+    if (file) data.append('fileURI', file, file.name);
 
     const evidenceUri = await uploadToIPFS(data);
 
@@ -82,10 +82,7 @@ export default withClientConnected<RevokeProps>(function Revoke({
 
   if (web3Loaded && homeChain.id !== connectedChainId)
     return (
-      <button
-        onClick={() => switchNetwork?.(homeChain.id)}
-        className="btn-sec mb-4"
-      >
+      <button onClick={() => switchNetwork?.(homeChain.id)} className="btn-sec mb-4">
         Connect to {homeChain.name} to revoke
       </button>
     );
@@ -101,30 +98,25 @@ export default withClientConnected<RevokeProps>(function Revoke({
         </button>
       }
     >
-      <div className="p-4 flex flex-col items-center">
+      <div className="flex flex-col items-center p-4">
         <ALink className="flex" href={ipfs(arbitrationInfo.policy)}>
-          <DocumentIcon className="fill-orange w-6 h-6" />
-          <strong className="mr-1 text-orange font-semibold">Policy</strong>
+          <DocumentIcon className="fill-orange h-6 w-6" />
+          <strong className="text-orange mr-1 font-semibold">Policy</strong>
         </ALink>
 
-        <span className="txt mt-8 text-primaryText">
+        <span className="txt text-primaryText mt-8">
           In order to request removal you need to deposit
         </span>
-        <span className="font-semibold text-xl text-primaryText">
+        <span className="text-primaryText text-xl font-semibold">
           {formatEth(cost)} {homeChain.nativeCurrency.symbol}
         </span>
 
-        <span className="m-4 text-primaryText">
-          Anyone can put a deposit claiming the removal to be incorrect. If no
-          one does, the individual is removed from the list. If one does, a
-          dispute is created.
+        <span className="text-primaryText m-4">
+          Anyone can put a deposit claiming the removal to be incorrect. If no one does, the
+          individual is removed from the list. If one does, a dispute is created.
         </span>
 
-        <Field
-          label="Title"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-        />
+        <Field label="Title" value={title} onChange={(e) => setTitle(e.target.value)} />
         <Field
           textarea
           label="Description (Your Arguments)"
@@ -134,13 +126,11 @@ export default withClientConnected<RevokeProps>(function Revoke({
         <Label>File</Label>
         <div className="bordered w-full rounded-sm">
           <Uploader
-            className="w-full flex justify-center bg-whiteBackgroundWithOpacity p-2 outline-dotted outline-white rounded-sm text-primaryText"
+            className="bg-whiteBackgroundWithOpacity text-primaryText flex w-full justify-center rounded-sm p-2 outline-dotted outline-white"
             type="all"
             onDrop={(acceptedFiles) => setFile(acceptedFiles[0])}
           >
-            {file
-              ? file.name
-              : "Drag 'n drop some files here, or click to select files"}
+            {file ? file.name : "Drag 'n drop some files here, or click to select files"}
           </Uploader>
         </div>
 

@@ -1,4 +1,4 @@
-import { sepolia, gnosisChiado } from "viem/chains";
+import { gnosisChiado, sepolia } from 'viem/chains';
 
 export const supportedChains = [sepolia, gnosisChiado];
 
@@ -37,6 +37,6 @@ export function getForeignChain(chainId: number) {
     case 11155111:
       return 10200;
     default:
-      throw new Error("chain not supported");
+      throw new Error('chain not supported');
   }
 }

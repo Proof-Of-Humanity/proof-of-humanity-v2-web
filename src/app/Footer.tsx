@@ -1,14 +1,10 @@
-import Image from "next/image";
-import ExternalLink from "components/ExternalLink";
+import Image from 'next/image';
+import ExternalLink from 'components/ExternalLink';
 
 const Footer: React.FC = () => (
-  <div className="bottom-0 w-full flex flex-wrap justify-center sm:justify-between items-center gap-y-[20px] gap-x-[240px] text-white text-lg header-background shadow-sm px-8 py-4">
-    <ExternalLink
-      className="flex items-center gap-2 text-sm"
-      href="https://kleros.io/"
-    >
-      BUILT BY{" "}
-      <Image alt="kleros" src="/logo/kleros.svg" width={96} height={24} />
+  <div className="header-background bottom-0 flex w-full flex-wrap items-center justify-center gap-x-[240px] gap-y-[20px] px-8 py-4 text-lg text-white shadow-sm sm:justify-between">
+    <ExternalLink className="flex items-center gap-2 text-sm" href="https://kleros.io/">
+      BUILT BY <Image alt="kleros" src="/logo/kleros.svg" width={96} height={24} />
     </ExternalLink>
 
     <div className="flex items-center gap-4">

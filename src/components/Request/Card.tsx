@@ -1,28 +1,28 @@
-"use client";
+'use client';
 
-import { SupportedChainId, idToChain } from "config/chains";
-import { colorForStatus } from "config/misc";
-import { queryToStatus } from "config/requests";
-import Link from "next/link";
-import { Suspense } from "react";
-import { Address, Hash } from "viem";
-import ChainLogo from "components/ChainLogo";
-import ErrorBoundary from "components/ErrorBoundary";
-import { WinnerClaimFragment } from "generated/graphql";
-import useIPFS from "hooks/useIPFS";
-import { EvidenceFile, RegistrationFile } from "types/docs";
-import { shortenAddress } from "utils/address";
-import { camelToTitle } from "utils/case";
-import { prettifyId } from "utils/identifier";
-import { ipfs } from "utils/ipfs";
-import { RequestsQueryItem } from "./Grid";
+import { SupportedChainId, idToChain } from 'config/chains';
+import { colorForStatus } from 'config/misc';
+import { queryToStatus } from 'config/requests';
+import Link from 'next/link';
+import { Suspense } from 'react';
+import { Address, Hash } from 'viem';
+import ChainLogo from 'components/ChainLogo';
+import ErrorBoundary from 'components/ErrorBoundary';
+import { WinnerClaimFragment } from 'generated/graphql';
+import useIPFS from 'hooks/useIPFS';
+import { EvidenceFile, RegistrationFile } from 'types/docs';
+import { shortenAddress } from 'utils/address';
+import { camelToTitle } from 'utils/case';
+import { prettifyId } from 'utils/identifier';
+import { ipfs } from 'utils/ipfs';
+import { RequestsQueryItem } from './Grid';
 
 interface ContentProps {
   chainId: SupportedChainId;
   revocation: boolean;
   registrationEvidenceRevokedReq: string;
-  evidence: RequestsQueryItem["evidenceGroup"]["evidence"];
-  claimer: RequestsQueryItem["claimer"];
+  evidence: RequestsQueryItem['evidenceGroup']['evidence'];
+  claimer: RequestsQueryItem['claimer'];
   requester: Address;
   humanity: { id: Hash } & WinnerClaimFragment;
   expired: boolean;
@@ -34,17 +34,15 @@ interface CardInterface extends ContentProps {
 }
 
 const LoadingFallback: React.FC = () => (
-  <div className="p-2 h-84 flex flex-col items-center bg-whiteBackground">
-    <div className="animate-pulse mx-auto mb-2 h-32 w-32 bg-grey rounded-full" />
-    <div className="animate-pulse w-1/2 h-4 bg-grey rounded" />
+  <div className="h-84 bg-whiteBackground flex flex-col items-center p-2">
+    <div className="bg-grey mx-auto mb-2 h-32 w-32 animate-pulse rounded-full" />
+    <div className="bg-grey h-4 w-1/2 animate-pulse rounded" />
   </div>
 );
 
-const ErrorFallback: React.FC<{ claimer?: { name?: string | null } }> = ({
-  claimer,
-}) => (
-  <div className="animate-pulse p-2 h-84 flex flex-col items-center bg-white">
-    <div className="mx-auto mb-2 h-32 w-32 bg-slate-200 rounded-full" />
+const ErrorFallback: React.FC<{ claimer?: { name?: string | null } }> = ({ claimer }) => (
+  <div className="h-84 flex animate-pulse flex-col items-center bg-white p-2">
+    <div className="mx-auto mb-2 h-32 w-32 rounded-full bg-slate-200" />
     <span className="font-semibold">{claimer?.name}</span>
     <span>Some error occurred...</span>
   </div>
@@ -66,7 +64,7 @@ const Content = ({
         ? registrationEvidenceRevokedReq
         : humanity.winnerClaim.at(0)?.evidenceGroup.evidence.at(-1)?.uri
       : evidence.at(-1)?.uri,
-    { suspense: true }
+    { suspense: true },
   );
   const [data] = useIPFS<RegistrationFile>(evidenceURI?.fileURI, {
     suspense: true,
@@ -76,20 +74,20 @@ const Content = ({
     data && claimer.name && data.name !== claimer.name
       ? `${data?.name} (aka ${claimer.name})`
       : claimer.name
-      ? claimer.name
-      : data && data.name
-      ? data.name
-      : "";
+        ? claimer.name
+        : data && data.name
+          ? data.name
+          : '';
 
   return (
-    <div className="p-3 h-full flex flex-col items-center bg-whiteBackground">
+    <div className="bg-whiteBackground flex h-full flex-col items-center p-3">
       <div
-        className={"w-32 h-32 bg-no-repeat bg-cover bg-center rounded-full"}
+        className={'h-32 w-32 rounded-full bg-cover bg-center bg-no-repeat'}
         style={{ backgroundImage: `url('${ipfs(data?.photo!)}')` }}
       />
-      <span className="my-2 font-semibold truncate text-primaryText">{name}</span>
+      <span className="text-primaryText my-2 truncate font-semibold">{name}</span>
       <div className="grid grid-cols-3 items-center">
-        <ChainLogo chainId={chainId} className="w-4 h-4 fill-primaryText" />
+        <ChainLogo chainId={chainId} className="fill-primaryText h-4 w-4" />
         <span className="text-secondaryText">{shortenAddress(requester)}</span>
       </div>
     </div>
@@ -116,14 +114,14 @@ function Card({
   return (
     <Link
       href={`/${prettifyId(pohId)}/${chain.name.toLowerCase()}/${index}`}
-      className="h-84 rounded border border-stroke bg-whiteBackground shadow-sm flex-col overflow-hidden hover:scale-105 hover:z-10 hover:shadow-xl transition duration-150 ease-out cursor-pointer wiggle"
+      className="h-84 border-stroke bg-whiteBackground wiggle cursor-pointer flex-col overflow-hidden rounded border shadow-sm transition duration-150 ease-out hover:z-10 hover:scale-105 hover:shadow-xl"
     >
       <div className="justify-between font-light">
-        <div className={`w-full h-1 bg-status-${statusColor}`} />
-        <div className="p-2 centered font-medium">
+        <div className={`h-1 w-full bg-status-${statusColor}`} />
+        <div className="centered p-2 font-medium">
           <span className={`text-status-${statusColor}`}>
-            {status === "resolved" && expired && !revocation
-              ? "Expired"
+            {status === 'resolved' && expired && !revocation
+              ? 'Expired'
               : camelToTitle(statusTitle, revocation, expired)}
           </span>
           <span className={`dot ml-2 bg-status-${statusColor}`} />

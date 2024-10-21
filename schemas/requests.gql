@@ -1,11 +1,5 @@
 query Requests($skip: Int, $first: Int, $where: Request_filter) {
-  requests(
-    first: $first
-    skip: $skip
-    where: $where
-    orderBy: creationTime
-    orderDirection: desc
-  ) {
+  requests(first: $first, skip: $skip, where: $where, orderBy: creationTime, orderDirection: desc) {
     id
     index
     status {

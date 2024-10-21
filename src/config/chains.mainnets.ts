@@ -1,4 +1,4 @@
-import { mainnet, gnosis } from "viem/chains";
+import { gnosis, mainnet } from 'viem/chains';
 
 export const supportedChains = [mainnet, gnosis];
 
@@ -37,6 +37,6 @@ export function getForeignChain(chainId: number) {
     case 100:
       return 1;
     default:
-      throw new Error("chain not supported");
+      throw new Error('chain not supported');
   }
 }

@@ -1,6 +1,6 @@
-import cn from "classnames";
-import { InputHTMLAttributes, TextareaHTMLAttributes, useState } from "react";
-import Label from "./Label";
+import cn from 'classnames';
+import { InputHTMLAttributes, TextareaHTMLAttributes, useState } from 'react';
+import Label from './Label';
 
 type FieldProps = TextareaHTMLAttributes<HTMLTextAreaElement> &
   InputHTMLAttributes<HTMLInputElement> & {
@@ -12,28 +12,28 @@ function Field({ label, textarea = false, className, ...props }: FieldProps) {
   const [focused, setFocused] = useState(false);
 
   return (
-    <div className="w-full flex flex-col">
+    <div className="flex w-full flex-col">
       {label && <Label>{label}</Label>}
       <div
-        className={cn("w-full bordered", {
-          "ring-2 ring-offset-2 ring-theme/60": focused,
+        className={cn('bordered w-full', {
+          'ring-theme/60 ring-2 ring-offset-2': focused,
         })}
       >
         {textarea ? (
           <textarea
             className={cn(
-              "block w-full px-4 py-2 border-none bg-whiteBackgroundWithOpacity bg-blend-lighten rounded-sm transition ease-in-out font-medium text-primaryText",
-              "focus:ring-0",
-              className
+              'bg-whiteBackgroundWithOpacity text-primaryText block w-full rounded-sm border-none px-4 py-2 font-medium bg-blend-lighten transition ease-in-out',
+              'focus:ring-0',
+              className,
             )}
             {...props}
           />
         ) : (
           <input
             className={cn(
-              "block w-full px-4 py-2 border-none bg-whiteBackgroundWithOpacity bg-blend-overlay rounded-sm font-medium text-primaryText",
-              "focus-visible:outline-none",
-              className
+              'bg-whiteBackgroundWithOpacity text-primaryText block w-full rounded-sm border-none px-4 py-2 font-medium bg-blend-overlay',
+              'focus-visible:outline-none',
+              className,
             )}
             onFocus={() => setFocused(true)}
             onBlur={() => setFocused(false)}

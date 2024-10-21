@@ -1,5 +1,5 @@
-import { useParams } from "next/navigation";
-import { Hash, isHash } from "viem";
+import { useParams } from 'next/navigation';
+import { Hash, isHash } from 'viem';
 
 export default function useChainParam() {
   const params = useParams();

@@ -1,48 +1,49 @@
-"use client";
+'use client';
 
-import { useRef, useState } from "react";
-import Cropper from "react-easy-crop";
-import type { Area, Point } from "react-easy-crop/types";
-import { toast } from "react-toastify";
-import ReactWebcam from "react-webcam";
-import Uploader from "components/Uploader";
-import Webcam from "components/Webcam";
-import useFullscreen from "hooks/useFullscreen";
-import { useLoading } from "hooks/useLoading";
-import { getCroppedPhoto, sanitizeImage } from "utils/media";
-import { base64ToUint8Array } from "utils/misc";
-import { ObservableObject } from "@legendapp/state";
-import Image, { StaticImageData } from "next/image";
-import { MediaState } from "./Form";
-import Previewed from "components/Previewed";
-import CameraIcon from "icons/camera.svg";
-import CircleCancel from "icons/CircleCancelMinor.svg";
-import CircleTick from "icons/CircleTickMinor.svg";
-import CheckmarkIcon from "icons/MobileAcceptMajor.svg";
-import ResetIcon from "icons/ResetMinor.svg";
-import ZoomIcon from "icons/SearchMajor.svg";
-import UploadIcon from "icons/upload.svg";
+import { useRef, useState } from 'react';
+import Cropper from 'react-easy-crop';
+import type { Area, Point } from 'react-easy-crop/types';
+import { toast } from 'react-toastify';
+import ReactWebcam from 'react-webcam';
+import Uploader from 'components/Uploader';
+import Webcam from 'components/Webcam';
+import useFullscreen from 'hooks/useFullscreen';
+import { useLoading } from 'hooks/useLoading';
+import { getCroppedPhoto, sanitizeImage } from 'utils/media';
+import { base64ToUint8Array } from 'utils/misc';
+import { ObservableObject } from '@legendapp/state';
+import Image, { StaticImageData } from 'next/image';
+import { MediaState } from './Form';
+import Previewed from 'components/Previewed';
+import CameraIcon from 'icons/camera.svg';
+import CircleCancel from 'icons/CircleCancelMinor.svg';
+import CircleTick from 'icons/CircleTickMinor.svg';
+import CheckmarkIcon from 'icons/MobileAcceptMajor.svg';
+import ResetIcon from 'icons/ResetMinor.svg';
+import ZoomIcon from 'icons/SearchMajor.svg';
+import UploadIcon from 'icons/upload.svg';
 
 interface PhotoProps {
   advance: () => void;
-  photo$: ObservableObject<MediaState["photo"]>;
+  photo$: ObservableObject<MediaState['photo']>;
 }
 
-const ExamplePic: React.FC<
-  Omit<StaticImageData, "width" | "height"> & { wrong?: boolean }
-> = ({ wrong, ...imageProps }) => (
+const ExamplePic: React.FC<Omit<StaticImageData, 'width' | 'height'> & { wrong?: boolean }> = ({
+  wrong,
+  ...imageProps
+}) => (
   <div className="flex flex-col items-center">
     <Image
       alt="example"
-      className="h-36 w-36 mb-2 rounded-sm"
+      className="mb-2 h-36 w-36 rounded-sm"
       width={512}
       height={512}
       {...imageProps}
     />
     {wrong ? (
-      <CircleCancel className="w-6 h-6 fill-red-500" />
+      <CircleCancel className="h-6 w-6 fill-red-500" />
     ) : (
-      <CircleTick className="w-6 h-6 fill-green-500" />
+      <CircleTick className="h-6 w-6 fill-green-500" />
     )}
   </div>
 );
@@ -50,8 +51,7 @@ const ExamplePic: React.FC<
 function Photo({ advance, photo$ }: PhotoProps) {
   const photo = photo$.use();
   const fullscreenRef = useRef(null);
-  const { isFullscreen, setFullscreen, toggleFullscreen } =
-    useFullscreen(fullscreenRef);
+  const { isFullscreen, setFullscreen, toggleFullscreen } = useFullscreen(fullscreenRef);
 
   const [originalPhoto, setOriginalPhoto] = useState<{
     uri: string;
@@ -70,18 +70,15 @@ function Photo({ advance, photo$ }: PhotoProps) {
 
   const onCrop = async () => {
     if (!cropPixels || !originalPhoto) return;
-    if (cropPixels.width < 256 || cropPixels.height < 256)
-      return console.error("Size error");
+    if (cropPixels.width < 256 || cropPixels.height < 256) return console.error('Size error');
 
-    loading.start("Cropping photo");
+    loading.start('Cropping photo');
 
     const cropped = await getCroppedPhoto(originalPhoto.uri, cropPixels);
     if (!cropped) return;
 
     try {
-      const sanitized = await sanitizeImage(
-        Buffer.from(base64ToUint8Array(cropped.split(",")[1]))
-      );
+      const sanitized = await sanitizeImage(Buffer.from(base64ToUint8Array(cropped.split(',')[1])));
       photo$.set({ content: sanitized, uri: URL.createObjectURL(sanitized) });
     } catch (err: any) {
       toast.error(err.message);
@@ -97,9 +94,9 @@ function Photo({ advance, photo$ }: PhotoProps) {
     const screenshot = camera.getScreenshot();
     if (!screenshot) return;
 
-    const buffer = Buffer.from(base64ToUint8Array(screenshot.split(",")[1]));
+    const buffer = Buffer.from(base64ToUint8Array(screenshot.split(',')[1]));
     setOriginalPhoto({
-      uri: URL.createObjectURL(new Blob([buffer], { type: "buffer" })),
+      uri: URL.createObjectURL(new Blob([buffer], { type: 'buffer' })),
       buffer,
     });
 
@@ -118,77 +115,74 @@ function Photo({ advance, photo$ }: PhotoProps) {
 
   return (
     <>
-      <span className="w-full my-4 flex flex-col text-2xl font-semibold">
-        {originalPhoto && !photo ? "Crop photo" : "Take Photo"}
+      <span className="my-4 flex w-full flex-col text-2xl font-semibold">
+        {originalPhoto && !photo ? 'Crop photo' : 'Take Photo'}
         <div className="divider mt-4 w-2/3" />
       </span>
 
       <span className="pb-8">
         {originalPhoto && !photo
-          ? "Make sure your face is centered and not rotated"
-          : "The photo should include the face of the submitter facing the camera and the facial features must be visible"}
+          ? 'Make sure your face is centered and not rotated'
+          : 'The photo should include the face of the submitter facing the camera and the facial features must be visible'}
       </span>
 
       {!showCamera && !originalPhoto && !photo && (
         <div className="flex flex-col items-center">
-          <div className="w-full flex flex-col sm:flex-row pb-8">
-            <div className="w-fit m-auto flex flex-col items-center">
-              <span className="font-semibold pb-2">Facing the camera</span>
+          <div className="flex w-full flex-col pb-8 sm:flex-row">
+            <div className="m-auto flex w-fit flex-col items-center">
+              <span className="pb-2 font-semibold">Facing the camera</span>
               <div className="grid grid-cols-2 gap-2">
                 <ExamplePic src="/images/front-facing.jpg" />
                 <ExamplePic src="/images/not-front-facing.jpg" wrong={true} />
               </div>
             </div>
 
-            <div className="w-fit m-auto flex flex-col items-center">
-              <span className="font-semibold pb-2">No filters</span>
-              <div className="w-fit grid grid-cols-1">
+            <div className="m-auto flex w-fit flex-col items-center">
+              <span className="pb-2 font-semibold">No filters</span>
+              <div className="grid w-fit grid-cols-1">
                 <ExamplePic src="/images/b&w.jpg" wrong={true} />
               </div>
             </div>
           </div>
 
-          <div className="w-fit flex flex-col items-center">
-            <span className="font-semibold pb-2">
-              All facial features must be visible
-            </span>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+          <div className="flex w-fit flex-col items-center">
+            <span className="pb-2 font-semibold">All facial features must be visible</span>
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
               <ExamplePic src="/images/hijab.jpg" />
               <ExamplePic src="/images/niqab.jpg" wrong={true} />
               <ExamplePic src="/images/glasses.jpg" />
               <ExamplePic src="/images/sunglasses.jpg" wrong={true} />
             </div>
 
-            <div className="w-fit flex flex-col items-center">
-              <br/>
-              <span className="font-semibold pb-2">
-                Upload only in accepted formats (jpg, jpeg, png and webp) to avoid losing your deposit
+            <div className="flex w-fit flex-col items-center">
+              <br />
+              <span className="pb-2 font-semibold">
+                Upload only in accepted formats (jpg, jpeg, png and webp) to avoid losing your
+                deposit
               </span>
             </div>
           </div>
-          
-          <div className="relative w-full mt-12 bordered grid grid-cols-2">
+
+          <div className="bordered relative mt-12 grid w-full grid-cols-2">
             <Uploader
-              className="h-full flex items-center justify-center p-2 outline-dotted outline-white bg-whiteBackground rounded"
+              className="bg-whiteBackground flex h-full items-center justify-center rounded p-2 outline-dotted outline-white"
               type="image"
               onDrop={async (received) => {
                 const file = received[0];
                 setOriginalPhoto({
-                  uri: URL.createObjectURL(
-                    new Blob([file], { type: file.type })
-                  ),
+                  uri: URL.createObjectURL(new Blob([file], { type: file.type })),
                   buffer: Buffer.from(await file.arrayBuffer()),
                 });
               }}
               disabled={!!originalPhoto}
             >
-              <div className="mr-4 bg-orange w-12 h-12 rounded-full flex items-center justify-center">
-                <UploadIcon className="w-6 h-6" />
+              <div className="bg-orange mr-4 flex h-12 w-12 items-center justify-center rounded-full">
+                <UploadIcon className="h-6 w-6" />
               </div>
               <span className="text-lg font-medium">Upload photo</span>
             </Uploader>
 
-            <span className="absolute top-1/2 left-1/2 -translate-y-1/2 -translate-x-1/2 p-1 border-2 border-slate-200 bg-whiteBackground rounded-full text-orange text-xs font-semibold">
+            <span className="bg-whiteBackground text-orange absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-slate-200 p-1 text-xs font-semibold">
               OR
             </span>
 
@@ -200,7 +194,7 @@ function Photo({ advance, photo$ }: PhotoProps) {
                 <span>Take with</span>
                 <span>camera</span>
               </div>
-              <CameraIcon className="h-12 ml-4 fill-white" />
+              <CameraIcon className="ml-4 h-12 fill-white" />
             </button>
           </div>
         </div>
@@ -220,9 +214,9 @@ function Photo({ advance, photo$ }: PhotoProps) {
       {!showCamera && !!originalPhoto && !photo && (
         <>
           <div className="centered mx-12 mb-4">
-            <ZoomIcon className="w-6 h-6 mr-2 fill-theme" />
+            <ZoomIcon className="fill-theme mr-2 h-6 w-6" />
             <input
-              className="w-full h-0.5 bg-slate-200 appearance-none slider-thumb"
+              className="slider-thumb h-0.5 w-full appearance-none bg-slate-200"
               type="range"
               min={1}
               max={maxZoom}
@@ -232,7 +226,7 @@ function Photo({ advance, photo$ }: PhotoProps) {
             />
           </div>
 
-          <div className="relative w-full h-96 mb-2 bg-slate-200">
+          <div className="relative mb-2 h-96 w-full bg-slate-200">
             <Cropper
               image={originalPhoto?.uri}
               crop={crop}
@@ -244,15 +238,11 @@ function Photo({ advance, photo$ }: PhotoProps) {
               onCropComplete={(_area, croppedPixels) => {
                 setCropPixels(croppedPixels);
                 if (croppedPixels.width < 256 || croppedPixels.height < 256)
-                  console.error("Size error");
+                  console.error('Size error');
               }}
               onZoomChange={setZoom}
               onMediaLoaded={(media) => {
-                setMaxZoom(
-                  Math.floor(
-                    Math.min(media.naturalWidth, media.naturalHeight) / 256
-                  )
-                );
+                setMaxZoom(Math.floor(Math.min(media.naturalWidth, media.naturalHeight) / 256));
               }}
             />
           </div>
@@ -270,7 +260,7 @@ function Photo({ advance, photo$ }: PhotoProps) {
             </button>
           ) : (
             <button className="btn-main" onClick={onCrop}>
-              <CheckmarkIcon className="w-6 h-6 mr-2 fill-white" />
+              <CheckmarkIcon className="mr-2 h-6 w-6 fill-white" />
               Ready
             </button>
           )}
@@ -299,11 +289,11 @@ function Photo({ advance, photo$ }: PhotoProps) {
 
       {(showCamera || !!originalPhoto || !!photo) && (
         <button
-          className="centered mt-4 text-orange font-semibold text-lg uppercase"
+          className="centered text-orange mt-4 text-lg font-semibold uppercase"
           onClick={retakePhoto}
         >
-          <ResetIcon className="w-6 h-6 mr-2 fill-orange" />
-          {showCamera ? "Return" : "Retake"}
+          <ResetIcon className="fill-orange mr-2 h-6 w-6" />
+          {showCamera ? 'Return' : 'Retake'}
         </button>
       )}
     </>

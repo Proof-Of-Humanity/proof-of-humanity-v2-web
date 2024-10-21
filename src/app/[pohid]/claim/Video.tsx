@@ -1,22 +1,22 @@
-import getBlobDuration from "get-blob-duration";
-import React, { useRef, useState } from "react";
-import ReactWebcam from "react-webcam";
-import Uploader from "components/Uploader";
-import Webcam from "components/Webcam";
-import { IS_IOS } from "utils/media";
-import useFullscreen from "hooks/useFullscreen";
-import { useAccount } from "wagmi";
-import { ObservableObject } from "@legendapp/state";
-import { MediaState } from "./Form";
-import CameraIcon from "icons/CameraMajor.svg";
-import ResetIcon from "icons/ResetMinor.svg";
-import UploadIcon from "icons/upload.svg";
+import getBlobDuration from 'get-blob-duration';
+import React, { useRef, useState } from 'react';
+import ReactWebcam from 'react-webcam';
+import Uploader from 'components/Uploader';
+import Webcam from 'components/Webcam';
+import { IS_IOS } from 'utils/media';
+import useFullscreen from 'hooks/useFullscreen';
+import { useAccount } from 'wagmi';
+import { ObservableObject } from '@legendapp/state';
+import { MediaState } from './Form';
+import CameraIcon from 'icons/CameraMajor.svg';
+import ResetIcon from 'icons/ResetMinor.svg';
+import UploadIcon from 'icons/upload.svg';
 
 const MIN_DIMS = { width: 352, height: 352 };
 
 interface PhotoProps {
   advance: () => void;
-  video$: ObservableObject<MediaState["video"]>;
+  video$: ObservableObject<MediaState['video']>;
   isRenewal: boolean;
 }
 
@@ -26,8 +26,7 @@ function VideoStep({ advance, video$, isRenewal }: PhotoProps) {
   const { address } = useAccount();
 
   const fullscreenRef = useRef(null);
-  const { isFullscreen, setFullscreen, toggleFullscreen } =
-    useFullscreen(fullscreenRef);
+  const { isFullscreen, setFullscreen, toggleFullscreen } = useFullscreen(fullscreenRef);
 
   const [showCamera, setShowCamera] = useState(false);
   const [camera, setCamera] = useState<ReactWebcam | null>(null);
@@ -43,8 +42,7 @@ function VideoStep({ advance, video$, isRenewal }: PhotoProps) {
 
     mediaRecorder.ondataavailable = async ({ data }) => {
       const newlyRecorded = ([] as BlobPart[]).concat(data);
-      const blob = new Blob(newlyRecorded, 
-         {
+      const blob = new Blob(newlyRecorded, {
         type: `${IS_IOS ? 'video/mp4;codecs="h264"' : 'video/webm;codecs="vp8"'}`,
       });
       video$.set({ content: blob, uri: URL.createObjectURL(blob) });
@@ -73,35 +71,29 @@ function VideoStep({ advance, video$, isRenewal }: PhotoProps) {
     video$.delete();
   };
 
-  const phrase = 
-    isRenewal
-    ? "I certify I am a real human and I reapply to keep being part of this registry"
-    : "I certify that I am a real human and that I am not already registered in this registry";
-
+  const phrase = isRenewal
+    ? 'I certify I am a real human and I reapply to keep being part of this registry'
+    : 'I certify that I am a real human and that I am not already registered in this registry';
 
   return (
     <>
-      <span className="w-full my-4 flex flex-col text-2xl font-semibold">
+      <span className="my-4 flex w-full flex-col text-2xl font-semibold">
         Video
         <div className="divider mt-4 w-2/3" />
       </span>
 
-      <span className="flex flex-col text-center my-8 mx-12">
-        <span>
-          You must record yourself holding a sign with your wallet address
-        </span>
+      <span className="mx-12 my-8 flex flex-col text-center">
+        <span>You must record yourself holding a sign with your wallet address</span>
         <strong className="my-2">{address}</strong>
         <span>and say the phrase</span>
         <span className="my-2">
           <code className="text-orange">"</code>
-          <strong>
-            {phrase}
-          </strong>
+          <strong>{phrase}</strong>
           <code className="text-orange">"</code>
         </span>
       </span>
 
-      <span className="flex flex-col text-center my-8 mx-12">
+      <span className="mx-12 my-8 flex flex-col text-center">
         <span>
           <strong>
             Upload only in accepted formats (webm, mp4, avi, and mov) to avoid losing your deposit
@@ -110,9 +102,9 @@ function VideoStep({ advance, video$, isRenewal }: PhotoProps) {
       </span>
 
       {!showCamera && !video && (
-        <div className="relative w-full mt-12 bordered grid grid-cols-2">
+        <div className="bordered relative mt-12 grid w-full grid-cols-2">
           <Uploader
-            className="h-full flex items-center justify-center p-2 outline-dotted outline-white bg-whiteBackground rounded"
+            className="bg-whiteBackground flex h-full items-center justify-center rounded p-2 outline-dotted outline-white"
             type="video"
             onDrop={async (received) => {
               const file = received[0];
@@ -120,44 +112,41 @@ function VideoStep({ advance, video$, isRenewal }: PhotoProps) {
               const uri = URL.createObjectURL(blob);
 
               const duration = await getBlobDuration(blob);
-              if (duration > 60 * 2) return console.error("Video is too long");
+              if (duration > 60 * 2) return console.error('Video is too long');
 
-              const vid = document.createElement("video");
-              vid.crossOrigin = "anonymous";
+              const vid = document.createElement('video');
+              vid.crossOrigin = 'anonymous';
               vid.src = uri;
-              vid.preload = "auto";
+              vid.preload = 'auto';
 
-              vid.addEventListener("loadeddata", async () => {
-                if (
-                  vid.videoWidth < MIN_DIMS.width ||
-                  vid.videoHeight < MIN_DIMS.height
-                )
-                  return console.error("Video dimensions are too small");
+              vid.addEventListener('loadeddata', async () => {
+                if (vid.videoWidth < MIN_DIMS.width || vid.videoHeight < MIN_DIMS.height)
+                  return console.error('Video dimensions are too small');
 
                 setRecording(false);
                 video$.set({ uri, content: blob });
               });
             }}
           >
-            <div className="mr-4 bg-orange w-12 h-12 rounded-full flex items-center justify-center">
-              <UploadIcon className="w-6 h-6" />
+            <div className="bg-orange mr-4 flex h-12 w-12 items-center justify-center rounded-full">
+              <UploadIcon className="h-6 w-6" />
             </div>
             <span className="text-lg font-medium">Upload video</span>
           </Uploader>
 
-          <span className="absolute top-1/2 left-1/2 -translate-y-1/2 -translate-x-1/2 p-1 border-2 border-slate-200 bg-whiteBackground rounded-full text-orange text-xs font-semibold">
+          <span className="bg-whiteBackground text-orange absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-slate-200 p-1 text-xs font-semibold">
             OR
           </span>
 
           <button
-            className="flex items-center justify-center p-2 font-medium text-lg text-white"
+            className="flex items-center justify-center p-2 text-lg font-medium text-white"
             onClick={() => setShowCamera(true)}
           >
             <div className="flex flex-col">
               <span>Record with</span>
               <span>camera</span>
             </div>
-            <CameraIcon className="h-12 ml-4 fill-white" />
+            <CameraIcon className="ml-4 h-12 fill-white" />
           </button>
         </div>
       )}
@@ -187,11 +176,11 @@ function VideoStep({ advance, video$, isRenewal }: PhotoProps) {
 
       {(showCamera || !!video) && (
         <button
-          className="centered mt-4 text-orange font-semibold text-lg uppercase"
+          className="centered text-orange mt-4 text-lg font-semibold uppercase"
           onClick={() => retakeVideo()}
         >
-          <ResetIcon className="w-6 h-6 mr-2 fill-orange" />
-          {showCamera ? "Return" : "Retake"}
+          <ResetIcon className="fill-orange mr-2 h-6 w-6" />
+          {showCamera ? 'Return' : 'Retake'}
         </button>
       )}
     </>

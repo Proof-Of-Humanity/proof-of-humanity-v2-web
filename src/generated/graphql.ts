@@ -22,7 +22,7 @@ export type Scalars = {
 
 export enum Aggregation_Interval {
   Day = 'day',
-  Hour = 'hour'
+  Hour = 'hour',
 }
 
 export type ArbitratorHistory = {
@@ -35,7 +35,6 @@ export type ArbitratorHistory = {
   requests: Array<Request>;
   updateTime: Scalars['BigInt'];
 };
-
 
 export type ArbitratorHistoryRequestsArgs = {
   first?: InputMaybe<Scalars['Int']>;
@@ -136,7 +135,7 @@ export enum ArbitratorHistory_OrderBy {
   Id = 'id',
   RegistrationMeta = 'registrationMeta',
   Requests = 'requests',
-  UpdateTime = 'updateTime'
+  UpdateTime = 'updateTime',
 }
 
 export type BlockChangedFilter = {
@@ -162,7 +161,6 @@ export type Challenge = {
   rounds: Array<Round>;
   ruling: Party;
 };
-
 
 export type ChallengeRoundsArgs = {
   first?: InputMaybe<Scalars['Int']>;
@@ -331,7 +329,7 @@ export enum Challenge_OrderBy {
   Rounds = 'rounds',
   Ruling = 'ruling',
   RulingCount = 'ruling__count',
-  RulingId = 'ruling__id'
+  RulingId = 'ruling__id',
 }
 
 export type Challenger = {
@@ -341,7 +339,6 @@ export type Challenger = {
   wins: Array<Request>;
 };
 
-
 export type ChallengerChallengesArgs = {
   first?: InputMaybe<Scalars['Int']>;
   orderBy?: InputMaybe<Challenge_OrderBy>;
@@ -349,7 +346,6 @@ export type ChallengerChallengesArgs = {
   skip?: InputMaybe<Scalars['Int']>;
   where?: InputMaybe<Challenge_Filter>;
 };
-
 
 export type ChallengerWinsArgs = {
   first?: InputMaybe<Scalars['Int']>;
@@ -367,7 +363,6 @@ export type ChallengerFund = Fund & {
   id: Scalars['Bytes'];
   round: Round;
 };
-
 
 export type ChallengerFundContributionsArgs = {
   first?: InputMaybe<Scalars['Int']>;
@@ -420,7 +415,7 @@ export enum ChallengerFund_OrderBy {
   Round = 'round',
   RoundCreationTime = 'round__creationTime',
   RoundId = 'round__id',
-  RoundIndex = 'round__index'
+  RoundIndex = 'round__index',
 }
 
 export type Challenger_Filter = {
@@ -445,7 +440,7 @@ export type Challenger_Filter = {
 export enum Challenger_OrderBy {
   Challenges = 'challenges',
   Id = 'id',
-  Wins = 'wins'
+  Wins = 'wins',
 }
 
 export type Claimer = {
@@ -459,7 +454,6 @@ export type Claimer = {
   vouchesReceived: Array<Vouch>;
 };
 
-
 export type ClaimerVouchesArgs = {
   first?: InputMaybe<Scalars['Int']>;
   orderBy?: InputMaybe<Vouch_OrderBy>;
@@ -467,7 +461,6 @@ export type ClaimerVouchesArgs = {
   skip?: InputMaybe<Scalars['Int']>;
   where?: InputMaybe<Vouch_Filter>;
 };
-
 
 export type ClaimerVouchesReceivedArgs = {
   first?: InputMaybe<Scalars['Int']>;
@@ -565,7 +558,7 @@ export enum Claimer_OrderBy {
   RegistrationExpirationTime = 'registration__expirationTime',
   RegistrationId = 'registration__id',
   Vouches = 'vouches',
-  VouchesReceived = 'vouchesReceived'
+  VouchesReceived = 'vouchesReceived',
 }
 
 export type Contract = {
@@ -670,7 +663,7 @@ export enum Contract_OrderBy {
   LatestArbitratorHistoryRegistrationMeta = 'latestArbitratorHistory__registrationMeta',
   LatestArbitratorHistoryUpdateTime = 'latestArbitratorHistory__updateTime',
   RenewalPeriodDuration = 'renewalPeriodDuration',
-  RequiredNumberOfVouches = 'requiredNumberOfVouches'
+  RequiredNumberOfVouches = 'requiredNumberOfVouches',
 }
 
 export type Contribution = {
@@ -744,7 +737,7 @@ export enum Contribution_OrderBy {
   FundAmount = 'fund__amount',
   FundFeeRewards = 'fund__feeRewards',
   FundId = 'fund__id',
-  Id = 'id'
+  Id = 'id',
 }
 
 export type CrossChainGateway = {
@@ -782,7 +775,7 @@ export type CrossChainGateway_Filter = {
 
 export enum CrossChainGateway_OrderBy {
   ForeignProxy = 'foreignProxy',
-  Id = 'id'
+  Id = 'id',
 }
 
 export type CrossChainRegistration = {
@@ -854,7 +847,7 @@ export enum CrossChainRegistration_OrderBy {
   ClaimerNbVouchesReceived = 'claimer__nbVouchesReceived',
   ExpirationTime = 'expirationTime',
   Id = 'id',
-  LastReceivedTransferTimestamp = 'lastReceivedTransferTimestamp'
+  LastReceivedTransferTimestamp = 'lastReceivedTransferTimestamp',
 }
 
 export type Evidence = {
@@ -873,7 +866,6 @@ export type EvidenceGroup = {
   length: Scalars['BigInt'];
   request: Request;
 };
-
 
 export type EvidenceGroupEvidenceArgs = {
   first?: InputMaybe<Scalars['Int']>;
@@ -924,7 +916,7 @@ export enum EvidenceGroup_OrderBy {
   RequestRegistrationEvidenceRevokedReq = 'request__registrationEvidenceRevokedReq',
   RequestRequester = 'request__requester',
   RequestResolutionTime = 'request__resolutionTime',
-  RequestRevocation = 'request__revocation'
+  RequestRevocation = 'request__revocation',
 }
 
 export type Evidence_Filter = {
@@ -1010,7 +1002,7 @@ export enum Evidence_OrderBy {
   GroupLength = 'group__length',
   Id = 'id',
   Submitter = 'submitter',
-  Uri = 'uri'
+  Uri = 'uri',
 }
 
 export type Fund = {
@@ -1020,7 +1012,6 @@ export type Fund = {
   id: Scalars['Bytes'];
   round: Round;
 };
-
 
 export type FundContributionsArgs = {
   first?: InputMaybe<Scalars['Int']>;
@@ -1093,7 +1084,7 @@ export enum Fund_OrderBy {
   Round = 'round',
   RoundCreationTime = 'round__creationTime',
   RoundId = 'round__id',
-  RoundIndex = 'round__index'
+  RoundIndex = 'round__index',
 }
 
 export type Humanity = {
@@ -1111,7 +1102,6 @@ export type Humanity = {
   usedVouch?: Maybe<VouchInProcess>;
   vouching: Scalars['Boolean'];
 };
-
 
 export type HumanityRequestsArgs = {
   first?: InputMaybe<Scalars['Int']>;
@@ -1221,7 +1211,7 @@ export enum Humanity_OrderBy {
   UsedVouch = 'usedVouch',
   UsedVouchId = 'usedVouch__id',
   UsedVouchProcessed = 'usedVouch__processed',
-  Vouching = 'vouching'
+  Vouching = 'vouching',
 }
 
 export type InTransfer = {
@@ -1259,13 +1249,13 @@ export type InTransfer_Filter = {
 
 export enum InTransfer_OrderBy {
   HumanityId = 'humanityId',
-  Id = 'id'
+  Id = 'id',
 }
 
 /** Defines the order direction, either ascending or descending */
 export enum OrderDirection {
   Asc = 'asc',
-  Desc = 'desc'
+  Desc = 'desc',
 }
 
 export type OutTransfer = {
@@ -1325,7 +1315,7 @@ export enum OutTransfer_OrderBy {
   ForeignProxy = 'foreignProxy',
   Id = 'id',
   TransferHash = 'transferHash',
-  TransferTimestamp = 'transferTimestamp'
+  TransferTimestamp = 'transferTimestamp',
 }
 
 export type Party = {
@@ -1334,7 +1324,6 @@ export type Party = {
   count: Scalars['BigInt'];
   id: Scalars['ID'];
 };
-
 
 export type PartyChallengesWonArgs = {
   first?: InputMaybe<Scalars['Int']>;
@@ -1371,7 +1360,7 @@ export type Party_Filter = {
 export enum Party_OrderBy {
   ChallengesWon = 'challengesWon',
   Count = 'count',
-  Id = 'id'
+  Id = 'id',
 }
 
 export type Query = {
@@ -1429,11 +1418,9 @@ export type Query = {
   vouches: Array<Vouch>;
 };
 
-
 export type Query_MetaArgs = {
   block?: InputMaybe<Block_Height>;
 };
-
 
 export type QueryArbitratorHistoriesArgs = {
   block?: InputMaybe<Block_Height>;
@@ -1445,13 +1432,11 @@ export type QueryArbitratorHistoriesArgs = {
   where?: InputMaybe<ArbitratorHistory_Filter>;
 };
 
-
 export type QueryArbitratorHistoryArgs = {
   block?: InputMaybe<Block_Height>;
   id: Scalars['ID'];
   subgraphError?: _SubgraphErrorPolicy_;
 };
-
 
 export type QueryChallengeArgs = {
   block?: InputMaybe<Block_Height>;
@@ -1459,20 +1444,17 @@ export type QueryChallengeArgs = {
   subgraphError?: _SubgraphErrorPolicy_;
 };
 
-
 export type QueryChallengerArgs = {
   block?: InputMaybe<Block_Height>;
   id: Scalars['ID'];
   subgraphError?: _SubgraphErrorPolicy_;
 };
 
-
 export type QueryChallengerFundArgs = {
   block?: InputMaybe<Block_Height>;
   id: Scalars['ID'];
   subgraphError?: _SubgraphErrorPolicy_;
 };
-
 
 export type QueryChallengerFundsArgs = {
   block?: InputMaybe<Block_Height>;
@@ -1484,7 +1466,6 @@ export type QueryChallengerFundsArgs = {
   where?: InputMaybe<ChallengerFund_Filter>;
 };
 
-
 export type QueryChallengersArgs = {
   block?: InputMaybe<Block_Height>;
   first?: InputMaybe<Scalars['Int']>;
@@ -1494,7 +1475,6 @@ export type QueryChallengersArgs = {
   subgraphError?: _SubgraphErrorPolicy_;
   where?: InputMaybe<Challenger_Filter>;
 };
-
 
 export type QueryChallengesArgs = {
   block?: InputMaybe<Block_Height>;
@@ -1506,13 +1486,11 @@ export type QueryChallengesArgs = {
   where?: InputMaybe<Challenge_Filter>;
 };
 
-
 export type QueryClaimerArgs = {
   block?: InputMaybe<Block_Height>;
   id: Scalars['ID'];
   subgraphError?: _SubgraphErrorPolicy_;
 };
-
 
 export type QueryClaimersArgs = {
   block?: InputMaybe<Block_Height>;
@@ -1524,13 +1502,11 @@ export type QueryClaimersArgs = {
   where?: InputMaybe<Claimer_Filter>;
 };
 
-
 export type QueryContractArgs = {
   block?: InputMaybe<Block_Height>;
   id: Scalars['ID'];
   subgraphError?: _SubgraphErrorPolicy_;
 };
-
 
 export type QueryContractsArgs = {
   block?: InputMaybe<Block_Height>;
@@ -1542,13 +1518,11 @@ export type QueryContractsArgs = {
   where?: InputMaybe<Contract_Filter>;
 };
 
-
 export type QueryContributionArgs = {
   block?: InputMaybe<Block_Height>;
   id: Scalars['ID'];
   subgraphError?: _SubgraphErrorPolicy_;
 };
-
 
 export type QueryContributionsArgs = {
   block?: InputMaybe<Block_Height>;
@@ -1560,13 +1534,11 @@ export type QueryContributionsArgs = {
   where?: InputMaybe<Contribution_Filter>;
 };
 
-
 export type QueryCrossChainGatewayArgs = {
   block?: InputMaybe<Block_Height>;
   id: Scalars['ID'];
   subgraphError?: _SubgraphErrorPolicy_;
 };
-
 
 export type QueryCrossChainGatewaysArgs = {
   block?: InputMaybe<Block_Height>;
@@ -1578,13 +1550,11 @@ export type QueryCrossChainGatewaysArgs = {
   where?: InputMaybe<CrossChainGateway_Filter>;
 };
 
-
 export type QueryCrossChainRegistrationArgs = {
   block?: InputMaybe<Block_Height>;
   id: Scalars['ID'];
   subgraphError?: _SubgraphErrorPolicy_;
 };
-
 
 export type QueryCrossChainRegistrationsArgs = {
   block?: InputMaybe<Block_Height>;
@@ -1596,20 +1566,17 @@ export type QueryCrossChainRegistrationsArgs = {
   where?: InputMaybe<CrossChainRegistration_Filter>;
 };
 
-
 export type QueryEvidenceArgs = {
   block?: InputMaybe<Block_Height>;
   id: Scalars['ID'];
   subgraphError?: _SubgraphErrorPolicy_;
 };
 
-
 export type QueryEvidenceGroupArgs = {
   block?: InputMaybe<Block_Height>;
   id: Scalars['ID'];
   subgraphError?: _SubgraphErrorPolicy_;
 };
-
 
 export type QueryEvidenceGroupsArgs = {
   block?: InputMaybe<Block_Height>;
@@ -1621,7 +1588,6 @@ export type QueryEvidenceGroupsArgs = {
   where?: InputMaybe<EvidenceGroup_Filter>;
 };
 
-
 export type QueryEvidencesArgs = {
   block?: InputMaybe<Block_Height>;
   first?: InputMaybe<Scalars['Int']>;
@@ -1632,13 +1598,11 @@ export type QueryEvidencesArgs = {
   where?: InputMaybe<Evidence_Filter>;
 };
 
-
 export type QueryFundArgs = {
   block?: InputMaybe<Block_Height>;
   id: Scalars['ID'];
   subgraphError?: _SubgraphErrorPolicy_;
 };
-
 
 export type QueryFundsArgs = {
   block?: InputMaybe<Block_Height>;
@@ -1650,7 +1614,6 @@ export type QueryFundsArgs = {
   where?: InputMaybe<Fund_Filter>;
 };
 
-
 export type QueryHumanitiesArgs = {
   block?: InputMaybe<Block_Height>;
   first?: InputMaybe<Scalars['Int']>;
@@ -1661,20 +1624,17 @@ export type QueryHumanitiesArgs = {
   where?: InputMaybe<Humanity_Filter>;
 };
 
-
 export type QueryHumanityArgs = {
   block?: InputMaybe<Block_Height>;
   id: Scalars['ID'];
   subgraphError?: _SubgraphErrorPolicy_;
 };
 
-
 export type QueryInTransferArgs = {
   block?: InputMaybe<Block_Height>;
   id: Scalars['ID'];
   subgraphError?: _SubgraphErrorPolicy_;
 };
-
 
 export type QueryInTransfersArgs = {
   block?: InputMaybe<Block_Height>;
@@ -1686,13 +1646,11 @@ export type QueryInTransfersArgs = {
   where?: InputMaybe<InTransfer_Filter>;
 };
 
-
 export type QueryOutTransferArgs = {
   block?: InputMaybe<Block_Height>;
   id: Scalars['ID'];
   subgraphError?: _SubgraphErrorPolicy_;
 };
-
 
 export type QueryOutTransfersArgs = {
   block?: InputMaybe<Block_Height>;
@@ -1704,7 +1662,6 @@ export type QueryOutTransfersArgs = {
   where?: InputMaybe<OutTransfer_Filter>;
 };
 
-
 export type QueryPartiesArgs = {
   block?: InputMaybe<Block_Height>;
   first?: InputMaybe<Scalars['Int']>;
@@ -1715,20 +1672,17 @@ export type QueryPartiesArgs = {
   where?: InputMaybe<Party_Filter>;
 };
 
-
 export type QueryPartyArgs = {
   block?: InputMaybe<Block_Height>;
   id: Scalars['ID'];
   subgraphError?: _SubgraphErrorPolicy_;
 };
 
-
 export type QueryReasonArgs = {
   block?: InputMaybe<Block_Height>;
   id: Scalars['ID'];
   subgraphError?: _SubgraphErrorPolicy_;
 };
-
 
 export type QueryReasonsArgs = {
   block?: InputMaybe<Block_Height>;
@@ -1740,13 +1694,11 @@ export type QueryReasonsArgs = {
   where?: InputMaybe<Reason_Filter>;
 };
 
-
 export type QueryRegistrationArgs = {
   block?: InputMaybe<Block_Height>;
   id: Scalars['ID'];
   subgraphError?: _SubgraphErrorPolicy_;
 };
-
 
 export type QueryRegistrationsArgs = {
   block?: InputMaybe<Block_Height>;
@@ -1758,20 +1710,17 @@ export type QueryRegistrationsArgs = {
   where?: InputMaybe<Registration_Filter>;
 };
 
-
 export type QueryRequestArgs = {
   block?: InputMaybe<Block_Height>;
   id: Scalars['ID'];
   subgraphError?: _SubgraphErrorPolicy_;
 };
 
-
 export type QueryRequesterFundArgs = {
   block?: InputMaybe<Block_Height>;
   id: Scalars['ID'];
   subgraphError?: _SubgraphErrorPolicy_;
 };
-
 
 export type QueryRequesterFundsArgs = {
   block?: InputMaybe<Block_Height>;
@@ -1783,7 +1732,6 @@ export type QueryRequesterFundsArgs = {
   where?: InputMaybe<RequesterFund_Filter>;
 };
 
-
 export type QueryRequestsArgs = {
   block?: InputMaybe<Block_Height>;
   first?: InputMaybe<Scalars['Int']>;
@@ -1794,13 +1742,11 @@ export type QueryRequestsArgs = {
   where?: InputMaybe<Request_Filter>;
 };
 
-
 export type QueryRoundArgs = {
   block?: InputMaybe<Block_Height>;
   id: Scalars['ID'];
   subgraphError?: _SubgraphErrorPolicy_;
 };
-
 
 export type QueryRoundsArgs = {
   block?: InputMaybe<Block_Height>;
@@ -1812,13 +1758,11 @@ export type QueryRoundsArgs = {
   where?: InputMaybe<Round_Filter>;
 };
 
-
 export type QueryStatusArgs = {
   block?: InputMaybe<Block_Height>;
   id: Scalars['ID'];
   subgraphError?: _SubgraphErrorPolicy_;
 };
-
 
 export type QueryStatusesArgs = {
   block?: InputMaybe<Block_Height>;
@@ -1830,7 +1774,6 @@ export type QueryStatusesArgs = {
   where?: InputMaybe<Status_Filter>;
 };
 
-
 export type QuerySubmissionSearchArgs = {
   block?: InputMaybe<Block_Height>;
   first?: InputMaybe<Scalars['Int']>;
@@ -1840,20 +1783,17 @@ export type QuerySubmissionSearchArgs = {
   where?: InputMaybe<Claimer_Filter>;
 };
 
-
 export type QueryVouchArgs = {
   block?: InputMaybe<Block_Height>;
   id: Scalars['ID'];
   subgraphError?: _SubgraphErrorPolicy_;
 };
 
-
 export type QueryVouchInProcessArgs = {
   block?: InputMaybe<Block_Height>;
   id: Scalars['ID'];
   subgraphError?: _SubgraphErrorPolicy_;
 };
-
 
 export type QueryVouchInProcessesArgs = {
   block?: InputMaybe<Block_Height>;
@@ -1864,7 +1804,6 @@ export type QueryVouchInProcessesArgs = {
   subgraphError?: _SubgraphErrorPolicy_;
   where?: InputMaybe<VouchInProcess_Filter>;
 };
-
 
 export type QueryVouchesArgs = {
   block?: InputMaybe<Block_Height>;
@@ -1882,7 +1821,6 @@ export type Reason = {
   count: Scalars['BigInt'];
   id: Scalars['ID'];
 };
-
 
 export type ReasonChallengesArgs = {
   first?: InputMaybe<Scalars['Int']>;
@@ -1919,7 +1857,7 @@ export type Reason_Filter = {
 export enum Reason_OrderBy {
   Challenges = 'challenges',
   Count = 'count',
-  Id = 'id'
+  Id = 'id',
 }
 
 export type Registration = {
@@ -2013,7 +1951,7 @@ export enum Registration_OrderBy {
   HumanityNbRequests = 'humanity__nbRequests',
   HumanityPendingRevocation = 'humanity__pendingRevocation',
   HumanityVouching = 'humanity__vouching',
-  Id = 'id'
+  Id = 'id',
 }
 
 export type Request = {
@@ -2040,7 +1978,6 @@ export type Request = {
   winnerParty?: Maybe<Party>;
 };
 
-
 export type RequestChallengesArgs = {
   first?: InputMaybe<Scalars['Int']>;
   orderBy?: InputMaybe<Challenge_OrderBy>;
@@ -2048,7 +1985,6 @@ export type RequestChallengesArgs = {
   skip?: InputMaybe<Scalars['Int']>;
   where?: InputMaybe<Challenge_Filter>;
 };
-
 
 export type RequestVouchesArgs = {
   first?: InputMaybe<Scalars['Int']>;
@@ -2357,7 +2293,7 @@ export enum Request_OrderBy {
   Vouches = 'vouches',
   WinnerParty = 'winnerParty',
   WinnerPartyCount = 'winnerParty__count',
-  WinnerPartyId = 'winnerParty__id'
+  WinnerPartyId = 'winnerParty__id',
 }
 
 export type RequesterFund = Fund & {
@@ -2368,7 +2304,6 @@ export type RequesterFund = Fund & {
   id: Scalars['Bytes'];
   round: Round;
 };
-
 
 export type RequesterFundContributionsArgs = {
   first?: InputMaybe<Scalars['Int']>;
@@ -2421,7 +2356,7 @@ export enum RequesterFund_OrderBy {
   Round = 'round',
   RoundCreationTime = 'round__creationTime',
   RoundId = 'round__id',
-  RoundIndex = 'round__index'
+  RoundIndex = 'round__index',
 }
 
 export type Round = {
@@ -2547,7 +2482,7 @@ export enum Round_OrderBy {
   RequesterFund = 'requesterFund',
   RequesterFundAmount = 'requesterFund__amount',
   RequesterFundFeeRewards = 'requesterFund__feeRewards',
-  RequesterFundId = 'requesterFund__id'
+  RequesterFundId = 'requesterFund__id',
 }
 
 export type Status = {
@@ -2556,7 +2491,6 @@ export type Status = {
   id: Scalars['ID'];
   requests: Array<Request>;
 };
-
 
 export type StatusRequestsArgs = {
   first?: InputMaybe<Scalars['Int']>;
@@ -2593,7 +2527,7 @@ export type Status_Filter = {
 export enum Status_OrderBy {
   Count = 'count',
   Id = 'id',
-  Requests = 'requests'
+  Requests = 'requests',
 }
 
 export type Subscription = {
@@ -2650,11 +2584,9 @@ export type Subscription = {
   vouches: Array<Vouch>;
 };
 
-
 export type Subscription_MetaArgs = {
   block?: InputMaybe<Block_Height>;
 };
-
 
 export type SubscriptionArbitratorHistoriesArgs = {
   block?: InputMaybe<Block_Height>;
@@ -2666,13 +2598,11 @@ export type SubscriptionArbitratorHistoriesArgs = {
   where?: InputMaybe<ArbitratorHistory_Filter>;
 };
 
-
 export type SubscriptionArbitratorHistoryArgs = {
   block?: InputMaybe<Block_Height>;
   id: Scalars['ID'];
   subgraphError?: _SubgraphErrorPolicy_;
 };
-
 
 export type SubscriptionChallengeArgs = {
   block?: InputMaybe<Block_Height>;
@@ -2680,20 +2610,17 @@ export type SubscriptionChallengeArgs = {
   subgraphError?: _SubgraphErrorPolicy_;
 };
 
-
 export type SubscriptionChallengerArgs = {
   block?: InputMaybe<Block_Height>;
   id: Scalars['ID'];
   subgraphError?: _SubgraphErrorPolicy_;
 };
 
-
 export type SubscriptionChallengerFundArgs = {
   block?: InputMaybe<Block_Height>;
   id: Scalars['ID'];
   subgraphError?: _SubgraphErrorPolicy_;
 };
-
 
 export type SubscriptionChallengerFundsArgs = {
   block?: InputMaybe<Block_Height>;
@@ -2705,7 +2632,6 @@ export type SubscriptionChallengerFundsArgs = {
   where?: InputMaybe<ChallengerFund_Filter>;
 };
 
-
 export type SubscriptionChallengersArgs = {
   block?: InputMaybe<Block_Height>;
   first?: InputMaybe<Scalars['Int']>;
@@ -2715,7 +2641,6 @@ export type SubscriptionChallengersArgs = {
   subgraphError?: _SubgraphErrorPolicy_;
   where?: InputMaybe<Challenger_Filter>;
 };
-
 
 export type SubscriptionChallengesArgs = {
   block?: InputMaybe<Block_Height>;
@@ -2727,13 +2652,11 @@ export type SubscriptionChallengesArgs = {
   where?: InputMaybe<Challenge_Filter>;
 };
 
-
 export type SubscriptionClaimerArgs = {
   block?: InputMaybe<Block_Height>;
   id: Scalars['ID'];
   subgraphError?: _SubgraphErrorPolicy_;
 };
-
 
 export type SubscriptionClaimersArgs = {
   block?: InputMaybe<Block_Height>;
@@ -2745,13 +2668,11 @@ export type SubscriptionClaimersArgs = {
   where?: InputMaybe<Claimer_Filter>;
 };
 
-
 export type SubscriptionContractArgs = {
   block?: InputMaybe<Block_Height>;
   id: Scalars['ID'];
   subgraphError?: _SubgraphErrorPolicy_;
 };
-
 
 export type SubscriptionContractsArgs = {
   block?: InputMaybe<Block_Height>;
@@ -2763,13 +2684,11 @@ export type SubscriptionContractsArgs = {
   where?: InputMaybe<Contract_Filter>;
 };
 
-
 export type SubscriptionContributionArgs = {
   block?: InputMaybe<Block_Height>;
   id: Scalars['ID'];
   subgraphError?: _SubgraphErrorPolicy_;
 };
-
 
 export type SubscriptionContributionsArgs = {
   block?: InputMaybe<Block_Height>;
@@ -2781,13 +2700,11 @@ export type SubscriptionContributionsArgs = {
   where?: InputMaybe<Contribution_Filter>;
 };
 
-
 export type SubscriptionCrossChainGatewayArgs = {
   block?: InputMaybe<Block_Height>;
   id: Scalars['ID'];
   subgraphError?: _SubgraphErrorPolicy_;
 };
-
 
 export type SubscriptionCrossChainGatewaysArgs = {
   block?: InputMaybe<Block_Height>;
@@ -2799,13 +2716,11 @@ export type SubscriptionCrossChainGatewaysArgs = {
   where?: InputMaybe<CrossChainGateway_Filter>;
 };
 
-
 export type SubscriptionCrossChainRegistrationArgs = {
   block?: InputMaybe<Block_Height>;
   id: Scalars['ID'];
   subgraphError?: _SubgraphErrorPolicy_;
 };
-
 
 export type SubscriptionCrossChainRegistrationsArgs = {
   block?: InputMaybe<Block_Height>;
@@ -2817,20 +2732,17 @@ export type SubscriptionCrossChainRegistrationsArgs = {
   where?: InputMaybe<CrossChainRegistration_Filter>;
 };
 
-
 export type SubscriptionEvidenceArgs = {
   block?: InputMaybe<Block_Height>;
   id: Scalars['ID'];
   subgraphError?: _SubgraphErrorPolicy_;
 };
 
-
 export type SubscriptionEvidenceGroupArgs = {
   block?: InputMaybe<Block_Height>;
   id: Scalars['ID'];
   subgraphError?: _SubgraphErrorPolicy_;
 };
-
 
 export type SubscriptionEvidenceGroupsArgs = {
   block?: InputMaybe<Block_Height>;
@@ -2842,7 +2754,6 @@ export type SubscriptionEvidenceGroupsArgs = {
   where?: InputMaybe<EvidenceGroup_Filter>;
 };
 
-
 export type SubscriptionEvidencesArgs = {
   block?: InputMaybe<Block_Height>;
   first?: InputMaybe<Scalars['Int']>;
@@ -2853,13 +2764,11 @@ export type SubscriptionEvidencesArgs = {
   where?: InputMaybe<Evidence_Filter>;
 };
 
-
 export type SubscriptionFundArgs = {
   block?: InputMaybe<Block_Height>;
   id: Scalars['ID'];
   subgraphError?: _SubgraphErrorPolicy_;
 };
-
 
 export type SubscriptionFundsArgs = {
   block?: InputMaybe<Block_Height>;
@@ -2871,7 +2780,6 @@ export type SubscriptionFundsArgs = {
   where?: InputMaybe<Fund_Filter>;
 };
 
-
 export type SubscriptionHumanitiesArgs = {
   block?: InputMaybe<Block_Height>;
   first?: InputMaybe<Scalars['Int']>;
@@ -2882,20 +2790,17 @@ export type SubscriptionHumanitiesArgs = {
   where?: InputMaybe<Humanity_Filter>;
 };
 
-
 export type SubscriptionHumanityArgs = {
   block?: InputMaybe<Block_Height>;
   id: Scalars['ID'];
   subgraphError?: _SubgraphErrorPolicy_;
 };
 
-
 export type SubscriptionInTransferArgs = {
   block?: InputMaybe<Block_Height>;
   id: Scalars['ID'];
   subgraphError?: _SubgraphErrorPolicy_;
 };
-
 
 export type SubscriptionInTransfersArgs = {
   block?: InputMaybe<Block_Height>;
@@ -2907,13 +2812,11 @@ export type SubscriptionInTransfersArgs = {
   where?: InputMaybe<InTransfer_Filter>;
 };
 
-
 export type SubscriptionOutTransferArgs = {
   block?: InputMaybe<Block_Height>;
   id: Scalars['ID'];
   subgraphError?: _SubgraphErrorPolicy_;
 };
-
 
 export type SubscriptionOutTransfersArgs = {
   block?: InputMaybe<Block_Height>;
@@ -2925,7 +2828,6 @@ export type SubscriptionOutTransfersArgs = {
   where?: InputMaybe<OutTransfer_Filter>;
 };
 
-
 export type SubscriptionPartiesArgs = {
   block?: InputMaybe<Block_Height>;
   first?: InputMaybe<Scalars['Int']>;
@@ -2936,20 +2838,17 @@ export type SubscriptionPartiesArgs = {
   where?: InputMaybe<Party_Filter>;
 };
 
-
 export type SubscriptionPartyArgs = {
   block?: InputMaybe<Block_Height>;
   id: Scalars['ID'];
   subgraphError?: _SubgraphErrorPolicy_;
 };
 
-
 export type SubscriptionReasonArgs = {
   block?: InputMaybe<Block_Height>;
   id: Scalars['ID'];
   subgraphError?: _SubgraphErrorPolicy_;
 };
-
 
 export type SubscriptionReasonsArgs = {
   block?: InputMaybe<Block_Height>;
@@ -2961,13 +2860,11 @@ export type SubscriptionReasonsArgs = {
   where?: InputMaybe<Reason_Filter>;
 };
 
-
 export type SubscriptionRegistrationArgs = {
   block?: InputMaybe<Block_Height>;
   id: Scalars['ID'];
   subgraphError?: _SubgraphErrorPolicy_;
 };
-
 
 export type SubscriptionRegistrationsArgs = {
   block?: InputMaybe<Block_Height>;
@@ -2979,20 +2876,17 @@ export type SubscriptionRegistrationsArgs = {
   where?: InputMaybe<Registration_Filter>;
 };
 
-
 export type SubscriptionRequestArgs = {
   block?: InputMaybe<Block_Height>;
   id: Scalars['ID'];
   subgraphError?: _SubgraphErrorPolicy_;
 };
 
-
 export type SubscriptionRequesterFundArgs = {
   block?: InputMaybe<Block_Height>;
   id: Scalars['ID'];
   subgraphError?: _SubgraphErrorPolicy_;
 };
-
 
 export type SubscriptionRequesterFundsArgs = {
   block?: InputMaybe<Block_Height>;
@@ -3004,7 +2898,6 @@ export type SubscriptionRequesterFundsArgs = {
   where?: InputMaybe<RequesterFund_Filter>;
 };
 
-
 export type SubscriptionRequestsArgs = {
   block?: InputMaybe<Block_Height>;
   first?: InputMaybe<Scalars['Int']>;
@@ -3015,13 +2908,11 @@ export type SubscriptionRequestsArgs = {
   where?: InputMaybe<Request_Filter>;
 };
 
-
 export type SubscriptionRoundArgs = {
   block?: InputMaybe<Block_Height>;
   id: Scalars['ID'];
   subgraphError?: _SubgraphErrorPolicy_;
 };
-
 
 export type SubscriptionRoundsArgs = {
   block?: InputMaybe<Block_Height>;
@@ -3033,13 +2924,11 @@ export type SubscriptionRoundsArgs = {
   where?: InputMaybe<Round_Filter>;
 };
 
-
 export type SubscriptionStatusArgs = {
   block?: InputMaybe<Block_Height>;
   id: Scalars['ID'];
   subgraphError?: _SubgraphErrorPolicy_;
 };
-
 
 export type SubscriptionStatusesArgs = {
   block?: InputMaybe<Block_Height>;
@@ -3051,20 +2940,17 @@ export type SubscriptionStatusesArgs = {
   where?: InputMaybe<Status_Filter>;
 };
 
-
 export type SubscriptionVouchArgs = {
   block?: InputMaybe<Block_Height>;
   id: Scalars['ID'];
   subgraphError?: _SubgraphErrorPolicy_;
 };
 
-
 export type SubscriptionVouchInProcessArgs = {
   block?: InputMaybe<Block_Height>;
   id: Scalars['ID'];
   subgraphError?: _SubgraphErrorPolicy_;
 };
-
 
 export type SubscriptionVouchInProcessesArgs = {
   block?: InputMaybe<Block_Height>;
@@ -3075,7 +2961,6 @@ export type SubscriptionVouchInProcessesArgs = {
   subgraphError?: _SubgraphErrorPolicy_;
   where?: InputMaybe<VouchInProcess_Filter>;
 };
-
 
 export type SubscriptionVouchesArgs = {
   block?: InputMaybe<Block_Height>;
@@ -3213,7 +3098,7 @@ export enum VouchInProcess_OrderBy {
   VoucherNbPendingRequests = 'voucher__nbPendingRequests',
   VoucherNbRequests = 'voucher__nbRequests',
   VoucherPendingRevocation = 'voucher__pendingRevocation',
-  VoucherVouching = 'voucher__vouching'
+  VoucherVouching = 'voucher__vouching',
 }
 
 export type Vouch_Filter = {
@@ -3315,7 +3200,7 @@ export enum Vouch_OrderBy {
   HumanityNbRequests = 'humanity__nbRequests',
   HumanityPendingRevocation = 'humanity__pendingRevocation',
   HumanityVouching = 'humanity__vouching',
-  Id = 'id'
+  Id = 'id',
 }
 
 export type _Block_ = {
@@ -3351,53 +3236,279 @@ export enum _SubgraphErrorPolicy_ {
   /** Data will be returned even if the subgraph has indexing errors */
   Allow = 'allow',
   /** If the subgraph has indexing errors, data will be omitted. The default. */
-  Deny = 'deny'
+  Deny = 'deny',
 }
 
-export type RequestsToAdvanceQueryVariables = Exact<{ [key: string]: never; }>;
+export type RequestsToAdvanceQueryVariables = Exact<{ [key: string]: never }>;
 
-
-export type RequestsToAdvanceQuery = { __typename?: 'Query', status?: { __typename?: 'Status', requests: Array<{ __typename?: 'Request', claimer: { __typename?: 'Claimer', id: any, vouchesReceived: Array<{ __typename?: 'Vouch', humanity: { __typename?: 'Humanity', id: any, usedVouch?: { __typename?: 'VouchInProcess', id: any } | null }, from: { __typename?: 'Claimer', id: any } }> }, humanity: { __typename?: 'Humanity', id: any }, challenges: Array<{ __typename?: 'Challenge', rounds: Array<{ __typename?: 'Round', requesterFund: { __typename?: 'RequesterFund', amount: any } }> }> }> } | null };
+export type RequestsToAdvanceQuery = {
+  __typename?: 'Query';
+  status?: {
+    __typename?: 'Status';
+    requests: Array<{
+      __typename?: 'Request';
+      claimer: {
+        __typename?: 'Claimer';
+        id: any;
+        vouchesReceived: Array<{
+          __typename?: 'Vouch';
+          humanity: {
+            __typename?: 'Humanity';
+            id: any;
+            usedVouch?: { __typename?: 'VouchInProcess'; id: any } | null;
+          };
+          from: { __typename?: 'Claimer'; id: any };
+        }>;
+      };
+      humanity: { __typename?: 'Humanity'; id: any };
+      challenges: Array<{
+        __typename?: 'Challenge';
+        rounds: Array<{
+          __typename?: 'Round';
+          requesterFund: { __typename?: 'RequesterFund'; amount: any };
+        }>;
+      }>;
+    }>;
+  } | null;
+};
 
 export type ClaimerQueryVariables = Exact<{
   id: Scalars['ID'];
 }>;
 
+export type ClaimerQuery = {
+  __typename?: 'Query';
+  claimer?: {
+    __typename?: 'Claimer';
+    id: any;
+    name?: string | null;
+    registration?: {
+      __typename?: 'Registration';
+      humanity: {
+        __typename?: 'Humanity';
+        id: any;
+        winnerClaim: Array<{
+          __typename?: 'Request';
+          index: any;
+          resolutionTime: any;
+          evidenceGroup: {
+            __typename?: 'EvidenceGroup';
+            evidence: Array<{ __typename?: 'Evidence'; uri: string }>;
+          };
+        }>;
+      };
+    } | null;
+  } | null;
+};
 
-export type ClaimerQuery = { __typename?: 'Query', claimer?: { __typename?: 'Claimer', id: any, name?: string | null, registration?: { __typename?: 'Registration', humanity: { __typename?: 'Humanity', id: any, winnerClaim: Array<{ __typename?: 'Request', index: any, resolutionTime: any, evidenceGroup: { __typename?: 'EvidenceGroup', evidence: Array<{ __typename?: 'Evidence', uri: string }> } }> } } | null } | null };
+export type ContractQueryVariables = Exact<{ [key: string]: never }>;
 
-export type ContractQueryVariables = Exact<{ [key: string]: never; }>;
-
-
-export type ContractQuery = { __typename?: 'Query', contract?: { __typename?: 'Contract', baseDeposit: any, humanityLifespan: any, renewalPeriodDuration: any, challengePeriodDuration: any, requiredNumberOfVouches: any, latestArbitratorHistory?: { __typename?: 'ArbitratorHistory', arbitrator: any, extraData: any, updateTime: any, registrationMeta: string, clearingMeta: string } | null } | null, crossChainGateways: Array<{ __typename?: 'CrossChainGateway', id: any, foreignProxy: any }> };
+export type ContractQuery = {
+  __typename?: 'Query';
+  contract?: {
+    __typename?: 'Contract';
+    baseDeposit: any;
+    humanityLifespan: any;
+    renewalPeriodDuration: any;
+    challengePeriodDuration: any;
+    requiredNumberOfVouches: any;
+    latestArbitratorHistory?: {
+      __typename?: 'ArbitratorHistory';
+      arbitrator: any;
+      extraData: any;
+      updateTime: any;
+      registrationMeta: string;
+      clearingMeta: string;
+    } | null;
+  } | null;
+  crossChainGateways: Array<{ __typename?: 'CrossChainGateway'; id: any; foreignProxy: any }>;
+};
 
 export type HumanityQueryVariables = Exact<{
   id: Scalars['ID'];
 }>;
 
-
-export type HumanityQuery = { __typename?: 'Query', humanity?: { __typename?: 'Humanity', registration?: { __typename?: 'Registration', expirationTime: any, claimer: { __typename?: 'Claimer', id: any, name?: string | null } } | null, requests: Array<{ __typename?: 'Request', id: any, creationTime: any, lastStatusChange: any, index: any, revocation: boolean, registrationEvidenceRevokedReq: string, requester: any, status: { __typename?: 'Status', id: string }, claimer: { __typename?: 'Claimer', id: any, name?: string | null }, evidenceGroup: { __typename?: 'EvidenceGroup', evidence: Array<{ __typename?: 'Evidence', id: any, uri: string, creationTime: any, submitter: any }> } }>, winnerClaim: Array<{ __typename?: 'Request', index: any, resolutionTime: any, evidenceGroup: { __typename?: 'EvidenceGroup', evidence: Array<{ __typename?: 'Evidence', uri: string }> } }> } | null, crossChainRegistration?: { __typename?: 'CrossChainRegistration', expirationTime: any, lastReceivedTransferTimestamp: any, claimer: { __typename?: 'Claimer', id: any } } | null, outTransfer?: { __typename?: 'OutTransfer', foreignProxy: any, transferHash: any, transferTimestamp: any } | null };
+export type HumanityQuery = {
+  __typename?: 'Query';
+  humanity?: {
+    __typename?: 'Humanity';
+    registration?: {
+      __typename?: 'Registration';
+      expirationTime: any;
+      claimer: { __typename?: 'Claimer'; id: any; name?: string | null };
+    } | null;
+    requests: Array<{
+      __typename?: 'Request';
+      id: any;
+      creationTime: any;
+      lastStatusChange: any;
+      index: any;
+      revocation: boolean;
+      registrationEvidenceRevokedReq: string;
+      requester: any;
+      status: { __typename?: 'Status'; id: string };
+      claimer: { __typename?: 'Claimer'; id: any; name?: string | null };
+      evidenceGroup: {
+        __typename?: 'EvidenceGroup';
+        evidence: Array<{
+          __typename?: 'Evidence';
+          id: any;
+          uri: string;
+          creationTime: any;
+          submitter: any;
+        }>;
+      };
+    }>;
+    winnerClaim: Array<{
+      __typename?: 'Request';
+      index: any;
+      resolutionTime: any;
+      evidenceGroup: {
+        __typename?: 'EvidenceGroup';
+        evidence: Array<{ __typename?: 'Evidence'; uri: string }>;
+      };
+    }>;
+  } | null;
+  crossChainRegistration?: {
+    __typename?: 'CrossChainRegistration';
+    expirationTime: any;
+    lastReceivedTransferTimestamp: any;
+    claimer: { __typename?: 'Claimer'; id: any };
+  } | null;
+  outTransfer?: {
+    __typename?: 'OutTransfer';
+    foreignProxy: any;
+    transferHash: any;
+    transferTimestamp: any;
+  } | null;
+};
 
 export type MeQueryVariables = Exact<{
   id: Scalars['ID'];
 }>;
 
-
-export type MeQuery = { __typename?: 'Query', claimer?: { __typename?: 'Claimer', registration?: { __typename?: 'Registration', id: any } | null, currentRequest?: { __typename?: 'Request', index: any, humanity: { __typename?: 'Humanity', id: any } } | null } | null };
+export type MeQuery = {
+  __typename?: 'Query';
+  claimer?: {
+    __typename?: 'Claimer';
+    registration?: { __typename?: 'Registration'; id: any } | null;
+    currentRequest?: {
+      __typename?: 'Request';
+      index: any;
+      humanity: { __typename?: 'Humanity'; id: any };
+    } | null;
+  } | null;
+};
 
 export type RegistrationQueryVariables = Exact<{
   id: Scalars['ID'];
 }>;
 
-
-export type RegistrationQuery = { __typename?: 'Query', registration?: { __typename?: 'Registration', expirationTime: any, claimer: { __typename?: 'Claimer', id: any } } | null };
+export type RegistrationQuery = {
+  __typename?: 'Query';
+  registration?: {
+    __typename?: 'Registration';
+    expirationTime: any;
+    claimer: { __typename?: 'Claimer'; id: any };
+  } | null;
+};
 
 export type RequestQueryVariables = Exact<{
   id: Scalars['ID'];
 }>;
 
-
-export type RequestQuery = { __typename?: 'Query', request?: { __typename?: 'Request', index: any, revocation: boolean, registrationEvidenceRevokedReq: string, requester: any, creationTime: any, lastStatusChange: any, status: { __typename?: 'Status', id: string }, vouches: Array<{ __typename?: 'VouchInProcess', voucher: { __typename?: 'Humanity', id: any } }>, humanity: { __typename?: 'Humanity', id: any, nbRequests: any, nbLegacyRequests: any, registration?: { __typename?: 'Registration', expirationTime: any, claimer: { __typename?: 'Claimer', id: any } } | null, winnerClaim: Array<{ __typename?: 'Request', index: any, resolutionTime: any, evidenceGroup: { __typename?: 'EvidenceGroup', evidence: Array<{ __typename?: 'Evidence', uri: string }> } }> }, claimer: { __typename?: 'Claimer', id: any, name?: string | null, vouchesReceived: Array<{ __typename?: 'Vouch', from: { __typename?: 'Claimer', id: any, registration?: { __typename?: 'Registration', expirationTime: any, humanity: { __typename?: 'Humanity', vouching: boolean } } | null }, humanity: { __typename?: 'Humanity', id: any } }>, vouches: Array<{ __typename?: 'Vouch', for: { __typename?: 'Claimer', id: any, name?: string | null } }> }, evidenceGroup: { __typename?: 'EvidenceGroup', evidence: Array<{ __typename?: 'Evidence', id: any, uri: string, creationTime: any, submitter: any }> }, challenges: Array<{ __typename?: 'Challenge', id: any, disputeId: any, nbRounds: any, reason: { __typename?: 'Reason', id: string }, challenger?: { __typename?: 'Challenger', id: any } | null, rounds: Array<{ __typename?: 'Round', creationTime: any, index: any, requesterFund: { __typename?: 'RequesterFund', amount: any }, challengerFund?: { __typename?: 'ChallengerFund', amount: any } | null }> }>, arbitratorHistory: { __typename?: 'ArbitratorHistory', updateTime: any, registrationMeta: string, id: string, arbitrator: any, extraData: any } } | null };
+export type RequestQuery = {
+  __typename?: 'Query';
+  request?: {
+    __typename?: 'Request';
+    index: any;
+    revocation: boolean;
+    registrationEvidenceRevokedReq: string;
+    requester: any;
+    creationTime: any;
+    lastStatusChange: any;
+    status: { __typename?: 'Status'; id: string };
+    vouches: Array<{
+      __typename?: 'VouchInProcess';
+      voucher: { __typename?: 'Humanity'; id: any };
+    }>;
+    humanity: {
+      __typename?: 'Humanity';
+      id: any;
+      nbRequests: any;
+      nbLegacyRequests: any;
+      registration?: {
+        __typename?: 'Registration';
+        expirationTime: any;
+        claimer: { __typename?: 'Claimer'; id: any };
+      } | null;
+      winnerClaim: Array<{
+        __typename?: 'Request';
+        index: any;
+        resolutionTime: any;
+        evidenceGroup: {
+          __typename?: 'EvidenceGroup';
+          evidence: Array<{ __typename?: 'Evidence'; uri: string }>;
+        };
+      }>;
+    };
+    claimer: {
+      __typename?: 'Claimer';
+      id: any;
+      name?: string | null;
+      vouchesReceived: Array<{
+        __typename?: 'Vouch';
+        from: {
+          __typename?: 'Claimer';
+          id: any;
+          registration?: {
+            __typename?: 'Registration';
+            expirationTime: any;
+            humanity: { __typename?: 'Humanity'; vouching: boolean };
+          } | null;
+        };
+        humanity: { __typename?: 'Humanity'; id: any };
+      }>;
+      vouches: Array<{
+        __typename?: 'Vouch';
+        for: { __typename?: 'Claimer'; id: any; name?: string | null };
+      }>;
+    };
+    evidenceGroup: {
+      __typename?: 'EvidenceGroup';
+      evidence: Array<{
+        __typename?: 'Evidence';
+        id: any;
+        uri: string;
+        creationTime: any;
+        submitter: any;
+      }>;
+    };
+    challenges: Array<{
+      __typename?: 'Challenge';
+      id: any;
+      disputeId: any;
+      nbRounds: any;
+      reason: { __typename?: 'Reason'; id: string };
+      challenger?: { __typename?: 'Challenger'; id: any } | null;
+      rounds: Array<{
+        __typename?: 'Round';
+        creationTime: any;
+        index: any;
+        requesterFund: { __typename?: 'RequesterFund'; amount: any };
+        challengerFund?: { __typename?: 'ChallengerFund'; amount: any } | null;
+      }>;
+    }>;
+    arbitratorHistory: {
+      __typename?: 'ArbitratorHistory';
+      updateTime: any;
+      registrationMeta: string;
+      id: string;
+      arbitrator: any;
+      extraData: any;
+    };
+  } | null;
+};
 
 export type RequestsQueryVariables = Exact<{
   skip?: InputMaybe<Scalars['Int']>;
@@ -3405,393 +3516,580 @@ export type RequestsQueryVariables = Exact<{
   where?: InputMaybe<Request_Filter>;
 }>;
 
-
-export type RequestsQuery = { __typename?: 'Query', requests: Array<{ __typename?: 'Request', id: any, index: any, revocation: boolean, registrationEvidenceRevokedReq: string, creationTime: any, lastStatusChange: any, requester: any, status: { __typename?: 'Status', id: string }, claimer: { __typename?: 'Claimer', id: any, name?: string | null }, humanity: { __typename?: 'Humanity', id: any, nbRequests: any, registration?: { __typename?: 'Registration', expirationTime: any, claimer: { __typename?: 'Claimer', id: any } } | null, winnerClaim: Array<{ __typename?: 'Request', index: any, resolutionTime: any, evidenceGroup: { __typename?: 'EvidenceGroup', evidence: Array<{ __typename?: 'Evidence', uri: string }> } }> }, evidenceGroup: { __typename?: 'EvidenceGroup', evidence: Array<{ __typename?: 'Evidence', uri: string }> } }> };
+export type RequestsQuery = {
+  __typename?: 'Query';
+  requests: Array<{
+    __typename?: 'Request';
+    id: any;
+    index: any;
+    revocation: boolean;
+    registrationEvidenceRevokedReq: string;
+    creationTime: any;
+    lastStatusChange: any;
+    requester: any;
+    status: { __typename?: 'Status'; id: string };
+    claimer: { __typename?: 'Claimer'; id: any; name?: string | null };
+    humanity: {
+      __typename?: 'Humanity';
+      id: any;
+      nbRequests: any;
+      registration?: {
+        __typename?: 'Registration';
+        expirationTime: any;
+        claimer: { __typename?: 'Claimer'; id: any };
+      } | null;
+      winnerClaim: Array<{
+        __typename?: 'Request';
+        index: any;
+        resolutionTime: any;
+        evidenceGroup: {
+          __typename?: 'EvidenceGroup';
+          evidence: Array<{ __typename?: 'Evidence'; uri: string }>;
+        };
+      }>;
+    };
+    evidenceGroup: {
+      __typename?: 'EvidenceGroup';
+      evidence: Array<{ __typename?: 'Evidence'; uri: string }>;
+    };
+  }>;
+};
 
 export type IsSyncedQueryVariables = Exact<{
   block: Scalars['Int'];
 }>;
 
-
-export type IsSyncedQuery = { __typename?: 'Query', _meta?: { __typename?: '_Meta_', hasIndexingErrors: boolean } | null };
+export type IsSyncedQuery = {
+  __typename?: 'Query';
+  _meta?: { __typename?: '_Meta_'; hasIndexingErrors: boolean } | null;
+};
 
 export type TransferQueryVariables = Exact<{
   hash: Scalars['ID'];
 }>;
 
-
-export type TransferQuery = { __typename?: 'Query', inTransfer?: { __typename?: 'InTransfer', id: any, humanityId: any } | null };
+export type TransferQuery = {
+  __typename?: 'Query';
+  inTransfer?: { __typename?: 'InTransfer'; id: any; humanityId: any } | null;
+};
 
 export type HumanityVouchQueryVariables = Exact<{
   id: Scalars['ID'];
 }>;
 
+export type HumanityVouchQuery = {
+  __typename?: 'Query';
+  humanity?: {
+    __typename?: 'Humanity';
+    vouching: boolean;
+    registration?: { __typename?: 'Registration'; expirationTime: any } | null;
+  } | null;
+};
 
-export type HumanityVouchQuery = { __typename?: 'Query', humanity?: { __typename?: 'Humanity', vouching: boolean, registration?: { __typename?: 'Registration', expirationTime: any } | null } | null };
-
-export type WinnerClaimFragment = { __typename?: 'Humanity', winnerClaim: Array<{ __typename?: 'Request', index: any, resolutionTime: any, evidenceGroup: { __typename?: 'EvidenceGroup', evidence: Array<{ __typename?: 'Evidence', uri: string }> } }> };
+export type WinnerClaimFragment = {
+  __typename?: 'Humanity';
+  winnerClaim: Array<{
+    __typename?: 'Request';
+    index: any;
+    resolutionTime: any;
+    evidenceGroup: {
+      __typename?: 'EvidenceGroup';
+      evidence: Array<{ __typename?: 'Evidence'; uri: string }>;
+    };
+  }>;
+};
 
 export const WinnerClaimFragmentDoc = gql`
-    fragment winnerClaim on Humanity {
-  winnerClaim: requests(
-    where: {or: [{revocation: false, status: "resolved", winnerParty: "requester"}, {revocation: false, status: "transferring", winnerParty: "requester"}]}
-    orderBy: resolutionTime
-    orderDirection: desc
-    first: 1
-  ) {
-    index
-    resolutionTime
-    evidenceGroup {
-      evidence(orderBy: creationTime, first: 1) {
-        uri
+  fragment winnerClaim on Humanity {
+    winnerClaim: requests(
+      where: {
+        or: [
+          { revocation: false, status: "resolved", winnerParty: "requester" }
+          { revocation: false, status: "transferring", winnerParty: "requester" }
+        ]
       }
-    }
-  }
-}
-    `;
-export const RequestsToAdvanceDocument = gql`
-    query RequestsToAdvance {
-  status(id: "vouching") {
-    requests(orderBy: lastStatusChange) {
-      claimer {
-        id
-        vouchesReceived {
-          humanity {
-            id
-            usedVouch {
-              id
-            }
-          }
-          from {
-            id
-          }
-        }
-      }
-      humanity {
-        id
-      }
-      challenges {
-        rounds {
-          requesterFund {
-            amount
-          }
-        }
-      }
-    }
-  }
-}
-    `;
-export const ClaimerDocument = gql`
-    query Claimer($id: ID!) {
-  claimer(id: $id) {
-    id
-    name
-    registration {
-      humanity {
-        id
-        ...winnerClaim
-      }
-    }
-  }
-}
-    ${WinnerClaimFragmentDoc}`;
-export const ContractDocument = gql`
-    query Contract {
-  contract(id: "0x00") {
-    baseDeposit
-    humanityLifespan
-    renewalPeriodDuration
-    challengePeriodDuration
-    requiredNumberOfVouches
-    latestArbitratorHistory {
-      arbitrator
-      extraData
-      updateTime
-      registrationMeta
-      clearingMeta
-    }
-  }
-  crossChainGateways {
-    id
-    foreignProxy
-  }
-}
-    `;
-export const HumanityDocument = gql`
-    query Humanity($id: ID!) {
-  humanity(id: $id) {
-    registration {
-      expirationTime
-      claimer {
-        id
-        name
-      }
-    }
-    requests {
-      id
-      status {
-        id
-      }
-      claimer {
-        id
-        name
-      }
-      creationTime
-      lastStatusChange
+      orderBy: resolutionTime
+      orderDirection: desc
+      first: 1
+    ) {
       index
-      revocation
-      registrationEvidenceRevokedReq
-      requester
+      resolutionTime
       evidenceGroup {
         evidence(orderBy: creationTime, first: 1) {
-          id
           uri
-          creationTime
-          submitter
         }
       }
     }
-    ...winnerClaim
   }
-  crossChainRegistration(id: $id) {
-    claimer {
-      id
-    }
-    expirationTime
-    lastReceivedTransferTimestamp
-  }
-  outTransfer(id: $id) {
-    foreignProxy
-    transferHash
-    transferTimestamp
-  }
-}
-    ${WinnerClaimFragmentDoc}`;
-export const MeDocument = gql`
-    query Me($id: ID!) {
-  claimer(id: $id) {
-    registration {
-      id
-    }
-    currentRequest {
-      index
-      humanity {
-        id
-      }
-    }
-  }
-}
-    `;
-export const RegistrationDocument = gql`
-    query Registration($id: ID!) {
-  registration(id: $id) {
-    expirationTime
-    claimer {
-      id
-    }
-  }
-}
-    `;
-export const RequestDocument = gql`
-    query Request($id: ID!) {
-  request(id: $id) {
-    status {
-      id
-    }
-    index
-    revocation
-    registrationEvidenceRevokedReq
-    requester
-    creationTime
-    lastStatusChange
-    vouches {
-      voucher {
-        id
-      }
-    }
-    humanity {
-      id
-      nbRequests
-      nbLegacyRequests
-      registration {
-        expirationTime
+`;
+export const RequestsToAdvanceDocument = gql`
+  query RequestsToAdvance {
+    status(id: "vouching") {
+      requests(orderBy: lastStatusChange) {
         claimer {
           id
-        }
-      }
-      ...winnerClaim
-    }
-    claimer {
-      id
-      name
-      vouchesReceived {
-        from {
-          id
-          registration {
-            expirationTime
+          vouchesReceived {
             humanity {
-              vouching
+              id
+              usedVouch {
+                id
+              }
+            }
+            from {
+              id
             }
           }
         }
         humanity {
           id
         }
-      }
-      vouches {
-        for {
-          id
-          name
+        challenges {
+          rounds {
+            requesterFund {
+              amount
+            }
+          }
         }
       }
-    }
-    evidenceGroup {
-      evidence(orderBy: creationTime, orderDirection: desc) {
-        id
-        uri
-        creationTime
-        submitter
-      }
-    }
-    challenges(orderBy: creationTime) {
-      id
-      reason {
-        id
-      }
-      disputeId
-      challenger {
-        id
-      }
-      nbRounds
-      rounds(orderBy: index) {
-        creationTime
-        index
-        requesterFund {
-          amount
-        }
-        challengerFund {
-          amount
-        }
-      }
-    }
-    arbitratorHistory {
-      updateTime
-      registrationMeta
-      id
-      arbitrator
-      extraData
     }
   }
-}
-    ${WinnerClaimFragmentDoc}`;
-export const RequestsDocument = gql`
-    query Requests($skip: Int, $first: Int, $where: Request_filter) {
-  requests(
-    first: $first
-    skip: $skip
-    where: $where
-    orderBy: creationTime
-    orderDirection: desc
-  ) {
-    id
-    index
-    status {
-      id
-    }
-    revocation
-    registrationEvidenceRevokedReq
-    creationTime
-    lastStatusChange
-    requester
-    claimer {
+`;
+export const ClaimerDocument = gql`
+  query Claimer($id: ID!) {
+    claimer(id: $id) {
       id
       name
+      registration {
+        humanity {
+          id
+          ...winnerClaim
+        }
+      }
     }
-    humanity {
+  }
+  ${WinnerClaimFragmentDoc}
+`;
+export const ContractDocument = gql`
+  query Contract {
+    contract(id: "0x00") {
+      baseDeposit
+      humanityLifespan
+      renewalPeriodDuration
+      challengePeriodDuration
+      requiredNumberOfVouches
+      latestArbitratorHistory {
+        arbitrator
+        extraData
+        updateTime
+        registrationMeta
+        clearingMeta
+      }
+    }
+    crossChainGateways {
       id
-      nbRequests
+      foreignProxy
+    }
+  }
+`;
+export const HumanityDocument = gql`
+  query Humanity($id: ID!) {
+    humanity(id: $id) {
       registration {
         expirationTime
         claimer {
           id
+          name
+        }
+      }
+      requests {
+        id
+        status {
+          id
+        }
+        claimer {
+          id
+          name
+        }
+        creationTime
+        lastStatusChange
+        index
+        revocation
+        registrationEvidenceRevokedReq
+        requester
+        evidenceGroup {
+          evidence(orderBy: creationTime, first: 1) {
+            id
+            uri
+            creationTime
+            submitter
+          }
         }
       }
       ...winnerClaim
     }
-    evidenceGroup {
-      evidence(orderBy: creationTime, first: 1) {
-        uri
+    crossChainRegistration(id: $id) {
+      claimer {
+        id
+      }
+      expirationTime
+      lastReceivedTransferTimestamp
+    }
+    outTransfer(id: $id) {
+      foreignProxy
+      transferHash
+      transferTimestamp
+    }
+  }
+  ${WinnerClaimFragmentDoc}
+`;
+export const MeDocument = gql`
+  query Me($id: ID!) {
+    claimer(id: $id) {
+      registration {
+        id
+      }
+      currentRequest {
+        index
+        humanity {
+          id
+        }
       }
     }
   }
-}
-    ${WinnerClaimFragmentDoc}`;
-export const IsSyncedDocument = gql`
-    query IsSynced($block: Int!) {
-  _meta(block: {number: $block}) {
-    hasIndexingErrors
-  }
-}
-    `;
-export const TransferDocument = gql`
-    query Transfer($hash: ID!) {
-  inTransfer(id: $hash) {
-    id
-    humanityId
-  }
-}
-    `;
-export const HumanityVouchDocument = gql`
-    query HumanityVouch($id: ID!) {
-  humanity(id: $id) {
-    vouching
-    registration {
+`;
+export const RegistrationDocument = gql`
+  query Registration($id: ID!) {
+    registration(id: $id) {
       expirationTime
+      claimer {
+        id
+      }
     }
   }
-}
-    `;
+`;
+export const RequestDocument = gql`
+  query Request($id: ID!) {
+    request(id: $id) {
+      status {
+        id
+      }
+      index
+      revocation
+      registrationEvidenceRevokedReq
+      requester
+      creationTime
+      lastStatusChange
+      vouches {
+        voucher {
+          id
+        }
+      }
+      humanity {
+        id
+        nbRequests
+        nbLegacyRequests
+        registration {
+          expirationTime
+          claimer {
+            id
+          }
+        }
+        ...winnerClaim
+      }
+      claimer {
+        id
+        name
+        vouchesReceived {
+          from {
+            id
+            registration {
+              expirationTime
+              humanity {
+                vouching
+              }
+            }
+          }
+          humanity {
+            id
+          }
+        }
+        vouches {
+          for {
+            id
+            name
+          }
+        }
+      }
+      evidenceGroup {
+        evidence(orderBy: creationTime, orderDirection: desc) {
+          id
+          uri
+          creationTime
+          submitter
+        }
+      }
+      challenges(orderBy: creationTime) {
+        id
+        reason {
+          id
+        }
+        disputeId
+        challenger {
+          id
+        }
+        nbRounds
+        rounds(orderBy: index) {
+          creationTime
+          index
+          requesterFund {
+            amount
+          }
+          challengerFund {
+            amount
+          }
+        }
+      }
+      arbitratorHistory {
+        updateTime
+        registrationMeta
+        id
+        arbitrator
+        extraData
+      }
+    }
+  }
+  ${WinnerClaimFragmentDoc}
+`;
+export const RequestsDocument = gql`
+  query Requests($skip: Int, $first: Int, $where: Request_filter) {
+    requests(
+      first: $first
+      skip: $skip
+      where: $where
+      orderBy: creationTime
+      orderDirection: desc
+    ) {
+      id
+      index
+      status {
+        id
+      }
+      revocation
+      registrationEvidenceRevokedReq
+      creationTime
+      lastStatusChange
+      requester
+      claimer {
+        id
+        name
+      }
+      humanity {
+        id
+        nbRequests
+        registration {
+          expirationTime
+          claimer {
+            id
+          }
+        }
+        ...winnerClaim
+      }
+      evidenceGroup {
+        evidence(orderBy: creationTime, first: 1) {
+          uri
+        }
+      }
+    }
+  }
+  ${WinnerClaimFragmentDoc}
+`;
+export const IsSyncedDocument = gql`
+  query IsSynced($block: Int!) {
+    _meta(block: { number: $block }) {
+      hasIndexingErrors
+    }
+  }
+`;
+export const TransferDocument = gql`
+  query Transfer($hash: ID!) {
+    inTransfer(id: $hash) {
+      id
+      humanityId
+    }
+  }
+`;
+export const HumanityVouchDocument = gql`
+  query HumanityVouch($id: ID!) {
+    humanity(id: $id) {
+      vouching
+      registration {
+        expirationTime
+      }
+    }
+  }
+`;
 
-export type SdkFunctionWrapper = <T>(action: (requestHeaders?:Record<string, string>) => Promise<T>, operationName: string, operationType?: string) => Promise<T>;
-
+export type SdkFunctionWrapper = <T>(
+  action: (requestHeaders?: Record<string, string>) => Promise<T>,
+  operationName: string,
+  operationType?: string,
+) => Promise<T>;
 
 const defaultWrapper: SdkFunctionWrapper = (action, _operationName, _operationType) => action();
 
 export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = defaultWrapper) {
   return {
-    RequestsToAdvance(variables?: RequestsToAdvanceQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<RequestsToAdvanceQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<RequestsToAdvanceQuery>(RequestsToAdvanceDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'RequestsToAdvance', 'query');
+    RequestsToAdvance(
+      variables?: RequestsToAdvanceQueryVariables,
+      requestHeaders?: Dom.RequestInit['headers'],
+    ): Promise<RequestsToAdvanceQuery> {
+      return withWrapper(
+        (wrappedRequestHeaders) =>
+          client.request<RequestsToAdvanceQuery>(RequestsToAdvanceDocument, variables, {
+            ...requestHeaders,
+            ...wrappedRequestHeaders,
+          }),
+        'RequestsToAdvance',
+        'query',
+      );
     },
-    Claimer(variables: ClaimerQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<ClaimerQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<ClaimerQuery>(ClaimerDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'Claimer', 'query');
+    Claimer(
+      variables: ClaimerQueryVariables,
+      requestHeaders?: Dom.RequestInit['headers'],
+    ): Promise<ClaimerQuery> {
+      return withWrapper(
+        (wrappedRequestHeaders) =>
+          client.request<ClaimerQuery>(ClaimerDocument, variables, {
+            ...requestHeaders,
+            ...wrappedRequestHeaders,
+          }),
+        'Claimer',
+        'query',
+      );
     },
-    Contract(variables?: ContractQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<ContractQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<ContractQuery>(ContractDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'Contract', 'query');
+    Contract(
+      variables?: ContractQueryVariables,
+      requestHeaders?: Dom.RequestInit['headers'],
+    ): Promise<ContractQuery> {
+      return withWrapper(
+        (wrappedRequestHeaders) =>
+          client.request<ContractQuery>(ContractDocument, variables, {
+            ...requestHeaders,
+            ...wrappedRequestHeaders,
+          }),
+        'Contract',
+        'query',
+      );
     },
-    Humanity(variables: HumanityQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<HumanityQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<HumanityQuery>(HumanityDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'Humanity', 'query');
+    Humanity(
+      variables: HumanityQueryVariables,
+      requestHeaders?: Dom.RequestInit['headers'],
+    ): Promise<HumanityQuery> {
+      return withWrapper(
+        (wrappedRequestHeaders) =>
+          client.request<HumanityQuery>(HumanityDocument, variables, {
+            ...requestHeaders,
+            ...wrappedRequestHeaders,
+          }),
+        'Humanity',
+        'query',
+      );
     },
-    Me(variables: MeQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<MeQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<MeQuery>(MeDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'Me', 'query');
+    Me(variables: MeQueryVariables, requestHeaders?: Dom.RequestInit['headers']): Promise<MeQuery> {
+      return withWrapper(
+        (wrappedRequestHeaders) =>
+          client.request<MeQuery>(MeDocument, variables, {
+            ...requestHeaders,
+            ...wrappedRequestHeaders,
+          }),
+        'Me',
+        'query',
+      );
     },
-    Registration(variables: RegistrationQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<RegistrationQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<RegistrationQuery>(RegistrationDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'Registration', 'query');
+    Registration(
+      variables: RegistrationQueryVariables,
+      requestHeaders?: Dom.RequestInit['headers'],
+    ): Promise<RegistrationQuery> {
+      return withWrapper(
+        (wrappedRequestHeaders) =>
+          client.request<RegistrationQuery>(RegistrationDocument, variables, {
+            ...requestHeaders,
+            ...wrappedRequestHeaders,
+          }),
+        'Registration',
+        'query',
+      );
     },
-    Request(variables: RequestQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<RequestQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<RequestQuery>(RequestDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'Request', 'query');
+    Request(
+      variables: RequestQueryVariables,
+      requestHeaders?: Dom.RequestInit['headers'],
+    ): Promise<RequestQuery> {
+      return withWrapper(
+        (wrappedRequestHeaders) =>
+          client.request<RequestQuery>(RequestDocument, variables, {
+            ...requestHeaders,
+            ...wrappedRequestHeaders,
+          }),
+        'Request',
+        'query',
+      );
     },
-    Requests(variables?: RequestsQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<RequestsQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<RequestsQuery>(RequestsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'Requests', 'query');
+    Requests(
+      variables?: RequestsQueryVariables,
+      requestHeaders?: Dom.RequestInit['headers'],
+    ): Promise<RequestsQuery> {
+      return withWrapper(
+        (wrappedRequestHeaders) =>
+          client.request<RequestsQuery>(RequestsDocument, variables, {
+            ...requestHeaders,
+            ...wrappedRequestHeaders,
+          }),
+        'Requests',
+        'query',
+      );
     },
-    IsSynced(variables: IsSyncedQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<IsSyncedQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<IsSyncedQuery>(IsSyncedDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'IsSynced', 'query');
+    IsSynced(
+      variables: IsSyncedQueryVariables,
+      requestHeaders?: Dom.RequestInit['headers'],
+    ): Promise<IsSyncedQuery> {
+      return withWrapper(
+        (wrappedRequestHeaders) =>
+          client.request<IsSyncedQuery>(IsSyncedDocument, variables, {
+            ...requestHeaders,
+            ...wrappedRequestHeaders,
+          }),
+        'IsSynced',
+        'query',
+      );
     },
-    Transfer(variables: TransferQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<TransferQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<TransferQuery>(TransferDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'Transfer', 'query');
+    Transfer(
+      variables: TransferQueryVariables,
+      requestHeaders?: Dom.RequestInit['headers'],
+    ): Promise<TransferQuery> {
+      return withWrapper(
+        (wrappedRequestHeaders) =>
+          client.request<TransferQuery>(TransferDocument, variables, {
+            ...requestHeaders,
+            ...wrappedRequestHeaders,
+          }),
+        'Transfer',
+        'query',
+      );
     },
-    HumanityVouch(variables: HumanityVouchQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<HumanityVouchQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<HumanityVouchQuery>(HumanityVouchDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'HumanityVouch', 'query');
-    }
+    HumanityVouch(
+      variables: HumanityVouchQueryVariables,
+      requestHeaders?: Dom.RequestInit['headers'],
+    ): Promise<HumanityVouchQuery> {
+      return withWrapper(
+        (wrappedRequestHeaders) =>
+          client.request<HumanityVouchQuery>(HumanityVouchDocument, variables, {
+            ...requestHeaders,
+            ...wrappedRequestHeaders,
+          }),
+        'HumanityVouch',
+        'query',
+      );
+    },
   };
 }
 export type Sdk = ReturnType<typeof getSdk>;

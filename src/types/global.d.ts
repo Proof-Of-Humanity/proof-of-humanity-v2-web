@@ -9,17 +9,17 @@ interface Window {
   };
 }
 
-declare module "*.svg" {
+declare module '*.svg' {
   const content: React.FC<React.SVGAttributes<SVGElement>>;
   export default content;
 }
 
-declare module "*.jpg" {
+declare module '*.jpg' {
   const uri: string;
   export default uri;
 }
 
-declare module "*.png" {
+declare module '*.png' {
   const uri: string;
   export default uri;
 }

@@ -1,14 +1,11 @@
-import { HumanityQuery } from "generated/graphql";
+import { HumanityQuery } from 'generated/graphql';
 
 interface TokenAccordionProps {
   pohName: string;
-  humanity: NonNullable<HumanityQuery["humanity"]>;
+  humanity: NonNullable<HumanityQuery['humanity']>;
 }
 
-const TokenAccordion: React.FC<TokenAccordionProps> = ({
-  pohName,
-  humanity,
-}) => {
+const TokenAccordion: React.FC<TokenAccordionProps> = ({ pohName, humanity }) => {
   return null;
   // const [showCircles, setShowCircles] = useState(false);
 

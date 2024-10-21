@@ -1,5 +1,5 @@
-import useSWR from "swr";
-import { ipfsFetch } from "utils/ipfs";
+import useSWR from 'swr';
+import { ipfsFetch } from 'utils/ipfs';
 
 interface useIPFSConfig {
   suspense?: boolean;
@@ -7,7 +7,7 @@ interface useIPFSConfig {
 
 const useIPFS = <T>(
   uri?: string | null | false,
-  { suspense }: useIPFSConfig = {}
+  { suspense }: useIPFSConfig = {},
 ): [T | undefined, Error] => {
   const { data, error } = useSWR(uri || null, ipfsFetch<T>, {
     revalidateIfStale: false,

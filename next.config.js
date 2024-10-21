@@ -5,7 +5,7 @@ const nextConfig = {
     config.module.rules.push({
       test: /\.svg$/i,
       issuer: /\.[jt]sx?$/,
-      use: ["@svgr/webpack"],
+      use: ['@svgr/webpack'],
     });
 
     return config;
@@ -16,15 +16,15 @@ const nextConfig = {
     CHIADO_RPC: process.env.CHIADO_RPC,
     SEPOLIA_RPC: process.env.SEPOLIA_RPC,
     GNOSIS_RPC: process.env.GNOSIS_RPC,
-    MAINNET_RPC: process.env.MAINNET_RPC
+    MAINNET_RPC: process.env.MAINNET_RPC,
   },
   images: {
     remotePatterns: [
       {
-        protocol: "https",
+        protocol: 'https',
         hostname: process.env.REACT_APP_IPFS_GATEWAY,
-        port: "",
-        pathname: "/ipfs/**",
+        port: '',
+        pathname: '/ipfs/**',
       },
     ],
   },

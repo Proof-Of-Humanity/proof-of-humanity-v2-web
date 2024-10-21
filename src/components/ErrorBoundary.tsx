@@ -1,4 +1,4 @@
-import { Component } from "react";
+import { Component } from 'react';
 
 interface ErrorBoundaryInterface {
   fallback: React.ReactNode;
@@ -10,28 +10,18 @@ interface ErrorBoundaryState {
   error: Error | null;
 }
 
-export default class ErrorBoundary extends Component<
-  ErrorBoundaryInterface,
-  ErrorBoundaryState
-> {
+export default class ErrorBoundary extends Component<ErrorBoundaryInterface, ErrorBoundaryState> {
   state = { error: null };
 
   static getDerivedStateFromError(error: Error) {
     return { error };
   }
 
-  componentDidUpdate(
-    prevProps: ErrorBoundaryInterface,
-    prevState: ErrorBoundaryState
-  ) {
+  componentDidUpdate(prevProps: ErrorBoundaryInterface, prevState: ErrorBoundaryState) {
     const { error } = this.state;
     const { resetSwitch } = this.props;
 
-    if (
-      error !== null &&
-      prevState.error !== null &&
-      prevProps.resetSwitch !== resetSwitch
-    ) {
+    if (error !== null && prevState.error !== null && prevProps.resetSwitch !== resetSwitch) {
       this.setState({ error: null });
     }
   }

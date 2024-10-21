@@ -12,7 +12,7 @@
 @tailwind components;
 @layer components {
   .slider-thumb::-webkit-slider-thumb {
-    @apply appearance-none w-4 h-4 rounded-full bg-theme cursor-pointer;
+    @apply bg-theme h-4 w-4 cursor-pointer appearance-none rounded-full;
   }
 
   .no-spinner::-webkit-outer-spin-button,
@@ -21,7 +21,7 @@
     margin: 0;
   }
 
-  .no-spinner[type="number"] {
+  .no-spinner[type='number'] {
     -moz-appearance: textfield;
   }
 
@@ -30,27 +30,27 @@
   }
 
   .checkbox {
-    @apply w-6 h-6 border border-orange rounded-sm bg-lightOrange;
+    @apply border-orange bg-lightOrange h-6 w-6 rounded-sm border;
   }
 
   .radio {
-    @apply w-6 h-6 border border-orange rounded-full bg-lightOrange;
+    @apply border-orange bg-lightOrange h-6 w-6 rounded-full border;
   }
 
   .bordered {
-    @apply p-px gradient rounded;
+    @apply gradient rounded p-px;
   }
 
   .btn-main {
-    @apply centered gradient p-2 rounded-sm text-white font-medium uppercase disabled:opacity-40;
+    @apply centered gradient rounded-sm p-2 font-medium uppercase text-white disabled:opacity-40;
   }
 
   .btn-sec {
-    @apply centered p-2 border-2 border-theme rounded-sm text-orange font-semibold uppercase disabled:opacity-40;
+    @apply centered border-theme text-orange rounded-sm border-2 p-2 font-semibold uppercase disabled:opacity-40;
   }
 
   .backdrop {
-    @apply fixed top-0 left-0 h-screen z-10 w-full flex justify-center items-center bg-slate-800/30 backdrop-blur;
+    @apply fixed left-0 top-0 z-10 flex h-screen w-full items-center justify-center bg-slate-800/30 backdrop-blur;
   }
 
   .dot {
@@ -58,20 +58,15 @@
   }
 
   .content {
-    @apply mt-8 mb-16 mx-auto w-11/12
-           sm:mt-12 sm:w-5/6
-           lg:w-3/5;
+    @apply mx-auto mb-16 mt-8 w-11/12 sm:mt-12 sm:w-5/6 lg:w-3/5;
   }
 
   .content-wide {
-    @apply mb-16 mx-auto w-11/12
-             sm:w-5/6
-             md:mt-12
-             lg:w-4/5;
+    @apply mx-auto mb-16 w-11/12 sm:w-5/6 md:mt-12 lg:w-4/5;
   }
 
   .paper {
-    @apply bg-whiteBackground border border-stroke text-primaryText rounded shadow;
+    @apply bg-whiteBackground border-stroke text-primaryText rounded border shadow;
   }
 }
 
@@ -82,289 +77,289 @@
   }
 
   .dark .header-background {
-    background: theme("colors.dark.whiteBackground");
+    background: theme('colors.dark.whiteBackground');
   }
 
   .border-theme {
-    border-color: theme("colors.light.theme");
+    border-color: theme('colors.light.theme');
   }
 
   .dark .border-theme {
-    border-color: theme("colors.dark.theme");
+    border-color: theme('colors.dark.theme');
   }
 
   .border-stroke {
-    border-color: theme("colors.light.stroke");
+    border-color: theme('colors.light.stroke');
   }
 
   .dark .border-stroke {
-    border-color: theme("colors.dark.stroke");
+    border-color: theme('colors.dark.stroke');
   }
 
   .border-orange {
-    border-color: theme("colors.light.orange");
+    border-color: theme('colors.light.orange');
   }
 
   .dark .border-orange {
-    border-color: theme("colors.dark.orange");
+    border-color: theme('colors.dark.orange');
   }
 
   .text-primaryText {
-    color: theme("colors.light.primaryText");
+    color: theme('colors.light.primaryText');
   }
 
   .dark .text-primaryText {
-    color: theme("colors.dark.primaryText");
+    color: theme('colors.dark.primaryText');
   }
 
   .text-secondaryText {
-    color: theme("colors.light.secondaryText");
+    color: theme('colors.light.secondaryText');
   }
 
   .dark .text-secondaryText {
-    color: theme("colors.dark.secondaryText");
+    color: theme('colors.dark.secondaryText');
   }
 
   .text-orange {
-    color: theme("colors.light.orange");
+    color: theme('colors.light.orange');
   }
 
   .dark .text-orange {
-    color: theme("colors.dark.orange");
+    color: theme('colors.dark.orange');
   }
 
   .text-status-vouching {
-    color: theme("colors.light.status.vouching");
+    color: theme('colors.light.status.vouching');
   }
 
   .dark .text-status-vouching {
-    color: theme("colors.dark.status.vouching");
+    color: theme('colors.dark.status.vouching');
   }
 
   .text-status-registered {
-    color: theme("colors.light.status.registered");
+    color: theme('colors.light.status.registered');
   }
 
   .dark .text-status-registered {
-    color: theme("colors.dark.status.registered");
+    color: theme('colors.dark.status.registered');
   }
 
   .text-status-removed {
-    color: theme("colors.light.status.removed");
+    color: theme('colors.light.status.removed');
   }
 
   .dark .text-status-removed {
-    color: theme("colors.dark.status.removed");
+    color: theme('colors.dark.status.removed');
   }
 
   .text-status-revocation {
-    color: theme("colors.light.status.revocation");
+    color: theme('colors.light.status.revocation');
   }
 
   .dark .text-status-revocation {
-    color: theme("colors.dark.status.revocation");
+    color: theme('colors.dark.status.revocation');
   }
 
   .text-status-claim {
-    color: theme("colors.light.status.claim");
+    color: theme('colors.light.status.claim');
   }
 
   .dark .text-status-claim {
-    color: theme("colors.dark.status.claim");
+    color: theme('colors.dark.status.claim');
   }
 
   .text-status-challenged {
-    color: theme("colors.light.status.challenged");
+    color: theme('colors.light.status.challenged');
   }
 
   .dark .text-status-challenged {
-    color: theme("colors.dark.status.challenged");
+    color: theme('colors.dark.status.challenged');
   }
 
   .text-status-withdrawn {
-    color: theme("colors.light.status.withdrawn");
+    color: theme('colors.light.status.withdrawn');
   }
 
   .dark .text-status-withdrawn {
-    color: theme("colors.dark.status.withdrawn");
+    color: theme('colors.dark.status.withdrawn');
   }
 
   .text-status-expired {
-    color: theme("colors.light.status.expired");
+    color: theme('colors.light.status.expired');
   }
 
   .dark .text-status-expired {
-    color: theme("colors.dark.status.expired");
+    color: theme('colors.dark.status.expired');
   }
 
   .text-status-transferred {
-    color: theme("colors.light.status.transferred");
+    color: theme('colors.light.status.transferred');
   }
 
   .dark .text-status-transferred {
-    color: theme("colors.dark.status.transferred");
+    color: theme('colors.dark.status.transferred');
   }
 
   .text-status-transferring {
-    color: theme("colors.light.status.transferring");
+    color: theme('colors.light.status.transferring');
   }
 
   .dark .text-status-transferring {
-    color: theme("colors.dark.status.transferring");
+    color: theme('colors.dark.status.transferring');
   }
 
   .fill-primaryText {
-    fill: theme("colors.light.primaryText");
+    fill: theme('colors.light.primaryText');
   }
 
   .dark .fill-primaryText {
-    fill: theme("colors.dark.primaryText");
+    fill: theme('colors.dark.primaryText');
   }
 
   .fill-orange {
-    fill: theme("colors.light.orange");
+    fill: theme('colors.light.orange');
   }
 
   .dark .fill-orange {
-    fill: theme("colors.dark.orange");
+    fill: theme('colors.dark.orange');
   }
 
   .bg-whiteBackground {
-    background-color: theme("colors.light.whiteBackground");
+    background-color: theme('colors.light.whiteBackground');
   }
 
   .dark .bg-whiteBackground {
-    background-color: theme("colors.dark.whiteBackground");
+    background-color: theme('colors.dark.whiteBackground');
   }
 
   .bg-whiteBackgroundWithOpacity {
-    background-color: theme("colors.light.whiteBackground");
+    background-color: theme('colors.light.whiteBackground');
     opacity: 90%;
   }
 
   .dark .bg-whiteBackgroundWithOpacity {
-    background-color: theme("colors.dark.whiteBackground");
+    background-color: theme('colors.dark.whiteBackground');
     opacity: 90%;
   }
 
   .bg-theme {
-    background-color: theme("colors.light.theme");
+    background-color: theme('colors.light.theme');
   }
 
   .dark .bg-theme {
-    background-color: theme("colors.dark.theme");
+    background-color: theme('colors.dark.theme');
   }
 
   .bg-primaryBackground {
-    background-color: theme("colors.light.primaryBackground");
+    background-color: theme('colors.light.primaryBackground');
   }
 
   .dark .bg-primaryBackground {
-    background-color: theme("colors.dark.primaryBackground");
+    background-color: theme('colors.dark.primaryBackground');
   }
 
   .bg-orange {
-    background-color: theme("colors.light.orange");
+    background-color: theme('colors.light.orange');
   }
 
   .dark .bg-orange {
-    background-color: theme("colors.dark.orange");
+    background-color: theme('colors.dark.orange');
   }
 
   .bg-lightOrange {
-    background-color: theme("colors.light.lightOrange");
+    background-color: theme('colors.light.lightOrange');
   }
 
   .dark .bg-lightOrange {
-    background-color: theme("colors.dark.lightOrange");
+    background-color: theme('colors.dark.lightOrange');
   }
 
   .bg-grey {
-    background-color: theme("colors.light.grey");
+    background-color: theme('colors.light.grey');
   }
 
   .dark .bg-grey {
-    background-color: theme("colors.dark.grey");
+    background-color: theme('colors.dark.grey');
   }
 
   .bg-status-vouching {
-    background-color: theme("colors.light.status.vouching");
+    background-color: theme('colors.light.status.vouching');
   }
 
   .dark .bg-status-vouching {
-    background-color: theme("colors.dark.status.vouching");
+    background-color: theme('colors.dark.status.vouching');
   }
 
   .bg-status-registered {
-    background-color: theme("colors.light.status.registered");
+    background-color: theme('colors.light.status.registered');
   }
 
   .dark .bg-status-registered {
-    background-color: theme("colors.dark.status.registered");
+    background-color: theme('colors.dark.status.registered');
   }
 
   .bg-status-removed {
-    background-color: theme("colors.light.status.removed");
+    background-color: theme('colors.light.status.removed');
   }
 
   .dark .bg-status-removed {
-    background-color: theme("colors.dark.status.removed");
+    background-color: theme('colors.dark.status.removed');
   }
 
   .bg-status-revocation {
-    background-color: theme("colors.light.status.revocation");
+    background-color: theme('colors.light.status.revocation');
   }
 
   .dark .bg-status-revocation {
-    background-color: theme("colors.dark.status.revocation");
+    background-color: theme('colors.dark.status.revocation');
   }
 
   .bg-status-claim {
-    background-color: theme("colors.light.status.claim");
+    background-color: theme('colors.light.status.claim');
   }
 
   .dark .bg-status-claim {
-    background-color: theme("colors.dark.status.claim");
+    background-color: theme('colors.dark.status.claim');
   }
 
   .bg-status-challenged {
-    background-color: theme("colors.light.status.challenged");
+    background-color: theme('colors.light.status.challenged');
   }
 
   .dark .bg-status-challenged {
-    background-color: theme("colors.dark.status.challenged");
+    background-color: theme('colors.dark.status.challenged');
   }
 
   .bg-status-withdrawn {
-    background-color: theme("colors.light.status.withdrawn");
+    background-color: theme('colors.light.status.withdrawn');
   }
 
   .dark .bg-status-withdrawn {
-    background-color: theme("colors.dark.status.withdrawn");
+    background-color: theme('colors.dark.status.withdrawn');
   }
 
   .bg-status-expired {
-    background-color: theme("colors.light.status.expired");
+    background-color: theme('colors.light.status.expired');
   }
 
   .dark .bg-status-expired {
-    background-color: theme("colors.dark.status.expired");
+    background-color: theme('colors.dark.status.expired');
   }
 
   .bg-status-transferred {
-    background-color: theme("colors.light.status.transferred");
+    background-color: theme('colors.light.status.transferred');
   }
 
   .dark .bg-status-transferred {
-    background-color: theme("colors.dark.status.transferred");
+    background-color: theme('colors.dark.status.transferred');
   }
 
   .bg-status-transferring {
-    background-color: theme("colors.light.status.transferring");
+    background-color: theme('colors.light.status.transferring');
   }
 
   .dark .bg-status-transferring {
-    background-color: theme("colors.dark.status.transferring");
+    background-color: theme('colors.dark.status.transferring');
   }
 
   .btn-main {
@@ -376,7 +371,7 @@
   }
 
   .slider-thumb::-webkit-slider-thumb {
-    @apply appearance-none w-4 h-4 rounded-full bg-theme cursor-pointer;
+    @apply bg-theme h-4 w-4 cursor-pointer appearance-none rounded-full;
   }
 
   .centered {

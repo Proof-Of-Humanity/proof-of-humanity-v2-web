@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useState } from "react";
-import { ContractAbi, WriteArgs, WriteFunctionName, Effects } from "./types";
-import { SupportedChainId } from "config/chains";
+import { useEffect, useMemo, useState } from 'react';
+import { ContractAbi, WriteArgs, WriteFunctionName, Effects } from './types';
+import { SupportedChainId } from 'config/chains';
 import {
   UseContractWriteConfig,
   UsePrepareContractWriteConfig,
@@ -9,36 +9,37 @@ import {
   useContractWrite,
   usePrepareContractWrite,
   useWaitForTransaction,
-} from "wagmi";
-import abis from "contracts/abis";
-import useChainParam from "hooks/useChainParam";
-import { Contract, ContractName } from "contracts";
-import { Abi, ParseAbiParameter, toBytes, zeroAddress } from "viem";
+} from 'wagmi';
+import abis from 'contracts/abis';
+import useChainParam from 'hooks/useChainParam';
+import { Contract, ContractName } from 'contracts';
+import { Abi, ParseAbiParameter, toBytes, zeroAddress } from 'viem';
 
 const defaultForInputs = (inputs: readonly ParseAbiParameter<string>[]) =>
   inputs.length
     ? inputs.map((inp) => {
-        if (inp.type.endsWith("[]")) return [];
-        if (inp.type === "address") return zeroAddress;
-        if (inp.type === "bool") return false;
-        if (inp.type === "string") return "";
-        if (inp.type.startsWith("uint")) return 0n;
-        if (inp.type.startsWith("bytes")) return toBytes(0);
-        if (inp.type.startsWith("int")) return 0n;
-        throw new Error("Abi error");
+        if (inp.type.endsWith('[]')) return [];
+        if (inp.type === 'address') return zeroAddress;
+        if (inp.type === 'bool') return false;
+        if (inp.type === 'string') return '';
+        if (inp.type.startsWith('uint')) return 0n;
+        if (inp.type.startsWith('bytes')) return toBytes(0);
+        if (inp.type.startsWith('int')) return 0n;
+        throw new Error('Abi error');
       })
     : undefined;
 
-export default function useWagmiWrite<
-  C extends ContractName,
-  F extends WriteFunctionName<C>
->(contract: C, functionName: F, effects?: Effects) {
+export default function useWagmiWrite<C extends ContractName, F extends WriteFunctionName<C>>(
+  contract: C,
+  functionName: F,
+  effects?: Effects,
+) {
   const abiFragment = (abis[contract] as Abi).find(
-    (item) => item.type === "function" && item.name === functionName
+    (item) => item.type === 'function' && item.name === functionName,
   );
   const [value, setValue] = useState(0n);
   const [args, setArgs] = useState(
-    defaultForInputs((abiFragment as any).inputs) as WriteArgs<C, F>
+    defaultForInputs((abiFragment as any).inputs) as WriteArgs<C, F>,
   );
 
   const [enabled, setEnabled] = useState(false);
@@ -57,7 +58,7 @@ export default function useWagmiWrite<
   } as UsePrepareContractWriteConfig<ContractAbi<C>, F, SupportedChainId, WalletClient>);
 
   const { write, data, status } = useContractWrite(
-    prepared as UseContractWriteConfig<ContractAbi<C>, F, "prepared">
+    prepared as UseContractWriteConfig<ContractAbi<C>, F, 'prepared'>,
   );
   const { status: transactionStatus } = useWaitForTransaction({
     hash: data?.hash,
@@ -65,13 +66,13 @@ export default function useWagmiWrite<
 
   useEffect(() => {
     switch (prepareStatus) {
-      case "success":
+      case 'success':
         if (write && enabled) {
           effects?.onReady?.(write);
           setEnabled(false);
         }
         break;
-      case "error":
+      case 'error':
         effects?.onFail?.();
         setEnabled(false);
     }
@@ -79,7 +80,7 @@ export default function useWagmiWrite<
 
   useEffect(() => {
     switch (status) {
-      case "error":
+      case 'error':
         effects?.onError?.();
         setEnabled(false);
     }
@@ -87,10 +88,10 @@ export default function useWagmiWrite<
 
   useEffect(() => {
     switch (transactionStatus) {
-      case "loading":
+      case 'loading':
         effects?.onLoading?.();
         break;
-      case "success":
+      case 'success':
         effects?.onSuccess?.();
     }
   }, [transactionStatus, effects]);
@@ -113,6 +114,6 @@ export default function useWagmiWrite<
           transaction: transactionStatus,
         },
       ] as const,
-    [prepareStatus, status, transactionStatus, write]
+    [prepareStatus, status, transactionStatus, write],
   );
 }

@@ -1,8 +1,8 @@
-import { SupportedChainId, supportedChains } from "config/chains";
-import { sdk } from "config/subgraph";
-import { cache } from "react";
-import { MetaEvidenceFile } from "types/docs";
-import { ipfsFetch } from "utils/ipfs";
+import { SupportedChainId, supportedChains } from 'config/chains';
+import { sdk } from 'config/subgraph';
+import { cache } from 'react';
+import { MetaEvidenceFile } from 'types/docs';
+import { ipfsFetch } from 'utils/ipfs';
 
 export const getContractData = cache(async (chainId: SupportedChainId) => {
   const contract = await sdk[chainId].Contract();
@@ -17,7 +17,7 @@ export const getContractData = cache(async (chainId: SupportedChainId) => {
       ...contract.contract!.latestArbitratorHistory,
       policy: (
         await ipfsFetch<MetaEvidenceFile>(
-          contract.contract!.latestArbitratorHistory!.registrationMeta
+          contract.contract!.latestArbitratorHistory!.registrationMeta,
         )
       ).fileURI,
     },
@@ -27,12 +27,10 @@ export const getContractData = cache(async (chainId: SupportedChainId) => {
 export type ContractData = Awaited<ReturnType<Awaited<typeof getContractData>>>;
 
 export const getContractDataAllChains = cache(async () => {
-  const res = await Promise.all(
-    supportedChains.map((chain) => getContractData(chain.id))
-  );
+  const res = await Promise.all(supportedChains.map((chain) => getContractData(chain.id)));
 
   return supportedChains.reduce(
     (acc, chain, i) => ({ ...acc, [chain.id]: res[i] }),
-    {} as Record<SupportedChainId, ContractData>
+    {} as Record<SupportedChainId, ContractData>,
   );
 });

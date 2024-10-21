@@ -1,15 +1,9 @@
-export type Json =
-  | string
-  | number
-  | boolean
-  | null
-  | { [key: string]: Json | undefined }
-  | Json[];
+export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[];
 
 export interface Database {
   public: {
     Tables: {
-      "poh-vouchdb": {
+      'poh-vouchdb': {
         Row: {
           chainId: number;
           claimer: string;

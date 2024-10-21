@@ -1,22 +1,22 @@
-import Field from "components/Field";
-import Label from "components/Label";
-import TimeAgo from "components/TimeAgo";
-import { ipfs } from "utils/ipfs";
-import { formatEth } from "utils/misc";
-import { useAccount, useBalance, useChainId } from "wagmi";
-import { ObservableObject, ObservablePrimitiveBaseFns } from "@legendapp/state";
-import { MediaState, SubmissionState } from "./Form";
-import { formatEther } from "viem";
-import { SupportedChainId, idToChain } from "config/chains";
-import ExternalLink from "components/ExternalLink";
-import Image from "next/image";
-import Previewed from "components/Previewed";
-import DocumentIcon from "icons/NoteMajor.svg";
-import { ContractData } from "data/contract";
-import { prettifyId } from "utils/identifier";
+import Field from 'components/Field';
+import Label from 'components/Label';
+import TimeAgo from 'components/TimeAgo';
+import { ipfs } from 'utils/ipfs';
+import { formatEth } from 'utils/misc';
+import { useAccount, useBalance, useChainId } from 'wagmi';
+import { ObservableObject, ObservablePrimitiveBaseFns } from '@legendapp/state';
+import { MediaState, SubmissionState } from './Form';
+import { formatEther } from 'viem';
+import { SupportedChainId, idToChain } from 'config/chains';
+import ExternalLink from 'components/ExternalLink';
+import Image from 'next/image';
+import Previewed from 'components/Previewed';
+import DocumentIcon from 'icons/NoteMajor.svg';
+import { ContractData } from 'data/contract';
+import { prettifyId } from 'utils/identifier';
 
 interface ReviewProps {
-  arbitrationInfo: ContractData["arbitrationInfo"];
+  arbitrationInfo: ContractData['arbitrationInfo'];
   totalCost: bigint;
   selfFunded$: ObservablePrimitiveBaseFns<number>;
   state$: ObservableObject<SubmissionState>;
@@ -46,51 +46,50 @@ function Review({
 
   return (
     <>
-      <span className="w-full my-4 flex flex-col text-2xl font-semibold">
+      <span className="my-4 flex w-full flex-col text-2xl font-semibold">
         Finalize your registration
         <div className="divider mt-4 w-2/3" />
       </span>
 
-      <div className="centered flex-col mb-4">
+      <div className="centered mb-4 flex-col">
         <ExternalLink
-          className="flex mr-1 text-orange font-semibold"
+          className="text-orange mr-1 flex font-semibold"
           href={ipfs(arbitrationInfo.policy)}
         >
-          <DocumentIcon className="fill-orange w-6 h-6" />
+          <DocumentIcon className="fill-orange h-6 w-6" />
           Registration Policy
         </ExternalLink>
-        <span className="text-sm text-secondaryText">
+        <span className="text-secondaryText text-sm">
           Updated: <TimeAgo time={arbitrationInfo.updateTime} />
         </span>
       </div>
 
       <span className="txt pb-8">
-        Before proceeding, check that your submission complies with the above 
-        Registration Policy. If not, you might lose your deposit. 
-        Specifically, make sure:
-        <ul className="list-disc ml-8">
+        Before proceeding, check that your submission complies with the above Registration Policy.
+        If not, you might lose your deposit. Specifically, make sure:
+        <ul className="ml-8 list-disc">
           <li>
-            Non-mirrored photo and video (if you display any text in the 
-            camera and it appears backwards, your image is mirrored).
+            Non-mirrored photo and video (if you display any text in the camera and it appears
+            backwards, your image is mirrored).
           </li>
           <li>
-            Photo is facing forward, without any covering that might hide 
-            internal facial features (no filters, heavy makeup, or masks).
+            Photo is facing forward, without any covering that might hide internal facial features
+            (no filters, heavy makeup, or masks).
           </li>
           <li>
-            Video has good lighting and sound, your internal facial 
-            features are visible, and the displayed address is correct.
+            Video has good lighting and sound, your internal facial features are visible, and the
+            displayed address is correct.
           </li>
         </ul>
       </span>
 
-      <div className="w-full flex flex-col sm:flex-row items-center justify-center mx-auto">
+      <div className="mx-auto flex w-full flex-col items-center justify-center sm:flex-row">
         <Previewed
           uri={photo!.uri}
           trigger={
             <Image
               alt="preview"
-              className="w-48 h-48 rounded-full"
+              className="h-48 w-48 rounded-full"
               src={photo!.uri}
               width={256}
               height={256}
@@ -100,16 +99,11 @@ function Review({
         <Previewed
           isVideo
           uri={video!.uri}
-          trigger={
-            <video
-              className="h-48 mt-4 sm:mt-0 sm:ml-8 cursor-pointer"
-              src={video!.uri}
-            />
-          }
+          trigger={<video className="mt-4 h-48 cursor-pointer sm:ml-8 sm:mt-0" src={video!.uri} />}
         />
       </div>
 
-      <div className="w-full flex flex-col">
+      <div className="flex w-full flex-col">
         <Field label="Proof of Humanity ID" value={prettifyId(pohId)} disabled />
         <Field label="Name" value={name} disabled />
         <Field label="Account" value={address} disabled />
@@ -118,8 +112,8 @@ function Review({
           <div className="flex items-center">
             Initial deposit
             {balance && (
-              <span className="ml-8 text-primaryText normal-case">
-                Your balance:{" "}
+              <span className="text-primaryText ml-8 normal-case">
+                Your balance:{' '}
                 <strong>
                   {formatEth(balance.value)} {nativeCurrency.symbol}
                 </strong>
@@ -127,9 +121,9 @@ function Review({
             )}
           </div>
         </Label>
-        <div className="txt flex flex-col mb-16">
+        <div className="txt mb-16 flex flex-col">
           <div className="inline-flex items-center">
-            <div className="w-48 mr-2">
+            <div className="mr-2 w-48">
               <Field
                 type="number"
                 className="no-spinner text-right"
@@ -143,17 +137,16 @@ function Review({
             of
             <span
               onClick={() => selfFunded$.set(formatEth(totalCost))}
-              className="mx-1 text-orange font-semibold underline underline-offset-2 cursor-pointer"
+              className="text-orange mx-1 cursor-pointer font-semibold underline underline-offset-2"
             >
               {formatEther(totalCost)}
-            </span>{" "}
+            </span>{' '}
             {nativeCurrency.symbol}
           </div>
 
           <span className="mt-2 text-blue-500">
-            The deposit is reimbursed after successful registration, and lost
-            after failure. Any amount not contributed now can be put up by
-            crowdfunders later.
+            The deposit is reimbursed after successful registration, and lost after failure. Any
+            amount not contributed now can be put up by crowdfunders later.
           </span>
         </div>
       </div>

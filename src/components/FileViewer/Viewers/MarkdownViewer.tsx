@@ -1,13 +1,13 @@
-import { type DocRenderer } from "@cyntler/react-doc-viewer";
-import React from "react";
-import ReactMarkdown from "react-markdown";
+import { type DocRenderer } from '@cyntler/react-doc-viewer';
+import React from 'react';
+import ReactMarkdown from 'react-markdown';
 
 /**
  * MarkdownRenderer component to render markdown files using Tailwind CSS instead of styled-components.
  */
 const MarkdownRenderer: DocRenderer = ({ mainState: { currentDocument } }) => {
   if (!currentDocument) return null;
-  const base64String = (currentDocument.fileData as string).split(",")[1];
+  const base64String = (currentDocument.fileData as string).split(',')[1];
 
   // Decode the base64 string
   const decodedData = atob(base64String);
@@ -18,9 +18,7 @@ const MarkdownRenderer: DocRenderer = ({ mainState: { currentDocument } }) => {
         className="bg-white"
         components={{
           a: ({ node, ...props }) => <a className="text-base" {...props} />,
-          code: ({ node, ...props }) => (
-            <code className="text-secondary" {...props} />
-          ),
+          code: ({ node, ...props }) => <code className="text-secondary" {...props} />,
         }}
       >
         {decodedData}
@@ -29,7 +27,7 @@ const MarkdownRenderer: DocRenderer = ({ mainState: { currentDocument } }) => {
   );
 };
 
-MarkdownRenderer.fileTypes = ["md", "text/plain"];
+MarkdownRenderer.fileTypes = ['md', 'text/plain'];
 MarkdownRenderer.weight = 1;
 
 export default MarkdownRenderer;

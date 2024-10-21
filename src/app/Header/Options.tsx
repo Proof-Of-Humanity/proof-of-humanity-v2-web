@@ -1,36 +1,36 @@
-import Image from "next/image";
-import React, { useEffect, useState } from "react";
-import ExternalLink from "components/ExternalLink";
-import Popover from "components/Popover";
+import Image from 'next/image';
+import React, { useEffect, useState } from 'react';
+import ExternalLink from 'components/ExternalLink';
+import Popover from 'components/Popover';
 
 const Options: React.FC = () => {
   const [isDarkMode, setIsDarkMode] = useState<boolean>(false);
 
   useEffect(() => {
-    const savedTheme = localStorage.getItem("theme");
-    if (savedTheme === "dark") {
-      document.documentElement.classList.add("dark");
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme === 'dark') {
+      document.documentElement.classList.add('dark');
       setIsDarkMode(true);
     } else {
-      document.documentElement.classList.remove("dark");
+      document.documentElement.classList.remove('dark');
       setIsDarkMode(false);
     }
   }, []);
 
   const toggleTheme = () => {
     if (isDarkMode) {
-      document.documentElement.classList.remove("dark");
-      localStorage.setItem("theme", "light");
+      document.documentElement.classList.remove('dark');
+      localStorage.setItem('theme', 'light');
       setIsDarkMode(false);
     } else {
-      document.documentElement.classList.add("dark");
-      localStorage.setItem("theme", "dark");
+      document.documentElement.classList.add('dark');
+      localStorage.setItem('theme', 'dark');
       setIsDarkMode(true);
     }
   };
 
   return (
-    <div className="flex flex-row mt-[16px] md:mt-0">
+    <div className="mt-[16px] flex flex-row md:mt-0">
       <ExternalLink href="https://snapshot.org/#/poh.eth/">
         <Image alt="snapshot" src="/logo/snapshot.svg" height={16} width={16} />
       </ExternalLink>
@@ -39,26 +39,20 @@ const Options: React.FC = () => {
         trigger={
           <Image
             alt="question"
-            className="cursor-pointer ml-2"
-            src={"/logo/question.svg"}
+            className="ml-2 cursor-pointer"
+            src={'/logo/question.svg'}
             height={16}
             width={16}
           />
         }
       >
-        <div className="p-2 h-fit grid grid-cols-1 gap-2">
-          <ExternalLink href="https://t.me/proofhumanity">
-            Get Help (English)
-          </ExternalLink>
+        <div className="grid h-fit grid-cols-1 gap-2 p-2">
+          <ExternalLink href="https://t.me/proofhumanity">Get Help (English)</ExternalLink>
           <ExternalLink href="https://t.me/proofofhumanityenespanol">
             Get Help (Spanish)
           </ExternalLink>
-          <ExternalLink href="https://gov.proofofhumanity.id/">
-            Forums
-          </ExternalLink>
-          <ExternalLink href="https://t.me/pohDebug">
-            Report Bugs (Telegram)
-          </ExternalLink>
+          <ExternalLink href="https://gov.proofofhumanity.id/">Forums</ExternalLink>
+          <ExternalLink href="https://t.me/pohDebug">Report Bugs (Telegram)</ExternalLink>
           <ExternalLink href="https://github.com/Proof-Of-Humanity/proof-of-humanity-web/issues">
             Report Bugs (Github)
           </ExternalLink>
@@ -77,8 +71,8 @@ const Options: React.FC = () => {
       <Image
         alt="toggle theme"
         onClick={toggleTheme}
-        className="cursor-pointer ml-2"
-        src={isDarkMode ? " /logo/light-icon.svg" : "/logo/night-icon.svg"}
+        className="ml-2 cursor-pointer"
+        src={isDarkMode ? ' /logo/light-icon.svg' : '/logo/night-icon.svg'}
         height={16}
         width={16}
       />
