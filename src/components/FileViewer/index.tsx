@@ -1,9 +1,9 @@
-import React from 'react';
-import DocViewer, { DocViewerRenderers } from '@cyntler/react-doc-viewer';
+import React from "react";
+import DocViewer, { DocViewerRenderers } from "@cyntler/react-doc-viewer";
 
-import '@cyntler/react-doc-viewer/dist/index.css';
+import "@cyntler/react-doc-viewer/dist/index.css";
 
-import MarkdownRenderer from './Viewers/MarkdownViewer';
+import MarkdownRenderer from "./Viewers/MarkdownViewer";
 
 /**
  * @description this viewer supports loading multiple files, it can load urls, local files, etc

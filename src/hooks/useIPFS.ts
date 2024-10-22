@@ -1,5 +1,5 @@
-import useSWR from 'swr';
-import { ipfsFetch } from 'utils/ipfs';
+import useSWR from "swr";
+import { ipfsFetch } from "utils/ipfs";
 
 interface useIPFSConfig {
   suspense?: boolean;

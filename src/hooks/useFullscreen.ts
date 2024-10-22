@@ -1,5 +1,5 @@
-import { RefObject, useEffect, useState } from 'react';
-import screenfull from 'screenfull';
+import { RefObject, useEffect, useState } from "react";
+import screenfull from "screenfull";
 
 export interface FullScreenOptions {
   video?: RefObject<
@@ -30,14 +30,14 @@ const useFullscreen = (ref: RefObject<Element>) => {
       } catch (error: any) {
         setIsFullscreen(false);
       }
-      screenfull.on('change', onChange);
+      screenfull.on("change", onChange);
     } else setIsFullscreen(false);
 
     return () => {
       setIsFullscreen(false);
       if (screenfull.isEnabled) {
         try {
-          screenfull.off('change', onChange);
+          screenfull.off("change", onChange);
           screenfull.exit();
         } catch {}
       }

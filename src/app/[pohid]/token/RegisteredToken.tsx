@@ -1,41 +1,48 @@
-import { PoHContract } from 'enums/PoHContract';
-import { formatEther, parseEther } from 'ethers/lib/utils';
-import { useState } from 'react';
-import Field from 'components/Field';
-import Label from 'components/Label';
-import { TOKEN_CHAIN } from 'config/chains';
-import { CONTRACT } from 'contracts';
+import { PoHContract } from "enums/PoHContract";
+import { formatEther, parseEther } from "ethers/lib/utils";
+import { useState } from "react";
+import Field from "components/Field";
+import Label from "components/Label";
+import { TOKEN_CHAIN } from "config/chains";
+import { CONTRACT } from "contracts";
 import {
   useGCTAllowance,
   useGCTApprove,
   useGCTBalanceOf,
   useGCTMint,
-} from 'hooks/useGroupCurrencyToken';
-import { useHubTokenToUser } from 'hooks/useHub';
-import { usePoHRedeem } from 'hooks/usePoHTokenManager';
-import { useTokenAllowance, useTokenApprove, useTokenBalanceOf } from 'hooks/useToken';
-import useWeb3 from 'hooks/useWeb3';
-import { formatEth } from 'utils/misc';
+} from "hooks/useGroupCurrencyToken";
+import { useHubTokenToUser } from "hooks/useHub";
+import { usePoHRedeem } from "hooks/usePoHTokenManager";
+import {
+  useTokenAllowance,
+  useTokenApprove,
+  useTokenBalanceOf,
+} from "hooks/useToken";
+import useWeb3 from "hooks/useWeb3";
+import { formatEth } from "utils/misc";
 
 interface RegisteredTokenProps {
   pohName: string;
   circlesToken: string;
 }
 
-const RegisteredToken: React.FC<RegisteredTokenProps> = ({ pohName, circlesToken }) => {
+const RegisteredToken: React.FC<RegisteredTokenProps> = ({
+  pohName,
+  circlesToken,
+}) => {
   const { account } = useWeb3();
 
   const [circlesWallet] = useHubTokenToUser(circlesToken);
 
-  const [myCirclesBalance, { mutate: mutateMyCirclesBalance }] = useTokenBalanceOf(
-    circlesToken,
-    account,
-  );
-  const [treasuryCirclesBalance, { mutate: mutateTreasuryCirlclesBalance }] = useTokenBalanceOf(
-    circlesToken,
-    CONTRACT[PoHContract.POH_TOKEN_MANAGER][TOKEN_CHAIN],
-  );
-  const [myPoHBalance, { mutate: mutateMyPoHBalance }] = useGCTBalanceOf(account);
+  const [myCirclesBalance, { mutate: mutateMyCirclesBalance }] =
+    useTokenBalanceOf(circlesToken, account);
+  const [treasuryCirclesBalance, { mutate: mutateTreasuryCirlclesBalance }] =
+    useTokenBalanceOf(
+      circlesToken,
+      CONTRACT[PoHContract.POH_TOKEN_MANAGER][TOKEN_CHAIN],
+    );
+  const [myPoHBalance, { mutate: mutateMyPoHBalance }] =
+    useGCTBalanceOf(account);
   const [otherPoHBalance] = useGCTBalanceOf(circlesWallet);
 
   const [tokensToMint, setTokensToMint] = useState(0);
@@ -51,7 +58,10 @@ const RegisteredToken: React.FC<RegisteredTokenProps> = ({ pohName, circlesToken
     account,
     gctContract,
   );
-  const [gctAllowance, { mutate: mutateGCTAllowance }] = useGCTAllowance(account, pohtmContract);
+  const [gctAllowance, { mutate: mutateGCTAllowance }] = useGCTAllowance(
+    account,
+    pohtmContract,
+  );
 
   const mint = useGCTMint();
   const redeem = usePoHRedeem();
@@ -66,10 +76,10 @@ const RegisteredToken: React.FC<RegisteredTokenProps> = ({ pohName, circlesToken
         <div className="flex flex-col">
           {otherPoHBalance && (
             <span className="font-bold">
-              {isSelf ? 'You own ' : pohName + ' owns '}
+              {isSelf ? "You own " : pohName + " owns "}
               <code className="font-bold text-emerald-400">
                 {formatEth(otherPoHBalance, 2)}
-              </code>{' '}
+              </code>{" "}
               <code className="font-bold">POH</code> Tokens
             </span>
           )}
@@ -77,9 +87,12 @@ const RegisteredToken: React.FC<RegisteredTokenProps> = ({ pohName, circlesToken
           {myCirclesBalance && (
             <>
               <Label>
-                You have <code className="font-bold">{formatEth(myCirclesBalance, 2)}</code>{' '}
-                {isSelf ? '' : 'of ' + pohName + "'s"} personal{' '}
-                <code className="font-bold">CRC</code> you can use to mint{' '}
+                You have{" "}
+                <code className="font-bold">
+                  {formatEth(myCirclesBalance, 2)}
+                </code>{" "}
+                {isSelf ? "" : "of " + pohName + "'s"} personal{" "}
+                <code className="font-bold">CRC</code> you can use to mint{" "}
                 <code className="font-bold">POH</code>.
               </Label>
               {!myCirclesBalance.isZero() && (
@@ -92,7 +105,9 @@ const RegisteredToken: React.FC<RegisteredTokenProps> = ({ pohName, circlesToken
                     max={formatEther(myCirclesBalance)}
                     step={1}
                     value={tokensToMint}
-                    onChange={(e) => setTokensToMint(parseFloat(e.target.value || '0'))}
+                    onChange={(e) =>
+                      setTokensToMint(parseFloat(e.target.value || "0"))
+                    }
                   />
                   {crcAllowance &&
                     (crcAllowance.gte(parseEther(tokensToMint.toString())) ? (
@@ -116,7 +131,7 @@ const RegisteredToken: React.FC<RegisteredTokenProps> = ({ pohName, circlesToken
                           );
                         }}
                       >
-                        {mintLoading ? '...' : 'MINT'}
+                        {mintLoading ? "..." : "MINT"}
                       </button>
                     ) : (
                       <button
@@ -137,7 +152,7 @@ const RegisteredToken: React.FC<RegisteredTokenProps> = ({ pohName, circlesToken
                           );
                         }}
                       >
-                        {mintLoading ? '...' : 'APPROVE'}
+                        {mintLoading ? "..." : "APPROVE"}
                       </button>
                     ))}
                 </div>
@@ -148,14 +163,19 @@ const RegisteredToken: React.FC<RegisteredTokenProps> = ({ pohName, circlesToken
           {treasuryCirclesBalance && myPoHBalance && (
             <>
               <Label>
-                There are <code className="font-bold">{formatEth(treasuryCirclesBalance, 2)}</code>{' '}
-                of {isSelf ? 'your' : pohName + "'s"} personal{' '}
-                <code className="font-bold">CRC</code> in the treasury.{' '}
+                There are{" "}
+                <code className="font-bold">
+                  {formatEth(treasuryCirclesBalance, 2)}
+                </code>{" "}
+                of {isSelf ? "your" : pohName + "'s"} personal{" "}
+                <code className="font-bold">CRC</code> in the treasury.{" "}
                 {!myPoHBalance.isZero() && (
                   <>
-                    You can use some of your{' '}
-                    <code className="font-bold">{formatEth(myPoHBalance, 2)} POH</code> to redeem
-                    some.
+                    You can use some of your{" "}
+                    <code className="font-bold">
+                      {formatEth(myPoHBalance, 2)} POH
+                    </code>{" "}
+                    to redeem some.
                   </>
                 )}
               </Label>
@@ -169,7 +189,9 @@ const RegisteredToken: React.FC<RegisteredTokenProps> = ({ pohName, circlesToken
                     min={0}
                     max={formatEther(myPoHBalance)}
                     step={1}
-                    onChange={(e) => setTokensToRedeem(parseFloat(e.target.value))}
+                    onChange={(e) =>
+                      setTokensToRedeem(parseFloat(e.target.value))
+                    }
                   />
 
                   {gctAllowance &&
@@ -195,7 +217,7 @@ const RegisteredToken: React.FC<RegisteredTokenProps> = ({ pohName, circlesToken
                           );
                         }}
                       >
-                        {redeemLoading ? '...' : 'REDEEM'}
+                        {redeemLoading ? "..." : "REDEEM"}
                       </button>
                     ) : (
                       <button
@@ -216,7 +238,7 @@ const RegisteredToken: React.FC<RegisteredTokenProps> = ({ pohName, circlesToken
                           );
                         }}
                       >
-                        {redeemLoading ? '...' : 'APPROVE'}
+                        {redeemLoading ? "..." : "APPROVE"}
                       </button>
                     ))}
                 </div>

@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import { useAccount } from 'wagmi';
+import { useEffect, useState } from "react";
+import { useAccount } from "wagmi";
 
 export default function useWeb3Loaded() {
   const { isReconnecting } = useAccount();

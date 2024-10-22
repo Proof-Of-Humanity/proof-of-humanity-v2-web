@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import Jazzicon, { jsNumberForAddress } from 'react-jazzicon';
+import Jazzicon, { jsNumberForAddress } from "react-jazzicon";
 
 interface IdenticonProps {
   diameter?: number;
@@ -8,7 +8,10 @@ interface IdenticonProps {
 }
 
 const Identicon: React.FC<IdenticonProps> = ({ address, diameter }) => (
-  <Jazzicon diameter={diameter} seed={address ? jsNumberForAddress(address) : undefined} />
+  <Jazzicon
+    diameter={diameter}
+    seed={address ? jsNumberForAddress(address) : undefined}
+  />
 );
 
 export default Identicon;

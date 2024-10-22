@@ -1,4 +1,4 @@
-import Popover from 'components/Popover';
+import Popover from "components/Popover";
 
 interface DropdownProps {
   title: string;
@@ -13,7 +13,9 @@ const Dropdown: React.FC<DropdownProps> = ({ title, children }) => (
       </button>
     }
   >
-    <div className="bg-whiteBackground text-primaryText flex flex-col">{children}</div>
+    <div className="bg-whiteBackground text-primaryText flex flex-col">
+      {children}
+    </div>
   </Popover>
 );
 

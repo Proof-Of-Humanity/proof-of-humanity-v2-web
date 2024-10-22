@@ -1,11 +1,11 @@
-import usePoHWrite from 'contracts/hooks/usePoHWrite';
-import { Address, Hash } from 'viem';
-import { useMemo } from 'react';
-import { useLoading } from 'hooks/useLoading';
-import { enableReactUse } from '@legendapp/state/config/enableReactUse';
-import { toast } from 'react-toastify';
-import { useEffectOnce } from '@legendapp/state/react';
-import { SupportedChain } from 'config/chains';
+import usePoHWrite from "contracts/hooks/usePoHWrite";
+import { Address, Hash } from "viem";
+import { useMemo } from "react";
+import { useLoading } from "hooks/useLoading";
+import { enableReactUse } from "@legendapp/state/config/enableReactUse";
+import { toast } from "react-toastify";
+import { useEffectOnce } from "@legendapp/state/react";
+import { SupportedChain } from "config/chains";
 
 enableReactUse();
 
@@ -28,18 +28,18 @@ export default function RemoveVouch({
   const [pending] = loading.use();
 
   const [prepareRemoveVouch, removeOnchainVouch] = usePoHWrite(
-    'removeVouch',
+    "removeVouch",
     useMemo(
       () => ({
         onError() {
-          toast.error('Transaction rejected');
+          toast.error("Transaction rejected");
         },
         onLoading() {
           loading.start();
-          toast.info('Transaction pending');
+          toast.info("Transaction pending");
         },
         onSuccess() {
-          toast.success('Request remove vouch successful');
+          toast.success("Request remove vouch successful");
         },
       }),
       [loading],
@@ -54,7 +54,11 @@ export default function RemoveVouch({
     web3Loaded &&
     userChainId === chain.id && (
       <div className="flex gap-4">
-        <button disabled={pending} className="btn-main mb-2" onClick={removeOnchainVouch}>
+        <button
+          disabled={pending}
+          className="btn-main mb-2"
+          onClick={removeOnchainVouch}
+        >
           Remove Vouch
         </button>
       </div>

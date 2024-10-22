@@ -1,42 +1,47 @@
-import { useState, useMemo } from 'react';
-import ALink from 'components/ExternalLink';
-import Field from 'components/Field';
-import Label from 'components/Label';
-import Modal from 'components/Modal';
-import TimeAgo from 'components/TimeAgo';
-import { useLoading } from 'hooks/useLoading';
-import { ipfs, uploadToIPFS } from 'utils/ipfs';
-import { formatEth } from 'utils/misc';
-import cn from 'classnames';
-import Image from 'next/image';
-import { useObservable } from '@legendapp/state/react';
-import usePoHWrite from 'contracts/hooks/usePoHWrite';
-import { Hash } from 'viem';
-import DocumentIcon from 'icons/NoteMajor.svg';
-import { ObservablePrimitiveBaseFns } from '@legendapp/state';
-import { ContractData } from 'data/contract';
+import { useState, useMemo } from "react";
+import ALink from "components/ExternalLink";
+import Field from "components/Field";
+import Label from "components/Label";
+import Modal from "components/Modal";
+import TimeAgo from "components/TimeAgo";
+import { useLoading } from "hooks/useLoading";
+import { ipfs, uploadToIPFS } from "utils/ipfs";
+import { formatEth } from "utils/misc";
+import cn from "classnames";
+import Image from "next/image";
+import { useObservable } from "@legendapp/state/react";
+import usePoHWrite from "contracts/hooks/usePoHWrite";
+import { Hash } from "viem";
+import DocumentIcon from "icons/NoteMajor.svg";
+import { ObservablePrimitiveBaseFns } from "@legendapp/state";
+import { ContractData } from "data/contract";
 
-type Reason = 'none' | 'incorrectSubmission' | 'identityTheft' | 'sybilAttack' | 'deceased';
+type Reason =
+  | "none"
+  | "incorrectSubmission"
+  | "identityTheft"
+  | "sybilAttack"
+  | "deceased";
 
 const reasonToImage: Record<Reason, string> = {
-  none: '',
-  incorrectSubmission: '/reason/incorrect.png',
-  identityTheft: '/reason/duplicate.png',
-  sybilAttack: '/reason/dne.png',
-  deceased: '/reason/deceased.png',
+  none: "",
+  incorrectSubmission: "/reason/incorrect.png",
+  identityTheft: "/reason/duplicate.png",
+  sybilAttack: "/reason/dne.png",
+  deceased: "/reason/deceased.png",
 };
 
 function reasonToIdx(reason: Reason) {
   switch (reason) {
-    case 'none':
+    case "none":
       return 0;
-    case 'incorrectSubmission':
+    case "incorrectSubmission":
       return 1;
-    case 'identityTheft':
+    case "identityTheft":
       return 2;
-    case 'sybilAttack':
+    case "sybilAttack":
       return 3;
-    case 'deceased':
+    case "deceased":
       return 4;
     default:
       return 0;
@@ -49,11 +54,15 @@ interface ReasonCardInterface {
   current: ObservablePrimitiveBaseFns<Reason>;
 }
 
-const ReasonCard: React.FC<ReasonCardInterface> = ({ text, reason, current }) => (
+const ReasonCard: React.FC<ReasonCardInterface> = ({
+  text,
+  reason,
+  current,
+}) => (
   <div
     className={cn(
-      'cursor-pointer rounded-sm bg-slate-200 p-0.5 text-lg uppercase text-black',
-      reason === current.get() ? 'gradient font-bold' : 'grayscale',
+      "cursor-pointer rounded-sm bg-slate-200 p-0.5 text-lg uppercase text-black",
+      reason === current.get() ? "gradient font-bold" : "grayscale",
     )}
     onClick={() => current.set(reason)}
   >
@@ -75,7 +84,7 @@ interface ChallengeInterface {
   requestIndex: number;
   revocation: boolean;
   arbitrationCost: bigint;
-  arbitrationInfo: ContractData['arbitrationInfo'];
+  arbitrationInfo: ContractData["arbitrationInfo"];
 }
 
 export default function Challenge({
@@ -86,7 +95,7 @@ export default function Challenge({
   arbitrationInfo,
 }: ChallengeInterface) {
   const [prepare] = usePoHWrite(
-    'challengeRequest',
+    "challengeRequest",
     useMemo(
       () => ({
         onReady(fire) {
@@ -97,42 +106,48 @@ export default function Challenge({
     ),
   );
 
-  const reason$ = useObservable<Reason>('none');
+  const reason$ = useObservable<Reason>("none");
   const reason = reason$.use();
 
-  const [justification, setJustification] = useState('');
+  const [justification, setJustification] = useState("");
 
   const loading = useLoading();
 
   const submit = async () => {
     if (revocation === !reason && !justification) return;
 
-    loading.start('Uploading evidence');
+    loading.start("Uploading evidence");
 
     const data = new FormData();
-    data.append('###', 'evidence.json');
-    data.append('name', 'Challenge Justification');
-    if (justification) data.append('description', justification);
+    data.append("###", "evidence.json");
+    data.append("name", "Challenge Justification");
+    if (justification) data.append("description", justification);
 
     prepare({
       value: arbitrationCost,
       args: [
         pohId,
         BigInt(requestIndex),
-        reasonToIdx(revocation ? 'none' : reason),
+        reasonToIdx(revocation ? "none" : reason),
         await uploadToIPFS(data),
       ],
     });
 
-    loading.start('Executing transaction');
+    loading.start("Executing transaction");
   };
 
   return (
-    <Modal formal header="Challenge" trigger={<button className="btn-main">Challenge</button>}>
+    <Modal
+      formal
+      header="Challenge"
+      trigger={<button className="btn-main">Challenge</button>}
+    >
       <div className="flex flex-col flex-wrap items-center p-4">
         <ALink className="flex" href={ipfs(arbitrationInfo.policy)}>
           <DocumentIcon className="fill-theme h-6 w-6" />
-          <strong className="text-orange mr-1 font-semibold">Registration Policy</strong>
+          <strong className="text-orange mr-1 font-semibold">
+            Registration Policy
+          </strong>
           (at the time of submission)
         </ALink>
         <span className="text-sm text-slate-400">
@@ -148,8 +163,16 @@ export default function Challenge({
                 text="Incorrect Submission"
                 current={reason$}
               />
-              <ReasonCard reason="identityTheft" text="Identity Theft" current={reason$} />
-              <ReasonCard reason="sybilAttack" text="Sybil Attack" current={reason$} />
+              <ReasonCard
+                reason="identityTheft"
+                text="Identity Theft"
+                current={reason$}
+              />
+              <ReasonCard
+                reason="sybilAttack"
+                text="Sybil Attack"
+                current={reason$}
+              />
               <ReasonCard reason="deceased" text="Deceased" current={reason$} />
             </div>
           </>
@@ -162,10 +185,14 @@ export default function Challenge({
           onChange={(e) => setJustification(e.target.value)}
         />
 
-        <div className="txt mt-4 text-lg">Deposit: {formatEth(arbitrationCost)} ETH</div>
+        <div className="txt mt-4 text-lg">
+          Deposit: {formatEth(arbitrationCost)} ETH
+        </div>
 
         <button
-          disabled={!revocation ? !justification || reason === 'none' : !justification}
+          disabled={
+            !revocation ? !justification || reason === "none" : !justification
+          }
           className="btn-main mt-12"
           onClick={submit}
         >

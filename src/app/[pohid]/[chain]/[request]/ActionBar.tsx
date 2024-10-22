@@ -1,30 +1,30 @@
-'use client';
+"use client";
 
-import { enableReactUse } from '@legendapp/state/config/enableReactUse';
-import { useEffectOnce } from '@legendapp/state/react';
-import ExternalLink from 'components/ExternalLink';
-import withClientConnected from 'components/HighOrder/withClientConnected';
-import TimeAgo from 'components/TimeAgo';
-import { colorForStatus } from 'config/misc';
-import usePoHWrite from 'contracts/hooks/usePoHWrite';
-import { ContractData } from 'data/contract';
-import { getMyData } from 'data/user';
-import { RequestQuery } from 'generated/graphql';
-import useChainParam from 'hooks/useChainParam';
-import { useLoading } from 'hooks/useLoading';
-import useWeb3Loaded from 'hooks/useWeb3Loaded';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { toast } from 'react-toastify';
-import useSWR from 'swr';
-import { camelToTitle } from 'utils/case';
-import { ActionType } from 'utils/enums';
-import { Address, Hash, formatEther, hexToSignature } from 'viem';
-import { useAccount, useChainId } from 'wagmi';
-import Appeal from './Appeal';
-import Challenge from './Challenge';
-import FundButton from './Funding';
-import RemoveVouch from './RemoveVouch';
-import Vouch from './Vouch';
+import { enableReactUse } from "@legendapp/state/config/enableReactUse";
+import { useEffectOnce } from "@legendapp/state/react";
+import ExternalLink from "components/ExternalLink";
+import withClientConnected from "components/HighOrder/withClientConnected";
+import TimeAgo from "components/TimeAgo";
+import { colorForStatus } from "config/misc";
+import usePoHWrite from "contracts/hooks/usePoHWrite";
+import { ContractData } from "data/contract";
+import { getMyData } from "data/user";
+import { RequestQuery } from "generated/graphql";
+import useChainParam from "hooks/useChainParam";
+import { useLoading } from "hooks/useLoading";
+import useWeb3Loaded from "hooks/useWeb3Loaded";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { toast } from "react-toastify";
+import useSWR from "swr";
+import { camelToTitle } from "utils/case";
+import { ActionType } from "utils/enums";
+import { Address, Hash, formatEther, hexToSignature } from "viem";
+import { useAccount, useChainId } from "wagmi";
+import Appeal from "./Appeal";
+import Challenge from "./Challenge";
+import FundButton from "./Funding";
+import RemoveVouch from "./RemoveVouch";
+import Vouch from "./Vouch";
 
 enableReactUse();
 
@@ -45,13 +45,15 @@ interface ActionBarProps extends JSX.IntrinsicAttributes {
   index: number;
   lastStatusChange: number;
   contractData: ContractData;
-  currentChallenge?: ArrayElement<NonNullable<NonNullable<RequestQuery>['request']>['challenges']>;
+  currentChallenge?: ArrayElement<
+    NonNullable<NonNullable<RequestQuery>["request"]>["challenges"]
+  >;
   advanceRequestsOnChainVouches?: { claimer: Address; vouchers: Address[] }[];
   onChainVouches: Address[];
   offChainVouches: { voucher: Address; expiration: number; signature: Hash }[];
   expired: boolean;
   arbitrationHistory: {
-    __typename?: 'ArbitratorHistory' | undefined;
+    __typename?: "ArbitratorHistory" | undefined;
     updateTime: any;
     registrationMeta: string;
     id: string;
@@ -108,7 +110,9 @@ export default withClientConnected<ActionBarProps>(function ActionBar({
     return (
       onChainVouches.length + offChainVouches.length >= 0 &&
       (onChainVouches.some((voucherAddress) => {
-        if (voucherAddress.toLocaleLowerCase() === address?.toLocaleLowerCase()) {
+        if (
+          voucherAddress.toLocaleLowerCase() === address?.toLocaleLowerCase()
+        ) {
           setIsVouchOnchain(true);
           return true;
         }
@@ -116,9 +120,11 @@ export default withClientConnected<ActionBarProps>(function ActionBar({
         return false;
       }) ||
         offChainVouches.some((voucher) => {
-          if (voucher.voucher.toLocaleLowerCase() === address?.toLocaleLowerCase()) {
+          if (
+            voucher.voucher.toLocaleLowerCase() === address?.toLocaleLowerCase()
+          ) {
             if (!offChainRef.current && userChainId === chain.id) {
-              toast.error('Off chain vouches cannot be removed');
+              toast.error("Off chain vouches cannot be removed");
               offChainRef.current = true;
             }
             return true;
@@ -134,11 +140,13 @@ export default withClientConnected<ActionBarProps>(function ActionBar({
 
   useEffectOnce(() => {
     const checkVouchStatus = async () => {
-      if (status === 'resolved' || status === 'withdrawn') setAction(ActionType.NONE);
+      if (status === "resolved" || status === "withdrawn")
+        setAction(ActionType.NONE);
       else if (index < 0 && index > -100) setAction(ActionType.OLD_ACTIVE);
-      else if (status === 'disputed') setAction(ActionType.DISPUTED);
-      else if (status === 'vouching') {
-        if (funded < arbitrationCost + BigInt(contractData.baseDeposit)) setAction(ActionType.FUND);
+      else if (status === "disputed") setAction(ActionType.DISPUTED);
+      else if (status === "vouching") {
+        if (funded < arbitrationCost + BigInt(contractData.baseDeposit))
+          setAction(ActionType.FUND);
         else if (
           onChainVouches.length + offChainVouches.length >=
           contractData.requiredNumberOfVouches
@@ -151,9 +159,10 @@ export default withClientConnected<ActionBarProps>(function ActionBar({
         )
           setAction(ActionType.REMOVE_VOUCH);
         else setAction(ActionType.VOUCH);
-      } else if (status == 'resolving')
+      } else if (status == "resolving")
         setAction(
-          +lastStatusChange + +contractData.challengePeriodDuration < Date.now() / 1000
+          +lastStatusChange + +contractData.challengePeriodDuration <
+            Date.now() / 1000
             ? ActionType.EXECUTE
             : ActionType.CHALLENGE,
         );
@@ -162,39 +171,40 @@ export default withClientConnected<ActionBarProps>(function ActionBar({
   });
 
   const [prepareExecute, execute] = usePoHWrite(
-    'executeRequest',
+    "executeRequest",
     useMemo(
       () => ({
         onError() {
-          toast.error('Transaction rejected');
+          toast.error("Transaction rejected");
         },
         onLoading() {
           loading.start();
-          toast.info('Transaction pending');
+          toast.info("Transaction pending");
         },
         onSuccess() {
-          toast.success('Requested executed successfully');
+          toast.success("Requested executed successfully");
         },
       }),
       [loading],
     ),
   );
   const [prepareAdvance, advanceFire] = usePoHWrite(
-    'advanceState',
+    "advanceState",
     useMemo(
       () => ({
         onError() {
-          toast.error('Transaction rejected');
+          toast.error("Transaction rejected");
         },
         onLoading() {
           loading.start();
-          toast.info('Transaction pending');
+          toast.info("Transaction pending");
         },
         onSuccess() {
-          toast.success('Request advanced to resolving state');
+          toast.success("Request advanced to resolving state");
         },
         onFail() {
-          !errorRef.current && toast.error('No vouch is valid. Advance is not possible');
+          !errorRef.current &&
+            toast.error("No vouch is valid. Advance is not possible");
           errorRef.current = true;
           setAction(ActionType.VOUCH);
         },
@@ -203,18 +213,18 @@ export default withClientConnected<ActionBarProps>(function ActionBar({
     ),
   );
   const [prepareWithdraw, withdraw] = usePoHWrite(
-    'withdrawRequest',
+    "withdrawRequest",
     useMemo(
       () => ({
         onError() {
-          toast.error('Transaction rejected');
+          toast.error("Transaction rejected");
         },
         onLoading() {
           loading.start();
-          toast.info('Transaction pending');
+          toast.info("Transaction pending");
         },
         onSuccess() {
-          toast.success('Request withdrawn successfully');
+          toast.success("Request withdrawn successfully");
         },
       }),
       [loading],
@@ -269,7 +279,8 @@ export default withClientConnected<ActionBarProps>(function ActionBar({
       });
     }
 
-    if (action === ActionType.EXECUTE) prepareExecute({ args: [pohId, BigInt(index)] });
+    if (action === ActionType.EXECUTE)
+      prepareExecute({ args: [pohId, BigInt(index)] });
   }, [action]);
 
   useEffect(() => {
@@ -277,10 +288,20 @@ export default withClientConnected<ActionBarProps>(function ActionBar({
       !revocation &&
       chain.id === userChainId &&
       requester === address?.toLowerCase() &&
-      (action === ActionType.VOUCH || action === ActionType.FUND || action === ActionType.ADVANCE)
+      (action === ActionType.VOUCH ||
+        action === ActionType.FUND ||
+        action === ActionType.ADVANCE)
     )
       prepareWithdraw();
-  }, [address, prepareWithdraw, action, requester, revocation, chain, userChainId]);
+  }, [
+    address,
+    prepareWithdraw,
+    action,
+    requester,
+    revocation,
+    chain,
+    userChainId,
+  ]);
 
   const totalCost = BigInt(contractData.baseDeposit) + arbitrationCost;
   const statusColor = colorForStatus(status, revocation, expired);
@@ -289,7 +310,9 @@ export default withClientConnected<ActionBarProps>(function ActionBar({
     <div className="paper border-stroke bg-whiteBackground text-primaryText flex flex-col items-center justify-between gap-[12px] px-[24px] py-[24px] md:flex-row lg:gap-[20px]">
       <div className="flex items-center">
         <span className="mr-4">Status</span>
-        <span className={`rounded-full px-3 py-1 text-white bg-status-${statusColor}`}>
+        <span
+          className={`rounded-full px-3 py-1 text-white bg-status-${statusColor}`}
+        >
           {camelToTitle(status, revocation, expired)}
         </span>
       </div>
@@ -301,17 +324,21 @@ export default withClientConnected<ActionBarProps>(function ActionBar({
             <>
               <div className="flex gap-6">
                 <span className="text-slate-400">
-                  It needs{' '}
+                  It needs{" "}
                   <strong className={`text-status-${statusColor}`}>
                     {contractData.requiredNumberOfVouches}
-                  </strong>{' '}
-                  {+contractData.requiredNumberOfVouches === 1 ? 'vouch' : 'vouches'} to proceed
+                  </strong>{" "}
+                  {+contractData.requiredNumberOfVouches === 1
+                    ? "vouch"
+                    : "vouches"}{" "}
+                  to proceed
                   {!!(totalCost - funded) && (
                     <>
-                      {' + '}
+                      {" + "}
                       <strong className={`text-status-${statusColor}`}>
-                        {formatEther(totalCost - funded)} {chain.nativeCurrency.symbol}
-                      </strong>{' '}
+                        {formatEther(totalCost - funded)}{" "}
+                        {chain.nativeCurrency.symbol}
+                      </strong>{" "}
                       to complete the initial deposit
                     </>
                   )}
@@ -322,7 +349,9 @@ export default withClientConnected<ActionBarProps>(function ActionBar({
                 {action === ActionType.FUND && (
                   <FundButton
                     pohId={pohId}
-                    totalCost={BigInt(contractData.baseDeposit) + arbitrationCost}
+                    totalCost={
+                      BigInt(contractData.baseDeposit) + arbitrationCost
+                    }
                     index={index}
                     funded={funded}
                   />
@@ -389,7 +418,11 @@ export default withClientConnected<ActionBarProps>(function ActionBar({
                   userChainId={userChainId}
                 />
               ) : null}
-              <button disabled={pending} className="btn-main mb-2" onClick={advance}>
+              <button
+                disabled={pending}
+                className="btn-main mb-2"
+                onClick={advance}
+              >
                 Advance
               </button>
             </div>
@@ -399,7 +432,11 @@ export default withClientConnected<ActionBarProps>(function ActionBar({
           <>
             <span className="text-slate-400">Ready to finalize.</span>
             <div className="flex flex-col justify-between gap-4 font-normal md:flex-row md:items-center">
-              <button disabled={pending} className="btn-main mb-2" onClick={execute}>
+              <button
+                disabled={pending}
+                className="btn-main mb-2"
+                onClick={execute}
+              >
                 Execute
               </button>
             </div>
@@ -409,8 +446,10 @@ export default withClientConnected<ActionBarProps>(function ActionBar({
         {action === ActionType.CHALLENGE && (
           <>
             <div className="text-slate-400">
-              Challenge period end:{' '}
-              <TimeAgo time={lastStatusChange + +contractData.challengePeriodDuration} />
+              Challenge period end:{" "}
+              <TimeAgo
+                time={lastStatusChange + +contractData.challengePeriodDuration}
+              />
             </div>
 
             <Challenge
@@ -429,10 +468,14 @@ export default withClientConnected<ActionBarProps>(function ActionBar({
               The request was challenged
               {!revocation && (
                 <>
-                  {' '}
-                  for{' '}
+                  {" "}
+                  for{" "}
                   <strong className="text-status-challenged">
-                    {camelToTitle(currentChallenge.reason.id, revocation, expired)}
+                    {camelToTitle(
+                      currentChallenge.reason.id,
+                      revocation,
+                      expired,
+                    )}
                   </strong>
                 </>
               )}
@@ -463,11 +506,15 @@ export default withClientConnected<ActionBarProps>(function ActionBar({
           </>
         )}
 
-        {status === 'resolved' && (
+        {status === "resolved" && (
           <>
             <span>
               Request was accepted
-              <TimeAgo className={`ml-1 text-status-${statusColor}`} time={lastStatusChange} />.
+              <TimeAgo
+                className={`ml-1 text-status-${statusColor}`}
+                time={lastStatusChange}
+              />
+              .
             </span>
           </>
         )}

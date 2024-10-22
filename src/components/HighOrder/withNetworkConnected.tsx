@@ -1,8 +1,8 @@
-import { WagmiConfig, configureChains, createConfig } from 'wagmi';
-import { Chain } from 'viem/chains';
-import { jsonRpcProvider } from 'wagmi/providers/jsonRpc';
-import { getChainRpc } from 'config/chains';
-import useChainParam from 'hooks/useChainParam';
+import { WagmiConfig, configureChains, createConfig } from "wagmi";
+import { Chain } from "viem/chains";
+import { jsonRpcProvider } from "wagmi/providers/jsonRpc";
+import { getChainRpc } from "config/chains";
+import useChainParam from "hooks/useChainParam";
 
 const config = (chosenChain: Chain) =>
   createConfig({

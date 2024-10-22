@@ -1,7 +1,7 @@
-import { SupportedChainId, getChainRpc, supportedChains } from 'config/chains';
-import { Address, createPublicClient, http } from 'viem';
-import Error from 'next/error';
-import klerosLiquid from 'contracts/abis/kleros-liquid';
+import { SupportedChainId, getChainRpc, supportedChains } from "config/chains";
+import { Address, createPublicClient, http } from "viem";
+import Error from "next/error";
+import klerosLiquid from "contracts/abis/kleros-liquid";
 
 export enum DisputeStatusEnum {
   Waiting,
@@ -37,7 +37,10 @@ export class APIArbitrator {
       transport: http(getChainRpc(_chainId)),
     });
   }
-  private static getApiReader(_chainId: SupportedChainId, _arbitrator: Address) {
+  private static getApiReader(
+    _chainId: SupportedChainId,
+    _arbitrator: Address,
+  ) {
     if (
       !APIArbitrator.apiReader ||
       APIArbitrator.apiReader.chainId !== _chainId ||
@@ -56,7 +59,10 @@ export class APIArbitrator {
         args: args,
       })
       .catch(() => {
-        throw new Error({ statusCode: 521, title: 'Error while reading Arbitrator' });
+        throw new Error({
+          statusCode: 521,
+          title: "Error while reading Arbitrator",
+        });
       });
   }
 
@@ -74,13 +80,16 @@ export class APIArbitrator {
       period: undefined,
     };
     try {
-      out.status = await apiReader.get('disputeStatus', [disputeId]);
-      out.cost = await apiReader.get('appealCost', [disputeId, extraData]);
-      out.period = await apiReader.get('appealPeriod', [disputeId]);
-      out.currentRuling = await apiReader.get('currentRuling', [disputeId]);
+      out.status = await apiReader.get("disputeStatus", [disputeId]);
+      out.cost = await apiReader.get("appealCost", [disputeId, extraData]);
+      out.period = await apiReader.get("appealPeriod", [disputeId]);
+      out.currentRuling = await apiReader.get("currentRuling", [disputeId]);
       return out;
     } catch (error) {
-      throw new Error({ statusCode: 521, title: 'Error while reading Arbitrator' });
+      throw new Error({
+        statusCode: 521,
+        title: "Error while reading Arbitrator",
+      });
     }
   }
 }

@@ -1,8 +1,8 @@
-import { SupportedChainId, getChainRpc, supportedChains } from 'config/chains';
-import { Contract } from 'contracts';
-import abis from 'contracts/abis';
-import { Address, createPublicClient, http } from 'viem';
-import Error from 'next/error';
+import { SupportedChainId, getChainRpc, supportedChains } from "config/chains";
+import { Contract } from "contracts";
+import abis from "contracts/abis";
+import Error from "next/error";
+import { Address, createPublicClient, http } from "viem";
 
 export interface ArbitratorFromRequest {
   arbitrator: Address | undefined;
@@ -50,7 +50,10 @@ export class APIPoH {
         args: args,
       })
       .catch(() => {
-        throw new Error({ statusCode: 520, title: 'Error while reading ProofOfHumanity' });
+        throw new Error({
+          statusCode: 520,
+          title: "Error while reading ProofOfHumanity",
+        });
       });
   }
 
@@ -65,13 +68,19 @@ export class APIPoH {
       extraData: undefined,
     };
     try {
-      const data = await apiReader.get('getRequestInfo', [pohId, requestIndex]);
-      const arbitratorDataHistory = await apiReader.get('arbitratorDataHistory', [data[2]]);
+      const data = await apiReader.get("getRequestInfo", [pohId, requestIndex]);
+      const arbitratorDataHistory = await apiReader.get(
+        "arbitratorDataHistory",
+        [data[2]],
+      );
       out.arbitrator = arbitratorDataHistory[1];
       out.extraData = arbitratorDataHistory[2];
       return out;
     } catch (error) {
-      throw new Error({ statusCode: 520, title: 'Error while reading ProofOfHumanity' });
+      throw new Error({
+        statusCode: 520,
+        title: "Error while reading ProofOfHumanity",
+      });
     }
   }
 
@@ -88,15 +97,18 @@ export class APIPoH {
       challengerFunds: undefined,
     };
     try {
-      const data = await apiReader.get('disputeIdToData', [arbitrator, disputeId]);
+      const data = await apiReader.get("disputeIdToData", [
+        arbitrator,
+        disputeId,
+      ]);
       const challengeId = data[1];
-      const challengeInfo = await apiReader.get('getChallengeInfo', [
+      const challengeInfo = await apiReader.get("getChallengeInfo", [
         pohId,
         requestIndex,
         challengeId,
       ]);
       const lastRoundId = challengeInfo[0];
-      const funds = await apiReader.get('getRoundInfo', [
+      const funds = await apiReader.get("getRoundInfo", [
         pohId,
         requestIndex,
         challengeId,
@@ -106,11 +118,16 @@ export class APIPoH {
       out.challengerFunds = funds[2];
       return out;
     } catch (error) {
-      throw new Error({ statusCode: 520, title: 'Error while reading ProofOfHumanity' });
+      throw new Error({
+        statusCode: 520,
+        title: "Error while reading ProofOfHumanity",
+      });
     }
   }
 
-  public static async getStakeMultipliers(_chainId: SupportedChainId): Promise<StakeMultipliers> {
+  public static async getStakeMultipliers(
+    _chainId: SupportedChainId,
+  ): Promise<StakeMultipliers> {
     const apiReader = APIPoH.getApiReader(_chainId);
     const out: StakeMultipliers = {
       winnerStakeMultiplier: undefined,
@@ -118,12 +135,15 @@ export class APIPoH {
       sharedStakeMultiplier: undefined,
     };
     try {
-      out.winnerStakeMultiplier = await apiReader.get('winnerStakeMultiplier');
-      out.loserStakeMultiplier = await apiReader.get('loserStakeMultiplier');
-      out.sharedStakeMultiplier = await apiReader.get('sharedStakeMultiplier');
+      out.winnerStakeMultiplier = await apiReader.get("winnerStakeMultiplier");
+      out.loserStakeMultiplier = await apiReader.get("loserStakeMultiplier");
+      out.sharedStakeMultiplier = await apiReader.get("sharedStakeMultiplier");
       return out;
     } catch (error) {
-      throw new Error({ statusCode: 520, title: 'Error while reading ProofOfHumanity' });
+      throw new Error({
+        statusCode: 520,
+        title: "Error while reading ProofOfHumanity",
+      });
     }
   }
 }

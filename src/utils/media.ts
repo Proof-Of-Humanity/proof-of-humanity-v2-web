@@ -1,19 +1,19 @@
-import { FFmpeg, createFFmpeg } from '@ffmpeg/ffmpeg';
-import Jimp from 'jimp';
-import { Area } from 'react-easy-crop';
-import { on } from './events';
-import { concatBuffers, randomString } from './misc';
-import UAParser from 'ua-parser-js';
+import { FFmpeg, createFFmpeg } from "@ffmpeg/ffmpeg";
+import Jimp from "jimp";
+import { Area } from "react-easy-crop";
+import { on } from "./events";
+import { concatBuffers, randomString } from "./misc";
+import UAParser from "ua-parser-js";
 
 const parser = new UAParser(navigator.userAgent);
 export const USER_AGENT = parser.getResult();
 
 const device = parser.getDevice();
-export const IS_MOBILE = device.type === 'mobile' || device.type === 'tablet';
+export const IS_MOBILE = device.type === "mobile" || device.type === "tablet";
 
 export const OS = parser.getOS();
-export const IS_IOS = OS.name === 'iOS';
-export const IS_ANDROID = OS.name === 'Android';
+export const IS_IOS = OS.name === "iOS";
+export const IS_ANDROID = OS.name === "Android";
 
 const exifRemoved = async (buffer: Uint8Array) => {
   const dv = new DataView(buffer.buffer);
@@ -49,11 +49,17 @@ const isGrayscale = async (image: Jimp) => {
   let green = 0;
   let blue = 0;
 
-  image.scan(0, 0, image.bitmap.width, image.bitmap.height, function (_x, _y, idx) {
-    red += this.bitmap.data[idx + 0];
-    green += this.bitmap.data[idx + 1];
-    blue += this.bitmap.data[idx + 2];
-  });
+  image.scan(
+    0,
+    0,
+    image.bitmap.width,
+    image.bitmap.height,
+    function (_x, _y, idx) {
+      red += this.bitmap.data[idx + 0];
+      green += this.bitmap.data[idx + 1];
+      blue += this.bitmap.data[idx + 2];
+    },
+  );
 
   return red === green && green === blue;
 };
@@ -62,7 +68,7 @@ export const sanitizeImage = async (buffer: Buffer) => {
   const image = await Jimp.read(buffer);
   const { bitmap } = image;
 
-  if (await isGrayscale(image)) throw new Error('Image is grayscale!');
+  if (await isGrayscale(image)) throw new Error("Image is grayscale!");
 
   return new Blob(
     [
@@ -73,16 +79,16 @@ export const sanitizeImage = async (buffer: Buffer) => {
           .getBufferAsync(Jimp.MIME_JPEG),
       ),
     ],
-    { type: 'image/jpeg' },
+    { type: "image/jpeg" },
   );
 };
 
 const createImage = (url: string): Promise<HTMLImageElement> =>
   new Promise((resolve, reject) => {
     const image = new Image();
-    on(image, 'load', () => resolve(image));
-    on(image, 'error', (error) => reject(error));
-    image.setAttribute('crossOrigin', 'anonymous');
+    on(image, "load", () => resolve(image));
+    on(image, "error", (error) => reject(error));
+    image.setAttribute("crossOrigin", "anonymous");
     image.src = url;
   });
 
@@ -92,8 +98,8 @@ export const getCroppedPhoto = async (
   flip = { horizontal: false, vertical: false },
 ) => {
   const image = await createImage(photoUri);
-  const canvas = document.createElement('canvas');
-  const context = canvas.getContext('2d');
+  const canvas = document.createElement("canvas");
+  const context = canvas.getContext("2d");
 
   if (!context) return null;
 
@@ -107,7 +113,12 @@ export const getCroppedPhoto = async (
 
   // croppedAreaPixels values are bounding box relative
   // extract the cropped image using these values
-  const data = context.getImageData(pixelCrop.x, pixelCrop.y, pixelCrop.width, pixelCrop.height);
+  const data = context.getImageData(
+    pixelCrop.x,
+    pixelCrop.y,
+    pixelCrop.width,
+    pixelCrop.height,
+  );
 
   // set canvas width to final desired crop size - this will clear existing context
   canvas.width = pixelCrop.width;
@@ -117,14 +128,14 @@ export const getCroppedPhoto = async (
   context.putImageData(data, 0, 0);
 
   // As Base64 string
-  return canvas.toDataURL('image/jpeg');
+  return canvas.toDataURL("image/jpeg");
 };
 
 let ffmpeg: FFmpeg;
 
 export const loadFFMPEG = async () => {
   if (ffmpeg && ffmpeg.isLoaded()) return;
-  ffmpeg = createFFmpeg({ log: false, corePath: '/dist/ffmpeg-core.js' });
+  ffmpeg = createFFmpeg({ log: false, corePath: "/dist/ffmpeg-core.js" });
   await ffmpeg.load();
 };
 
@@ -144,27 +155,27 @@ export const videoSanitizer = async (
     const inputName = randomString(16);
     const outputFilename = `${randomString(16)}.mp4`;
 
-    ffmpeg.FS('writeFile', inputName, new Uint8Array(inputBuffer));
+    ffmpeg.FS("writeFile", inputName, new Uint8Array(inputBuffer));
 
     await ffmpeg.run(
-      '-i',
+      "-i",
       inputName,
-      '-map_metadata',
-      '-1',
-      '-c:v',
-      'libx264',
-      '-c:a',
-      'copy',
-      '-crf',
-      '26',
-      '-preset',
-      'superfast',
+      "-map_metadata",
+      "-1",
+      "-c:v",
+      "libx264",
+      "-c:a",
+      "copy",
+      "-crf",
+      "26",
+      "-preset",
+      "superfast",
       // "-vf",
       // "mpdecimate",
       outputFilename,
     );
 
-    return ffmpeg.FS('readFile', outputFilename);
+    return ffmpeg.FS("readFile", outputFilename);
   } catch (err) {
     console.error(err);
     return inputBuffer;
