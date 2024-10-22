@@ -1,8 +1,8 @@
-import { useState } from 'react';
-import { sdk } from 'api/index';
-import { sdkReturnType } from 'api/index';
-import useInterval from './useInterval';
-import useWeb3 from './useWeb3';
+import { useState } from "react";
+import { sdk } from "api/index";
+import { sdkReturnType } from "api/index";
+import useInterval from "./useInterval";
+import useWeb3 from "./useWeb3";
 
 function useIsGraphSynced(block?: number) {
   const [isSynced, setIsSynced] = useState(false);

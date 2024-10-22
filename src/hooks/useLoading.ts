@@ -1,7 +1,10 @@
-import { useObservable } from '@legendapp/state/react';
-import { useMemo } from 'react';
+import { useObservable } from "@legendapp/state/react";
+import { useMemo } from "react";
 
-export const useLoading = (initState: boolean = false, initMessage?: string) => {
+export const useLoading = (
+  initState: boolean = false,
+  initMessage?: string,
+) => {
   const $state = useObservable([initState, initMessage] as const);
   return useMemo(
     () => ({

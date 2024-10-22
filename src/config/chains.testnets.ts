@@ -1,4 +1,4 @@
-import { gnosisChiado, sepolia } from 'viem/chains';
+import { gnosisChiado, sepolia } from "viem/chains";
 
 export const supportedChains = [sepolia, gnosisChiado];
 
@@ -10,7 +10,7 @@ export function nameToChain(name: string): SupportedChain | null {
   switch (name.toLowerCase()) {
     case sepolia.name.toLowerCase():
       return sepolia;
-    case gnosisChiado.name.toLowerCase().replace(/ /g, '%20'):
+    case gnosisChiado.name.toLowerCase().replace(/ /g, "%20"):
       return gnosisChiado;
     default:
       return null;
@@ -37,6 +37,6 @@ export function getForeignChain(chainId: number) {
     case 11155111:
       return 10200;
     default:
-      throw new Error('chain not supported');
+      throw new Error("chain not supported");
   }
 }

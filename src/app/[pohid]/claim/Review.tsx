@@ -1,22 +1,22 @@
-import Field from 'components/Field';
-import Label from 'components/Label';
-import TimeAgo from 'components/TimeAgo';
-import { ipfs } from 'utils/ipfs';
-import { formatEth } from 'utils/misc';
-import { useAccount, useBalance, useChainId } from 'wagmi';
-import { ObservableObject, ObservablePrimitiveBaseFns } from '@legendapp/state';
-import { MediaState, SubmissionState } from './Form';
-import { formatEther } from 'viem';
-import { SupportedChainId, idToChain } from 'config/chains';
-import ExternalLink from 'components/ExternalLink';
-import Image from 'next/image';
-import Previewed from 'components/Previewed';
-import DocumentIcon from 'icons/NoteMajor.svg';
-import { ContractData } from 'data/contract';
-import { prettifyId } from 'utils/identifier';
+import Field from "components/Field";
+import Label from "components/Label";
+import TimeAgo from "components/TimeAgo";
+import { ipfs } from "utils/ipfs";
+import { formatEth } from "utils/misc";
+import { useAccount, useBalance, useChainId } from "wagmi";
+import { ObservableObject, ObservablePrimitiveBaseFns } from "@legendapp/state";
+import { MediaState, SubmissionState } from "./Form";
+import { formatEther } from "viem";
+import { SupportedChainId, idToChain } from "config/chains";
+import ExternalLink from "components/ExternalLink";
+import Image from "next/image";
+import Previewed from "components/Previewed";
+import DocumentIcon from "icons/NoteMajor.svg";
+import { ContractData } from "data/contract";
+import { prettifyId } from "utils/identifier";
 
 interface ReviewProps {
-  arbitrationInfo: ContractData['arbitrationInfo'];
+  arbitrationInfo: ContractData["arbitrationInfo"];
   totalCost: bigint;
   selfFunded$: ObservablePrimitiveBaseFns<number>;
   state$: ObservableObject<SubmissionState>;
@@ -65,20 +65,21 @@ function Review({
       </div>
 
       <span className="txt pb-8">
-        Before proceeding, check that your submission complies with the above Registration Policy.
-        If not, you might lose your deposit. Specifically, make sure:
+        Before proceeding, check that your submission complies with the above
+        Registration Policy. If not, you might lose your deposit. Specifically,
+        make sure:
         <ul className="ml-8 list-disc">
           <li>
-            Non-mirrored photo and video (if you display any text in the camera and it appears
-            backwards, your image is mirrored).
+            Non-mirrored photo and video (if you display any text in the camera
+            and it appears backwards, your image is mirrored).
           </li>
           <li>
-            Photo is facing forward, without any covering that might hide internal facial features
-            (no filters, heavy makeup, or masks).
+            Photo is facing forward, without any covering that might hide
+            internal facial features (no filters, heavy makeup, or masks).
           </li>
           <li>
-            Video has good lighting and sound, your internal facial features are visible, and the
-            displayed address is correct.
+            Video has good lighting and sound, your internal facial features are
+            visible, and the displayed address is correct.
           </li>
         </ul>
       </span>
@@ -99,12 +100,21 @@ function Review({
         <Previewed
           isVideo
           uri={video!.uri}
-          trigger={<video className="mt-4 h-48 cursor-pointer sm:ml-8 sm:mt-0" src={video!.uri} />}
+          trigger={
+            <video
+              className="mt-4 h-48 cursor-pointer sm:ml-8 sm:mt-0"
+              src={video!.uri}
+            />
+          }
         />
       </div>
 
       <div className="flex w-full flex-col">
-        <Field label="Proof of Humanity ID" value={prettifyId(pohId)} disabled />
+        <Field
+          label="Proof of Humanity ID"
+          value={prettifyId(pohId)}
+          disabled
+        />
         <Field label="Name" value={name} disabled />
         <Field label="Account" value={address} disabled />
 
@@ -113,7 +123,7 @@ function Review({
             Initial deposit
             {balance && (
               <span className="text-primaryText ml-8 normal-case">
-                Your balance:{' '}
+                Your balance:{" "}
                 <strong>
                   {formatEth(balance.value)} {nativeCurrency.symbol}
                 </strong>
@@ -140,13 +150,14 @@ function Review({
               className="text-orange mx-1 cursor-pointer font-semibold underline underline-offset-2"
             >
               {formatEther(totalCost)}
-            </span>{' '}
+            </span>{" "}
             {nativeCurrency.symbol}
           </div>
 
           <span className="mt-2 text-blue-500">
-            The deposit is reimbursed after successful registration, and lost after failure. Any
-            amount not contributed now can be put up by crowdfunders later.
+            The deposit is reimbursed after successful registration, and lost
+            after failure. Any amount not contributed now can be put up by
+            crowdfunders later.
           </span>
         </div>
       </div>

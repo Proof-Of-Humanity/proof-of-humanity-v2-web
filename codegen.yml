@@ -1,10 +1,10 @@
 overwrite: true
 #schema: "https://api.studio.thegraph.com/query/64099/proof-of-humanity-sepolia/version/latest"
-schema: 'https://api.studio.thegraph.com/query/64099/proof-of-humanity-mainnet/version/latest'
-documents: 'schemas/**/*.gql'
+schema: "https://api.studio.thegraph.com/query/64099/proof-of-humanity-mainnet/version/latest"
+documents: "schemas/**/*.gql"
 generates:
   ./src/generated/graphql.ts:
     plugins:
-      - 'typescript'
-      - 'typescript-operations'
-      - 'typescript-graphql-request'
+      - "typescript"
+      - "typescript-operations"
+      - "typescript-graphql-request"

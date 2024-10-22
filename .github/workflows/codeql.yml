@@ -1,4 +1,4 @@
-name: 'CodeQL Advanced'
+name: "CodeQL Advanced"
 
 on:
   merge_group:
@@ -15,7 +15,7 @@ on:
       - master
       - dev
   schedule:
-    - cron: '26 1 * * 6'
+    - cron: "26 1 * * 6"
 
 permissions:
   actions: read
@@ -75,4 +75,4 @@ jobs:
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@2cb752a87e96af96708ab57187ab6372ee1973ab # v2.22.0
         with:
-          category: '/language:${{matrix.language}}'
+          category: "/language:${{matrix.language}}"

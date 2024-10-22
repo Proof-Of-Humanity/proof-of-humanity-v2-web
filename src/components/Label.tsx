@@ -1,5 +1,5 @@
-import cn from 'classnames';
-import React from 'react';
+import cn from "classnames";
+import React from "react";
 
 interface LabelProps {
   className?: string;
@@ -7,7 +7,9 @@ interface LabelProps {
 }
 
 const Label: React.FC<LabelProps> = ({ children, className }) => (
-  <legend className={cn('text-orange mb-2 mt-8 font-medium uppercase', className)}>
+  <legend
+    className={cn("text-orange mb-2 mt-8 font-medium uppercase", className)}
+  >
     {children}
   </legend>
 );

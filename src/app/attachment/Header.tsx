@@ -1,6 +1,6 @@
-import Image from 'next/image';
-import { useRouter } from 'next/navigation';
-import React from 'react';
+import Image from "next/image";
+import { useRouter } from "next/navigation";
+import React from "react";
 
 const Header: React.FC = () => {
   const router = useRouter();
@@ -15,9 +15,14 @@ const Header: React.FC = () => {
           width={24}
           height={24}
         />
-        <h1 className="text-primaryText text-lg font-semibold md:text-xl">File</h1>
+        <h1 className="text-primaryText text-lg font-semibold md:text-xl">
+          File
+        </h1>
       </div>
-      <button onClick={() => router.back()} className="flex items-center text-blue-500">
+      <button
+        onClick={() => router.back()}
+        className="flex items-center text-blue-500"
+      >
         <Image
           src="/logo/arrow-left.svg"
           alt="Arrow Icon"

@@ -1,22 +1,22 @@
-import getBlobDuration from 'get-blob-duration';
-import React, { useRef, useState } from 'react';
-import ReactWebcam from 'react-webcam';
-import Uploader from 'components/Uploader';
-import Webcam from 'components/Webcam';
-import { IS_IOS } from 'utils/media';
-import useFullscreen from 'hooks/useFullscreen';
-import { useAccount } from 'wagmi';
-import { ObservableObject } from '@legendapp/state';
-import { MediaState } from './Form';
-import CameraIcon from 'icons/CameraMajor.svg';
-import ResetIcon from 'icons/ResetMinor.svg';
-import UploadIcon from 'icons/upload.svg';
+import getBlobDuration from "get-blob-duration";
+import React, { useRef, useState } from "react";
+import ReactWebcam from "react-webcam";
+import Uploader from "components/Uploader";
+import Webcam from "components/Webcam";
+import { IS_IOS } from "utils/media";
+import useFullscreen from "hooks/useFullscreen";
+import { useAccount } from "wagmi";
+import { ObservableObject } from "@legendapp/state";
+import { MediaState } from "./Form";
+import CameraIcon from "icons/CameraMajor.svg";
+import ResetIcon from "icons/ResetMinor.svg";
+import UploadIcon from "icons/upload.svg";
 
 const MIN_DIMS = { width: 352, height: 352 };
 
 interface PhotoProps {
   advance: () => void;
-  video$: ObservableObject<MediaState['video']>;
+  video$: ObservableObject<MediaState["video"]>;
   isRenewal: boolean;
 }
 
@@ -26,7 +26,8 @@ function VideoStep({ advance, video$, isRenewal }: PhotoProps) {
   const { address } = useAccount();
 
   const fullscreenRef = useRef(null);
-  const { isFullscreen, setFullscreen, toggleFullscreen } = useFullscreen(fullscreenRef);
+  const { isFullscreen, setFullscreen, toggleFullscreen } =
+    useFullscreen(fullscreenRef);
 
   const [showCamera, setShowCamera] = useState(false);
   const [camera, setCamera] = useState<ReactWebcam | null>(null);
@@ -72,8 +73,8 @@ function VideoStep({ advance, video$, isRenewal }: PhotoProps) {
   };
 
   const phrase = isRenewal
-    ? 'I certify I am a real human and I reapply to keep being part of this registry'
-    : 'I certify that I am a real human and that I am not already registered in this registry';
+    ? "I certify I am a real human and I reapply to keep being part of this registry"
+    : "I certify that I am a real human and that I am not already registered in this registry";
 
   return (
     <>
@@ -83,7 +84,9 @@ function VideoStep({ advance, video$, isRenewal }: PhotoProps) {
       </span>
 
       <span className="mx-12 my-8 flex flex-col text-center">
-        <span>You must record yourself holding a sign with your wallet address</span>
+        <span>
+          You must record yourself holding a sign with your wallet address
+        </span>
         <strong className="my-2">{address}</strong>
         <span>and say the phrase</span>
         <span className="my-2">
@@ -96,7 +99,8 @@ function VideoStep({ advance, video$, isRenewal }: PhotoProps) {
       <span className="mx-12 my-8 flex flex-col text-center">
         <span>
           <strong>
-            Upload only in accepted formats (webm, mp4, avi, and mov) to avoid losing your deposit
+            Upload only in accepted formats (webm, mp4, avi, and mov) to avoid
+            losing your deposit
           </strong>
         </span>
       </span>
@@ -112,16 +116,19 @@ function VideoStep({ advance, video$, isRenewal }: PhotoProps) {
               const uri = URL.createObjectURL(blob);
 
               const duration = await getBlobDuration(blob);
-              if (duration > 60 * 2) return console.error('Video is too long');
+              if (duration > 60 * 2) return console.error("Video is too long");
 
-              const vid = document.createElement('video');
-              vid.crossOrigin = 'anonymous';
+              const vid = document.createElement("video");
+              vid.crossOrigin = "anonymous";
               vid.src = uri;
-              vid.preload = 'auto';
+              vid.preload = "auto";
 
-              vid.addEventListener('loadeddata', async () => {
-                if (vid.videoWidth < MIN_DIMS.width || vid.videoHeight < MIN_DIMS.height)
-                  return console.error('Video dimensions are too small');
+              vid.addEventListener("loadeddata", async () => {
+                if (
+                  vid.videoWidth < MIN_DIMS.width ||
+                  vid.videoHeight < MIN_DIMS.height
+                )
+                  return console.error("Video dimensions are too small");
 
                 setRecording(false);
                 video$.set({ uri, content: blob });
@@ -180,7 +187,7 @@ function VideoStep({ advance, video$, isRenewal }: PhotoProps) {
           onClick={() => retakeVideo()}
         >
           <ResetIcon className="fill-orange mr-2 h-6 w-6" />
-          {showCamera ? 'Return' : 'Retake'}
+          {showCamera ? "Return" : "Retake"}
         </button>
       )}
     </>

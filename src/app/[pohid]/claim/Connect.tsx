@@ -1,12 +1,15 @@
-import { Web3Button, Web3NetworkSwitch } from '@web3modal/react';
-import { SupportedChain, supportedChains } from 'config/chains';
-import { Address, useAccount, useChainId } from 'wagmi';
+import { Web3Button, Web3NetworkSwitch } from "@web3modal/react";
+import { SupportedChain, supportedChains } from "config/chains";
+import { Address, useAccount, useChainId } from "wagmi";
 
 type ConnectProps =
   | { renewalAddress: undefined; renewalChain: undefined }
   | { renewalAddress: Address; renewalChain: SupportedChain };
 
-export default function Connect({ renewalAddress, renewalChain }: ConnectProps) {
+export default function Connect({
+  renewalAddress,
+  renewalChain,
+}: ConnectProps) {
   const { address, isConnected } = useAccount();
   const chainId = useChainId();
 
@@ -15,7 +18,8 @@ export default function Connect({ renewalAddress, renewalChain }: ConnectProps) 
       <div className="my-4 flex w-full flex-col text-2xl font-extralight">
         <span>Create your</span>
         <span>
-          <strong className="font-semibold uppercase">Proof of Humanity</strong> Profile
+          <strong className="font-semibold uppercase">Proof of Humanity</strong>{" "}
+          Profile
         </span>
         <div className="divider mt-4 w-2/3" />
       </div>
@@ -23,11 +27,14 @@ export default function Connect({ renewalAddress, renewalChain }: ConnectProps) 
       {isConnected ? (
         renewalChain ? (
           renewalAddress !== address?.toLowerCase() ? (
-            <span>Connect with corresponding wallet {renewalAddress} to renew</span>
+            <span>
+              Connect with corresponding wallet {renewalAddress} to renew
+            </span>
           ) : (
             <>
               <span className="txt mb-2">
-                Switch your chain to <strong>{renewalChain.name}</strong> to continue the renewal
+                Switch your chain to <strong>{renewalChain.name}</strong> to
+                continue the renewal
               </span>
               <Web3NetworkSwitch />
             </>

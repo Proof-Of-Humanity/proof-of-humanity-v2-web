@@ -1,9 +1,9 @@
-'use client';
+"use client";
 
-import { useEffect, useMemo, useState } from 'react';
-import Modal from 'components/Modal';
-import TimeAgo from 'components/TimeAgo';
-import withClientConnected from 'components/HighOrder/withClientConnected';
+import ChainLogo from "components/ChainLogo";
+import withClientConnected from "components/HighOrder/withClientConnected";
+import Modal from "components/Modal";
+import TimeAgo from "components/TimeAgo";
 import {
   SupportedChain,
   SupportedChainId,
@@ -11,22 +11,22 @@ import {
   getForeignChain,
   idToChain,
   supportedChains,
-} from 'config/chains';
-import { Contract, CreationBlockNumber } from 'contracts';
-import useCCPoHWrite from 'contracts/hooks/useCCPoHWrite';
-import { HumanityQuery } from 'generated/graphql';
-import { timeAgo } from 'utils/time';
-import { Address, Hash, createPublicClient, http } from 'viem';
-import { mainnet, sepolia, useAccount, useChainId } from 'wagmi';
-import ChainLogo from 'components/ChainLogo';
-import { useLoading } from 'hooks/useLoading';
-import useWeb3Loaded from 'hooks/useWeb3Loaded';
-import { ContractData } from 'data/contract';
-import useRelayWrite from 'contracts/hooks/useRelayWrite';
-import gnosisAmbHelper from 'contracts/abis/gnosis-amb-helper';
-import { gnosisChiado } from 'viem/chains';
-import { toast } from 'react-toastify';
-import abis from 'contracts/abis';
+} from "config/chains";
+import { Contract, CreationBlockNumber } from "contracts";
+import abis from "contracts/abis";
+import gnosisAmbHelper from "contracts/abis/gnosis-amb-helper";
+import useCCPoHWrite from "contracts/hooks/useCCPoHWrite";
+import useRelayWrite from "contracts/hooks/useRelayWrite";
+import { ContractData } from "data/contract";
+import { HumanityQuery } from "generated/graphql";
+import { useLoading } from "hooks/useLoading";
+import useWeb3Loaded from "hooks/useWeb3Loaded";
+import React, { useEffect, useMemo, useState } from "react";
+import { toast } from "react-toastify";
+import { timeAgo } from "utils/time";
+import { Address, Hash, createPublicClient, http } from "viem";
+import { gnosisChiado } from "viem/chains";
+import { mainnet, sepolia, useAccount, useChainId } from "wagmi";
 
 interface CrossChainProps extends JSX.IntrinsicAttributes {
   contractData: Record<SupportedChainId, ContractData>;
@@ -34,7 +34,7 @@ interface CrossChainProps extends JSX.IntrinsicAttributes {
   claimer: Address;
   homeChain: SupportedChain;
   pohId: Hash;
-  lastTransfer: HumanityQuery['outTransfer'];
+  lastTransfer: HumanityQuery["outTransfer"];
   lastTransferChain?: SupportedChain;
   winningStatus?: string;
 }
@@ -55,7 +55,7 @@ export default withClientConnected<CrossChainProps>(function CrossChain({
   const chainId = useChainId() as SupportedChainId;
 
   const [prepareTransfer, doTransfer] = useCCPoHWrite(
-    'transferHumanity',
+    "transferHumanity",
     useMemo(
       () => ({
         onLoading() {
@@ -70,7 +70,7 @@ export default withClientConnected<CrossChainProps>(function CrossChain({
   );
 
   const [prepareUpdate] = useCCPoHWrite(
-    'updateHumanity',
+    "updateHumanity",
     useMemo(
       () => ({
         onLoading() {
@@ -85,7 +85,7 @@ export default withClientConnected<CrossChainProps>(function CrossChain({
   );
 
   const [prepareRelayWrite] = useRelayWrite(
-    'executeSignatures',
+    "executeSignatures",
     useMemo(
       () => ({
         onLoading() {
@@ -105,7 +105,9 @@ export default withClientConnected<CrossChainProps>(function CrossChain({
     encodedData: `0x${string}`;
   };
 
-  const [pendingRelayUpdate, setPendingRelayUpdate] = useState({} as RelayUpdateParams);
+  const [pendingRelayUpdate, setPendingRelayUpdate] = useState(
+    {} as RelayUpdateParams,
+  );
 
   const publicClient =
     lastTransferChain &&
@@ -115,19 +117,27 @@ export default withClientConnected<CrossChainProps>(function CrossChain({
     });
 
   const pendingRelayUpdateEthereum = async () => {
-    if (web3Loaded && winningStatus !== 'transferring' && winningStatus !== 'transferred') {
+    if (
+      web3Loaded &&
+      winningStatus !== "transferring" &&
+      winningStatus !== "transferred"
+    ) {
       const sendingChain = idToChain(getForeignChain(chainId));
       const sendingChainId = sendingChain!.id as SupportedChainId;
       const publicClientSending = createPublicClient({
         chain: supportedChains[sendingChainId],
         transport: http(getChainRpc(sendingChainId)),
       });
-      const sendingCCPoHAddress = Contract.CrossChainProofOfHumanity[sendingChainId] as Address;
+      const sendingCCPoHAddress = Contract.CrossChainProofOfHumanity[
+        sendingChainId
+      ] as Address;
       const allSendingTxs = await publicClientSending.getContractEvents({
         address: sendingCCPoHAddress,
         abi: abis.CrossChainProofOfHumanity,
-        eventName: 'UpdateInitiated',
-        fromBlock: CreationBlockNumber.CrossChainProofOfHumanity[sendingChainId] as bigint,
+        eventName: "UpdateInitiated",
+        fromBlock: CreationBlockNumber.CrossChainProofOfHumanity[
+          sendingChainId
+        ] as bigint,
         strict: true,
         args: { humanityId: pohId },
       });
@@ -138,9 +148,12 @@ export default withClientConnected<CrossChainProps>(function CrossChain({
       }
 
       const txHashSending =
-        allSendingTxs && allSendingTxs[allSendingTxs.length - 1].transactionHash;
+        allSendingTxs &&
+        allSendingTxs[allSendingTxs.length - 1].transactionHash;
 
-      const txSending = await publicClientSending.getTransactionReceipt({ hash: txHashSending });
+      const txSending = await publicClientSending.getTransactionReceipt({
+        hash: txHashSending,
+      });
 
       const messageIdSending = txSending.logs.at(0)?.topics.at(1);
       const expirationTime = txSending.logs.at(1)?.data.substring(0, 66);
@@ -155,19 +168,24 @@ export default withClientConnected<CrossChainProps>(function CrossChain({
         chain: supportedChains[chainId],
         transport: http(getChainRpc(chainId)),
       });
-      const receivingCCPoHAddress = Contract.CrossChainProofOfHumanity[chainId] as Address;
+      const receivingCCPoHAddress = Contract.CrossChainProofOfHumanity[
+        chainId
+      ] as Address;
       const allReceivingTxs = await publicClientReceiving.getContractEvents({
         address: receivingCCPoHAddress,
         abi: abis.CrossChainProofOfHumanity,
-        eventName: 'UpdateReceived',
-        fromBlock: CreationBlockNumber.CrossChainProofOfHumanity[chainId] as bigint,
+        eventName: "UpdateReceived",
+        fromBlock: CreationBlockNumber.CrossChainProofOfHumanity[
+          chainId
+        ] as bigint,
         strict: true,
         args: { humanityId: pohId },
       });
 
       var messageIdReceiving;
       if (allReceivingTxs.length > 0) {
-        const txHashReceiving = allReceivingTxs[allReceivingTxs.length - 1].transactionHash;
+        const txHashReceiving =
+          allReceivingTxs[allReceivingTxs.length - 1].transactionHash;
 
         const txReceiving = await publicClientReceiving.getTransactionReceipt({
           hash: txHashReceiving,
@@ -178,12 +196,16 @@ export default withClientConnected<CrossChainProps>(function CrossChain({
         messageIdReceiving = txReceiving.logs.at(eventIndex)?.topics.at(3);
       }
 
-      if (allReceivingTxs.length == 0 || messageIdSending !== messageIdReceiving) {
+      if (
+        allReceivingTxs.length == 0 ||
+        messageIdSending !== messageIdReceiving
+      ) {
         const data = txSending.logs.at(0)?.data;
 
         // Encoded data has a different length in Gnosis compared to Chiado
         const subEnd = sendingChainId === gnosisChiado.id ? 754 : 748;
-        const encodedData = `0x${data?.substring(130, subEnd)}` as `0x${string}`;
+        const encodedData =
+          `0x${data?.substring(130, subEnd)}` as `0x${string}`;
 
         setPendingRelayUpdate({
           sideChainId: sendingChainId,
@@ -199,7 +221,9 @@ export default withClientConnected<CrossChainProps>(function CrossChain({
 
   const showPendingUpdate = () => {
     const sendingChainName = idToChain(pendingRelayUpdate.sideChainId)?.name;
-    const receivingChainName = idToChain(getForeignChain(pendingRelayUpdate.sideChainId))?.name;
+    const receivingChainName = idToChain(
+      getForeignChain(pendingRelayUpdate.sideChainId),
+    )?.name;
     return (
       <Modal
         trigger={
@@ -214,17 +238,20 @@ export default withClientConnected<CrossChainProps>(function CrossChain({
             {sendingChainName} ▶ {receivingChainName}
           </span>
           <span className="txt m-2">
-            There is a pending state update that needs to be relayed on {receivingChainName}.
+            There is a pending state update that needs to be relayed on{" "}
+            {receivingChainName}.
           </span>
-          {pendingRelayUpdate.sideChainId === 100 || pendingRelayUpdate.sideChainId === 10200 ? (
+          {pendingRelayUpdate.sideChainId === 100 ||
+          pendingRelayUpdate.sideChainId === 10200 ? (
             <button
               className="text-blue-500 underline underline-offset-2"
               onClick={async () => {
                 await pendingRelayUpdate.publicClientSide
                   .readContract({
-                    address: Contract.GnosisAMBHelper[pendingRelayUpdate.sideChainId],
+                    address:
+                      Contract.GnosisAMBHelper[pendingRelayUpdate.sideChainId],
                     abi: gnosisAmbHelper,
-                    functionName: 'getSignatures',
+                    functionName: "getSignatures",
                     args: [pendingRelayUpdate.encodedData],
                   })
                   .then((signatures: `0x${string}`) => {
@@ -233,7 +260,9 @@ export default withClientConnected<CrossChainProps>(function CrossChain({
                     });
                   })
                   .catch((e: any) => {
-                    toast.info('Confirmation takes around 10 minutes. Come back later');
+                    toast.info(
+                      "Confirmation takes around 10 minutes. Come back later",
+                    );
                   });
               }}
             >
@@ -252,7 +281,11 @@ export default withClientConnected<CrossChainProps>(function CrossChain({
   };
 
   useEffect(() => {
-    if (web3Loaded && winningStatus !== 'transferring' && winningStatus !== 'transferred')
+    if (
+      web3Loaded &&
+      winningStatus !== "transferring" &&
+      winningStatus !== "transferred"
+    )
       pendingRelayUpdateEthereum();
   }, [web3Loaded, chainId]);
 
@@ -261,7 +294,10 @@ export default withClientConnected<CrossChainProps>(function CrossChain({
       <div className="flex flex-col">
         <span className="text-secondaryText">Home chain</span>
         <span className="flex items-center font-semibold">
-          <ChainLogo chainId={homeChain.id} className="fill-primaryText mr-2 h-4 w-4" />
+          <ChainLogo
+            chainId={homeChain.id}
+            className="fill-primaryText mr-2 h-4 w-4"
+          />
           {homeChain.name}
         </span>
       </div>
@@ -269,8 +305,8 @@ export default withClientConnected<CrossChainProps>(function CrossChain({
       {web3Loaded &&
         address?.toLowerCase() === claimer &&
         homeChain.id === chainId &&
-        winningStatus !== 'transferring' &&
-        winningStatus !== 'transferred' && (
+        winningStatus !== "transferring" &&
+        winningStatus !== "transferred" && (
           <Modal
             formal
             header="Transfer"
@@ -282,8 +318,8 @@ export default withClientConnected<CrossChainProps>(function CrossChain({
           >
             <div className="p-4">
               <span className="txt text-primaryText m-2">
-                Transfer your humanity to another chain. If you use a contract wallet make sure it
-                has the same address on both chains.
+                Transfer your humanity to another chain. If you use a contract
+                wallet make sure it has the same address on both chains.
               </span>
               <button
                 className="btn-main mt-4"
@@ -301,8 +337,8 @@ export default withClientConnected<CrossChainProps>(function CrossChain({
 
       {web3Loaded &&
         homeChain.id === chainId &&
-        winningStatus !== 'transferring' &&
-        winningStatus !== 'transferred' &&
+        winningStatus !== "transferring" &&
+        winningStatus !== "transferred" &&
         (!pendingRelayUpdate || !pendingRelayUpdate.encodedData) && (
           <Modal
             formal
@@ -311,8 +347,8 @@ export default withClientConnected<CrossChainProps>(function CrossChain({
           >
             <div className="p-4">
               <span className="txt text-primaryText m-2">
-                Update humanity state on another chain. If you use wallet contract make sure it has
-                same address on both chains.
+                Update humanity state on another chain. If you use wallet
+                contract make sure it has same address on both chains.
               </span>
 
               <div>
@@ -322,13 +358,16 @@ export default withClientConnected<CrossChainProps>(function CrossChain({
                     className="text-primaryText m-2 flex items-center justify-between border p-2"
                   >
                     <div className="flex items-center">
-                      <ChainLogo chainId={chain.id} className="fill-primaryText mr-1 h-4 w-4" />
-                      {chain.name}{' '}
+                      <ChainLogo
+                        chainId={chain.id}
+                        className="fill-primaryText mr-1 h-4 w-4"
+                      />
+                      {chain.name}{" "}
                       {chain === homeChain ||
                       humanity[chain.id].crossChainRegistration ||
                       chain.id === homeChain.id
-                        ? '✔'
-                        : '❌'}
+                        ? "✔"
+                        : "❌"}
                     </div>
 
                     {chain.id === homeChain.id ? (
@@ -337,22 +376,31 @@ export default withClientConnected<CrossChainProps>(function CrossChain({
                       <>
                         {humanity[chain.id].crossChainRegistration && (
                           <div>
-                            Expiration time:{' '}
-                            {timeAgo(humanity[chain.id].crossChainRegistration?.expirationTime)}
+                            Expiration time:{" "}
+                            {timeAgo(
+                              humanity[chain.id].crossChainRegistration
+                                ?.expirationTime,
+                            )}
                           </div>
                         )}
                         <button
                           className="text-blue-500 underline underline-offset-2"
                           onClick={async () => {
-                            const gatewayForChain = contractData[homeChain.id].gateways.find(
+                            const gatewayForChain = contractData[
+                              homeChain.id
+                            ].gateways.find(
                               (gateway) =>
                                 gateway.foreignProxy ===
-                                Contract.CrossChainProofOfHumanity[chain.id]?.toLowerCase(),
+                                Contract.CrossChainProofOfHumanity[
+                                  chain.id
+                                ]?.toLowerCase(),
                             );
 
                             if (!gatewayForChain) return;
 
-                            prepareUpdate({ args: [gatewayForChain.id, pohId] });
+                            prepareUpdate({
+                              args: [gatewayForChain.id, pohId],
+                            });
                           }}
                         >
                           Relay State Update
@@ -369,7 +417,7 @@ export default withClientConnected<CrossChainProps>(function CrossChain({
         //address?.toLowerCase() === claimer &&
         //homeChain?.id === chainId &&
         homeChain &&
-        winningStatus === 'transferred' &&
+        winningStatus === "transferred" &&
         publicClient && (
           <Modal
             trigger={
@@ -384,7 +432,8 @@ export default withClientConnected<CrossChainProps>(function CrossChain({
                 {lastTransferChain?.name} ▶ {homeChain?.name}
               </span>
               <TimeAgo time={parseInt(lastTransfer?.transferTimestamp)} />
-              {homeChain?.id === chainId && (chainId === mainnet.id || chainId === sepolia.id) ? (
+              {homeChain?.id === chainId &&
+              (chainId === mainnet.id || chainId === sepolia.id) ? (
                 <button
                   className="text-blue-500 underline underline-offset-2"
                   onClick={async () => {
@@ -394,7 +443,7 @@ export default withClientConnected<CrossChainProps>(function CrossChain({
                     const allTxs = await publicClient.getContractEvents({
                       address: address,
                       abi: abis.CrossChainProofOfHumanity,
-                      eventName: 'TransferInitiated',
+                      eventName: "TransferInitiated",
                       fromBlock: CreationBlockNumber.CrossChainProofOfHumanity[
                         lastTransferChain.id
                       ] as bigint,
@@ -402,21 +451,26 @@ export default withClientConnected<CrossChainProps>(function CrossChain({
                       args: { humanityId: pohId },
                     });
                     const txHash = allTxs.find(
-                      (tx) => tx.args.transferHash === lastTransfer?.transferHash,
+                      (tx) =>
+                        tx.args.transferHash === lastTransfer?.transferHash,
                     )?.transactionHash;
 
-                    const tx = await publicClient.getTransactionReceipt({ hash: txHash! });
+                    const tx = await publicClient.getTransactionReceipt({
+                      hash: txHash!,
+                    });
                     const data = tx.logs.at(1)?.data;
 
                     // Encoded data has a different length in Gnosis compared to Chiado
-                    const subEnd = lastTransferChain.id === gnosisChiado.id ? 754 : 748;
-                    const encodedData = `0x${data?.substring(130, subEnd)}` as `0x${string}`;
+                    const subEnd =
+                      lastTransferChain.id === gnosisChiado.id ? 754 : 748;
+                    const encodedData =
+                      `0x${data?.substring(130, subEnd)}` as `0x${string}`;
 
                     await publicClient
                       .readContract({
                         address: Contract.GnosisAMBHelper[lastTransferChain.id],
                         abi: gnosisAmbHelper,
-                        functionName: 'getSignatures',
+                        functionName: "getSignatures",
                         args: [encodedData],
                       })
                       .then((signatures) => {
@@ -425,7 +479,9 @@ export default withClientConnected<CrossChainProps>(function CrossChain({
                         });
                       })
                       .catch((e) => {
-                        toast.info('Confirmation takes around 10 minutes. Come back later');
+                        toast.info(
+                          "Confirmation takes around 10 minutes. Come back later",
+                        );
                       });
                   }}
                 >
@@ -440,14 +496,17 @@ export default withClientConnected<CrossChainProps>(function CrossChain({
               ) : (
                 <div className="p-4">
                   <span className="txt m-2">
-                    Relaying the transferring profile in this chain can take around 30 minutes
+                    Relaying the transferring profile in this chain can take
+                    around 30 minutes
                   </span>
                 </div>
               )}
             </div>
           </Modal>
         )}
-      {!!pendingRelayUpdate && pendingRelayUpdate.encodedData ? showPendingUpdate() : null}
+      {!!pendingRelayUpdate && pendingRelayUpdate.encodedData
+        ? showPendingUpdate()
+        : null}
     </div>
   );
 });

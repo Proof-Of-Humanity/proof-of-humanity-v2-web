@@ -1,6 +1,6 @@
-import cn from 'classnames';
-import { InputHTMLAttributes, TextareaHTMLAttributes, useState } from 'react';
-import Label from './Label';
+import cn from "classnames";
+import { InputHTMLAttributes, TextareaHTMLAttributes, useState } from "react";
+import Label from "./Label";
 
 type FieldProps = TextareaHTMLAttributes<HTMLTextAreaElement> &
   InputHTMLAttributes<HTMLInputElement> & {
@@ -15,15 +15,15 @@ function Field({ label, textarea = false, className, ...props }: FieldProps) {
     <div className="flex w-full flex-col">
       {label && <Label>{label}</Label>}
       <div
-        className={cn('bordered w-full', {
-          'ring-theme/60 ring-2 ring-offset-2': focused,
+        className={cn("bordered w-full", {
+          "ring-theme/60 ring-2 ring-offset-2": focused,
         })}
       >
         {textarea ? (
           <textarea
             className={cn(
-              'bg-whiteBackgroundWithOpacity text-primaryText block w-full rounded-sm border-none px-4 py-2 font-medium bg-blend-lighten transition ease-in-out',
-              'focus:ring-0',
+              "bg-whiteBackgroundWithOpacity text-primaryText block w-full rounded-sm border-none px-4 py-2 font-medium bg-blend-lighten transition ease-in-out",
+              "focus:ring-0",
               className,
             )}
             {...props}
@@ -31,8 +31,8 @@ function Field({ label, textarea = false, className, ...props }: FieldProps) {
         ) : (
           <input
             className={cn(
-              'bg-whiteBackgroundWithOpacity text-primaryText block w-full rounded-sm border-none px-4 py-2 font-medium bg-blend-overlay',
-              'focus-visible:outline-none',
+              "bg-whiteBackgroundWithOpacity text-primaryText block w-full rounded-sm border-none px-4 py-2 font-medium bg-blend-overlay",
+              "focus-visible:outline-none",
               className,
             )}
             onFocus={() => setFocused(true)}

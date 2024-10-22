@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import Link from 'next/link';
-import { ipfs } from 'utils/ipfs';
-import AttachmentIcon from 'icons/AttachmentMajor.svg';
+import Link from "next/link";
+import { ipfs } from "utils/ipfs";
+import AttachmentIcon from "icons/AttachmentMajor.svg";
 
 interface AttachmentProps {
   uri: string;

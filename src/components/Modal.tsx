@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import cn from 'classnames';
-import Popup from 'reactjs-popup';
+import cn from "classnames";
+import Popup from "reactjs-popup";
 
 interface ModalProps extends React.HTMLAttributes<HTMLDivElement> {
   trigger?: JSX.Element | ((isOpen: boolean) => JSX.Element);
@@ -34,8 +34,11 @@ const Modal: React.FC<ModalProps> = ({
         />
         <div
           className={cn(
-            'absolute-centered fixed z-30 w-4/5 md:w-3/5 xl:w-2/5',
-            { 'bg-whiteBackground border-stroke overflow-clip rounded border': formal },
+            "absolute-centered fixed z-30 w-4/5 md:w-3/5 xl:w-2/5",
+            {
+              "bg-whiteBackground border-stroke overflow-clip rounded border":
+                formal,
+            },
             className,
           )}
         >

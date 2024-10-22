@@ -1,33 +1,33 @@
-'use client';
+"use client";
 
-import { enableReactUse } from '@legendapp/state/config/enableReactUse';
-import usePoHWrite from 'contracts/hooks/usePoHWrite';
-import AttachmentIcon from 'icons/AttachmentMajor.svg';
-import DocumentIcon from 'icons/NoteMajor.svg';
-import Link from 'next/link';
-import { useEffect, useMemo, useState } from 'react';
-import { toast } from 'react-toastify';
-import useSWR from 'swr';
-import { Address, Hash } from 'viem';
-import Accordion from 'components/Accordion';
-import ExternalLink from 'components/ExternalLink';
-import Field from 'components/Field';
-import withClientConnected from 'components/HighOrder/withClientConnected';
-import Identicon from 'components/Identicon';
-import Label from 'components/Label';
-import Modal from 'components/Modal';
-import TimeAgo from 'components/TimeAgo';
-import Uploader from 'components/Uploader';
-import { RequestQuery } from 'generated/graphql';
-import useChainParam from 'hooks/useChainParam';
-import useIPFS from 'hooks/useIPFS';
-import { useLoading } from 'hooks/useLoading';
-import { EvidenceFile, MetaEvidenceFile } from 'types/docs';
-import { shortenAddress } from 'utils/address';
-import { explorerLink } from 'config/chains';
-import { ipfs, ipfsFetch, uploadToIPFS } from 'utils/ipfs';
-import { romanize } from 'utils/misc';
-import { usePublicClient } from 'wagmi';
+import { enableReactUse } from "@legendapp/state/config/enableReactUse";
+import usePoHWrite from "contracts/hooks/usePoHWrite";
+import AttachmentIcon from "icons/AttachmentMajor.svg";
+import DocumentIcon from "icons/NoteMajor.svg";
+import Link from "next/link";
+import { useEffect, useMemo, useState } from "react";
+import { toast } from "react-toastify";
+import useSWR from "swr";
+import { Address, Hash } from "viem";
+import Accordion from "components/Accordion";
+import ExternalLink from "components/ExternalLink";
+import Field from "components/Field";
+import withClientConnected from "components/HighOrder/withClientConnected";
+import Identicon from "components/Identicon";
+import Label from "components/Label";
+import Modal from "components/Modal";
+import TimeAgo from "components/TimeAgo";
+import Uploader from "components/Uploader";
+import { RequestQuery } from "generated/graphql";
+import useChainParam from "hooks/useChainParam";
+import useIPFS from "hooks/useIPFS";
+import { useLoading } from "hooks/useLoading";
+import { EvidenceFile, MetaEvidenceFile } from "types/docs";
+import { shortenAddress } from "utils/address";
+import { explorerLink } from "config/chains";
+import { ipfs, ipfsFetch, uploadToIPFS } from "utils/ipfs";
+import { romanize } from "utils/misc";
+import { usePublicClient } from "wagmi";
 
 enableReactUse();
 
@@ -45,11 +45,15 @@ function Item({ index, uri, creationTime, sender }: ItemInterface) {
   return (
     <div className="mt-4 flex flex-col">
       <div className="paper relative px-8 py-4">
-        <span className="absolute left-3 text-sm text-slate-500">{romanize(index + 1)}</span>
+        <span className="absolute left-3 text-sm text-slate-500">
+          {romanize(index + 1)}
+        </span>
         <div className="flex justify-between text-xl font-bold">
           {evidence?.name}
           {evidence?.fileURI && (
-            <Link href={`/attachment?url=${encodeURIComponent(ipfs(evidence?.fileURI))}`}>
+            <Link
+              href={`/attachment?url=${encodeURIComponent(ipfs(evidence?.fileURI))}`}
+            >
               <AttachmentIcon className="h-6 w-6 fill-black" />
             </Link>
           )}
@@ -60,7 +64,7 @@ function Item({ index, uri, creationTime, sender }: ItemInterface) {
         <Identicon diameter={32} address={sender} />
         <div className="text-primaryText flex flex-col pl-2">
           <span>
-            submitted by{' '}
+            submitted by{" "}
             <ExternalLink
               className="text-blue-500 underline underline-offset-2"
               href={explorerLink(sender, chain)}
@@ -78,8 +82,8 @@ function Item({ index, uri, creationTime, sender }: ItemInterface) {
 interface EvidenceProps extends JSX.IntrinsicAttributes {
   pohId: Hash;
   requestIndex: number;
-  arbitrationInfo: NonNullable<RequestQuery['request']>['arbitratorHistory'];
-  list: NonNullable<RequestQuery['request']>['evidenceGroup']['evidence'];
+  arbitrationInfo: NonNullable<RequestQuery["request"]>["arbitratorHistory"];
+  list: NonNullable<RequestQuery["request"]>["evidenceGroup"]["evidence"];
 }
 
 export default withClientConnected<EvidenceProps>(function Evidence({
@@ -92,44 +96,45 @@ export default withClientConnected<EvidenceProps>(function Evidence({
   const { chain } = usePublicClient();
   const { data: policy } = useSWR(
     arbitrationInfo.registrationMeta,
-    async (metaEvidenceLink) => (await ipfsFetch<MetaEvidenceFile>(metaEvidenceLink)).fileURI,
+    async (metaEvidenceLink) =>
+      (await ipfsFetch<MetaEvidenceFile>(metaEvidenceLink)).fileURI,
   );
   const [modalOpen, setModalOpen] = useState(false);
-  const loading = useLoading(false, 'Revoke');
+  const loading = useLoading(false, "Revoke");
   const [pending] = loading.use();
 
   const [prepare] = usePoHWrite(
-    'submitEvidence',
+    "submitEvidence",
     useMemo(
       () => ({
         onReady(fire) {
           fire();
-          toast.info('Transaction pending');
+          toast.info("Transaction pending");
         },
         onError() {
           loading.stop();
-          toast.error('Transaction rejected');
+          toast.error("Transaction rejected");
         },
         onSuccess() {
           setModalOpen(false);
-          toast.success('Request created');
+          toast.success("Request created");
         },
       }),
       [loading],
     ),
   );
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
   const [file, setFile] = useState<File | null>(null);
 
   const submit = async () => {
     loading.start();
 
     const data = new FormData();
-    data.append('###', 'evidence.json');
-    data.append('name', title);
-    if (description) data.append('description', description);
-    if (file) data.append('evidence', file, file.name);
+    data.append("###", "evidence.json");
+    data.append("name", title);
+    if (description) data.append("description", description);
+    if (file) data.append("evidence", file, file.name);
 
     prepare({ args: [pohId, BigInt(requestIndex), await uploadToIPFS(data)] });
 
@@ -167,7 +172,9 @@ export default withClientConnected<EvidenceProps>(function Evidence({
                   href={ipfs(arbitrationInfo.registrationMeta)}
                 >
                   <DocumentIcon className="fill-orange h-6 w-6" />
-                  <strong className="text-orange mr-1 font-semibold">Registration Policy</strong>
+                  <strong className="text-orange mr-1 font-semibold">
+                    Registration Policy
+                  </strong>
                   (at the time of submission)
                 </ExternalLink>
                 <span className="text-secondaryText text-sm">
@@ -176,7 +183,11 @@ export default withClientConnected<EvidenceProps>(function Evidence({
               </div>
             )}
 
-            <Field label="Title" value={title} onChange={(e) => setTitle(e.target.value)} />
+            <Field
+              label="Title"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+            />
             <Field
               textarea
               label="Description (Your Arguments)"
@@ -190,10 +201,16 @@ export default withClientConnected<EvidenceProps>(function Evidence({
                 type="all"
                 onDrop={(acceptedFiles) => setFile(acceptedFiles[0])}
               >
-                {file ? file?.name : "Drag 'n drop some files here, or click to select files"}
+                {file
+                  ? file?.name
+                  : "Drag 'n drop some files here, or click to select files"}
               </Uploader>
             </div>
-            <button disabled={pending} className="btn-main mt-12" onClick={submit}>
+            <button
+              disabled={pending}
+              className="btn-main mt-12"
+              onClick={submit}
+            >
               Submit
             </button>
           </div>

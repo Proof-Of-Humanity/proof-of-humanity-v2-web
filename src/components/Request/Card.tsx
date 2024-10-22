@@ -1,28 +1,28 @@
-'use client';
+"use client";
 
-import { SupportedChainId, idToChain } from 'config/chains';
-import { colorForStatus } from 'config/misc';
-import { queryToStatus } from 'config/requests';
-import Link from 'next/link';
-import { Suspense } from 'react';
-import { Address, Hash } from 'viem';
-import ChainLogo from 'components/ChainLogo';
-import ErrorBoundary from 'components/ErrorBoundary';
-import { WinnerClaimFragment } from 'generated/graphql';
-import useIPFS from 'hooks/useIPFS';
-import { EvidenceFile, RegistrationFile } from 'types/docs';
-import { shortenAddress } from 'utils/address';
-import { camelToTitle } from 'utils/case';
-import { prettifyId } from 'utils/identifier';
-import { ipfs } from 'utils/ipfs';
-import { RequestsQueryItem } from './Grid';
+import { SupportedChainId, idToChain } from "config/chains";
+import { colorForStatus } from "config/misc";
+import { queryToStatus } from "config/requests";
+import Link from "next/link";
+import { Suspense } from "react";
+import { Address, Hash } from "viem";
+import ChainLogo from "components/ChainLogo";
+import ErrorBoundary from "components/ErrorBoundary";
+import { WinnerClaimFragment } from "generated/graphql";
+import useIPFS from "hooks/useIPFS";
+import { EvidenceFile, RegistrationFile } from "types/docs";
+import { shortenAddress } from "utils/address";
+import { camelToTitle } from "utils/case";
+import { prettifyId } from "utils/identifier";
+import { ipfs } from "utils/ipfs";
+import { RequestsQueryItem } from "./Grid";
 
 interface ContentProps {
   chainId: SupportedChainId;
   revocation: boolean;
   registrationEvidenceRevokedReq: string;
-  evidence: RequestsQueryItem['evidenceGroup']['evidence'];
-  claimer: RequestsQueryItem['claimer'];
+  evidence: RequestsQueryItem["evidenceGroup"]["evidence"];
+  claimer: RequestsQueryItem["claimer"];
   requester: Address;
   humanity: { id: Hash } & WinnerClaimFragment;
   expired: boolean;
@@ -40,7 +40,9 @@ const LoadingFallback: React.FC = () => (
   </div>
 );
 
-const ErrorFallback: React.FC<{ claimer?: { name?: string | null } }> = ({ claimer }) => (
+const ErrorFallback: React.FC<{ claimer?: { name?: string | null } }> = ({
+  claimer,
+}) => (
   <div className="h-84 flex animate-pulse flex-col items-center bg-white p-2">
     <div className="mx-auto mb-2 h-32 w-32 rounded-full bg-slate-200" />
     <span className="font-semibold">{claimer?.name}</span>
@@ -77,15 +79,17 @@ const Content = ({
         ? claimer.name
         : data && data.name
           ? data.name
-          : '';
+          : "";
 
   return (
     <div className="bg-whiteBackground flex h-full flex-col items-center p-3">
       <div
-        className={'h-32 w-32 rounded-full bg-cover bg-center bg-no-repeat'}
+        className={"h-32 w-32 rounded-full bg-cover bg-center bg-no-repeat"}
         style={{ backgroundImage: `url('${ipfs(data?.photo!)}')` }}
       />
-      <span className="text-primaryText my-2 truncate font-semibold">{name}</span>
+      <span className="text-primaryText my-2 truncate font-semibold">
+        {name}
+      </span>
       <div className="grid grid-cols-3 items-center">
         <ChainLogo chainId={chainId} className="fill-primaryText h-4 w-4" />
         <span className="text-secondaryText">{shortenAddress(requester)}</span>
@@ -120,8 +124,8 @@ function Card({
         <div className={`h-1 w-full bg-status-${statusColor}`} />
         <div className="centered p-2 font-medium">
           <span className={`text-status-${statusColor}`}>
-            {status === 'resolved' && expired && !revocation
-              ? 'Expired'
+            {status === "resolved" && expired && !revocation
+              ? "Expired"
               : camelToTitle(statusTitle, revocation, expired)}
           </span>
           <span className={`dot ml-2 bg-status-${statusColor}`} />

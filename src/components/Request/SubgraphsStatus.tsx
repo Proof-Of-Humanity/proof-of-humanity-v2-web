@@ -1,7 +1,7 @@
-import { supportedChains } from 'config/chains';
-import { subgraph_url } from 'config/subgraph';
-import { StatusBanner } from 'subgraph-status';
-import styled from 'styled-components';
+import { supportedChains } from "config/chains";
+import { subgraph_url } from "config/subgraph";
+import { StatusBanner } from "subgraph-status";
+import styled from "styled-components";
 
 const StyledBanner = styled(StatusBanner)`
   position: sticky !important;
@@ -15,10 +15,12 @@ const StyledBanner = styled(StatusBanner)`
 `;
 
 function SubgraphsStatus() {
-  const subgraphs: { name: string; url: string }[] = supportedChains.map((chain) => ({
-    name: `Subgraph on ${chain.name}`,
-    url: subgraph_url[chain.id],
-  }));
+  const subgraphs: { name: string; url: string }[] = supportedChains.map(
+    (chain) => ({
+      name: `Subgraph on ${chain.name}`,
+      url: subgraph_url[chain.id],
+    }),
+  );
 
   return <StyledBanner autoHide subgraphs={subgraphs} />;
 }

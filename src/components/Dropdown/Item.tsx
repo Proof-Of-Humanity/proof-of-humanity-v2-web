@@ -1,4 +1,4 @@
-import cn from 'classnames';
+import cn from "classnames";
 
 interface DropdownItemProps {
   icon?: React.ReactNode;
@@ -7,11 +7,16 @@ interface DropdownItemProps {
   onSelect: () => void;
 }
 
-const DropdownItem: React.FC<DropdownItemProps> = ({ icon, selected, name, onSelect }) => (
+const DropdownItem: React.FC<DropdownItemProps> = ({
+  icon,
+  selected,
+  name,
+  onSelect,
+}) => (
   <span
     className={cn(
-      'text-md flex cursor-pointer items-center rounded p-2',
-      selected ? 'bg-whiteBackground' : 'hover:bg-primaryBackground',
+      "text-md flex cursor-pointer items-center rounded p-2",
+      selected ? "bg-whiteBackground" : "hover:bg-primaryBackground",
     )}
     onClick={onSelect}
   >

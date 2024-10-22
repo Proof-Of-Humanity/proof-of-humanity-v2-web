@@ -5,7 +5,7 @@ const nextConfig = {
     config.module.rules.push({
       test: /\.svg$/i,
       issuer: /\.[jt]sx?$/,
-      use: ['@svgr/webpack'],
+      use: ["@svgr/webpack"],
     });
 
     return config;
@@ -21,10 +21,10 @@ const nextConfig = {
   images: {
     remotePatterns: [
       {
-        protocol: 'https',
+        protocol: "https",
         hostname: process.env.REACT_APP_IPFS_GATEWAY,
-        port: '',
-        pathname: '/ipfs/**',
+        port: "",
+        pathname: "/ipfs/**",
       },
     ],
   },

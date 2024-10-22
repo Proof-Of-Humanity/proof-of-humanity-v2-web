@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import Popup from 'reactjs-popup';
+import Popup from "reactjs-popup";
 
 interface ImageProps {
   uri: string;
@@ -8,7 +8,11 @@ interface ImageProps {
   trigger: JSX.Element | ((isOpen: boolean) => JSX.Element);
 }
 
-export default function Previewed({ uri, trigger, isVideo = false }: ImageProps) {
+export default function Previewed({
+  uri,
+  trigger,
+  isVideo = false,
+}: ImageProps) {
   return (
     <Popup trigger={trigger} modal nested>
       {(close) => (

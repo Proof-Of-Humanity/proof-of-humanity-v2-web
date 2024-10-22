@@ -1,15 +1,15 @@
-'use client';
+"use client";
 
-import Loading from 'app/[pohid]/loading';
-import Image from 'next/image';
-import { useSearchParams } from 'next/navigation';
-import React, { Suspense } from 'react';
-import FileViewer from 'components/FileViewer';
-import Header from './Header';
+import Loading from "app/[pohid]/loading";
+import Image from "next/image";
+import { useSearchParams } from "next/navigation";
+import React, { Suspense } from "react";
+import FileViewer from "components/FileViewer";
+import Header from "./Header";
 
 const AttachmentDisplay: React.FC = () => {
   const searchParams = useSearchParams();
-  const url = searchParams.get('url');
+  const url = searchParams.get("url");
 
   return (
     <div className="bg-primaryBackground mx-auto w-[96vw] max-w-[1500px] px-6 py-8 md:w-[80vw]">

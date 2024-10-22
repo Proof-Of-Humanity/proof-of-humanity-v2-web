@@ -1,29 +1,29 @@
-import { EvidenceFile, MetaEvidenceFile, RegistrationFile } from 'types/docs';
-import { ipfs, ipfsFetch } from 'utils/ipfs';
-import { SupportedChainId, paramToChain, supportedChains } from 'config/chains';
-import ActionBar from './ActionBar';
-import Evidence from './Evidence';
-import { getOffChainVouches, getRequestData } from 'data/request';
-import { getContractData } from 'data/contract';
-import { getArbitrationCost } from 'data/costs';
-import { machinifyId, prettifyId } from 'utils/identifier';
-import ExternalLink from 'components/ExternalLink';
-import Identicon from 'components/Identicon';
-import { explorerLink } from 'config/chains';
-import Image from 'next/image';
-import Previewed from 'components/Previewed';
-import Label from 'components/Label';
-import TimeAgo from 'components/TimeAgo';
-import Link from 'next/link';
-import Attachment from 'components/Attachment';
-import ChainLogo from 'components/ChainLogo';
-import Info from './Info';
-import { Address } from 'viem';
-import { Hash } from '@wagmi/core';
-import { getClaimerData } from 'data/claimer';
-import { ClaimerQuery, Request, Vouch as VouchQuery } from 'generated/graphql';
-import Vouch from 'components/Vouch';
-import { ValidVouch, isValidOnChainVouch, isValidVouch } from 'data/vouch';
+import { EvidenceFile, MetaEvidenceFile, RegistrationFile } from "types/docs";
+import { ipfs, ipfsFetch } from "utils/ipfs";
+import { SupportedChainId, paramToChain, supportedChains } from "config/chains";
+import ActionBar from "./ActionBar";
+import Evidence from "./Evidence";
+import { getOffChainVouches, getRequestData } from "data/request";
+import { getContractData } from "data/contract";
+import { getArbitrationCost } from "data/costs";
+import { machinifyId, prettifyId } from "utils/identifier";
+import ExternalLink from "components/ExternalLink";
+import Identicon from "components/Identicon";
+import { explorerLink } from "config/chains";
+import Image from "next/image";
+import Previewed from "components/Previewed";
+import Label from "components/Label";
+import TimeAgo from "components/TimeAgo";
+import Link from "next/link";
+import Attachment from "components/Attachment";
+import ChainLogo from "components/ChainLogo";
+import Info from "./Info";
+import { Address } from "viem";
+import { Hash } from "@wagmi/core";
+import { getClaimerData } from "data/claimer";
+import { ClaimerQuery, Request, Vouch as VouchQuery } from "generated/graphql";
+import Vouch from "components/Vouch";
+import { ValidVouch, isValidOnChainVouch, isValidVouch } from "data/vouch";
 
 interface PageProps {
   params: { pohid: string; chain: string; request: string };
@@ -32,7 +32,7 @@ interface PageProps {
 export default async function Request({ params }: PageProps) {
   const chain = paramToChain(params.chain);
 
-  if (!chain) throw new Error('unsupported chain');
+  if (!chain) throw new Error("unsupported chain");
 
   const pohId = machinifyId(params.pohid)!;
 
@@ -49,7 +49,9 @@ export default async function Request({ params }: PageProps) {
     contractData.arbitrationInfo.extraData,
   );
 
-  const onChainVouches = request.claimer.vouchesReceived.map((v) => v.from.id as Address);
+  const onChainVouches = request.claimer.vouchesReceived.map(
+    (v) => v.from.id as Address,
+  );
 
   // This are vouches to be read directly from supabase, ie, vouches still not processed
   // (only necessary before advance state in vouching status)
@@ -59,12 +61,14 @@ export default async function Request({ params }: PageProps) {
     signature: Hash;
   }[] = [];
 
-  if (request.status.id === 'vouching') {
-    offChainVouches.push(...(await getOffChainVouches(chain.id, request.claimer.id, pohId)));
+  if (request.status.id === "vouching") {
+    offChainVouches.push(
+      ...(await getOffChainVouches(chain.id, request.claimer.id, pohId)),
+    );
   }
 
   const hasExpired = () => {
-    if (request.status.id === 'resolved') {
+    if (request.status.id === "resolved") {
       if (!request.revocation && request.humanity.winnerClaim.length > 0) {
         if (request.humanity.winnerClaim[0].index === request.index) {
           if (!!contractData.humanityLifespan) {
@@ -73,14 +77,16 @@ export default async function Request({ params }: PageProps) {
                 Number(request.humanity.winnerClaim[0].resolutionTime) + Number(contractData.humanityLifespan) < Date.now() / 1000) || 
                 (Number(request.creationTime) + Number(contractData.humanityLifespan) < Date.now() / 1000) ||  */
               !request.humanity.registration ||
-              Number(request.humanity.registration?.expirationTime) < Date.now() / 1000
+              Number(request.humanity.registration?.expirationTime) <
+                Date.now() / 1000
             );
           }
         } else return true;
       }
-    } else if (request.status.id === 'transferring') {
+    } else if (request.status.id === "transferring") {
       return (
-        Number(request.creationTime) + Number(contractData.humanityLifespan) < Date.now() / 1000
+        Number(request.creationTime) + Number(contractData.humanityLifespan) <
+        Date.now() / 1000
       );
     }
     return true;
@@ -96,9 +102,11 @@ export default async function Request({ params }: PageProps) {
       !!request.registrationEvidenceRevokedReq
         ? ipfsFetch<EvidenceFile>(request.registrationEvidenceRevokedReq)
         : request.humanity.winnerClaim.length > 0 &&
-            request.humanity.winnerClaim.at(0)!.evidenceGroup.evidence.length > 0
+            request.humanity.winnerClaim.at(0)!.evidenceGroup.evidence.length >
+              0
           ? ipfsFetch<EvidenceFile>(
-              request.humanity.winnerClaim.at(0)!.evidenceGroup.evidence.at(-1)!.uri,
+              request.humanity.winnerClaim.at(0)!.evidenceGroup.evidence.at(-1)!
+                .uri,
             )
           : null,
       ipfsFetch<EvidenceFile>(request.evidenceGroup.evidence.at(-1)!.uri),
@@ -112,7 +120,9 @@ export default async function Request({ params }: PageProps) {
   } else {
     const registrationEvidence =
       request.evidenceGroup.evidence.length > 0
-        ? await ipfsFetch<EvidenceFile>(request.evidenceGroup.evidence.at(-1)!.uri)
+        ? await ipfsFetch<EvidenceFile>(
+            request.evidenceGroup.evidence.at(-1)!.uri,
+          )
         : null;
 
     registrationFile =
@@ -150,13 +160,18 @@ export default async function Request({ params }: PageProps) {
             rawVoucher[chain.id].claimer &&
             rawVoucher[chain.id].claimer?.registration?.humanity.winnerClaim,
         );
-        const relevantChain = !!voucherEvidenceChain ? voucherEvidenceChain : chain;
+        const relevantChain = !!voucherEvidenceChain
+          ? voucherEvidenceChain
+          : chain;
 
         out.name = rawVoucher[relevantChain.id].claimer?.name;
         out.voucher = rawVoucher[relevantChain.id].claimer?.id;
-        out.pohId = rawVoucher[relevantChain.id].claimer?.registration?.humanity.id;
+        out.pohId =
+          rawVoucher[relevantChain.id].claimer?.registration?.humanity.id;
         if (!out.pohId) out.pohId = out.voucher;
-        const uri = rawVoucher[relevantChain.id].claimer?.registration?.humanity.winnerClaim
+        const uri = rawVoucher[
+          relevantChain.id
+        ].claimer?.registration?.humanity.winnerClaim
           .at(0)
           ?.evidenceGroup.evidence.at(0)?.uri;
 
@@ -165,12 +180,15 @@ export default async function Request({ params }: PageProps) {
             chain.id,
             out.voucher!,
             offChainVouches.find(
-              (vouch) => vouch.voucher === rawVoucher[relevantChain.id].claimer?.id,
+              (vouch) =>
+                vouch.voucher === rawVoucher[relevantChain.id].claimer?.id,
             )?.expiration,
           );
         } else if (!skipStatusCheck && isOnChain) {
           out.vouchStatus = isValidOnChainVouch(
-            request.claimer.vouchesReceived.find((v) => v.from.id === out.voucher!)! as VouchQuery,
+            request.claimer.vouchesReceived.find(
+              (v) => v.from.id === out.voucher!,
+            )! as VouchQuery,
           );
         }
 
@@ -179,7 +197,9 @@ export default async function Request({ params }: PageProps) {
         const evFile = await Promise.resolve(ipfsFetch<EvidenceFile>(uri));
         if (!evFile?.fileURI) return out;
 
-        out.photo = (await Promise.resolve(ipfsFetch<RegistrationFile>(evFile.fileURI))).photo;
+        out.photo = (
+          await Promise.resolve(ipfsFetch<RegistrationFile>(evFile.fileURI))
+        ).photo;
         return out;
       } catch {
         return out;
@@ -188,18 +208,24 @@ export default async function Request({ params }: PageProps) {
   };
 
   const vourchesForData = prepareVouchData(
-    await Promise.all([...request.claimer.vouches.map((vouch) => getClaimerData(vouch.for.id))]),
+    await Promise.all([
+      ...request.claimer.vouches.map((vouch) => getClaimerData(vouch.for.id)),
+    ]),
     true,
     true,
   );
 
   const vouchersData = prepareVouchData(
-    await Promise.all([...offChainVouches.map((vouch) => getClaimerData(vouch.voucher))]),
+    await Promise.all([
+      ...offChainVouches.map((vouch) => getClaimerData(vouch.voucher)),
+    ]),
     false,
     false,
   ).concat(
     prepareVouchData(
-      await Promise.all([...onChainVouches.map((voucher) => getClaimerData(voucher))]),
+      await Promise.all([
+        ...onChainVouches.map((voucher) => getClaimerData(voucher)),
+      ]),
       true,
       false,
     ),
@@ -209,7 +235,9 @@ export default async function Request({ params }: PageProps) {
     try {
       return (
         await Promise.resolve(
-          ipfsFetch<MetaEvidenceFile>(request.arbitratorHistory.registrationMeta),
+          ipfsFetch<MetaEvidenceFile>(
+            request.arbitratorHistory.registrationMeta,
+          ),
         )
       ).fileURI;
     } catch (e) {
@@ -237,7 +265,9 @@ export default async function Request({ params }: PageProps) {
             : undefined
         }
         funded={
-          request.index >= 0 ? BigInt(request.challenges[0].rounds[0].requesterFund.amount) : 0n
+          request.index >= 0
+            ? BigInt(request.challenges[0].rounds[0].requesterFund.amount)
+            : 0n
         }
         onChainVouches={onChainVouches}
         offChainVouches={offChainVouches}
@@ -250,7 +280,9 @@ export default async function Request({ params }: PageProps) {
             <div className="relative">
               <div className="text-primaryText flex justify-between">
                 Revocation requested - {revocationFile.name}
-                {revocationFile.fileURI && <Attachment uri={revocationFile.fileURI} />}
+                {revocationFile.fileURI && (
+                  <Attachment uri={revocationFile.fileURI} />
+                )}
               </div>
               <p className="text-primaryText">{revocationFile.description}</p>
             </div>
@@ -287,11 +319,11 @@ export default async function Request({ params }: PageProps) {
 
               <span className="text-primaryText mb-12 mt-4 text-2xl">
                 {/* {request.claimer.name} */}
-                {registrationFile ? registrationFile.name : ''}
+                {registrationFile ? registrationFile.name : ""}
               </span>
 
               <span className="text-secondaryText text-sm font-light">
-                {registrationFile ? registrationFile.bio : ''}
+                {registrationFile ? registrationFile.bio : ""}
               </span>
             </div>
 
@@ -314,21 +346,32 @@ export default async function Request({ params }: PageProps) {
                 </ExternalLink>
               </div>
               <span className="text-primaryText flex items-center">
-                <ChainLogo chainId={chain.id} className="fill-primaryText m-1 h-4 w-4" />
+                <ChainLogo
+                  chainId={chain.id}
+                  className="fill-primaryText m-1 h-4 w-4"
+                />
                 {chain.name}
               </span>
             </div>
 
             <div className="text-orange mb-8 flex flex-wrap gap-x-[8px] gap-y-[8px] font-medium">
               <div className="flex flex-row flex-wrap gap-x-[8px]">
-                <Image alt="poh id" src="/logo/pohid.svg" height={24} width={24} />
+                <Image
+                  alt="poh id"
+                  src="/logo/pohid.svg"
+                  height={24}
+                  width={24}
+                />
                 <Link className="text-orange" href={`/${prettifyId(pohId)}`}>
                   {prettifyId(pohId).slice(0, 20)}
                   <wbr />
                   {prettifyId(pohId).slice(20)}
                 </Link>
                 <Info
-                  nbRequests={+request.humanity.nbRequests + +request.humanity.nbLegacyRequests}
+                  nbRequests={
+                    +request.humanity.nbRequests +
+                    +request.humanity.nbLegacyRequests
+                  }
                 />
               </div>
             </div>
@@ -354,12 +397,16 @@ export default async function Request({ params }: PageProps) {
               </span>
 
               <span className="text-secondaryText mb-[32px] text-sm font-light">
-                {registrationFile ? registrationFile.bio : ''}
+                {registrationFile ? registrationFile.bio : ""}
               </span>
             </div>
 
             {registrationFile && (
-              <video className="w-full" src={ipfs(registrationFile.video)} controls />
+              <video
+                className="w-full"
+                src={ipfs(registrationFile.video)}
+                controls
+              />
             )}
 
             <div className="flex w-full flex-wrap justify-between gap-2 md:flex-row md:items-center">
@@ -374,14 +421,17 @@ export default async function Request({ params }: PageProps) {
                       <div className="\\ \\ \\ \\ \\ \\ \\ \\ outline-color: #E5E5E5 \\ bg-whiteBackground text-secondaryText invisible absolute left-1/2 z-10 m-4 mx-auto w-[260px] flex-shrink-0 -translate-x-1/2 transform place-content-center content-between rounded-[3px] border-[1px] border-[solid] bg-[var(--Light-Mode-White-background,_#FFF)] p-[8px] text-justify text-[14px] font-normal not-italic leading-[normal] outline-black transition-opacity ease-in-out [box-shadow:0px_2px_3px_0px_rgba(0,_0,_0,_0.06)] group-hover:visible md:w-[400px]">
                         <span>
                           {/* (Policy in force since {new Date(policyUpdate * 1000).toDateString()}) */}
-                          This is the policy that was in effect when this submission was made. Why
-                          is this important? Policies may change over time, and it's crucial to know
-                          the policy that was in force at the time of a submission before
-                          challenging or removing a profile. If you challenge this submission, this
-                          version of the policy will be enforced by Kleros jurors if the case goes
-                          to arbitration. Also, if you revoke this profile citing “incorrect
-                          submission,” but the submission complied with this policy, your revocation
-                          request may be rejected, and you may lose your deposit.
+                          This is the policy that was in effect when this
+                          submission was made. Why is this important? Policies
+                          may change over time, and it's crucial to know the
+                          policy that was in force at the time of a submission
+                          before challenging or removing a profile. If you
+                          challenge this submission, this version of the policy
+                          will be enforced by Kleros jurors if the case goes to
+                          arbitration. Also, if you revoke this profile citing
+                          “incorrect submission,” but the submission complied
+                          with this policy, your revocation request may be
+                          rejected, and you may lose your deposit.
                         </span>
                       </div>
                     </div>

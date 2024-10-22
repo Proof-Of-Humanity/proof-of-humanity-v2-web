@@ -1,15 +1,15 @@
-import { machinifyId } from 'utils/identifier';
-import { Hash } from 'viem';
-import { supportedChains } from 'config/chains';
-import { redirect } from 'next/navigation';
-import { RedirectType } from 'next/dist/client/components/redirect';
-import dynamic from 'next/dynamic';
-import { getContractDataAllChains } from 'data/contract';
-import { getRegistrationData } from 'data/registration';
-import { getTotalCosts } from 'data/costs';
-import Loading from '../loading';
+import { supportedChains } from "config/chains";
+import { getContractDataAllChains } from "data/contract";
+import { getTotalCosts } from "data/costs";
+import { getRegistrationData } from "data/registration";
+import { RedirectType } from "next/dist/client/components/redirect";
+import dynamic from "next/dynamic";
+import { redirect } from "next/navigation";
+import { machinifyId } from "utils/identifier";
+import { Hash } from "viem";
+import Loading from "../loading";
 
-const Form = dynamic(() => import('./Form'), {
+const Form = dynamic(() => import("./Form"), {
   ssr: false,
   loading: () => <Loading />,
 });
@@ -32,13 +32,17 @@ export default async function Claim({ params: { pohid } }: PageProps) {
     getRegistrationData(pohid as Hash),
   ]);
 
-  const registrationChain = supportedChains.find((chain) => registrationData[chain.id]);
+  const registrationChain = supportedChains.find(
+    (chain) => registrationData[chain.id],
+  );
   const isRenewal =
     registrationChain &&
-    +registrationData[registrationChain.id]!.expirationTime - Date.now() / 1000 <
+    +registrationData[registrationChain.id]!.expirationTime -
+      Date.now() / 1000 <
       +contractData[registrationChain.id].renewalPeriodDuration;
 
-  if (registrationChain && !isRenewal) redirect(`/${pohid}`, RedirectType.replace);
+  if (registrationChain && !isRenewal)
+    redirect(`/${pohid}`, RedirectType.replace);
 
   const totalCosts = await getTotalCosts(contractData);
 
