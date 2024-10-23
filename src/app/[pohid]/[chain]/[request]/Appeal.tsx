@@ -32,6 +32,7 @@ interface SideFundingProps {
   requesterFunds: bigint;
   appealCost: bigint;
   chainId: SupportedChainId;
+  loosingSideHasEnd: boolean;
 }
 
 const SideFunding: React.FC<SideFundingProps> = ({
@@ -43,6 +44,7 @@ const SideFunding: React.FC<SideFundingProps> = ({
   requesterFunds,
   appealCost,
   chainId,
+  loosingSideHasEnd,
 }) => {
   const title = side === SideEnum.claimer ? "Claimer" : "Challenger";
   const [requesterInput, setRequesterInput] = useState(0n);
@@ -92,11 +94,11 @@ const SideFunding: React.FC<SideFundingProps> = ({
           />
           <button
             className={`gradient rounded px-4 text-white ${
-              !contributor || errorRef.current
+              !contributor || errorRef.current || loosingSideHasEnd
                 ? "cursor-not-allowed opacity-50"
                 : ""
             }`}
-            disabled={!contributor || errorRef.current}
+            disabled={!contributor || errorRef.current || loosingSideHasEnd}
             onClick={async () => {
               prepareFundAppeal({
                 args: [arbitrator as Address, BigInt(disputeId), side],
@@ -148,6 +150,10 @@ const Appeal: React.FC<AppealProps> = ({
   const [formatedCurrentRuling, setFormatedCurrentRuling] = useState("");
   const defaultPeriod = [0n, 0n];
   const [period, setPeriod] = useState(defaultPeriod);
+  const [loosingSideHasEnd, setLoosingSideHasEnd] = useState(false);
+  const [loosingSideDeadline, setLoosingSideDeadline] = useState(0);
+  const [currentRulingFormatted, setCurrentRulingFormatted] = useState(0);
+
   const [disputeStatus, setDisputeStatus] = useState(
     DisputeStatusEnum.Appealable,
   );
@@ -244,11 +250,18 @@ const Appeal: React.FC<AppealProps> = ({
         const currentRuling = arbitratorsData.currentRuling;
 
         setPeriod(period!);
+        const loosingSideDeadline =
+          (parseInt(String(period![0])) + parseInt(String(period![1]))) / 2;
+
+        setLoosingSideHasEnd(loosingSideDeadline < Date.now() / 1000);
+        setLoosingSideDeadline(loosingSideDeadline);
         setDisputeStatus(Number(status) as DisputeStatusEnum);
-        formatCurrentRuling(Number(currentRuling) as SideEnum);
+        const currentRulingFormatted = Number(currentRuling) as SideEnum;
+        setCurrentRulingFormatted(currentRulingFormatted);
+        formatCurrentRuling(currentRulingFormatted);
         calculateTotalCost(
           cost!,
-          Number(currentRuling) as SideEnum,
+          currentRulingFormatted,
           Number(winnerMult),
           Number(loserMult),
           Number(sharedMult),
@@ -275,7 +288,7 @@ const Appeal: React.FC<AppealProps> = ({
       header={`Appeal case #${disputeId}`}
       trigger={
         <button className="btn-sec h-[48px] rounded px-[24px]">
-          Fund Appeal (ends&nbsp;
+          Appeal (ends&nbsp;
           <TimeAgo time={parseInt(String(period[1]))} />)
         </button>
       }
@@ -292,6 +305,23 @@ const Appeal: React.FC<AppealProps> = ({
           in order not to lose the case.
         </p>
         <br />
+        <h1 className="mb-4 text-xl">Appeal timeframes</h1>
+        <p className="txt">
+          Appeal timeframe ends&nbsp;
+          <TimeAgo time={parseInt(String(period[1]))} />
+        </p>
+        {loosingSideHasEnd ? (
+          <p className="txt">
+            Loosing side ended&nbsp;
+            <TimeAgo time={loosingSideDeadline} />
+          </p>
+        ) : (
+          <p className="txt">
+            Loosing side ends&nbsp;
+            <TimeAgo time={loosingSideDeadline} />
+          </p>
+        )}
+        <br />
         <SideFunding
           side={SideEnum.claimer}
           disputeId={disputeId}
@@ -301,6 +331,11 @@ const Appeal: React.FC<AppealProps> = ({
           requesterFunds={claimerFunds}
           appealCost={totalClaimerCost}
           chainId={chainId}
+          loosingSideHasEnd={
+            currentRulingFormatted === SideEnum.challenger
+              ? loosingSideHasEnd
+              : false
+          }
         />
         <br />
         <SideFunding
@@ -312,6 +347,11 @@ const Appeal: React.FC<AppealProps> = ({
           requesterFunds={challengerFunds}
           appealCost={totalChallengerCost}
           chainId={chainId}
+          loosingSideHasEnd={
+            currentRulingFormatted === SideEnum.claimer
+              ? loosingSideHasEnd
+              : false
+          }
         />
       </div>
     </Modal>
