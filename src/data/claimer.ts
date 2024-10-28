@@ -37,6 +37,6 @@ export const getClaimerData = cache(async (id: Address) => {
     {} as Record<SupportedChainId, ClaimerQuery>,
   );
 
-  sanitizeRegistration(out);
+  //sanitizeRegistration(out);
   return await sanitizeClaimerData(out, id);
 });
