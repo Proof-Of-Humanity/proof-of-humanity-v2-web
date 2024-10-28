@@ -1,29 +1,33 @@
-import { EvidenceFile, MetaEvidenceFile, RegistrationFile } from "types/docs";
-import { ipfs, ipfsFetch } from "utils/ipfs";
-import { SupportedChainId, paramToChain, supportedChains } from "config/chains";
-import ActionBar from "./ActionBar";
-import Evidence from "./Evidence";
-import { getOffChainVouches, getRequestData } from "data/request";
-import { getContractData } from "data/contract";
-import { getArbitrationCost } from "data/costs";
-import { machinifyId, prettifyId } from "utils/identifier";
-import ExternalLink from "components/ExternalLink";
-import Identicon from "components/Identicon";
-import { explorerLink } from "config/chains";
-import Image from "next/image";
-import Previewed from "components/Previewed";
-import Label from "components/Label";
-import TimeAgo from "components/TimeAgo";
-import Link from "next/link";
+import { Hash } from "@wagmi/core";
 import Attachment from "components/Attachment";
 import ChainLogo from "components/ChainLogo";
-import Info from "./Info";
-import { Address } from "viem";
-import { Hash } from "@wagmi/core";
-import { getClaimerData } from "data/claimer";
-import { ClaimerQuery, Request, Vouch as VouchQuery } from "generated/graphql";
+import ExternalLink from "components/ExternalLink";
+import Identicon from "components/Identicon";
+import Label from "components/Label";
+import Previewed from "components/Previewed";
+import TimeAgo from "components/TimeAgo";
 import Vouch from "components/Vouch";
+import {
+  SupportedChainId,
+  explorerLink,
+  paramToChain,
+  supportedChains,
+} from "config/chains";
+import { getClaimerData } from "data/claimer";
+import { getContractData } from "data/contract";
+import { getArbitrationCost } from "data/costs";
+import { getOffChainVouches, getRequestData } from "data/request";
 import { ValidVouch, isValidOnChainVouch, isValidVouch } from "data/vouch";
+import { ClaimerQuery, Request, Vouch as VouchQuery } from "generated/graphql";
+import Image from "next/image";
+import Link from "next/link";
+import { EvidenceFile, MetaEvidenceFile, RegistrationFile } from "types/docs";
+import { machinifyId, prettifyId } from "utils/identifier";
+import { ipfs, ipfsFetch } from "utils/ipfs";
+import { Address } from "viem";
+import ActionBar from "./ActionBar";
+import Evidence from "./Evidence";
+import Info from "./Info";
 
 interface PageProps {
   params: { pohid: string; chain: string; request: string };
