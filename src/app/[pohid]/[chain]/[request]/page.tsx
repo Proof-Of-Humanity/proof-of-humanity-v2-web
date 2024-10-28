@@ -18,7 +18,7 @@ import { getContractData } from "data/contract";
 import { getArbitrationCost } from "data/costs";
 import { getOffChainVouches, getRequestData } from "data/request";
 import { ValidVouch, isValidOnChainVouch, isValidVouch } from "data/vouch";
-import { ClaimerQuery, Request, Vouch as VouchQuery } from "generated/graphql";
+import { ClaimerQuery, Vouch as VouchQuery } from "generated/graphql";
 import Image from "next/image";
 import Link from "next/link";
 import { EvidenceFile, MetaEvidenceFile, RegistrationFile } from "types/docs";
