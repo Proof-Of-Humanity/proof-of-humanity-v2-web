@@ -51,7 +51,7 @@ const Vouch: React.FC<VouchingTooltipProps> = ({
             src={ipfs(photo)}
             width={64}
             height={64}
-            unoptimized={true}
+            //unoptimized={true} //Skips cache
           />
         ) : (
           <Identicon key={key} address={address} diameter={32} />
