@@ -316,6 +316,7 @@ export default async function Request({ params }: PageProps) {
                       src={ipfs(registrationFile.photo)}
                       width={144}
                       height={144}
+                      unoptimized={true}
                     />
                   }
                 />
@@ -391,6 +392,7 @@ export default async function Request({ params }: PageProps) {
                       src={ipfs(registrationFile.photo)}
                       width={144}
                       height={144}
+                      unoptimized={true}
                     />
                   }
                 />
