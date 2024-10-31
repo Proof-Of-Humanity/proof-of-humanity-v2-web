@@ -1,4 +1,5 @@
 import { Hash } from "@wagmi/core";
+import Arrow from "components/Arrow";
 import Attachment from "components/Attachment";
 import ChainLogo from "components/ChainLogo";
 import ExternalLink from "components/ExternalLink";
@@ -342,7 +343,7 @@ export default async function Request({ params }: PageProps) {
               <div className="flex items-center">
                 <Identicon diameter={24} address={request.claimer.id} />
                 <ExternalLink
-                  className="text-primaryText ml-2 font-semibold underline underline-offset-2"
+                  className="ml-2 font-semibold text-slate-400 hover:text-slate-600"
                   href={explorerLink(request.claimer.id, chain)}
                 >
                   {request.claimer.id.slice(0, 20)}
@@ -358,7 +359,20 @@ export default async function Request({ params }: PageProps) {
                 {chain.name}
               </span>
             </div>
-
+            <div className="mb-4 h-1 w-full border-b"></div>
+            <div className="mb-2 flex flex-col-reverse justify-between md:flex-row">
+              <div className="flex items-center">
+                <span className="flex items-center text-slate-400">POH ID</span>
+                <div className="mx-[10px]">
+                  <Info
+                    nbRequests={
+                      +request.humanity.nbRequests +
+                      +request.humanity.nbLegacyRequests
+                    }
+                  />
+                </div>
+              </div>
+            </div>
             <div className="text-orange mb-8 flex flex-wrap gap-x-[8px] gap-y-[8px] font-medium">
               <div className="flex flex-row flex-wrap gap-x-[8px]">
                 <Image
@@ -367,17 +381,15 @@ export default async function Request({ params }: PageProps) {
                   height={24}
                   width={24}
                 />
-                <Link className="text-orange" href={`/${prettifyId(pohId)}`}>
+                <Link
+                  className="text-orange font-semibold hover:text-orange-500"
+                  href={`/${prettifyId(pohId)}`}
+                >
                   {prettifyId(pohId).slice(0, 20)}
                   <wbr />
-                  {prettifyId(pohId).slice(20)}
+                  {prettifyId(pohId).slice(20)} <span>- Open ID</span>
                 </Link>
-                <Info
-                  nbRequests={
-                    +request.humanity.nbRequests +
-                    +request.humanity.nbLegacyRequests
-                  }
-                />
+                <Arrow />
               </div>
             </div>
 
@@ -420,7 +432,7 @@ export default async function Request({ params }: PageProps) {
                 <div className="flex grid w-full flex-col justify-items-end font-normal md:flex-row md:items-end">
                   <Link
                     href={`/attachment?url=${ipfs(policyLink)}`}
-                    className="text-primaryText ml-2 underline"
+                    className="text-primaryText ml-2"
                   >
                     <div className="text-primaryText group relative flex py-[8px]">
                       Policy in force at submission
