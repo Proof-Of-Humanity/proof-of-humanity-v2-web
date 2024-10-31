@@ -374,23 +374,20 @@ export default async function Request({ params }: PageProps) {
               </div>
             </div>
             <div className="text-orange mb-8 flex flex-wrap gap-x-[8px] gap-y-[8px] font-medium">
-              <div className="flex flex-row flex-wrap gap-x-[8px]">
+              <Link
+                className="text-orange flex flex-row flex-wrap gap-x-[8px] font-semibold hover:text-orange-500"
+                href={`/${prettifyId(pohId)}`}
+              >
                 <Image
                   alt="poh id"
                   src="/logo/pohid.svg"
                   height={24}
                   width={24}
                 />
-                <Link
-                  className="text-orange font-semibold hover:text-orange-500"
-                  href={`/${prettifyId(pohId)}`}
-                >
-                  {prettifyId(pohId).slice(0, 20)}
-                  <wbr />
-                  {prettifyId(pohId).slice(20)} <span>- Open ID</span>
-                </Link>
-                <Arrow />
-              </div>
+                {prettifyId(pohId).slice(0, 20)}
+                <wbr />
+                {prettifyId(pohId).slice(20)} <span>- Open ID</span> <Arrow />
+              </Link>
             </div>
 
             <div className="flex flex-col items-center md:hidden">
