@@ -1,21 +1,23 @@
 "use client";
 
+import Modal from "components/Modal";
 import InfoIcon from "icons/info.svg";
 import Image from "next/image";
-import Modal from "components/Modal";
 
 interface InfoProps {
   nbRequests: number;
+  label: string;
 }
 
-export default function Info({ nbRequests }: InfoProps) {
+export default function Info({ nbRequests, label }: InfoProps) {
   return (
     <Modal
       formal
       className="flex flex-col p-8"
       trigger={
-        <span className="flex cursor-pointer gap-x-[4px] text-slate-500">
-          <InfoIcon className="h-6 w-6 stroke-slate-500 stroke-2" />
+        <span className="flex cursor-pointer gap-x-[4px] text-slate-500 hover:text-slate-700">
+          {label}&nbsp;
+          <InfoIcon className="h-6 w-6 stroke-slate-500 stroke-2 hover:stroke-slate-700" />
         </span>
       }
     >
