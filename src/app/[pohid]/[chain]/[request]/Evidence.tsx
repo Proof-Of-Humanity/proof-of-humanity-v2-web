@@ -1,15 +1,8 @@
 "use client";
 
 import { enableReactUse } from "@legendapp/state/config/enableReactUse";
-import usePoHWrite from "contracts/hooks/usePoHWrite";
-import AttachmentIcon from "icons/AttachmentMajor.svg";
-import DocumentIcon from "icons/NoteMajor.svg";
-import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
-import { toast } from "react-toastify";
-import useSWR from "swr";
-import { Address, Hash } from "viem";
 import Accordion from "components/Accordion";
+import Attachment from "components/Attachment";
 import ExternalLink from "components/ExternalLink";
 import Field from "components/Field";
 import withClientConnected from "components/HighOrder/withClientConnected";
@@ -18,15 +11,21 @@ import Label from "components/Label";
 import Modal from "components/Modal";
 import TimeAgo from "components/TimeAgo";
 import Uploader from "components/Uploader";
+import { explorerLink } from "config/chains";
+import usePoHWrite from "contracts/hooks/usePoHWrite";
 import { RequestQuery } from "generated/graphql";
 import useChainParam from "hooks/useChainParam";
 import useIPFS from "hooks/useIPFS";
 import { useLoading } from "hooks/useLoading";
+import DocumentIcon from "icons/NoteMajor.svg";
+import { useEffect, useMemo, useState } from "react";
+import { toast } from "react-toastify";
+import useSWR from "swr";
 import { EvidenceFile, MetaEvidenceFile } from "types/docs";
 import { shortenAddress } from "utils/address";
-import { explorerLink } from "config/chains";
 import { ipfs, ipfsFetch, uploadToIPFS } from "utils/ipfs";
 import { romanize } from "utils/misc";
+import { Address, Hash } from "viem";
 import { usePublicClient } from "wagmi";
 
 enableReactUse();
@@ -41,6 +40,11 @@ interface ItemInterface {
 function Item({ index, uri, creationTime, sender }: ItemInterface) {
   const chain = useChainParam()!;
   const [evidence] = useIPFS<EvidenceFile>(uri);
+  const ipfsUri = evidence?.fileURI
+    ? evidence?.fileURI
+    : evidence?.evidence
+      ? evidence?.evidence
+      : undefined;
 
   return (
     <div className="mt-4 flex flex-col">
@@ -50,13 +54,7 @@ function Item({ index, uri, creationTime, sender }: ItemInterface) {
         </span>
         <div className="flex justify-between text-xl font-bold">
           {evidence?.name}
-          {evidence?.fileURI && (
-            <Link
-              href={`/attachment?url=${encodeURIComponent(ipfs(evidence?.fileURI))}`}
-            >
-              <AttachmentIcon className="h-6 w-6 fill-black" />
-            </Link>
-          )}
+          {ipfsUri && <Attachment uri={ipfsUri} />}
         </div>
         <p className="break-word break-words">{evidence?.description}</p>
       </div>

@@ -2,6 +2,7 @@ export interface EvidenceFile {
   name: string;
   description?: string;
   fileURI?: string;
+  evidence?: string;
 }
 
 export interface RegistrationFile {
