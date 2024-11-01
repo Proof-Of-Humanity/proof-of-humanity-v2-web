@@ -1,6 +1,7 @@
 "use client";
 
 import { enableReactUse } from "@legendapp/state/config/enableReactUse";
+import { useObservable } from "@legendapp/state/react";
 import Accordion from "components/Accordion";
 import Attachment from "components/Attachment";
 import ExternalLink from "components/ExternalLink";
@@ -12,6 +13,7 @@ import Modal from "components/Modal";
 import TimeAgo from "components/TimeAgo";
 import Uploader from "components/Uploader";
 import { explorerLink } from "config/chains";
+import { Effects } from "contracts/hooks/types";
 import usePoHWrite from "contracts/hooks/usePoHWrite";
 import { RequestQuery } from "generated/graphql";
 import useChainParam from "hooks/useChainParam";
@@ -98,12 +100,12 @@ export default withClientConnected<EvidenceProps>(function Evidence({
       (await ipfsFetch<MetaEvidenceFile>(metaEvidenceLink)).fileURI,
   );
   const [modalOpen, setModalOpen] = useState(false);
-  const loading = useLoading(false, "Revoke");
+  const loading = useLoading();
   const [pending] = loading.use();
 
   const [prepare] = usePoHWrite(
     "submitEvidence",
-    useMemo(
+    useMemo<Effects>(
       () => ({
         onReady(fire) {
           fire();
@@ -114,13 +116,18 @@ export default withClientConnected<EvidenceProps>(function Evidence({
           toast.error("Transaction rejected");
         },
         onSuccess() {
-          setModalOpen(false);
+          loading.stop();
           toast.success("Request created");
         },
       }),
       [loading],
     ),
   );
+
+  const state$ = useObservable({
+    uri: "",
+  });
+
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [file, setFile] = useState<File | null>(null);
@@ -133,11 +140,13 @@ export default withClientConnected<EvidenceProps>(function Evidence({
     data.append("name", title);
     if (description) data.append("description", description);
     if (file) data.append("evidence", file, file.name);
-
-    prepare({ args: [pohId, BigInt(requestIndex), await uploadToIPFS(data)] });
-
-    loading.stop();
+    state$.uri.set(await uploadToIPFS(data));
   };
+
+  state$.onChange(({ value }) => {
+    if (!value.uri) return;
+    prepare({ args: [pohId, BigInt(requestIndex), value.uri] });
+  });
 
   const [isEvidenceDisabled, setIsEvidenceDisabled] = useState(false);
 
