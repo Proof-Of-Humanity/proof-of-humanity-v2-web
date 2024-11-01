@@ -494,6 +494,8 @@ export default withClientConnected<ActionBarProps>(function ActionBar({
                 challenger={currentChallenge.challenger?.id}
                 currentChallenge={currentChallenge}
                 chainId={chain.id}
+                revocation={revocation}
+                expired={expired}
               />
 
               <ExternalLink
