@@ -1,15 +1,9 @@
 "use client";
 
 import { enableReactUse } from "@legendapp/state/config/enableReactUse";
-import usePoHWrite from "contracts/hooks/usePoHWrite";
-import AttachmentIcon from "icons/AttachmentMajor.svg";
-import DocumentIcon from "icons/NoteMajor.svg";
-import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
-import { toast } from "react-toastify";
-import useSWR from "swr";
-import { Address, Hash } from "viem";
+import { useObservable } from "@legendapp/state/react";
 import Accordion from "components/Accordion";
+import Attachment from "components/Attachment";
 import ExternalLink from "components/ExternalLink";
 import Field from "components/Field";
 import withClientConnected from "components/HighOrder/withClientConnected";
@@ -18,15 +12,22 @@ import Label from "components/Label";
 import Modal from "components/Modal";
 import TimeAgo from "components/TimeAgo";
 import Uploader from "components/Uploader";
+import { explorerLink } from "config/chains";
+import { Effects } from "contracts/hooks/types";
+import usePoHWrite from "contracts/hooks/usePoHWrite";
 import { RequestQuery } from "generated/graphql";
 import useChainParam from "hooks/useChainParam";
 import useIPFS from "hooks/useIPFS";
 import { useLoading } from "hooks/useLoading";
+import DocumentIcon from "icons/NoteMajor.svg";
+import { useEffect, useMemo, useState } from "react";
+import { toast } from "react-toastify";
+import useSWR from "swr";
 import { EvidenceFile, MetaEvidenceFile } from "types/docs";
 import { shortenAddress } from "utils/address";
-import { explorerLink } from "config/chains";
 import { ipfs, ipfsFetch, uploadToIPFS } from "utils/ipfs";
 import { romanize } from "utils/misc";
+import { Address, Hash } from "viem";
 import { usePublicClient } from "wagmi";
 
 enableReactUse();
@@ -41,6 +42,11 @@ interface ItemInterface {
 function Item({ index, uri, creationTime, sender }: ItemInterface) {
   const chain = useChainParam()!;
   const [evidence] = useIPFS<EvidenceFile>(uri);
+  const ipfsUri = evidence?.fileURI
+    ? evidence?.fileURI
+    : evidence?.evidence
+      ? evidence?.evidence
+      : undefined;
 
   return (
     <div className="mt-4 flex flex-col">
@@ -50,13 +56,7 @@ function Item({ index, uri, creationTime, sender }: ItemInterface) {
         </span>
         <div className="flex justify-between text-xl font-bold">
           {evidence?.name}
-          {evidence?.fileURI && (
-            <Link
-              href={`/attachment?url=${encodeURIComponent(ipfs(evidence?.fileURI))}`}
-            >
-              <AttachmentIcon className="h-6 w-6 fill-black" />
-            </Link>
-          )}
+          {ipfsUri && <Attachment uri={ipfsUri} />}
         </div>
         <p className="break-word break-words">{evidence?.description}</p>
       </div>
@@ -100,12 +100,12 @@ export default withClientConnected<EvidenceProps>(function Evidence({
       (await ipfsFetch<MetaEvidenceFile>(metaEvidenceLink)).fileURI,
   );
   const [modalOpen, setModalOpen] = useState(false);
-  const loading = useLoading(false, "Revoke");
+  const loading = useLoading();
   const [pending] = loading.use();
 
   const [prepare] = usePoHWrite(
     "submitEvidence",
-    useMemo(
+    useMemo<Effects>(
       () => ({
         onReady(fire) {
           fire();
@@ -116,13 +116,18 @@ export default withClientConnected<EvidenceProps>(function Evidence({
           toast.error("Transaction rejected");
         },
         onSuccess() {
-          setModalOpen(false);
+          loading.stop();
           toast.success("Request created");
         },
       }),
       [loading],
     ),
   );
+
+  const state$ = useObservable({
+    uri: "",
+  });
+
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [file, setFile] = useState<File | null>(null);
@@ -135,11 +140,13 @@ export default withClientConnected<EvidenceProps>(function Evidence({
     data.append("name", title);
     if (description) data.append("description", description);
     if (file) data.append("evidence", file, file.name);
-
-    prepare({ args: [pohId, BigInt(requestIndex), await uploadToIPFS(data)] });
-
-    loading.stop();
+    state$.uri.set(await uploadToIPFS(data));
   };
+
+  state$.onChange(({ value }) => {
+    if (!value.uri) return;
+    prepare({ args: [pohId, BigInt(requestIndex), value.uri] });
+  });
 
   const [isEvidenceDisabled, setIsEvidenceDisabled] = useState(false);
 
