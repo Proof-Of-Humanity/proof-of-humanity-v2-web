@@ -361,17 +361,13 @@ export default async function Request({ params }: PageProps) {
             </div>
             <div className="mb-4 h-1 w-full border-b"></div>
             <div className="mb-2 flex flex-col-reverse justify-between md:flex-row">
-              <div className="flex items-center">
-                <span className="flex items-center text-slate-400">POH ID</span>
-                <div className="mx-[10px]">
-                  <Info
-                    nbRequests={
-                      +request.humanity.nbRequests +
-                      +request.humanity.nbLegacyRequests
-                    }
-                  />
-                </div>
-              </div>
+              <Info
+                label="POH ID"
+                nbRequests={
+                  +request.humanity.nbRequests +
+                  +request.humanity.nbLegacyRequests
+                }
+              />
             </div>
             <div className="text-orange mb-8 flex flex-wrap gap-x-[8px] gap-y-[8px] font-medium">
               <Link
@@ -432,10 +428,15 @@ export default async function Request({ params }: PageProps) {
                     className="text-primaryText ml-2"
                   >
                     <div className="text-primaryText group relative flex py-[8px]">
-                      Policy in force at submission
-                      <div className="\\ \\ \\ \\ \\ \\ \\ \\ outline-color: #E5E5E5 \\ bg-whiteBackground text-secondaryText invisible absolute left-1/2 z-10 m-4 mx-auto w-[260px] flex-shrink-0 -translate-x-1/2 transform place-content-center content-between rounded-[3px] border-[1px] border-[solid] bg-[var(--Light-Mode-White-background,_#FFF)] p-[8px] text-justify text-[14px] font-normal not-italic leading-[normal] outline-black transition-opacity ease-in-out [box-shadow:0px_2px_3px_0px_rgba(0,_0,_0,_0.06)] group-hover:visible md:w-[400px]">
+                      <Image
+                        alt="warning"
+                        src="/logo/exclamation.svg"
+                        height={24}
+                        width={24}
+                      />
+                      &nbsp; Policy in force at submission
+                      <div className="outline-color: #E5E5E5 bg-whiteBackground text-secondaryText invisible absolute left-1/2 z-10 m-4 mx-auto w-[260px] flex-shrink-0 -translate-x-1/2 transform place-content-center content-between rounded-[3px] border-[1px] border-[solid] bg-[var(--Light-Mode-White-background,_#FFF)] p-[8px] text-justify text-[14px] font-normal not-italic leading-[normal] outline-black transition-opacity ease-in-out [box-shadow:0px_2px_3px_0px_rgba(0,_0,_0,_0.06)] group-hover:visible md:w-[400px]">
                         <span>
-                          {/* (Policy in force since {new Date(policyUpdate * 1000).toDateString()}) */}
                           This is the policy that was in effect when this
                           submission was made. Why is this important? Policies
                           may change over time, and it's crucial to know the
