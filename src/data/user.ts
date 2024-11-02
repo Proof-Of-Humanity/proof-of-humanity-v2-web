@@ -10,8 +10,10 @@ const sanitize = (res: MeQuery[]) => {
     if (claimer.claimer?.currentRequest && claimer.claimer?.registration) {
       if (claimer.claimer?.currentRequest.index <= -100) {
         claimer.claimer.currentRequest = null;
-      } else {
+      } else if (res.filter((cl) => cl.claimer?.registration).length > 1) {
         claimer.claimer.registration = null;
+      } else {
+        claimer.claimer.currentRequest = null;
       }
     }
   });
