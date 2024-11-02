@@ -7,8 +7,13 @@ import { MeQuery } from "generated/graphql";
 // function should be removed
 const sanitize = (res: MeQuery[]) => {
   res.map((claimer) => {
-    if (claimer.claimer?.currentRequest && claimer.claimer?.registration)
-      claimer.claimer.registration = null;
+    if (claimer.claimer?.currentRequest && claimer.claimer?.registration) {
+      if (claimer.claimer?.currentRequest.index <= -100) {
+        claimer.claimer.currentRequest = null;
+      } else {
+        claimer.claimer.registration = null;
+      }
+    }
   });
 };
 
@@ -16,7 +21,6 @@ export const getMyData = async (account: string) => {
   const res = await Promise.all(
     supportedChains.map((chain) => sdk[chain.id].Me({ id: account })),
   );
-
   sanitize(res);
 
   const homeChain = supportedChains.find(
