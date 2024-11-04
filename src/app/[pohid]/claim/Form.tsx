@@ -1,28 +1,28 @@
 "use client";
 
+import { enableReactUse } from "@legendapp/state/config/enableReactUse";
+import { Show, Switch, useObservable } from "@legendapp/state/react";
+import cn from "classnames";
+import withClientConnected from "components/HighOrder/withClientConnected";
+import { SupportedChain, SupportedChainId } from "config/chains";
+import { Effects } from "contracts/hooks/types";
+import usePoHWrite from "contracts/hooks/usePoHWrite";
+import { ContractData } from "data/contract";
+import { RegistrationQuery } from "generated/graphql";
+import { useLoading } from "hooks/useLoading";
+import { useParams } from "next/navigation";
 import { Fragment, useMemo } from "react";
+import { toast } from "react-toastify";
+import { machinifyId } from "utils/identifier";
+import { uploadToIPFS } from "utils/ipfs";
+import { Hash, parseEther } from "viem";
+import { useAccount, useChainId } from "wagmi";
+import Connect from "./Connect";
 import Finalized from "./Finalized";
 import InfoStep from "./Info";
 import PhotoStep from "./Photo";
 import ReviewStep from "./Review";
 import VideoStep from "./Video";
-import { Show, Switch, useObservable } from "@legendapp/state/react";
-import { useAccount, useChainId } from "wagmi";
-import withClientConnected from "components/HighOrder/withClientConnected";
-import { useParams } from "next/navigation";
-import { Hash, parseEther } from "viem";
-import cn from "classnames";
-import { enableReactUse } from "@legendapp/state/config/enableReactUse";
-import Connect from "./Connect";
-import { SupportedChain, SupportedChainId } from "config/chains";
-import { RegistrationQuery } from "generated/graphql";
-import usePoHWrite from "contracts/hooks/usePoHWrite";
-import { toast } from "react-toastify";
-import { machinifyId } from "utils/identifier";
-import { Effects } from "contracts/hooks/types";
-import { uploadToIPFS } from "utils/ipfs";
-import { useLoading } from "hooks/useLoading";
-import { ContractData } from "data/contract";
 
 enableReactUse();
 

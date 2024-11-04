@@ -1,19 +1,19 @@
+import { ObservableObject, ObservablePrimitiveBaseFns } from "@legendapp/state";
+import ExternalLink from "components/ExternalLink";
 import Field from "components/Field";
 import Label from "components/Label";
+import Previewed from "components/Previewed";
 import TimeAgo from "components/TimeAgo";
+import { SupportedChainId, idToChain } from "config/chains";
+import { ContractData } from "data/contract";
+import DocumentIcon from "icons/NoteMajor.svg";
+import Image from "next/image";
+import { prettifyId } from "utils/identifier";
 import { ipfs } from "utils/ipfs";
 import { formatEth } from "utils/misc";
-import { useAccount, useBalance, useChainId } from "wagmi";
-import { ObservableObject, ObservablePrimitiveBaseFns } from "@legendapp/state";
-import { MediaState, SubmissionState } from "./Form";
 import { formatEther } from "viem";
-import { SupportedChainId, idToChain } from "config/chains";
-import ExternalLink from "components/ExternalLink";
-import Image from "next/image";
-import Previewed from "components/Previewed";
-import DocumentIcon from "icons/NoteMajor.svg";
-import { ContractData } from "data/contract";
-import { prettifyId } from "utils/identifier";
+import { useAccount, useBalance, useChainId } from "wagmi";
+import { MediaState, SubmissionState } from "./Form";
 
 interface ReviewProps {
   arbitrationInfo: ContractData["arbitrationInfo"];
@@ -159,6 +159,22 @@ function Review({
             after failure. Any amount not contributed now can be put up by
             crowdfunders later.
           </span>
+          {pohId.toLowerCase() !== address?.toLowerCase() ? (
+            <span className="text-orange mt-2">
+              <span className="font-semibold underline">Beware</span>: Your PoH
+              ID differs from the wallet address connected to your account. If
+              you're registering for the first time, this discrepancy is a
+              consequence of changing the connected wallet during the
+              registration process. In such cases, to make both addresses match,
+              you may need to change the connected wallet to the original wallet
+              used at the beginning of the registration process, or else
+              reinitiate the registration process. If you are not a newcomer and
+              wish to reclaim your ID from a different wallet (e.g., if you have
+              lost the private key to your original wallet), please confirm that
+              the PoH ID you are using is the one from your initial
+              registration.
+            </span>
+          ) : null}
         </div>
       </div>
       {loadingMessage ? (
