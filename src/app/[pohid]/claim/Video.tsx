@@ -12,6 +12,12 @@ import { IS_IOS } from "utils/media";
 import { useAccount } from "wagmi";
 import { MediaState } from "./Form";
 
+const ALLOWED_VIDEO_TYPES = [
+  "video/webm",
+  "video/mp4",
+  "video/avi",
+  "video/mov",
+];
 const MIN_DIMS = { width: 352, height: 352 }; // PXs
 //const MAX_DURATION = 20; // Seconds
 //const MAX_SIZE = 7; // Megabytes
@@ -22,6 +28,8 @@ const ERROR_MSG = {
   duration: `Video is too long. Maximum allowed duration is ${MAX_DURATION} seconds long`,
   dimensions: `Video dimensions are too small. Minimum dimensions are ${MIN_DIMS.width}px by ${MIN_DIMS.height}px`,
   size: `Video is oversized. Maximum allowed size is ${MAX_SIZE}mb`,
+  fileType: `Unsupported video format. Please use ${ALLOWED_VIDEO_TYPES.map((t) => t.split("/")[1]).join(", ")}`,
+  unexpected: "Unexpected error. Check format/codecs used.",
 };
 interface PhotoProps {
   advance: () => void;
@@ -142,6 +150,14 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
             onDrop={async (received) => {
               try {
                 const file = received[0];
+                if (!ALLOWED_VIDEO_TYPES.includes(file.type)) {
+                  const msg =
+                    "Uploaded file type: " +
+                    file.type.split("/")[1] +
+                    ". ".concat(ERROR_MSG.fileType);
+                  videoError(msg);
+                  return console.error(msg);
+                }
                 const blob = new Blob([file], { type: file.type });
                 const uri = URL.createObjectURL(blob);
 
@@ -165,7 +181,7 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
                   video$.set({ uri, content: blob });
                 });
               } catch (error: any) {
-                videoError("Unexpected error. Check format/codecs used.");
+                videoError(ERROR_MSG.unexpected);
                 return console.error(error);
               }
             }}
