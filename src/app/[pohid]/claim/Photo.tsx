@@ -1,27 +1,35 @@
 "use client";
 
-import { useRef, useState } from "react";
-import Cropper from "react-easy-crop";
-import type { Area, Point } from "react-easy-crop/types";
-import { toast } from "react-toastify";
-import ReactWebcam from "react-webcam";
+import { ObservableObject } from "@legendapp/state";
+import Previewed from "components/Previewed";
 import Uploader from "components/Uploader";
 import Webcam from "components/Webcam";
 import useFullscreen from "hooks/useFullscreen";
 import { useLoading } from "hooks/useLoading";
-import { getCroppedPhoto, sanitizeImage } from "utils/media";
-import { base64ToUint8Array } from "utils/misc";
-import { ObservableObject } from "@legendapp/state";
-import Image, { StaticImageData } from "next/image";
-import { MediaState } from "./Form";
-import Previewed from "components/Previewed";
-import CameraIcon from "icons/camera.svg";
 import CircleCancel from "icons/CircleCancelMinor.svg";
 import CircleTick from "icons/CircleTickMinor.svg";
 import CheckmarkIcon from "icons/MobileAcceptMajor.svg";
 import ResetIcon from "icons/ResetMinor.svg";
 import ZoomIcon from "icons/SearchMajor.svg";
+import CameraIcon from "icons/camera.svg";
 import UploadIcon from "icons/upload.svg";
+import Image, { StaticImageData } from "next/image";
+import { useRef, useState } from "react";
+import Cropper from "react-easy-crop";
+import type { Area, Point } from "react-easy-crop/types";
+import { toast } from "react-toastify";
+import ReactWebcam from "react-webcam";
+import { getCroppedPhoto, sanitizeImage } from "utils/media";
+import { base64ToUint8Array } from "utils/misc";
+import { MediaState } from "./Form";
+
+const MIN_DIMS = { width: 256, height: 256 }; // PXs
+const MAX_SIZE = 3; // Megabytes
+const MAX_SIZE_BYTES = 1024 * 1024 * MAX_SIZE; // Bytes
+const ERROR_MSG = {
+  dimensions: `Photo dimensions are too small. Minimum dimensions are ${MIN_DIMS.width}px by ${MIN_DIMS.height}px`,
+  size: `Photo is oversized. Maximum allowed size is ${MAX_SIZE}mb`,
+};
 
 interface PhotoProps {
   advance: () => void;
@@ -70,8 +78,13 @@ function Photo({ advance, photo$ }: PhotoProps) {
 
   const onCrop = async () => {
     if (!cropPixels || !originalPhoto) return;
-    if (cropPixels.width < 256 || cropPixels.height < 256)
-      return console.error("Size error");
+    if (
+      cropPixels.width < MIN_DIMS.width ||
+      cropPixels.height < MIN_DIMS.height
+    ) {
+      toast.error(ERROR_MSG.dimensions);
+      return console.error("Dimensions error");
+    }
 
     loading.start("Cropping photo");
 
@@ -82,6 +95,11 @@ function Photo({ advance, photo$ }: PhotoProps) {
       const sanitized = await sanitizeImage(
         Buffer.from(base64ToUint8Array(cropped.split(",")[1])),
       );
+      if (sanitized.size > MAX_SIZE_BYTES) {
+        toast.error(ERROR_MSG.size);
+        //return console.error("Size error");
+      }
+
       photo$.set({ content: sanitized, uri: URL.createObjectURL(sanitized) });
     } catch (err: any) {
       toast.error(err.message);
@@ -244,8 +262,13 @@ function Photo({ advance, photo$ }: PhotoProps) {
               onCropChange={setCrop}
               onCropComplete={(_area, croppedPixels) => {
                 setCropPixels(croppedPixels);
-                if (croppedPixels.width < 256 || croppedPixels.height < 256)
+                if (
+                  croppedPixels.width < MIN_DIMS.width ||
+                  croppedPixels.height < MIN_DIMS.height
+                ) {
+                  toast.error(ERROR_MSG.dimensions);
                   console.error("Size error");
+                }
               }}
               onZoomChange={setZoom}
               onMediaLoaded={(media) => {
