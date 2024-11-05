@@ -140,29 +140,34 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
             className="bg-whiteBackground flex h-full items-center justify-center rounded p-2 outline-dotted outline-white"
             type="video"
             onDrop={async (received) => {
-              const file = received[0];
-              const blob = new Blob([file], { type: file.type });
-              const uri = URL.createObjectURL(blob);
+              try {
+                const file = received[0];
+                const blob = new Blob([file], { type: file.type });
+                const uri = URL.createObjectURL(blob);
 
-              await checkVideoDuration(blob);
-              checkVideoSize(blob);
-              const vid = document.createElement("video");
-              vid.crossOrigin = "anonymous";
-              vid.src = uri;
-              vid.preload = "auto";
+                await checkVideoDuration(blob);
+                checkVideoSize(blob);
+                const vid = document.createElement("video");
+                vid.crossOrigin = "anonymous";
+                vid.src = uri;
+                vid.preload = "auto";
 
-              vid.addEventListener("loadeddata", async () => {
-                if (
-                  vid.videoWidth < MIN_DIMS.width ||
-                  vid.videoHeight < MIN_DIMS.height
-                ) {
-                  videoError(ERROR_MSG.dimensions);
-                  return console.error(ERROR_MSG.dimensions);
-                }
+                vid.addEventListener("loadeddata", async () => {
+                  if (
+                    vid.videoWidth < MIN_DIMS.width ||
+                    vid.videoHeight < MIN_DIMS.height
+                  ) {
+                    videoError(ERROR_MSG.dimensions);
+                    return console.error(ERROR_MSG.dimensions);
+                  }
 
-                setRecording(false);
-                video$.set({ uri, content: blob });
-              });
+                  setRecording(false);
+                  video$.set({ uri, content: blob });
+                });
+              } catch (error: any) {
+                videoError("Unexpected error. Check format/codecs used.");
+                return console.error(error);
+              }
             }}
           >
             <div className="bg-orange mr-4 flex h-12 w-12 items-center justify-center rounded-full">
