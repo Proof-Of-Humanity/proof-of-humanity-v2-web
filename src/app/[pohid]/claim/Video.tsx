@@ -1,26 +1,36 @@
-import getBlobDuration from "get-blob-duration";
-import React, { useRef, useState } from "react";
-import ReactWebcam from "react-webcam";
+import { ObservableObject } from "@legendapp/state";
 import Uploader from "components/Uploader";
 import Webcam from "components/Webcam";
-import { IS_IOS } from "utils/media";
+import getBlobDuration from "get-blob-duration";
 import useFullscreen from "hooks/useFullscreen";
-import { useAccount } from "wagmi";
-import { ObservableObject } from "@legendapp/state";
-import { MediaState } from "./Form";
 import CameraIcon from "icons/CameraMajor.svg";
 import ResetIcon from "icons/ResetMinor.svg";
 import UploadIcon from "icons/upload.svg";
+import React, { useRef, useState } from "react";
+import ReactWebcam from "react-webcam";
+import { IS_IOS } from "utils/media";
+import { useAccount } from "wagmi";
+import { MediaState } from "./Form";
 
-const MIN_DIMS = { width: 352, height: 352 };
-
+const MIN_DIMS = { width: 352, height: 352 }; // PXs
+//const MAX_DURATION = 20; // Seconds
+//const MAX_SIZE = 7; // Megabytes
+const MAX_DURATION = 60 * 2; // Seconds
+const MAX_SIZE = undefined;
+const MAX_SIZE_BYTES = MAX_SIZE ? 1024 * 1024 * MAX_SIZE : MAX_SIZE; // Bytes
+const ERROR_MSG = {
+  duration: `Video is too long. Maximum allowed duration is ${MAX_DURATION} seconds long`,
+  dimensions: `Video dimensions are too small. Minimum dimensions are ${MIN_DIMS.width}px by ${MIN_DIMS.height}px`,
+  size: `Video is oversized. Maximum allowed size is ${MAX_SIZE}mb`,
+};
 interface PhotoProps {
   advance: () => void;
   video$: ObservableObject<MediaState["video"]>;
   isRenewal: boolean;
+  videoError: (error: string) => void;
 }
 
-function VideoStep({ advance, video$, isRenewal }: PhotoProps) {
+function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
   const video = video$.use();
 
   const { address } = useAccount();
@@ -35,6 +45,21 @@ function VideoStep({ advance, video$, isRenewal }: PhotoProps) {
 
   const [recorder, setRecorder] = useState<MediaRecorder | null>(null);
 
+  const checkVideoSize = (blob: Blob) => {
+    if (MAX_SIZE_BYTES && blob.size > MAX_SIZE_BYTES) {
+      videoError(ERROR_MSG.size);
+      return console.error(ERROR_MSG.size);
+    }
+  };
+
+  const checkVideoDuration = async (blob: Blob) => {
+    const duration = await getBlobDuration(blob);
+    if (duration > MAX_DURATION) {
+      videoError(ERROR_MSG.duration);
+      return console.error(ERROR_MSG.duration);
+    }
+  };
+
   const startRecording = () => {
     if (!camera || !camera.stream) return;
     const mediaRecorder = new MediaRecorder(camera.stream, {
@@ -46,6 +71,10 @@ function VideoStep({ advance, video$, isRenewal }: PhotoProps) {
       const blob = new Blob(newlyRecorded, {
         type: `${IS_IOS ? 'video/mp4;codecs="h264"' : 'video/webm;codecs="vp8"'}`,
       });
+
+      await checkVideoDuration(blob);
+      checkVideoSize(blob);
+
       video$.set({ content: blob, uri: URL.createObjectURL(blob) });
       setShowCamera(false);
     };
@@ -115,9 +144,8 @@ function VideoStep({ advance, video$, isRenewal }: PhotoProps) {
               const blob = new Blob([file], { type: file.type });
               const uri = URL.createObjectURL(blob);
 
-              const duration = await getBlobDuration(blob);
-              if (duration > 60 * 2) return console.error("Video is too long");
-
+              await checkVideoDuration(blob);
+              checkVideoSize(blob);
               const vid = document.createElement("video");
               vid.crossOrigin = "anonymous";
               vid.src = uri;
@@ -127,8 +155,10 @@ function VideoStep({ advance, video$, isRenewal }: PhotoProps) {
                 if (
                   vid.videoWidth < MIN_DIMS.width ||
                   vid.videoHeight < MIN_DIMS.height
-                )
-                  return console.error("Video dimensions are too small");
+                ) {
+                  videoError(ERROR_MSG.dimensions);
+                  return console.error(ERROR_MSG.dimensions);
+                }
 
                 setRecording(false);
                 video$.set({ uri, content: blob });

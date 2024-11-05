@@ -219,6 +219,7 @@ export default withClientConnected<FormProps & JSX.IntrinsicAttributes>(
                 advance={() => step$.set(Step.review)}
                 video$={media$.video}
                 isRenewal={!!renewal}
+                videoError={(ErrMsg) => toast.error(ErrMsg)}
               />
             ),
             [Step.review]: () => (
