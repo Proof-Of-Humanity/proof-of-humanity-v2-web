@@ -163,16 +163,13 @@ function Review({
             <span className="text-orange mt-2">
               <span className="font-semibold underline">Beware</span>: Your PoH
               ID differs from the wallet address connected to your account. If
-              you're registering for the first time, this discrepancy is a
-              consequence of changing the connected wallet during the
-              registration process. In such cases, to make both addresses match,
-              you may need to change the connected wallet to the original wallet
-              used at the beginning of the registration process, or else
-              reinitiate the registration process. If you are not a newcomer and
-              wish to reclaim your ID from a different wallet (e.g., if you have
-              lost the private key to your original wallet), please confirm that
-              the PoH ID you are using is the one from your initial
-              registration.
+              you are registering for the first time, this discrepancy will
+              result in fund loss. To make both addresses match, you may need to
+              change the connected wallet, or else reinitiate the registration
+              process. If you are not a newcomer and wish to reclaim your ID
+              from a different wallet (e.g., if you have lost the private key to
+              your original wallet), please confirm that the PoH ID you are
+              using is the one from your initial registration.
             </span>
           ) : null}
         </div>
