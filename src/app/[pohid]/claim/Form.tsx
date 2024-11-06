@@ -1,7 +1,12 @@
 "use client";
 
 import { enableReactUse } from "@legendapp/state/config/enableReactUse";
-import { Show, Switch, useObservable } from "@legendapp/state/react";
+import {
+  Show,
+  Switch,
+  useEffectOnce,
+  useObservable,
+} from "@legendapp/state/react";
 import cn from "classnames";
 import withClientConnected from "components/HighOrder/withClientConnected";
 import { SupportedChain, SupportedChainId } from "config/chains";
@@ -10,8 +15,9 @@ import usePoHWrite from "contracts/hooks/usePoHWrite";
 import { ContractData } from "data/contract";
 import { RegistrationQuery } from "generated/graphql";
 import { useLoading } from "hooks/useLoading";
-import { useParams } from "next/navigation";
-import { Fragment, useMemo } from "react";
+import { RedirectType } from "next/dist/client/components/redirect";
+import { redirect, useParams } from "next/navigation";
+import { Fragment, MutableRefObject, useEffect, useMemo, useRef } from "react";
 import { toast } from "react-toastify";
 import { machinifyId } from "utils/identifier";
 import { uploadToIPFS } from "utils/ipfs";
@@ -59,6 +65,8 @@ export default withClientConnected<FormProps & JSX.IntrinsicAttributes>(
   function Form({ contractData, totalCosts, renewal }) {
     const params = useParams();
     const { address, isConnected } = useAccount();
+    const initiatingAddress: MutableRefObject<typeof address> =
+      useRef(undefined);
     const chainId = useChainId() as SupportedChainId;
 
     const step$ = useObservable(Step.info);
@@ -163,6 +171,20 @@ export default withClientConnected<FormProps & JSX.IntrinsicAttributes>(
           renewalChain={renewal?.chain}
         />
       );
+
+    useEffectOnce(() => {
+      initiatingAddress.current = address;
+    });
+
+    useEffect(() => {
+      if (initiatingAddress.current) {
+        if (
+          !renewal &&
+          initiatingAddress.current.toLowerCase() !== address?.toLowerCase()
+        )
+          redirect(`/${address}`, RedirectType.replace);
+      }
+    }, [address, initiatingAddress]);
 
     return (
       <>
