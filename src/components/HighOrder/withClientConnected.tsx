@@ -1,13 +1,13 @@
-import { Web3Modal } from "@web3modal/react";
-import { WagmiConfig, configureChains, createConfig } from "wagmi";
 import {
   EthereumClient,
   w3mConnectors,
   w3mProvider,
 } from "@web3modal/ethereum";
+import { Web3Modal } from "@web3modal/react";
 import { supportedChains } from "config/chains";
+import { WagmiConfig, configureChains, createConfig } from "wagmi";
 
-const projectId = "9185f693b1bc3d1d3440300c1559a202";
+const projectId = process.env.WALLET_CONNECT_PROJECT_ID;
 
 const { publicClient } = configureChains(supportedChains as any, [
   w3mProvider({ projectId }),
