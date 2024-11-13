@@ -203,10 +203,9 @@ export default withClientConnected<ActionBarProps>(function ActionBar({
           toast.success("Request advanced to resolving state");
         },
         onFail() {
-          !errorRef.current &&
-            toast.error("No vouch is valid. Advance is not possible");
+          !errorRef.current && toast.error("Advance is not possible");
           errorRef.current = true;
-          setAction(ActionType.VOUCH);
+          //setAction(ActionType.VOUCH);
         },
       }),
       [loading],
@@ -240,28 +239,7 @@ export default withClientConnected<ActionBarProps>(function ActionBar({
   );
 
   useEffect(() => {
-    //useEffectOnce(() => {
     if (action === ActionType.ADVANCE && !revocation) {
-      // if (advanceRequestsOnChainVouches) {
-      //   prepareMulticallAdvance({
-      //     args: [
-      //       [
-      //         {
-      //           target: Contract.ProofOfHumanity[chain.id],
-      //           callData: encodeClaimToAdvance(requester, []),
-      //         },
-      //         ...advanceRequestsOnChainVouches!
-      //           .map((vouch) => ({
-      //             target: Contract.ProofOfHumanity[chain.id],
-      //             callData: encodeClaimToAdvance(vouch.claimer, vouch.vouchers),
-      //           }))
-      //           .slice(0, 1),
-      //       ],
-      //     ],
-      //   });
-      // } else {
-      // }
-
       prepareAdvance({
         args: [
           requester,
@@ -281,7 +259,15 @@ export default withClientConnected<ActionBarProps>(function ActionBar({
 
     if (action === ActionType.EXECUTE)
       prepareExecute({ args: [pohId, BigInt(index)] });
-  }, [action]);
+  }, [
+    address,
+    prepareExecute,
+    action,
+    requester,
+    revocation,
+    chain,
+    userChainId,
+  ]);
 
   useEffect(() => {
     if (
@@ -419,7 +405,7 @@ export default withClientConnected<ActionBarProps>(function ActionBar({
                 />
               ) : null}
               <button
-                disabled={pending}
+                disabled={pending || userChainId !== chain.id}
                 className="btn-main mb-2"
                 onClick={advance}
               >
@@ -433,7 +419,7 @@ export default withClientConnected<ActionBarProps>(function ActionBar({
             <span className="text-slate-400">Ready to finalize.</span>
             <div className="flex flex-col justify-between gap-4 font-normal md:flex-row md:items-center">
               <button
-                disabled={pending}
+                disabled={pending || userChainId !== chain.id}
                 className="btn-main mb-2"
                 onClick={execute}
               >

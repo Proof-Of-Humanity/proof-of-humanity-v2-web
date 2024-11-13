@@ -11,6 +11,7 @@ declare global {
       LOGTAIL_SOURCE_TOKEN: string;
       REACT_APP_IPFS_GATEWAY: string;
       DEPLOYED_APP: string;
+      WALLET_CONNECT_PROJECT_ID: string;
     }
   }
 }

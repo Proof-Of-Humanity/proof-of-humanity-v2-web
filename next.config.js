@@ -17,6 +17,7 @@ const nextConfig = {
     SEPOLIA_RPC: process.env.SEPOLIA_RPC,
     GNOSIS_RPC: process.env.GNOSIS_RPC,
     MAINNET_RPC: process.env.MAINNET_RPC,
+    WALLET_CONNECT_PROJECT_ID: process.env.WALLET_CONNECT_PROJECT_ID,
   },
   images: {
     remotePatterns: [
