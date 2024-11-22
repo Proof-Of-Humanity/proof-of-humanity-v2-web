@@ -54,12 +54,8 @@ export default async function Request({ params }: PageProps) {
     contractData.arbitrationInfo.extraData,
   );
 
-  const onChainVouches = request.claimer.vouchesReceived.map(
-    (v) => v.from.id as Address,
-  );
+  let onChainVouches: Array<Address> = [];
 
-  // This are vouches to be read directly from supabase, ie, vouches still not processed
-  // (only necessary before advance state in vouching status)
   const offChainVouches: {
     voucher: Address;
     expiration: number;
@@ -67,9 +63,23 @@ export default async function Request({ params }: PageProps) {
   }[] = [];
 
   if (request.status.id === "vouching") {
+    onChainVouches = request.claimer.vouchesReceived.map(
+      (v) => v.from.id as Address,
+    );
     offChainVouches.push(
       ...(await getOffChainVouches(chain.id, request.claimer.id, pohId)),
     );
+
+    // If offChain voucher has been registered before, it will appear at subgraph,
+    // so we remove it from onChain since the contract has no data of it
+    onChainVouches = onChainVouches.filter(
+      (onChainVoucher) =>
+        offChainVouches.filter((voucher) => voucher.voucher === onChainVoucher)
+          .length === 0,
+    );
+  } else {
+    // For any other request status there are registered vouches for this request
+    onChainVouches = request.vouches.map((v) => v.voucher.id as Address);
   }
 
   const hasExpired = () => {
@@ -456,7 +466,7 @@ export default async function Request({ params }: PageProps) {
               )}
               {vourchesForData.find((v) => v) && (
                 <div className="text-secondaryText mt-8 flex flex-col">
-                  Vouched for
+                  This PoHID vouched for
                   <div className="flex flex-wrap gap-2">
                     {vourchesForData.map(async (vouch, idx) => {
                       const vouchLocal = await Promise.resolve(vouch);
@@ -482,14 +492,20 @@ export default async function Request({ params }: PageProps) {
             <div className="w-full flex-wrap justify-between gap-2 md:flex-row md:items-center">
               {vouchersData.find((v) => v) && (
                 <div className="text-secondaryText mt-8 flex flex-col">
-                  Vouched by
+                  {request.status.id === "vouching"
+                    ? "Available vouches for this PoHID"
+                    : "Vouched for this request"}
                   <div className="flex flex-wrap gap-2">
                     {vouchersData.map(async (vouch, idx) => {
                       const vouchLocal = await Promise.resolve(vouch);
                       return (
                         <Vouch
                           isActive={vouchLocal.vouchStatus?.isValid}
-                          reason={vouchLocal.vouchStatus?.reason}
+                          reason={
+                            request.status.id === "vouching"
+                              ? vouchLocal.vouchStatus?.reason
+                              : undefined
+                          }
                           name={vouchLocal.name}
                           photo={vouchLocal.photo}
                           idx={idx}
@@ -497,7 +513,7 @@ export default async function Request({ params }: PageProps) {
                           pohId={vouchLocal.pohId}
                           address={vouchLocal.voucher}
                           isOnChain={vouchLocal.isOnChain}
-                          reducedTooltip={false}
+                          reducedTooltip={request.status.id !== "vouching"}
                         />
                       );
                     })}
