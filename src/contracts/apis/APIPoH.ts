@@ -146,4 +146,23 @@ export class APIPoH {
       });
     }
   }
+
+  public static async isValidVouch(
+    _chainId: SupportedChainId,
+    _voucher: Address,
+    _pohId: Address,
+    _address: Address,
+  ): Promise<boolean> {
+    const apiReader = APIPoH.getApiReader(_chainId);
+    let out: boolean = false;
+    try {
+      out = await apiReader.get("vouches", [_voucher, _pohId, _address]);
+      return out;
+    } catch (error) {
+      throw new Error({
+        statusCode: 520,
+        title: "Error while reading ProofOfHumanity",
+      });
+    }
+  }
 }

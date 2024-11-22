@@ -103,6 +103,7 @@ export default withClientConnected<ActionBarProps>(function ActionBar({
   const errorRef = useRef(false);
   const offChainRef = useRef(false);
   const [action, setAction] = useState(ActionType.NONE);
+  const [canAdvance, setCanAdvance] = useState(true);
   const [didIVouchFor, setDidIVouchFor] = useState(false);
   const [isVouchOnchain, setIsVouchOnchain] = useState(false);
 
@@ -205,7 +206,7 @@ export default withClientConnected<ActionBarProps>(function ActionBar({
         onFail() {
           !errorRef.current && toast.error("Advance is not possible");
           errorRef.current = true;
-          //setAction(ActionType.VOUCH);
+          setCanAdvance(false);
         },
       }),
       [loading],
@@ -240,6 +241,7 @@ export default withClientConnected<ActionBarProps>(function ActionBar({
 
   useEffect(() => {
     if (action === ActionType.ADVANCE && !revocation) {
+      setCanAdvance(true);
       prepareAdvance({
         args: [
           requester,
@@ -267,6 +269,7 @@ export default withClientConnected<ActionBarProps>(function ActionBar({
     revocation,
     chain,
     userChainId,
+    canAdvance,
   ]);
 
   useEffect(() => {
@@ -405,7 +408,7 @@ export default withClientConnected<ActionBarProps>(function ActionBar({
                 />
               ) : null}
               <button
-                disabled={pending || userChainId !== chain.id}
+                disabled={pending || userChainId !== chain.id || !canAdvance}
                 className="btn-main mb-2"
                 onClick={advance}
               >
