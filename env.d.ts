@@ -5,6 +5,10 @@ declare global {
       GNOSIS_RPC: string;
       CHIADO_RPC: string;
       SEPOLIA_RPC: string;
+      MAINNET_SUBGRAPH_URL: string;
+      GNOSIS_SUBGRAPH_URL: string;
+      CHIADO_SUBGRAPH_URL: string;
+      SEPOLIA_SUBGRAPH_URL: string;
       FILEBASE_TOKEN: string;
       DATALAKE_URL: string;
       DATALAKE_KEY: string;

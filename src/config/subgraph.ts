@@ -1,4 +1,3 @@
-import { configSetSelection, configSets } from "contracts";
 import { getSdk } from "generated/graphql";
 import { GraphQLClient } from "graphql-request";
 import { gnosis, gnosisChiado, mainnet, sepolia } from "viem/chains";
@@ -12,38 +11,10 @@ export type queryReturnType<Q extends queryType> = Record<
 >;
 
 export const subgraph_url = {
-  [mainnet.id]:
-    configSetSelection.id === configSets.main.id
-      ? "https://api.studio.thegraph.com/query/64099/poh-origin-mainnet/v0.0.4"
-      : //"https://api.studio.thegraph.com/query/64099/poh-origin-mainnet/version/latest"
-        configSetSelection.id === configSets.mainOld.id
-        ? "https://api.studio.thegraph.com/query/64099/proof-of-humanity-mainnet/version/latest"
-        : configSetSelection.id === configSets.mainPreAudit.id
-          ? "https://api.studio.thegraph.com/query/64099/pohv2-prod-mainnet/version/latest"
-          : "",
-  [gnosis.id]:
-    configSetSelection.id === configSets.main.id
-      ? "https://api.studio.thegraph.com/query/64099/poh-origin-gnosis/v0.0.4"
-      : //"https://api.studio.thegraph.com/query/64099/poh-origin-gnosis/version/latest"
-        configSetSelection.id === configSets.mainOld.id
-        ? "https://api.studio.thegraph.com/query/64099/proof-of-humanity-gnosis/version/latest"
-        : configSetSelection.id === configSets.mainPreAudit.id
-          ? "https://api.studio.thegraph.com/query/64099/pohv2-prod-gnosis/version/latest"
-          : "",
-  [sepolia.id]:
-    configSetSelection.id === configSets.testOld.id
-      ? //"https://api.studio.thegraph.com/query/64099/proof-of-humanity-sepolia-test/v0.0.14" // TESTNETS
-        "https://api.studio.thegraph.com/query/64099/proof-of-humanity-sepolia-test/version/latest" // Development
-      : configSetSelection.id === configSets.testNew.id
-        ? "https://api.studio.thegraph.com/query/64099/proof-of-humanity-sepolia/version/latest"
-        : "",
-  [gnosisChiado.id]:
-    configSetSelection.id === configSets.testOld.id
-      ? //"https://api.goldsky.com/api/public/project_cluh21be5gq0o01u27olk4rwl/subgraphs/proof-of-humanity-chiado/1.0.2/gn" // TESTNETS
-        "https://api.goldsky.com/api/public/project_cluh21be5gq0o01u27olk4rwl/subgraphs/proof-of-humanity-chiado/1.0.0/gn" // Development
-      : configSetSelection.id === configSets.testNew.id
-        ? "https://api.goldsky.com/api/public/project_cluh21be5gq0o01u27olk4rwl/subgraphs/proof-of-humanity-chiado/1.0.1/gn"
-        : "",
+  [mainnet.id]: process.env.MAINNET_SUBGRAPH_URL,
+  [gnosis.id]: process.env.GNOSIS_SUBGRAPH_URL,
+  [sepolia.id]: process.env.SEPOLIA_SUBGRAPH_URL,
+  [gnosisChiado.id]: process.env.CHIADO_SUBGRAPH_URL,
 };
 
 export const sdk = {
