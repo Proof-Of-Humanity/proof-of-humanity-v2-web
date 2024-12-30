@@ -37,7 +37,7 @@
   },
   "dependencies": {
     "@cyntler/react-doc-viewer": "^1.16.3",
-    "@ffmpeg/ffmpeg": "^0.10.1",
+    "@ffmpeg/ffmpeg": "^0.12.13",
     "@legendapp/state": "^1.11.1",
     "@web3modal/ethereum": "^2.7.1",
     "@web3modal/react": "^2.7.1",
