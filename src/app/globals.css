@@ -208,6 +208,14 @@
     color: theme("colors.dark.status.transferring");
   }
 
+  .text-status-rejected {
+    color: theme("colors.light.status.rejected");
+  }
+
+  .dark .text-status-rejected {
+    color: theme("colors.dark.status.rejected");
+  }
+
   .fill-primaryText {
     fill: theme("colors.light.primaryText");
   }
@@ -360,6 +368,14 @@
 
   .dark .bg-status-transferring {
     background-color: theme("colors.dark.status.transferring");
+  }
+
+  .bg-status-rejected {
+    background-color: theme("colors.light.status.rejected");
+  }
+
+  .dark .bg-status-rejected {
+    background-color: theme("colors.dark.status.rejected");
   }
 
   .btn-main {
