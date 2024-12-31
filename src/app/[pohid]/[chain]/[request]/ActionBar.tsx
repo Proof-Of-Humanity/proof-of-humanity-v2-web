@@ -295,7 +295,7 @@ export default withClientConnected<ActionBarProps>(function ActionBar({
   ]);
 
   const totalCost = BigInt(contractData.baseDeposit) + arbitrationCost;
-  const statusColor = colorForStatus(status, revocation, expired);
+  const statusColor = colorForStatus(status, revocation, expired,rejected);
 
   return (
     <div className="paper border-stroke bg-whiteBackground text-primaryText flex flex-col items-center justify-between gap-[12px] px-[24px] py-[24px] md:flex-row lg:gap-[20px]">
