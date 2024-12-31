@@ -82,6 +82,8 @@ export default async function Request({ params }: PageProps) {
     onChainVouches = request.vouches.map((v) => v.voucher.id as Address);
   }
 
+  const rejected = request.status.id === "resolved" && !request.humanity.winnerClaim.some(claim => claim.index === request.index);
+
   const hasExpired = () => {
     if (request.status.id === "resolved") {
       if (!request.revocation && request.humanity.winnerClaim.length > 0) {
@@ -96,7 +98,9 @@ export default async function Request({ params }: PageProps) {
                 Date.now() / 1000
             );
           }
-        } else return true;
+          return false;
+        }
+        return false;
       }
     } else if (request.status.id === "transferring") {
       return (
@@ -104,7 +108,7 @@ export default async function Request({ params }: PageProps) {
         Date.now() / 1000
       );
     }
-    return true;
+    return false;
   };
 
   const expired = hasExpired();
@@ -287,6 +291,7 @@ export default async function Request({ params }: PageProps) {
         onChainVouches={onChainVouches}
         offChainVouches={offChainVouches}
         arbitrationHistory={request.arbitratorHistory}
+        rejected={rejected}
       />
 
       <div className="border-stroke bg-whiteBackground mb-6 rounded border shadow">
