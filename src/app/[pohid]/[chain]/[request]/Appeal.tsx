@@ -254,7 +254,7 @@ const Appeal: React.FC<AppealProps> = ({
           );
         const status = arbitratorsData.status;
         const cost = arbitratorsData.cost;
-        const period = arbitratorsData.period;
+        const period = arbitratorsData.period; 
         const currentRuling = arbitratorsData.currentRuling;
 
         setPeriod(period!);
@@ -288,16 +288,32 @@ const Appeal: React.FC<AppealProps> = ({
     };
     getAppealData();
   });
-
+  
   return disputeStatus === DisputeStatusEnum.Appealable &&
     !error &&
     !loading ? (
     <Modal
       header={`Appeal case #${disputeId}`}
       trigger={
-        <button className="btn-sec h-[48px] rounded px-[24px]">
-          Appeal (ends&nbsp;
-          <TimeAgo time={parseInt(String(period[1]))} />)
+        <button className="
+          btn-sec 
+          py-2
+          rounded
+          w-[150px]
+          md:w-auto
+        ">
+          <span className="
+            flex 
+            items-center
+            flex-wrap
+            md:flex-nowrap
+            flex-inline
+            whitespace-nowrap
+          ">
+            Appeal (ends&nbsp;
+            <TimeAgo time={parseInt(String(period[1]))} />
+            )
+          </span>
         </button>
       }
     >
