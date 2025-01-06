@@ -254,7 +254,7 @@ const Appeal: React.FC<AppealProps> = ({
           );
         const status = arbitratorsData.status;
         const cost = arbitratorsData.cost;
-        const period = arbitratorsData.period; 
+        const period = arbitratorsData.period;
         const currentRuling = arbitratorsData.currentRuling;
 
         setPeriod(period!);
@@ -288,7 +288,6 @@ const Appeal: React.FC<AppealProps> = ({
     };
     getAppealData();
   });
-  
   return disputeStatus === DisputeStatusEnum.Appealable &&
     !error &&
     !loading ? (
