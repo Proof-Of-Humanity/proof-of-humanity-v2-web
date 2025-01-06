@@ -471,7 +471,7 @@ export default withClientConnected<ActionBarProps>(function ActionBar({
               .
             </span>
 
-            <div className="flex gap-4">
+            <div className="flex gap-4 flex-wrap lg:flex-nowrap ">
               <Appeal
                 pohId={pohId}
                 requestIndex={index}
@@ -489,7 +489,12 @@ export default withClientConnected<ActionBarProps>(function ActionBar({
 
               <ExternalLink
                 href={`https://resolve.kleros.io/cases/${currentChallenge.disputeId}`}
-                className="btn-main gradient h-[48px] rounded px-[24px]"
+                className="btn-main gradient h-[48px] rounded
+                items-center
+                justify-center
+                p-2
+                whitespace-nowrap
+                "
               >
                 View case #{currentChallenge.disputeId}
               </ExternalLink>
