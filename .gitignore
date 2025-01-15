@@ -36,3 +36,12 @@ next-env.d.ts
 
 # Local Netlify folder
 .netlify
+
+### yarn ###
+# https://yarnpkg.com/advanced/qa#which-files-should-be-gitignored
+
+.yarn/*
+!.yarn/releases
+!.yarn/plugins
+!.yarn/sdks
+!.yarn/versions
