@@ -20,7 +20,7 @@ export const configSets = {
 export const configSetSelection =
   process.env.DEPLOYED_APP ==
   "https://testnets--proof-of-humanity-v2.netlify.app/"
-    ? configSets.testOld
+    ? configSets.testNew
     : configSets.main;
 
 export const Contract = {
@@ -36,8 +36,8 @@ export const Contract = {
         ? {
             [gnosis.id]: "0x4a594f0e73223c9a1CE0EfC16da92fFaA193a612",
             [mainnet.id]: "0x0D4674De96459e00A101656b799ba016fBc45dC1",
-            [sepolia.id]: "0x0D4674De96459e00A101656b799ba016fBc45dC1",
-            [gnosisChiado.id]: "0x2F0f39c3CF5cffc0DeACEb69d3fD883734D67687",
+            [sepolia.id]: "0x44297C64e651E07e83215997D89aEE297a0AFebA",
+            [gnosisChiado.id]: "0x3DED649Cc1E0a5D67614d6742C4919B10F0Aabe9",
           }
         : configSetSelection.id === configSets.main.id
           ? {
@@ -78,8 +78,8 @@ export const Contract = {
         ? {
             [gnosis.id]: "0x2C692919Da3B5471F9Ac6ae1C9D1EE54F8111f76",
             [mainnet.id]: "0xDb7070C1AE12f83E709FF22c4c51993a570FDF84",
-            [sepolia.id]: "0xDb7070C1AE12f83E709FF22c4c51993a570FDF84",
-            [gnosisChiado.id]: "0x2f33051DF37Edf2286E3b2B3c7883E1A13D82071",
+            [sepolia.id]: "0x5142177398E94ce45b19c59cBA5d3d71a1c34202",
+            [gnosisChiado.id]: "0xBFb98b8F785dE02F35e4eAa8b83a4c9390f75f99",
           }
         : configSetSelection.id === configSets.main.id
           ? {
@@ -141,8 +141,8 @@ export const CreationBlockNumber = {
         ? {
             [gnosis.id]: 0,
             [mainnet.id]: 0,
-            [sepolia.id]: BigInt(6198860),
-            [gnosisChiado.id]: BigInt(10533290),
+            [sepolia.id]: BigInt(7460633),
+            [gnosisChiado.id]: BigInt(13753852),
           }
         : configSetSelection.id === configSets.main.id
           ? {
