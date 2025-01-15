@@ -11,10 +11,10 @@ export type queryReturnType<Q extends queryType> = Record<
 >;
 
 export const subgraph_url = {
-  [mainnet.id]: process.env.MAINNET_SUBGRAPH_URL,
-  [gnosis.id]: process.env.GNOSIS_SUBGRAPH_URL,
-  [sepolia.id]: process.env.SEPOLIA_SUBGRAPH_URL,
-  [gnosisChiado.id]: process.env.CHIADO_SUBGRAPH_URL,
+  [mainnet.id]: process.env.MAINNET_SUBGRAPH_URL ?? throw new Error('MAINNET_SUBGRAPH_URL not set'),
+  [gnosis.id]: process.env.GNOSIS_SUBGRAPH_URL ?? throw new Error('GNOSIS_SUBGRAPH_URL not set'),
+  [sepolia.id]: process.env.SEPOLIA_SUBGRAPH_URL ?? throw new Error('SEPOLIA_SUBGRAPH_URL not set'),
+  [gnosisChiado.id]: process.env.CHIADO_SUBGRAPH_URL ?? throw new Error('CHIADO_SUBGRAPH_URL not set'),
 };
 
 export const sdk = {
