@@ -164,17 +164,25 @@ async function Profile({ params: { pohid } }: PageProps) {
                 !pendingRequests.some(
                   (pending) =>
                     req.id === pending.id && pending.chainId === chain.id,
-                ) && // No pending requests
+                ) && 
                 (!(
                   winnerClaimData.request &&
                   req.index === winnerClaimData.request.index &&
                   chain.id === winnerClaimData.chainId
-                ) || // No winnerClaimRequest if it did not expired
-                  !winnerClaimData.request), // if winnerClaimRequest has expired it is left as pastRequest
+                ) || 
+                  !winnerClaimData.request),
             ).map((req) => ({
               ...req,
               chainId: chain.id,
-              expired: true,
+              expired: 
+                req.status.id === "resolved" 
+                  ? (!req.revocation && 
+                     winnerClaimData?.request?.index === req.index &&
+                     (! humanity[chain.id]!.humanity!.registration ||
+                      Number(humanity[chain.id]!.humanity!.registration?.expirationTime) < Date.now() / 1000))
+                  : req.status.id === "transferring"
+                    ? (Number(req.creationTime) + Number(contractData[chain.id].humanityLifespan) < Date.now() / 1000)
+                    : false
             }))
           : []),
       ],
@@ -182,6 +190,7 @@ async function Profile({ params: { pohid } }: PageProps) {
     ),
   );
 
+  console.log(pastRequests.map(req => req.status.id));
   const lastTransferChain = supportedChains.sort((chain1, chain2) => {
     const out1 = humanity[chain1.id]?.outTransfer;
     const out2 = humanity[chain2.id]?.outTransfer;
