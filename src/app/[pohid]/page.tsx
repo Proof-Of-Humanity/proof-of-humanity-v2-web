@@ -190,7 +190,6 @@ async function Profile({ params: { pohid } }: PageProps) {
     ),
   );
 
-  console.log(pastRequests.map(req => req.status.id));
   const lastTransferChain = supportedChains.sort((chain1, chain2) => {
     const out1 = humanity[chain1.id]?.outTransfer;
     const out2 = humanity[chain2.id]?.outTransfer;
