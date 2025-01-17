@@ -60,6 +60,7 @@ interface ActionBarProps extends JSX.IntrinsicAttributes {
     arbitrator: any;
     extraData: any;
   };
+  rejected: boolean;
 }
 
 export default withClientConnected<ActionBarProps>(function ActionBar({
@@ -78,6 +79,7 @@ export default withClientConnected<ActionBarProps>(function ActionBar({
   // advanceRequestsOnChainVouches,
   expired,
   arbitrationHistory,
+  rejected,
 }) {
   const chain = useChainParam()!;
   const { address } = useAccount();
@@ -293,7 +295,7 @@ export default withClientConnected<ActionBarProps>(function ActionBar({
   ]);
 
   const totalCost = BigInt(contractData.baseDeposit) + arbitrationCost;
-  const statusColor = colorForStatus(status, revocation, expired);
+  const statusColor = colorForStatus(status, revocation, expired,rejected);
 
   return (
     <div className="paper border-stroke bg-whiteBackground text-primaryText flex flex-col items-center justify-between gap-[12px] px-[24px] py-[24px] md:flex-row lg:gap-[20px]">
@@ -302,7 +304,7 @@ export default withClientConnected<ActionBarProps>(function ActionBar({
         <span
           className={`rounded-full px-3 py-1 text-white bg-status-${statusColor}`}
         >
-          {camelToTitle(status, revocation, expired)}
+          {camelToTitle(status, revocation, expired,rejected)}
         </span>
       </div>
       <div className="flex w-full flex-col justify-between gap-[12px] font-normal md:flex-row md:items-center">
@@ -464,6 +466,7 @@ export default withClientConnected<ActionBarProps>(function ActionBar({
                       currentChallenge.reason.id,
                       revocation,
                       expired,
+                      rejected
                     )}
                   </strong>
                 </>
@@ -505,7 +508,9 @@ export default withClientConnected<ActionBarProps>(function ActionBar({
         {status === "resolved" && (
           <>
             <span>
-              Request was accepted
+              {!rejected
+                ? "Request was accepted"
+                : "Request was rejected"}
               <TimeAgo
                 className={`ml-1 text-status-${statusColor}`}
                 time={lastStatusChange}

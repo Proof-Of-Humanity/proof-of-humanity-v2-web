@@ -110,11 +110,12 @@ function Card({
   humanity: { id: pohId, winnerClaim },
   expired,
 }: CardInterface) {
+  const rejected = status === "resolved" && !winnerClaim.some(claim => claim.index === index) && !revocation;
+
   const statusTitle = queryToStatus(status, revocation, expired);
-  const statusColor = colorForStatus(status, revocation, expired);
+  const statusColor = colorForStatus(status, revocation, expired,rejected);
 
   const chain = idToChain(chainId)!;
-
   return (
     <Link
       href={`/${prettifyId(pohId)}/${chain.name.toLowerCase()}/${index}`}
@@ -124,8 +125,10 @@ function Card({
         <div className={`h-1 w-full bg-status-${statusColor}`} />
         <div className="centered p-2 font-medium">
           <span className={`text-status-${statusColor}`}>
-            {status === "resolved" && expired && !revocation
+          {status === "resolved" && expired && !revocation
               ? "Expired"
+              : rejected
+              ? "Rejected"
               : camelToTitle(statusTitle, revocation, expired)}
           </span>
           <span className={`dot ml-2 bg-status-${statusColor}`} />
