@@ -164,25 +164,23 @@ async function Profile({ params: { pohid } }: PageProps) {
                 !pendingRequests.some(
                   (pending) =>
                     req.id === pending.id && pending.chainId === chain.id,
-                ) && 
+                ) && // No pending requests
                 (!(
                   winnerClaimData.request &&
                   req.index === winnerClaimData.request.index &&
                   chain.id === winnerClaimData.chainId
-                ) || 
-                  !winnerClaimData.request),
+                ) || // No winnerClaimRequest if it did not expired
+                  !winnerClaimData.request), // if winnerClaimRequest has expired it is left as pastRequest
             ).map((req) => ({
               ...req,
               chainId: chain.id,
               expired: 
                 req.status.id === "resolved" 
                   ? (!req.revocation && 
-                     winnerClaimData?.request?.index === req.index &&
-                     (! humanity[chain.id]!.humanity!.registration ||
+                     humanity[chain.id].humanity?.winnerClaim[0]?.index === req.index &&
+                     (!humanity[chain.id]!.humanity!.registration ||
                       Number(humanity[chain.id]!.humanity!.registration?.expirationTime) < Date.now() / 1000))
-                  : req.status.id === "transferring"
-                    ? (Number(req.creationTime) + Number(contractData[chain.id].humanityLifespan) < Date.now() / 1000)
-                    : false
+                  : false,
             }))
           : []),
       ],
