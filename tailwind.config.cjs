@@ -31,6 +31,7 @@ module.exports = {
             expired: "#333333",
             transferred: "#3F6212",
             transferring: "#ba7264",
+            rejected: "#D90429",
           },
         },
         dark: {
@@ -54,6 +55,7 @@ module.exports = {
             expired: "#DAF0FF",
             transferred: "#8BC34A",
             transferring: "#795548",
+            rejected: "#F25F5F",
           },
         },
       },
@@ -107,5 +109,8 @@ module.exports = {
     "border-status-expired",
     "border-status-transferred",
     "border-status-transferring",
+    "bg-status-rejected",
+    "text-status-rejected",
+    "border-status-rejected",
   ],
 };

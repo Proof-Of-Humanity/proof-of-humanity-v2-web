@@ -90,14 +90,14 @@ const isRequestExpired = (
         Number(request.humanity.registration?.expirationTime) <
           Date.now() / 1000
       );
-    } // else return (Number(request.creationTime) + Number(humanityLifespan) < Date.now() / 1000)
+    }
   } else if (request.status.id === "transferring") {
     return (
       Number(request.creationTime) + Number(humanityLifespan) <
       Date.now() / 1000
     );
   }
-  return true;
+  return false;
 };
 
 const normalize = (

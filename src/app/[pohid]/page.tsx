@@ -174,7 +174,13 @@ async function Profile({ params: { pohid } }: PageProps) {
             ).map((req) => ({
               ...req,
               chainId: chain.id,
-              expired: true,
+              expired: 
+                req.status.id === "resolved" 
+                  ? (!req.revocation && 
+                     humanity[chain.id].humanity?.winnerClaim[0]?.index === req.index &&
+                     (!humanity[chain.id]!.humanity!.registration ||
+                      Number(humanity[chain.id]!.humanity!.registration?.expirationTime) < Date.now() / 1000))
+                  : false,
             }))
           : []),
       ],
