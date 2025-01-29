@@ -29,6 +29,7 @@ import { Address } from "viem";
 import ActionBar from "./ActionBar";
 import Evidence from "./Evidence";
 import Info from "./Info";
+import DocumentIcon from "components/DocumentIcon";
 
 interface PageProps {
   params: { pohid: string; chain: string; request: string };
@@ -82,6 +83,8 @@ export default async function Request({ params }: PageProps) {
     onChainVouches = request.vouches.map((v) => v.voucher.id as Address);
   }
 
+  const rejected = request.status.id === "resolved" && !request.humanity.winnerClaim.some(claim => claim.index === request.index);
+
   const hasExpired = () => {
     if (request.status.id === "resolved") {
       if (!request.revocation && request.humanity.winnerClaim.length > 0) {
@@ -96,7 +99,9 @@ export default async function Request({ params }: PageProps) {
                 Date.now() / 1000
             );
           }
-        } else return true;
+          return false;
+        }
+        return false;
       }
     } else if (request.status.id === "transferring") {
       return (
@@ -104,7 +109,7 @@ export default async function Request({ params }: PageProps) {
         Date.now() / 1000
       );
     }
-    return true;
+    return false;
   };
 
   const expired = hasExpired();
@@ -287,6 +292,7 @@ export default async function Request({ params }: PageProps) {
         onChainVouches={onChainVouches}
         offChainVouches={offChainVouches}
         arbitrationHistory={request.arbitratorHistory}
+        rejected={rejected}
       />
 
       <div className="border-stroke bg-whiteBackground mb-6 rounded border shadow">
@@ -435,31 +441,11 @@ export default async function Request({ params }: PageProps) {
                 <div className="flex grid w-full flex-col justify-items-end font-normal md:flex-row md:items-end">
                   <Link
                     href={`/attachment?url=${ipfs(policyLink)}`}
-                    className="text-primaryText ml-2"
+                    className="flex justify-center items-center text-primaryText ml-2"
                   >
+                    <DocumentIcon className="fill-orange h-6 w-6"/>
                     <div className="text-primaryText group relative flex py-[8px]">
-                      <Image
-                        alt="warning"
-                        src="/logo/exclamation.svg"
-                        height={24}
-                        width={24}
-                      />
-                      &nbsp; Policy in force at submission
-                      <div className="outline-color: #E5E5E5 bg-whiteBackground text-secondaryText invisible absolute left-1/2 z-10 m-4 mx-auto w-[260px] flex-shrink-0 -translate-x-1/2 transform place-content-center content-between rounded-[3px] border-[1px] border-[solid] bg-[var(--Light-Mode-White-background,_#FFF)] p-[8px] text-justify text-[14px] font-normal not-italic leading-[normal] outline-black transition-opacity ease-in-out [box-shadow:0px_2px_3px_0px_rgba(0,_0,_0,_0.06)] group-hover:visible md:w-[400px]">
-                        <span>
-                          This is the policy that was in effect when this
-                          submission was made. Why is this important? Policies
-                          may change over time, and it's crucial to know the
-                          policy that was in force at the time of a submission
-                          before challenging or removing a profile. If you
-                          challenge this submission, this version of the policy
-                          will be enforced by Kleros jurors if the case goes to
-                          arbitration. Also, if you revoke this profile citing
-                          “incorrect submission,” but the submission complied
-                          with this policy, your revocation request may be
-                          rejected, and you may lose your deposit.
-                        </span>
-                      </div>
+                      Relevant Policy
                     </div>
                   </Link>
                 </div>

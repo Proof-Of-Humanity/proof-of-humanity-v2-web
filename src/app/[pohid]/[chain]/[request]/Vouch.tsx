@@ -106,7 +106,7 @@ export default function Vouch({
         trigger={<button className="btn-main mb-2">Vouch</button>}
       >
         <div className="flex flex-col items-center p-4">
-          <span className="txt m-2">
+          <span className="txt m-2 text-primaryText">
             Make sure the person exists and only vouch for people you have
             physically encountered. Note that in case a profile is removed for
             (Sybil attack) or (Identity theft), all people who had vouched for

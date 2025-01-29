@@ -2,6 +2,7 @@ export const camelToTitle = (
   strIn: string,
   revocation?: boolean,
   expired?: boolean,
+  rejected?: boolean
 ) => {
   let str: string = strIn;
   switch (strIn) {
@@ -26,7 +27,13 @@ export const camelToTitle = (
       break;
     case "resolved":
       str = strIn;
-      str = revocation ? "revoked" : expired ? "expired" : "included";
+      str = revocation 
+        ? "revoked" 
+        : rejected 
+          ? "rejected"
+          : expired 
+            ? "expired" 
+            : "included";
       break;
   }
   const result = str.replace(/([A-Z])/g, " $1");

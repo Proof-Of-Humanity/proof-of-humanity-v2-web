@@ -29,6 +29,7 @@ import InfoStep from "./Info";
 import PhotoStep from "./Photo";
 import ReviewStep from "./Review";
 import VideoStep from "./Video";
+import { formatEth } from "utils/misc";
 
 enableReactUse();
 
@@ -78,7 +79,7 @@ export default withClientConnected<FormProps & JSX.IntrinsicAttributes>(
       uri: "",
     });
     const state = state$.use();
-    const selfFunded$ = useObservable(0);
+    const selfFunded$ = useObservable(formatEth(totalCosts[chainId]));
     const selfFunded = selfFunded$.use();
     const loading = useLoading();
     const [, loadingMessage] = loading.use();

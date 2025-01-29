@@ -4,14 +4,23 @@ import {
   w3mProvider,
 } from "@web3modal/ethereum";
 import { Web3Modal } from "@web3modal/react";
-import { supportedChains } from "config/chains";
+import { supportedChains, getChainRpc } from "config/chains";
 import { WagmiConfig, configureChains, createConfig } from "wagmi";
+import { jsonRpcProvider } from "wagmi/providers/jsonRpc";
 
 const projectId = process.env.WALLET_CONNECT_PROJECT_ID;
 
-const { publicClient } = configureChains(supportedChains as any, [
-  w3mProvider({ projectId }),
-]);
+const { publicClient } = configureChains(
+  supportedChains as any,
+  [
+    jsonRpcProvider({
+      rpc: (chain) => ({
+        http: getChainRpc(chain.id),
+      }),
+    }),
+    w3mProvider({ projectId }),
+  ]
+);
 
 const wagmiConfig = createConfig({
   autoConnect: true,
