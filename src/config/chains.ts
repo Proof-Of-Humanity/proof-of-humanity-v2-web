@@ -1,6 +1,6 @@
 import { ChainSet, configSetSelection } from "contracts";
 import { isAddress } from "viem";
-import { gnosis, gnosisChiado, mainnet, sepolia } from "viem/chains";
+import { gnosis, gnosisChiado, mainnet, sepolia } from "@reown/appkit/networks";
 import {
   getForeignChain as getForeignChainMain,
   idToChain as idToChainMain,

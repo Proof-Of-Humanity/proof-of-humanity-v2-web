@@ -6,7 +6,6 @@ import Accordion from "components/Accordion";
 import Attachment from "components/Attachment";
 import ExternalLink from "components/ExternalLink";
 import Field from "components/Field";
-import withClientConnected from "components/HighOrder/withClientConnected";
 import Identicon from "components/Identicon";
 import Label from "components/Label";
 import Modal from "components/Modal";
@@ -28,7 +27,7 @@ import { shortenAddress } from "utils/address";
 import { ipfs, ipfsFetch, uploadToIPFS } from "utils/ipfs";
 import { romanize } from "utils/misc";
 import { Address, Hash } from "viem";
-import { usePublicClient } from "wagmi";
+import { useChainId } from "wagmi";
 
 enableReactUse();
 
@@ -79,21 +78,21 @@ function Item({ index, uri, creationTime, sender }: ItemInterface) {
   );
 }
 
-interface EvidenceProps extends JSX.IntrinsicAttributes {
+interface EvidenceProps {
   pohId: Hash;
   requestIndex: number;
   arbitrationInfo: NonNullable<RequestQuery["request"]>["arbitratorHistory"];
   list: NonNullable<RequestQuery["request"]>["evidenceGroup"]["evidence"];
 }
 
-export default withClientConnected<EvidenceProps>(function Evidence({
+export default function Evidence({
   pohId,
   requestIndex,
   list,
   arbitrationInfo,
-}) {
+}: EvidenceProps) {
   const chainReq = useChainParam()!;
-  const { chain } = usePublicClient();
+  const chainId = useChainId();
   const { data: policy } = useSWR(
     arbitrationInfo.registrationMeta,
     async (metaEvidenceLink) =>
@@ -151,8 +150,8 @@ export default withClientConnected<EvidenceProps>(function Evidence({
   const [isEvidenceDisabled, setIsEvidenceDisabled] = useState(false);
 
   useEffect(() => {
-    setIsEvidenceDisabled(chainReq.id !== chain.id);
-  }, [chain]);
+    setIsEvidenceDisabled(chainReq.id !== chainId);
+  }, [chainId]);
 
   return (
     <Accordion title="Evidence">
@@ -235,4 +234,4 @@ export default withClientConnected<EvidenceProps>(function Evidence({
       ))}
     </Accordion>
   );
-});
+}

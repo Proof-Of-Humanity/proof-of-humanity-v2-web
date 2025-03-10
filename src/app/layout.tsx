@@ -9,6 +9,7 @@ import Footer from "./Footer";
 import Header from "./Header/index";
 import Toastify from "./Toastify";
 import "./globals.css";
+import AppKitProvider from "../context/AppKitProvider";
 
 export const metadata: Metadata = {
   title: "Proof of Humanity V2",
@@ -32,10 +33,12 @@ export default async function RootLayout({ children }: RootLayoutProps) {
           inter.className,
         )}
       >
-        <Header policy={ipfs(policy)} />
-        <main className="flex-grow">{children}</main>
-        <Footer />
-        <Toastify />
+        <AppKitProvider>
+          <Header policy={ipfs(policy)} />
+          <main className="flex-grow">{children}</main>
+          <Footer />
+          <Toastify />
+        </AppKitProvider>
       </body>
     </html>
   );

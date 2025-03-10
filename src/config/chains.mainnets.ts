@@ -1,4 +1,4 @@
-import { gnosis, mainnet } from "viem/chains";
+import { gnosis, mainnet } from '@reown/appkit/networks';
 
 export const supportedChains = [mainnet, gnosis];
 

@@ -1,4 +1,4 @@
-import { gnosisChiado, sepolia } from "viem/chains";
+import { gnosisChiado, sepolia } from "@reown/appkit/networks";
 
 export const supportedChains = [sepolia, gnosisChiado];
 

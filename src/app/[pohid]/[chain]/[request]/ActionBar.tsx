@@ -3,7 +3,6 @@
 import { enableReactUse } from "@legendapp/state/config/enableReactUse";
 import { useEffectOnce } from "@legendapp/state/react";
 import ExternalLink from "components/ExternalLink";
-import withClientConnected from "components/HighOrder/withClientConnected";
 import TimeAgo from "components/TimeAgo";
 import { colorForStatus } from "config/misc";
 import usePoHWrite from "contracts/hooks/usePoHWrite";
@@ -35,7 +34,7 @@ enableReactUse();
 //     args: [claimer, vouchers, []],
 //   });
 
-interface ActionBarProps extends JSX.IntrinsicAttributes {
+interface ActionBarProps {
   pohId: Hash;
   arbitrationCost: bigint;
   requester: Address;
@@ -63,7 +62,7 @@ interface ActionBarProps extends JSX.IntrinsicAttributes {
   rejected: boolean;
 }
 
-export default withClientConnected<ActionBarProps>(function ActionBar({
+export default function ActionBar({
   pohId,
   requester,
   index,
@@ -80,7 +79,7 @@ export default withClientConnected<ActionBarProps>(function ActionBar({
   expired,
   arbitrationHistory,
   rejected,
-}) {
+}: ActionBarProps) {
   const chain = useChainParam()!;
   const { address } = useAccount();
   const loading = useLoading();
@@ -535,4 +534,4 @@ export default withClientConnected<ActionBarProps>(function ActionBar({
       </div>
     </div>
   );
-});
+}

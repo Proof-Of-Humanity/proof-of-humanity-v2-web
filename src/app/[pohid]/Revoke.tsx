@@ -3,7 +3,6 @@
 import { enableReactUse } from "@legendapp/state/config/enableReactUse";
 import ALink from "components/ExternalLink";
 import Field from "components/Field";
-import withClientConnected from "components/HighOrder/withClientConnected";
 import Label from "components/Label";
 import Modal from "components/Modal";
 import Uploader from "components/Uploader";
@@ -18,23 +17,23 @@ import { toast } from "react-toastify";
 import { ipfs, uploadToIPFS } from "utils/ipfs";
 import { formatEth } from "utils/misc";
 import { Hash } from "viem";
-import { useChainId, useSwitchNetwork } from "wagmi";
+import { useChainId, useSwitchChain } from "wagmi";
 
 enableReactUse();
 
-interface RevokeProps extends JSX.IntrinsicAttributes {
+interface RevokeProps {
   cost: bigint;
   pohId: Hash;
   homeChain: SupportedChain;
   arbitrationInfo: ContractData["arbitrationInfo"];
 }
 
-export default withClientConnected<RevokeProps>(function Revoke({
+export default function Revoke({
   pohId,
   cost,
   homeChain,
   arbitrationInfo,
-}) {
+}: RevokeProps) {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [file, setFile] = useState<File | null>(null);
@@ -43,7 +42,7 @@ export default withClientConnected<RevokeProps>(function Revoke({
   const [pending] = loading.use();
   const connectedChainId = useChainId() as SupportedChainId;
   const web3Loaded = useWeb3Loaded();
-  const { switchNetwork } = useSwitchNetwork();
+  const { switchChain } = useSwitchChain();
 
   const [prepare] = usePoHWrite(
     "revokeHumanity",
@@ -83,7 +82,7 @@ export default withClientConnected<RevokeProps>(function Revoke({
   if (web3Loaded && homeChain.id !== connectedChainId)
     return (
       <button
-        onClick={() => switchNetwork?.(homeChain.id)}
+        onClick={() => switchChain?.({chainId : homeChain.id})}
         className="btn-sec mb-4"
       >
         Connect to {homeChain.name} to revoke
@@ -150,4 +149,4 @@ export default withClientConnected<RevokeProps>(function Revoke({
       </div>
     </Modal>
   );
-});
+}
