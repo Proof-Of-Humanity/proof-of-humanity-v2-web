@@ -55,6 +55,9 @@ export async function POST(request: NextRequest) {
   } catch (err: any) {
     logtail.error("pohv2 ipfs-upload", { err });
     await logtail.flush();
-    return NextResponse.error();
+    return NextResponse.json(
+      { error: "File upload failed", message: err?.message || "Unknown error" },
+      { status: 500 }
+    );
   }
 }

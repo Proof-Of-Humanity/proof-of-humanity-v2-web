@@ -7,25 +7,29 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import useSWR from "swr";
-import { useAccount, usePublicClient } from "wagmi";
-import withClientConnected from "components/HighOrder/withClientConnected";
+import { useAccount, useChainId, useConfig } from "wagmi";
 import useWeb3Loaded from "hooks/useWeb3Loaded";
 import DesktopNavigation from "./DesktopNavigation";
 import MobileMenu from "./MobileMenu";
 import Options from "./Options";
 import WalletSection from "./WalletSection";
 
-interface IHeader extends JSX.IntrinsicAttributes {
+interface IHeader {
   policy: string;
 }
 
-export default withClientConnected(function Header({ policy }: IHeader) {
+export default function Header({ policy }: IHeader) {
   const [menuOpen, setMenuOpen] = useState<boolean>(false);
   const [isDarkMode, setIsDarkMode] = useState<boolean>(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const pathname = usePathname();
   const { isConnected, address } = useAccount();
-  const { chain } = usePublicClient();
+  const chainId = useChainId()
+
+  const config = useConfig()
+  const chains = config.chains
+  
+  const chain = chains.find(chain => chain.id === chainId)
   const web3Loaded = useWeb3Loaded();
   const { data: me } = useSWR(address, getMyData);
 
@@ -100,7 +104,7 @@ export default withClientConnected(function Header({ policy }: IHeader) {
 
       <div className="lg:absolute lg:left-1/2 lg:-translate-x-1/2 lg:transform">
         <DesktopNavigation
-          {...{ address, me, policy, pathname, chain, web3Loaded }}
+          {...{ address, me, policy, pathname, chain: chain!, web3Loaded }}
         />
       </div>
 
@@ -113,7 +117,7 @@ export default withClientConnected(function Header({ policy }: IHeader) {
 
       <div className="flex flex-row items-center">
         <div className="hidden md:block">
-          <WalletSection {...{ chain, address, isConnected, web3Loaded }} />
+          <WalletSection {...{ chain: chain!, address, isConnected, web3Loaded }} />
         </div>
         <div className="hidden md:block">
           <Options />
@@ -121,4 +125,4 @@ export default withClientConnected(function Header({ policy }: IHeader) {
       </div>
     </header>
   );
-});
+}

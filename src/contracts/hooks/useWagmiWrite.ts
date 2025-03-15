@@ -1,14 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
-import { ContractAbi, WriteArgs, WriteFunctionName, Effects } from "./types";
+import { WriteArgs, WriteFunctionName, Effects } from "./types";
 import { SupportedChainId } from "config/chains";
 import {
-  UseContractWriteConfig,
-  UsePrepareContractWriteConfig,
-  WalletClient,
   useChainId,
-  useContractWrite,
-  usePrepareContractWrite,
-  useWaitForTransaction,
+  useWriteContract,
+  useWaitForTransactionReceipt,
+  useSimulateContract,
 } from "wagmi";
 import abis from "contracts/abis";
 import useChainParam from "hooks/useChainParam";
@@ -40,39 +37,34 @@ export default function useWagmiWrite<
   const [args, setArgs] = useState(
     defaultForInputs((abiFragment as any).inputs) as WriteArgs<C, F>,
   );
-
+  console.log(typeof args);
   const [enabled, setEnabled] = useState(false);
 
   const chain = useChainParam();
   const defaultChainId = useChainId() as SupportedChainId;
 
-  const { config: prepared, status: prepareStatus } = usePrepareContractWrite({
-    address: Contract[contract][chain?.id || defaultChainId],
-    abi: [abiFragment],
+  const { data: prepared, status: prepareStatus} = useSimulateContract({
+   address: Contract[contract][chain?.id || defaultChainId] as `0x${string}`,
+    abi: abis[contract] as Abi,
     functionName,
     chainId: chain?.id || defaultChainId,
     value,
-    args,
-    enabled,
-  } as UsePrepareContractWriteConfig<
-    ContractAbi<C>,
-    F,
-    SupportedChainId,
-    WalletClient
-  >);
+   args,
+    query : {
+      enabled
+    }
+  } as any);
 
-  const { write, data, status } = useContractWrite(
-    prepared as UseContractWriteConfig<ContractAbi<C>, F, "prepared">,
-  );
-  const { status: transactionStatus } = useWaitForTransaction({
-    hash: data?.hash,
+  const { writeContract, data, status} = useWriteContract();
+  const { status: transactionStatus } = useWaitForTransactionReceipt({
+    hash: data,
   });
-
+  
   useEffect(() => {
     switch (prepareStatus) {
       case "success":
-        if (write && enabled) {
-          effects?.onReady?.(write);
+        if (prepared.request && enabled) {
+          effects?.onReady?.(() => writeContract(prepared.request));
           setEnabled(false);
         }
         break;
@@ -80,7 +72,7 @@ export default function useWagmiWrite<
         effects?.onFail?.();
         setEnabled(false);
     }
-  }, [prepareStatus, write, effects, enabled]);
+  }, [prepareStatus, effects, enabled, prepared?.request, writeContract]);
 
   useEffect(() => {
     switch (status) {
@@ -91,12 +83,14 @@ export default function useWagmiWrite<
   }, [status, effects]);
 
   useEffect(() => {
-    switch (transactionStatus) {
-      case "loading":
-        effects?.onLoading?.();
-        break;
-      case "success":
-        effects?.onSuccess?.();
+    if(data) {
+      switch (transactionStatus) {
+        case "pending":
+          effects?.onLoading?.();
+          break;
+        case "success":
+          effects?.onSuccess?.();
+      }
     }
   }, [transactionStatus, effects]);
 
@@ -109,7 +103,8 @@ export default function useWagmiWrite<
           setEnabled(true);
         },
         () => {
-          write?.();
+          if(prepared?.request)
+          writeContract(prepared.request);
           setEnabled(false);
         },
         {
@@ -118,6 +113,6 @@ export default function useWagmiWrite<
           transaction: transactionStatus,
         },
       ] as const,
-    [prepareStatus, status, transactionStatus, write],
+    [prepareStatus, status, transactionStatus, prepared?.request, writeContract],
   );
 }
