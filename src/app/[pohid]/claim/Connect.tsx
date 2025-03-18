@@ -1,6 +1,6 @@
-import { Web3Button, Web3NetworkSwitch } from "@web3modal/react";
 import { SupportedChain, supportedChains } from "config/chains";
-import { Address, useAccount, useChainId } from "wagmi";
+import { Address } from "viem";
+import { useAccount, useChainId } from "wagmi";
 
 type ConnectProps =
   | { renewalAddress: undefined; renewalChain: undefined }
@@ -36,19 +36,19 @@ export default function Connect({
                 Switch your chain to <strong>{renewalChain.name}</strong> to
                 continue the renewal
               </span>
-              <Web3NetworkSwitch />
+              <appkit-network-button />
             </>
           )
         ) : (
           !supportedChains.find((chain) => chain.id === chainId) && (
             <>
               <span className="txt">Switch to supported network</span>
-              <Web3NetworkSwitch />
+              <appkit-network-button />
             </>
           )
         )
       ) : (
-        <Web3Button />
+        <appkit-button />
       )}
     </>
   );

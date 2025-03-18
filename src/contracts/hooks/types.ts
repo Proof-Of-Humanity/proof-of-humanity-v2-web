@@ -1,6 +1,7 @@
 import { ContractName } from "contracts";
 import abis from "contracts/abis";
 import {
+  ContractFunctionArgs,
   ReadContractParameters,
   ReadContractReturnType,
   WriteContractParameters,
@@ -26,7 +27,7 @@ export type WriteFunctionName<C extends ContractName> = WriteContractParameters<
 export type WriteArgs<
   C extends ContractName,
   F extends WriteFunctionName<C>,
-> = WriteContractParameters<ContractAbi<C>, F>["args"];
+> = ContractFunctionArgs<ContractAbi<C>, "nonpayable" | "payable", F>;
 
 export interface Effects {
   onLoading?: () => void;

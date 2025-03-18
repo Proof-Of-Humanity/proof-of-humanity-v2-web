@@ -1,7 +1,6 @@
 "use client";
 
 import ChainLogo from "components/ChainLogo";
-import withClientConnected from "components/HighOrder/withClientConnected";
 import Modal from "components/Modal";
 import TimeAgo from "components/TimeAgo";
 import {
@@ -25,10 +24,10 @@ import React, { useEffect, useMemo, useState } from "react";
 import { toast } from "react-toastify";
 import { timeAgo } from "utils/time";
 import { Address, Hash, createPublicClient, http } from "viem";
-import { gnosisChiado } from "viem/chains";
-import { mainnet, sepolia, useAccount, useChainId } from "wagmi";
+import { mainnet, sepolia, gnosisChiado } from "viem/chains";
+import { useAccount, useChainId } from "wagmi";
 
-interface CrossChainProps extends JSX.IntrinsicAttributes {
+interface CrossChainProps {
   contractData: Record<SupportedChainId, ContractData>;
   humanity: Record<SupportedChainId, HumanityQuery>;
   claimer: Address;
@@ -39,7 +38,7 @@ interface CrossChainProps extends JSX.IntrinsicAttributes {
   winningStatus?: string;
 }
 
-export default withClientConnected<CrossChainProps>(function CrossChain({
+export default function CrossChain({
   pohId,
   contractData,
   humanity,
@@ -48,7 +47,7 @@ export default withClientConnected<CrossChainProps>(function CrossChain({
   lastTransfer,
   lastTransferChain,
   winningStatus,
-}) {
+}: CrossChainProps) {
   const { address } = useAccount();
   const loading = useLoading();
   const web3Loaded = useWeb3Loaded();
@@ -509,4 +508,4 @@ export default withClientConnected<CrossChainProps>(function CrossChain({
         : null}
     </div>
   );
-});
+}
