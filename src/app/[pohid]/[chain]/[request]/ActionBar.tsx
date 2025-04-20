@@ -507,9 +507,11 @@ export default function ActionBar({
         {status === "resolved" && (
           <>
             <span>
-              {!rejected
-                ? "Request was accepted"
-                : "Request was rejected"}
+              {expired
+                ? "Request has expired"
+                : !rejected
+                  ? "Request was accepted"
+                  : "Request was rejected"}
               <TimeAgo
                 className={`ml-1 text-status-${statusColor}`}
                 time={lastStatusChange}
