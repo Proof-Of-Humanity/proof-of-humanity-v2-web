@@ -133,7 +133,7 @@ export default function Form({ contractData, totalCosts, renewal }: FormProps) {
 
   state$.onChange(({ value }) => {
     if (!value.uri) return;
-    const selfFundedWei = BigInt(parseEther(selfFunded.toString()));
+    const selfFundedWei = BigInt(parseEther(selfFunded$.get().toString()));
     const funded =
       selfFundedWei > totalCosts[chainId]
         ? totalCosts[chainId]
