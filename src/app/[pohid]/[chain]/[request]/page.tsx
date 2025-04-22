@@ -293,6 +293,7 @@ export default async function Request({ params }: PageProps) {
         offChainVouches={offChainVouches}
         arbitrationHistory={request.arbitratorHistory}
         rejected={rejected}
+        humanityExpirationTime={request.humanity.registration?.expirationTime ? Number(request.humanity.registration.expirationTime) : undefined}
       />
 
       <div className="border-stroke bg-whiteBackground mb-6 rounded border shadow">

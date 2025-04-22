@@ -60,6 +60,7 @@ interface ActionBarProps {
     extraData: any;
   };
   rejected: boolean;
+  humanityExpirationTime?: number;
 }
 
 export default function ActionBar({
@@ -79,6 +80,7 @@ export default function ActionBar({
   expired,
   arbitrationHistory,
   rejected,
+  humanityExpirationTime,
 }: ActionBarProps) {
   const chain = useChainParam()!;
   const { address } = useAccount();
@@ -507,12 +509,14 @@ export default function ActionBar({
         {status === "resolved" && (
           <>
             <span>
-              {!rejected
-                ? "Request was accepted"
-                : "Request was rejected"}
+              {expired
+                ? "Request has expired"
+                : !rejected
+                  ? "Request was accepted"
+                  : "Request was rejected"}
               <TimeAgo
                 className={`ml-1 text-status-${statusColor}`}
-                time={lastStatusChange}
+                time={expired && humanityExpirationTime ? humanityExpirationTime : lastStatusChange}
               />
               .
             </span>
