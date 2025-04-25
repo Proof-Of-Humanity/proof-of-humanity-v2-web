@@ -8,6 +8,7 @@ export interface Integration {
   startPath: string;
   buttonText: string;
   connectionSteps?: ConnectionStep[];
+  mintSteps?: ConnectionStep[];
   externalLinks?: ExternalLink[];
 }
 
