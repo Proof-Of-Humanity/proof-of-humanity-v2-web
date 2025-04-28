@@ -37,7 +37,7 @@ export default function useWagmiWrite<
   const [args, setArgs] = useState(
     defaultForInputs((abiFragment as any).inputs) as WriteArgs<C, F>,
   );
-  console.log(typeof args);
+  
   const [enabled, setEnabled] = useState(false);
 
   const chain = useChainParam();
