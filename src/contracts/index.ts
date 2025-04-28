@@ -126,6 +126,12 @@ export const Contract = {
     [gnosis.id]: "0x",
     [gnosisChiado.id]: "0x",
   },
+  CirclesIntegration: {
+    [mainnet.id]: "0x",
+    [sepolia.id]: "0x",
+    [gnosis.id]: "0x",
+    [gnosisChiado.id]: "0x209646aA817375bE46568502de298B63092Fa7Ef",
+  },
 } as const;
 
 export const CreationBlockNumber = {
