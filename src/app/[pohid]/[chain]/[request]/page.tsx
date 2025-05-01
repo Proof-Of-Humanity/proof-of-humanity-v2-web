@@ -68,7 +68,8 @@ export default async function Request({ params }: PageProps) {
       (v) => v.from.id as Address,
     );
     offChainVouches.push(
-      ...(await getOffChainVouches(chain.id, request.claimer.id, pohId)),
+      ...(await getOffChainVouches(chain.id, request.claimer.id, pohId))
+      .filter((vouch) => vouch.expiration > Date.now() / 1000),
     );
 
     // If offChain voucher has been registered before, it will appear at subgraph,
@@ -227,15 +228,14 @@ export default async function Request({ params }: PageProps) {
     });
   };
 
-  const vourchesForData = prepareVouchData(
+  let vourchesForData = await Promise.all(prepareVouchData(
     await Promise.all([
       ...request.claimer.vouches.map((vouch) => getClaimerData(vouch.for.id)),
     ]),
     true,
     true,
-  );
-
-  const vouchersData = prepareVouchData(
+  ));
+  let vouchersData = await Promise.all(prepareVouchData(
     await Promise.all([
       ...offChainVouches.map((vouch) => getClaimerData(vouch.voucher)),
     ]),
@@ -249,7 +249,9 @@ export default async function Request({ params }: PageProps) {
       true,
       false,
     ),
-  );
+  ));
+  vourchesForData = vourchesForData.filter((vouch) => vouch.voucher);
+  vouchersData = vouchersData.filter((vouch) => vouch.voucher);
 
   const policyLink = await (async () => {
     try {
@@ -451,23 +453,22 @@ export default async function Request({ params }: PageProps) {
                   </Link>
                 </div>
               )}
-              {vourchesForData.find((v) => v) && (
+              {vourchesForData.length > 0 && (
                 <div className="text-secondaryText mt-8 flex flex-col">
                   This PoHID vouched for
                   <div className="flex flex-wrap gap-2">
-                    {vourchesForData.map(async (vouch, idx) => {
-                      const vouchLocal = await Promise.resolve(vouch);
+                    {vourchesForData.map((vouch, idx) => {
                       return (
                         <Vouch
                           isActive={true}
                           reason={undefined}
-                          name={vouchLocal.name}
-                          photo={vouchLocal.photo}
+                          name={vouch.name}
+                          photo={vouch.photo}
                           idx={idx}
-                          href={`/${prettifyId(vouchLocal.pohId!)}`}
-                          pohId={vouchLocal.pohId}
-                          address={vouchLocal.pohId}
-                          isOnChain={vouchLocal.isOnChain}
+                          href={`/${prettifyId(vouch.pohId!)}`}
+                          pohId={vouch.pohId}
+                          address={vouch.pohId}
+                          isOnChain={vouch.isOnChain}
                           reducedTooltip={true}
                         />
                       );
@@ -477,29 +478,28 @@ export default async function Request({ params }: PageProps) {
               )}
             </div>
             <div className="w-full flex-wrap justify-between gap-2 md:flex-row md:items-center">
-              {vouchersData.find((v) => v) && (
+              {vouchersData.length > 0 && (
                 <div className="text-secondaryText mt-8 flex flex-col">
                   {request.status.id === "vouching"
                     ? "Available vouches for this PoHID"
                     : "Vouched for this request"}
                   <div className="flex flex-wrap gap-2">
-                    {vouchersData.map(async (vouch, idx) => {
-                      const vouchLocal = await Promise.resolve(vouch);
+                    {vouchersData.map((vouch, idx) => {
                       return (
                         <Vouch
-                          isActive={vouchLocal.vouchStatus?.isValid}
+                          isActive={vouch.vouchStatus?.isValid}
                           reason={
                             request.status.id === "vouching"
-                              ? vouchLocal.vouchStatus?.reason
+                              ? vouch.vouchStatus?.reason
                               : undefined
                           }
-                          name={vouchLocal.name}
-                          photo={vouchLocal.photo}
+                          name={vouch.name}
+                          photo={vouch.photo}
                           idx={idx}
-                          href={`/${prettifyId(vouchLocal.pohId!)}`}
-                          pohId={vouchLocal.pohId}
-                          address={vouchLocal.voucher}
-                          isOnChain={vouchLocal.isOnChain}
+                          href={`/${prettifyId(vouch.pohId!)}`}
+                          pohId={vouch.pohId}
+                          address={vouch.voucher}
+                          isOnChain={vouch.isOnChain}
                           reducedTooltip={request.status.id !== "vouching"}
                         />
                       );
