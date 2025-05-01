@@ -68,7 +68,8 @@ export default async function Request({ params }: PageProps) {
       (v) => v.from.id as Address,
     );
     offChainVouches.push(
-      ...(await getOffChainVouches(chain.id, request.claimer.id, pohId)),
+      ...(await getOffChainVouches(chain.id, request.claimer.id, pohId))
+      .filter((vouch) => vouch.expiration > Date.now() / 1000),
     );
 
     // If offChain voucher has been registered before, it will appear at subgraph,
