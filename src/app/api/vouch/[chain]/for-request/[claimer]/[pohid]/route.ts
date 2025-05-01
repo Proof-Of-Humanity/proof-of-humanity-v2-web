@@ -25,7 +25,8 @@ export async function GET(
       .select("*")
       .eq("chainId", chain.id)
       .eq("pohId", params.pohid.toLowerCase())
-      .eq("claimer", params.claimer.toLowerCase());
+      .eq("claimer", params.claimer.toLowerCase())
+      .gt("expiration", Date.now() / 1000);
 
     if (error) throw new Error(error.message);
 
