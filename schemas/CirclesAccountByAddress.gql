@@ -1,16 +1,14 @@
-query GetCirclesAccountsByaddress($address: String!) {
-  registrations(where: { claimer: $address }) {
+query GetCirclesAccountsByaddress($address: String!, $expirationTime: BigInt!) {
+  registrations(where: { claimer: $address , expirationTime_gt: $expirationTime }) {
     id
-    expirationTime
     circleAccount {
       id               # the circles‐account address
       trustExpiryTime  
     }
   }
 
-  crossChainRegistrations(where: { claimer: $address }) {
+  crossChainRegistrations(where: { claimer: $address , expirationTime_gt: $expirationTime }) {
     id
-    expirationTime
     circleAccount {
       id
       trustExpiryTime

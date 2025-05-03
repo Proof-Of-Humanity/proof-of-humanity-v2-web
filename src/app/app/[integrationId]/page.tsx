@@ -1,4 +1,4 @@
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { Metadata } from "next";
 import { getIntegration } from "data/integrations";
 import CirclesIntegration from "./CirclesIntegration";
@@ -31,7 +31,7 @@ export default async function IntegrationPage({
   const integration = await getIntegration(params.integrationId);
   
   if (!integration) {
-    notFound();
+    redirect("/app/");
   }
   
   return (
