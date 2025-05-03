@@ -3003,10 +3003,11 @@ export enum _SubgraphErrorPolicy_ {
 
 export type GetCirclesAccountsByaddressQueryVariables = Exact<{
   address: Scalars['String'];
+  expirationTime: Scalars['BigInt'];
 }>;
 
 
-export type GetCirclesAccountsByaddressQuery = { __typename?: 'Query', registrations: Array<{ __typename?: 'Registration', id: any, expirationTime: any, circleAccount?: { __typename?: 'CirclesAccount', id: any, trustExpiryTime: any } | null }>, crossChainRegistrations: Array<{ __typename?: 'CrossChainRegistration', id: any, expirationTime: any, circleAccount?: { __typename?: 'CirclesAccount', id: any, trustExpiryTime: any } | null }> };
+export type GetCirclesAccountsByaddressQuery = { __typename?: 'Query', registrations: Array<{ __typename?: 'Registration', id: any, circleAccount?: { __typename?: 'CirclesAccount', id: any, trustExpiryTime: any } | null }>, crossChainRegistrations: Array<{ __typename?: 'CrossChainRegistration', id: any, circleAccount?: { __typename?: 'CirclesAccount', id: any, trustExpiryTime: any } | null }> };
 
 export type RequestsToAdvanceQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -3104,18 +3105,18 @@ export const WinnerClaimFragmentDoc = gql`
 }
     `;
 export const GetCirclesAccountsByaddressDocument = gql`
-    query GetCirclesAccountsByaddress($address: String!) {
-  registrations(where: {claimer: $address}) {
+    query GetCirclesAccountsByaddress($address: String!, $expirationTime: BigInt!) {
+  registrations(where: {claimer: $address, expirationTime_gt: $expirationTime}) {
     id
-    expirationTime
     circleAccount {
       id
       trustExpiryTime
     }
   }
-  crossChainRegistrations(where: {claimer: $address}) {
+  crossChainRegistrations(
+    where: {claimer: $address, expirationTime_gt: $expirationTime}
+  ) {
     id
-    expirationTime
     circleAccount {
       id
       trustExpiryTime
