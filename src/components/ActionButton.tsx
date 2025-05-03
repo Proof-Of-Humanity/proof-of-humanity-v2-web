@@ -8,6 +8,7 @@ interface ActionButtonProps {
   ariaLabel?: string;
   className?: string;
   icon?: React.ReactNode;
+  defaultLabel?: string;
 }
 
 export default function ActionButton({
@@ -17,14 +18,19 @@ export default function ActionButton({
   isLoading = false,
   ariaLabel,
   className = '',
-  icon
+  icon,
+  defaultLabel
 }: ActionButtonProps) {
+  const buttonStyle = (defaultLabel && label !== defaultLabel) 
+    ? 'btn-sec' 
+    : 'btn-main gradient';
+
   return (
     <button
       onClick={onClick}
       aria-label={ariaLabel || label}
       tabIndex={0}
-      className={`btn-main gradient px-5 py-2 normal-case disabled:opacity-50 disabled:cursor-not-allowed flex items-center ${className}`}
+      className={`${buttonStyle} px-5 py-2 normal-case disabled:opacity-50 disabled:cursor-not-allowed flex items-center ${className}`}
       disabled={disabled || isLoading}
       onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.click()}
     >

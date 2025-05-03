@@ -34,7 +34,7 @@ export default function useCirclesIntegration() {
   const [isFetching] = fetchLoading.use();
   
   // Chain configuration
-  const circlesChainId = configSetSelection.chainSet === ChainSet.MAINNETS ? gnosis.id : gnosisChiado.id;
+  const circlesChain  = configSetSelection.chainSet === ChainSet.MAINNETS ? gnosis : gnosisChiado;
   
   // Derived states
   const isWalletAddressValid = isAddress(walletAddress.trim());
@@ -155,14 +155,14 @@ export default function useCirclesIntegration() {
         disabled: false 
       };
     }
-
-    const isWrongChain = connectedChainId !== circlesChainId;
+    const isWrongChain = connectedChainId !== circlesChain.id;
+    console.log("chainName", circlesChain.name);
     if (isWrongChain) {
       return { 
         onClick: () => {
-          switchChain({ chainId: circlesChainId })
+          switchChain({ chainId: circlesChain.id })
         }, 
-        label: 'Switch Chain',
+        label: `Switch to ${circlesChain.name} to ${defaultLabel}`,
         disabled: false 
       };
     }
@@ -180,7 +180,7 @@ export default function useCirclesIntegration() {
       label: defaultLabel,
       disabled: false 
     };
-  }, [isConnected, connectedChainId, circlesChainId, connect, switchChain, humanityStatus, pending]);
+  }, [isConnected, connectedChainId, circlesChain, connect, switchChain, humanityStatus, pending]);
 
   // Load data on wallet connection
   useEffect(() => {
@@ -206,7 +206,7 @@ export default function useCirclesIntegration() {
     isWalletAddressValid,
     pending,
     isFetching,
-    circlesChainId,
+    circlesChain,
     humanityId: humanityId.current,
     
     // Actions
