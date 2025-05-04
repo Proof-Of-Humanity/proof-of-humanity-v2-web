@@ -1,5 +1,5 @@
 import React from 'react';
-import CirclesLogo from 'icons/CriclesLogo.svg';
+import CirclesLogo from 'icons/CirclesLogo.svg';
 import ExternalLinkIcon from 'icons/ExternalLink.svg';
 import { ChainSet, configSetSelection } from 'contracts';
 
