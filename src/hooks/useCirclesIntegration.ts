@@ -94,7 +94,7 @@ export default function useCirclesIntegration() {
   );
 
   // Data fetching
-  const updateCirclesData = async (accountAddress: string) => {
+  const updateCirclesData = useCallback(async (accountAddress: string) => {
     fetchLoading.start();
     try {
       const result = await getProcessedCirclesData(accountAddress);
@@ -115,7 +115,7 @@ export default function useCirclesIntegration() {
     } finally {
       fetchLoading.stop();
     }
-  }
+  }, [fetchLoading]);
 
   // Actions
   const handleLinkAccount = useCallback(async () => {

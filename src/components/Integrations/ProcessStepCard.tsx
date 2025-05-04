@@ -38,26 +38,26 @@ const ProcessStepCard: React.FC<ProcessStepCardProps> = ({
         <p className="text-primaryText text-2xl font-semibold">{step.title}</p>
         <p className="text-primaryText mt-4 flex-1">{addLinkToText(step.description)}</p>
         <div className="flex mt-6 space-x-4">
-            <LeftArrowIcon
-              width={32}
-              height={32}
-              style={{
-                opacity: previousStep ? "100%" : "50%",
-                pointerEvents: previousStep ? "auto" : "none",
-                cursor: previousStep ? "pointer" : "not-allowed",
-              }}
-              onClick={onPrevious}
-            />
-            <RightArrowIcon
-              width={32}
-              height={32}
-              style={{
-                opacity: nextStep ? "100%" : "50%",
-                pointerEvents: nextStep ? "auto" : "none",
-                cursor: nextStep ? "pointer" : "not-allowed",
-              }}
-              onClick={onNext}
-            />
+        <LeftArrowIcon 
+                 width={32} 
+                 height={32} 
+                 className={`${previousStep ? 'opacity-100 cursor-pointer' : 'opacity-50 cursor-not-allowed pointer-events-none'}`}
+                 onClick={onPrevious}
+                 onKeyDown={(e: React.KeyboardEvent<HTMLButtonElement>) => previousStep && e.key === 'Enter' && onPrevious()}
+                 aria-label="Previous step"
+                 role="button"
+                 tabIndex={previousStep ? 0 : -1}
+               />
+               <RightArrowIcon 
+                 width={32} 
+                 height={32} 
+                 className={`ml-2 ${nextStep ? 'opacity-100 cursor-pointer' : 'opacity-50 cursor-not-allowed pointer-events-none'}`}
+                 onClick={onNext}
+                 onKeyDown={(e: React.KeyboardEvent<HTMLButtonElement>) => nextStep && e.key === 'Enter' && onNext()}
+                 aria-label="Next step"
+                 role="button"
+                 tabIndex={nextStep ? 0 : -1}
+               />
         </div>
       </div>
     </div>
