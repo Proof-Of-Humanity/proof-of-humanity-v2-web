@@ -1,7 +1,8 @@
-import { notFound, redirect } from "next/navigation";
 import { Metadata } from "next";
 import { getIntegration } from "data/integrations";
 import CirclesIntegration from "./CirclesIntegration";
+import { Integration } from "types/integrations";
+import { redirect } from "next/navigation";
 
 interface IntegrationPageProps {
   params: {
@@ -34,9 +35,23 @@ export default async function IntegrationPage({
     redirect("/app/");
   }
   
+  // Create a mapping of integration IDs to their respective components
+  const IntegrationComponents: Record<string, React.ComponentType<{integration: Integration}>> = {
+    circles: CirclesIntegration,
+  };
+
+  const IntegrationComponent = IntegrationComponents[integration.id];
+  
   return (
     <div className="flex flex-col items-center justify-center py-12">
-      {integration.id === 'circles' && <CirclesIntegration integration={integration} />}
+      {IntegrationComponent ? (
+        <IntegrationComponent integration={integration} />  
+      ) : (
+        <div role="alert" className="text-center">
+          <h2 className="text-xl">Integration Not Implemented</h2>
+          <p>The integration "{integration.name}" exists but has not been implemented yet.</p>
+        </div>
+      )}
     </div>
   );
 } 

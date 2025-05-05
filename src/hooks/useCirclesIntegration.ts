@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useAccount, useChainId, useConnect, useSwitchChain, injected } from 'wagmi';
 import { SupportedChainId } from "config/chains";
 import { ChainSet, configSetSelection } from "contracts";
@@ -42,8 +42,9 @@ export default function useCirclesIntegration() {
   // Write operations
   const [writeLink] = usePOHCirclesWrite(
     "register", 
-    {
-      onReady(fire) {
+    useMemo(() =>
+      ({
+      onReady: (fire) => {
         fire();
         toast.info("Transaction pending");
       },
@@ -61,14 +62,15 @@ export default function useCirclesIntegration() {
       },
       onError: () => {
         loading.stop();
+        console.log("2Failed to link account");
         toast.error("Failed to link account");
       }
-    }
+    }), [loading])
   );
 
   const [writeRenew] = usePOHCirclesWrite(
     "renewTrust", 
-    {
+    useMemo(() => ({
       onReady(fire) {
         fire();
         toast.info("Transaction pending");
@@ -90,7 +92,7 @@ export default function useCirclesIntegration() {
         loading.stop();
         toast.error("Failed to renew trust");
       }
-    }
+    }), [loading])
   );
 
   // Data fetching
