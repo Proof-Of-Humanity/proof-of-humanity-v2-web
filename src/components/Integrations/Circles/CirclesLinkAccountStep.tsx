@@ -16,8 +16,6 @@ interface CirclesLinkAccountStepProps {
   onRenewTrust: () => void;
   isLoading: boolean;
   error: unknown;
-  isWalletAddressValid: boolean;
-  disableButton?: boolean;
   getActionButtonProps: (action: () => void, defaultLabel: string) => {
     onClick: () => void;
     label: string;
@@ -34,8 +32,6 @@ export default function CirclesLinkAccountStep({
   onRenewTrust,
   isLoading,
   error,
-  isWalletAddressValid,
-  disableButton = false,
   getActionButtonProps,
   pending
 }: CirclesLinkAccountStepProps) {
@@ -77,7 +73,7 @@ export default function CirclesLinkAccountStep({
                     label={label}
                     defaultLabel='Link'
                     ariaLabel="Link Circles account"
-                    disabled={disabled || (label === "Link" && !isWalletAddressValid) || disableButton}
+                    disabled={disabled}
                     isLoading={pending}
                     className="mt-4 self-start"
                   />
@@ -110,7 +106,7 @@ export default function CirclesLinkAccountStep({
                     label={label}
                     defaultLabel='Renew'
                     ariaLabel="Renew Circles trust"
-                    disabled={disabled || disableButton}
+                    disabled={disabled}
                     isLoading={pending}
                     className="mt-2 self-start"
                   />

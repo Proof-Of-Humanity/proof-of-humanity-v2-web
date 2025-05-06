@@ -64,7 +64,6 @@ export default function useCirclesIntegration() {
       },
       onError: () => {
         loading.stop();
-        console.log("2Failed to link account");
         toast.error("Failed to link account");
       }
     }), [loading])
@@ -162,7 +161,6 @@ export default function useCirclesIntegration() {
       };
     }
     const isWrongChain = connectedChainId !== circlesChain.id;
-    console.log("chainName", circlesChain.name);
     if (isWrongChain) {
       return { 
         onClick: () => {
@@ -172,21 +170,17 @@ export default function useCirclesIntegration() {
         disabled: false 
       };
     }
-    
+    let disabled = disableButton || !isWalletAddressValid;
     if (humanityStatus === "invalid") {
       return { 
         onClick: () => toast.error("No valid humanity linked to current address"), 
         label: defaultLabel,
-        disabled: false
+        disabled
       };
     }
 
-    return { 
-      onClick: action, 
-      label: defaultLabel,
-      disabled: false 
-    };
-  }, [isConnected, connectedChainId, circlesChain, connect, switchChain, humanityStatus, pending]);
+    return { onClick: action, label: defaultLabel, disabled };
+  }, [pending, isConnected, connect, connectedChainId, circlesChain, switchChain, disableButton, isWalletAddressValid,humanityStatus]);
 
   // Load data on wallet connection
   useEffect(() => {
