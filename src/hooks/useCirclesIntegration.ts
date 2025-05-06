@@ -52,7 +52,9 @@ export default function useCirclesIntegration() {
         loading.stop();
         setDisableButton(true);
         if(address){
-          updateCirclesData(address);
+          setTimeout(() => {
+            updateCirclesData(address);
+          }, 1000); // 1 second delay
         }
         toast.success("Successfully linked Circles account!");
       },
@@ -79,7 +81,9 @@ export default function useCirclesIntegration() {
         loading.stop();
         setDisableButton(true);
         if(address){
-          updateCirclesData(address);
+          setTimeout(() => {
+            updateCirclesData(address);
+          }, 1000); // 1 second delay
         }
         toast.success("Successfully renewed trust!");
        
