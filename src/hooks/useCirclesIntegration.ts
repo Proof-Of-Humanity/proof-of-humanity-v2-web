@@ -198,6 +198,7 @@ export default function useCirclesIntegration() {
     }
     
     updateCirclesData(address);
+    setDisableButton(false);
   }, [isConnected, address]);
 
   return {
