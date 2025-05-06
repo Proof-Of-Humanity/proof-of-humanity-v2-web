@@ -1,7 +1,5 @@
-import { sdk } from "config/subgraph";
-import { cache } from "react";
-import { GetCirclesAccountsByaddressQuery } from "generated/graphql";
 import { gnosis, gnosisChiado } from "viem/chains";
+import { sdk } from "config/subgraph";
 import { ChainSet, configSetSelection } from "contracts";
 
 // Determine whether to use mainnet (gnosis) or testnet (chiado) for Circles subgraph
@@ -11,127 +9,97 @@ const circlesChainId =
     : gnosisChiado.id;
 
 export interface ProcessedCirclesData {
-  walletAddress: string;
-  humanityId: string;
-  linkStatus: "idle" | "linked" | "expired";
-  humanityStatus: "valid" | "invalid" | "checking";
-  error: unknown;
+  walletAddress: string;    
+  humanityId: string;       
+  linkStatus: "linked" | "expired" | "idle"; 
+  humanityStatus: "valid" | "invalid" | "checking"; 
+  error: Error | null;
 }
 
-/**
- * Fetch and process Circles account registrations for a given Ethereum address.
- * Returns normalized data with wallet address, link status, and humanity status.
- * @param address - Ethereum address to query (case-insensitive).
- */
 export const getProcessedCirclesData = 
   async (address: string): Promise<ProcessedCirclesData> => {
-    // Early return if no address provided
     if (!address) {
       return { 
         walletAddress: "", 
         humanityId: "",
         linkStatus: "idle", 
-        humanityStatus: "checking",
+        humanityStatus: "checking", 
         error: new Error("Address is required") 
       };
     }
     
     try {
-      const { data, error } = await getCirclesAccountsByAddress(address);
+      const data = await sdk[circlesChainId].GetCirclesAccountsByaddress({
+        address,
+        expirationTime: Math.ceil(Date.now() / 1000),
+      });
       
-      // Return early if API request failed
-      if (error || !data) {
+      if (!data) {
         return { 
           walletAddress: "", 
           humanityId: "",
           linkStatus: "idle", 
-          humanityStatus: "checking",
-          error 
+          humanityStatus: "checking", 
+          error: new Error("Failed to fetch data from Circles subgraph")
         };
       }
 
-      const hasRegistrations = data.registrations.length > 0 || data.crossChainRegistrations.length > 0;
+      const humanityId = data.registrations?.[0]?.id || data.crossChainRegistrations?.[0]?.id;
       
-      // Return early if no registrations found
-      if (!hasRegistrations) {
+      if (!humanityId) {
         return {
           walletAddress: "",
-          humanityId: "",
+          humanityId: "", 
           linkStatus: "idle",
-          humanityStatus: "invalid",
+          humanityStatus: "invalid", 
           error: null 
         };
       }
-
-      // Get the humanity ID from the first available registration
-      const humanityId = data.registrations[0]?.id || data.crossChainRegistrations[0]?.id || "";
       
-      // Process homechain accounts first, then cross-chain if needed
-      const homechainAccounts = data.registrations
-        .map((r) => r.circleAccount)
-        .filter(Boolean);
-        
-      const crossChainAccounts = data.crossChainRegistrations
-        .map((r) => r.circleAccount)
-        .filter(Boolean);
- 
+      let primaryCircleAccount = null;
+      if (data.registrations?.length > 0) {
+        primaryCircleAccount = data.registrations?.[0]?.humanity?.circleAccount;
+      }
 
-      // Prioritize homechain account over cross-chain
-      const account = homechainAccounts.length > 0 
-        ? homechainAccounts[0] 
-        : crossChainAccounts[0];
-
-      if (!account) {
+      if (!primaryCircleAccount) {
+        const humanityData = await sdk[circlesChainId].GetHumanityWithCircleAccountById({
+          humanityId
+        });
+          if (humanityData?.humanity?.circleAccount) {
+            primaryCircleAccount = humanityData.humanity.circleAccount;
+          }
+        }
+      
+      if (!primaryCircleAccount) {
         return {
-          walletAddress: "", 
+          walletAddress: "",  
           humanityId,
           linkStatus: "idle", 
           humanityStatus: "valid",
           error: null
         };
       }
-      const walletAddress = account.id as string;
-      const expiryMs = Number(account.trustExpiryTime) * 1000;
-      const linkStatus = expiryMs > Date.now() ? "linked" : "expired";
+      
+      const walletAddress = primaryCircleAccount.id as string; 
+      const trustExpiryTime = primaryCircleAccount.trustExpiryTime;
+      const expiryMs = Number(trustExpiryTime) * 1000; 
+      const linkStatus = !isNaN(expiryMs) && expiryMs > Date.now() ? "linked" : "expired";
 
       return {
         walletAddress, 
         humanityId,
         linkStatus, 
-        humanityStatus: "valid",
+        humanityStatus: "valid", 
         error: null
       };
     } catch (error) {
+      console.error("Error processing Circles data:", error);
       return {
         walletAddress: "", 
         humanityId: "",
         linkStatus: "idle", 
-        humanityStatus: "checking",
-        error 
+        humanityStatus: "checking", 
+        error: error instanceof Error ? error : new Error(String(error)) 
       };
     }
   }
-
-/**
- * Fetch Circles account registrations for a given Ethereum address.
- * Returns an object with data and error properties.
- * @param address - Ethereum address to query (case-insensitive).
- */
-export const getCirclesAccountsByAddress = cache(
-  async (
-    address: string,
-  ): Promise<{
-    data: GetCirclesAccountsByaddressQuery | null;
-    error: unknown;
-  }> => {
-    if (!address) {
-      return { data: null, error: new Error("Address is required") };
-    }
-    const normalized = address.toLowerCase();
-    const data = await sdk[circlesChainId].GetCirclesAccountsByaddress({
-      address: normalized,
-      expirationTime: Math.ceil(Date.now() / 1000),
-    });
-    return { data, error: null };
-  }
-);

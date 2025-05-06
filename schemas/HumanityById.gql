@@ -1,0 +1,9 @@
+query GetHumanityWithCircleAccountById($humanityId: ID!) {
+  humanity(id: $humanityId) {
+    id
+    circleAccount {
+      id
+      trustExpiryTime
+    }
+  }
+}
