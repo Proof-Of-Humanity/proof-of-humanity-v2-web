@@ -39,10 +39,10 @@ export default React.memo(function CirclesIntegration({ integration }: CirclesIn
   } = useCirclesIntegration();
 
   return (
-    <div className="flex flex-col paper w-10/12">
+    <div className="flex flex-col paper w-full md:w-10/12">
       <IntegrationHeader integration={integration} />
       
-      <div className="flex flex-col paper justify-center items-center px-8 py-4 space-y-4">
+      <div className="flex flex-col paper justify-center items-center px-4 py-2 md:px-8 md:py-4 space-y-4">
         <CirclesCreateAccountStep 
           steps={integration.connectionSteps || []}
           currentStep={currentCreateAccountStep}

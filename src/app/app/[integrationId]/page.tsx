@@ -43,7 +43,7 @@ export default async function IntegrationPage({
   const IntegrationComponent = IntegrationComponents[integration.id];
   
   return (
-    <div className="flex flex-col items-center justify-center py-12">
+    <div className="flex flex-col items-center justify-center py-6 md:py-12">
       {IntegrationComponent ? (
         <IntegrationComponent integration={integration} />  
       ) : (
