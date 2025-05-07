@@ -18,7 +18,7 @@ export default function CirclesCreateAccountStep({
   
   return (
     <Accordion title="Step 1 - Create your Circles Account" className="w-full">
-      <div className="p-6">
+      <div className="p-4 md:p-6">
         <IntegrationInfoCard 
           step={steps[currentStep]} 
           onPrevious={() => setCurrentStep(currentStep - 1)}

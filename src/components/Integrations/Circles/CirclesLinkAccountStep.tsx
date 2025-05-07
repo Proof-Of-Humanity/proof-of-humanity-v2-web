@@ -33,16 +33,16 @@ export default function CirclesLinkAccountStep({
   isLoading,
   error,
   getActionButtonProps,
-  pending
+  pending,
 }: CirclesLinkAccountStepProps) {
   return (
     <Accordion title="Step 2 - Link Account" className="w-full">
       {isLoading ? (
-        <div className="p-6 flex justify-center items-center my-5">
+        <div className="p-4 md:p-6 flex justify-center items-center my-5">
           <LoadingSpinner message="Loading Circles account info..." />
         </div>
       ) : error ? (
-        <div className="p-6 flex flex-col w-full">
+        <div className="p-4 md:p-6 flex flex-col w-full">
           <Label className="normal-case mt-0" aria-live="assertive">Error fetching Circles account</Label>
           <span className="text-secondaryText mb-2" role="alert">
             Try again later.
@@ -51,7 +51,7 @@ export default function CirclesLinkAccountStep({
       ) : (
         <>
           {linkStatus === "idle" && (
-            <div className="p-6 flex flex-col w-full ">
+            <div className="p-4 md:p-6 flex flex-col w-full ">
               <Label className="normal-case mt-0">Paste your Circles Wallet Address</Label>
               <Field
                 value={walletAddress}
@@ -82,7 +82,7 @@ export default function CirclesLinkAccountStep({
             </div>
           )}
           {linkStatus === "linked" && (
-            <div className="p-6 flex flex-col w-full space-y-4">
+            <div className="p-4 md:p-6 flex flex-col w-full space-y-4">
               <div className="flex items-center">
                 <span>Circles account successfully linked to POHID</span>
                 <CircleCheckIcon className="w-4 h-4 ml-1" />
@@ -92,7 +92,7 @@ export default function CirclesLinkAccountStep({
             </div>
           )}
           {linkStatus === "expired" && (
-            <div className="p-6 flex flex-col w-full space-y-4">
+            <div className="p-4 md:p-6 flex flex-col w-full space-y-4">
               <div className="flex items-center">
                 <span className="text-orange-400">The humanity expired. Please renew trust on POH Group.</span>
                 <InfoIcon width={16} height={16} className="ml-1 stroke-orange-400 stroke-2" />

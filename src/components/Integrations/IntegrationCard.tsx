@@ -16,8 +16,8 @@ export default function IntegrationCard({ integration }: IntegrationCardProps) {
   };
   
   return (
-    <div className="flex flex-col paper w-[570px]">
-      <div className="p-6">
+    <div className="flex flex-col paper w-full lg:w-[570px]">
+      <div className="p-4 md:p-6">
         {integration.logo && (
           <div className="mb-4">
             <Image
@@ -29,12 +29,12 @@ export default function IntegrationCard({ integration }: IntegrationCardProps) {
           </div>
         )}
         <h3 className="text-primaryText">{integration.title}</h3>
-        <p className="mb-4 text-sm text-gray-600 whitespace-nowrap text-primaryText">
+        <p className="mb-4 text-sm text-gray-600 text-primaryText break-words">
           {integration.description}
         </p>
 
         <button 
-          className="text-xs btn-main gradient px-6 py-3 dark:hover:bg-opacity-80"
+          className="text-xs btn-main gradient px-6 py-3 dark:hover:bg-opacity-80 w-full sm:w-auto"
           aria-label={`Start connecting your ${integration.name}`}
           onClick={handleNavigation}
         >

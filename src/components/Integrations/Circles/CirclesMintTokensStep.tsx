@@ -18,7 +18,7 @@ export default function CirclesMintTokensStep({
   
   return (
     <Accordion title="Step 3 - Mint your POH Circles group tokens" className="w-full">
-      <div className="p-6 flex flex-col w-full">
+      <div className="p-4 md:p-6 flex flex-col w-full">
         <ProcessStepCard 
           step={steps[currentStep]} 
           onPrevious={() => setCurrentStep(currentStep - 1)}
