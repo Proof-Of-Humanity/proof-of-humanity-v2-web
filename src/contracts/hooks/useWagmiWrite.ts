@@ -37,7 +37,7 @@ export default function useWagmiWrite<
   const [args, setArgs] = useState(
     defaultForInputs((abiFragment as any).inputs) as WriteArgs<C, F>,
   );
-  console.log(typeof args);
+  
   const [enabled, setEnabled] = useState(false);
 
   const chain = useChainParam();
@@ -55,9 +55,9 @@ export default function useWagmiWrite<
     }
   } as any);
 
-  const { writeContract, data, status} = useWriteContract();
+  const { writeContract, data, status, reset: resetWrite } = useWriteContract();
   const { status: transactionStatus } = useWaitForTransactionReceipt({
-    hash: data,
+    hash: data
   });
   
   useEffect(() => {
@@ -69,30 +69,35 @@ export default function useWagmiWrite<
         }
         break;
       case "error":
+        if(enabled){
         effects?.onFail?.();
         setEnabled(false);
+        }
+        break;
     }
-  }, [prepareStatus, effects, enabled, prepared?.request, writeContract]);
+  }, [prepareStatus, effects, enabled,prepared?.request, writeContract]);
 
   useEffect(() => {
-    switch (status) {
-      case "error":
-        effects?.onError?.();
-        setEnabled(false);
+    if (status === "error") {
+      effects?.onError?.();
+      setEnabled(false);
+      resetWrite();
     }
-  }, [status, effects]);
+  }, [status, effects, resetWrite]);
 
   useEffect(() => {
-    if(data) {
+    if (data) {
       switch (transactionStatus) {
         case "pending":
           effects?.onLoading?.();
           break;
         case "success":
           effects?.onSuccess?.();
+          resetWrite();
+          break;
       }
     }
-  }, [transactionStatus, effects]);
+  }, [transactionStatus, effects, data, resetWrite]);
 
   return useMemo(
     () =>
