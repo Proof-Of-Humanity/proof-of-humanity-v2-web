@@ -3,7 +3,6 @@ import React from "react";
 import { Integration } from "types/integrations";
 import { enableReactUse } from "@legendapp/state/config/enableReactUse";
 
-// Import custom components
 import IntegrationHeader from "components/Integrations/Circles/IntegrationHeader";
 import CirclesCreateAccountStep from "components/Integrations/Circles/CirclesCreateAccountStep";
 import CirclesLinkAccountStep from "components/Integrations/Circles/CirclesLinkAccountStep";
@@ -21,13 +20,11 @@ export default React.memo(function CirclesIntegration({ integration }: CirclesIn
     // State
     walletAddress,
     linkStatus,
-    fetchError,
-    disableButton,
+    isCirclesDataQueryError,
     currentCreateAccountStep,
     currentMintStep,
-    isWalletAddressValid,
     pending,
-    isFetching,
+    isLoadingCirclesData,
     
     // Actions
     setWalletAddress,
@@ -55,10 +52,8 @@ export default React.memo(function CirclesIntegration({ integration }: CirclesIn
           onAddressChange={(e) => setWalletAddress(e.target.value)}
           onLinkAccount={handleLinkAccount}
           onRenewTrust={handleRenewTrust}
-          isLoading={isFetching}
-          error={fetchError}
-          isWalletAddressValid={isWalletAddressValid}
-          disableButton={disableButton}
+          isLoading={isLoadingCirclesData}
+          isError={isCirclesDataQueryError}
           getActionButtonProps={getActionButtonProps}
           pending={pending}
         />
