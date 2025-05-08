@@ -22,6 +22,8 @@ interface CirclesLinkAccountStepProps {
     disabled: boolean;
   };
   pending: boolean;
+  isOpen: boolean;
+  onToggle: () => void;
 }
 
 export default function CirclesLinkAccountStep({
@@ -34,9 +36,16 @@ export default function CirclesLinkAccountStep({
   isError,
   getActionButtonProps,
   pending,
+  isOpen,
+  onToggle,
 }: CirclesLinkAccountStepProps) {
   return (
-    <Accordion title="Step 2 - Link Account" className="w-full">
+    <Accordion 
+      title="Step 2 - Link Account" 
+      className="w-full"
+      isOpen={isOpen}
+      onToggle={onToggle}
+    >
       {isLoading ? (
         <div className="p-4 md:p-6 flex justify-center items-center my-5">
           <LoadingSpinner message="Loading Circles account info..." />

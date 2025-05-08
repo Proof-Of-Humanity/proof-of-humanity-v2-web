@@ -1,5 +1,5 @@
 "use client";
-import React from "react";
+import React, { useState } from "react";
 import { Integration } from "types/integrations";
 import { enableReactUse } from "@legendapp/state/config/enableReactUse";
 
@@ -16,6 +16,12 @@ interface CirclesIntegrationProps {
 }
 
 export default React.memo(function CirclesIntegration({ integration }: CirclesIntegrationProps) {
+  const [openAccordionKey, setOpenAccordionKey] = useState<string | null>(null);
+
+  const handleToggleAccordion = (key: string) => {
+    setOpenAccordionKey(openAccordionKey === key ? null : key);
+  };
+
   const {
     // State
     walletAddress,
@@ -44,6 +50,8 @@ export default React.memo(function CirclesIntegration({ integration }: CirclesIn
           steps={integration.connectionSteps || []}
           currentStep={currentCreateAccountStep}
           setCurrentStep={setCurrentCreateAccountStep}
+          isOpen={openAccordionKey === 'createAccount'}
+          onToggle={() => handleToggleAccordion('createAccount')}
         />
         
         <CirclesLinkAccountStep 
@@ -56,12 +64,16 @@ export default React.memo(function CirclesIntegration({ integration }: CirclesIn
           isError={isCirclesDataQueryError}
           getActionButtonProps={getActionButtonProps}
           pending={pending}
+          isOpen={openAccordionKey === 'linkAccount'}
+          onToggle={() => handleToggleAccordion('linkAccount')}
         />
         
         <CirclesMintTokensStep 
           steps={integration.mintSteps || []}
           currentStep={currentMintStep}
           setCurrentStep={setCurrentMintStep}
+          isOpen={openAccordionKey === 'mintTokens'}
+          onToggle={() => handleToggleAccordion('mintTokens')}
         />
       </div>
     </div>

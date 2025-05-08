@@ -7,17 +7,26 @@ interface CirclesMintTokensStepProps {
   steps: ConnectionStep[];
   currentStep: number;
   setCurrentStep: (step: number) => void;
+  isOpen: boolean;
+  onToggle: () => void;
 }
 
 export default function CirclesMintTokensStep({
   steps,
   currentStep,
-  setCurrentStep
+  setCurrentStep,
+  isOpen,
+  onToggle
 }: CirclesMintTokensStepProps) {
   if (!steps || steps.length === 0) return null;
   
   return (
-    <Accordion title="Step 3 - Mint your POH Circles group tokens" className="w-full">
+    <Accordion 
+      title="Step 3 - Mint your POH Circles group tokens" 
+      className="w-full"
+      isOpen={isOpen}
+      onToggle={onToggle}
+    >
       <div className="p-4 md:p-6 flex flex-col w-full">
         <ProcessStepCard 
           step={steps[currentStep]} 
