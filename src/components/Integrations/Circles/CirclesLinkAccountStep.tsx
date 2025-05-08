@@ -15,7 +15,7 @@ interface CirclesLinkAccountStepProps {
   onLinkAccount: () => void;
   onRenewTrust: () => void;
   isLoading: boolean;
-  error: unknown;
+  isError: boolean;
   getActionButtonProps: (action: () => void, defaultLabel: string) => {
     onClick: () => void;
     label: string;
@@ -31,7 +31,7 @@ export default function CirclesLinkAccountStep({
   onLinkAccount,
   onRenewTrust,
   isLoading,
-  error,
+  isError,
   getActionButtonProps,
   pending,
 }: CirclesLinkAccountStepProps) {
@@ -41,7 +41,7 @@ export default function CirclesLinkAccountStep({
         <div className="p-4 md:p-6 flex justify-center items-center my-5">
           <LoadingSpinner message="Loading Circles account info..." />
         </div>
-      ) : error ? (
+      ) : isError ? (
         <div className="p-4 md:p-6 flex flex-col w-full">
           <Label className="normal-case mt-0" aria-live="assertive">Error fetching Circles account</Label>
           <span className="text-secondaryText mb-2" role="alert">
@@ -84,7 +84,7 @@ export default function CirclesLinkAccountStep({
           {linkStatus === "linked" && (
             <div className="p-4 md:p-6 flex flex-col w-full space-y-4">
               <div className="flex items-center">
-                <span>Circles account successfully linked to POHID</span>
+                <span className='text-primaryText'>Circles account successfully linked to POHID</span>
                 <CircleCheckIcon className="w-4 h-4 ml-1" />
               </div>
               <CirclesAddressDisplay walletAddress={walletAddress} />
