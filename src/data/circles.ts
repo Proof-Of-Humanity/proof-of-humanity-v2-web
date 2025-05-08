@@ -13,19 +13,12 @@ export interface ProcessedCirclesData {
   humanityId: string;       
   linkStatus: "linked" | "expired" | "idle"; 
   humanityStatus: "valid" | "invalid" | "checking"; 
-  error: Error | null;
 }
 
 export const getProcessedCirclesData = 
   async (address: string): Promise<ProcessedCirclesData> => {
     if (!address) {
-      return { 
-        walletAddress: "", 
-        humanityId: "",
-        linkStatus: "idle", 
-        humanityStatus: "checking", 
-        error: new Error("Address is required") 
-      };
+      throw new Error("Address is required"); 
     }
     
     try {
@@ -35,13 +28,7 @@ export const getProcessedCirclesData =
       });
       
       if (!data) {
-        return { 
-          walletAddress: "", 
-          humanityId: "",
-          linkStatus: "idle", 
-          humanityStatus: "checking", 
-          error: new Error("Failed to fetch data from Circles subgraph")
-        };
+        throw new Error("Failed to fetch data from Circles subgraph");
       }
 
       const humanityId = data.registrations?.[0]?.id || data.crossChainRegistrations?.[0]?.id;
@@ -52,7 +39,6 @@ export const getProcessedCirclesData =
           humanityId: "", 
           linkStatus: "idle",
           humanityStatus: "invalid", 
-          error: null 
         };
       }
       
@@ -76,7 +62,6 @@ export const getProcessedCirclesData =
           humanityId,
           linkStatus: "idle", 
           humanityStatus: "valid",
-          error: null
         };
       }
       
@@ -90,16 +75,9 @@ export const getProcessedCirclesData =
         humanityId,
         linkStatus, 
         humanityStatus: "valid", 
-        error: null
       };
     } catch (error) {
       console.error("Error processing Circles data:", error);
-      return {
-        walletAddress: "", 
-        humanityId: "",
-        linkStatus: "idle", 
-        humanityStatus: "checking", 
-        error: error instanceof Error ? error : new Error(String(error)) 
-      };
+      throw error instanceof Error ? error : new Error(String(error)); 
     }
   }

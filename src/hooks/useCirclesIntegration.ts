@@ -1,45 +1,64 @@
-import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useAccount, useChainId, useConnect, useSwitchChain, injected } from 'wagmi';
+import { useQuery } from '@tanstack/react-query'; 
 import { SupportedChainId } from "config/chains";
 import { ChainSet, configSetSelection } from "contracts";
 import { gnosis, gnosisChiado } from "viem/chains";
-import { getProcessedCirclesData } from "data/circles";
+import { getProcessedCirclesData, ProcessedCirclesData } from "data/circles"; 
 import { toast } from "react-toastify";
 import { isAddress } from "viem";
 import usePOHCirclesWrite from "contracts/hooks/usePOHCirclesWrite";
 import { useLoading } from "hooks/useLoading";
+
+type CirclesDataQueryKey = ['circlesData', string];
 
 export default function useCirclesIntegration() {
   const { address, isConnected } = useAccount();
   const connectedChainId = useChainId() as SupportedChainId;
   const { switchChain } = useSwitchChain();
   const { connect } = useConnect();
-  
-  // Step management
+
   const [currentCreateAccountStep, setCurrentCreateAccountStep] = useState(0);
   const [currentMintStep, setCurrentMintStep] = useState(0);
   
-  // Circles account state
-  const [walletAddress, setWalletAddress] = useState("");
-  const [linkStatus, setLinkStatus] = useState<"idle"|"linked"|"expired">("idle");
-  const [humanityStatus, setHumanityStatus] = useState<"valid" | "invalid" | "checking">("checking");
-  const [fetchError, setFetchError] = useState<unknown>(null);
-  const [disableButton, setDisableButton] = useState(false);
-  const humanityId = useRef<string>("");
+  const [walletAddress, setWalletAddress] = useState(""); 
+  const [disableButton, setDisableButton] = useState(false); 
   
-  // Loading states
   const loading = useLoading(false, "Transaction pending");
-  const fetchLoading = useLoading(false, "Loading Circles account info...");
   const [pending] = loading.use();
-  const [isFetching] = fetchLoading.use();
   
-  // Chain configuration
   const circlesChain  = configSetSelection.chainSet === ChainSet.MAINNETS ? gnosis : gnosisChiado;
+
+  const {
+    data: circlesAccountInfo,
+    isFetching: isLoadingCirclesData,
+    isSuccess: isCirclesDataSuccess, 
+    isError: isCirclesDataQueryError, 
+    refetch: refetchCirclesData
+  } = useQuery<ProcessedCirclesData, Error, ProcessedCirclesData, CirclesDataQueryKey>({
+    queryKey: ['circlesData', address] as CirclesDataQueryKey,
+    queryFn: ({queryKey}) => getProcessedCirclesData(queryKey[1] as string),
+    enabled: !!address && isConnected,
+  });
+
+  useEffect(() => {
+    if (isCirclesDataSuccess && circlesAccountInfo?.walletAddress) {
+      setWalletAddress(circlesAccountInfo.walletAddress);
+    }
+  }, [isCirclesDataSuccess, circlesAccountInfo]);
+
+  useEffect(() => {
+    if (isCirclesDataQueryError) {
+      toast.error(`Failed to load Circles Account Info`);
+    }
+  }, [isCirclesDataQueryError]);
+
+  const linkStatus = circlesAccountInfo?.linkStatus || "idle";
+  const humanityStatus = circlesAccountInfo?.humanityStatus || "checking";
+  const currentHumanityId = circlesAccountInfo?.humanityId || ""; 
+
+  const isWalletAddressValid = useMemo(() => isAddress(walletAddress.trim()), [walletAddress]); 
   
-  // Derived states
-  const isWalletAddressValid = isAddress(walletAddress.trim());
-  
-  // Write operations
   const [writeLink] = usePOHCirclesWrite(
     "register", 
     useMemo(() =>
@@ -51,11 +70,7 @@ export default function useCirclesIntegration() {
       onSuccess: () => {
         loading.stop();
         setDisableButton(true);
-        if(address){
-          setTimeout(() => {
-            updateCirclesData(address);
-          }, 1000); // 1 second delay
-        }
+        refetchCirclesData();
         toast.success("Successfully linked Circles account!");
       },
       onFail: () => {
@@ -66,7 +81,7 @@ export default function useCirclesIntegration() {
         loading.stop();
         toast.error("Failed to link account");
       }
-    }), [loading])
+    }), [loading, refetchCirclesData])
   );
 
   const [writeRenew] = usePOHCirclesWrite(
@@ -79,13 +94,8 @@ export default function useCirclesIntegration() {
       onSuccess: () => {
         loading.stop();
         setDisableButton(true);
-        if(address){
-          setTimeout(() => {
-            updateCirclesData(address);
-          }, 1000); // 1 second delay
-        }
+        refetchCirclesData();
         toast.success("Successfully renewed trust!");
-       
       },
       onFail: () => {
         loading.stop();
@@ -95,58 +105,31 @@ export default function useCirclesIntegration() {
         loading.stop();
         toast.error("Failed to renew trust");
       }
-    }), [loading])
+    }), [loading,refetchCirclesData])
   );
 
-  // Data fetching
-  const updateCirclesData = useCallback(async (accountAddress: string) => {
-    fetchLoading.start();
-    try {
-      const result = await getProcessedCirclesData(accountAddress);
-      setWalletAddress(result.walletAddress);
-      setLinkStatus(result.linkStatus);
-      setHumanityStatus(result.humanityStatus);
-      humanityId.current = result.humanityId;
-      if (result.error) {
-        setFetchError(result.error);
-        toast.error("Error fetching Circles account data");
-      } else {
-        setFetchError(null);
-      }
-    } catch (error) {
-      console.error("Error during circles data update:", error);
-      setFetchError(error);
-      toast.error("Failed to load Circles data");
-    } finally {
-      fetchLoading.stop();
-    }
-  }, [fetchLoading]);
-
-  // Actions
   const handleLinkAccount = useCallback(async () => {
-    if (!walletAddress || !isWalletAddressValid) {
+    if (!walletAddress || !isWalletAddressValid) { 
       toast.error("Please enter a valid wallet address");
       return;
     }
-
     loading.start();
     writeLink({
-      args: [humanityId.current, walletAddress.trim()],
+      args: [currentHumanityId, walletAddress.trim()], 
     });
-  }, [walletAddress, isWalletAddressValid, loading, writeLink]);
+  }, [walletAddress, isWalletAddressValid,loading,currentHumanityId]); 
 
   const handleRenewTrust = useCallback(async () => {
-    if (!walletAddress || !isWalletAddressValid) {
-      toast.error("Wallet address is required");
+    if (!walletAddress || !isWalletAddressValid) { 
+      toast.error("No linked Circles account address found to renew.");
       return;
     }
     loading.start();
     writeRenew({
-      args: [walletAddress.trim()],
+      args: [walletAddress.trim()], 
     });
-  }, [walletAddress, isWalletAddressValid, loading, writeRenew]);
+  }, [walletAddress, loading, writeRenew]); 
 
-  // Button props helper
   const getActionButtonProps = useCallback((action: () => Promise<void> | void, defaultLabel: string) => {
     if (pending) {
       return { onClick: () => {}, label: defaultLabel, disabled: true };
@@ -170,53 +153,42 @@ export default function useCirclesIntegration() {
         disabled: false 
       };
     }
-    let disabled = disableButton || !isWalletAddressValid;
+    let disabled = disableButton || !isWalletAddressValid; 
     if (humanityStatus === "invalid") {
       return { 
         onClick: () => toast.error("No valid humanity linked to current address"), 
         label: defaultLabel,
-        disabled
+        disabled: disabled 
       };
     }
 
     return { onClick: action, label: defaultLabel, disabled };
-  }, [pending, isConnected, connect, connectedChainId, circlesChain, switchChain, disableButton, isWalletAddressValid,humanityStatus]);
+  }, [pending, isConnected, connectedChainId, circlesChain, disableButton, isWalletAddressValid, humanityStatus]);
 
-  // Load data on wallet connection
   useEffect(() => {
     if (!isConnected || !address) {
-      setLinkStatus("idle");
-      setWalletAddress("");
-      setHumanityStatus("checking");
-      return;
+        setWalletAddress(""); 
     }
-    
-    updateCirclesData(address);
-    setDisableButton(false);
-  }, [isConnected, address]);
+    setDisableButton(false); 
+  }, [isConnected, address]); 
 
   return {
-    // State
-    walletAddress,
+    walletAddress, 
     linkStatus,
     humanityStatus,
-    fetchError,
-    disableButton,
+    isCirclesDataQueryError,
     currentCreateAccountStep,
     currentMintStep,
     isWalletAddressValid,
-    pending,
-    isFetching,
-    circlesChain,
-    humanityId: humanityId.current,
+    pending, 
+    isLoadingCirclesData, 
+    humanityId: currentHumanityId, 
     
-    // Actions
-    setWalletAddress,
+    setWalletAddress, 
     setCurrentCreateAccountStep,
     setCurrentMintStep,
-    updateCirclesData,
     handleLinkAccount,
     handleRenewTrust,
-    getActionButtonProps
+    getActionButtonProps,
   };
-} 
+}
