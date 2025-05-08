@@ -7,17 +7,26 @@ interface CirclesCreateAccountStepProps {
   steps: ConnectionStep[];
   currentStep: number;
   setCurrentStep: (step: number) => void;
+  isOpen: boolean;
+  onToggle: () => void;
 }
 
 export default function CirclesCreateAccountStep({
   steps,
   currentStep,
-  setCurrentStep
+  setCurrentStep,
+  isOpen,
+  onToggle
 }: CirclesCreateAccountStepProps) {
   if (!steps || steps.length === 0) return null;
   
   return (
-    <Accordion title="Step 1 - Create your Circles Account" className="w-full">
+    <Accordion 
+      title="Step 1 - Create your Circles Account" 
+      className="w-full"
+      isOpen={isOpen}
+      onToggle={onToggle}
+    >
       <div className="p-4 md:p-6">
         <IntegrationInfoCard 
           step={steps[currentStep]} 
