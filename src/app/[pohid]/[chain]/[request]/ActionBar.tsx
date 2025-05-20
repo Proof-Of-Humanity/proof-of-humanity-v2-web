@@ -514,10 +514,12 @@ export default function ActionBar({
                 : !rejected
                   ? "Request was accepted"
                   : "Request was rejected"}
-              <TimeAgo
-                className={`ml-1 text-status-${statusColor}`}
-                time={expired && humanityExpirationTime ? humanityExpirationTime : lastStatusChange}
-              />
+              {!expired ? (
+                <TimeAgo
+                  className={`ml-1 text-status-${statusColor}`}
+                  time={lastStatusChange}
+                />
+              ) : null}
               .
             </span>
           </>

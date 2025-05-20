@@ -83,12 +83,12 @@ export default async function Request({ params }: PageProps) {
     onChainVouches = request.vouches.map((v) => v.voucher.id as Address);
   }
 
-  const rejected = request.status.id === "resolved" && !request.humanity.winnerClaim.some(claim => claim.index === request.index);
+  const rejected = request.status.id === "resolved" && !request.revocation && request.winnerParty?.id != 'requester';
 
   const hasExpired = () => {
     if (request.status.id === "resolved") {
       if (!request.revocation && request.humanity.winnerClaim.length > 0) {
-        if (request.humanity.winnerClaim[0].index === request.index) {
+        if (request.humanity.winnerClaim.some((claim) => claim.index === request.index)) {
           if (!!contractData.humanityLifespan) {
             return (
               /* (Number(request.humanity.winnerClaim[0].resolutionTime) > 0 && 
@@ -100,7 +100,7 @@ export default async function Request({ params }: PageProps) {
             );
           }
           return false;
-        }
+        } 
         return false;
       }
     } else if (request.status.id === "transferring") {
