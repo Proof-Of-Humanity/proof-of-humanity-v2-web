@@ -16,6 +16,9 @@ query Humanity($id: ID!) {
         id
         name
       }
+      winnerParty {
+        id
+      }
       creationTime
       lastStatusChange
       index

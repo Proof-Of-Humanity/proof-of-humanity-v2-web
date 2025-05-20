@@ -3,6 +3,9 @@ query Request($id: ID!) {
     status {
       id
     }
+    winnerParty {
+      id
+    }
     index
     revocation
     registrationEvidenceRevokedReq
