@@ -111,7 +111,7 @@ export default function useCirclesIntegration() {
   );
 
   const handleLinkAccount = useCallback(async () => {
-    if (!walletAddress || !isWalletAddressValid) { 
+    if (!isWalletAddressValid) { 
       toast.error("Please enter a valid wallet address");
       return;
     }
@@ -119,18 +119,18 @@ export default function useCirclesIntegration() {
     writeLink({
       args: [currentHumanityId, walletAddress.trim()], 
     });
-  }, [walletAddress, isWalletAddressValid,loading,currentHumanityId]); 
+  }, [isWalletAddressValid,loading,currentHumanityId]); 
 
   const handleRenewTrust = useCallback(async () => {
-    if (!walletAddress || !isWalletAddressValid) { 
+    if (!isWalletAddressValid) { 
       toast.error("No linked Circles account address found to renew.");
       return;
     }
     loading.start();
     writeRenew({
-      args: [walletAddress.trim()], 
+      args: [currentHumanityId], 
     });
-  }, [walletAddress, loading, writeRenew]); 
+  }, [currentHumanityId, isWalletAddressValid, loading, writeRenew]); 
 
   const getActionButtonProps = useCallback((action: () => Promise<void> | void, defaultLabel: string) => {
     if (pending) {
