@@ -39,6 +39,8 @@ export default function useCirclesIntegration() {
     queryKey: ['circlesData', address] as CirclesDataQueryKey,
     queryFn: ({queryKey}) => getProcessedCirclesData(queryKey[1] as string),
     enabled: !!address && isConnected,
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
   });
 
   useEffect(() => {
