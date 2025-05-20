@@ -7,36 +7,20 @@ interface AccordionProps {
   className?: string;
   title: string;
   children: React.ReactNode;
-  isOpen?: boolean;
-  onToggle?: () => void;
 }
 
 const Accordion: React.FC<AccordionProps> = ({
   className,
   title,
   children,
-  isOpen: propsIsOpen,
-  onToggle: propsOnToggle,
 }) => {
-  const [internalOpen, setInternalOpen] = useState(false);
-
-  const isControlled = propsIsOpen !== undefined;
-  
-  const open = isControlled ? propsIsOpen : internalOpen;
-
-  const handleToggle = () => {
-    if (isControlled && propsOnToggle) {
-      propsOnToggle();
-    } else {
-      setInternalOpen((o) => !o);
-    }
-  };
+  const [open, setOpen] = useState(false);
 
   return (
     <div className={cn("flex flex-col text-black", className)}>
       <div
         className="paper flex cursor-pointer justify-between overflow-hidden p-4 font-bold"
-        onClick={handleToggle}
+        onClick={() => setOpen((o) => !o)}
       >
         <span>{title}</span>
         {open ? (
