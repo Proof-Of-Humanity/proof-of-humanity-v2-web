@@ -8,6 +8,9 @@ query Requests($skip: Int, $first: Int, $where: Request_filter) {
   ) {
     id
     index
+    winnerParty {
+      id
+    }
     status {
       id
     }

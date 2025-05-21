@@ -25,12 +25,13 @@ interface ContentProps {
   claimer: RequestsQueryItem["claimer"];
   requester: Address;
   humanity: { id: Hash } & WinnerClaimFragment;
-  expired: boolean;
 }
 
 interface CardInterface extends ContentProps {
   index: number;
   status: string;
+  rejected: boolean;
+  expired: boolean;
 }
 
 const LoadingFallback: React.FC = () => (
@@ -58,7 +59,6 @@ const Content = ({
   evidence,
   requester,
   claimer,
-  expired,
 }: ContentProps) => {
   const [evidenceURI] = useIPFS<EvidenceFile>(
     revocation
@@ -109,8 +109,8 @@ function Card({
   evidence,
   humanity: { id: pohId, winnerClaim },
   expired,
+  rejected
 }: CardInterface) {
-  const rejected = status === "resolved" && !winnerClaim.some(claim => claim.index === index) && !revocation;
 
   const statusTitle = queryToStatus(status, revocation, expired);
   const statusColor = colorForStatus(status, revocation, expired,rejected);
@@ -125,7 +125,7 @@ function Card({
         <div className={`h-1 w-full bg-status-${statusColor}`} />
         <div className="centered p-2 font-medium">
           <span className={`text-status-${statusColor}`}>
-          {status === "resolved" && expired && !revocation
+          {status === "resolved" && expired
               ? "Expired"
               : rejected
               ? "Rejected"
@@ -148,7 +148,6 @@ function Card({
             requester={requester}
             revocation={revocation}
             registrationEvidenceRevokedReq={registrationEvidenceRevokedReq}
-            expired={expired}
           />
         </Suspense>
       </ErrorBoundary>
