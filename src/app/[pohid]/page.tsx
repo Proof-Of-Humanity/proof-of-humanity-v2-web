@@ -27,6 +27,7 @@ type PoHRequest = ArrayElement<
 > & {
   chainId: SupportedChainId;
   expired: boolean;
+  rejected: boolean;
 };
 
 type WinnerClaimRequest = NonNullable<
@@ -140,6 +141,7 @@ async function Profile({ params: { pohid } }: PageProps) {
             ...req,
             chainId: chain.id,
             expired: false,
+            rejected: false,
           }))
         : []),
     ],
@@ -155,10 +157,10 @@ async function Profile({ params: { pohid } }: PageProps) {
 
   // pastRequests must not contain pendingRequests nor winningClaimRequest if it did not expired
   const pastRequests = sortRequests(
-    supportedChains.reduce(
+    supportedChains.reduce<PoHRequest[]>(
       (acc, chain) => [
         ...acc,
-        ...(humanity[chain.id].humanity
+        ...(humanity[chain.id]?.humanity?.requests
           ? humanity[chain.id]!.humanity!.requests.filter(
               (req) =>
                 !pendingRequests.some(
@@ -171,17 +173,30 @@ async function Profile({ params: { pohid } }: PageProps) {
                   chain.id === winnerClaimData.chainId
                 ) || // No winnerClaimRequest if it did not expired
                   !winnerClaimData.request), // if winnerClaimRequest has expired it is left as pastRequest
-            ).map((req) => ({
-              ...req,
-              chainId: chain.id,
-              expired: 
-                req.status.id === "resolved" 
-                  ? (!req.revocation && 
-                     humanity[chain.id].humanity?.winnerClaim[0]?.index === req.index &&
-                     (!humanity[chain.id]!.humanity!.registration ||
-                      Number(humanity[chain.id]!.humanity!.registration?.expirationTime) < Date.now() / 1000))
-                  : false,
-            }))
+            ).map((req) => {
+              // Calculate expired status
+              let isExpired = false;
+              
+              if (req.status.id === "resolved") {
+                if (!req.revocation && 
+                    humanity[chain.id].humanity?.winnerClaim?.some((claim) => claim.index === req.index) &&
+                    (!humanity[chain.id]!.humanity!.registration ||
+                     Number(humanity[chain.id]!.humanity!.registration?.expirationTime) < Date.now() / 1000)) {
+                  isExpired = true;
+                }
+              } else if (req.status.id === "transferring" && 
+                         contractData[chain.id]?.humanityLifespan && 
+                         Number(req.creationTime) + Number(contractData[chain.id].humanityLifespan) < Date.now() / 1000) {
+                isExpired = true;
+              }
+              
+              return {
+                ...req,
+                chainId: chain.id,
+                expired: isExpired,
+                rejected: req.status.id === "resolved" && !req.revocation && req.winnerParty?.id !== 'requester',
+              };
+            })
           : []),
       ],
       [] as PoHRequest[],
@@ -363,6 +378,7 @@ async function Profile({ params: { pohid } }: PageProps) {
                   registrationEvidenceRevokedReq={""}
                   status={winnerClaimData.status as string}
                   expired={false}
+                  rejected={false}
                 />
               ) : null}
             </div>
@@ -401,6 +417,7 @@ async function Profile({ params: { pohid } }: PageProps) {
                   }
                   status={req.status.id}
                   expired={req.expired}
+                  rejected={req.rejected}
                 />
               ))}
             </div>
@@ -432,6 +449,7 @@ async function Profile({ params: { pohid } }: PageProps) {
                 }
                 status={req.status.id}
                 expired={req.expired}
+                rejected={req.rejected}
               />
             ))}
           </div>

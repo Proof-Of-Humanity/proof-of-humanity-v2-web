@@ -456,36 +456,25 @@ export enum Challenger_OrderBy {
 
 export type CirclesAccount = {
   __typename?: 'CirclesAccount';
-  humanity: Humanity;
+  humanities: Array<Humanity>;
   id: Scalars['Bytes'];
   trustExpiryTime: Scalars['BigInt'];
+};
+
+
+export type CirclesAccountHumanitiesArgs = {
+  first?: InputMaybe<Scalars['Int']>;
+  orderBy?: InputMaybe<Humanity_OrderBy>;
+  orderDirection?: InputMaybe<OrderDirection>;
+  skip?: InputMaybe<Scalars['Int']>;
+  where?: InputMaybe<Humanity_Filter>;
 };
 
 export type CirclesAccount_Filter = {
   /** Filter for the block changed event. */
   _change_block?: InputMaybe<BlockChangedFilter>;
   and?: InputMaybe<Array<InputMaybe<CirclesAccount_Filter>>>;
-  humanity?: InputMaybe<Scalars['String']>;
-  humanity_?: InputMaybe<Humanity_Filter>;
-  humanity_contains?: InputMaybe<Scalars['String']>;
-  humanity_contains_nocase?: InputMaybe<Scalars['String']>;
-  humanity_ends_with?: InputMaybe<Scalars['String']>;
-  humanity_ends_with_nocase?: InputMaybe<Scalars['String']>;
-  humanity_gt?: InputMaybe<Scalars['String']>;
-  humanity_gte?: InputMaybe<Scalars['String']>;
-  humanity_in?: InputMaybe<Array<Scalars['String']>>;
-  humanity_lt?: InputMaybe<Scalars['String']>;
-  humanity_lte?: InputMaybe<Scalars['String']>;
-  humanity_not?: InputMaybe<Scalars['String']>;
-  humanity_not_contains?: InputMaybe<Scalars['String']>;
-  humanity_not_contains_nocase?: InputMaybe<Scalars['String']>;
-  humanity_not_ends_with?: InputMaybe<Scalars['String']>;
-  humanity_not_ends_with_nocase?: InputMaybe<Scalars['String']>;
-  humanity_not_in?: InputMaybe<Array<Scalars['String']>>;
-  humanity_not_starts_with?: InputMaybe<Scalars['String']>;
-  humanity_not_starts_with_nocase?: InputMaybe<Scalars['String']>;
-  humanity_starts_with?: InputMaybe<Scalars['String']>;
-  humanity_starts_with_nocase?: InputMaybe<Scalars['String']>;
+  humanities_?: InputMaybe<Humanity_Filter>;
   id?: InputMaybe<Scalars['Bytes']>;
   id_contains?: InputMaybe<Scalars['Bytes']>;
   id_gt?: InputMaybe<Scalars['Bytes']>;
@@ -508,16 +497,7 @@ export type CirclesAccount_Filter = {
 };
 
 export enum CirclesAccount_OrderBy {
-  Humanity = 'humanity',
-  HumanityClaimerName = 'humanity__claimerName',
-  HumanityId = 'humanity__id',
-  HumanityInTransfer = 'humanity__inTransfer',
-  HumanityNbBridgedRequests = 'humanity__nbBridgedRequests',
-  HumanityNbLegacyRequests = 'humanity__nbLegacyRequests',
-  HumanityNbPendingRequests = 'humanity__nbPendingRequests',
-  HumanityNbRequests = 'humanity__nbRequests',
-  HumanityPendingRevocation = 'humanity__pendingRevocation',
-  HumanityVouching = 'humanity__vouching',
+  Humanities = 'humanities',
   Id = 'id',
   TrustExpiryTime = 'trustExpiryTime'
 }
@@ -1207,7 +1187,27 @@ export type Humanity_Filter = {
   /** Filter for the block changed event. */
   _change_block?: InputMaybe<BlockChangedFilter>;
   and?: InputMaybe<Array<InputMaybe<Humanity_Filter>>>;
+  circleAccount?: InputMaybe<Scalars['String']>;
   circleAccount_?: InputMaybe<CirclesAccount_Filter>;
+  circleAccount_contains?: InputMaybe<Scalars['String']>;
+  circleAccount_contains_nocase?: InputMaybe<Scalars['String']>;
+  circleAccount_ends_with?: InputMaybe<Scalars['String']>;
+  circleAccount_ends_with_nocase?: InputMaybe<Scalars['String']>;
+  circleAccount_gt?: InputMaybe<Scalars['String']>;
+  circleAccount_gte?: InputMaybe<Scalars['String']>;
+  circleAccount_in?: InputMaybe<Array<Scalars['String']>>;
+  circleAccount_lt?: InputMaybe<Scalars['String']>;
+  circleAccount_lte?: InputMaybe<Scalars['String']>;
+  circleAccount_not?: InputMaybe<Scalars['String']>;
+  circleAccount_not_contains?: InputMaybe<Scalars['String']>;
+  circleAccount_not_contains_nocase?: InputMaybe<Scalars['String']>;
+  circleAccount_not_ends_with?: InputMaybe<Scalars['String']>;
+  circleAccount_not_ends_with_nocase?: InputMaybe<Scalars['String']>;
+  circleAccount_not_in?: InputMaybe<Array<Scalars['String']>>;
+  circleAccount_not_starts_with?: InputMaybe<Scalars['String']>;
+  circleAccount_not_starts_with_nocase?: InputMaybe<Scalars['String']>;
+  circleAccount_starts_with?: InputMaybe<Scalars['String']>;
+  circleAccount_starts_with_nocase?: InputMaybe<Scalars['String']>;
   claimerName?: InputMaybe<Scalars['String']>;
   claimerName_contains?: InputMaybe<Scalars['String']>;
   claimerName_contains_nocase?: InputMaybe<Scalars['String']>;
@@ -3014,7 +3014,7 @@ export type HumanityQueryVariables = Exact<{
 }>;
 
 
-export type HumanityQuery = { __typename?: 'Query', humanity?: { __typename?: 'Humanity', registration?: { __typename?: 'Registration', expirationTime: any, claimer: { __typename?: 'Claimer', id: any, name?: string | null } } | null, requests: Array<{ __typename?: 'Request', id: any, creationTime: any, lastStatusChange: any, index: any, revocation: boolean, registrationEvidenceRevokedReq: string, requester: any, status: { __typename?: 'Status', id: string }, claimer: { __typename?: 'Claimer', id: any, name?: string | null }, evidenceGroup: { __typename?: 'EvidenceGroup', evidence: Array<{ __typename?: 'Evidence', id: any, uri: string, creationTime: any, submitter: any }> } }>, winnerClaim: Array<{ __typename?: 'Request', index: any, resolutionTime: any, evidenceGroup: { __typename?: 'EvidenceGroup', evidence: Array<{ __typename?: 'Evidence', uri: string }> } }> } | null, crossChainRegistration?: { __typename?: 'CrossChainRegistration', expirationTime: any, lastReceivedTransferTimestamp: any, claimer: { __typename?: 'Claimer', id: any } } | null, outTransfer?: { __typename?: 'OutTransfer', foreignProxy: any, transferHash: any, transferTimestamp: any } | null };
+export type HumanityQuery = { __typename?: 'Query', humanity?: { __typename?: 'Humanity', registration?: { __typename?: 'Registration', expirationTime: any, claimer: { __typename?: 'Claimer', id: any, name?: string | null } } | null, requests: Array<{ __typename?: 'Request', id: any, creationTime: any, lastStatusChange: any, index: any, revocation: boolean, registrationEvidenceRevokedReq: string, requester: any, status: { __typename?: 'Status', id: string }, claimer: { __typename?: 'Claimer', id: any, name?: string | null }, winnerParty?: { __typename?: 'Party', id: string } | null, evidenceGroup: { __typename?: 'EvidenceGroup', evidence: Array<{ __typename?: 'Evidence', id: any, uri: string, creationTime: any, submitter: any }> } }>, winnerClaim: Array<{ __typename?: 'Request', index: any, resolutionTime: any, evidenceGroup: { __typename?: 'EvidenceGroup', evidence: Array<{ __typename?: 'Evidence', uri: string }> } }> } | null, crossChainRegistration?: { __typename?: 'CrossChainRegistration', expirationTime: any, lastReceivedTransferTimestamp: any, claimer: { __typename?: 'Claimer', id: any } } | null, outTransfer?: { __typename?: 'OutTransfer', foreignProxy: any, transferHash: any, transferTimestamp: any } | null };
 
 export type MeQueryVariables = Exact<{
   id: Scalars['ID'];
@@ -3035,7 +3035,7 @@ export type RequestQueryVariables = Exact<{
 }>;
 
 
-export type RequestQuery = { __typename?: 'Query', request?: { __typename?: 'Request', index: any, revocation: boolean, registrationEvidenceRevokedReq: string, requester: any, creationTime: any, lastStatusChange: any, status: { __typename?: 'Status', id: string }, vouches: Array<{ __typename?: 'VouchInProcess', voucher: { __typename?: 'Humanity', id: any } }>, humanity: { __typename?: 'Humanity', id: any, nbRequests: any, nbLegacyRequests: any, registration?: { __typename?: 'Registration', expirationTime: any, claimer: { __typename?: 'Claimer', id: any } } | null, winnerClaim: Array<{ __typename?: 'Request', index: any, resolutionTime: any, evidenceGroup: { __typename?: 'EvidenceGroup', evidence: Array<{ __typename?: 'Evidence', uri: string }> } }> }, claimer: { __typename?: 'Claimer', id: any, name?: string | null, vouchesReceived: Array<{ __typename?: 'Vouch', from: { __typename?: 'Claimer', id: any, registration?: { __typename?: 'Registration', expirationTime: any, humanity: { __typename?: 'Humanity', vouching: boolean } } | null }, humanity: { __typename?: 'Humanity', id: any } }>, vouches: Array<{ __typename?: 'Vouch', for: { __typename?: 'Claimer', id: any, name?: string | null } }> }, evidenceGroup: { __typename?: 'EvidenceGroup', evidence: Array<{ __typename?: 'Evidence', id: any, uri: string, creationTime: any, submitter: any }> }, challenges: Array<{ __typename?: 'Challenge', id: any, disputeId: any, nbRounds: any, reason: { __typename?: 'Reason', id: string }, challenger?: { __typename?: 'Challenger', id: any } | null, rounds: Array<{ __typename?: 'Round', creationTime: any, index: any, requesterFund: { __typename?: 'RequesterFund', amount: any }, challengerFund?: { __typename?: 'ChallengerFund', amount: any } | null }> }>, arbitratorHistory: { __typename?: 'ArbitratorHistory', updateTime: any, registrationMeta: string, id: string, arbitrator: any, extraData: any } } | null };
+export type RequestQuery = { __typename?: 'Query', request?: { __typename?: 'Request', index: any, revocation: boolean, registrationEvidenceRevokedReq: string, requester: any, creationTime: any, lastStatusChange: any, status: { __typename?: 'Status', id: string }, winnerParty?: { __typename?: 'Party', id: string } | null, vouches: Array<{ __typename?: 'VouchInProcess', voucher: { __typename?: 'Humanity', id: any } }>, humanity: { __typename?: 'Humanity', id: any, nbRequests: any, nbLegacyRequests: any, registration?: { __typename?: 'Registration', expirationTime: any, claimer: { __typename?: 'Claimer', id: any } } | null, winnerClaim: Array<{ __typename?: 'Request', index: any, resolutionTime: any, evidenceGroup: { __typename?: 'EvidenceGroup', evidence: Array<{ __typename?: 'Evidence', uri: string }> } }> }, claimer: { __typename?: 'Claimer', id: any, name?: string | null, vouchesReceived: Array<{ __typename?: 'Vouch', from: { __typename?: 'Claimer', id: any, registration?: { __typename?: 'Registration', expirationTime: any, humanity: { __typename?: 'Humanity', vouching: boolean } } | null }, humanity: { __typename?: 'Humanity', id: any } }>, vouches: Array<{ __typename?: 'Vouch', for: { __typename?: 'Claimer', id: any, name?: string | null } }> }, evidenceGroup: { __typename?: 'EvidenceGroup', evidence: Array<{ __typename?: 'Evidence', id: any, uri: string, creationTime: any, submitter: any }> }, challenges: Array<{ __typename?: 'Challenge', id: any, disputeId: any, nbRounds: any, reason: { __typename?: 'Reason', id: string }, challenger?: { __typename?: 'Challenger', id: any } | null, rounds: Array<{ __typename?: 'Round', creationTime: any, index: any, requesterFund: { __typename?: 'RequesterFund', amount: any }, challengerFund?: { __typename?: 'ChallengerFund', amount: any } | null }> }>, arbitratorHistory: { __typename?: 'ArbitratorHistory', updateTime: any, registrationMeta: string, id: string, arbitrator: any, extraData: any } } | null };
 
 export type RequestsQueryVariables = Exact<{
   skip?: InputMaybe<Scalars['Int']>;
@@ -3044,7 +3044,7 @@ export type RequestsQueryVariables = Exact<{
 }>;
 
 
-export type RequestsQuery = { __typename?: 'Query', requests: Array<{ __typename?: 'Request', id: any, index: any, revocation: boolean, registrationEvidenceRevokedReq: string, creationTime: any, lastStatusChange: any, requester: any, status: { __typename?: 'Status', id: string }, claimer: { __typename?: 'Claimer', id: any, name?: string | null }, humanity: { __typename?: 'Humanity', id: any, nbRequests: any, registration?: { __typename?: 'Registration', expirationTime: any, claimer: { __typename?: 'Claimer', id: any } } | null, winnerClaim: Array<{ __typename?: 'Request', index: any, resolutionTime: any, evidenceGroup: { __typename?: 'EvidenceGroup', evidence: Array<{ __typename?: 'Evidence', uri: string }> } }> }, evidenceGroup: { __typename?: 'EvidenceGroup', evidence: Array<{ __typename?: 'Evidence', uri: string }> } }> };
+export type RequestsQuery = { __typename?: 'Query', requests: Array<{ __typename?: 'Request', id: any, index: any, revocation: boolean, registrationEvidenceRevokedReq: string, creationTime: any, lastStatusChange: any, requester: any, winnerParty?: { __typename?: 'Party', id: string } | null, status: { __typename?: 'Status', id: string }, claimer: { __typename?: 'Claimer', id: any, name?: string | null }, humanity: { __typename?: 'Humanity', id: any, nbRequests: any, registration?: { __typename?: 'Registration', expirationTime: any, claimer: { __typename?: 'Claimer', id: any } } | null, winnerClaim: Array<{ __typename?: 'Request', index: any, resolutionTime: any, evidenceGroup: { __typename?: 'EvidenceGroup', evidence: Array<{ __typename?: 'Evidence', uri: string }> } }> }, evidenceGroup: { __typename?: 'EvidenceGroup', evidence: Array<{ __typename?: 'Evidence', uri: string }> } }> };
 
 export type IsSyncedQueryVariables = Exact<{
   block: Scalars['Int'];
@@ -3075,7 +3075,6 @@ export const WinnerClaimFragmentDoc = gql`
     where: {or: [{revocation: false, status: "resolved", winnerParty: "requester"}, {revocation: false, status: "transferring", winnerParty: "requester"}]}
     orderBy: resolutionTime
     orderDirection: desc
-    first: 1
   ) {
     index
     resolutionTime
@@ -3208,6 +3207,9 @@ export const HumanityDocument = gql`
         id
         name
       }
+      winnerParty {
+        id
+      }
       creationTime
       lastStatusChange
       index
@@ -3268,6 +3270,9 @@ export const RequestDocument = gql`
     query Request($id: ID!) {
   request(id: $id) {
     status {
+      id
+    }
+    winnerParty {
       id
     }
     index
@@ -3367,6 +3372,9 @@ export const RequestsDocument = gql`
   ) {
     id
     index
+    winnerParty {
+      id
+    }
     status {
       id
     }

@@ -8,7 +8,6 @@ fragment winnerClaim on Humanity {
     }
     orderBy: resolutionTime
     orderDirection: desc
-    first: 1
   ) {
     index
     resolutionTime

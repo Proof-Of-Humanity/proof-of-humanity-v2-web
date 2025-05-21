@@ -46,6 +46,7 @@ export type RequestsQueryItem = ArrayElement<RequestsQuery["requests"]>;
 interface RequestInterface extends RequestsQueryItem {
   chainId: SupportedChainId;
   expired: boolean;
+  rejected: boolean;
 }
 
 const sortRequests = (request: RequestInterface[]): RequestInterface[] => {
@@ -115,6 +116,7 @@ const normalize = (
             request,
             humanityLifespanAllChains[Number(chainId) as SupportedChainId],
           ),
+          rejected: request.status.id === "resolved" && !request.revocation && request.winnerParty?.id != 'requester'
         })),
       ],
       [],
@@ -343,6 +345,7 @@ function RequestsGrid() {
             }
             evidence={request.evidenceGroup.evidence}
             expired={request.expired}
+            rejected={request.rejected}
           />
         ))}
       </div>
