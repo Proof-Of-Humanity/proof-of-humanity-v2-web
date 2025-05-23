@@ -11,6 +11,9 @@ function IntegrationInfoCard({ step, onPrevious, onNext , previousStep, nextStep
              <div className="flex flex-col mt-4 md:mt-8 lg:mt-20 min-h-[150px] md:px-8 md:h-80">
                 <p className="text-primaryText text-xl md:text-2xl font-semibold">{step.title}</p>
                 <p className="text-primaryText mt-4 md:mt-6 text-sm md:text-base">{addLinkToText(step.description)}</p>
+                {step.disclaimer && (
+                    <div className="text-orange-400 text-sm md:text-base mt-4">{step.disclaimer}</div>
+                )}
             </div> 
             <div className="flex flex-row justify-center md:justify-end mt-4 md:mr-8">
             <LeftArrowIcon 

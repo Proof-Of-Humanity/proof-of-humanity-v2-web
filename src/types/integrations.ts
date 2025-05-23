@@ -16,6 +16,7 @@ export interface ConnectionStep {
   id: string;
   title: string;
   description: string;
+  disclaimer?: string;
   externalLink?: string;
   image?: string;
 }

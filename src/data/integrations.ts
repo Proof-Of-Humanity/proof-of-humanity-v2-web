@@ -14,7 +14,7 @@ const integrations: Record<string, Integration> = {
       {
         id: 'start',
         title: 'Start',
-        description: 'Sign up for |Metri wallet;https://metri.xyz|. ',
+        description: 'Sign up for |Metri wallet;https://app.metri.xyz|. ',
         image: '/images/integrations/circles-start.png',
       },
       {
@@ -27,6 +27,7 @@ const integrations: Record<string, Integration> = {
         id: 'activateAccount',
         title: 'Activate your account',
         description: 'Share your QR code with an existing user to activate your account.',
+        disclaimer: 'IMPORTANT: You need to be invited into Circles to be able to join the POH-circles group.',
         image: '/images/integrations/circles-activate-account.png',
       },
       {
@@ -46,7 +47,7 @@ const integrations: Record<string, Integration> = {
       {
         id: 'collectCRC',
         title: 'Collecting CRC',
-        description: 'Once your Circles account is created you get 24 CRC (individual tokens) per day — one every hour. To mint POH Circles group tokens, sign in to |Circles UI;https://circles.garden/welcome|, go to Contacts at the top, then select the POH Minter.',
+        description: 'Once your Circles account is created you get 24 CRC (individual tokens) per day — one every hour. To mint POH Circles group tokens, sign in to |Circles UI;https://app.aboutcircles.com|, go to Contacts at the top, then select the POH Minter.',
         image: '/images/integrations/collect-crc.png',
       },
       {

@@ -13,7 +13,7 @@ export default [
       },
       {
         "internalType": "address",
-        "name": "_coreMembersGroup",
+        "name": "_baseGroup",
         "type": "address"
       },
       {
@@ -131,6 +131,19 @@ export default [
     "type": "event"
   },
   {
+    "inputs": [],
+    "name": "baseGroup",
+    "outputs": [
+      {
+        "internalType": "contract IBaseGroup",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
     "inputs": [
       {
         "internalType": "address",
@@ -158,11 +171,11 @@ export default [
     "inputs": [
       {
         "internalType": "address",
-        "name": "_coreMembersGroup",
+        "name": "_baseGroup",
         "type": "address"
       }
     ],
-    "name": "changeCoreMembersGroup",
+    "name": "changeBaseGroup",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -238,19 +251,6 @@ export default [
         "internalType": "bytes20",
         "name": "",
         "type": "bytes20"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "coreMembersGroup",
-    "outputs": [
-      {
-        "internalType": "contract ICoreMembersGroup",
-        "name": "",
-        "type": "address"
       }
     ],
     "stateMutability": "view",
