@@ -135,7 +135,9 @@ export default function useCirclesIntegration() {
       onSuccess: () => {
         loading.stop();
         setDisableButton(true);
-        refetchCirclesData();
+       setTimeout(() => {
+         refetchCirclesData();
+        }, 1000);
         toast.success("Successfully linked Circles account!");
       },
       onFail: () => {
@@ -159,7 +161,9 @@ export default function useCirclesIntegration() {
       onSuccess: () => {
         loading.stop();
         setDisableButton(true);
-        refetchCirclesData();
+       setTimeout(() => {
+         refetchCirclesData();
+        }, 1000);
         toast.success("Successfully renewed trust!");
       },
       onFail: () => {

@@ -71,7 +71,7 @@ export default function CirclesLinkAccountStep({
               <div className="flex items-start text-sm mt-2">
                 <InfoIcon width={16} height={16} className="mt-1 mr-1 stroke-orange-400 stroke-2" />
                 <span className="text-secondaryText">
-                  Make sure this is your correct Circles address. Please, double check it before linking the accounts as it's a permanent action.
+                  Make sure this is your correct Circles address. You need to be invited into Circles to be able to join the POH-circles group. Make sure you were invited before proceeding. Please, double check it before linking the accounts as its a permanent action.
                 </span>
               </div>
               {(() => {
