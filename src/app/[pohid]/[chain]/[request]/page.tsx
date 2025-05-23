@@ -1,4 +1,5 @@
-import { Hash } from "@wagmi/core";
+import { isRequestExpired } from "utils/time";
+import type { Hash } from "viem";
 import Arrow from "components/Arrow";
 import Attachment from "components/Attachment";
 import ChainLogo from "components/ChainLogo";
@@ -25,7 +26,7 @@ import Link from "next/link";
 import { EvidenceFile, MetaEvidenceFile, RegistrationFile } from "types/docs";
 import { machinifyId, prettifyId } from "utils/identifier";
 import { ipfs, ipfsFetch } from "utils/ipfs";
-import { Address } from "viem";
+import type { Address } from "viem";
 import ActionBar from "./ActionBar";
 import Evidence from "./Evidence";
 import Info from "./Info";
@@ -85,34 +86,10 @@ export default async function Request({ params }: PageProps) {
 
   const rejected = request.status.id === "resolved" && !request.revocation && request.winnerParty?.id != 'requester';
 
-  const hasExpired = () => {
-    if (request.status.id === "resolved") {
-      if (!request.revocation && request.humanity.winnerClaim.length > 0) {
-        if (request.humanity.winnerClaim.some((claim) => claim.index === request.index)) {
-          if (!!contractData.humanityLifespan) {
-            return (
-              /* (Number(request.humanity.winnerClaim[0].resolutionTime) > 0 && 
-                Number(request.humanity.winnerClaim[0].resolutionTime) + Number(contractData.humanityLifespan) < Date.now() / 1000) || 
-                (Number(request.creationTime) + Number(contractData.humanityLifespan) < Date.now() / 1000) ||  */
-              !request.humanity.registration ||
-              Number(request.humanity.registration?.expirationTime) <
-                Date.now() / 1000
-            );
-          }
-          return false;
-        } 
-        return false;
-      }
-    } else if (request.status.id === "transferring") {
-      return (
-        Number(request.creationTime) + Number(contractData.humanityLifespan) <
-        Date.now() / 1000
-      );
-    }
-    return false;
-  };
-
-  const expired = hasExpired();
+  const totalRequests = 
+    (request.humanity.nbRequests ? Number(request.humanity.nbRequests) : 0) + 
+    (request.humanity.nbLegacyRequests ? Number(request.humanity.nbLegacyRequests) : 0);
+  const expired = isRequestExpired(request, contractData, totalRequests);
 
   let registrationFile: RegistrationFile | null;
   let revocationFile: EvidenceFile | null = null;

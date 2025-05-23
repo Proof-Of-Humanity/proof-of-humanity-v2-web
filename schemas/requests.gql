@@ -26,6 +26,7 @@ query Requests($skip: Int, $first: Int, $where: Request_filter) {
     humanity {
       id
       nbRequests
+      nbLegacyRequests
       registration {
         expirationTime
         claimer {

@@ -16,6 +16,7 @@ import { HumanityQuery } from "generated/graphql";
 import Image from "next/image";
 import Link from "next/link";
 import React from "react";
+import { isRequestExpired } from "utils/time";
 import { shortenAddress } from "utils/address";
 import { machinifyId, prettifyId } from "utils/identifier";
 import CrossChain from "./CrossChain";
@@ -99,14 +100,22 @@ async function Profile({ params: { pohid } }: PageProps) {
         requestQuery = humanity[lastEvidenceChain.id]!.humanity!.requests.find(
           (req) => req.index === request!.index,
         );
-        expired =
-          humanity[homeChain.id]!.humanity!.registration!.expirationTime <
-          Date.now() / 1000;
-        /* expired = (
-          (Number(request.resolutionTime) > 0 && 
-          Number(request.resolutionTime) + Number(contractData[lastEvidenceChain.id].humanityLifespan) < Date.now() / 1000) || 
-          (Number(requestQuery?.creationTime) + Number(contractData[lastEvidenceChain.id].humanityLifespan) < Date.now() / 1000)
-        ); */
+        const totalRequests = 
+          (humanity[homeChain.id]!.humanity!.nbRequests ? Number(humanity[homeChain.id]!.humanity!.nbRequests) : 0) + 
+          (humanity[homeChain.id]!.humanity!.nbLegacyRequests ? Number(humanity[homeChain.id]!.humanity!.nbLegacyRequests) : 0);
+        
+        expired = isRequestExpired(
+          {
+            status: { id: requestQuery?.status.id || "resolved" },
+            creationTime: requestQuery?.creationTime || 0,
+            revocation: requestQuery?.revocation || false,
+            humanity: humanity[homeChain.id]!.humanity!,
+            index: request.index,
+            winnerParty: requestQuery?.winnerParty
+          },
+          { humanityLifespan: contractData[lastEvidenceChain.id].humanityLifespan },
+          totalRequests
+        );
         if (expired) {
           request = undefined;
         } else {
@@ -174,21 +183,22 @@ async function Profile({ params: { pohid } }: PageProps) {
                 ) || // No winnerClaimRequest if it did not expired
                   !winnerClaimData.request), // if winnerClaimRequest has expired it is left as pastRequest
             ).map((req) => {
-              // Calculate expired status
-              let isExpired = false;
-              
-              if (req.status.id === "resolved") {
-                if (!req.revocation && 
-                    humanity[chain.id].humanity?.winnerClaim?.some((claim) => claim.index === req.index) &&
-                    (!humanity[chain.id]!.humanity!.registration ||
-                     Number(humanity[chain.id]!.humanity!.registration?.expirationTime) < Date.now() / 1000)) {
-                  isExpired = true;
-                }
-              } else if (req.status.id === "transferring" && 
-                         contractData[chain.id]?.humanityLifespan && 
-                         Number(req.creationTime) + Number(contractData[chain.id].humanityLifespan) < Date.now() / 1000) {
-                isExpired = true;
-              }
+                const totalRequests = 
+                  (humanity[chain.id]?.humanity?.nbRequests ? Number(humanity[chain.id].humanity?.nbRequests) : 0) + 
+                  (humanity[chain.id]?.humanity?.nbLegacyRequests ? Number(humanity[chain.id].humanity?.nbLegacyRequests) : 0);
+                
+                const isExpired = isRequestExpired(
+                  {
+                    status: { id: req.status.id },
+                    creationTime: req.creationTime,
+                    revocation: req.revocation,
+                    humanity: humanity[chain.id].humanity!,
+                    index: req.index,
+                    winnerParty: req.winnerParty
+                  },
+                  { humanityLifespan: contractData[chain.id]?.humanityLifespan },
+                  totalRequests
+                );
               
               return {
                 ...req,
