@@ -2872,6 +2872,13 @@
     "@jridgewell/resolve-uri" "^3.1.0"
     "@jridgewell/sourcemap-codec" "^1.4.14"
 
+"@kleros/kleros-app@^2.1.0":
+  version "2.1.0"
+  resolved "https://registry.yarnpkg.com/@kleros/kleros-app/-/kleros-app-2.1.0.tgz#746afb8481e1e55020276fe65c9cf601284fb182"
+  integrity sha512-/VF80B1+va17ofgOjyXd1S9qvJWrkpc+8LeZEw8jehFm8AiPUGbVxmp3OfSEKk5T8XTcow+e5wKuchndv1CiyA==
+  dependencies:
+    jose "^5.9.6"
+
 "@legendapp/state@^1.11.1":
   version "1.11.3"
   resolved "https://registry.yarnpkg.com/@legendapp/state/-/state-1.11.3.tgz#fc3d8aafae6c4bf24a054b24432b2e070a95251e"
@@ -8847,6 +8854,11 @@ jose@^4.11.4:
   version "4.15.9"
   resolved "https://registry.yarnpkg.com/jose/-/jose-4.15.9.tgz#9b68eda29e9a0614c042fa29387196c7dd800100"
   integrity sha512-1vUQX+IdDMVPj4k8kOxgUqlcK518yluMuGZwqlr44FS1ppZB/5GWh4rZG89erpOBOJjU/OBsnCVFfapsRz6nEA==
+
+jose@^5.9.6:
+  version "5.10.0"
+  resolved "https://registry.yarnpkg.com/jose/-/jose-5.10.0.tgz#c37346a099d6467c401351a9a0c2161e0f52c4be"
+  integrity sha512-s+3Al/p9g32Iq+oqXxkW//7jk2Vig6FF1CFqzVXoTUXt2qz89YWbL+OwS17NFYEvxC35n0FKeGO2LGYSxeM2Gg==
 
 jotai@^1.9.0:
   version "1.13.1"
