@@ -58,3 +58,27 @@ export const isRequestExpired = (
   }
   return false;
 };
+
+/**
+ * Formats a relative time string for a given date
+ * @param targetDate The date to format
+ * @returns A string representing the relative time
+ */
+export const formatRelativeTime = (targetDate: Date): string => {
+  const now = new Date();
+  const diffMs = targetDate.getTime() - now.getTime();
+
+  if (diffMs <= 0) return "now"; // Should ideally not happen if we only call for future dates
+
+  const diffSeconds = Math.round(diffMs / 1000);
+  if (diffSeconds < 60) return `in ${diffSeconds} second${diffSeconds > 1 ? 's' : ''}`;
+  
+  const diffMinutes = Math.round(diffSeconds / 60);
+  if (diffMinutes < 60) return `in ${diffMinutes} minute${diffMinutes > 1 ? 's' : ''}`;
+  
+  const diffHours = Math.round(diffMinutes / 60);
+  if (diffHours < 24) return `in ${diffHours} hour${diffHours > 1 ? 's' : ''}`;
+  
+  const diffDays = Math.round(diffHours / 24);
+  return `in ${diffDays} day${diffDays > 1 ? 's' : ''}`;
+};

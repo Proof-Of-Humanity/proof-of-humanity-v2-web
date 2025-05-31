@@ -33,7 +33,7 @@ const Options: React.FC = () => {
   };
 
   return (
-    <div className="mt-[16px] flex flex-row md:mt-0">
+    <div className="mt-[16px] flex flex-row items-center md:mt-0">
       {isConnected && <SettingsPopover />}
       <ExternalLink href="https://snapshot.org/#/poh.eth/">
         <Image alt="snapshot" src="/logo/snapshot.svg" height={16} width={16} />
