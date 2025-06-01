@@ -167,9 +167,9 @@ const SettingsPopover: React.FC = () => {
         }
         open={popoverOpen}
         onClose={onPopoverClose}
-        className="w-[26rem]"
+        className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[calc(100vw-2rem)] max-w-[26rem] sm:relative sm:left-auto sm:top-auto sm:transform-none sm:w-[26rem] sm:max-w-none"
       >
-        <div className="p-6">
+        <div className="p-4 sm:p-6">
           <div className="text-center mb-6">
             <h2 className="text-xl font-semibold text-primaryText">Settings</h2>
           </div>
@@ -180,7 +180,7 @@ const SettingsPopover: React.FC = () => {
                 onClick={handleSignIn}
                 isLoading={isSigningIn}
                 label={isSigningIn ? "Signing In..." : "Sign In"}
-                className="normal-case min-h-[44px] transition-colors duration-200"
+                className="w-full sm:w-auto normal-case min-h-[44px] transition-colors duration-200"
                 ariaLabel="Sign in with wallet"
               />
             </div>
@@ -198,15 +198,15 @@ const SettingsPopover: React.FC = () => {
                       if (user?.email) {
                         const buttonState = getActionButtonProps();
                         return (
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center">
-                              <span className="px-4 py-2 text-primaryText">{user.email}</span>
+                          <div className="flex flex-col sm:flex-row items-stretch sm:items-center sm:justify-between gap-2 sm:gap-0">
+                            <div className="flex items-center flex-grow">
+                              <span className="px-4 py-2 text-primaryText w-full sm:w-auto text-center sm:text-left break-all">{user.email}</span>
                             </div>
                             <ActionButton
                               onClick={() => setEditMode(EditMode.EDIT)}
                               label={buttonState.label}
                               disabled={buttonState.isDisabled}
-                              className={`px-6 normal-case text-base rounded-l-none min-h-[44px] transition-colors duration-200`}
+                              className={`w-full sm:w-auto px-6 normal-case text-base min-h-[44px] transition-colors duration-200`}
                               ariaLabel={editButtonTooltip || `${buttonState.label} email address ${user.email}`}
                               tooltip={editButtonTooltip}
                             />
@@ -219,8 +219,8 @@ const SettingsPopover: React.FC = () => {
                     case EditMode.EDIT:
                       const buttonState = getActionButtonProps();
                       return (
-                        <div className="flex">
-                          <div className="flex-1">
+                        <div className="flex flex-col sm:flex-row">
+                          <div className="flex-1 mb-2 sm:mb-0 sm:mr-0">
                             <input
                               type="email"
                               value={email}
@@ -242,7 +242,7 @@ const SettingsPopover: React.FC = () => {
                             isLoading={isUpdatingUser || isAddingUser}
                             disabled={buttonState.isDisabled}
                             label={buttonState.label}
-                            className="px-6 normal-case text-base rounded-l-none min-h-[44px] transition-colors duration-200"
+                            className="w-full sm:w-auto px-6 normal-case text-base rounded-l-none min-h-[44px] transition-colors duration-200"
                             ariaLabel={`${buttonState.label} email address`}
                           />
                         </div>
@@ -265,8 +265,8 @@ const SettingsPopover: React.FC = () => {
                     );
                   } else if (user?.email && !user.isEmailVerified) {
                     return (
-                      <div className="text-sm text-secondaryText animate-fadeIn flex gap-1" role="alert">
-                        <InfoIcon className="h-8 w-8 stroke-orange-400 -mt-1" />
+                      <div className="text-sm text-secondaryText animate-fadeIn flex flex-col sm:flex-row gap-1 items-center sm:items-stretch text-center sm:text-left" role="alert">
+                        <InfoIcon className="sm:h-4 h-8 sm:w-4 w-8 stroke-orange-400 shrink-0 mt-1" />
                         <span>Verification email sent! Please check your inbox to confirm your email address.</span>
                       </div>
                     );
