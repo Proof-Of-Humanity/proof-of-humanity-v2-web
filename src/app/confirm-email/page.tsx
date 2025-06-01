@@ -1,107 +1,169 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import { useEffect } from 'react'; 
 import { useSearchParams } from 'next/navigation';
 import { useAtlasProvider } from '@kleros/kleros-app';
+import { useMutation } from '@tanstack/react-query';
 import Link from 'next/link';
+import Image from 'next/image';
 
-enum VerificationStatus {
-  LOADING,
-  SUCCESS,
-  ERROR,
-  INVALID_PARAMS
-}
 
 const ConfirmEmailPage: React.FC = () => {
   const searchParams = useSearchParams();
   const { confirmEmail } = useAtlasProvider();
-  const [status, setStatus] = useState<VerificationStatus>(VerificationStatus.LOADING);
-  const [message, setMessage] = useState<string>('Verifying your email, please wait...');
+
+  const address = searchParams.get('address');
+  const token = searchParams.get('token');
+
+  const mutation = useMutation({
+    mutationFn: async ({ address, token }: { address: string; token: string }) => {
+      return await confirmEmail({ address, token });
+    },
+    retry: false,
+  });
 
   useEffect(() => {
-    const address = searchParams.get('address');
-    const token = searchParams.get('token');
+    if (address && token && mutation.status === 'idle') {
+      mutation.mutate({ address, token });
+    }
+  }, [address, token]);
 
-    if (!address || !token) {
-      setStatus(VerificationStatus.INVALID_PARAMS);
-      setMessage('Invalid verification link: Required information is missing.');
-      return;
+  const getStatus = () => {
+    if (mutation.isSuccess && mutation.data?.isConfirmed) {
+      return {
+        icon: (
+          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-status-registered/10">
+            <svg
+              className="h-8 w-8 text-status-registered"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M5 13l4 4L19 7"
+              />
+            </svg>
+          </div>
+        ),
+        color: 'text-status-registered',
+        title: 'Email Verified!'
+      };
     }
 
-    const verify = async () => {
-      try {
-        if (!confirmEmail) {
-          setStatus(VerificationStatus.ERROR);
-          setMessage('Verification service is currently unavailable. Please try again later.');
-          return;
-        }
-        const { isConfirmed, isTokenExpired, isTokenInvalid, isError } = await confirmEmail({ address, token });
+    if (mutation.isError || (!address || !token) || (mutation.isSuccess && !mutation.data?.isConfirmed)) {
+      return {
+        icon: (
+          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-status-rejected/10">
+            <svg
+              className="h-8 w-8 text-status-rejected"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M6 18L18 6M6 6l12 12"
+              />
+            </svg>
+          </div>
+        ),
+        color: 'text-status-rejected',
+        title: 'Verification Failed'
+      };
+    }
 
-        if (isError) {
-          setStatus(VerificationStatus.ERROR);
-          setMessage('An unexpected error occurred during email verification. Please try again.');
-          return;
-        }
-
-        if (isConfirmed) {
-          setStatus(VerificationStatus.SUCCESS);
-          setMessage('Email verified successfully! You can now close this page.');
-        } else {
-          setStatus(VerificationStatus.ERROR);
-          if (isTokenExpired) {
-            setMessage('Email verification failed: The link has expired. Please request a new one.');
-          } else if (isTokenInvalid) {
-            setMessage('Email verification failed: The link is invalid.');
-          } else {
-            setMessage('Email verification failed. Please try again or request a new verification link.');
-          }
-        }
-      } catch (error) {
-        console.error('Email confirmation error:', error);
-        setStatus(VerificationStatus.ERROR);
-        setMessage('An error occurred during email verification. Please try again.');
-      }
+    return {
+      icon: (
+        <div className="flex h-16 w-16 items-center justify-center">
+          <Image
+            alt="loading"
+            src="/logo/poh-colored.svg"
+            className="animate-flip"
+            width={32}
+            height={32}
+          />
+        </div>
+      ),
+      color: 'text-primaryText',
+      title: 'Verifying Email...'
     };
-
-    verify();
-  }, [searchParams, confirmEmail]);
-
-  const renderContent = () => {
-    let textColor = 'text-gray-700';
-    if (status === VerificationStatus.SUCCESS) {
-      textColor = 'text-green-600';
-    } else if (status === VerificationStatus.ERROR || status === VerificationStatus.INVALID_PARAMS) {
-      textColor = 'text-red-600';
-    }
-
-    return (
-      <div className={`p-4 md:p-8 rounded-lg shadow-lg bg-white text-center ${textColor}`}>
-        {status === VerificationStatus.LOADING && (
-          <div className="flex justify-center items-center mb-4">
-            <span 
-              className="inline-block w-8 h-8 border-4 border-t-transparent border-blue-500 rounded-full animate-spin"
-              role="status"
-            />
-          </div>
-        )}
-        <p className="text-lg font-medium">{message}</p>
-        {(status === VerificationStatus.SUCCESS || status === VerificationStatus.ERROR || status === VerificationStatus.INVALID_PARAMS) && (
-          <div className="mt-6">
-            <Link href="/" legacyBehavior>
-              <a className="px-6 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors">
-                Go to Homepage
-              </a>
-            </Link>
-          </div>
-        )}
-      </div>
-    );
   };
 
+  const getMessage = () => {
+    if (!address || !token) {
+      return 'Invalid verification link: Required information is missing.';
+    }
+
+    if (mutation.isPending) {
+      return 'Verifying your email, please wait...';
+    }
+
+    if (mutation.isSuccess) {
+      if (mutation.data?.isConfirmed) {
+        return 'Email verified successfully! You can now close this page.';
+      } else {
+        const { isTokenExpired, isTokenInvalid } = mutation.data || {};
+        if (isTokenExpired) {
+          return 'Email verification failed: The link has expired. Please request a new one.';
+        } else if (isTokenInvalid) {
+          return 'Email verification failed: The link is invalid.';
+        } else {
+          return 'Email verification failed. Please try again or request a new verification link.';
+        }
+      }
+    }
+
+    if (mutation.isError) {
+      return 'An unexpected error occurred during email verification. Please try again.';
+    }
+
+    return 'Verifying your email, please wait...';
+  };
+
+  const status = getStatus();
+  const isLoading = mutation.isPending;
+  const hasError = mutation.isError || (!address || !token) || (mutation.isSuccess && !mutation.data?.isConfirmed);
+
   return (
-    <div className="min-h-screen bg-gray-100 flex flex-col items-center justify-center p-4">
-      <div className="max-w-md w-full">
-        {renderContent()}
+    <div className="flex min-h-full items-center justify-center py-8">
+      <div className="content mx-auto w-[84vw] max-w-[600px] md:w-[76vw]">
+        <div className="paper p-8 md:p-12">
+          <div className="flex flex-col items-center text-center">
+            <div className="mb-6">
+              {status.icon}
+            </div>
+
+            <h1 className={`mb-4 text-2xl font-bold ${status.color}`}>
+              {status.title}
+            </h1>
+
+            <p className="text-secondaryText mb-8 text-lg leading-relaxed">
+              {getMessage()}
+            </p>
+
+            {!isLoading && (
+              <Link href="/" className="w-full sm:w-auto">
+                <button className="btn-main w-full px-8 py-3 sm:w-auto">
+                  Return to Homepage
+                </button>
+              </Link>
+            )}
+
+            {/* Additional Info for Errors */}
+            {hasError && (
+              <div className="bg-primaryBackground mt-6 rounded-lg p-4">
+                <p className="text-secondaryText text-sm">
+                  Need help? Contact support or try requesting a new verification email.
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
       </div>
     </div>
   );

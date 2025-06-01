@@ -35,8 +35,7 @@ const SettingsPopover: React.FC = () => {
     updateEmail: updateUserEmail,
   } = useAtlasProvider();
 
-  useEffect(() => {
-    console.log("user", user);
+  useEffect(() => {;
     if (user) {
       if (user.email) {
         setEmail(user.email);
@@ -239,7 +238,7 @@ const SettingsPopover: React.FC = () => {
                           </div>
                           <ActionButton
                             onClick={handleSaveEmail}
-                            isLoading={isUpdatingUser || isAddingUser}
+                            isLoading={(isUpdatingUser || isAddingUser)}
                             disabled={buttonState.isDisabled}
                             label={buttonState.label}
                             className="w-full sm:w-auto px-6 normal-case text-base rounded-l-none min-h-[44px] transition-colors duration-200"
@@ -254,7 +253,6 @@ const SettingsPopover: React.FC = () => {
                 
                 {(() => {
                   if (transientStatus) {
-                    console.log("transientStatus", transientStatus);
                     let textColor = 'text-blue-600';
                     if (transientStatus.type === 'success') textColor = 'text-green-600';
                     if (transientStatus.type === 'error') textColor = 'text-red-600';
