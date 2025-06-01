@@ -137,7 +137,6 @@ export default function ActionBar({
         }))
     );
   };
-
   useEffect(() => {
     setDidIVouchFor(handleDidIVouchFor());
   }, [address, action, requester, revocation, chain, userChainId]);
@@ -152,7 +151,7 @@ export default function ActionBar({
         if (funded < arbitrationCost + BigInt(contractData.baseDeposit))
           setAction(ActionType.FUND);
         else if (
-          onChainVouches.length + offChainVouches.length >=
+          onChainVouches.length + offChainVouches.filter(v => v.expiration > Date.now() / 1000).length >=
           contractData.requiredNumberOfVouches
         )
           setAction(ActionType.ADVANCE);
