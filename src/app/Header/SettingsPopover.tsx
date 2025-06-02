@@ -145,6 +145,25 @@ const SettingsPopover: React.FC = () => {
     setTransientStatus(null);
   };
 
+  const handleResendVerification = async () => {
+    if (!user?.email) return;
+    
+    try {
+      const success = await updateUserEmail({ newEmail: user.email });
+      if (success) {
+        toast.success("Verification email sent successfully. Please check your inbox.");
+        setTransientStatus({ message: "Verification email sent", type: 'success' });
+      } else {
+        toast.error("Failed to resend verification email");
+        setTransientStatus({ message: "Failed to resend verification email", type: 'error' });
+      }
+    } catch (error) {
+      console.error("Error resending verification email:", error);
+      toast.error("Failed to resend verification email");
+      setTransientStatus({ message: "Failed to resend verification email", type: 'error' });
+    }
+  };
+
   let editButtonTooltip = undefined;
   if (validFutureUpdateDate) {
     editButtonTooltip = `You can update email ${formatRelativeTime(validFutureUpdateDate)}`;
@@ -265,7 +284,22 @@ const SettingsPopover: React.FC = () => {
                     return (
                       <div className="text-sm text-secondaryText animate-fadeIn flex flex-col sm:flex-row gap-1 items-center sm:items-stretch text-center sm:text-left" role="alert">
                         <InfoIcon className="sm:h-4 h-8 sm:w-4 w-8 stroke-orange-400 shrink-0 mt-1" />
-                        <span>Verification email sent! Please check your inbox to confirm your email address.</span>
+                        <span>We sent you a verification email. Please, verify it.
+                        Didn't receive the email?{" "}
+                          {!validFutureUpdateDate ? (
+                            <button
+                              onClick={handleResendVerification}
+                              disabled={isUpdatingUser}
+                              className="text-orange hover:text-orange-600 underline disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
+                            >
+                              {isUpdatingUser ? "Sending..." : "Resend"}
+                            </button>
+                          ) : (
+                            <span className="text-secondaryText">
+                              Please wait {formatRelativeTime(validFutureUpdateDate)} before resending
+                            </span>
+                          )}
+                        </span>
                       </div>
                     );
                   }

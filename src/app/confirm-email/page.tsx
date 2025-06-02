@@ -1,15 +1,18 @@
 'use client';
 
 import { useEffect } from 'react'; 
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { useAtlasProvider } from '@kleros/kleros-app';
 import { useMutation } from '@tanstack/react-query';
-import Link from 'next/link';
-import Image from 'next/image';
 
+import CheckCircle from 'icons/CheckCircle.svg';
+import WarningCircle from 'icons/WarningCircle.svg';
+import MinusCircle from 'icons/MinusCircle.svg';
+import ActionButton from 'components/ActionButton';
 
 const ConfirmEmailPage: React.FC = () => {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const { confirmEmail } = useAtlasProvider();
 
   const address = searchParams.get('address');
@@ -26,140 +29,124 @@ const ConfirmEmailPage: React.FC = () => {
     if (address && token && mutation.status === 'idle') {
       mutation.mutate({ address, token });
     }
-  }, [address, token]);
+  }, [address, token, mutation]);
 
-  const getStatus = () => {
-    if (mutation.isSuccess && mutation.data?.isConfirmed) {
-      return {
-        icon: (
-          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-status-registered/10">
-            <svg
-              className="h-8 w-8 text-status-registered"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M5 13l4 4L19 7"
-              />
-            </svg>
-          </div>
-        ),
-        color: 'text-status-registered',
-        title: 'Email Verified!'
-      };
+  const getVerificationStatus = () => {
+    if(mutation.isPending) {
+      return 'loading';
     }
-
-    if (mutation.isError || (!address || !token) || (mutation.isSuccess && !mutation.data?.isConfirmed)) {
-      return {
-        icon: (
-          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-status-rejected/10">
-            <svg
-              className="h-8 w-8 text-status-rejected"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M6 18L18 6M6 6l12 12"
-              />
-            </svg>
-          </div>
-        ),
-        color: 'text-status-rejected',
-        title: 'Verification Failed'
-      };
-    }
-
-    return {
-      icon: (
-        <div className="flex h-16 w-16 items-center justify-center">
-          <Image
-            alt="loading"
-            src="/logo/poh-colored.svg"
-            className="animate-flip"
-            width={32}
-            height={32}
-          />
-        </div>
-      ),
-      color: 'text-primaryText',
-      title: 'Verifying Email...'
-    };
-  };
-
-  const getMessage = () => {
-    if (!address || !token) {
-      return 'Invalid verification link: Required information is missing.';
-    }
-
-    if (mutation.isPending) {
-      return 'Verifying your email, please wait...';
-    }
-
     if (mutation.isSuccess) {
-      if (mutation.data?.isConfirmed) {
-        return 'Email verified successfully! You can now close this page.';
-      } else {
-        const { isTokenExpired, isTokenInvalid } = mutation.data || {};
-        if (isTokenExpired) {
-          return 'Email verification failed: The link has expired. Please request a new one.';
-        } else if (isTokenInvalid) {
-          return 'Email verification failed: The link is invalid.';
-        } else {
-          return 'Email verification failed. Please try again or request a new verification link.';
-        }
+      const data = mutation.data;
+      if (data?.isConfirmed) {
+        return 'success';
+      }
+      if (data?.isTokenExpired) {
+        return 'expired';
+      }
+      if (data?.isTokenInvalid) {
+        return 'invalid';
       }
     }
-
-    if (mutation.isError) {
-      return 'An unexpected error occurred during email verification. Please try again.';
-    }
-
-    return 'Verifying your email, please wait...';
+    return 'invalid';
   };
 
-  const status = getStatus();
-  const isLoading = mutation.isPending;
-  const hasError = mutation.isError || (!address || !token) || (mutation.isSuccess && !mutation.data?.isConfirmed);
+  const status = getVerificationStatus();
+
+  interface StatusConfig {
+    title: string | React.ReactNode;
+    description: string;
+    titleColor: string;
+    icon?: React.ComponentType<{ className?: string }>;
+    onClick?: () => void;
+    buttonText?: string;
+  }
+
+  const statusConfig: Record<'loading' | 'success' | 'expired' | 'invalid', StatusConfig> = {
+    loading: {
+      title: 'Verifying your email...',
+      description: 'Please wait while we confirm your email address.',
+      titleColor: 'text-orange',
+    },
+    success: {
+      title: (
+        <>
+          Congratulations :)
+          <div className="my-1" />
+          Your email has been verified!
+        </>
+      ),
+      description: "We'll remind you when your actions are required on POH, and send you notifications on key moments to help you achieve the best of Proof of Humanity.",
+      titleColor: 'text-status-registered',
+      buttonText: "Let's start!",
+      icon: CheckCircle,
+      onClick: () => {
+        router.push('/');
+      },
+    },
+    expired: {
+      title: 'Verification link expired...',
+      description: 'Oops, the email verification link has expired. No worries! Go to settings and click on Resend it to receive another verification email.',
+      titleColor: 'text-status-revocation',
+      buttonText: 'Open Settings',
+      icon: WarningCircle,
+      onClick: () => {
+        router.push('/');
+      },
+    },
+    invalid: {
+      title: 'Invalid link!',
+      description: 'Oops, seems like you followed an invalid link.',
+      titleColor: 'text-primaryText',
+      buttonText: 'Contact support',
+      icon: MinusCircle,
+      onClick: () => {
+        router.push('/');
+      },
+    },
+  };
+
+  const config = statusConfig[status];
+  const { title, description, titleColor, buttonText, onClick, icon: IconComponent } = config;
 
   return (
-    <div className="flex min-h-full items-center justify-center py-8">
-      <div className="content mx-auto w-[84vw] max-w-[600px] md:w-[76vw]">
-        <div className="paper p-8 md:p-12">
-          <div className="flex flex-col items-center text-center">
-            <div className="mb-6">
-              {status.icon}
+    <div className="h-full flex flex-col">
+      {/* Main content area */}
+      <div className="flex-grow flex items-center justify-center py-12 lg:py-24 lg:mt-24">
+        <div className="mx-auto px-4 w-full">
+          <div className="grid grid-cols-1 lg:grid-cols-6 gap-8 lg:gap-16 items-center lg:mx-14 xl:mx-32">
+            
+            {/* Content Section */}
+            <div className="flex flex-col items-center lg:items-start text-center lg:text-left space-y-8 lg:col-span-4">
+              
+              {IconComponent && (
+                <div className="flex justify-center lg:justify-start">
+                  <IconComponent 
+                    className={`w-16 h-16 md:w-20 md:h-20`}
+                  />
+                </div>
+              )}
+              
+              <h1 className={`text-2xl md:text-3xl lg:text-4xl font-semibold ${titleColor} leading-tight`}>
+                {title}
+              </h1>
+              
+              <p className="text-base md:text-lg text-secondaryText leading-relaxed w-full">
+                {description}
+              </p>
+              
+              {onClick && buttonText && 
+                    <ActionButton 
+                      onClick={onClick}
+                      label={buttonText}
+                      className='px-8 py-3'
+                    />
+              }
             </div>
-
-            <h1 className={`mb-4 text-2xl font-bold ${status.color}`}>
-              {status.title}
-            </h1>
-
-            <p className="text-secondaryText mb-8 text-lg leading-relaxed">
-              {getMessage()}
-            </p>
-
-            {!isLoading && (
-              <Link href="/" className="w-full sm:w-auto">
-                <button className="btn-main w-full px-8 py-3 sm:w-auto">
-                  Return to Homepage
-                </button>
-              </Link>
-            )}
-
-            {/* Additional Info for Errors */}
-            {hasError && (
-              <div className="bg-primaryBackground mt-6 rounded-lg p-4">
-                <p className="text-secondaryText text-sm">
-                  Need help? Contact support or try requesting a new verification email.
-                </p>
+            
+            {/* Decorative Icon Section */}
+            {IconComponent && (
+              <div className="flex items-center justify-center lg:justify-end lg:col-span-2">
+                <IconComponent/>
               </div>
             )}
           </div>
