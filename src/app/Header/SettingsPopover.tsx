@@ -36,7 +36,6 @@ const SettingsPopover: React.FC = () => {
   } = useAtlasProvider();
 
   useEffect(() => {
-    console.log("user", user);
     if (user) {
       if (user.email) {
         setEmail(user.email);
@@ -47,7 +46,6 @@ const SettingsPopover: React.FC = () => {
       }
     } else {
       setEditMode(EditMode.VIEW);
-      setEmail("");
     }
   }, [user]);
 
