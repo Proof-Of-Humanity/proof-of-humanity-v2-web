@@ -6,6 +6,7 @@ import { toast } from "react-toastify";
 import ActionButton from "components/ActionButton";
 import InfoIcon from "icons/info.svg";
 import { formatRelativeTime } from "utils/time";
+import { useSettingsPopover } from "context/SettingsPopoverContext";
 
 // Basic email validation regex
 const EMAIL_REGEX = /^\S+@\S+\.\S+$/;
@@ -15,14 +16,13 @@ enum EditMode {
   EDIT = 'edit'
 }
 
-
 const SettingsPopover: React.FC = () => {
   const [email, setEmail] = useState<string>("");
   const [editMode, setEditMode] = useState<EditMode>(EditMode.VIEW);
-  const [popoverOpen, setPopoverOpen] = useState(false);
-  const [transientStatus, setTransientStatus] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null);
+  let [transientStatus, setTransientStatus] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null);
 
   const isEmailValid = useMemo(() => EMAIL_REGEX.test(email), [email]);
+  const { isOpen, closeSettingsPopover, toggleSettingsPopover } = useSettingsPopover();
 
   const {
     isVerified,
@@ -35,7 +35,8 @@ const SettingsPopover: React.FC = () => {
     updateEmail: updateUserEmail,
   } = useAtlasProvider();
 
-  useEffect(() => {;
+  useEffect(() => {
+    console.log("user", user);
     if (user) {
       if (user.email) {
         setEmail(user.email);
@@ -64,7 +65,7 @@ const SettingsPopover: React.FC = () => {
   const handleCancelEdit = () => {
     setEmail(user?.email || "");
     setEditMode(EditMode.VIEW);
-    setPopoverOpen(false);
+    closeSettingsPopover();
   };
 
   const handleSaveEmail = async () => {
@@ -73,7 +74,7 @@ const SettingsPopover: React.FC = () => {
     const handleSuccess = (message: string) => {
       toast.success(message);
       setEditMode(EditMode.VIEW);
-      setPopoverOpen(false);
+      closeSettingsPopover();
     };
 
     try {
@@ -138,7 +139,7 @@ const SettingsPopover: React.FC = () => {
   };
 
   const onPopoverClose = () => {
-    setPopoverOpen(false);
+    closeSettingsPopover();
     if (editMode === EditMode.EDIT) {
       handleCancelEdit();
     }
@@ -173,7 +174,7 @@ const SettingsPopover: React.FC = () => {
     <div>
       <Popover
         trigger={
-          <span onClick={() => setPopoverOpen(!popoverOpen)} className="cursor-pointer">
+          <span onClick={toggleSettingsPopover} className="cursor-pointer">
             <Image
               alt="settings"
               className="mx-2"
@@ -183,7 +184,7 @@ const SettingsPopover: React.FC = () => {
             />
           </span>
         }
-        open={popoverOpen}
+        open={isOpen}
         onClose={onPopoverClose}
         className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[calc(100vw-2rem)] max-w-[26rem] sm:relative sm:left-auto sm:top-auto sm:transform-none sm:w-[26rem] sm:max-w-none"
       >
@@ -276,7 +277,7 @@ const SettingsPopover: React.FC = () => {
                     if (transientStatus.type === 'success') textColor = 'text-green-600';
                     if (transientStatus.type === 'error') textColor = 'text-red-600';
                     return (
-                      <div className={`mt-3 text-sm ${textColor} animate-fadeIn`} role="alert">
+                      <div className={`mt-3 text-sm m-1 ${textColor} animate-fadeIn`} role="alert">
                         <p>{transientStatus.message}</p>
                       </div>
                     );
@@ -314,4 +315,4 @@ const SettingsPopover: React.FC = () => {
   );
 };
 
-export default SettingsPopover; 
+export default SettingsPopover;

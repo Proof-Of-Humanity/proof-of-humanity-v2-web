@@ -11,6 +11,7 @@ import Toastify from "./Toastify";
 import "./globals.css";
 import AppKitProvider from "../context/AppKitProvider";
 import HashBasedRedirectHandler from "../components/HashBasedRedirectHandler";
+import { SettingsPopoverProvider } from "../context/SettingsPopoverContext";
 
 export const metadata: Metadata = {
   title: "Proof of Humanity V2",
@@ -35,11 +36,13 @@ export default async function RootLayout({ children }: RootLayoutProps) {
         )}
       >
         <AppKitProvider>
-          <HashBasedRedirectHandler />
-          <Header policy={ipfs(policy)} />
-          <main className="flex-grow">{children}</main>
-          <Footer />
-          <Toastify />
+          <SettingsPopoverProvider>
+            <HashBasedRedirectHandler />
+            <Header policy={ipfs(policy)} />
+            <main className="flex-grow">{children}</main>
+            <Footer />
+            <Toastify />
+          </SettingsPopoverProvider>
         </AppKitProvider>
       </body>
     </html>

@@ -5,15 +5,20 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import { useAtlasProvider } from '@kleros/kleros-app';
 import { useMutation } from '@tanstack/react-query';
 
-import CheckCircle from 'icons/CheckCircle.svg';
-import WarningCircle from 'icons/WarningCircle.svg';
-import MinusCircle from 'icons/MinusCircle.svg';
+import CheckCircle from 'icons/CheckCircleMajor.svg';
+import WarningCircle from 'icons/WarningCircleMajor.svg';
+import MinusCircle from 'icons/MinusCircleMajor.svg';
+import CheckCircleMinor from 'icons/CheckCircleMinor.svg';
+import WarningCircleMinor from 'icons/WarningCircleMinor.svg';
+import MinusCircleMinor from 'icons/MinusCircleMinor.svg';
 import ActionButton from 'components/ActionButton';
+import { useSettingsPopover } from 'context/SettingsPopoverContext';
 
 const ConfirmEmailPage: React.FC = () => {
   const searchParams = useSearchParams();
   const router = useRouter();
   const { confirmEmail } = useAtlasProvider();
+  const { openSettingsPopover } = useSettingsPopover();
 
   const address = searchParams.get('address');
   const token = searchParams.get('token');
@@ -32,6 +37,7 @@ const ConfirmEmailPage: React.FC = () => {
   }, [address, token, mutation]);
 
   const getVerificationStatus = () => {
+    return 'expired';
     if(mutation.isPending) {
       return 'loading';
     }
@@ -57,6 +63,7 @@ const ConfirmEmailPage: React.FC = () => {
     description: string;
     titleColor: string;
     icon?: React.ComponentType<{ className?: string }>;
+    largeIcon?: React.ComponentType<{ className?: string }>;
     onClick?: () => void;
     buttonText?: string;
   }
@@ -78,7 +85,8 @@ const ConfirmEmailPage: React.FC = () => {
       description: "We'll remind you when your actions are required on POH, and send you notifications on key moments to help you achieve the best of Proof of Humanity.",
       titleColor: 'text-status-registered',
       buttonText: "Let's start!",
-      icon: CheckCircle,
+      icon: CheckCircleMinor,
+      largeIcon: CheckCircle,
       onClick: () => {
         router.push('/');
       },
@@ -88,9 +96,10 @@ const ConfirmEmailPage: React.FC = () => {
       description: 'Oops, the email verification link has expired. No worries! Go to settings and click on Resend it to receive another verification email.',
       titleColor: 'text-status-revocation',
       buttonText: 'Open Settings',
-      icon: WarningCircle,
+      icon: WarningCircleMinor,
+      largeIcon: WarningCircle,
       onClick: () => {
-        router.push('/');
+        openSettingsPopover();
       },
     },
     invalid: {
@@ -98,19 +107,19 @@ const ConfirmEmailPage: React.FC = () => {
       description: 'Oops, seems like you followed an invalid link.',
       titleColor: 'text-primaryText',
       buttonText: 'Contact support',
-      icon: MinusCircle,
+      icon: MinusCircleMinor,
+      largeIcon: MinusCircle,
       onClick: () => {
-        router.push('/');
+        window.open('https://t.me/proofhumanity', '_blank');
       },
     },
   };
 
   const config = statusConfig[status];
-  const { title, description, titleColor, buttonText, onClick, icon: IconComponent } = config;
+  const { title, description, titleColor, buttonText, onClick, icon: IconComponent, largeIcon: LargeIconComponent } = config;
 
   return (
     <div className="h-full flex flex-col">
-      {/* Main content area */}
       <div className="flex-grow flex items-center justify-center py-12 lg:py-24 lg:mt-24">
         <div className="mx-auto px-4 w-full">
           <div className="grid grid-cols-1 lg:grid-cols-6 gap-8 lg:gap-16 items-center lg:mx-14 xl:mx-32">
@@ -120,9 +129,7 @@ const ConfirmEmailPage: React.FC = () => {
               
               {IconComponent && (
                 <div className="flex justify-center lg:justify-start">
-                  <IconComponent 
-                    className={`w-16 h-16 md:w-20 md:h-20`}
-                  />
+                  <IconComponent />
                 </div>
               )}
               
@@ -144,9 +151,9 @@ const ConfirmEmailPage: React.FC = () => {
             </div>
             
             {/* Decorative Icon Section */}
-            {IconComponent && (
+            {LargeIconComponent && (
               <div className="flex items-center justify-center lg:justify-end lg:col-span-2">
-                <IconComponent/>
+                <LargeIconComponent />
               </div>
             )}
           </div>
