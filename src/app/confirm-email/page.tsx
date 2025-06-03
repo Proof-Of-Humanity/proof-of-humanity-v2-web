@@ -37,7 +37,6 @@ const ConfirmEmailPage: React.FC = () => {
   }, [address, token, mutation]);
 
   const getVerificationStatus = () => {
-    return 'expired';
     if(mutation.isPending) {
       return 'loading';
     }

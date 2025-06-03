@@ -129,7 +129,9 @@ const SettingsPopover: React.FC = () => {
       const isDisabled =
         !email.trim() ||
         !isEmailValid ||
-        isUpdatingUser || isAddingUser;
+        isUpdatingUser || 
+        isAddingUser ||
+        user?.email === email;
       return { label, isDisabled };
     } else {
       const label = "Edit";
