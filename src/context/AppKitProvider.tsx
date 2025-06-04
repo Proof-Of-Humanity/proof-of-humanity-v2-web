@@ -4,7 +4,7 @@ import { wagmiAdapter, projectId } from '../config/appkit'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { createAppKit } from '@reown/appkit/react'
 import { mainnet } from '@reown/appkit/networks'
-import React, { type ReactNode } from 'react'
+import React, { useEffect, useState, type ReactNode } from 'react'
 import { WagmiProvider } from 'wagmi'
 import { supportedChains } from '../config/chains'
 import { Products } from '@kleros/kleros-app'
@@ -35,6 +35,13 @@ interface AppKitProviderProps {
 }
 
 export default function AppKitProvider({ children }: AppKitProviderProps) {
+    // Add state to handle client-side rendering
+    const [mounted, setMounted] = useState(false)
+
+    useEffect(() => {
+      setMounted(true)
+    }, [])
+  
   return (
     <WagmiProvider config={wagmiAdapter.wagmiConfig}>
       <QueryClientProvider client={queryClient}>
@@ -44,7 +51,7 @@ export default function AppKitProvider({ children }: AppKitProviderProps) {
               product: Products.ProofOfHumanity,
               wagmiConfig: wagmiAdapter.wagmiConfig,
             }}
-          >{children}
+          >{mounted && children}
         </DynamicAtlasProvider>
       </QueryClientProvider>
     </WagmiProvider>
