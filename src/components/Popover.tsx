@@ -34,12 +34,14 @@ const Popover: React.FC<PopoverInterface> = ({ trigger, children, className, ope
 
   return (
     <Popup 
-      trigger={trigger} 
-      position={position} 
-      arrow={false}
-      open={open}
-      onOpen={onOpen}
-      onClose={onClose}
+      {...{
+        trigger,
+        position,
+        arrow: false,
+        open,
+        onOpen,
+        onClose
+      }}
     >
       <div className={`bg-whiteBackground text-secondaryText shadow-shade-500/50 mt-1 rounded shadow-md ${className || 'w-48'}`}>
         {children}
