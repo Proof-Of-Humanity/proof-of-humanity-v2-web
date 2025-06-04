@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { twMerge } from 'tailwind-merge';
 
 interface ActionButtonProps {
   onClick: () => void;
@@ -61,7 +62,9 @@ export default function ActionButton({
         return { bottom: '100%', left: '50%', transform: 'translateX(-50%) translateY(-8px)' };
     }
   };
+  const buttonBaseClass = 'px-5 py-2 normal-case disabled:opacity-50 disabled:cursor-not-allowed flex items-center';
 
+  const mergedClasses = twMerge(buttonStyle, buttonBaseClass, className);
   return (
     <div 
       className="relative inline-block"
@@ -72,7 +75,7 @@ export default function ActionButton({
         onClick={onClick}
         aria-label={ariaLabel || label}
         tabIndex={0}
-        className={`${buttonStyle} px-5 py-2 normal-case disabled:opacity-50 disabled:cursor-not-allowed flex items-center ${className}`}
+        className={mergedClasses}
         disabled={disabled || isLoading}
         onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.click()}
       >

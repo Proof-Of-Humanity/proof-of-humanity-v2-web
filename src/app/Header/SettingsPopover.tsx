@@ -199,9 +199,15 @@ const SettingsPopover: React.FC = () => {
           <div className="text-center mb-6">
             <h2 className="text-xl font-semibold text-primaryText">Settings</h2>
           </div>
-
-          {!isVerified && (
             <div className="mb-6 flex justify-center w-full">
+              {isVerified ? (
+                 <ActionButton
+                 onClick={handleDisconnect}
+                 label="Disconnect"
+                 className="w-full sm:w-auto normal-case min-h-[44px] transition-colors duration-200"
+                 ariaLabel="Disconnect wallet"
+               />
+              ) : (
               <ActionButton
                 onClick={handleSignIn}
                 isLoading={isSigningIn}
@@ -209,19 +215,8 @@ const SettingsPopover: React.FC = () => {
                 className="w-full sm:w-auto normal-case min-h-[44px] transition-colors duration-200"
                 ariaLabel="Sign in with wallet"
               />
+            )}
             </div>
-          )}
-
-          {isVerified && (
-            <div className="flex justify-center w-full">
-              <ActionButton
-                onClick={handleDisconnect}
-                label="Disconnect"
-                className="w-full sm:w-auto normal-case min-h-[44px] transition-colors duration-200"
-                ariaLabel="Disconnect wallet"
-              />
-            </div>
-          )}
 
           {/* EMAIL FUNCTIONALITY - COMMENTED OUT UNTIL BACKEND IS IMPLEMENTED */}
           {/* {isVerified && (

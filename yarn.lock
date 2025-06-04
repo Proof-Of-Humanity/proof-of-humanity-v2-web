@@ -2873,9 +2873,9 @@
     "@jridgewell/sourcemap-codec" "^1.4.14"
 
 "@kleros/kleros-app@^2.1.0":
-  version "2.1.0"
-  resolved "https://registry.yarnpkg.com/@kleros/kleros-app/-/kleros-app-2.1.0.tgz#746afb8481e1e55020276fe65c9cf601284fb182"
-  integrity sha512-/VF80B1+va17ofgOjyXd1S9qvJWrkpc+8LeZEw8jehFm8AiPUGbVxmp3OfSEKk5T8XTcow+e5wKuchndv1CiyA==
+  version "2.1.1"
+  resolved "https://registry.yarnpkg.com/@kleros/kleros-app/-/kleros-app-2.1.1.tgz#624d292758ae576ef82d561ed973371e3b1af3c6"
+  integrity sha512-VQqCTh4lJ/mtSfJv9NyIwCQn2Ym7ycCA3lUK3r2G6or/DnX+0ZKX713mf6JI5/wTRu0fOXL+e+yqJBjWylbXMg==
   dependencies:
     jose "^5.9.6"
 
@@ -12128,6 +12128,11 @@ synckit@^0.9.1:
   dependencies:
     "@pkgr/core" "^0.1.0"
     tslib "^2.6.2"
+
+tailwind-merge@^3.3.0:
+  version "3.3.0"
+  resolved "https://registry.yarnpkg.com/tailwind-merge/-/tailwind-merge-3.3.0.tgz#d9bb4f298801ef6232ced4f97e830fc79bc3d3e7"
+  integrity sha512-fyW/pEfcQSiigd5SNn0nApUOxx0zB/dm6UDU/rEwc2c3sX2smWUNbapHv+QRqLGVp9GWX3THIa7MUGPo+YkDzQ==
 
 tailwindcss@^3.4.10:
   version "3.4.17"
