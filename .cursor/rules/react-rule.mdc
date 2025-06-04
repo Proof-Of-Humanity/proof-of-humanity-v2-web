@@ -1,6 +1,0 @@
----
-description: 
-globs: *.tsx
-alwaysApply: false
----
-https://react.dev/learn/you-might-not-need-an-effect
