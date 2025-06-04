@@ -57,7 +57,6 @@ export default function ActionButton({
         return { top: '50%', right: '100%', transform: 'translateY(-50%) translateX(-8px)' };
       case 'right':
         return { top: '50%', left: '100%', transform: 'translateY(-50%) translateX(8px)' };
-      case 'top':
       default:
         return { bottom: '100%', left: '50%', transform: 'translateX(-50%) translateY(-8px)' };
     }

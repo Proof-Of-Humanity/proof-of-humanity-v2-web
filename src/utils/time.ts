@@ -74,10 +74,10 @@ export const formatRelativeTime = (targetDate: Date): string => {
   if (diffSeconds < 60) return `${diffSeconds} second${diffSeconds > 1 ? 's' : ''}`;
   
   const diffMinutes = Math.round(diffSeconds / 60);
-  if (diffMinutes < 60) return ` ${diffMinutes} minute${diffMinutes > 1 ? 's' : ''}`;
+  if (diffMinutes < 60) return `${diffMinutes} minute${diffMinutes > 1 ? 's' : ''}`;
   
   const diffHours = Math.round(diffMinutes / 60);
-  if (diffHours < 24) return ` ${diffHours} hour${diffHours > 1 ? 's' : ''}`;
+  if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? 's' : ''}`;
   
   const diffDays = Math.round(diffHours / 24);
   return `${diffDays} day${diffDays > 1 ? 's' : ''}`;

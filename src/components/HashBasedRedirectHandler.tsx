@@ -4,10 +4,18 @@ import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 const parseQueryString = (queryString: string): Record<string, string> => {
   const params: Record<string, string> = {};
+  if (!queryString) return params;
+  
   queryString.split('&').forEach(param => {
+    if (!param) return;
     const [key, value] = param.split('=');
     if (key && value) {
       params[decodeURIComponent(key)] = decodeURIComponent(value);
+      try {
+        params[decodeURIComponent(key)] = decodeURIComponent(value);
+      } catch (error) {
+       console.warn('Failed to decode URL parameter:', param);
+    }
     }
   });
   return params;
