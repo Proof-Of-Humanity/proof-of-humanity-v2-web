@@ -4,101 +4,103 @@ import Popover from "components/Popover";
 import { useAtlasProvider } from "@kleros/kleros-app";
 import { toast } from "react-toastify";
 import ActionButton from "components/ActionButton";
-import InfoIcon from "icons/info.svg";
-import { formatRelativeTime } from "utils/time";
+// import InfoIcon from "icons/info.svg";
+// import { formatRelativeTime } from "utils/time";
 import { useSettingsPopover } from "context/SettingsPopoverContext";
+import { useDisconnect } from "wagmi";
 
 // Basic email validation regex
-const EMAIL_REGEX = /^\S+@\S+\.\S+$/;
+// const EMAIL_REGEX = /^\S+@\S+\.\S+$/;
 
-enum EditMode {
-  VIEW = 'view',
-  EDIT = 'edit'
-}
+// enum EditMode {
+//   VIEW = 'view',
+//   EDIT = 'edit'
+// }
 
 const SettingsPopover: React.FC = () => {
-  const [email, setEmail] = useState<string>("");
-  const [editMode, setEditMode] = useState<EditMode>(EditMode.VIEW);
-  let [transientStatus, setTransientStatus] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null);
+  // const [email, setEmail] = useState<string>("");
+  // const [editMode, setEditMode] = useState<EditMode>(EditMode.VIEW);
+  // const [transientStatus, setTransientStatus] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null);
 
-  const isEmailValid = useMemo(() => EMAIL_REGEX.test(email), [email]);
+  // const isEmailValid = useMemo(() => EMAIL_REGEX.test(email), [email]);
   const { isOpen, closeSettingsPopover, toggleSettingsPopover } = useSettingsPopover();
+  const { disconnect } = useDisconnect();
 
   const {
     isVerified,
     isSigningIn,
-    isUpdatingUser,
-    isAddingUser,
-    user,
-    addUser,
+    // isUpdatingUser,
+    // isAddingUser,
+    // user,
+    // addUser,
     authoriseUser,
-    updateEmail: updateUserEmail,
+    // updateEmail: updateUserEmail,
   } = useAtlasProvider();
 
-  useEffect(() => {
-    if (user) {
-      if (user.email) {
-        setEmail(user.email);
-        setEditMode(EditMode.VIEW);
-      } else {
-        setEditMode(EditMode.EDIT);
-        setEmail("");
-      }
-    } else {
-      setEditMode(EditMode.VIEW);
-    }
-  }, [user]);
+  // useEffect(() => {
+  //   if (user) {
+  //     if (user.email) {
+  //       setEmail(user.email);
+  //       setEditMode(EditMode.VIEW);
+  //     } else {
+  //       setEditMode(EditMode.EDIT);
+  //       setEmail("");
+  //     }
+  //   } else {
+  //     setEditMode(EditMode.VIEW);
+  //   }
+  // }, [user]);
 
-  const validFutureUpdateDate = useMemo(() => {
-    if (user?.email && user.emailUpdateableAt) {
-      const updateableAt = new Date(user.emailUpdateableAt);
-      if (!isNaN(updateableAt.getTime()) && updateableAt > new Date()) {
-        return updateableAt;
-      }
-    }
-    return null;
-  }, [user?.email, user?.emailUpdateableAt]);
+  // const validFutureUpdateDate = useMemo(() => {
+  //   if (user?.email && user.emailUpdateableAt) {
+  //     const updateableAt = new Date(user.emailUpdateableAt);
+  //     if (!isNaN(updateableAt.getTime()) && updateableAt > new Date()) {
+  //       return updateableAt;
+  //     }
+  //   }
+  //   return null;
+  // }, [user?.email, user?.emailUpdateableAt]);
 
 
-  const handleCancelEdit = () => {
-    setEmail(user?.email || "");
-    setEditMode(EditMode.VIEW);
-    closeSettingsPopover();
-  };
+  // const handleCancelEdit = () => {
+  //   setEmail(user?.email || "");
+  //   setEditMode(EditMode.VIEW);
+  //   closeSettingsPopover();
+  // };
 
-  const handleSaveEmail = async () => {
-    const trimmedEmail = email.trim();
+  // const handleSaveEmail = async () => {
+  //   const trimmedEmail = email.trim();
 
-    const handleSuccess = (message: string) => {
-      toast.success(message);
-      setEditMode(EditMode.VIEW);
-      closeSettingsPopover();
-    };
+  //   const handleSuccess = (message: string) => {
+  //     toast.success(message);
+  //     setEditMode(EditMode.VIEW);
+  //     closeSettingsPopover();
+  //   };
 
-    try {
-      let success;
-      if (user?.email) {
-        success = await updateUserEmail({ newEmail: trimmedEmail });
-        if (success) {
-          handleSuccess("Email updated successfully. Please check your inbox for verification.");
-        } else {
-          toast.error("Failed to update email");
-        }
-      } else {
-        success = await addUser({ email: trimmedEmail });
-        if (success) {
-          handleSuccess("Email saved successfully. Please check your inbox for verification.");
-        } else {
-          toast.error("Failed to save email");
-        }
-      }
-    } catch (error) {
-      console.error("Error processing email:", error);
-      const errorMessage = user?.email ? "Failed to update email" : "Failed to save email";
-      setTransientStatus({ message: errorMessage, type: 'error' });
-      toast.error(errorMessage);
-    }
-  };
+  //   try {
+  //     let success;
+  //     if (user?.email) {
+  //       success = await updateUserEmail({ newEmail: trimmedEmail });
+  //       if (success) {
+  //         handleSuccess("Email updated successfully. Please check your inbox for verification.");
+  //       } else {
+  //         toast.error("Failed to update email");
+  //       }
+  //     } else {
+  //       success = await addUser({ email: trimmedEmail });
+  //       if (success) {
+  //         handleSuccess("Email saved successfully. Please check your inbox for verification.");
+  //       } else {
+  //         toast.error("Failed to save email");
+  //       }
+  //     }
+  //   } catch (error) {
+  //     console.error("Error processing email:", error);
+  //     const errorMessage = user?.email ? "Failed to update email" : "Failed to save email";
+  //     setTransientStatus({ message: errorMessage, type: 'error' });
+  //     toast.error(errorMessage);
+  //   }
+  // };
 
   const handleSignIn = async () => {
     try {
@@ -109,66 +111,71 @@ const SettingsPopover: React.FC = () => {
     }
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (editMode === EditMode.EDIT) {
-      if (e.key === 'Enter') {
-        e.preventDefault();
-        handleSaveEmail();
-      } else if (e.key === 'Escape') {
-        e.preventDefault();
-        handleCancelEdit();
-      }
-    }
+  const handleDisconnect = () => {
+    disconnect();
+    closeSettingsPopover();
   };
 
-  const getActionButtonProps = (): { label: string; isDisabled: boolean } => {
-    if (editMode === EditMode.EDIT) {
-      const label = isAddingUser || isUpdatingUser ? "" : user?.email ? "Update" : "Save";
-      const isDisabled =
-        !email.trim() ||
-        !isEmailValid ||
-        isUpdatingUser || 
-        isAddingUser ||
-        user?.email === email;
-      return { label, isDisabled };
-    } else {
-      const label = "Edit";
-      const isDisabled = !!validFutureUpdateDate;
-      return { label, isDisabled };
-    }
-  };
+  // const handleKeyDown = (e: React.KeyboardEvent) => {
+  //   if (editMode === EditMode.EDIT) {
+  //     if (e.key === 'Enter') {
+  //       e.preventDefault();
+  //       handleSaveEmail();
+  //     } else if (e.key === 'Escape') {
+  //       e.preventDefault();
+  //       handleCancelEdit();
+  //     }
+  //   }
+  // };
+
+  // const getActionButtonProps = (): { label: string; isDisabled: boolean } => {
+  //   if (editMode === EditMode.EDIT) {
+  //     const label = isAddingUser || isUpdatingUser ? "" : user?.email ? "Update" : "Save";
+  //     const isDisabled =
+  //       !email.trim() ||
+  //       !isEmailValid ||
+  //       isUpdatingUser || 
+  //       isAddingUser ||
+  //       user?.email === email;
+  //     return { label, isDisabled };
+  //   } else {
+  //     const label = "Edit";
+  //     const isDisabled = !!validFutureUpdateDate;
+  //     return { label, isDisabled };
+  //   }
+  // };
 
   const onPopoverClose = () => {
     closeSettingsPopover();
-    if (editMode === EditMode.EDIT) {
-      handleCancelEdit();
-    }
-    setTransientStatus(null);
+    // if (editMode === EditMode.EDIT) {
+    //   handleCancelEdit();
+    // }
+    // setTransientStatus(null);
   };
 
-  const handleResendVerification = async () => {
-    if (!user?.email) return;
+  // const handleResendVerification = async () => {
+  //   if (!user?.email) return;
     
-    try {
-      const success = await updateUserEmail({ newEmail: user.email });
-      if (success) {
-        toast.success("Verification email sent successfully. Please check your inbox.");
-        setTransientStatus({ message: "Verification email sent", type: 'success' });
-      } else {
-        toast.error("Failed to resend verification email");
-        setTransientStatus({ message: "Failed to resend verification email", type: 'error' });
-      }
-    } catch (error) {
-      console.error("Error resending verification email:", error);
-      toast.error("Failed to resend verification email");
-      setTransientStatus({ message: "Failed to resend verification email", type: 'error' });
-    }
-  };
+  //   try {
+  //     const success = await updateUserEmail({ newEmail: user.email });
+  //     if (success) {
+  //       toast.success("Verification email sent successfully. Please check your inbox.");
+  //       setTransientStatus({ message: "Verification email sent", type: 'success' });
+  //     } else {
+  //       toast.error("Failed to resend verification email");
+  //       setTransientStatus({ message: "Failed to resend verification email", type: 'error' });
+  //     }
+  //   } catch (error) {
+  //     console.error("Error resending verification email:", error);
+  //     toast.error("Failed to resend verification email");
+  //     setTransientStatus({ message: "Failed to resend verification email", type: 'error' });
+  //   }
+  // };
 
-  let editButtonTooltip = undefined;
-  if (validFutureUpdateDate) {
-    editButtonTooltip = `You can update email ${formatRelativeTime(validFutureUpdateDate)}`;
-  }
+  // let editButtonTooltip = undefined;
+  // if (validFutureUpdateDate) {
+  //   editButtonTooltip = `You can update email ${formatRelativeTime(validFutureUpdateDate)}`;
+  // }
 
   return (
     <div>
@@ -206,6 +213,18 @@ const SettingsPopover: React.FC = () => {
           )}
 
           {isVerified && (
+            <div className="flex justify-center w-full">
+              <ActionButton
+                onClick={handleDisconnect}
+                label="Disconnect"
+                className="w-full sm:w-auto normal-case min-h-[44px] transition-colors duration-200"
+                ariaLabel="Disconnect wallet"
+              />
+            </div>
+          )}
+
+          {/* EMAIL FUNCTIONALITY - COMMENTED OUT UNTIL BACKEND IS IMPLEMENTED */}
+          {/* {isVerified && (
             <div>
               <span className="block text-sm ml-1 text-primaryText mb-3">
               Add/Update your email address
@@ -231,9 +250,6 @@ const SettingsPopover: React.FC = () => {
                             />
                           </div>
                         );
-                      } else {
-                        setEditMode(EditMode.EDIT); 
-                        return null;
                       }
                     case EditMode.EDIT:
                       const buttonState = getActionButtonProps();
@@ -308,7 +324,7 @@ const SettingsPopover: React.FC = () => {
                 })()}
               </div>
             </div>
-          )}
+          )} */}
         </div>
       </Popover>
     </div>
