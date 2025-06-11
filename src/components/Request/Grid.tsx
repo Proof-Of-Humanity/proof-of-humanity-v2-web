@@ -82,17 +82,13 @@ const normalize = (
       (acc, chainId) => [
         ...acc,
         ...requestsData[Number(chainId) as SupportedChainId].map((request) => {
-          const totalRequests = (request.humanity.nbRequests ? Number(request.humanity.nbRequests) : 0)
-            + (request.humanity.nbLegacyRequests ? Number(request.humanity.nbLegacyRequests) : 0);
-
           return {
             ...request,
             old: Number(chainId) === legacyChain.id,
             chainId: Number(chainId) as SupportedChainId,
             expired: isRequestExpired(
               request,
-              { humanityLifespan: humanityLifespanAllChains[Number(chainId) as SupportedChainId] },
-              totalRequests
+              { humanityLifespan: humanityLifespanAllChains[Number(chainId) as SupportedChainId] }
             ),
             rejected: request.status.id === "resolved" && !request.revocation && request.winnerParty?.id != 'requester'
           };

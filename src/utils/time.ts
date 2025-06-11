@@ -1,60 +1,106 @@
 import { format } from "timeago.js";
 
+interface RequestHumanity {
+  nbRequests?: string | number;
+  nbLegacyRequests?: string | number;
+  winnerClaim: Array<{ index: number; resolutionTime?: string | number }>;
+  registration?: { expirationTime: string | number } | null;
+}
+
+interface PohRequest {
+  status: { id: string };
+  creationTime: string | number;
+  revocation?: boolean;
+  humanity: RequestHumanity;
+  index: number;
+  winnerParty?: { id: string } | null;
+}
+
 export const timeAgo = (s: number) => format(s * 1000);
 
-/**
- * Determines if a request is expired based on its status and related data
- * @param request The request object to check
- * @param contractData Contract data containing humanityLifespan
- * @returns Boolean indicating if the request is expired
- */
+const LEGACY_REQUEST_LIFESPAN = 63115200; // 2 years in seconds
+
 export const isRequestExpired = (
-  request: {
-    status: { id: string };
-    creationTime: string | number;
-    revocation?: boolean;
-    humanity: {
-      winnerClaim: Array<{ index: number; resolutionTime?: string | number }>;
-      registration?: { expirationTime: string | number } | null;
-      nbRequests?: string | number;
-      nbLegacyRequests?: string | number;
-    };
-    index: number;
-    winnerParty?: { id: string } | null;
-  },
-  contractData: { humanityLifespan?: string | number },
-  totalRequests?: number
+  request: PohRequest,
+  contractData: { humanityLifespan?: string | number }
 ): boolean => {
-  const { status, creationTime, revocation, humanity, index } = request;
+  const { status, index } = request;
   const { humanityLifespan } = contractData;
+
+  const isLegacyRequest = index < 0 && index > -100;
+  const lifespan = isLegacyRequest
+    ? LEGACY_REQUEST_LIFESPAN
+    : humanityLifespan;
   const currentTime = Date.now() / 1000;
-  
-  // Check for transferring status first
-  if (status.id === "transferring" && humanityLifespan) {
-    return Number(creationTime) + Number(humanityLifespan) < currentTime;
-  }
-  
-  // Check for resolved status
-  if (status.id === "resolved") {
-    // Must not be a revocation and must have winner claims
+
+  const isNotLatestRequest = (
+    humanity: RequestHumanity,
+    requestIndex: number
+  ): boolean => {
+    const hasV2Requests =
+      humanity.nbRequests && Number(humanity.nbRequests) > 0;
+
+    if (hasV2Requests) {
+      const latestV2RequestIndex = Number(humanity.nbRequests) - 1;
+      return requestIndex < latestV2RequestIndex;
+    }
+
+    if (Number(humanity.nbLegacyRequests) > 0) {
+      const legacyWinnerClaims = humanity.winnerClaim.filter(
+        (claim) => claim.index < 0
+      );
+
+      if (legacyWinnerClaims.length === 0) {
+        return false;
+      }
+
+      const latestLegacyIndex = Math.min(
+        ...legacyWinnerClaims.map((claim) => claim.index)
+      );
+      return requestIndex > latestLegacyIndex;
+    }
+    return false;
+  };
+
+  const isExpiredResolved = (
+    req: PohRequest
+  ): boolean => {
+    const { revocation, humanity, index: reqIndex } = req;
+
     if (revocation || humanity.winnerClaim.length === 0) {
       return false;
     }
-    
-    // Calculate total requests for this humanity
-    const totalRequestsForHumanity = totalRequests !== undefined ? totalRequests : 
-      (humanity.nbRequests ? Number(humanity.nbRequests) : 0) + 
-      (humanity.nbLegacyRequests ? Number(humanity.nbLegacyRequests) : 0);
+
+    const isWinnerClaim = humanity.winnerClaim.some(
+      (claim) => claim.index === reqIndex
+    );
+
+    if (!isWinnerClaim) {
+      return false;
+    }
 
     
-    // This request must be a winner claim to check registration expiration
-    const isWinnerClaim = humanity.winnerClaim.some(claim => claim.index === index);
-    if (isWinnerClaim && humanityLifespan) {
-      // Check if registration is missing or expired or if this is not the latest request
-      return !humanity.registration || 
-             Number(humanity.registration.expirationTime) < currentTime ||
-            (totalRequestsForHumanity > 0 && index < totalRequestsForHumanity - 1);
-    }
+    const isNotLatest = isNotLatestRequest(humanity, reqIndex);
+
+    return (
+      !humanity.registration ||
+      Number(humanity.registration.expirationTime) < currentTime ||
+      isNotLatest
+    );
+  };
+
+  const isExpiredTransferring = (
+    req: PohRequest
+  ): boolean => {
+    return Number(req.creationTime) + Number(lifespan) < currentTime;
+  };
+
+  switch (status.id) {
+    case "resolved":
+      return isExpiredResolved(request);
+    case "transferring":
+      return isExpiredTransferring(request);
+    default:
+      return false;
   }
-  return false;
 };
