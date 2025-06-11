@@ -3,6 +3,7 @@ import ExternalLink from "components/ExternalLink";
 import Field from "components/Field";
 import Label from "components/Label";
 import Previewed from "components/Previewed";
+import AuthGuard from "components/AuthGuard";
 import TimeAgo from "components/TimeAgo";
 import { SupportedChainId, idToChain } from "config/chains";
 import { ContractData } from "data/contract";
@@ -34,6 +35,7 @@ function Review({
   loadingMessage,
   submit,
 }: ReviewProps) {
+
   const selfFunded = selfFunded$.use();
   const { pohId, name } = state$.use();
   const { photo, video } = media$.use();
@@ -186,9 +188,11 @@ function Review({
           {loadingMessage}...
         </button>
       ) : (
-        <button className="btn-main" onClick={submit}>
-          Submit
-        </button>
+        <AuthGuard>
+          <button className="btn-main" onClick={submit}>
+            Submit
+          </button>
+        </AuthGuard>
       )}
     </>
   );
