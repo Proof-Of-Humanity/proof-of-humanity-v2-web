@@ -4,6 +4,7 @@ import Popover from "components/Popover";
 import { useAtlasProvider } from "@kleros/kleros-app";
 import { toast } from "react-toastify";
 import ActionButton from "components/ActionButton";
+import AuthGuard from "components/AuthGuard";
 // import InfoIcon from "icons/info.svg";
 // import { formatRelativeTime } from "utils/time";
 import { useSettingsPopover } from "context/SettingsPopoverContext";
@@ -27,13 +28,10 @@ const SettingsPopover: React.FC = () => {
   const { disconnect } = useDisconnect();
 
   const {
-    isVerified,
-    isSigningIn,
     // isUpdatingUser,
     // isAddingUser,
     // user,
     // addUser,
-    authoriseUser,
     // updateEmail: updateUserEmail,
   } = useAtlasProvider();
 
@@ -101,15 +99,6 @@ const SettingsPopover: React.FC = () => {
   //     toast.error(errorMessage);
   //   }
   // };
-
-  const handleSignIn = async () => {
-    try {
-      await authoriseUser();
-      toast.success("Successfully Signed In");
-    } catch (error) {
-      toast.error("Failed to sign in");
-    }
-  };
 
   const handleDisconnect = () => {
     disconnect();
@@ -199,24 +188,16 @@ const SettingsPopover: React.FC = () => {
           <div className="text-center mb-6">
             <h2 className="text-xl font-semibold text-primaryText">Settings</h2>
           </div>
-            <div className="mb-6 flex justify-center w-full">
-              {isVerified ? (
-                 <ActionButton
-                 onClick={handleDisconnect}
-                 label="Disconnect"
-                 className="w-full sm:w-auto normal-case min-h-[44px] transition-colors duration-200"
-                 ariaLabel="Disconnect wallet"
-               />
-              ) : (
+          <div className="mb-6 flex justify-center w-full">
+            <AuthGuard>
               <ActionButton
-                onClick={handleSignIn}
-                isLoading={isSigningIn}
-                label={isSigningIn ? "Signing In..." : "Sign In"}
-                className="w-full sm:w-auto normal-case min-h-[44px] transition-colors duration-200"
-                ariaLabel="Sign in with wallet"
+                onClick={handleDisconnect}
+                label="Disconnect"
+                className="px-5 py-2"
+                ariaLabel="Disconnect wallet"
               />
-            )}
-            </div>
+            </AuthGuard>
+          </div>
 
           {/* EMAIL FUNCTIONALITY - COMMENTED OUT UNTIL BACKEND IS IMPLEMENTED */}
           {/* {isVerified && (
