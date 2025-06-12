@@ -1,20 +1,30 @@
 export default [
   {
-    inputs: [
-      {
-        internalType: "address",
-        "name": "_proofOfHumanity",
-        "type": "address"
-      },
+    "inputs": [
       {
         "internalType": "address",
-        "name": "_coreMembersGroup",
+        "name": "_proofOfHumanity",
         "type": "address"
       },
       {
         "internalType": "address",
         "name": "_crossChainProofOfHumanity",
         "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "_baseGroup",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "_hub",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_maximumBatchSize",
+        "type": "uint256"
       }
     ],
     "stateMutability": "nonpayable",
@@ -34,6 +44,18 @@ export default [
         "internalType": "address",
         "name": "account",
         "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint40",
+        "name": "humanityExpirationTime",
+        "type": "uint40"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint96",
+        "name": "trustExpiryTime",
+        "type": "uint96"
       }
     ],
     "name": "AccountRegistered",
@@ -43,19 +65,44 @@ export default [
     "anonymous": false,
     "inputs": [
       {
-        "indexed": false,
-        "internalType": "bytes20[]",
-        "name": "humanityIDs",
-        "type": "bytes20[]"
+        "indexed": true,
+        "internalType": "address",
+        "name": "account",
+        "type": "address"
       },
       {
         "indexed": false,
-        "internalType": "address[]",
-        "name": "accounts",
-        "type": "address[]"
+        "internalType": "uint256",
+        "name": "currentIndex",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "length",
+        "type": "uint256"
       }
     ],
-    "name": "AccountsRemoved",
+    "name": "TrustReEvaluationBatchProcessed",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "account",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint96",
+        "name": "expirationTime",
+        "type": "uint96"
+      }
+    ],
+    "name": "TrustReEvaluationCompleted",
     "type": "event"
   },
   {
@@ -72,20 +119,63 @@ export default [
         "internalType": "address",
         "name": "account",
         "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint96",
+        "name": "newTrustExpiryTime",
+        "type": "uint96"
       }
     ],
     "name": "TrustRenewed",
     "type": "event"
   },
   {
-    "inputs": [
+    "inputs": [],
+    "name": "baseGroup",
+    "outputs": [
       {
-        "internalType": "address",
-        "name": "_coreMembersGroup",
+        "internalType": "contract IBaseGroup",
+        "name": "",
         "type": "address"
       }
     ],
-    "name": "changeCoreMembersGroup",
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "name": "batchStates",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "nextIndexToProcess",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint40",
+        "name": "currentMaxExpiryTime",
+        "type": "uint40"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_baseGroup",
+        "type": "address"
+      }
+    ],
+    "name": "changeBaseGroup",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -107,6 +197,32 @@ export default [
     "inputs": [
       {
         "internalType": "address",
+        "name": "_hub",
+        "type": "address"
+      }
+    ],
+    "name": "changeHub",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "_maximumBatchSize",
+        "type": "uint256"
+      }
+    ],
+    "name": "changeMaximumBatchSize",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
         "name": "_proofOfHumanity",
         "type": "address"
       }
@@ -117,13 +233,24 @@ export default [
     "type": "function"
   },
   {
-    "inputs": [],
-    "name": "coreMembersGroup",
-    "outputs": [
+    "inputs": [
       {
-        "internalType": "contract ICoreMembersGroup",
+        "internalType": "address",
         "name": "",
         "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "name": "circlesAccountToHumanityIDs",
+    "outputs": [
+      {
+        "internalType": "bytes20",
+        "name": "",
+        "type": "bytes20"
       }
     ],
     "stateMutability": "view",
@@ -156,6 +283,19 @@ export default [
     "type": "function"
   },
   {
+    "inputs": [],
+    "name": "hub",
+    "outputs": [
+      {
+        "internalType": "contract IHub",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
     "inputs": [
       {
         "internalType": "bytes20",
@@ -176,6 +316,19 @@ export default [
   },
   {
     "inputs": [],
+    "name": "maximumBatchSize",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
     "name": "proofOfHumanity",
     "outputs": [
       {
@@ -185,6 +338,19 @@ export default [
       }
     ],
     "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "account",
+        "type": "address"
+      }
+    ],
+    "name": "reEvaluateTrust",
+    "outputs": [],
+    "stateMutability": "nonpayable",
     "type": "function"
   },
   {
@@ -214,19 +380,6 @@ export default [
       }
     ],
     "name": "renewTrust",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "bytes20[]",
-        "name": "humanityIDs",
-        "type": "bytes20[]"
-      }
-    ],
-    "name": "revokeTrust",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"

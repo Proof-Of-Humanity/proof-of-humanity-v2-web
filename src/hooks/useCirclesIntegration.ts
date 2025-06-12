@@ -10,6 +10,69 @@ import { isAddress } from "viem";
 import usePOHCirclesWrite from "contracts/hooks/usePOHCirclesWrite";
 import { useLoading } from "hooks/useLoading";
 
+async function fetchMetaDigest(address: string): Promise<string | null> {
+  const requestData = {
+    jsonrpc: "2.0",
+    id: 0,
+    method: "circles_query",
+    params: [
+      {
+        Namespace: "CrcV2",
+        Table: "UpdateMetadataDigest",
+        Columns: ["metadataDigest"],
+        Filter: [
+          {
+            Type: "FilterPredicate",
+            FilterType: "Equals",
+            Column: "avatar", 
+            Value: address.toLowerCase(),
+          },
+        ],
+        Order: [
+          { Column: "blockNumber", SortOrder: "DESC" },
+          { Column: "transactionIndex", SortOrder: "DESC" },
+          { Column: "logIndex", SortOrder: "DESC" },
+        ],
+        Limit: 1,
+      },
+    ],
+  };
+
+  try {
+    const response = await fetch("https://rpc.aboutcircles.com/", {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+      },
+      body: JSON.stringify(requestData),
+    });
+
+    if (!response.ok) {
+      console.error("Failed to fetch metaDigest, HTTP status:", response.status);
+      toast.error("Failed to verify Circles profile activity.");
+      return null;
+    }
+
+    const data = await response.json();
+
+    if (data.error) {
+      console.error("Error in metaDigest RPC response:", data.error);
+      toast.error("Error verifying Circles profile activity.");
+      return null;
+    }
+    if (data.result.rows.length > 0) {
+      return data.result.rows[0];
+    } else {
+      toast.error("No Circles profile found for the address.");
+      return null; 
+    }
+  } catch (error) {
+    console.error("Error fetching metaDigest:", error);
+    toast.error("An error occurred while checking Circles profile activity.");
+    return null;
+  }
+}
+
 type CirclesDataQueryKey = ['circlesData', string];
 
 export default function useCirclesIntegration() {
@@ -72,7 +135,9 @@ export default function useCirclesIntegration() {
       onSuccess: () => {
         loading.stop();
         setDisableButton(true);
-        refetchCirclesData();
+       setTimeout(() => {
+         refetchCirclesData();
+        }, 1000);
         toast.success("Successfully linked Circles account!");
       },
       onFail: () => {
@@ -96,7 +161,9 @@ export default function useCirclesIntegration() {
       onSuccess: () => {
         loading.stop();
         setDisableButton(true);
-        refetchCirclesData();
+       setTimeout(() => {
+         refetchCirclesData();
+        }, 1000);
         toast.success("Successfully renewed trust!");
       },
       onFail: () => {
@@ -115,11 +182,21 @@ export default function useCirclesIntegration() {
       toast.error("Please enter a valid wallet address");
       return;
     }
+
     loading.start();
+
+    const trimmedWalletAddress = walletAddress.trim();
+    const digest = await fetchMetaDigest(trimmedWalletAddress);
+
+    if (!digest) {
+      loading.stop(); 
+      return;
+    }
+    
     writeLink({
-      args: [currentHumanityId, walletAddress.trim()], 
+      args: [currentHumanityId, trimmedWalletAddress], 
     });
-  }, [isWalletAddressValid,loading,currentHumanityId]); 
+  }, [isWalletAddressValid, walletAddress, loading, currentHumanityId, writeLink]); 
 
   const handleRenewTrust = useCallback(async () => {
     if (!isWalletAddressValid) { 
@@ -168,11 +245,9 @@ export default function useCirclesIntegration() {
   }, [pending, isConnected, connectedChainId, circlesChain, disableButton, isWalletAddressValid, humanityStatus]);
 
   useEffect(() => {
-    if (!isConnected || !address) {
-        setWalletAddress(""); 
-    }
+    setWalletAddress(""); 
     setDisableButton(false); 
-  }, [isConnected, address]); 
+  }, [address]); 
 
   return {
     walletAddress, 
