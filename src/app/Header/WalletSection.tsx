@@ -38,7 +38,7 @@ const WalletSection = ({
       ) : (
         <button
           className="centered mr-2 h-8 rounded border-2 border-white bg-white/10 px-2 text-white"
-          onClick={() => modal.open({ view: "AllWallets" })}
+          onClick={() => modal.open({ view: "Connect" })}
         >
           Connect
         </button>

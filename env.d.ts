@@ -16,6 +16,7 @@ declare global {
       REACT_APP_IPFS_GATEWAY: string;
       DEPLOYED_APP: string;
       WALLET_CONNECT_PROJECT_ID: string;
+      ATLAS_URI: string;
     }
   }
 }
