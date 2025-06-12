@@ -33,6 +33,7 @@ import Dropdown from "components/Dropdown/Menu";
 import { RequestsQuery } from "generated/graphql";
 import { useLoading } from "hooks/useLoading";
 import { camelToTitle } from "utils/case";
+import { isRequestExpired } from "utils/time";
 import Card from "./Card";
 import SubgraphsStatus from "./SubgraphsStatus";
 import Loading from "app/[pohid]/loading";
@@ -72,34 +73,6 @@ const sortRequests = (request: RequestInterface[]): RequestInterface[] => {
   return requestsOut;
 };
 
-const isRequestExpired = (
-  request: RequestsQueryItem,
-  humanityLifespan: string | undefined,
-): boolean => {
-  if (request.status.id === "resolved") {
-    if (
-      request.humanity.winnerClaim.length > 0 &&
-      !!humanityLifespan &&
-      request.humanity.winnerClaim[0].index === request.index
-    ) {
-      // Is this the winner request
-      return (
-        /* (Number(request.humanity.winnerClaim[0].resolutionTime) > 0 && 
-            Number(request.humanity.winnerClaim[0].resolutionTime) + Number(humanityLifespan) < Date.now() / 1000) || 
-          (Number(request.creationTime) + Number(humanityLifespan) < Date.now() / 1000) ||  */
-        !request.humanity.registration ||
-        Number(request.humanity.registration?.expirationTime) <
-          Date.now() / 1000
-      );
-    }
-  } else if (request.status.id === "transferring") {
-    return (
-      Number(request.creationTime) + Number(humanityLifespan) <
-      Date.now() / 1000
-    );
-  }
-  return false;
-};
 
 const normalize = (
   requestsData: Record<SupportedChainId, RequestsQueryItem[]>,
@@ -108,16 +81,22 @@ const normalize = (
     Object.keys(requestsData).reduce<RequestInterface[]>(
       (acc, chainId) => [
         ...acc,
-        ...requestsData[Number(chainId) as SupportedChainId].map((request) => ({
-          ...request,
-          old: Number(chainId) === legacyChain.id,
-          chainId: Number(chainId) as SupportedChainId,
-          expired: isRequestExpired(
-            request,
-            humanityLifespanAllChains[Number(chainId) as SupportedChainId],
-          ),
-          rejected: request.status.id === "resolved" && !request.revocation && request.winnerParty?.id != 'requester'
-        })),
+        ...requestsData[Number(chainId) as SupportedChainId].map((request) => {
+          const totalRequests = (request.humanity.nbRequests ? Number(request.humanity.nbRequests) : 0)
+            + (request.humanity.nbLegacyRequests ? Number(request.humanity.nbLegacyRequests) : 0);
+
+          return {
+            ...request,
+            old: Number(chainId) === legacyChain.id,
+            chainId: Number(chainId) as SupportedChainId,
+            expired: isRequestExpired(
+              request,
+              { humanityLifespan: humanityLifespanAllChains[Number(chainId) as SupportedChainId] },
+              totalRequests
+            ),
+            rejected: request.status.id === "resolved" && !request.revocation && request.winnerParty?.id != 'requester'
+          };
+        }),
       ],
       [],
     ),
