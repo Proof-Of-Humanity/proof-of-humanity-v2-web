@@ -2,9 +2,12 @@ import Image from "next/image";
 import React, { useEffect, useState } from "react";
 import ExternalLink from "components/ExternalLink";
 import Popover from "components/Popover";
+import SettingsPopover from "./SettingsPopover";
+import { useAccount } from "wagmi";
 
 const Options: React.FC = () => {
   const [isDarkMode, setIsDarkMode] = useState<boolean>(false);
+  const { isConnected } = useAccount();
 
   useEffect(() => {
     const savedTheme = localStorage.getItem("theme");
@@ -30,7 +33,8 @@ const Options: React.FC = () => {
   };
 
   return (
-    <div className="mt-[16px] flex flex-row md:mt-0">
+    <div className="mt-[16px] flex flex-row items-center md:mt-0">
+      {isConnected && <SettingsPopover />}
       <ExternalLink href="https://snapshot.org/#/poh.eth/">
         <Image alt="snapshot" src="/logo/snapshot.svg" height={16} width={16} />
       </ExternalLink>
