@@ -2,6 +2,7 @@ import { useAtlasProvider } from "@kleros/kleros-app";
 import { toast } from "react-toastify";
 import ActionButton, { ActionButtonProps } from "./ActionButton";
 import { twMerge } from "tailwind-merge";
+import { useAccount } from "wagmi";
 
 export interface SignInButtonProps extends Omit<ActionButtonProps, 'onClick' | 'label'> {
   label?: string;
@@ -13,6 +14,7 @@ const SignInButton: React.FC<SignInButtonProps> = ({
   ...restProps
 }) => {
   const { isSigningIn, authoriseUser } = useAtlasProvider();
+  const { isConnected } = useAccount();
 
   const handleSignIn = async () => {
     try {
@@ -29,6 +31,7 @@ const SignInButton: React.FC<SignInButtonProps> = ({
         ...restProps,
         className: twMerge("px-5 py-2", className),
         isLoading: isSigningIn,
+        disabled: !isConnected,
         label: isSigningIn ? "Signing In..." : label,
         onClick: handleSignIn,
       }}

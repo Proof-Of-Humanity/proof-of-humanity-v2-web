@@ -156,7 +156,7 @@ export default function Evidence({
 
     const evidenceTextFile = new File(
       [JSON.stringify(evidenceJson)],
-      "evidence.txt",
+      "evidence",
       {
         type: "text/plain",
       }
@@ -172,7 +172,8 @@ export default function Evidence({
 
     state$.uri.set(evidenceUri);
   } catch (error) {
-    toast.error("Failed to upload evidence. Please try again.");
+    toast.error(`Failed to upload evidence : 
+      ${error instanceof Error ? error.message : "Unknown error"}`);
     loading.stop();
   }
   };
