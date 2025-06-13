@@ -1,5 +1,6 @@
 import { useAtlasProvider } from "@kleros/kleros-app";
 import SignInButton, { SignInButtonProps } from "./SignInButton";
+import React from "react";
 
 interface AuthGuardProps {
   children: React.ReactNode;
