@@ -80,7 +80,6 @@ export default function ActionBar({
   expired,
   arbitrationHistory,
   rejected,
-  humanityExpirationTime,
 }: ActionBarProps) {
   const chain = useChainParam()!;
   const { address } = useAccount();
@@ -491,7 +490,7 @@ export default function ActionBar({
               />
 
               <ExternalLink
-                href={`https://resolve.kleros.io/cases/${currentChallenge.disputeId}`}
+                href={`https://resolve.kleros.io/${chain.id}cases/${currentChallenge.disputeId}`}
                 className="btn-main gradient h-[48px] rounded
                 items-center
                 justify-center

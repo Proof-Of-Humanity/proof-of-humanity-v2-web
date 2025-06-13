@@ -361,7 +361,7 @@ const Appeal: React.FC<AppealProps> = ({
               <div className="mt-[-1.4rem]">
                 <ExternalLink
                   className="text-orange mx-2 flex flex-row flex-wrap justify-end gap-x-[8px] text-sm font-semibold leading-none hover:text-orange-500 md:gap-2 lg:gap-3"
-                  href={`https://resolve.kleros.io/cases/${currentChallenge.disputeId}`}
+                  href={`https://resolve.kleros.io/${chainId}/cases/${currentChallenge.disputeId}`}
                 >
                   <span className="mt-1 text-right text-sm font-semibold leading-none">
                     Check how the jury voted
