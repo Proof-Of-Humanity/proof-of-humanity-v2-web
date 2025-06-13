@@ -68,8 +68,7 @@ export default function Form({ contractData, totalCosts, renewal }: FormProps) {
     useRef(undefined);
   const chainId = useChainId() as SupportedChainId;
 
-  const { uploadFile: uploadToIPFS , roleRestrictions} = useAtlasProvider();
-  console.log(roleRestrictions);
+  const { uploadFile: uploadToIPFS } = useAtlasProvider();
 
   const step$ = useObservable(Step.info);
   const media$ = useObservable<MediaState>({ photo: null, video: null });
