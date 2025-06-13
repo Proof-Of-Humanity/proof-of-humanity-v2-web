@@ -100,9 +100,6 @@ async function Profile({ params: { pohid } }: PageProps) {
         requestQuery = humanity[lastEvidenceChain.id]!.humanity!.requests.find(
           (req) => req.index === request!.index,
         );
-        const totalRequests = 
-          (humanity[homeChain.id]!.humanity!.nbRequests ? Number(humanity[homeChain.id]!.humanity!.nbRequests) : 0) + 
-          (humanity[homeChain.id]!.humanity!.nbLegacyRequests ? Number(humanity[homeChain.id]!.humanity!.nbLegacyRequests) : 0);
         
         expired = isRequestExpired(
           {
@@ -113,8 +110,7 @@ async function Profile({ params: { pohid } }: PageProps) {
             index: request.index,
             winnerParty: requestQuery?.winnerParty
           },
-          { humanityLifespan: contractData[lastEvidenceChain.id].humanityLifespan },
-          totalRequests
+          { humanityLifespan: contractData[lastEvidenceChain.id].humanityLifespan }
         );
         if (expired) {
           request = undefined;
@@ -183,21 +179,15 @@ async function Profile({ params: { pohid } }: PageProps) {
                 ) || // No winnerClaimRequest if it did not expired
                   !winnerClaimData.request), // if winnerClaimRequest has expired it is left as pastRequest
             ).map((req) => {
-                const totalRequests = 
-                  (humanity[chain.id]?.humanity?.nbRequests ? Number(humanity[chain.id].humanity?.nbRequests) : 0) + 
-                  (humanity[chain.id]?.humanity?.nbLegacyRequests ? Number(humanity[chain.id].humanity?.nbLegacyRequests) : 0);
-                
                 const isExpired = isRequestExpired(
                   {
                     status: { id: req.status.id },
                     creationTime: req.creationTime,
                     revocation: req.revocation,
                     humanity: humanity[chain.id].humanity!,
-                    index: req.index,
-                    winnerParty: req.winnerParty
+                    index: req.index
                   },
-                  { humanityLifespan: contractData[chain.id]?.humanityLifespan },
-                  totalRequests
+                  { humanityLifespan: contractData[chain.id]?.humanityLifespan }
                 );
               
               return {
