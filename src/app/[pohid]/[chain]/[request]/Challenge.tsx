@@ -99,15 +99,28 @@ export default function Challenge({
 }: ChallengeInterface) {
   const { uploadFile } = useAtlasProvider();
   
+  const loading = useLoading();
+
   const [prepare] = usePoHWrite(
     "challengeRequest",
     useMemo(
       () => ({
         onReady(fire) {
+          loading.stop();
           fire();
+          loading.start("Executing transaction");
+          toast.info("Transaction pending");
+        },
+        onError() {
+          loading.stop();
+          toast.error("Transaction rejected");
+        },
+        onSuccess() {
+          loading.stop();
+          toast.success("Challenge submitted successfully");
         },
       }),
-      [],
+      [loading],
     ),
   );
 
@@ -115,8 +128,6 @@ export default function Challenge({
   const reason = reason$.use();
 
   const [justification, setJustification] = useState("");
-
-  const loading = useLoading();
 
   const submit = async () => {
     if (revocation === !reason && !justification) return;
@@ -154,7 +165,6 @@ export default function Challenge({
       ],
     });
 
-      loading.start("Executing transaction");
     } catch (error) {
       toast.error("Failed to upload evidence. Please try again.");
       loading.stop();
