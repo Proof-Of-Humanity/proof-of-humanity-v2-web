@@ -55,20 +55,26 @@ export default function Vouch({
   );
 
   const { signTypedData } = useSignTypedData({
-    onSuccess: async (signature) => {
-      try {
-        await axios.post(`/api/vouch/${chain.name}/add`, {
-          claimer,
-          pohId,
-          voucher: address!,
-          expiration,
-          signature,
-        });
-        toast.success("Vouched successfully");
-      } catch (err) {
-        console.error(err);
-        toast.error("Some error occurred");
-      }
+    mutation: {
+      onSuccess: async (signature) => {
+        try {
+          await axios.post(`/api/vouch/${chain.name}/add`, {
+            claimer,
+            pohId,
+            voucher: address!,
+            expiration,
+            signature,
+          });
+          toast.success("Vouched successfully");
+        } catch (err) {
+          console.error(err);
+          toast.error("Error vouching. Please try again.");
+        }
+      },
+      onError: (error) => {
+        console.error(error);
+        toast.error("Error vouching. Please try again.");
+      },
     },
   });
 
