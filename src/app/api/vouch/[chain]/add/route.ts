@@ -8,20 +8,9 @@ import {
   Address,
   Hash,
   createPublicClient,
-  getContract,
   http,
   verifyTypedData,
 } from "viem";
-
-const getProofOfHumanity = (chain: SupportedChain) =>
-  getContract({
-    abi: abis.ProofOfHumanity,
-    address: Contract.ProofOfHumanity[chain.id] as `0x${string}`,
-    publicClient: createPublicClient({
-      chain,
-      transport: http(getChainRpc(chain.id)),
-    }),
-  });
 
 interface AddVouchBody {
   pohId: Hash;
@@ -56,9 +45,18 @@ export async function POST(
     if (expiration < Math.floor(Date.now() / 1000))
       throw new Error("Vouch already expired");
 
-    const poh = getProofOfHumanity(chain);
+    const publicClient = createPublicClient({
+      chain,
+      transport: http(getChainRpc(chain.id)),
+    });
 
-    const isVoucherHuman = await poh.read.isHuman([voucher]);
+    const isVoucherHuman = await publicClient.readContract({
+      abi: abis.ProofOfHumanity,
+      address: Contract.ProofOfHumanity[chain.id] as `0x${string}`,
+      functionName: 'isHuman',
+      args: [voucher],
+    });
+
     if (!isVoucherHuman) throw new Error("Voucher is not human");
 
     const validSignature = await verifyTypedData({
