@@ -49,7 +49,6 @@ export default async function Request({ params }: PageProps) {
   ]);
 
   if (!request) return <span>Error occured</span>;
-
   const arbitrationCost = await getArbitrationCost(
     chain,
     contractData.arbitrationInfo.arbitrator,
@@ -86,11 +85,8 @@ export default async function Request({ params }: PageProps) {
 
   const rejected = request.status.id === "resolved" && !request.revocation && request.winnerParty?.id != 'requester';
 
-  const totalRequests = 
-    (request.humanity.nbRequests ? Number(request.humanity.nbRequests) : 0) + 
-    (request.humanity.nbLegacyRequests ? Number(request.humanity.nbLegacyRequests) : 0);
-  const expired = isRequestExpired(request, contractData, totalRequests);
-
+  const expired = isRequestExpired(request, contractData);
+  
   let registrationFile: RegistrationFile | null;
   let revocationFile: EvidenceFile | null = null;
 
