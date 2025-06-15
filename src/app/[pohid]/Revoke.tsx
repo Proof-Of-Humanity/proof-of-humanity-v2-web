@@ -107,7 +107,7 @@ export default function Revoke({
 
       prepare({ args: [pohId, evidenceUri], value: cost });
     } catch (error) {
-      toast.error("Failed to upload evidence. Please try again.");
+      toast.error(`Failed to upload evidence : ${error instanceof Error ? error.message : "Unknown error"}`);
       loading.stop();
     }
   };
