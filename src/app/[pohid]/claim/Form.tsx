@@ -176,12 +176,9 @@ export default function Form({ contractData, totalCosts, renewal }: FormProps) {
     state$.uri.set(registrationUri);
 
    } catch (error) {
-      toast.error("Failed to upload registration. Please try again.");
-      console.error(error);
-      return;
-    }
-    finally {
+      toast.error(`Failed to upload registration : ${error instanceof Error ? error.message : "Unknown error"}`);
       loading.stop();
+      return;
     }
   };
 

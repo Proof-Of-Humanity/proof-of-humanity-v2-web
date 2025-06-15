@@ -166,7 +166,7 @@ export default function Challenge({
     });
 
     } catch (error) {
-      toast.error("Failed to upload evidence. Please try again.");
+      toast.error(`Failed to upload evidence : ${error instanceof Error ? error.message : "Unknown error"}`);
       loading.stop();
     }
   };
