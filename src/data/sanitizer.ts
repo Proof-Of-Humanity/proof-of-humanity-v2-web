@@ -18,6 +18,34 @@ import { Address, Hash } from "viem";
 import { getHumanityData } from "./humanity";
 import { genRequestId } from "./request";
 
+const hasRegistrationEvidence = async (
+  evidences: { uri: string }[] | undefined,
+): Promise<boolean> => {
+  if (!evidences || evidences.length === 0) return false;
+
+  const registrationCandidates = (evidences: { uri: string }[]): string[] => {
+    if (evidences.length === 0) return [];
+    if (evidences.length === 1) return [evidences[0].uri];
+
+    // first(home) chain evidence, last(foreign) chain evidence have higher 
+    // likelihood of being the registration evidence
+    const first = evidences[0].uri;
+    const last = evidences[evidences.length - 1].uri;
+    const middle = evidences.slice(1, -1).map((e) => e.uri);
+
+    return [first, last, ...middle];
+  };
+
+  for (const uri of registrationCandidates(evidences)) {
+    try {
+      const json = await ipfsFetch<EvidenceFile>(uri);
+      if (json?.name?.toLowerCase() === "registration") return true;
+    } catch {}
+  }
+
+  return false;
+};
+
 /* 
   Sanitizer module 
 
@@ -30,6 +58,10 @@ export const sanitizeRequest = async (
   chainId: SupportedChainId,
   pohId: Hash,
 ) => {
+  const hasReg = await hasRegistrationEvidence(
+    request?.evidenceGroup?.evidence,
+  );
+
   if (
     (request?.revocation &&
       request?.humanity.winnerClaim &&
@@ -40,10 +72,7 @@ export const sanitizeRequest = async (
         !request.evidenceGroup.evidence ||
         request.evidenceGroup.evidence.length === 0 ||
         !request.claimer.name ||
-        (!request.evidenceGroup.evidence.some((ev) =>
-          ev.uri.includes("registration.json"),
-        ) &&
-          !request.revocation)))
+        (!hasReg && !request.revocation)))
   ) {
     const res = await Promise.all(
       supportedChains.map((chain) => sdk[chain.id].Humanity({ id: pohId })),
@@ -108,10 +137,7 @@ export const sanitizeRequest = async (
         request &&
         (!request.evidenceGroup ||
           !request.evidenceGroup.evidence ||
-          request.evidenceGroup.evidence.length === 0 ||
-          !request.evidenceGroup.evidence.some((ev) =>
-            ev.uri.includes("registration.json"),
-          )) /* && !request.revocation */
+          request.evidenceGroup.evidence.length === 0)
       ) {
         completeRequest(request as any, transferringRequest as any);
       }
@@ -120,7 +146,7 @@ export const sanitizeRequest = async (
   return request;
 };
 
-export const sanitizeHumanityRequests = (
+export const sanitizeHumanityRequests = async (
   out: Record<SupportedChainId, HumanityQuery>,
 ) => {
   const isIncompleteRequest = (request: RequestsQuery["requests"][0]) => {
@@ -130,21 +156,17 @@ export const sanitizeHumanityRequests = (
         !request.evidenceGroup.evidence ||
         request.evidenceGroup.evidence.length === 0 ||
         !request.claimer.name ||
-        (!request.evidenceGroup.evidence.some((ev) =>
-          ev.uri.includes("registration.json"),
-        ) &&
-          !request.revocation) ||
         (request.revocation && request.registrationEvidenceRevokedReq == ""))
     );
   };
 
-  supportedChains.forEach((chain) => {
+  for (const chain of supportedChains) {
     let localIncompleteReqs = out[chain.id].humanity?.requests
       .filter((req) => isIncompleteRequest(req as any))
       .sort((req1, req2) => req2.creationTime - req1.creationTime);
 
     if (localIncompleteReqs) {
-      for (let i = 0; i < localIncompleteReqs?.length; i++) {
+      for (let i = 0; i < localIncompleteReqs.length; i++) {
         try {
           let tROut = getTransferringRequest(
             out,
@@ -176,7 +198,7 @@ export const sanitizeHumanityRequests = (
         ];
       }
     }
-  });
+  }
   return out;
 };
 
@@ -275,10 +297,7 @@ const completeRequest = (request: Request, transferringRequest: Request) => {
     !request.revocation &&
     (!request.evidenceGroup ||
       !request.evidenceGroup.evidence ||
-      request.evidenceGroup.evidence.length === 0 ||
-      !request.evidenceGroup.evidence.some((ev) =>
-        ev.uri.includes("registration.json"),
-      )) /* && !request.revocation */
+      request.evidenceGroup.evidence.length === 0) /* && !request.revocation */
   ) {
     request.evidenceGroup.evidence.push(
       transferringRequest?.evidenceGroup.evidence[0],

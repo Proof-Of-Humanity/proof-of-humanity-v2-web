@@ -5,7 +5,7 @@ import Label from "components/Label";
 import Modal from "components/Modal";
 import TimeAgo from "components/TimeAgo";
 import { useLoading } from "hooks/useLoading";
-import { ipfs, uploadToIPFS } from "utils/ipfs";
+import { ipfs } from "utils/ipfs";
 import { formatEth } from "utils/misc";
 import cn from "classnames";
 import Image from "next/image";
@@ -15,6 +15,9 @@ import { Hash } from "viem";
 import DocumentIcon from "icons/NoteMajor.svg";
 import { ObservablePrimitiveBaseFns } from "@legendapp/state";
 import { ContractData } from "data/contract";
+import { useAtlasProvider, Roles } from "@kleros/kleros-app";
+import { toast } from "react-toastify";
+import AuthGuard from "components/AuthGuard";
 
 type Reason =
   | "none"
@@ -94,15 +97,30 @@ export default function Challenge({
   arbitrationCost,
   arbitrationInfo,
 }: ChallengeInterface) {
+  const { uploadFile } = useAtlasProvider();
+  
+  const loading = useLoading();
+
   const [prepare] = usePoHWrite(
     "challengeRequest",
     useMemo(
       () => ({
         onReady(fire) {
+          loading.stop();
           fire();
+          loading.start("Executing transaction");
+          toast.info("Transaction pending");
+        },
+        onError() {
+          loading.stop();
+          toast.error("Transaction rejected");
+        },
+        onSuccess() {
+          loading.stop();
+          toast.success("Challenge submitted successfully");
         },
       }),
-      [],
+      [loading],
     ),
   );
 
@@ -111,17 +129,31 @@ export default function Challenge({
 
   const [justification, setJustification] = useState("");
 
-  const loading = useLoading();
-
   const submit = async () => {
     if (revocation === !reason && !justification) return;
 
     loading.start("Uploading evidence");
+    try {
+    const evidenceJson = {
+      name: "Challenge Justification",
+      description: justification,
+    };
 
-    const data = new FormData();
-    data.append("###", "evidence.json");
-    data.append("name", "Challenge Justification");
-    if (justification) data.append("description", justification);
+    const evidenceTextFile = new File(
+      [JSON.stringify(evidenceJson)],
+      "evidence",
+      {
+        type: "text/plain",
+      }
+    );
+
+    const evidenceUri = await uploadFile(evidenceTextFile, Roles.Evidence);
+    
+    if (!evidenceUri) {
+      toast.error("Failed to upload evidence.");
+      loading.stop();
+      return;
+    }
 
     prepare({
       value: arbitrationCost,
@@ -129,11 +161,14 @@ export default function Challenge({
         pohId,
         BigInt(requestIndex),
         reasonToIdx(revocation ? "none" : reason),
-        await uploadToIPFS(data),
+        evidenceUri,
       ],
     });
 
-    loading.start("Executing transaction");
+    } catch (error) {
+      toast.error(`Failed to upload evidence : ${error instanceof Error ? error.message : "Unknown error"}`);
+      loading.stop();
+    }
   };
 
   return (
@@ -189,15 +224,17 @@ export default function Challenge({
           Deposit: {formatEth(arbitrationCost)} ETH
         </div>
 
-        <button
-          disabled={
-            !revocation ? !justification || reason === "none" : !justification
-          }
-          className="btn-main mt-12"
-          onClick={submit}
-        >
-          Challenge request
-        </button>
+        <AuthGuard signInButtonProps={{ className: "mt-12 px-4" }}>
+          <button
+            disabled={
+              !revocation ? !justification || reason === "none" : !justification
+            }
+            className="btn-main mt-12"
+            onClick={submit}
+          >
+            Challenge request
+          </button>
+        </AuthGuard>
       </div>
     </Modal>
   );
