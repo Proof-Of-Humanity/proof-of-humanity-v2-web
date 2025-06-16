@@ -97,6 +97,10 @@ export default function Form({ contractData, totalCosts, renewal }: FormProps) {
         step$.set(Step.finalized);
         toast.success("Request created");
       },
+      onFail() {
+        loading.stop();
+        toast.error("Transaction preparation failed. You may have insufficient funds or are on the wrong network.");
+      },
       onReady(fire) {
         fire();
         toast.info("Transaction pending");
@@ -217,9 +221,13 @@ export default function Form({ contractData, totalCosts, renewal }: FormProps) {
     if (initiatingAddress.current) {
       if (
         !renewal &&
-        initiatingAddress.current.toLowerCase() !== address?.toLowerCase()
-      )
+        address &&
+        initiatingAddress.current.toLowerCase() !== address.toLowerCase()
+      ) {
         redirect(`/${address}`, RedirectType.replace);
+      } else if (!address) {
+        redirect('/', RedirectType.replace);
+      }
     }
   }, [address, initiatingAddress, renewal]);
 
