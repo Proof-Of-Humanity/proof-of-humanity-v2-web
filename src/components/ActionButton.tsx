@@ -1,7 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
+import Image from 'next/image';
 import { twMerge } from 'tailwind-merge';
 
-interface ActionButtonProps {
+export type ActionButtonVariant = 'primary' | 'secondary';
+export interface ActionButtonProps {
   onClick: () => void;
   label: string;
   disabled?: boolean;
@@ -9,7 +11,7 @@ interface ActionButtonProps {
   ariaLabel?: string;
   className?: string;
   icon?: React.ReactNode;
-  defaultLabel?: string;
+  variant?: ActionButtonVariant;
   tooltip?: React.ReactNode;
   tooltipPosition?: 'top' | 'bottom' | 'left' | 'right';
 }
@@ -22,33 +24,38 @@ export default function ActionButton({
   ariaLabel,
   className = '',
   icon,
-  defaultLabel,
+  variant = 'primary',
   tooltip,
   tooltipPosition = 'top',
 }: ActionButtonProps) {
-  const buttonStyle = (defaultLabel && label !== defaultLabel) 
-    ? 'btn-sec' 
-    : 'btn-main gradient';
+  const buttonStyle = variant === 'secondary' ? 'btn-sec' : 'btn-main';
 
   const [showTooltip, setShowTooltip] = useState(false);
-  const [tooltipTimeoutId, setTooltipTimeoutId] = useState<NodeJS.Timeout | null>(null);
+  const tooltipTimeoutId = useRef<NodeJS.Timeout | null>(null);
 
   const handleMouseEnter = () => {
     if (tooltip) {
-      const timeoutId = setTimeout(() => {
+      tooltipTimeoutId.current = setTimeout(() => {
         setShowTooltip(true);
       }, 300);
-      setTooltipTimeoutId(timeoutId);
     }
   };
 
   const handleMouseLeave = () => {
-    if (tooltipTimeoutId) {
-      clearTimeout(tooltipTimeoutId);
-      setTooltipTimeoutId(null);
+    if (tooltipTimeoutId.current) {
+      clearTimeout(tooltipTimeoutId.current);
+      tooltipTimeoutId.current = null;
     }
     setShowTooltip(false);
   };
+
+  useEffect(() => {
+    return () => {
+      if (tooltipTimeoutId.current) {
+        clearTimeout(tooltipTimeoutId.current);
+      }
+    };
+  }, []);
 
   const getTooltipPositionStyles = () => {
     switch (tooltipPosition) {
@@ -58,35 +65,39 @@ export default function ActionButton({
         return { top: '50%', right: '100%', transform: 'translateY(-50%) translateX(-8px)' };
       case 'right':
         return { top: '50%', left: '100%', transform: 'translateY(-50%) translateX(8px)' };
-      default:
+      default: // top
         return { bottom: '100%', left: '50%', transform: 'translateX(-50%) translateY(-8px)' };
     }
   };
-  const buttonBaseClass = 'px-5 py-2 normal-case disabled:opacity-50 disabled:cursor-not-allowed flex items-center';
+
+  const buttonBaseClass =
+    'w-full normal-case disabled:opacity-50 disabled:cursor-not-allowed';
 
   const mergedClasses = twMerge(buttonStyle, buttonBaseClass, className);
   return (
-    <div 
-      className="relative inline-block"
+    <div
+      className="relative"
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
     >
       <button
         onClick={onClick}
         aria-label={ariaLabel || label}
-        tabIndex={0}
         className={mergedClasses}
         disabled={disabled || isLoading}
-        onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.click()}
       >
         {isLoading && (
-          <span className="mr-2 inline-block w-4 h-4 border-2 border-t-transparent border-white rounded-full animate-spin" />
+          <Image
+            alt="loading"
+            src="/logo/poh-white.svg"
+            className="animate-flip fill-white mr-2"
+            width={14}
+            height={14}
+          />
         )}
-        
-        {icon && !isLoading && (
-          <span className="mr-2">{icon}</span>
-        )}
-        
+
+        {icon && !isLoading && <span className="mr-2">{icon}</span>}
+
         {label}
       </button>
       {tooltip && showTooltip && (

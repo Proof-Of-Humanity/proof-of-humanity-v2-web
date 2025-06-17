@@ -9,7 +9,6 @@ declare global {
       GNOSIS_SUBGRAPH_URL: string;
       CHIADO_SUBGRAPH_URL: string;
       SEPOLIA_SUBGRAPH_URL: string;
-      FILEBASE_TOKEN: string;
       DATALAKE_URL: string;
       DATALAKE_KEY: string;
       LOGTAIL_SOURCE_TOKEN: string;

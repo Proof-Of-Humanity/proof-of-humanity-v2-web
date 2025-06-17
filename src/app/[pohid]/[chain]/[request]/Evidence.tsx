@@ -24,10 +24,12 @@ import { toast } from "react-toastify";
 import useSWR from "swr";
 import { EvidenceFile, MetaEvidenceFile } from "types/docs";
 import { shortenAddress } from "utils/address";
-import { ipfs, ipfsFetch, uploadToIPFS } from "utils/ipfs";
+import { ipfsFetch, ipfs } from "utils/ipfs";
 import { romanize } from "utils/misc";
 import { Address, Hash } from "viem";
 import { useChainId } from "wagmi";
+import { useAtlasProvider, Roles } from "@kleros/kleros-app";
+import AuthGuard from "components/AuthGuard";
 
 enableReactUse();
 
@@ -101,7 +103,8 @@ export default function Evidence({
   const [modalOpen, setModalOpen] = useState(false);
   const loading = useLoading();
   const [pending] = loading.use();
-
+  
+  const { uploadFile } = useAtlasProvider();
   const [prepare] = usePoHWrite(
     "submitEvidence",
     useMemo<Effects>(
@@ -134,12 +137,45 @@ export default function Evidence({
   const submit = async () => {
     loading.start();
 
-    const data = new FormData();
-    data.append("###", "evidence.json");
-    data.append("name", title);
-    if (description) data.append("description", description);
-    if (file) data.append("evidence", file, file.name);
-    state$.uri.set(await uploadToIPFS(data));
+    let evidenceFileURI;
+    try {
+    if (file) {
+      evidenceFileURI = await uploadFile(file, Roles.Evidence);
+      if (!evidenceFileURI) {
+        toast.error("Failed to upload file.");
+        loading.stop();
+        return;
+      }
+    }
+
+    const evidenceJson = {
+      name: title,
+      description: description,
+      evidence: evidenceFileURI,
+    };
+
+    const evidenceTextFile = new File(
+      [JSON.stringify(evidenceJson)],
+      "evidence",
+      {
+        type: "text/plain",
+      }
+    );
+
+    const evidenceUri = await uploadFile(evidenceTextFile, Roles.Evidence);
+    
+    if (!evidenceUri) {
+      toast.error("Failed to upload evidence.");
+      loading.stop();
+      return;
+    }
+
+    state$.uri.set(evidenceUri);
+  } catch (error) {
+    toast.error(`Failed to upload evidence : 
+      ${error instanceof Error ? error.message : "Unknown error"}`);
+    loading.stop();
+  }
   };
 
   state$.onChange(({ value }) => {
@@ -212,13 +248,15 @@ export default function Evidence({
                   : "Drag 'n drop some files here, or click to select files"}
               </Uploader>
             </div>
-            <button
-              disabled={pending}
-              className="btn-main mt-12"
-              onClick={submit}
-            >
-              Submit
-            </button>
+            <AuthGuard signInButtonProps={{ className: "mt-12" }}>
+              <button
+                disabled={pending}
+                className="btn-main mt-12"
+                onClick={submit}
+              >
+                Submit
+              </button>
+            </AuthGuard>
           </div>
         </Modal>
       )}
