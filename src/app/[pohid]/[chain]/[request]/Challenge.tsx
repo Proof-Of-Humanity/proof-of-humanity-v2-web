@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
 import ALink from "components/ExternalLink";
 import Field from "components/Field";
 import Label from "components/Label";
@@ -111,6 +111,10 @@ export default function Challenge({
           loading.start("Executing transaction");
           toast.info("Transaction pending");
         },
+        onFail() {
+          loading.stop();
+          toast.error("Transaction failed");
+        },
         onError() {
           loading.stop();
           toast.error("Transaction rejected");
@@ -129,7 +133,7 @@ export default function Challenge({
 
   const [justification, setJustification] = useState("");
 
-  const submit = async () => {
+  const submit = useCallback(async () => {
     if (revocation === !reason && !justification) return;
 
     loading.start("Uploading evidence");
@@ -169,7 +173,7 @@ export default function Challenge({
       toast.error(`Failed to upload evidence : ${error instanceof Error ? error.message : "Unknown error"}`);
       loading.stop();
     }
-  };
+  }, [revocation, reason, justification, prepare, arbitrationCost, pohId, requestIndex, uploadFile, loading]);
 
   return (
     <Modal
