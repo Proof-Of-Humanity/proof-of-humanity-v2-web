@@ -1,5 +1,6 @@
 "use client";
 
+import { useAtlasProvider, Roles } from "@kleros/kleros-app";
 import { enableReactUse } from "@legendapp/state/config/enableReactUse";
 import {
   Show,
@@ -19,7 +20,6 @@ import { redirect, useParams } from "next/navigation";
 import { Fragment, MutableRefObject, useEffect, useMemo, useRef } from "react";
 import { toast } from "react-toastify";
 import { machinifyId } from "utils/identifier";
-import { uploadToIPFS } from "utils/ipfs";
 import { Hash, parseEther } from "viem";
 import { useAccount, useChainId } from "wagmi";
 import Connect from "./Connect";
@@ -68,6 +68,8 @@ export default function Form({ contractData, totalCosts, renewal }: FormProps) {
     useRef(undefined);
   const chainId = useChainId() as SupportedChainId;
 
+  const { uploadFile: uploadToIPFS } = useAtlasProvider();
+
   const step$ = useObservable(Step.info);
   const media$ = useObservable<MediaState>({ photo: null, video: null });
   const media = media$.use();
@@ -95,6 +97,10 @@ export default function Form({ contractData, totalCosts, renewal }: FormProps) {
         step$.set(Step.finalized);
         toast.success("Request created");
       },
+      onFail() {
+        loading.stop();
+        toast.error("Transaction preparation failed. You may have insufficient funds or are on the wrong network.");
+      },
       onReady(fire) {
         fire();
         toast.info("Transaction pending");
@@ -110,25 +116,74 @@ export default function Form({ contractData, totalCosts, renewal }: FormProps) {
     if (!media.photo || !media.video) return;
 
     loading.start("Uploading media");
+  try{
+    const photoFile = media.photo.content as File;
+    const videoFile = media.video.content as File;
 
-    let data = new FormData();
-    data.append("###", "file.json");
-    data.append("name", state.name);
-    data.append("photo", media.photo.content);
-    data.append("video", media.video.content);
+    const [photoUri, videoUri] = await Promise.all([
+        uploadToIPFS(photoFile, Roles.Photo),
+        uploadToIPFS(videoFile, Roles.IdentificationVideo),
+      ]);
 
-    const fileURI = await uploadToIPFS(data);
+
+    if (!photoUri || !videoUri) {
+      toast.error("Failed to upload media.");
+      loading.stop();
+      return;
+    }
+    
+    const fileJson = {
+      name: state.name,
+      photo: photoUri,
+      video: videoUri,
+    };
+    
+    const fileTextFile = new File([JSON.stringify(fileJson)], "file", {
+      type: "text/plain",
+    });
+
+    let fileURI: string | null;
+      fileURI = await uploadToIPFS(fileTextFile, Roles.Evidence);
+
+    if (!fileURI) {
+      toast.error("Failed to upload media metadata.");
+      loading.stop();
+      return;
+    }
 
     loading.start("Uploading evidence files");
 
-    data = new FormData();
-    data.append("###", "registration.json");
-    data.append("name", "Registration");
-    data.append("fileURI", fileURI);
+    const registrationJson = {
+      name: "Registration",
+      fileURI: fileURI,
+    };
 
-    state$.uri.set(await uploadToIPFS(data));
+    const registrationTextFile = new File(
+      [JSON.stringify(registrationJson)],
+      "registration",
+      {
+        type: "text/plain",
+      },
+    );
 
-    loading.stop();
+    let registrationUri: string | null;
+      registrationUri = await uploadToIPFS(
+        registrationTextFile,
+        Roles.Evidence
+      );
+    if (!registrationUri) {
+      toast.error("Failed to upload registration.");
+      loading.stop();
+      return;
+    }
+
+    state$.uri.set(registrationUri);
+
+   } catch (error) {
+      toast.error(`Failed to upload registration : ${error instanceof Error ? error.message : "Unknown error"}`);
+      loading.stop();
+      return;
+    }
   };
 
   state$.onChange(({ value }) => {
@@ -166,9 +221,13 @@ export default function Form({ contractData, totalCosts, renewal }: FormProps) {
     if (initiatingAddress.current) {
       if (
         !renewal &&
-        initiatingAddress.current.toLowerCase() !== address?.toLowerCase()
-      )
+        address &&
+        initiatingAddress.current.toLowerCase() !== address.toLowerCase()
+      ) {
         redirect(`/${address}`, RedirectType.replace);
+      } else if (!address) {
+        redirect('/', RedirectType.replace);
+      }
     }
   }, [address, initiatingAddress, renewal]);
 
