@@ -18,6 +18,7 @@ import { ContractData } from "data/contract";
 import { useAtlasProvider, Roles } from "@kleros/kleros-app";
 import { toast } from "react-toastify";
 import AuthGuard from "components/AuthGuard";
+import ActionButton from "components/ActionButton";
 
 type Reason =
   | "none"
@@ -100,6 +101,7 @@ export default function Challenge({
   const { uploadFile } = useAtlasProvider();
   
   const loading = useLoading();
+  const [isLoading, loadingMessage] = loading.use();
 
   const [prepare] = usePoHWrite(
     "challengeRequest",
@@ -136,7 +138,7 @@ export default function Challenge({
   const submit = useCallback(async () => {
     if (revocation === !reason && !justification) return;
 
-    loading.start("Uploading evidence");
+    loading.start("Uploading evidence...");
     try {
     const evidenceJson = {
       name: "Challenge Justification",
@@ -229,15 +231,18 @@ export default function Challenge({
         </div>
 
         <AuthGuard signInButtonProps={{ className: "mt-12 px-4" }}>
-          <button
-            disabled={
-              !revocation ? !justification || reason === "none" : !justification
-            }
-            className="btn-main mt-12"
-            onClick={submit}
-          >
-            Challenge request
-          </button>
+          <ActionButton
+            {...{
+              disabled:
+                (!revocation
+                  ? !justification || reason === "none"
+                  : !justification),
+              className: "mt-12",
+              onClick: submit,
+              isLoading,
+              label: loadingMessage || "Challenge request",
+            }}
+          />
         </AuthGuard>
       </div>
     </Modal>
