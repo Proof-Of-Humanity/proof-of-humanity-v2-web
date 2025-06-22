@@ -56,6 +56,10 @@ export default function Revoke({
           fire();
           toast.info("Transaction pending");
         },
+        onFail() {
+          loading.stop();
+          toast.error("Transaction failed");
+        },
         onError() {
           loading.stop();
           toast.error("Transaction rejected");
