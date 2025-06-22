@@ -59,7 +59,7 @@ export default function useWagmiWrite<
   const { status: transactionStatus } = useWaitForTransactionReceipt({
     hash: data
   });
-  
+
   useEffect(() => {
     switch (prepareStatus) {
       case "success":

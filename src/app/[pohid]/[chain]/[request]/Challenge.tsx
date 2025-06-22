@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
 import ALink from "components/ExternalLink";
 import Field from "components/Field";
 import Label from "components/Label";
@@ -18,6 +18,7 @@ import { ContractData } from "data/contract";
 import { useAtlasProvider, Roles } from "@kleros/kleros-app";
 import { toast } from "react-toastify";
 import AuthGuard from "components/AuthGuard";
+import ActionButton from "components/ActionButton";
 
 type Reason =
   | "none"
@@ -100,6 +101,7 @@ export default function Challenge({
   const { uploadFile } = useAtlasProvider();
   
   const loading = useLoading();
+  const [isLoading, loadingMessage] = loading.use();
 
   const [prepare] = usePoHWrite(
     "challengeRequest",
@@ -110,6 +112,10 @@ export default function Challenge({
           fire();
           loading.start("Executing transaction");
           toast.info("Transaction pending");
+        },
+        onFail() {
+          loading.stop();
+          toast.error("Transaction failed");
         },
         onError() {
           loading.stop();
@@ -129,10 +135,10 @@ export default function Challenge({
 
   const [justification, setJustification] = useState("");
 
-  const submit = async () => {
+  const submit = useCallback(async () => {
     if (revocation === !reason && !justification) return;
 
-    loading.start("Uploading evidence");
+    loading.start("Uploading evidence...");
     try {
     const evidenceJson = {
       name: "Challenge Justification",
@@ -169,7 +175,7 @@ export default function Challenge({
       toast.error(`Failed to upload evidence : ${error instanceof Error ? error.message : "Unknown error"}`);
       loading.stop();
     }
-  };
+  }, [revocation, reason, justification, prepare, arbitrationCost, pohId, requestIndex, uploadFile, loading]);
 
   return (
     <Modal
@@ -225,15 +231,18 @@ export default function Challenge({
         </div>
 
         <AuthGuard signInButtonProps={{ className: "mt-12 px-4" }}>
-          <button
-            disabled={
-              !revocation ? !justification || reason === "none" : !justification
-            }
-            className="btn-main mt-12"
-            onClick={submit}
-          >
-            Challenge request
-          </button>
+          <ActionButton
+            {...{
+              disabled:
+                (!revocation
+                  ? !justification || reason === "none"
+                  : !justification),
+              className: "mt-12",
+              onClick: submit,
+              isLoading,
+              label: loadingMessage || "Challenge request",
+            }}
+          />
         </AuthGuard>
       </div>
     </Modal>
