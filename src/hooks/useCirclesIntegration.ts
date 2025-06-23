@@ -115,23 +115,29 @@ export default function useCirclesIntegration() {
   );
 
   const handleLinkAccount = useCallback(async () => {
-    if (!isWalletAddressValid) { 
-      toast.error("Please enter a valid wallet address");
-      return;
-    }
-    loading.start();
-    const isHuman = await validateCirclesHumanity(
-      walletAddress,
-    );
-    if (!isHuman) {
-      loading.stop();
-      toast.error("The provided address is not a human in Circles.");
-      return;
-    }
+    try {
+      if (!isWalletAddressValid) { 
+        toast.error("Please enter a valid wallet address");
+        return;
+      }
+      loading.start();
+      const isHuman = await validateCirclesHumanity(
+        walletAddress,
+      );
+      if (!isHuman) {
+        loading.stop();
+        toast.error("The provided address is not a human in Circles.");
+        return;
+      }
 
-    writeLink({
-      args: [currentHumanityId, walletAddress.trim()], 
-    });
+      writeLink({
+        args: [currentHumanityId, walletAddress.trim()], 
+      });
+    } catch (error) {
+      loading.stop();
+      console.error("Error linking account:", error);
+      toast.error("An error occurred while linking the account. Please try again.");
+    }
   }, [
     isWalletAddressValid,
     walletAddress,
@@ -142,14 +148,20 @@ export default function useCirclesIntegration() {
   ]);
 
   const handleRenewTrust = useCallback(async () => {
-    if (!isWalletAddressValid) { 
-      toast.error("No linked Circles account address found to renew.");
-      return;
+    try {
+      if (!isWalletAddressValid) { 
+        toast.error("No linked Circles account address found to renew.");
+        return;
+      }
+      loading.start();
+      writeRenew({
+        args: [currentHumanityId], 
+      });
+    } catch (error) {
+      loading.stop();
+      console.error("Error renewing trust:", error);
+      toast.error("An error occurred while renewing trust. Please try again.");
     }
-    loading.start();
-    writeRenew({
-      args: [currentHumanityId], 
-    });
   }, [currentHumanityId, isWalletAddressValid, loading, writeRenew]); 
 
   const getActionButtonProps = useCallback((action: () => Promise<void> | void, defaultLabel: string) => {
