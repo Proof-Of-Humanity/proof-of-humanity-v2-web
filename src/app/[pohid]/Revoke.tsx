@@ -14,10 +14,12 @@ import useWeb3Loaded from "hooks/useWeb3Loaded";
 import DocumentIcon from "icons/NoteMajor.svg";
 import React, { useMemo, useState } from "react";
 import { toast } from "react-toastify";
-import { ipfs, uploadToIPFS } from "utils/ipfs";
+import { ipfs } from "utils/ipfs";
 import { formatEth } from "utils/misc";
 import { Hash } from "viem";
 import { useChainId, useSwitchChain } from "wagmi";
+import { useAtlasProvider, Roles } from "@kleros/kleros-app";
+import AuthGuard from "components/AuthGuard";
 
 enableReactUse();
 
@@ -43,6 +45,8 @@ export default function Revoke({
   const connectedChainId = useChainId() as SupportedChainId;
   const web3Loaded = useWeb3Loaded();
   const { switchChain } = useSwitchChain();
+  
+  const { uploadFile } = useAtlasProvider();
 
   const [prepare] = usePoHWrite(
     "revokeHumanity",
@@ -51,6 +55,10 @@ export default function Revoke({
         onReady(fire) {
           fire();
           toast.info("Transaction pending");
+        },
+        onFail() {
+          loading.stop();
+          toast.error("Transaction failed");
         },
         onError() {
           loading.stop();
@@ -66,17 +74,46 @@ export default function Revoke({
   );
 
   const submit = async () => {
-    loading.start();
+    try {
+      loading.start();
 
-    const data = new FormData();
-    data.append("###", "evidence.json");
-    data.append("name", title);
-    data.append("description", description);
-    if (file) data.append("fileURI", file, file.name);
+      let fileURI;
+      if (file) {
+        fileURI = await uploadFile(file, Roles.Evidence);
+        if (!fileURI) {
+          toast.error("Failed to upload file.");
+          loading.stop();
+          return;
+        }
+      }
 
-    const evidenceUri = await uploadToIPFS(data);
+      const evidenceJson = {
+        name: title,
+        description: description,
+        fileURI: fileURI,
+      };
 
-    prepare({ args: [pohId, evidenceUri], value: cost });
+      const evidenceTextFile = new File(
+        [JSON.stringify(evidenceJson)],
+        "evidence",
+        {
+          type: "text/plain",
+        }
+      );
+
+      const evidenceUri = await uploadFile(evidenceTextFile, Roles.Evidence);
+
+      if (!evidenceUri) {
+        toast.error("Failed to upload evidence.");
+        loading.stop();
+        return;
+      }
+
+      prepare({ args: [pohId, evidenceUri], value: cost });
+    } catch (error) {
+      toast.error(`Failed to upload evidence : ${error instanceof Error ? error.message : "Unknown error"}`);
+      loading.stop();
+    }
   };
 
   if (web3Loaded && homeChain.id !== connectedChainId)
@@ -143,9 +180,15 @@ export default function Revoke({
           </Uploader>
         </div>
 
-        <button disabled={pending} className="btn-main mt-12" onClick={submit}>
-          Revoke
-        </button>
+        <AuthGuard signInButtonProps={{ className: "mt-12 px-5 py-2" }}>
+          <button
+            disabled={pending}
+            className="btn-main mt-12"
+            onClick={submit}
+          >
+            Revoke
+          </button>
+        </AuthGuard>
       </div>
     </Modal>
   );

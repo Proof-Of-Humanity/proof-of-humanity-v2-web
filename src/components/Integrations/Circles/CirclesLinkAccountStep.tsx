@@ -80,11 +80,11 @@ export default function CirclesLinkAccountStep({
                   <ActionButton
                     onClick={onClick}
                     label={label}
-                    defaultLabel='Link'
                     ariaLabel="Link Circles account"
                     disabled={disabled}
                     isLoading={pending}
                     className="mt-4 self-start"
+                    variant={label === 'Link' ? 'primary' : 'secondary'}
                   />
                 );
               })()}
@@ -113,11 +113,11 @@ export default function CirclesLinkAccountStep({
                   <ActionButton
                     onClick={onClick}
                     label={label}
-                    defaultLabel='Renew'
                     ariaLabel="Renew Circles trust"
                     disabled={disabled}
                     isLoading={pending}
                     className="mt-2 self-start"
+                    variant={label === 'Renew' ? 'primary' : 'secondary'}
                   />
                 );
               })()}
