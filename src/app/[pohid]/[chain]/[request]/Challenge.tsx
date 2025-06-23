@@ -161,6 +161,7 @@ export default function Challenge({
       return;
     }
 
+    loading.start("Challenging...");
     prepare({
       value: arbitrationCost,
       args: [
