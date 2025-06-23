@@ -193,6 +193,7 @@ export default function Form({ contractData, totalCosts, renewal }: FormProps) {
       selfFundedWei > totalCosts[chainId]
         ? totalCosts[chainId]
         : selfFundedWei;
+    loading.start("Submitting...");
     if (renewal)
       prepareRenewHumanity({
         value: funded,
