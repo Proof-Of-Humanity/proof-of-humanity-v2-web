@@ -4,74 +4,11 @@ import { useQuery } from '@tanstack/react-query';
 import { SupportedChainId } from "config/chains";
 import { ChainSet, configSetSelection } from "contracts";
 import { gnosis, gnosisChiado } from "viem/chains";
-import { getProcessedCirclesData, ProcessedCirclesData } from "data/circles"; 
+import { getProcessedCirclesData, ProcessedCirclesData, validateCirclesHumanity } from "data/circles"; 
 import { toast } from "react-toastify";
 import { isAddress } from "viem";
 import usePOHCirclesWrite from "contracts/hooks/usePOHCirclesWrite";
 import { useLoading } from "hooks/useLoading";
-
-async function fetchMetaDigest(address: string): Promise<string | null> {
-  const requestData = {
-    jsonrpc: "2.0",
-    id: 0,
-    method: "circles_query",
-    params: [
-      {
-        Namespace: "CrcV2",
-        Table: "UpdateMetadataDigest",
-        Columns: ["metadataDigest"],
-        Filter: [
-          {
-            Type: "FilterPredicate",
-            FilterType: "Equals",
-            Column: "avatar", 
-            Value: address.toLowerCase(),
-          },
-        ],
-        Order: [
-          { Column: "blockNumber", SortOrder: "DESC" },
-          { Column: "transactionIndex", SortOrder: "DESC" },
-          { Column: "logIndex", SortOrder: "DESC" },
-        ],
-        Limit: 1,
-      },
-    ],
-  };
-
-  try {
-    const response = await fetch("https://rpc.aboutcircles.com/", {
-      method: "POST",
-      headers: {
-        "content-type": "application/json",
-      },
-      body: JSON.stringify(requestData),
-    });
-
-    if (!response.ok) {
-      console.error("Failed to fetch metaDigest, HTTP status:", response.status);
-      toast.error("Failed to verify Circles profile activity.");
-      return null;
-    }
-
-    const data = await response.json();
-
-    if (data.error) {
-      console.error("Error in metaDigest RPC response:", data.error);
-      toast.error("Error verifying Circles profile activity.");
-      return null;
-    }
-    if (data.result.rows.length > 0) {
-      return data.result.rows[0];
-    } else {
-      toast.error("No Circles profile found for the address.");
-      return null; 
-    }
-  } catch (error) {
-    console.error("Error fetching metaDigest:", error);
-    toast.error("An error occurred while checking Circles profile activity.");
-    return null;
-  }
-}
 
 type CirclesDataQueryKey = ['circlesData', string];
 
@@ -178,35 +115,53 @@ export default function useCirclesIntegration() {
   );
 
   const handleLinkAccount = useCallback(async () => {
-    if (!isWalletAddressValid) { 
-      toast.error("Please enter a valid wallet address");
-      return;
+    try {
+      if (!isWalletAddressValid) { 
+        toast.error("Please enter a valid wallet address");
+        return;
+      }
+      loading.start();
+      const isHuman = await validateCirclesHumanity(
+        walletAddress,
+      );
+      if (!isHuman) {
+        loading.stop();
+        toast.error("The provided address is not a human in Circles.");
+        return;
+      }
+
+      writeLink({
+        args: [currentHumanityId, walletAddress.trim()], 
+      });
+    } catch (error) {
+      loading.stop();
+      console.error("Error linking account:", error);
+      toast.error("An error occurred while linking the account. Please try again.");
     }
-
-    loading.start();
-
-    const trimmedWalletAddress = walletAddress.trim();
-    const digest = await fetchMetaDigest(trimmedWalletAddress);
-
-    if (!digest) {
-      loading.stop(); 
-      return;
-    }
-    
-    writeLink({
-      args: [currentHumanityId, trimmedWalletAddress], 
-    });
-  }, [isWalletAddressValid, walletAddress, loading, currentHumanityId, writeLink]); 
+  }, [
+    isWalletAddressValid,
+    walletAddress,
+    loading,
+    currentHumanityId,
+    writeLink,
+    circlesChain.id,
+  ]);
 
   const handleRenewTrust = useCallback(async () => {
-    if (!isWalletAddressValid) { 
-      toast.error("No linked Circles account address found to renew.");
-      return;
+    try {
+      if (!isWalletAddressValid) { 
+        toast.error("No linked Circles account address found to renew.");
+        return;
+      }
+      loading.start();
+      writeRenew({
+        args: [currentHumanityId], 
+      });
+    } catch (error) {
+      loading.stop();
+      console.error("Error renewing trust:", error);
+      toast.error("An error occurred while renewing trust. Please try again.");
     }
-    loading.start();
-    writeRenew({
-      args: [currentHumanityId], 
-    });
   }, [currentHumanityId, isWalletAddressValid, loading, writeRenew]); 
 
   const getActionButtonProps = useCallback((action: () => Promise<void> | void, defaultLabel: string) => {

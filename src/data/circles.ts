@@ -1,6 +1,9 @@
 import { gnosis, gnosisChiado } from "viem/chains";
 import { sdk } from "config/subgraph";
-import { ChainSet, configSetSelection } from "contracts";
+import { ChainSet, configSetSelection, Contract } from "contracts";
+import abis from "contracts/abis";
+import { config as wagmiConfig } from "config/appkit";
+import { readContract } from "@wagmi/core";
 
 // Determine whether to use mainnet (gnosis) or testnet (chiado) for Circles subgraph
 const circlesChainId =
@@ -81,3 +84,16 @@ export const getProcessedCirclesData =
       throw error instanceof Error ? error : new Error(String(error)); 
     }
   }
+
+export async function validateCirclesHumanity(
+    walletAddress: string,
+  ): Promise<boolean> {
+      const isHuman = await readContract(wagmiConfig, {
+        address: Contract.CirclesHub[circlesChainId],
+        abi: abis.CirclesHub,
+        functionName: "isHuman",
+        args: [walletAddress.trim()],
+      });
+  
+      return isHuman as boolean;
+  }     

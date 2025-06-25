@@ -130,7 +130,13 @@ export const Contract = {
     [mainnet.id]: "0x",
     [sepolia.id]: "0x",
     [gnosis.id]: "0x",
-    [gnosisChiado.id]: "0x215d21044b65c362B22873bC07F56318f1D7740d",
+    [gnosisChiado.id]: "0x7562C66dB28e397c81d1E6d7645B59D308dEda46",
+  },
+  CirclesHub: {
+    [mainnet.id]: "0x",
+    [sepolia.id]: "0x",
+    [gnosis.id]: "0xc12C1E50ABB450d6205Ea2C3Fa861b3B834d13e8",
+    [gnosisChiado.id]: "0x7369766AB350FaC58091eAF91D544DD1BeaC6250",
   },
 } as const;
 
