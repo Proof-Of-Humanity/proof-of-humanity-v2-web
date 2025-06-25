@@ -490,7 +490,7 @@ export default function ActionBar({
               />
 
               <ExternalLink
-                href={`https://resolve.kleros.io/${chain.id}cases/${currentChallenge.disputeId}`}
+                href={`https://resolve.kleros.io/${chain.id}/cases/${currentChallenge.disputeId}`}
                 className="btn-main gradient h-[48px] rounded
                 items-center
                 justify-center
