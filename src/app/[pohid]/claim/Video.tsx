@@ -219,6 +219,7 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
             fullscreen={isFullscreen}
             toggleFullscreen={toggleFullscreen}
             loadCamera={setCamera}
+            phrase={phrase}
           />
         </div>
       )}
