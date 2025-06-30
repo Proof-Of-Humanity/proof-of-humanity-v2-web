@@ -68,7 +68,7 @@ export default function Form({ contractData, totalCosts, renewal }: FormProps) {
     useRef(undefined);
   const chainId = useChainId() as SupportedChainId;
 
-  const { uploadFile: uploadToIPFS } = useAtlasProvider();
+  const { uploadFile: uploadToIPFS} = useAtlasProvider();
 
   const step$ = useObservable(Step.info);
   const media$ = useObservable<MediaState>({ photo: null, video: null });
@@ -117,9 +117,17 @@ export default function Form({ contractData, totalCosts, renewal }: FormProps) {
 
     loading.start("Uploading media");
   try{
-    const photoFile = media.photo.content as File;
-    const videoFile = media.video.content as File;
+    const originalPhotoFile = media.photo.content as File;
+    const originalVideoFile = media.video.content as File;
+    console.log({originalPhotoFile, originalVideoFile});
+    const photoFile = new File([originalPhotoFile], originalPhotoFile.name, {
+      type: originalPhotoFile.type.split(';')[0]
+    });
 
+    const videoFile = new File([originalVideoFile], originalVideoFile.name, {
+      type: originalVideoFile.type.split(';')[0]
+    });
+    
     const [photoUri, videoUri] = await Promise.all([
         uploadToIPFS(photoFile, Roles.Photo),
         uploadToIPFS(videoFile, Roles.IdentificationVideo),
