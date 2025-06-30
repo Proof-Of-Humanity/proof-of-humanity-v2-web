@@ -75,7 +75,7 @@ export default async function Request({ params }: PageProps) {
     // so we remove it from onChain since the contract has no data of it
     onChainVouches = onChainVouches.filter(
       (onChainVoucher) =>
-        offChainVouches.filter((voucher) => voucher.voucher === onChainVoucher)
+        offChainVouches.filter((vouch) => vouch.voucher === onChainVoucher)
           .length === 0,
     );
   } else {
@@ -85,7 +85,15 @@ export default async function Request({ params }: PageProps) {
 
   const rejected = request.status.id === "resolved" && !request.revocation && request.winnerParty?.id != 'requester';
 
-  const expired = isRequestExpired(request, contractData);
+  const expired = isRequestExpired(
+    {
+      status: request.status,
+      creationTime: request.creationTime,
+      expirationTime: request.expirationTime,
+      index: request.index
+    },
+    contractData
+  );
   
   let registrationFile: RegistrationFile | null;
   let revocationFile: EvidenceFile | null = null;

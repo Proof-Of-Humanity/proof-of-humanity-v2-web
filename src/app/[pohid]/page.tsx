@@ -105,10 +105,8 @@ async function Profile({ params: { pohid } }: PageProps) {
           {
             status: { id: requestQuery?.status.id || "resolved" },
             creationTime: requestQuery?.creationTime || 0,
-            revocation: requestQuery?.revocation || false,
-            humanity: humanity[homeChain.id]!.humanity!,
-            index: request.index,
-            winnerParty: requestQuery?.winnerParty
+            expirationTime: (requestQuery as any)?.expirationTime,
+            index: request.index
           },
           { humanityLifespan: contractData[lastEvidenceChain.id].humanityLifespan }
         );
@@ -183,8 +181,7 @@ async function Profile({ params: { pohid } }: PageProps) {
                   {
                     status: { id: req.status.id },
                     creationTime: req.creationTime,
-                    revocation: req.revocation,
-                    humanity: humanity[chain.id].humanity!,
+                    expirationTime: (req as any).expirationTime,
                     index: req.index
                   },
                   { humanityLifespan: contractData[chain.id]?.humanityLifespan }
