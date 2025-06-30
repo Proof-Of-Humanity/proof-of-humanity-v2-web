@@ -19,10 +19,9 @@ const ALLOWED_VIDEO_TYPES = [
   "video/mov",
 ];
 const MIN_DIMS = { width: 352, height: 352 }; // PXs
-//const MAX_DURATION = 20; // Seconds
-//const MAX_SIZE = 7; // Megabytes
-const MAX_DURATION = 60 * 2; // Seconds
-const MAX_SIZE = undefined;
+
+const MAX_DURATION = 20; // Seconds
+const MAX_SIZE = 10; // Megabytes
 const MAX_SIZE_BYTES = MAX_SIZE ? 1024 * 1024 * MAX_SIZE : MAX_SIZE; // Bytes
 const ERROR_MSG = {
   duration: `Video is too long. Maximum allowed duration is ${MAX_DURATION} seconds long`,
@@ -77,7 +76,7 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
     mediaRecorder.ondataavailable = async ({ data }) => {
       const newlyRecorded = ([] as BlobPart[]).concat(data);
       const blob = new Blob(newlyRecorded, {
-        type: `${IS_IOS ? 'video/mp4;codecs="h264"' : 'video/webm;codecs="vp8"'}`,
+        type: IS_IOS ? 'video/mp4' : 'video/webm',
       });
 
       await checkVideoDuration(blob);
