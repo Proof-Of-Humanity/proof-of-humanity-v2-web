@@ -87,7 +87,12 @@ const normalize = (
             old: Number(chainId) === legacyChain.id,
             chainId: Number(chainId) as SupportedChainId,
             expired: isRequestExpired(
-              request,
+              {
+                status: request.status,
+                creationTime: request.creationTime,
+                expirationTime: (request as any).expirationTime,
+                index: request.index
+              },
               { humanityLifespan: humanityLifespanAllChains[Number(chainId) as SupportedChainId] }
             ),
             rejected: request.status.id === "resolved" && !request.revocation && request.winnerParty?.id != 'requester'
