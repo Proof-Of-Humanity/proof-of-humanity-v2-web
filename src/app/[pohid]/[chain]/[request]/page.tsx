@@ -30,7 +30,7 @@ import ActionBar from "./ActionBar";
 import Evidence from "./Evidence";
 import Info from "./Info";
 import DocumentIcon from "components/DocumentIcon";
-import { getStatus } from "utils/case";
+import { getStatus } from "utils/status";
 
 interface PageProps {
   params: { pohid: string; chain: string; request: string };

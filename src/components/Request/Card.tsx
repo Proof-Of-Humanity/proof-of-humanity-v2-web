@@ -10,7 +10,7 @@ import { WinnerClaimFragment } from "generated/graphql";
 import useIPFS from "hooks/useIPFS";
 import { EvidenceFile, RegistrationFile } from "types/docs";
 import { shortenAddress } from "utils/address";
-import {getStatusLabel, getStatusColor, RequestStatus} from "utils/case";
+import {getStatusLabel, getStatusColor, RequestStatus} from "utils/status";
 import { prettifyId } from "utils/identifier";
 import { ipfs } from "utils/ipfs";
 import { RequestsQueryItem } from "./Grid";

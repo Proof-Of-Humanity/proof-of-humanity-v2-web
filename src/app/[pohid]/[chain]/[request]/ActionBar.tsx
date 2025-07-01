@@ -14,7 +14,7 @@ import useWeb3Loaded from "hooks/useWeb3Loaded";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "react-toastify";
 import useSWR from "swr";
-import { getStatusLabel, getStatusColor, RequestStatus } from "utils/case";
+import { getStatusLabel, getStatusColor, RequestStatus } from "utils/status";
 import { ActionType } from "utils/enums";
 import { Address, Hash, formatEther, hexToSignature } from "viem";
 import { useAccount, useChainId } from "wagmi";

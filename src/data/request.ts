@@ -4,14 +4,13 @@ import {
   getForeignChain,
   supportedChains,
 } from "config/chains";
-import { REQUESTS_DISPLAY_BATCH } from "config/misc";
 import { sdk } from "config/subgraph";
 import { RequestsQuery } from "generated/graphql";
 import { cache } from "react";
 import { Address, Hash, concat, keccak256, toHex } from "viem";
 import { sanitizeHeadRequests, sanitizeRequest } from "./sanitizer";
 
-const PROFILES_DISPLAY_REQUIRED_REQS = REQUESTS_DISPLAY_BATCH * 4;
+const PROFILES_DISPLAY_REQUIRED_REQS = 12 * 4;
 
 const completeCrossChains = async (
   out: Record<SupportedChainId, RequestsQuery["requests"]>,
