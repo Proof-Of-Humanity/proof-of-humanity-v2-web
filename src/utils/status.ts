@@ -17,20 +17,25 @@ export enum RequestStatus {
   ALL = "ALL"
 }
 
-export const REQUEST_STATUS_LABELS: Record<RequestStatus, string> = {
-  [RequestStatus.VOUCHING]: "Vouching",
-  [RequestStatus.PENDING_CLAIM]: "Pending Claim",
-  [RequestStatus.PENDING_REVOCATION]: "Pending Revocation", 
-  [RequestStatus.DISPUTED_CLAIM]: "Disputed Claim",
-  [RequestStatus.DISPUTED_REVOCATION]: "Disputed Revocation",
-  [RequestStatus.RESOLVED_CLAIM]: "Included",
-  [RequestStatus.RESOLVED_REVOCATION]: "Resolved Revocation",
-  [RequestStatus.REJECTED]: "Rejected",
-  [RequestStatus.EXPIRED]: "Expired",
-  [RequestStatus.WITHDRAWN]: "Withdrawn",
-  [RequestStatus.TRANSFERRED]: "Transferred",
-  [RequestStatus.TRANSFERRING]: "Transferring",
-  [RequestStatus.ALL]: "All"
+interface StatusLabels {
+  actionBar: string;
+  card: string;
+}
+
+export const REQUEST_STATUS_LABELS: Record<RequestStatus, StatusLabels> = {
+  [RequestStatus.VOUCHING]: { actionBar: "Vouching", card: "Vouching" },
+  [RequestStatus.PENDING_CLAIM]: { actionBar: "Claim", card: "Pending Claim" },
+  [RequestStatus.PENDING_REVOCATION]: { actionBar: "Revocation", card: "Pending Revocation" }, 
+  [RequestStatus.DISPUTED_CLAIM]: { actionBar: "Disputed", card: "Disputed Claim" },
+  [RequestStatus.DISPUTED_REVOCATION]: { actionBar: "Disputed", card: "Disputed Revocation" },
+  [RequestStatus.RESOLVED_CLAIM]: { actionBar: "Included", card: "Resolved Claim" },
+  [RequestStatus.RESOLVED_REVOCATION]: { actionBar: "Revoked", card: "Resolved Revocation" },
+  [RequestStatus.REJECTED]: { actionBar: "Rejected", card: "Rejected" },
+  [RequestStatus.EXPIRED]: { actionBar: "Expired", card: "Expired" },
+  [RequestStatus.WITHDRAWN]: { actionBar: "Withdrawn", card: "Withdrawn" },
+  [RequestStatus.TRANSFERRED]: { actionBar: "Transferred", card: "Transferred" },
+  [RequestStatus.TRANSFERRING]: { actionBar: "Update", card: "Pending Update" },
+  [RequestStatus.ALL]: { actionBar: "All", card: "All" }
 };
 
 export const REQUEST_STATUS_COLORS: Record<RequestStatus, string> = {
@@ -59,10 +64,10 @@ export const REQUEST_STATUS_FILTERS: Record<RequestStatus, { filter: Request_Fil
   [RequestStatus.PENDING_REVOCATION]: { filter: { status: "resolving", revocation: true } },
   [RequestStatus.DISPUTED_CLAIM]: { filter: { status: "disputed", revocation: false } },
   [RequestStatus.DISPUTED_REVOCATION]: { filter: { status: "disputed", revocation: true } },
-  [RequestStatus.RESOLVED_CLAIM]: { filter: { status: "resolved", revocation: false } },
+  [RequestStatus.RESOLVED_CLAIM]: { filter: { status: "resolved", winnerParty_: { id: "requester" }, revocation: false, expirationTime_gt: Math.floor(Date.now() / 1000) } },
   [RequestStatus.RESOLVED_REVOCATION]: { filter: { status: "resolved", revocation: true } },
   [RequestStatus.REJECTED]: { filter: { status: "resolved", revocation: false, winnerParty_: { id_not: "requester" } } },
-  [RequestStatus.EXPIRED]: { filter: { status: "resolved", revocation: false, expirationTime_lt: Date.now() / 1000 } },
+  [RequestStatus.EXPIRED]: { filter: { status: "resolved", revocation: false, expirationTime_lt: Math.floor(Date.now() / 1000), winnerParty_: { id: "requester" } } },
   [RequestStatus.WITHDRAWN]: { filter: { status: "withdrawn" } },
   [RequestStatus.TRANSFERRED]: { filter: { status: "transferred" } },
   [RequestStatus.TRANSFERRING]: { filter: { status: "transferring" } },
@@ -71,7 +76,7 @@ export const REQUEST_STATUS_FILTERS: Record<RequestStatus, { filter: Request_Fil
 /**
  * List of all status filter options for UI dropdowns.
  */
-export const STATUS_FILTER_OPTIONS = Object.values(RequestStatus);
+export const STATUS_FILTER_OPTIONS = Object.values(RequestStatus).filter(status => ![RequestStatus.TRANSFERRING].includes(status));
 
 /**
  * Determines the RequestStatus enum value from raw status data.
@@ -139,7 +144,6 @@ export const getStatus = (
   request: RawRequestData,
   contractData?: { humanityLifespan?: string | number }
 ): RequestStatus => {
-
   const expired = isRequestExpired(
     {
       status: request.status,
@@ -165,10 +169,11 @@ export const getStatus = (
 /**
  * Helper function to get the display label for a RequestStatus enum value.
  * @param status RequestStatus enum value
+ * @param component Component type to determine which labels to use ('actionBar' | 'card')
  * @returns Human-readable display string
  */
-export const getStatusLabel = (status: RequestStatus): string => {
-  return REQUEST_STATUS_LABELS[status];
+export const getStatusLabel = (status: RequestStatus, component: 'actionBar' | 'card' = 'card'): string => {
+  return REQUEST_STATUS_LABELS[status][component];
 };
 
 /**

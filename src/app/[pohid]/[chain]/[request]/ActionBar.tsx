@@ -303,7 +303,7 @@ export default function ActionBar({
         <span
           className={`rounded-full px-3 py-1 text-white bg-status-${statusColor}`}
         >
-          {getStatusLabel(requestStatus)}
+          {getStatusLabel(requestStatus, 'actionBar')}
         </span>
       </div>
       <div className="flex w-full flex-col justify-between gap-[12px] font-normal md:flex-row md:items-center">
@@ -461,7 +461,7 @@ export default function ActionBar({
                   {" "}
                   for{" "}
                   <strong className="text-status-challenged">
-                    {getStatusLabel(requestStatus)}
+                    {getStatusLabel(requestStatus, 'actionBar')}
                   </strong>
                 </>
               )}

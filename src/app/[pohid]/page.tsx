@@ -104,8 +104,8 @@ async function Profile({ params: { pohid } }: PageProps) {
           expirationTime: requestQuery?.expirationTime,
           index: request.index,
           revocation: requestQuery!.revocation,
+          winnerParty: requestQuery?.winnerParty,
         }, { humanityLifespan: contractData[lastEvidenceChain.id].humanityLifespan });
-
         if (requestStatus === RequestStatus.EXPIRED) {
           request = undefined;
         } else {

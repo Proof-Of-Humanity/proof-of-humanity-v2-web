@@ -274,7 +274,8 @@ function RequestsGrid() {
                 <div
                   className={cn(
                     "dot mr-2",
-                    `bg-status-${getStatusColor(status)}`
+                    status === RequestStatus.ALL ?
+                     "bg-white" : `bg-status-${getStatusColor(status)}`
                   )}
                 />
               }
