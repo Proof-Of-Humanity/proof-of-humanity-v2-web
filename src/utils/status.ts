@@ -14,7 +14,6 @@ export enum RequestStatus {
   WITHDRAWN = "WITHDRAWN",
   TRANSFERRED = "TRANSFERRED",
   TRANSFERRING = "TRANSFERRING",
-  TRANSFER_INCOMPLETE = "TRANSFER_INCOMPLETE",
   ALL = "ALL"
 }
 
@@ -24,14 +23,13 @@ export const REQUEST_STATUS_LABELS: Record<RequestStatus, string> = {
   [RequestStatus.PENDING_REVOCATION]: "Pending Revocation", 
   [RequestStatus.DISPUTED_CLAIM]: "Disputed Claim",
   [RequestStatus.DISPUTED_REVOCATION]: "Disputed Revocation",
-  [RequestStatus.RESOLVED_CLAIM]: "Resolved Claim",
+  [RequestStatus.RESOLVED_CLAIM]: "Included",
   [RequestStatus.RESOLVED_REVOCATION]: "Resolved Revocation",
   [RequestStatus.REJECTED]: "Rejected",
   [RequestStatus.EXPIRED]: "Expired",
   [RequestStatus.WITHDRAWN]: "Withdrawn",
   [RequestStatus.TRANSFERRED]: "Transferred",
   [RequestStatus.TRANSFERRING]: "Transferring",
-  [RequestStatus.TRANSFER_INCOMPLETE]: "Transfer Incomplete",
   [RequestStatus.ALL]: "All"
 };
 
@@ -48,15 +46,13 @@ export const REQUEST_STATUS_COLORS: Record<RequestStatus, string> = {
   [RequestStatus.WITHDRAWN]: "withdrawn",
   [RequestStatus.TRANSFERRED]: "transferred",
   [RequestStatus.TRANSFERRING]: "transferring",
-  [RequestStatus.TRANSFER_INCOMPLETE]: "transferring",
   [RequestStatus.ALL]: "white"
 };
 
 /**
  * Maps RequestStatus enum values to GraphQL Request_Filter objects for querying.
- * This replaces the old requestStatus object from config/requests.ts
  */
-export const REQUEST_STATUS_FILTERS: Partial<Record<RequestStatus, { filter: Request_Filter }>> = {
+export const REQUEST_STATUS_FILTERS: Record<RequestStatus, { filter: Request_Filter }> = {
   [RequestStatus.ALL]: { filter: {} },
   [RequestStatus.VOUCHING]: { filter: { status: "vouching" } },
   [RequestStatus.PENDING_CLAIM]: { filter: { status: "resolving", revocation: false } },
@@ -74,25 +70,11 @@ export const REQUEST_STATUS_FILTERS: Partial<Record<RequestStatus, { filter: Req
 
 /**
  * List of all status filter options for UI dropdowns.
- * This replaces the old statusFilters from config/requests.ts
  */
-export const STATUS_FILTER_OPTIONS = [
-  RequestStatus.ALL,
-  RequestStatus.VOUCHING,
-  RequestStatus.PENDING_CLAIM,
-  RequestStatus.PENDING_REVOCATION,
-  RequestStatus.DISPUTED_CLAIM,
-  RequestStatus.DISPUTED_REVOCATION,
-  RequestStatus.RESOLVED_CLAIM,
-  RequestStatus.RESOLVED_REVOCATION,
-  RequestStatus.WITHDRAWN,
-  RequestStatus.TRANSFERRED,
-  RequestStatus.TRANSFERRING,
-];
+export const STATUS_FILTER_OPTIONS = Object.values(RequestStatus);
 
 /**
  * Determines the RequestStatus enum value from raw status data.
- * This is the core logic that was previously scattered across the codebase.
  */
 export const getRequestStatus = (
   status: string,
@@ -129,10 +111,9 @@ export const getRequestStatus = (
       return RequestStatus.TRANSFERRED;
     
     case "transferring":
-      return expired ? RequestStatus.TRANSFER_INCOMPLETE : RequestStatus.TRANSFERRING;
-
+      return RequestStatus.TRANSFERRING;
     default:
-      return RequestStatus.TRANSFER_INCOMPLETE;
+      throw new Error(`Unknown status: ${status}`);
   }
 };
 
@@ -158,6 +139,7 @@ export const getStatus = (
   request: RawRequestData,
   contractData?: { humanityLifespan?: string | number }
 ): RequestStatus => {
+
   const expired = isRequestExpired(
     {
       status: request.status,
@@ -167,7 +149,6 @@ export const getStatus = (
     } as any,
     contractData,
   );
-
   const rejected =
     request.status.id === "resolved" &&
     !request.revocation &&

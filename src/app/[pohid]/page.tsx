@@ -21,7 +21,7 @@ import { machinifyId, prettifyId } from "utils/identifier";
 import CrossChain from "./CrossChain";
 import Renew from "./Renew";
 import Revoke from "./Revoke";
-import { getStatus,RequestStatus } from "utils/case";
+import { getStatus,RequestStatus } from "utils/status";
 
 type PoHRequest = ArrayElement<
   NonNullable<HumanityQuery["humanity"]>["requests"]

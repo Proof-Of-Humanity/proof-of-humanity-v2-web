@@ -23,7 +23,7 @@ import { useLoading } from "hooks/useLoading";
 import Image from "next/image";
 import { useMemo, useRef, useState } from "react";
 import { toast } from "react-toastify";
-import {RequestStatus, getStatusLabel } from "utils/case";
+import {RequestStatus, getStatusLabel } from "utils/status";
 import { eth2Wei, formatEth } from "utils/misc";
 import { Address } from "viem";
 

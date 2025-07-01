@@ -16,11 +16,10 @@ export const isRequestExpired = (
   contractData?: { humanityLifespan?: string | number }
 ): boolean => {
   const { status, index, expirationTime } = request;
-  console.log({request, contractData});
   const currentTime = Date.now() / 1000;
 
   if (status.id === "resolved") {
-    if (expirationTime === undefined || expirationTime === null || expirationTime === 0) return false;
+    if (expirationTime === undefined || expirationTime === null || Number(expirationTime) === 0) return false;
     return Number(expirationTime) < currentTime;
   }
 

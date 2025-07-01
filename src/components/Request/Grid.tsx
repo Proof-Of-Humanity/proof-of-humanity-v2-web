@@ -29,13 +29,12 @@ import { RequestsQuery } from "generated/graphql";
 import { useLoading } from "hooks/useLoading";
 import { 
   getStatus, 
-  RequestStatus as CaseRequestStatus, 
   RequestStatus,
   REQUEST_STATUS_FILTERS,
   STATUS_FILTER_OPTIONS,
   getStatusLabel,
   getStatusColor
-} from "utils/case";
+} from "utils/status";
 
 
 import Card from "./Card";
@@ -51,7 +50,7 @@ export type RequestsQueryItem = ArrayElement<RequestsQuery["requests"]>;
 
 interface RequestInterface extends RequestsQueryItem {
   chainId: SupportedChainId;
-  requestStatus: CaseRequestStatus;
+  requestStatus: RequestStatus;
 }
 
 const sortRequests = (request: RequestInterface[]): RequestInterface[] => {
