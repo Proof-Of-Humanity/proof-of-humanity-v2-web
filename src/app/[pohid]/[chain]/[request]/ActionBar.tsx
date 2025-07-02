@@ -77,6 +77,7 @@ export default function ActionBar({
   offChainVouches,
   // advanceRequestsOnChainVouches,
   arbitrationHistory,
+  humanityExpirationTime,
 }: ActionBarProps) {
   const chain = useChainParam()!;
   const { address } = useAccount();
@@ -458,8 +459,8 @@ export default function ActionBar({
                 <>
                   {" "}
                   for{" "}
-                  <strong className="text-status-challenged">
-                    {getStatusLabel(requestStatus, 'actionBar')}
+                  <strong className="text-status-challenged capitalize">
+                    {currentChallenge.reason.id}
                   </strong>
                 </>
               )}
@@ -498,22 +499,19 @@ export default function ActionBar({
         )}
 
         {status === "resolved" && (
-          <>
-          {requestStatus === RequestStatus.EXPIRED ? (
-            <span>
-              Request has expired
-            </span>
-          ) : requestStatus === RequestStatus.REJECTED ? (
-            <span>Request was rejected</span>
-          ) : <span>Request was accepted</span>}
-          {requestStatus === RequestStatus.EXPIRED ? (
-            <TimeAgo
+          <span>
+          {requestStatus === RequestStatus.EXPIRED ? 
+          "Request has expired" : 
+          requestStatus === RequestStatus.REJECTED ?
+          "Request was rejected" : "Request was accepted"}
+          <TimeAgo
               className={`ml-1 text-status-${statusColor}`}
-              time={ lastStatusChange}
+              time={requestStatus === RequestStatus.EXPIRED 
+                ? humanityExpirationTime!
+                : lastStatusChange}
             />
-          ) : null}
           .
-          </>
+          </span>
         )}
 
         {index < 0 && index > -100 && (

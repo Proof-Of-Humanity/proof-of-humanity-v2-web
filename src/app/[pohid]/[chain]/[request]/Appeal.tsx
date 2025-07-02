@@ -331,8 +331,8 @@ const Appeal: React.FC<AppealProps> = ({
             {!revocation ? (
               <span className="mx-2 mt-2 text-sm">
                 The profile was challenged for{" "}
-                <strong className="text-status-challenged">
-                  {getStatusLabel(requestStatus)}
+                <strong className="text-status-challenged capitalize">
+                  {currentChallenge.reason.id}
                 </strong>
                 .
               </span>
