@@ -268,7 +268,7 @@ export default async function Request({ params }: PageProps) {
         validVouches={validVouches}
         arbitrationHistory={request.arbitratorHistory}
         requestStatus={requestStatus}
-        humanityExpirationTime={request.humanity.registration?.expirationTime}
+        humanityExpirationTime={request.expirationTime}
       />
       <div className="border-stroke bg-whiteBackground mb-6 rounded border shadow">
         {request.revocation && revocationFile && (
