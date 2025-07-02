@@ -132,7 +132,7 @@ export interface RawRequestData {
   winnerParty?: { id: string } | null;
   index: number;
   creationTime: number | string;
-  expirationTime?: number | string | null;
+  expirationTime?: number | string;
 }
 
 /**
@@ -148,9 +148,9 @@ export const getStatus = (
     {
       status: request.status,
       creationTime: request.creationTime,
-      expirationTime: request.expirationTime as any,
+      expirationTime: request.expirationTime,
       index: request.index,
-    } as any,
+    },
     contractData,
   );
   const rejected =
