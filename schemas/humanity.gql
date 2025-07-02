@@ -25,6 +25,7 @@ query Humanity($id: ID!) {
       lastStatusChange
       index
       revocation
+      expirationTime
       registrationEvidenceRevokedReq
       requester
       evidenceGroup {

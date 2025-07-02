@@ -16,19 +16,18 @@ import { HumanityQuery } from "generated/graphql";
 import Image from "next/image";
 import Link from "next/link";
 import React from "react";
-import { isRequestExpired } from "utils/time";
 import { shortenAddress } from "utils/address";
 import { machinifyId, prettifyId } from "utils/identifier";
 import CrossChain from "./CrossChain";
 import Renew from "./Renew";
 import Revoke from "./Revoke";
+import { getStatus,RequestStatus } from "utils/status";
 
 type PoHRequest = ArrayElement<
   NonNullable<HumanityQuery["humanity"]>["requests"]
 > & {
   chainId: SupportedChainId;
-  expired: boolean;
-  rejected: boolean;
+  requestStatus: RequestStatus;
 };
 
 type WinnerClaimRequest = NonNullable<
@@ -40,7 +39,7 @@ type WinnerClaimData = {
   status: string;
   request: WinnerClaimRequest | undefined;
   exists: boolean;
-  expired: boolean | null | undefined;
+  requestStatus: RequestStatus;
 };
 
 interface PageProps {
@@ -91,28 +90,23 @@ async function Profile({ params: { pohid } }: PageProps) {
     let status;
     let request: WinnerClaimRequest | undefined = undefined;
     let exists: boolean = false;
-    let expired: boolean | null | undefined = true;
     let requestQuery;
-
+    let requestStatus;
     if (homeChain && lastEvidenceChain) {
       request = humanity[lastEvidenceChain.id].humanity!.winnerClaim[0];
       if (request) {
         requestQuery = humanity[lastEvidenceChain.id]!.humanity!.requests.find(
           (req) => req.index === request!.index,
         );
-        
-        expired = isRequestExpired(
-          {
-            status: { id: requestQuery?.status.id || "resolved" },
-            creationTime: requestQuery?.creationTime || 0,
-            revocation: requestQuery?.revocation || false,
-            humanity: humanity[homeChain.id]!.humanity!,
-            index: request.index,
-            winnerParty: requestQuery?.winnerParty
-          },
-          { humanityLifespan: contractData[lastEvidenceChain.id].humanityLifespan }
-        );
-        if (expired) {
+        requestStatus = getStatus({
+          status: { id: requestQuery?.status.id || "resolved" },
+          creationTime: requestQuery?.creationTime || 0,
+          expirationTime: requestQuery?.expirationTime,
+          index: request.index,
+          revocation: requestQuery!.revocation,
+          winnerParty: requestQuery?.winnerParty,
+        }, { humanityLifespan: contractData[lastEvidenceChain.id].humanityLifespan });
+        if (requestStatus === RequestStatus.EXPIRED) {
           request = undefined;
         } else {
           exists = true;
@@ -122,7 +116,7 @@ async function Profile({ params: { pohid } }: PageProps) {
       }
     }
 
-    return { chainId, status, request, exists, expired } as WinnerClaimData;
+    return { chainId, status, request, exists, requestStatus } as WinnerClaimData;
   };
 
   let winnerClaimData: WinnerClaimData = retrieveWinnerClaimData();
@@ -145,8 +139,7 @@ async function Profile({ params: { pohid } }: PageProps) {
           }).map((req) => ({
             ...req,
             chainId: chain.id,
-            expired: false,
-            rejected: false,
+            requestStatus: getStatus(req, { humanityLifespan: contractData[chain.id]?.humanityLifespan }),
           }))
         : []),
     ],
@@ -179,22 +172,12 @@ async function Profile({ params: { pohid } }: PageProps) {
                 ) || // No winnerClaimRequest if it did not expired
                   !winnerClaimData.request), // if winnerClaimRequest has expired it is left as pastRequest
             ).map((req) => {
-                const isExpired = isRequestExpired(
-                  {
-                    status: { id: req.status.id },
-                    creationTime: req.creationTime,
-                    revocation: req.revocation,
-                    humanity: humanity[chain.id].humanity!,
-                    index: req.index
-                  },
-                  { humanityLifespan: contractData[chain.id]?.humanityLifespan }
-                );
+              const requestStatus = getStatus(req, { humanityLifespan: contractData[chain.id]?.humanityLifespan });
               
               return {
                 ...req,
                 chainId: chain.id,
-                expired: isExpired,
-                rejected: req.status.id === "resolved" && !req.revocation && req.winnerParty?.id !== 'requester',
+                requestStatus: requestStatus,
               };
             })
           : []),
@@ -242,7 +225,7 @@ async function Profile({ params: { pohid } }: PageProps) {
         </div>
 
         {
-          /* lastEvidenceChain &&  */ homeChain && !winnerClaimData.expired ? (
+          /* lastEvidenceChain &&  */ homeChain && winnerClaimData.requestStatus !== RequestStatus.EXPIRED ? (
             <>
               <div className="mb-2 flex text-emerald-500">
                 Claimed by
@@ -376,9 +359,8 @@ async function Profile({ params: { pohid } }: PageProps) {
                   }
                   revocation={false}
                   registrationEvidenceRevokedReq={""}
-                  status={winnerClaimData.status as string}
-                  expired={false}
-                  rejected={false}
+                  requestStatus={winnerClaimData.requestStatus}
+
                 />
               ) : null}
             </div>
@@ -415,9 +397,7 @@ async function Profile({ params: { pohid } }: PageProps) {
                   registrationEvidenceRevokedReq={
                     req.registrationEvidenceRevokedReq
                   }
-                  status={req.status.id}
-                  expired={req.expired}
-                  rejected={req.rejected}
+                  requestStatus={req.requestStatus}
                 />
               ))}
             </div>
@@ -447,9 +427,7 @@ async function Profile({ params: { pohid } }: PageProps) {
                 registrationEvidenceRevokedReq={
                   req.registrationEvidenceRevokedReq
                 }
-                status={req.status.id}
-                expired={req.expired}
-                rejected={req.rejected}
+                requestStatus={req.requestStatus}
               />
             ))}
           </div>

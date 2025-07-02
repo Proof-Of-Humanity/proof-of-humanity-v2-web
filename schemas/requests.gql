@@ -17,6 +17,7 @@ query Requests($skip: Int, $first: Int, $where: Request_filter) {
     revocation
     registrationEvidenceRevokedReq
     creationTime
+    expirationTime
     lastStatusChange
     requester
     claimer {

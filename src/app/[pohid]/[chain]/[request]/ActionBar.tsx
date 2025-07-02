@@ -4,7 +4,6 @@ import { enableReactUse } from "@legendapp/state/config/enableReactUse";
 import { useEffectOnce } from "@legendapp/state/react";
 import ExternalLink from "components/ExternalLink";
 import TimeAgo from "components/TimeAgo";
-import { colorForStatus } from "config/misc";
 import usePoHWrite from "contracts/hooks/usePoHWrite";
 import { ContractData } from "data/contract";
 import { getMyData } from "data/user";
@@ -15,7 +14,7 @@ import useWeb3Loaded from "hooks/useWeb3Loaded";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "react-toastify";
 import useSWR from "swr";
-import { camelToTitle } from "utils/case";
+import { getStatusLabel, getStatusColor, RequestStatus } from "utils/status";
 import { ActionType } from "utils/enums";
 import { Address, Hash, formatEther, hexToSignature } from "viem";
 import { useAccount, useChainId } from "wagmi";
@@ -50,7 +49,6 @@ interface ActionBarProps {
   advanceRequestsOnChainVouches?: { claimer: Address; vouchers: Address[] }[];
   onChainVouches: Address[];
   offChainVouches: { voucher: Address; expiration: number; signature: Hash }[];
-  expired: boolean;
   arbitrationHistory: {
     __typename?: "ArbitratorHistory" | undefined;
     updateTime: any;
@@ -59,7 +57,7 @@ interface ActionBarProps {
     arbitrator: any;
     extraData: any;
   };
-  rejected: boolean;
+  requestStatus: RequestStatus;
   humanityExpirationTime?: number;
 }
 
@@ -69,6 +67,7 @@ export default function ActionBar({
   index,
   revocation,
   status,
+  requestStatus,
   funded,
   lastStatusChange,
   arbitrationCost,
@@ -77,9 +76,8 @@ export default function ActionBar({
   onChainVouches,
   offChainVouches,
   // advanceRequestsOnChainVouches,
-  expired,
   arbitrationHistory,
-  rejected,
+  humanityExpirationTime,
 }: ActionBarProps) {
   const chain = useChainParam()!;
   const { address } = useAccount();
@@ -294,7 +292,8 @@ export default function ActionBar({
   ]);
 
   const totalCost = BigInt(contractData.baseDeposit) + arbitrationCost;
-  const statusColor = colorForStatus(status, revocation, expired,rejected);
+  
+  const statusColor = getStatusColor(requestStatus);
 
   return (
     <div className="paper border-stroke bg-whiteBackground text-primaryText flex flex-col items-center justify-between gap-[12px] px-[24px] py-[24px] md:flex-row lg:gap-[20px]">
@@ -303,7 +302,7 @@ export default function ActionBar({
         <span
           className={`rounded-full px-3 py-1 text-white bg-status-${statusColor}`}
         >
-          {camelToTitle(status, revocation, expired,rejected)}
+          {getStatusLabel(requestStatus, 'actionBar')}
         </span>
       </div>
       <div className="flex w-full flex-col justify-between gap-[12px] font-normal md:flex-row md:items-center">
@@ -460,13 +459,8 @@ export default function ActionBar({
                 <>
                   {" "}
                   for{" "}
-                  <strong className="text-status-challenged">
-                    {camelToTitle(
-                      currentChallenge.reason.id,
-                      revocation,
-                      expired,
-                      rejected
-                    )}
+                  <strong className="text-status-challenged capitalize">
+                    {currentChallenge.reason.id}
                   </strong>
                 </>
               )}
@@ -486,7 +480,7 @@ export default function ActionBar({
                 currentChallenge={currentChallenge}
                 chainId={chain.id}
                 revocation={revocation}
-                expired={expired}
+                requestStatus={requestStatus}
               />
 
               <ExternalLink
@@ -505,22 +499,19 @@ export default function ActionBar({
         )}
 
         {status === "resolved" && (
-          <>
-            <span>
-              {expired
-                ? "Request has expired"
-                : !rejected
-                  ? "Request was accepted"
-                  : "Request was rejected"}
-              {!expired ? (
-                <TimeAgo
-                  className={`ml-1 text-status-${statusColor}`}
-                  time={lastStatusChange}
-                />
-              ) : null}
-              .
-            </span>
-          </>
+          <span>
+          {requestStatus === RequestStatus.EXPIRED ? 
+          "Request has expired" : 
+          requestStatus === RequestStatus.REJECTED ?
+          "Request was rejected" : "Request was accepted"}
+          <TimeAgo
+              className={`ml-1 text-status-${statusColor}`}
+              time={requestStatus === RequestStatus.EXPIRED 
+                ? humanityExpirationTime!
+                : lastStatusChange}
+            />
+          .
+          </span>
         )}
 
         {index < 0 && index > -100 && (

@@ -23,7 +23,7 @@ import { useLoading } from "hooks/useLoading";
 import Image from "next/image";
 import { useMemo, useRef, useState } from "react";
 import { toast } from "react-toastify";
-import { camelToTitle } from "utils/case";
+import {RequestStatus, getStatusLabel } from "utils/status";
 import { eth2Wei, formatEth } from "utils/misc";
 import { Address } from "viem";
 
@@ -136,7 +136,7 @@ interface AppealProps {
     NonNullable<NonNullable<RequestQuery>["request"]>["challenges"]
   >;
   revocation: boolean;
-  expired: boolean;
+  requestStatus: RequestStatus;
 }
 
 const Appeal: React.FC<AppealProps> = ({
@@ -151,7 +151,7 @@ const Appeal: React.FC<AppealProps> = ({
   challenger,
   currentChallenge,
   revocation,
-  expired,
+  requestStatus,
 }) => {
   const [totalClaimerCost, setTotalClaimerCost] = useState(0n);
   const [totalChallengerCost, setTotalChallengerCost] = useState(0n);
@@ -331,12 +331,8 @@ const Appeal: React.FC<AppealProps> = ({
             {!revocation ? (
               <span className="mx-2 mt-2 text-sm">
                 The profile was challenged for{" "}
-                <strong className="text-status-challenged">
-                  {camelToTitle(
-                    currentChallenge.reason.id,
-                    revocation,
-                    expired,
-                  )}
+                <strong className="text-status-challenged capitalize">
+                  {currentChallenge.reason.id}
                 </strong>
                 .
               </span>
