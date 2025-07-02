@@ -2,7 +2,7 @@ import { format } from "timeago.js";
 
 interface PohRequest {
   status: { id: string };
-  expirationTime?: string | number;
+  expirationTime: string | number | undefined;
   creationTime: string | number;
   index: number;
 }

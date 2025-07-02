@@ -91,7 +91,7 @@ const normalize = (
               revocation: request.revocation,
               index: request.index,
               creationTime: request.creationTime,
-              expirationTime: (request as any).expirationTime,
+              expirationTime: request.expirationTime,
               winnerParty: request.winnerParty,
             },
             { humanityLifespan: humanityLifespanAllChains[Number(chainId) as SupportedChainId] }
