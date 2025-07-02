@@ -17,71 +17,151 @@ export enum RequestStatus {
   ALL = "ALL"
 }
 
-interface StatusLabels {
-  actionBar: string;
-  card: string;
-}
+const STATUS_COLORS = {
+  vouching: "vouching",
+  claim: "claim", 
+  revocation: "revocation",
+  challenged: "challenged",
+  registered: "registered",
+  removed: "removed",
+  rejected: "rejected",
+  expired: "expired",
+  withdrawn: "withdrawn",
+  transferred: "transferred",
+  transferring: "transferring",
+  white: "white"
+} as const;
 
-export const REQUEST_STATUS_LABELS: Record<RequestStatus, StatusLabels> = {
-  [RequestStatus.VOUCHING]: { actionBar: "Vouching", card: "Vouching" },
-  [RequestStatus.PENDING_CLAIM]: { actionBar: "Claim", card: "Pending Claim" },
-  [RequestStatus.PENDING_REVOCATION]: { actionBar: "Revocation", card: "Pending Revocation" }, 
-  [RequestStatus.DISPUTED_CLAIM]: { actionBar: "Disputed", card: "Disputed Claim" },
-  [RequestStatus.DISPUTED_REVOCATION]: { actionBar: "Disputed", card: "Disputed Revocation" },
-  [RequestStatus.RESOLVED_CLAIM]: { actionBar: "Included", card: "Resolved Claim" },
-  [RequestStatus.RESOLVED_REVOCATION]: { actionBar: "Revoked", card: "Resolved Revocation" },
-  [RequestStatus.REJECTED]: { actionBar: "Rejected", card: "Rejected" },
-  [RequestStatus.EXPIRED]: { actionBar: "Expired", card: "Expired" },
-  [RequestStatus.WITHDRAWN]: { actionBar: "Withdrawn", card: "Withdrawn" },
-  [RequestStatus.TRANSFERRED]: { actionBar: "Transferred", card: "Transferred" },
-  [RequestStatus.TRANSFERRING]: { actionBar: "Update", card: "Pending Update" },
-  [RequestStatus.ALL]: { actionBar: "All", card: "All" }
+type StatusColor = typeof STATUS_COLORS[keyof typeof STATUS_COLORS];
+
+// Centralized status configuration
+const STATUS_CONFIG = {
+  [RequestStatus.VOUCHING]: {
+    baseLabel: "Vouching",
+    color: STATUS_COLORS.vouching,
+    filter: { status: "vouching" }
+  },
+  [RequestStatus.PENDING_CLAIM]: {
+    baseLabel: "Claim", 
+    color: STATUS_COLORS.claim,
+    filter: { status: "resolving", revocation: false }
+  },
+  [RequestStatus.PENDING_REVOCATION]: {
+    baseLabel: "Revocation",
+    color: STATUS_COLORS.revocation,
+    filter: { status: "resolving", revocation: true }
+  },
+  [RequestStatus.DISPUTED_CLAIM]: {
+    baseLabel: "Disputed",
+    color: STATUS_COLORS.challenged,
+    filter: { status: "disputed", revocation: false }
+  },
+  [RequestStatus.DISPUTED_REVOCATION]: {
+    baseLabel: "Disputed",
+    color: STATUS_COLORS.challenged, 
+    filter: { status: "disputed", revocation: true }
+  },
+  [RequestStatus.RESOLVED_CLAIM]: {
+    baseLabel: "Included",
+    color: STATUS_COLORS.registered,
+    filter: { 
+      status: "resolved", 
+      winnerParty_: { id: "requester" }, 
+      revocation: false, 
+      expirationTime_gt: Math.floor(Date.now() / 1000) 
+    }
+  },
+  [RequestStatus.RESOLVED_REVOCATION]: {
+    baseLabel: "Revoked",
+    color: STATUS_COLORS.removed,
+    filter: { status: "resolved", revocation: true }
+  },
+  [RequestStatus.REJECTED]: {
+    baseLabel: "Rejected",
+    color: STATUS_COLORS.rejected,
+    filter: { status: "resolved", revocation: false, winnerParty_: { id_not: "requester" } }
+  },
+  [RequestStatus.EXPIRED]: {
+    baseLabel: "Expired", 
+    color: STATUS_COLORS.expired,
+    filter: { 
+      status: "resolved", 
+      revocation: false, 
+      expirationTime_lt: Math.floor(Date.now() / 1000), 
+      winnerParty_: { id: "requester" } 
+    }
+  },
+  [RequestStatus.WITHDRAWN]: {
+    baseLabel: "Withdrawn",
+    color: STATUS_COLORS.withdrawn,
+    filter: { status: "withdrawn" }
+  },
+  [RequestStatus.TRANSFERRED]: {
+    baseLabel: "Transferred",
+    color: STATUS_COLORS.transferred,
+    filter: { status: "transferred" }
+  },
+  [RequestStatus.TRANSFERRING]: {
+    baseLabel: "Update",
+    color: STATUS_COLORS.transferring,
+    filter: { status: "transferring" }
+  },
+  [RequestStatus.ALL]: {
+    baseLabel: "All",
+    color: STATUS_COLORS.white,
+    filter: {}
+  }
+} as const;
+
+// Helper function to generate card labels (more descriptive)
+const getCardLabel = (status: RequestStatus): string => {
+  const config = STATUS_CONFIG[status];
+  switch (status) {
+    case RequestStatus.PENDING_CLAIM:
+      return `Pending ${config.baseLabel}`;
+    case RequestStatus.PENDING_REVOCATION:
+      return `Pending ${config.baseLabel}`;
+    case RequestStatus.DISPUTED_CLAIM:
+      return `${config.baseLabel} Claim`;
+    case RequestStatus.DISPUTED_REVOCATION:
+      return `${config.baseLabel} Revocation`;
+    case RequestStatus.RESOLVED_CLAIM:
+      return `Resolved Claim`;
+    case RequestStatus.RESOLVED_REVOCATION:
+      return `Resolved Revocation`;
+    case RequestStatus.TRANSFERRING:
+      return `Pending Update`;
+    default:
+      return config.baseLabel;
+  }
 };
 
-export const REQUEST_STATUS_COLORS: Record<RequestStatus, string> = {
-  [RequestStatus.VOUCHING]: "vouching",
-  [RequestStatus.PENDING_CLAIM]: "claim",
-  [RequestStatus.PENDING_REVOCATION]: "revocation", 
-  [RequestStatus.DISPUTED_CLAIM]: "challenged",
-  [RequestStatus.DISPUTED_REVOCATION]: "challenged",
-  [RequestStatus.RESOLVED_CLAIM]: "registered",
-  [RequestStatus.RESOLVED_REVOCATION]: "removed",
-  [RequestStatus.REJECTED]: "rejected",
-  [RequestStatus.EXPIRED]: "expired",
-  [RequestStatus.WITHDRAWN]: "withdrawn",
-  [RequestStatus.TRANSFERRED]: "transferred",
-  [RequestStatus.TRANSFERRING]: "transferring",
-  [RequestStatus.ALL]: "white"
-};
+const REQUEST_STATUS_COLORS = Object.fromEntries(
+  Object.entries(STATUS_CONFIG).map(([status, config]) => [status, config.color])
+) as Record<RequestStatus, StatusColor>;
 
-/**
- * Maps RequestStatus enum values to GraphQL Request_Filter objects for querying.
- */
-export const REQUEST_STATUS_FILTERS: Record<RequestStatus, { filter: Request_Filter }> = {
-  [RequestStatus.ALL]: { filter: {} },
-  [RequestStatus.VOUCHING]: { filter: { status: "vouching" } },
-  [RequestStatus.PENDING_CLAIM]: { filter: { status: "resolving", revocation: false } },
-  [RequestStatus.PENDING_REVOCATION]: { filter: { status: "resolving", revocation: true } },
-  [RequestStatus.DISPUTED_CLAIM]: { filter: { status: "disputed", revocation: false } },
-  [RequestStatus.DISPUTED_REVOCATION]: { filter: { status: "disputed", revocation: true } },
-  [RequestStatus.RESOLVED_CLAIM]: { filter: { status: "resolved", winnerParty_: { id: "requester" }, revocation: false, expirationTime_gt: Math.floor(Date.now() / 1000) } },
-  [RequestStatus.RESOLVED_REVOCATION]: { filter: { status: "resolved", revocation: true } },
-  [RequestStatus.REJECTED]: { filter: { status: "resolved", revocation: false, winnerParty_: { id_not: "requester" } } },
-  [RequestStatus.EXPIRED]: { filter: { status: "resolved", revocation: false, expirationTime_lt: Math.floor(Date.now() / 1000), winnerParty_: { id: "requester" } } },
-  [RequestStatus.WITHDRAWN]: { filter: { status: "withdrawn" } },
-  [RequestStatus.TRANSFERRED]: { filter: { status: "transferred" } },
-  [RequestStatus.TRANSFERRING]: { filter: { status: "transferring" } },
-};
+export const REQUEST_STATUS_FILTERS = 
+  Object.fromEntries(
+    Object.entries(STATUS_CONFIG).map(([status, config]) => [status, { filter: config.filter }])
+  ) as Record<RequestStatus, { filter: Request_Filter }>;
 
 /**
  * List of all status filter options for UI dropdowns.
  */
-export const STATUS_FILTER_OPTIONS = Object.values(RequestStatus).filter(status => ![RequestStatus.TRANSFERRING].includes(status));
+export const STATUS_FILTER_OPTIONS = Object.values(RequestStatus).filter(
+  status => ![RequestStatus.TRANSFERRING].includes(status)
+);
+
+const isRejectedRequest = (request: RawRequestData): boolean => {
+  return request.status.id === "resolved" &&
+    !request.revocation &&
+    request.winnerParty?.id !== "requester";
+};
 
 /**
  * Determines the RequestStatus enum value from raw status data.
  */
-export const getRequestStatus = (
+const getRequestStatus = (
   status: string,
   revocation: boolean = false,
   expired: boolean = false,
@@ -153,10 +233,7 @@ export const getStatus = (
     },
     contractData,
   );
-  const rejected =
-    request.status.id === "resolved" &&
-    !request.revocation &&
-    request.winnerParty?.id !== "requester";
+  const rejected = isRejectedRequest(request);
 
   return getRequestStatus(
     request.status.id,
@@ -173,7 +250,8 @@ export const getStatus = (
  * @returns Human-readable display string
  */
 export const getStatusLabel = (status: RequestStatus, component: 'actionBar' | 'card' = 'card'): string => {
-  return REQUEST_STATUS_LABELS[status][component];
+  const config = STATUS_CONFIG[status];
+  return component === 'actionBar' ? config.baseLabel : getCardLabel(status);
 };
 
 /**
