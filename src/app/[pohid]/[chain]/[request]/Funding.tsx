@@ -70,8 +70,8 @@ const FundButton: React.FC<FundButtonProps> = ({
       args: [pohId, BigInt(index)],
     });
   };
-
-  const isDisabled = !addedFundInput|| isLoading || userChainId !== chain.id;
+  console.log(parseEther(addedFundInput), remainingAmount);
+  const isDisabled = !addedFundInput|| isLoading || userChainId !== chain.id || parseEther(addedFundInput) > remainingAmount;
 
   return (
     <Modal
