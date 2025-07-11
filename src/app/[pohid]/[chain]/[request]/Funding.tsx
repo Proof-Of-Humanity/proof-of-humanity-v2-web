@@ -29,8 +29,6 @@ const FundButton: React.FC<FundButtonProps> = ({
   const loading = useLoading();
   const [isLoading, loadingMessage] = loading.use();
 
-  console.log(addedFundInput);
-
   const [prepareFund] = usePoHWrite(
     "fundRequest",
     useMemo(
@@ -70,7 +68,6 @@ const FundButton: React.FC<FundButtonProps> = ({
       args: [pohId, BigInt(index)],
     });
   };
-  console.log(parseEther(addedFundInput), remainingAmount);
   const isDisabled = !addedFundInput|| isLoading || userChainId !== chain.id || parseEther(addedFundInput) > remainingAmount;
 
   return (
