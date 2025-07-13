@@ -61,6 +61,7 @@ interface ActionBarProps {
   };
   rejected: boolean;
   humanityExpirationTime?: number;
+  validVouches: number;
 }
 
 export default function ActionBar({
@@ -80,6 +81,7 @@ export default function ActionBar({
   expired,
   arbitrationHistory,
   rejected,
+  validVouches,
 }: ActionBarProps) {
   const chain = useChainParam()!;
   const { address } = useAccount();
@@ -150,8 +152,7 @@ export default function ActionBar({
         if (funded < arbitrationCost + BigInt(contractData.baseDeposit))
           setAction(ActionType.FUND);
         else if (
-          onChainVouches.length + offChainVouches.filter(v => v.expiration > Date.now() / 1000).length >=
-          contractData.requiredNumberOfVouches
+          validVouches >= contractData.requiredNumberOfVouches
         )
           setAction(ActionType.ADVANCE);
         else if (
