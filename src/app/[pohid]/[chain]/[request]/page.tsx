@@ -464,7 +464,6 @@ export default async function Request({ params }: PageProps) {
                   <div className="flex flex-wrap gap-2">
                     {vouchersData.map(async (vouch, idx) => {
                       const vouchLocal = await Promise.resolve(vouch);
-                      console.log({ vouchLocal });
                       return (
                         <Vouch
                           isActive={ request.status.id === "vouching" ?
