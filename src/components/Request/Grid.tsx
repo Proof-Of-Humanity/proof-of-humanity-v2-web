@@ -30,7 +30,7 @@ import { useLoading } from "hooks/useLoading";
 import { 
   getStatus, 
   RequestStatus,
-  REQUEST_STATUS_FILTERS,
+  getRequestStatusFilter,
   STATUS_FILTER_OPTIONS,
   getStatusLabel,
   getStatusColor
@@ -209,7 +209,7 @@ function RequestsGrid() {
               chainStacks[chain.id].length
           ) {
             const where = {
-              ...REQUEST_STATUS_FILTERS[status].filter,
+              ...getRequestStatusFilter(status),
               ...(search ? { claimer_: { name_contains: search } } : {}),
             };
 

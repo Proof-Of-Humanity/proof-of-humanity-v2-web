@@ -34,8 +34,22 @@ const STATUS_COLORS = {
 
 type StatusColor = typeof STATUS_COLORS[keyof typeof STATUS_COLORS];
 
+type StaticFilterConfig = {
+  baseLabel: string;
+  color: StatusColor;
+  filter: Request_Filter;
+};
+
+type DynamicFilterConfig = {
+  baseLabel: string;
+  color: StatusColor;
+  getFilter: () => Request_Filter;
+};
+
+type StatusConfig = StaticFilterConfig | DynamicFilterConfig;
+
 // Centralized status configuration
-const STATUS_CONFIG = {
+const STATUS_CONFIG: Record<RequestStatus, StatusConfig> = {
   [RequestStatus.VOUCHING]: {
     baseLabel: "Vouching",
     color: STATUS_COLORS.vouching,
@@ -64,12 +78,12 @@ const STATUS_CONFIG = {
   [RequestStatus.RESOLVED_CLAIM]: {
     baseLabel: "Included",
     color: STATUS_COLORS.registered,
-    filter: { 
+    getFilter: () => ({ 
       status: "resolved", 
       winnerParty_: { id: "requester" }, 
       revocation: false, 
       expirationTime_gt: Math.floor(Date.now() / 1000) 
-    }
+    })
   },
   [RequestStatus.RESOLVED_REVOCATION]: {
     baseLabel: "Revoked",
@@ -84,12 +98,12 @@ const STATUS_CONFIG = {
   [RequestStatus.EXPIRED]: {
     baseLabel: "Expired", 
     color: STATUS_COLORS.expired,
-    filter: { 
+    getFilter: () => ({ 
       status: "resolved", 
       revocation: false, 
       expirationTime_lt: Math.floor(Date.now() / 1000), 
       winnerParty_: { id: "requester" } 
-    }
+    })
   },
   [RequestStatus.WITHDRAWN]: {
     baseLabel: "Withdrawn",
@@ -111,7 +125,7 @@ const STATUS_CONFIG = {
     color: STATUS_COLORS.white,
     filter: {}
   }
-} as const;
+};
 
 // Helper function to generate card labels (more descriptive)
 const getCardLabel = (status: RequestStatus): string => {
@@ -140,11 +154,19 @@ const REQUEST_STATUS_COLORS = Object.fromEntries(
   Object.entries(STATUS_CONFIG).map(([status, config]) => [status, config.color])
 ) as Record<RequestStatus, StatusColor>;
 
-export const REQUEST_STATUS_FILTERS = 
-  Object.fromEntries(
-    Object.entries(STATUS_CONFIG).map(([status, config]) => [status, { filter: config.filter }])
-  ) as Record<RequestStatus, { filter: Request_Filter }>;
-
+/**
+ * Get the filter object for a given request status.
+ * This function ensures that time-dependent filters use the current timestamp.
+ * @param status The request status to get the filter for
+ * @returns Filter object with current timestamp for time-dependent filters
+ */
+export const getRequestStatusFilter = (status: RequestStatus): Request_Filter => {
+  const config = STATUS_CONFIG[status];
+  if ('getFilter' in config) {
+    return config.getFilter();
+  }
+  return config.filter;
+};
 /**
  * List of all status filter options for UI dropdowns.
  */
