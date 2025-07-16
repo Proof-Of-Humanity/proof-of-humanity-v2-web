@@ -62,26 +62,32 @@ const ReasonCard: React.FC<ReasonCardInterface> = ({
   text,
   reason,
   current,
-}) => (
-  <div
-    className={cn(
-      "cursor-pointer rounded-sm bg-slate-200 p-0.5 text-lg uppercase text-black",
-      reason === current.get() ? "gradient font-bold" : "grayscale",
-    )}
-    onClick={() => current.set(reason)}
-  >
-    <div className="flex h-full flex-col rounded-sm bg-white p-4 text-center">
-      <Image
-        width={500}
-        height={200}
-        className="object-cover"
-        alt={reason}
-        src={reasonToImage[reason]}
-      />
-      {text}
+}) => {
+  const isSelected = reason === current.get();
+  
+  return (
+    <div
+      className={cn(
+        "cursor-pointer rounded-sm bg-slate-200 p-0.5 text-lg uppercase text-black transition-all duration-200",
+        isSelected 
+          ? "gradient font-semibold" 
+          : "grayscale hover:grayscale-0",
+      )}
+      onClick={() => current.set(reason)}
+    >
+      <div className="flex h-full flex-col rounded-sm bg-white p-4 text-center">
+        <Image
+          width={500}
+          height={200}
+          className="object-cover"
+          alt={reason}
+          src={reasonToImage[reason]}
+        />
+        {text}
+      </div>
     </div>
-  </div>
-);
+  );
+};
 
 interface ChallengeInterface {
   pohId: Hash;
@@ -190,9 +196,9 @@ export default function Challenge({
           <strong className="text-orange mr-1 font-semibold">
             Registration Policy
           </strong>
-          (at the time of submission)
+          <span className="text-secondaryText">(at the time of submission)</span>
         </ALink>
-        <span className="text-sm text-slate-400">
+        <span className="text-sm text-secondaryText">
           Updated: <TimeAgo time={arbitrationInfo.updateTime} />
         </span>
 
@@ -227,7 +233,7 @@ export default function Challenge({
           onChange={(e) => setJustification(e.target.value)}
         />
 
-        <div className="txt mt-4 text-lg">
+        <div className="mt-4 text-lg text-primaryText">
           Deposit: {formatEth(arbitrationCost)} ETH
         </div>
 
