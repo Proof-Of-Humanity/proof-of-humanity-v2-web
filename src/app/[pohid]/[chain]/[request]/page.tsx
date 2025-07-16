@@ -224,6 +224,11 @@ export default async function Request({ params }: PageProps) {
     ),
   );
 
+  const resolvedVouchersData = await Promise.all(vouchersData);
+  const validVouches = resolvedVouchersData.filter(
+    (v) => v.vouchStatus?.isValid,
+  ).length;
+
   const policyLink = await (async () => {
     try {
       return (
@@ -264,6 +269,7 @@ export default async function Request({ params }: PageProps) {
         }
         onChainVouches={onChainVouches}
         offChainVouches={offChainVouches}
+        validVouches={validVouches}
         arbitrationHistory={request.arbitratorHistory}
         rejected={rejected}
         humanityExpirationTime={request.humanity.registration?.expirationTime ? Number(request.humanity.registration.expirationTime) : undefined}
@@ -460,7 +466,8 @@ export default async function Request({ params }: PageProps) {
                       const vouchLocal = await Promise.resolve(vouch);
                       return (
                         <Vouch
-                          isActive={vouchLocal.vouchStatus?.isValid}
+                          isActive={ request.status.id === "vouching" ?
+                             vouchLocal.vouchStatus?.isValid : true }
                           reason={
                             request.status.id === "vouching"
                               ? vouchLocal.vouchStatus?.reason
