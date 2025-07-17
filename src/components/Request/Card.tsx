@@ -1,8 +1,6 @@
 "use client";
 
 import { SupportedChainId, idToChain } from "config/chains";
-import { colorForStatus } from "config/misc";
-import { queryToStatus } from "config/requests";
 import Link from "next/link";
 import { Suspense } from "react";
 import { Address, Hash } from "viem";
@@ -12,7 +10,7 @@ import { WinnerClaimFragment } from "generated/graphql";
 import useIPFS from "hooks/useIPFS";
 import { EvidenceFile, RegistrationFile } from "types/docs";
 import { shortenAddress } from "utils/address";
-import { camelToTitle } from "utils/case";
+import {getStatusLabel, getStatusColor, RequestStatus} from "utils/status";
 import { prettifyId } from "utils/identifier";
 import { ipfs } from "utils/ipfs";
 import { RequestsQueryItem } from "./Grid";
@@ -29,9 +27,7 @@ interface ContentProps {
 
 interface CardInterface extends ContentProps {
   index: number;
-  status: string;
-  rejected: boolean;
-  expired: boolean;
+  requestStatus: RequestStatus;
 }
 
 const LoadingFallback: React.FC = () => (
@@ -99,7 +95,6 @@ const Content = ({
 };
 
 function Card({
-  status,
   revocation,
   registrationEvidenceRevokedReq,
   index,
@@ -108,12 +103,10 @@ function Card({
   claimer,
   evidence,
   humanity: { id: pohId, winnerClaim },
-  expired,
-  rejected
+  requestStatus,
 }: CardInterface) {
 
-  const statusTitle = queryToStatus(status, revocation, expired);
-  const statusColor = colorForStatus(status, revocation, expired,rejected);
+  const statusColor = getStatusColor(requestStatus);
 
   const chain = idToChain(chainId)!;
   return (
@@ -125,11 +118,7 @@ function Card({
         <div className={`h-1 w-full bg-status-${statusColor}`} />
         <div className="centered p-2 font-medium">
           <span className={`text-status-${statusColor}`}>
-          {status === "resolved" && expired
-              ? "Expired"
-              : rejected
-              ? "Rejected"
-              : camelToTitle(statusTitle, revocation, expired)}
+            {getStatusLabel(requestStatus)}
           </span>
           <span className={`dot ml-2 bg-status-${statusColor}`} />
         </div>

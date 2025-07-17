@@ -15,11 +15,6 @@ import {
   legacyChain,
   supportedChains,
 } from "config/chains";
-import {
-  REQUESTS_DISPLAY_BATCH as REQUESTS_BATCH_SIZE,
-  statusToColor,
-} from "config/misc";
-import { RequestStatus, requestStatus, statusFilters } from "config/requests";
 import { getContractDataAllChains } from "data/contract";
 import {
   getFilteredRequestsInitData,
@@ -32,22 +27,30 @@ import DropdownItem from "components/Dropdown/Item";
 import Dropdown from "components/Dropdown/Menu";
 import { RequestsQuery } from "generated/graphql";
 import { useLoading } from "hooks/useLoading";
-import { camelToTitle } from "utils/case";
-import { isRequestExpired } from "utils/time";
+import { 
+  getStatus, 
+  RequestStatus,
+  getRequestStatusFilter,
+  STATUS_FILTER_OPTIONS,
+  getStatusLabel,
+  getStatusColor
+} from "utils/status";
+
+
 import Card from "./Card";
 import SubgraphsStatus from "./SubgraphsStatus";
 import Loading from "app/[pohid]/loading";
 
 enableReactUse();
 
+const REQUESTS_BATCH_SIZE = 12;
 var humanityLifespanAllChains: Record<SupportedChainId, string>;
 
 export type RequestsQueryItem = ArrayElement<RequestsQuery["requests"]>;
 
 interface RequestInterface extends RequestsQueryItem {
   chainId: SupportedChainId;
-  expired: boolean;
-  rejected: boolean;
+  requestStatus: RequestStatus;
 }
 
 const sortRequests = (request: RequestInterface[]): RequestInterface[] => {
@@ -82,15 +85,23 @@ const normalize = (
       (acc, chainId) => [
         ...acc,
         ...requestsData[Number(chainId) as SupportedChainId].map((request) => {
+          const requestStatus = getStatus(
+            {
+              status: request.status,
+              revocation: request.revocation,
+              index: request.index,
+              creationTime: request.creationTime,
+              expirationTime: request.expirationTime,
+              winnerParty: request.winnerParty,
+            },
+            { humanityLifespan: humanityLifespanAllChains[Number(chainId) as SupportedChainId] }
+          );
+          
           return {
             ...request,
             old: Number(chainId) === legacyChain.id,
             chainId: Number(chainId) as SupportedChainId,
-            expired: isRequestExpired(
-              request,
-              { humanityLifespan: humanityLifespanAllChains[Number(chainId) as SupportedChainId] }
-            ),
-            rejected: request.status.id === "resolved" && !request.revocation && request.winnerParty?.id != 'requester'
+            requestStatus
           };
         }),
       ],
@@ -121,7 +132,7 @@ interface RequestFilter {
 
 const filter$ = observable<RequestFilter>({
   search: "",
-  status: "all",
+  status: RequestStatus.ALL,
   chainId: 0,
   cursor: 1,
 });
@@ -198,7 +209,7 @@ function RequestsGrid() {
               chainStacks[chain.id].length
           ) {
             const where = {
-              ...requestStatus[status].filter,
+              ...getRequestStatusFilter(status),
               ...(search ? { claimer_: { name_contains: search } } : {}),
             };
 
@@ -253,34 +264,33 @@ function RequestsGrid() {
         />
         <Dropdown
           title={
-            filter.status === "all" ? "Status" : camelToTitle(filter.status)
+            filter.status === RequestStatus.ALL ? "Status" : getStatusLabel(filter.status)
           }
         >
-          {statusFilters.map((status) => (
+          {STATUS_FILTER_OPTIONS.map((status) => (
             <DropdownItem
               key={status}
               icon={
                 <div
                   className={cn(
                     "dot mr-2",
-                    statusToColor[status as keyof typeof statusToColor]
-                      ? `bg-status-${statusToColor[status as keyof typeof statusToColor]}`
-                      : "bg-white",
+                    status === RequestStatus.ALL ?
+                     "bg-white" : `bg-status-${getStatusColor(status)}`
                   )}
                 />
               }
               selected={filter.status === status}
               onSelect={() => filter$.assign({ status, cursor: 1 })}
-              name={camelToTitle(status)}
+              name={getStatusLabel(status)}
             />
           ))}
         </Dropdown>
         <Dropdown
-          title={camelToTitle(
+          title={
             filter.chainId
               ? idToChain(filter.chainId as SupportedChainId)!.name
-              : "Chain",
-          )}
+              : "Chain"
+          }
         >
           <DropdownItem
             selected={!filter.chainId}
@@ -313,14 +323,12 @@ function RequestsGrid() {
             humanity={request.humanity}
             requester={request.requester}
             claimer={request.claimer}
-            status={request.status.id}
+            requestStatus={request.requestStatus}
             revocation={request.revocation}
             registrationEvidenceRevokedReq={
               request.registrationEvidenceRevokedReq
             }
             evidence={request.evidenceGroup.evidence}
-            expired={request.expired}
-            rejected={request.rejected}
           />
         ))}
       </div>
