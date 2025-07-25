@@ -60,6 +60,7 @@ interface ActionBarProps {
   requestStatus: RequestStatus;
   humanityExpirationTime?: number;
   validVouches: number;
+  usedReasons?: string[];
 }
 
 export default function ActionBar({
@@ -80,6 +81,7 @@ export default function ActionBar({
   arbitrationHistory,
   humanityExpirationTime,
   validVouches,
+  usedReasons = [],
 }: ActionBarProps) {
   const chain = useChainParam()!;
   const { address } = useAccount();
@@ -258,9 +260,9 @@ export default function ActionBar({
         ],
       });
     }
-
-    if (action === ActionType.EXECUTE)
+    if (action === ActionType.EXECUTE){
       prepareExecute({ args: [pohId, BigInt(index)] });
+    }
   }, [
     address,
     prepareExecute,
@@ -425,7 +427,9 @@ export default function ActionBar({
               <button
                 disabled={pending || userChainId !== chain.id}
                 className="btn-main mb-2"
-                onClick={execute}
+                onClick={() => {
+                  execute();
+                }}
               >
                 Execute
               </button>
@@ -448,6 +452,7 @@ export default function ActionBar({
               revocation={revocation}
               arbitrationCost={arbitrationCost}
               arbitrationInfo={contractData.arbitrationInfo!}
+              usedReasons={usedReasons}
             />
           </>
         )}

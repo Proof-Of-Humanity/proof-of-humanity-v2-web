@@ -47,7 +47,6 @@ export default async function Request({ params }: PageProps) {
     getRequestData(chain.id, pohId, +params.request),
     getContractData(chain.id),
   ]);
-
   if (!request) return <span>Error occured</span>;
   const arbitrationCost = await getArbitrationCost(
     chain,
@@ -226,6 +225,12 @@ export default async function Request({ params }: PageProps) {
     (v) => v.vouchStatus?.isValid,
   ).length;
 
+  // Extract used reasons from existing challenges
+
+  const usedReasons = request.challenges 
+    ? request.challenges.map(challenge => challenge.reason.id)
+    : [];
+
   const policyLink = await (async () => {
     try {
       return (
@@ -269,6 +274,7 @@ export default async function Request({ params }: PageProps) {
         arbitrationHistory={request.arbitratorHistory}
         requestStatus={requestStatus}
         humanityExpirationTime={request.expirationTime}
+        usedReasons={usedReasons}
       />
       <div className="border-stroke bg-whiteBackground mb-6 rounded border shadow">
         {request.revocation && revocationFile && (
