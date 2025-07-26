@@ -436,52 +436,86 @@ export default function CrossChain({
                 <button
                   className="text-blue-500 underline underline-offset-2"
                   onClick={async () => {
-                    const address = Contract.CrossChainProofOfHumanity[
-                      lastTransferChain.id
-                    ] as Address;
-                    const allTxs = await publicClient.getContractEvents({
-                      address: address,
-                      abi: abis.CrossChainProofOfHumanity,
-                      eventName: "TransferInitiated",
-                      fromBlock: CreationBlockNumber.CrossChainProofOfHumanity[
-                        lastTransferChain.id
-                      ] as bigint,
-                      strict: true,
-                      args: { humanityId: pohId },
-                    });
-                    const txHash = allTxs.find(
-                      (tx) =>
-                        tx.args.transferHash === lastTransfer?.transferHash,
-                    )?.transactionHash;
+                    if (!lastTransfer?.transferHash || !lastTransferChain) {
+                      toast.error("Transfer data not available");
+                      return;
+                    }
+                    try {
+                      const transferTimestamp = Number(
+                        lastTransfer.transferTimestamp,
+                      );
 
-                    const tx = await publicClient.getTransactionReceipt({
-                      hash: txHash!,
-                    });
-                    const data = tx.logs.at(1)?.data;
-
-                    // Encoded data has a different length in Gnosis compared to Chiado
-                    const subEnd =
-                      lastTransferChain.id === gnosisChiado.id ? 754 : 748;
-                    const encodedData =
-                      `0x${data?.substring(130, subEnd)}` as `0x${string}`;
-
-                    await publicClient
-                      .readContract({
-                        address: Contract.GnosisAMBHelper[lastTransferChain.id],
-                        abi: gnosisAmbHelper,
-                        functionName: "getSignatures",
-                        args: [encodedData],
-                      })
-                      .then((signatures) => {
-                        prepareRelayWrite({
-                          args: [encodedData, signatures],
-                        });
-                      })
-                      .catch((e) => {
-                        toast.info(
-                          "Confirmation takes around 10 minutes. Come back later",
-                        );
+                      const currentBlock = await publicClient.getBlockNumber();
+                      const currentBlockData = await publicClient.getBlock({
+                        blockNumber: currentBlock,
                       });
+                      const currentTimestamp = Number(currentBlockData.timestamp);
+                      const avgBlockTime = 5; // Average block time for gnosis
+                      const timeDiff = currentTimestamp - transferTimestamp;
+                      const estimatedBlockDiff = Math.floor(timeDiff / avgBlockTime);
+                      const targetBlock = currentBlock - BigInt(estimatedBlockDiff);
+
+                      const fromBlock = targetBlock > 1000n ? targetBlock - 1000n : 1n;
+                      const toBlock = targetBlock + 1000n;
+                      console.log("fromBlock", fromBlock, "toBlock", toBlock, "targetBlock", targetBlock, "currentBlock", currentBlock);
+                      const transferEvents = await publicClient.getContractEvents({
+                        address:
+                          Contract.CrossChainProofOfHumanity[lastTransferChain.id] as Address,
+                        abi: abis.CrossChainProofOfHumanity,
+                        eventName: "TransferInitiated",
+                        fromBlock,
+                        toBlock,
+                        strict: true,
+                        args: { humanityId: pohId },
+                      });
+
+                      const matchingEvent = transferEvents.find(
+                        (event) =>
+                          event.args.transferHash === lastTransfer.transferHash,
+                      );
+
+                      if (!matchingEvent) {
+                        toast.error(
+                          "Transfer transaction not found in recent blocks.",
+                        );
+                        return;
+                      }
+
+                      const tx = await publicClient.getTransactionReceipt({
+                        hash: matchingEvent.transactionHash,
+                      });
+                      const data = tx.logs.at(1)?.data;
+
+                      const subEnd =
+                        lastTransferChain.id === gnosisChiado.id ? 754 : 748;
+                      const encodedData =
+                        `0x${data?.substring(130, subEnd)}` as `0x${string}`;
+
+                      await publicClient
+                        .readContract({
+                          address:
+                            Contract.GnosisAMBHelper[lastTransferChain.id],
+                          abi: gnosisAmbHelper,
+                          functionName: "getSignatures",
+                          args: [encodedData],
+                        })
+                        .then((signatures) => {
+                          prepareRelayWrite({
+                            args: [encodedData, signatures],
+                          });
+                        })
+                        .catch(() => {
+                          toast.info(
+                            "Confirmation takes around 10 minutes. Come back later.",
+                          );
+                        });
+                    } catch (error) {
+                      console.error(
+                        "Error while relaying transfer:",
+                        error,
+                      );
+                      toast.error("Failed to relay transfer.");
+                    }
                   }}
                 >
                   Relay Transferring Profile
