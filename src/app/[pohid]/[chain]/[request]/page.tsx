@@ -217,7 +217,7 @@ export default async function Request({ params }: PageProps) {
       true,
       false,
     ),
-  );
+  ));
 
   const resolvedVouchersData = await Promise.all(vouchersData);
   const validVouches = resolvedVouchersData.filter(
@@ -461,23 +461,24 @@ export default async function Request({ params }: PageProps) {
                     ? "Available vouches for this PoHID"
                     : "Vouched for this request"}
                   <div className="flex flex-wrap gap-2">
-                    {vouchersData.map((vouch, idx) => {
+                  {vouchersData.map(async (vouch, idx) => {
+                      const vouchLocal = await Promise.resolve(vouch);
                       return (
                         <Vouch
                           isActive={ request.status.id === "vouching" ?
                              vouchLocal.vouchStatus?.isValid : true }
                           reason={
                             request.status.id === "vouching"
-                              ? vouch.vouchStatus?.reason
+                              ? vouchLocal.vouchStatus?.reason
                               : undefined
                           }
-                          name={vouch.name}
-                          photo={vouch.photo}
+                          name={vouchLocal.name}
+                          photo={vouchLocal.photo}
                           idx={idx}
-                          href={`/${prettifyId(vouch.pohId!)}`}
-                          pohId={vouch.pohId}
-                          address={vouch.voucher}
-                          isOnChain={vouch.isOnChain}
+                          href={`/${prettifyId(vouchLocal.pohId!)}`}
+                          pohId={vouchLocal.pohId}
+                          address={vouchLocal.voucher}
+                          isOnChain={vouchLocal.isOnChain}
                           reducedTooltip={request.status.id !== "vouching"}
                         />
                       );
