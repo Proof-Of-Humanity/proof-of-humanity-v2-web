@@ -55,9 +55,9 @@ export default function useWagmiWrite<
     }
   } as any);
 
-  const { writeContract, data, status, reset: resetWrite } = useWriteContract();
+  const { writeContract, data, status} = useWriteContract();
   const { status: transactionStatus } = useWaitForTransactionReceipt({
-    hash: data
+    hash: data,
   });
 
   useEffect(() => {
@@ -70,34 +70,31 @@ export default function useWagmiWrite<
         break;
       case "error":
         if(enabled){
-        effects?.onFail?.();
-        setEnabled(false);
+          effects?.onFail?.();
+          setEnabled(false);
         }
-        break;
     }
-  }, [prepareStatus, effects, enabled,prepared?.request, writeContract]);
+  }, [prepareStatus, effects, enabled, prepared?.request, writeContract]);
 
   useEffect(() => {
-    if (status === "error") {
-      effects?.onError?.();
-      setEnabled(false);
-      resetWrite();
+    switch (status) {
+      case "error":
+        effects?.onError?.();
+        setEnabled(false);
     }
-  }, [status, effects, resetWrite]);
+  }, [status, effects]);
 
   useEffect(() => {
-    if (data) {
+    if(data) {
       switch (transactionStatus) {
         case "pending":
           effects?.onLoading?.();
           break;
         case "success":
           effects?.onSuccess?.();
-          resetWrite();
-          break;
       }
     }
-  }, [transactionStatus, effects, data, resetWrite]);
+  }, [transactionStatus, effects]);
 
   return useMemo(
     () =>
