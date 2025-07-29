@@ -31,7 +31,7 @@ export default async function IntegrationPage({
 }: IntegrationPageProps) {
   const integration = await getIntegration(params.integrationId);
   
-  if (!integration) {
+  if (!integration || !integration.isActive) {
     redirect("/app/");
   }
   
