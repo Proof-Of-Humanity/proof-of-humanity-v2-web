@@ -7,7 +7,7 @@ const integrations: Record<string, Integration> = {
     title: 'Connect your Circles Wallet',
     description: 'Link your Circles address to your POHID and experience trust benefits.',
     logo: '/images/integrations/circles-logo.png',
-    isActive: true,
+    isActive: false, // Temporarily disabled - App section not displayed in UI
     startPath: 'app/circles',
     buttonText: 'Start Now',
     connectionSteps: [
