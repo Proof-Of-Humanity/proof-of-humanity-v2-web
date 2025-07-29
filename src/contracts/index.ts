@@ -25,14 +25,14 @@ export const configSetSelection =
 
 export const Contract = {
   ProofOfHumanity:
-    configSetSelection.id === configSets.testOld.id
+      configSetSelection.id === configSets.testOld.id
       ? {
           [mainnet.id]: "0x29defF3DbEf6f79ef20d3fe4f9CFa0547acCeC0D", // OLD
           [sepolia.id]: "0x29defF3DbEf6f79ef20d3fe4f9CFa0547acCeC0D", // OLD
           [gnosisChiado.id]: "0x2505C87AA36d9ed18514Ea7473Ac58aeDeb50849", // OLD
           [gnosis.id]: "0x4a594f0e73223c9a1CE0EfC16da92fFaA193a612",
         }
-      : configSetSelection.id === configSets.testNew.id
+        : configSetSelection.id === configSets.testNew.id
         ? {
             [gnosis.id]: "0x4a594f0e73223c9a1CE0EfC16da92fFaA193a612",
             [mainnet.id]: "0x0D4674De96459e00A101656b799ba016fBc45dC1",
@@ -46,14 +46,14 @@ export const Contract = {
               [sepolia.id]: "0x",
               [gnosisChiado.id]: "0x",
             }
-          : configSetSelection.id === configSets.mainPreAudit.id
+        : configSetSelection.id === configSets.mainPreAudit.id
             ? {
                 [gnosis.id]: "0xECd1823b3087acEE3C77928b1959c08d31A8F20e",
                 [mainnet.id]: "0x87c5c294C9d0ACa6b9b2835A99FE0c9A444Aacc1",
                 [sepolia.id]: "0x",
                 [gnosisChiado.id]: "0x",
               }
-            : configSetSelection.id === configSets.mainOld.id
+        : configSetSelection.id === configSets.mainOld.id
               ? {
                   [gnosis.id]: "0xe6573F65efAbc351b69F9b73ed8e95772698938b",
                   [mainnet.id]: "0x6cbEdC1920090EA4F28A38C1CD61c8D37b2cc323",
@@ -67,14 +67,14 @@ export const Contract = {
                   [gnosisChiado.id]: "0x",
                 },
   CrossChainProofOfHumanity:
-    configSetSelection.id === configSets.testOld.id
+      configSetSelection.id === configSets.testOld.id
       ? {
           [mainnet.id]: "0xd134748B972A320a73EfDe3AfF7a68718F6bA92c", //OLD
           [sepolia.id]: "0xd134748B972A320a73EfDe3AfF7a68718F6bA92c", //OLD
           [gnosisChiado.id]: "0xBEd896A3DEa0E065F05Ba83Fa63322c7b9d67838", //OLD
           [gnosis.id]: "0x2C692919Da3B5471F9Ac6ae1C9D1EE54F8111f76",
         }
-      : configSetSelection.id === configSets.testNew.id
+        : configSetSelection.id === configSets.testNew.id
         ? {
             [gnosis.id]: "0x2C692919Da3B5471F9Ac6ae1C9D1EE54F8111f76",
             [mainnet.id]: "0xDb7070C1AE12f83E709FF22c4c51993a570FDF84",
@@ -88,14 +88,14 @@ export const Contract = {
               [sepolia.id]: "0x",
               [gnosisChiado.id]: "0x",
             }
-          : configSetSelection.id === configSets.mainPreAudit.id
+        : configSetSelection.id === configSets.mainPreAudit.id
             ? {
                 [gnosis.id]: "0xF921b42B541bc53a07067B65207F879c9377bf7F",
                 [mainnet.id]: "0xD8D462ac9F3FAD77Af2ae2640fE7F591F1651A2C",
                 [sepolia.id]: "0x",
                 [gnosisChiado.id]: "0x",
               }
-            : configSetSelection.id === configSets.mainOld.id
+        : configSetSelection.id === configSets.mainOld.id
               ? {
                   [gnosis.id]: "0x6cbEdC1920090EA4F28A38C1CD61c8D37b2cc323",
                   [mainnet.id]: "0xD6F4E9d906CD7736a83e0AFa7EE9491658B4afA7",
@@ -107,7 +107,7 @@ export const Contract = {
                   [gnosis.id]: "0x",
                   [sepolia.id]: "0x",
                   [gnosisChiado.id]: "0x",
-                },
+  },
   Multicall3: {
     [mainnet.id]: mainnet.contracts.multicall3.address,
     [sepolia.id]: sepolia.contracts.multicall3.address,
@@ -125,6 +125,18 @@ export const Contract = {
     [sepolia.id]: "0xf2546D6648BD2af6a008A7e7C1542BB240329E11",
     [gnosis.id]: "0x",
     [gnosisChiado.id]: "0x",
+  },
+  CirclesIntegration: {
+    [mainnet.id]: "0x",
+    [sepolia.id]: "0x",
+    [gnosis.id]: "0x",
+    [gnosisChiado.id]: "0x7562C66dB28e397c81d1E6d7645B59D308dEda46",
+  },
+  CirclesHub: {
+    [mainnet.id]: "0x",
+    [sepolia.id]: "0x",
+    [gnosis.id]: "0xc12C1E50ABB450d6205Ea2C3Fa861b3B834d13e8",
+    [gnosisChiado.id]: "0x7369766AB350FaC58091eAF91D544DD1BeaC6250",
   },
 } as const;
 

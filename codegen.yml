@@ -1,5 +1,5 @@
 overwrite: true
-schema: "https://api.studio.thegraph.com/query/61738/poh-origin-mainnet/version/latest"
+schema: "https://api.studio.thegraph.com/query/61738/poh-origin-gnosis/version/latest"
 documents: "schemas/**/*.gql"
 generates:
   ./src/generated/graphql.ts:
