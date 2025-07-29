@@ -5,6 +5,7 @@ import Label from "components/Label";
 import Modal from "components/Modal";
 import TimeAgo from "components/TimeAgo";
 import { useLoading } from "hooks/useLoading";
+import useChainParam from "hooks/useChainParam";
 import { ipfs } from "utils/ipfs";
 import { formatEth } from "utils/misc";
 import cn from "classnames";
@@ -56,32 +57,45 @@ interface ReasonCardInterface {
   text: string;
   reason: Reason;
   current: ObservablePrimitiveBaseFns<Reason>;
+  isUsed?: boolean;
 }
 
 const ReasonCard: React.FC<ReasonCardInterface> = ({
   text,
   reason,
   current,
-}) => (
-  <div
-    className={cn(
-      "cursor-pointer rounded-sm bg-slate-200 p-0.5 text-lg uppercase text-black",
-      reason === current.get() ? "gradient font-bold" : "grayscale",
-    )}
-    onClick={() => current.set(reason)}
-  >
-    <div className="flex h-full flex-col rounded-sm bg-white p-4 text-center">
-      <Image
-        width={500}
-        height={200}
-        className="object-cover"
-        alt={reason}
-        src={reasonToImage[reason]}
-      />
-      {text}
+  isUsed = false,
+}) => {
+  const isSelected = reason === current.get();
+  
+  return (
+    <div
+      className={cn(
+        "cursor-pointer rounded-sm bg-slate-200 p-0.5 text-lg uppercase text-black transition-all duration-200",
+        isUsed 
+          ? "opacity-50 cursor-not-allowed grayscale"
+          : isSelected 
+            ? "gradient font-semibold" 
+            : "grayscale hover:grayscale-0",
+      )}
+      onClick={() => !isUsed && current.set(reason)}
+    >
+      <div className="flex h-full flex-col rounded-sm bg-white p-4 text-center">
+        <Image
+          width={500}
+          height={200}
+          className="object-cover"
+          alt={reason}
+          src={reasonToImage[reason]}
+        />
+        {text}
+        {isUsed && (
+          <span className="text-xs text-red-500 mt-1">Already used</span>
+        )}
+      </div>
     </div>
-  </div>
-);
+  );
+};
 
 interface ChallengeInterface {
   pohId: Hash;
@@ -89,6 +103,7 @@ interface ChallengeInterface {
   revocation: boolean;
   arbitrationCost: bigint;
   arbitrationInfo: ContractData["arbitrationInfo"];
+  usedReasons?: string[];
 }
 
 export default function Challenge({
@@ -97,8 +112,10 @@ export default function Challenge({
   revocation,
   arbitrationCost,
   arbitrationInfo,
+  usedReasons = [],
 }: ChallengeInterface) {
   const { uploadFile } = useAtlasProvider();
+  const chain = useChainParam()!;
   
   const loading = useLoading();
   const [isLoading, loadingMessage] = loading.use();
@@ -178,6 +195,18 @@ export default function Challenge({
     }
   }, [revocation, reason, justification, prepare, arbitrationCost, pohId, requestIndex, uploadFile, loading]);
 
+  const isReasonUsed = (reason: Reason): boolean => {
+    return usedReasons.includes(reason);
+  };
+
+  // Define reason cards data
+  const reasonCards = [
+    { reason: "incorrectSubmission" as Reason, text: "Incorrect Submission" },
+    { reason: "identityTheft" as Reason, text: "Identity Theft" },
+    { reason: "sybilAttack" as Reason, text: "Sybil Attack" },
+    { reason: "deceased" as Reason, text: "Deceased" },
+  ];
+
   return (
     <Modal
       formal
@@ -190,9 +219,9 @@ export default function Challenge({
           <strong className="text-orange mr-1 font-semibold">
             Registration Policy
           </strong>
-          (at the time of submission)
+          <span className="text-secondaryText">(at the time of submission)</span>
         </ALink>
-        <span className="text-sm text-slate-400">
+        <span className="text-sm text-secondaryText">
           Updated: <TimeAgo time={arbitrationInfo.updateTime} />
         </span>
 
@@ -200,22 +229,15 @@ export default function Challenge({
           <>
             <Label>Select challenging reason</Label>
             <div className="grid w-full grid-cols-2 gap-2 lg:grid-cols-4">
-              <ReasonCard
-                reason="incorrectSubmission"
-                text="Incorrect Submission"
-                current={reason$}
-              />
-              <ReasonCard
-                reason="identityTheft"
-                text="Identity Theft"
-                current={reason$}
-              />
-              <ReasonCard
-                reason="sybilAttack"
-                text="Sybil Attack"
-                current={reason$}
-              />
-              <ReasonCard reason="deceased" text="Deceased" current={reason$} />
+              {reasonCards.map((card) => (
+                <ReasonCard
+                  key={card.reason}
+                  reason={card.reason}
+                  text={card.text}
+                  current={reason$}
+                  isUsed={isReasonUsed(card.reason)}
+                />
+              ))}
             </div>
           </>
         )}
@@ -227,8 +249,8 @@ export default function Challenge({
           onChange={(e) => setJustification(e.target.value)}
         />
 
-        <div className="txt mt-4 text-lg">
-          Deposit: {formatEth(arbitrationCost)} ETH
+        <div className="mt-4 text-lg text-primaryText">
+          Deposit: {formatEth(arbitrationCost)} {chain.nativeCurrency.symbol}
         </div>
 
         <AuthGuard signInButtonProps={{ className: "mt-12 px-4" }}>

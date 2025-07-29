@@ -1,4 +1,3 @@
-import { isRequestExpired } from "utils/time";
 import type { Hash } from "viem";
 import Arrow from "components/Arrow";
 import Attachment from "components/Attachment";
@@ -31,6 +30,7 @@ import ActionBar from "./ActionBar";
 import Evidence from "./Evidence";
 import Info from "./Info";
 import DocumentIcon from "components/DocumentIcon";
+import { getStatus } from "utils/status";
 
 interface PageProps {
   params: { pohid: string; chain: string; request: string };
@@ -47,14 +47,14 @@ export default async function Request({ params }: PageProps) {
     getRequestData(chain.id, pohId, +params.request),
     getContractData(chain.id),
   ]);
-
   if (!request) return <span>Error occured</span>;
   const arbitrationCost = await getArbitrationCost(
     chain,
     contractData.arbitrationInfo.arbitrator,
     contractData.arbitrationInfo.extraData,
   );
-
+  const requestStatus = getStatus(request, contractData);
+  
   let onChainVouches: Array<Address> = [];
 
   const offChainVouches: {
@@ -75,7 +75,7 @@ export default async function Request({ params }: PageProps) {
     // so we remove it from onChain since the contract has no data of it
     onChainVouches = onChainVouches.filter(
       (onChainVoucher) =>
-        offChainVouches.filter((voucher) => voucher.voucher === onChainVoucher)
+        offChainVouches.filter((vouch) => vouch.voucher === onChainVoucher)
           .length === 0,
     );
   } else {
@@ -83,10 +83,6 @@ export default async function Request({ params }: PageProps) {
     onChainVouches = request.vouches.map((v) => v.voucher.id as Address);
   }
 
-  const rejected = request.status.id === "resolved" && !request.revocation && request.winnerParty?.id != 'requester';
-
-  const expired = isRequestExpired(request, contractData);
-  
   let registrationFile: RegistrationFile | null;
   let revocationFile: EvidenceFile | null = null;
 
@@ -221,9 +217,18 @@ export default async function Request({ params }: PageProps) {
       true,
       false,
     ),
-  ));
-  vourchesForData = vourchesForData.filter((vouch) => vouch.voucher);
-  vouchersData = vouchersData.filter((vouch) => vouch.voucher);
+  );
+
+  const resolvedVouchersData = await Promise.all(vouchersData);
+  const validVouches = resolvedVouchersData.filter(
+    (v) => v.vouchStatus?.isValid,
+  ).length;
+
+  // Extract used reasons from existing challenges
+
+  const usedReasons = request.challenges 
+    ? request.challenges.map(challenge => challenge.reason.id)
+    : [];
 
   const policyLink = await (async () => {
     try {
@@ -247,7 +252,6 @@ export default async function Request({ params }: PageProps) {
         arbitrationCost={arbitrationCost}
         index={request.index}
         status={request.status.id}
-        expired={expired}
         requester={request.requester}
         contractData={contractData}
         pohId={pohId}
@@ -265,11 +269,12 @@ export default async function Request({ params }: PageProps) {
         }
         onChainVouches={onChainVouches}
         offChainVouches={offChainVouches}
+        validVouches={validVouches}
         arbitrationHistory={request.arbitratorHistory}
-        rejected={rejected}
-        humanityExpirationTime={request.humanity.registration?.expirationTime ? Number(request.humanity.registration.expirationTime) : undefined}
+        requestStatus={requestStatus}
+        humanityExpirationTime={request.expirationTime}
+        usedReasons={usedReasons}
       />
-
       <div className="border-stroke bg-whiteBackground mb-6 rounded border shadow">
         {request.revocation && revocationFile && (
           <div className="bg-primaryBackground p-4">
@@ -459,7 +464,8 @@ export default async function Request({ params }: PageProps) {
                     {vouchersData.map((vouch, idx) => {
                       return (
                         <Vouch
-                          isActive={vouch.vouchStatus?.isValid}
+                          isActive={ request.status.id === "vouching" ?
+                             vouchLocal.vouchStatus?.isValid : true }
                           reason={
                             request.status.id === "vouching"
                               ? vouch.vouchStatus?.reason

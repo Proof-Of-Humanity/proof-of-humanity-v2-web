@@ -44,6 +44,7 @@ interface WebcamProps {
   action: () => void;
   isVideo?: boolean;
   overlay?: boolean;
+  phrase?: string;
   loadCamera: React.Dispatch<React.SetStateAction<ReactWebcam | null>>;
 }
 
@@ -55,6 +56,7 @@ const Webcam: React.FC<WebcamProps> = ({
   recording,
   fullscreen,
   toggleFullscreen,
+  phrase,
 }) => {
   const [devices, setDevices] = useState<MediaDeviceInfo[]>([]);
   const [currentCamera, setCurrentCamera] = useState("");
@@ -139,8 +141,7 @@ const Webcam: React.FC<WebcamProps> = ({
 
       {recording && overlay && (
         <div className="centered absolute left-0 top-0 h-full w-full select-none bg-black text-center text-xl font-semibold uppercase text-white opacity-70 sm:text-3xl md:text-3xl lg:text-4xl">
-          I certify that I am a real human and that I am not already registered
-          in this registry
+          {phrase}
         </div>
       )}
 
