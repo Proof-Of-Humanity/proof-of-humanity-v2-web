@@ -6,23 +6,26 @@ export interface Integration {
   logo: string;
   isActive: boolean;
   startPath: string;
+  headerTitle?: string;
+  headerDescription?: string;
   buttonText: string;
-  connectionSteps?: ConnectionStep[];
-  mintSteps?: ConnectionStep[];
+  firstInfoSlide?: InfoSlide[];
+  secondInfoSlide?: InfoSlide[];
   externalLinks?: ExternalLink[];
 }
 
-export interface ConnectionStep {
+export interface InfoSlide {
   id: string;
   title: string;
   description: string;
   disclaimer?: string;
   externalLink?: string;
   image?: string;
+  bulletPoints?: string[];
 }
 
 export interface ExternalLink {
   label: string;
   url: string;
   icon?: string;
-} 
+}

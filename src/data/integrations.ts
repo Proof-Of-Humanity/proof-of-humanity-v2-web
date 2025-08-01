@@ -10,7 +10,7 @@ const integrations: Record<string, Integration> = {
     isActive: true,
     startPath: 'app/circles',
     buttonText: 'Start Now',
-    connectionSteps: [
+    firstInfoSlide: [
       {
         id: 'start',
         title: 'Start',
@@ -43,7 +43,7 @@ const integrations: Record<string, Integration> = {
         image: '/images/integrations/circles-copy-address.png',
       }
     ],
-    mintSteps: [
+    secondInfoSlide: [
       // {
       //   id: 'collectCRC',
       //   title: 'Collecting CRC',
@@ -69,6 +69,62 @@ const integrations: Record<string, Integration> = {
       //   image: '/images/integrations/circles-success.png',
       // }
     ],
+  },
+
+  'pnk-airdrop': {
+    id: 'pnk-airdrop',
+    name: 'PNK Airdrop',
+    title: 'Kleros PNK Airdrop',
+    headerTitle: 'Join the Verified 10K: Earn PNK for Being Human',
+    headerDescription: 'Welcome to the Proof of Humanity Verified 10K Campaign! To celebrate our growing community and promote the adoption of decentralized identity, we\'re rewarding the first 10,000 verified humans on the PoH v2 registry with PNK tokens.',
+    description: 'Earn PNK tokens for being human.',
+    logo: '/images/kleros-logo.png',
+    isActive: true,
+    startPath: 'app/pnk-airdrop',
+    buttonText: 'Start Now',
+    firstInfoSlide: [
+      {
+        id: 'klerosInfo',
+        title: 'What is Kleros?',
+        description: 'Kleros is a decentralized dispute resolution protocol. Think of it as the “People’s Court” powered by Ethereum smart contracts and crowdsourced jurors. It’s used to settle disagreements where trust is hard — like freelancing, DeFi, content moderation, identity, crypto token listings, and more.',
+        image: '/images/integrations/kleros-slide1.png',
+        bulletPoints: [
+          'More than 1600+ disputes resolved',
+          'More than $x,xxx,xxx distributed as rewards for Jurors, and contributors.'
+        ]
+      },
+      {
+        id: 'howItWorks',
+        title: 'How Does It Work?',
+        description: 'A dispute arises (e.g., "Did the job get done?", "Did the profile comply with the rules?")\n\n⚖️ The case is sent to Kleros\n👩‍⚖️ Jurors are randomly selected from a pool\n📜 Jurors review evidence & vote\n🧠 Majority wins — decision enforced by smart contract',
+        image: '/images/integrations/kleros-slide2.png',
+        bulletPoints: [
+          'Transparent',
+          'Enforced by code',
+          'Trustless'
+        ]
+      },
+      {
+        id: 'whyUseKleros',
+        title: 'Why Use Kleros?',
+        description: '🔥 Unbiased Decisions — Jurors don\'t know each other\n🔒 Censorship-Resistant — No single point of control\n⚡ Fast & Affordable — Way cheaper than traditional courts\n🌍 Global by Default — Anyone, anywhere can get justice\n🎮 Game-Theory Powered — Incentives = honest outcomes',
+        image: '/images/integrations/kleros-slide3.png',
+        bulletPoints: [
+          'You earn monthly staking rewards by staking PNK on Kleros Court',
+          'You can win additional rewards by working as a juror, or contributing to appeals.'
+        ]
+      },
+      {
+        id: 'becomeJuror',
+        title: 'How I Become a Juror?',
+        description: 'To become a juror, you stake PNK (Kleros\' token) into a specific court (eg. Humanity court), subscribe for notifications to get alerts when you are selected to judge a case. The more you stake, the more likely you are to be selected as a juror. But it\'s not free lunch...\n\n🧠 Vote well = 🤑 Earn fees + PNK\n🙃 Vote badly = 😬 Lose staked PNK\n\n💰 Earn PNK for fair rulings',
+        image: '/images/integrations/kleros-slide4.png',
+        bulletPoints: [
+          'Stake > Judge > Earn > Repeat',
+          'Visit: Kleros.io'
+        ]
+      }
+    ]
   },
 };
 
