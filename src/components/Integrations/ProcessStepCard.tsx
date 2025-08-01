@@ -3,11 +3,11 @@ import React from "react";
 import Image from "next/image";
 import LeftArrowIcon from "icons/ArrowCircleLeft.svg";
 import RightArrowIcon from "icons/ArrowCircleRight.svg";
-import { ConnectionStep } from "types/integrations";
+import { InfoSlide } from "types/integrations";
 import { addLinkToText } from "components/addLinkToText";
 
 export type ProcessStepCardProps = {
-  step: ConnectionStep;
+  step: InfoSlide;
   previousStep: boolean;
   nextStep: boolean;
   onPrevious: () => void;
