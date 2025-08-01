@@ -33,6 +33,7 @@ module.exports = {
             transferring: "#ba7264",
             rejected: "#D90429",
           },
+          purple: "#BE75FF",
         },
         dark: {
           whiteBackground: "#2D0050",
@@ -57,6 +58,7 @@ module.exports = {
             transferring: "#795548",
             rejected: "#F25F5F",
           },
+          purple: "#D09BFF",
         },
       },
       animation: {
@@ -112,5 +114,8 @@ module.exports = {
     "bg-status-rejected",
     "text-status-rejected",
     "border-status-rejected",
+    "text-purple",
+    "text-status-vouching",
+    "border-status-vouching",
   ],
 };

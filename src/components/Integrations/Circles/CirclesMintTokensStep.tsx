@@ -4,7 +4,7 @@ import CirclesStepCard from 'components/Integrations/Circles/CirclesStepCard';
 import { ConnectionStep } from 'types/integrations';
 
 interface CirclesMintTokensStepProps {
-  steps: ConnectionStep[];
+  steps: InfoSlide[];
   currentStep: number;
   setCurrentStep: (step: number) => void;
   isOpen: boolean;
