@@ -1,7 +1,7 @@
 "use client";
 import KlerosInfoCard from "components/Integrations/Airdrop/KlerosInfoCard";
 import PnkAirdropClaim from "components/Integrations/Airdrop/PnkAirdropClaim";
-import NotificationCard from "components/Integrations/Airdrop/NotificationCard";
+import NotificationCard, { EmailVerificationStatus } from "components/Integrations/Airdrop/NotificationCard";
 import IntegrationHeader from "components/Integrations/IntegrationHeader";
 import { useState } from "react";
 import { Integration } from "types/integrations";
@@ -10,12 +10,17 @@ interface AirdropIntegrationProps {
     integration: Integration;
 }
 
+type EligibilityStatus = 'disconnected' | 'eligible' | 'not-eligible' | 'claimed';
+
 export default function PnkAirdrop({ integration }: AirdropIntegrationProps) {
     const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
-    const [showClaim, setShowClaim] = useState(false);
     const [showNotificationCard, setShowNotificationCard] = useState(false);
     
-    const [eligibilityStatus, setEligibilityStatus] = useState<'disconnected' | 'eligible' | 'not-eligible' | 'claimed'>('disconnected');
+
+    const [eligibilityStatus, setEligibilityStatus] = useState<EligibilityStatus>('disconnected');
+    const [emailVerificationStatus, setEmailVerificationStatus] = useState<EmailVerificationStatus>('pending');
+    const [subscribedEmail, setSubscribedEmail] = useState<string>('');
+    const [isEmailLoading, setIsEmailLoading] = useState(false);
     
     const handleConnectWallet = () => {
         console.log('Connecting wallet...');
@@ -30,8 +35,11 @@ export default function PnkAirdrop({ integration }: AirdropIntegrationProps) {
         setShowNotificationCard(true);
     };
     
-    const handleSubscribe = (email: string) => {
-        console.log('Subscribing email:', email);
+    const handleSubscribe = async (email: string) => {
+    };
+    
+    const handleResendEmail = async () => {
+        console.log('Resending verification email to:', subscribedEmail);
     };
     
     const isLastSlide = currentSlideIndex === integration!.firstInfoSlide!.length - 1;
@@ -69,15 +77,19 @@ export default function PnkAirdrop({ integration }: AirdropIntegrationProps) {
                             />
                         </div>
                     )}
-                </div>
-                {/* Notification Card - shown after claiming */}
-            {1 && (
-                <div className="w-full mb-6">
+                     {1 ? (
+                <div className="w-full mb-6 max-w-[1095px]">
                     <NotificationCard
                         onSubscribe={handleSubscribe}
+                        onResendEmail={handleResendEmail}
+                        isLoading={isEmailLoading}
+                        verificationStatus={emailVerificationStatus}
+                        subscribedEmail={subscribedEmail}
                     />
                 </div>
-            )}
+            ) : null}
+                </div>
+                {/* Notification Card - shown after claiming */}
             </div>
         </div>
     );
