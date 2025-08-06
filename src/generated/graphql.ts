@@ -455,6 +455,54 @@ export enum Challenger_OrderBy {
   Wins = 'wins'
 }
 
+export type CirclesAccount = {
+  __typename?: 'CirclesAccount';
+  humanities: Array<Humanity>;
+  id: Scalars['Bytes'];
+  trustExpiryTime: Scalars['BigInt'];
+};
+
+
+export type CirclesAccountHumanitiesArgs = {
+  first?: InputMaybe<Scalars['Int']>;
+  orderBy?: InputMaybe<Humanity_OrderBy>;
+  orderDirection?: InputMaybe<OrderDirection>;
+  skip?: InputMaybe<Scalars['Int']>;
+  where?: InputMaybe<Humanity_Filter>;
+};
+
+export type CirclesAccount_Filter = {
+  /** Filter for the block changed event. */
+  _change_block?: InputMaybe<BlockChangedFilter>;
+  and?: InputMaybe<Array<InputMaybe<CirclesAccount_Filter>>>;
+  humanities_?: InputMaybe<Humanity_Filter>;
+  id?: InputMaybe<Scalars['Bytes']>;
+  id_contains?: InputMaybe<Scalars['Bytes']>;
+  id_gt?: InputMaybe<Scalars['Bytes']>;
+  id_gte?: InputMaybe<Scalars['Bytes']>;
+  id_in?: InputMaybe<Array<Scalars['Bytes']>>;
+  id_lt?: InputMaybe<Scalars['Bytes']>;
+  id_lte?: InputMaybe<Scalars['Bytes']>;
+  id_not?: InputMaybe<Scalars['Bytes']>;
+  id_not_contains?: InputMaybe<Scalars['Bytes']>;
+  id_not_in?: InputMaybe<Array<Scalars['Bytes']>>;
+  or?: InputMaybe<Array<InputMaybe<CirclesAccount_Filter>>>;
+  trustExpiryTime?: InputMaybe<Scalars['BigInt']>;
+  trustExpiryTime_gt?: InputMaybe<Scalars['BigInt']>;
+  trustExpiryTime_gte?: InputMaybe<Scalars['BigInt']>;
+  trustExpiryTime_in?: InputMaybe<Array<Scalars['BigInt']>>;
+  trustExpiryTime_lt?: InputMaybe<Scalars['BigInt']>;
+  trustExpiryTime_lte?: InputMaybe<Scalars['BigInt']>;
+  trustExpiryTime_not?: InputMaybe<Scalars['BigInt']>;
+  trustExpiryTime_not_in?: InputMaybe<Array<Scalars['BigInt']>>;
+};
+
+export enum CirclesAccount_OrderBy {
+  Humanities = 'humanities',
+  Id = 'id',
+  TrustExpiryTime = 'trustExpiryTime'
+}
+
 export type Claimer = {
   __typename?: 'Claimer';
   currentRequest?: Maybe<Request>;
@@ -1114,6 +1162,7 @@ export enum Fund_OrderBy {
 
 export type Humanity = {
   __typename?: 'Humanity';
+  circleAccount?: Maybe<CirclesAccount>;
   claimerName?: Maybe<Scalars['String']>;
   id: Scalars['Bytes'];
   inTransfer: Scalars['Boolean'];
@@ -1141,6 +1190,27 @@ export type Humanity_Filter = {
   /** Filter for the block changed event. */
   _change_block?: InputMaybe<BlockChangedFilter>;
   and?: InputMaybe<Array<InputMaybe<Humanity_Filter>>>;
+  circleAccount?: InputMaybe<Scalars['String']>;
+  circleAccount_?: InputMaybe<CirclesAccount_Filter>;
+  circleAccount_contains?: InputMaybe<Scalars['String']>;
+  circleAccount_contains_nocase?: InputMaybe<Scalars['String']>;
+  circleAccount_ends_with?: InputMaybe<Scalars['String']>;
+  circleAccount_ends_with_nocase?: InputMaybe<Scalars['String']>;
+  circleAccount_gt?: InputMaybe<Scalars['String']>;
+  circleAccount_gte?: InputMaybe<Scalars['String']>;
+  circleAccount_in?: InputMaybe<Array<Scalars['String']>>;
+  circleAccount_lt?: InputMaybe<Scalars['String']>;
+  circleAccount_lte?: InputMaybe<Scalars['String']>;
+  circleAccount_not?: InputMaybe<Scalars['String']>;
+  circleAccount_not_contains?: InputMaybe<Scalars['String']>;
+  circleAccount_not_contains_nocase?: InputMaybe<Scalars['String']>;
+  circleAccount_not_ends_with?: InputMaybe<Scalars['String']>;
+  circleAccount_not_ends_with_nocase?: InputMaybe<Scalars['String']>;
+  circleAccount_not_in?: InputMaybe<Array<Scalars['String']>>;
+  circleAccount_not_starts_with?: InputMaybe<Scalars['String']>;
+  circleAccount_not_starts_with_nocase?: InputMaybe<Scalars['String']>;
+  circleAccount_starts_with?: InputMaybe<Scalars['String']>;
+  circleAccount_starts_with_nocase?: InputMaybe<Scalars['String']>;
   claimerName?: InputMaybe<Scalars['String']>;
   claimerName_contains?: InputMaybe<Scalars['String']>;
   claimerName_contains_nocase?: InputMaybe<Scalars['String']>;
@@ -1222,6 +1292,9 @@ export type Humanity_Filter = {
 };
 
 export enum Humanity_OrderBy {
+  CircleAccount = 'circleAccount',
+  CircleAccountId = 'circleAccount__id',
+  CircleAccountTrustExpiryTime = 'circleAccount__trustExpiryTime',
   ClaimerName = 'claimerName',
   Id = 'id',
   InTransfer = 'inTransfer',
@@ -1402,6 +1475,8 @@ export type Query = {
   challengerFunds: Array<ChallengerFund>;
   challengers: Array<Challenger>;
   challenges: Array<Challenge>;
+  circlesAccount?: Maybe<CirclesAccount>;
+  circlesAccounts: Array<CirclesAccount>;
   claimer?: Maybe<Claimer>;
   claimers: Array<Claimer>;
   contract?: Maybe<Contract>;
@@ -1520,6 +1595,24 @@ export type QueryChallengesArgs = {
   skip?: InputMaybe<Scalars['Int']>;
   subgraphError?: _SubgraphErrorPolicy_;
   where?: InputMaybe<Challenge_Filter>;
+};
+
+
+export type QueryCirclesAccountArgs = {
+  block?: InputMaybe<Block_Height>;
+  id: Scalars['ID'];
+  subgraphError?: _SubgraphErrorPolicy_;
+};
+
+
+export type QueryCirclesAccountsArgs = {
+  block?: InputMaybe<Block_Height>;
+  first?: InputMaybe<Scalars['Int']>;
+  orderBy?: InputMaybe<CirclesAccount_OrderBy>;
+  orderDirection?: InputMaybe<OrderDirection>;
+  skip?: InputMaybe<Scalars['Int']>;
+  subgraphError?: _SubgraphErrorPolicy_;
+  where?: InputMaybe<CirclesAccount_Filter>;
 };
 
 
@@ -2898,6 +2991,21 @@ export enum _SubgraphErrorPolicy_ {
   Deny = 'deny'
 }
 
+export type GetCirclesAccountsByaddressQueryVariables = Exact<{
+  address: Scalars['String'];
+  expirationTime: Scalars['BigInt'];
+}>;
+
+
+export type GetCirclesAccountsByaddressQuery = { __typename?: 'Query', registrations: Array<{ __typename?: 'Registration', id: any, humanity: { __typename?: 'Humanity', id: any, circleAccount?: { __typename?: 'CirclesAccount', id: any, trustExpiryTime: any } | null } }>, crossChainRegistrations: Array<{ __typename?: 'CrossChainRegistration', id: any }> };
+
+export type GetHumanityWithCircleAccountByIdQueryVariables = Exact<{
+  humanityId: Scalars['ID'];
+}>;
+
+
+export type GetHumanityWithCircleAccountByIdQuery = { __typename?: 'Query', humanity?: { __typename?: 'Humanity', id: any, circleAccount?: { __typename?: 'CirclesAccount', id: any, trustExpiryTime: any } | null } | null };
+
 export type RequestsToAdvanceQueryVariables = Exact<{ [key: string]: never; }>;
 
 
@@ -2988,6 +3096,40 @@ export const WinnerClaimFragmentDoc = gql`
       evidence(orderBy: creationTime, first: 1) {
         uri
       }
+    }
+  }
+}
+    `;
+export const GetCirclesAccountsByaddressDocument = gql`
+    query GetCirclesAccountsByaddress($address: String!, $expirationTime: BigInt!) {
+  registrations(
+    where: {claimer: $address, expirationTime_gt: $expirationTime}
+    first: 1
+  ) {
+    id
+    humanity {
+      id
+      circleAccount {
+        id
+        trustExpiryTime
+      }
+    }
+  }
+  crossChainRegistrations(
+    where: {claimer: $address, expirationTime_gt: $expirationTime}
+    first: 1
+  ) {
+    id
+  }
+}
+    `;
+export const GetHumanityWithCircleAccountByIdDocument = gql`
+    query GetHumanityWithCircleAccountById($humanityId: ID!) {
+  humanity(id: $humanityId) {
+    id
+    circleAccount {
+      id
+      trustExpiryTime
     }
   }
 }
@@ -3317,8 +3459,14 @@ const defaultWrapper: SdkFunctionWrapper = (action, _operationName, _operationTy
 
 export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = defaultWrapper) {
   return {
-    RequestsToAdvance(variables?: RequestsToAdvanceQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<RequestsToAdvanceQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<RequestsToAdvanceQuery>({ document: RequestsToAdvanceDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'RequestsToAdvance', 'query', variables);
+    GetCirclesAccountsByaddress(variables: GetCirclesAccountsByaddressQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<GetCirclesAccountsByaddressQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<GetCirclesAccountsByaddressQuery>(GetCirclesAccountsByaddressDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'GetCirclesAccountsByaddress', 'query');
+    },
+    GetHumanityWithCircleAccountById(variables: GetHumanityWithCircleAccountByIdQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<GetHumanityWithCircleAccountByIdQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<GetHumanityWithCircleAccountByIdQuery>(GetHumanityWithCircleAccountByIdDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'GetHumanityWithCircleAccountById', 'query');
+    },
+    RequestsToAdvance(variables?: RequestsToAdvanceQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<RequestsToAdvanceQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<RequestsToAdvanceQuery>(RequestsToAdvanceDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'RequestsToAdvance', 'query');
     },
     Claimer(variables: ClaimerQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<ClaimerQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<ClaimerQuery>({ document: ClaimerDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'Claimer', 'query', variables);
