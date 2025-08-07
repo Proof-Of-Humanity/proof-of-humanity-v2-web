@@ -1,7 +1,7 @@
 import { mainnet, sepolia, gnosis, gnosisChiado } from "viem/chains";
 import abi from "./abi";
 
-const addresses = {
+const addresses: Record<number, `0x${string}` | undefined> = {
   [mainnet.id]: "0x" as const,
   [sepolia.id]: "0x" as const,
   [gnosis.id]: "0xc12C1E50ABB450d6205Ea2C3Fa861b3B834d13e8" as const,

@@ -5,6 +5,7 @@ import { EthereumAMBBridge } from "./deployments/EthereumAMBBridge";
 import { CirclesIntegration } from "./deployments/CirclesIntegration";
 import { CirclesHub } from "./deployments/CirclesHub";
 import { KlerosLiquid } from "./deployments/KlerosLiquid";
+import { isAddress } from "viem";
 
 export const contractRegistry = {
   ProofOfHumanity,
@@ -36,9 +37,19 @@ export function getContractInfo<T extends ContractName>(
       `Supported chainIds: ${Object.keys(contract.addresses).join(', ')}`
     );
   }
-  
+
+  const address = contract.addresses[
+    chainId as keyof typeof contract.addresses
+  ];
+
+  if (!address || !isAddress(address)) {
+    throw new Error(
+      `Invalid address for contract ${contractName} on chainId ${chainId}: ${address}`
+    );
+  }
+
   return {
     abi: contract.abi,
-    address: contract.addresses[chainId as keyof typeof contract.addresses] as `0x${string}` | undefined,
+    address,
   };
 }
