@@ -97,7 +97,7 @@ export async function validateCirclesHumanity(
         address: contractInfo.address,
         abi: contractInfo.abi,
         functionName: "isHuman",
-        args: [walletAddress.trim()],
+        args: [walletAddress.trim() as `0x${string}`],
       });
   
       return isHuman as boolean;

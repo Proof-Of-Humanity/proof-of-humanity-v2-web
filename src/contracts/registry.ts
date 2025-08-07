@@ -18,7 +18,6 @@ export const contractRegistry = {
 
 export type ContractName = keyof typeof contractRegistry;
 
-// Type for contract info return value
 export type ContractInfo<T extends ContractName> = {
   abi: (typeof contractRegistry)[T]['abi'];
   address: `0x${string}` | undefined;
