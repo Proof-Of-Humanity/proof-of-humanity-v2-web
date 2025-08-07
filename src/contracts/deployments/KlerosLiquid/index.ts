@@ -2,10 +2,10 @@ import { mainnet, sepolia, gnosis, gnosisChiado } from "viem/chains";
 import abi from "./abi";
 
 const addresses = {
-  [mainnet.id]: "0x" as const,
-  [sepolia.id]: "0x" as const,
-  [gnosis.id]: "0x" as const,
-  [gnosisChiado.id]: "0x" as const,
+  [mainnet.id]: null,
+  [sepolia.id]: null,
+  [gnosis.id]: null,
+  [gnosisChiado.id]: null,
 };
 
 export const KlerosLiquid = {
