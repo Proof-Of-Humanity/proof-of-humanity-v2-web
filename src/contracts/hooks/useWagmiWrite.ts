@@ -7,9 +7,8 @@ import {
   useWaitForTransactionReceipt,
   useSimulateContract,
 } from "wagmi";
-import abis from "contracts/abis";
 import useChainParam from "hooks/useChainParam";
-import { Contract, ContractName } from "contracts";
+import { getContractInfo, ContractName } from "contracts";
 import { Abi, ParseAbiParameter, toBytes, zeroAddress } from "viem";
 
 const defaultForInputs = (inputs: readonly ParseAbiParameter<string>[]) =>
@@ -30,7 +29,10 @@ export default function useWagmiWrite<
   C extends ContractName,
   F extends WriteFunctionName<C>,
 >(contract: C, functionName: F, effects?: Effects) {
-  const abiFragment = (abis[contract] as Abi).find(
+  const chain = useChainParam();
+  const defaultChainId = useChainId() as SupportedChainId;
+  const contractInfo = getContractInfo(contract, chain?.id || defaultChainId);
+  const abiFragment = (contractInfo.abi as Abi).find(
     (item) => item.type === "function" && item.name === functionName,
   );
   const [value, setValue] = useState(0n);
@@ -40,12 +42,9 @@ export default function useWagmiWrite<
   
   const [enabled, setEnabled] = useState(false);
 
-  const chain = useChainParam();
-  const defaultChainId = useChainId() as SupportedChainId;
-
   const { data: prepared, status: prepareStatus} = useSimulateContract({
-   address: Contract[contract][chain?.id || defaultChainId] as `0x${string}`,
-    abi: abis[contract] as Abi,
+   address: contractInfo.address as `0x${string}`,
+    abi: contractInfo.abi as Abi,
     functionName,
     chainId: chain?.id || defaultChainId,
     value,
