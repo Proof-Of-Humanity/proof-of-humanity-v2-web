@@ -18,4 +18,4 @@ export default [
     ],
     "stateMutability": "view"
   }
-]; 
+] as const; 

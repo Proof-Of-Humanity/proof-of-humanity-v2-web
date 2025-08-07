@@ -380,12 +380,13 @@ export default function CrossChain({
                         <button
                           className="text-blue-500 underline underline-offset-2"
                           onClick={async () => {
+                            const contractAddress = getContractInfo("CrossChainProofOfHumanity", chain.id).address;
                             const gatewayForChain = contractData[
                               homeChain.id
                             ].gateways.find(
                               (gateway) =>
                                 gateway.foreignProxy ===
-                                (getContractInfo("CrossChainProofOfHumanity", chain.id).address as `0x${string}`)?.toLowerCase(),
+                                (contractAddress ? contractAddress.toLowerCase() : undefined),
                             );
 
                             if (!gatewayForChain) return;
