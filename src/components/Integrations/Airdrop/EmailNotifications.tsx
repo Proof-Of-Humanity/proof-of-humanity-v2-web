@@ -9,7 +9,7 @@ import Hourglass from "icons/Hourglass.svg";
 
 export type EmailVerificationStatus = "unsubscribed" | "pending" | "verified";
 
-export interface NotificationCardProps {
+export interface EmailNotificationsProps {
   onSubscribe?: (email: string) => void;
   onResendEmail?: () => void;
   isLoading?: boolean;
@@ -17,7 +17,7 @@ export interface NotificationCardProps {
   subscribedEmail?: string;
 }
 
-const NotificationCard: React.FC<NotificationCardProps> = ({
+const EmailNotifications: React.FC<EmailNotificationsProps> = ({
   onSubscribe,
   onResendEmail,
   isLoading = false,
@@ -189,4 +189,4 @@ const NotificationCard: React.FC<NotificationCardProps> = ({
   );
 };
 
-export default NotificationCard;
+export default EmailNotifications;

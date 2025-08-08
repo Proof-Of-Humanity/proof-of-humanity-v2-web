@@ -1,96 +1,62 @@
-"use client";
-import KlerosInfoCard from "components/Integrations/Airdrop/KlerosInfoCard";
-import PnkAirdropClaim from "components/Integrations/Airdrop/PnkAirdropClaim";
-import NotificationCard, { EmailVerificationStatus } from "components/Integrations/Airdrop/NotificationCard";
 import IntegrationHeader from "components/Integrations/IntegrationHeader";
-import { useState } from "react";
 import { Integration } from "types/integrations";
+import { getAirdropContractData } from "data/airdrop";
+import { ChainSet, configSetSelection } from "contracts";
+import { gnosis, gnosisChiado } from "viem/chains";
+import ClaimSection from "./ClaimSection";
+import CheckCircleIcon from "icons/components/CheckCircle";
 
-interface AirdropIntegrationProps {
-    integration: Integration;
-}
+const HUMANITY_SUBCOURT_ID = 1n;
 
-type EligibilityStatus = 'disconnected' | 'eligible' | 'not-eligible' | 'claimed';
+export default async function PnkAirdrop({ integration }: { integration: Integration }) {
+  const chainId = configSetSelection.chainSet === ChainSet.MAINNETS ? gnosis.id : gnosisChiado.id;
 
-export default function PnkAirdrop({ integration }: AirdropIntegrationProps) {
-    const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
-    const [showNotificationCard, setShowNotificationCard] = useState(false);
-    
-
-    const [eligibilityStatus, setEligibilityStatus] = useState<EligibilityStatus>('disconnected');
-    const [emailVerificationStatus, setEmailVerificationStatus] = useState<EmailVerificationStatus>('pending');
-    const [subscribedEmail, setSubscribedEmail] = useState<string>('');
-    const [isEmailLoading, setIsEmailLoading] = useState(false);
-    
-    const handleConnectWallet = () => {
-        console.log('Connecting wallet...');
-        const statuses: Array<'eligible' | 'not-eligible'> = ['eligible', 'not-eligible'];
-        const randomStatus = statuses[Math.floor(Math.random() * statuses.length)];
-        setEligibilityStatus(randomStatus);
-    };
-    
-    const handleClaimAndStake = () => {
-        console.log('Claiming and staking PNK...');
-        setEligibilityStatus('claimed');
-        setShowNotificationCard(true);
-    };
-    
-    const handleSubscribe = async (email: string) => {
-    };
-    
-    const handleResendEmail = async () => {
-        console.log('Resending verification email to:', subscribedEmail);
-    };
-    
-    const isLastSlide = currentSlideIndex === integration!.firstInfoSlide!.length - 1;
-    const slidesCompleted = true;
+    const contractData = await getAirdropContractData(chainId);
     
     return (
-        <div className="flex flex-col w-full md:w-10/12 space-y-8">
-            <div className="paper">
-                <IntegrationHeader integration={integration} />
-                <div className="flex flex-col justify-center items-center px-4 py-2 md:px-8 md:py-4 space-y-4">
-                    {!slidesCompleted ? (
-                        <>
-                            <div className="text-orange text-center text-md">Learn more about Kleros to unlock the airdrop</div>
-                            <KlerosInfoCard
-                                slide={integration.firstInfoSlide![currentSlideIndex]}
-                                previousStep={currentSlideIndex > 0}
-                                nextStep={currentSlideIndex <= integration!.firstInfoSlide!.length - 1}
-                                onPrevious={() => setCurrentSlideIndex(currentSlideIndex - 1)}
-                                onNext={() => {
-                                    if (isLastSlide) {
-                                        // Move to claim component by incrementing beyond slides
-                                        setCurrentSlideIndex(currentSlideIndex + 1);
-                                    } else {
-                                        setCurrentSlideIndex(currentSlideIndex + 1);
-                                    }
-                                }}
-                            />
-                        </>
-                    ) : (
-                        <div className="w-full max-w-[1095px]">
-                            <PnkAirdropClaim
-                                eligibilityStatus={eligibilityStatus}
-                                onConnectWallet={handleConnectWallet}
-                                onClaimAndStake={handleClaimAndStake}
-                            />
-                        </div>
-                    )}
-                     {1 ? (
-                <div className="w-full mb-6 max-w-[1095px]">
-                    <NotificationCard
-                        onSubscribe={handleSubscribe}
-                        onResendEmail={handleResendEmail}
-                        isLoading={isEmailLoading}
-                        verificationStatus={emailVerificationStatus}
-                        subscribedEmail={subscribedEmail}
-                    />
+      <div className="flex flex-col w-full md:w-10/12 space-y-8">
+        <div className="paper">
+          <IntegrationHeader integration={integration} />
+          <div className="flex flex-col justify-center items-center px-4 py-2 md:px-8 md:py-4 space-y-4">
+            <div className="w-full max-w-[1095px] mx-auto p-[1px] rounded-[30px] bg-gradient-to-br from-[#F9BFCE] to-[#BE75FF]">
+              <div className="flex flex-col lg:flex-row rounded-[29px] bg-primaryBackground">
+                <div className="flex-1 p-6 lg:p-8">
+                  <h2 className="text-primaryText text-2xl font-semibold mb-4">Claim & Stake your PNK airdrop</h2>
+                  <div className="mb-4">
+                    <p className="text-secondaryText text-sm mb-2">To qualify, you must be an included profile.</p>
+                    <p className="text-secondaryText text-sm mb-6">Claim & Stake your airdrop on the Humanity court. Deadline: December 31, 2025.</p>
+                  </div>
+                  <div className="space-y-1 mb-2">
+                    <div className="flex items-center">
+                      <div className="flex-shrink-0 mr-1">
+                        <CheckCircleIcon width={16} height={16} className="flex-shrink-0 fill-purple" />
+                      </div>
+                      <span>Claim your PNK tokens</span>
+                    </div>
+                    <div className="flex items-center text-primaryText text-base">
+                      <div className="flex-shrink-0 mr-1">
+                        <CheckCircleIcon width={16} height={16} className="flex-shrink-0 fill-purple" />
+                      </div>
+                      <span>Get additional PNK by staking:</span>
+                    </div>
+                  </div>
+                  <div className="text-xs text-purple mb-5 ml-2">
+                    <div className="flex flex-wrap gap-1">
+                      <span>Staking APY: 4% |</span>
+                      <span>Coherence Rewards (Humanity court): y PNK + wETH</span>
+                    </div>
+                    <p className="mt-1 italic font-light">(Values subject to change) The Coherence Rewards depend on how you vote.</p>
+                  </div>
+                  <div className="text-secondaryText text-sm leading-relaxed">
+                    By staking, you'll have the chance to be selected as a juror, earn arbitration fees, receive monthly 
+                    rewards through the Juror Incentive Program and become eligible for our next airdrop.
+                  </div>
                 </div>
-            ) : null}
-                </div>
-                {/* Notification Card - shown after claiming */}
+                <ClaimSection {...{ amountPerClaim: contractData.amountPerClaim, humanitySubcourtId: HUMANITY_SUBCOURT_ID }} />
+              </div>
             </div>
+          </div>
         </div>
-    );
+      </div>
+    )
 }
