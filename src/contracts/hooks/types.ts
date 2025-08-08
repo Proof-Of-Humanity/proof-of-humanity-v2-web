@@ -1,5 +1,4 @@
-import { ContractName } from "contracts";
-import abis from "contracts/abis";
+import { ContractName, contractRegistry } from "contracts";
 import {
   ContractFunctionArgs,
   ReadContractParameters,
@@ -7,7 +6,7 @@ import {
   WriteContractParameters,
 } from "viem";
 
-export type ContractAbi<C extends ContractName> = (typeof abis)[C];
+export type ContractAbi<C extends ContractName> = (typeof contractRegistry)[C]['abi'];
 
 export type ReadFunctionName<C extends ContractName> = ReadContractParameters<
   ContractAbi<C>

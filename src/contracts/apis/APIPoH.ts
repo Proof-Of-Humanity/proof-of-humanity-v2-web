@@ -1,6 +1,6 @@
 import { SupportedChainId, getChainRpc, supportedChains } from "config/chains";
-import { Contract } from "contracts";
-import abis from "contracts/abis";
+
+import { getContractInfo } from "contracts";
 import Error from "next/error";
 import { Address, createPublicClient, http } from "viem";
 
@@ -29,7 +29,7 @@ export class APIPoH {
 
   constructor(_chainId: SupportedChainId) {
     this.chainId = _chainId;
-    this.address = Contract.ProofOfHumanity[_chainId] as Address;
+    this.address = getContractInfo("ProofOfHumanity", _chainId).address as Address;
     this.publicClient = createPublicClient({
       chain: supportedChains[_chainId],
       transport: http(getChainRpc(_chainId)),
@@ -45,7 +45,7 @@ export class APIPoH {
     return await this.publicClient
       .readContract({
         address: this.address,
-        abi: abis.ProofOfHumanity as any,
+        abi: getContractInfo("ProofOfHumanity", this.chainId).abi,
         functionName: func,
         args: args,
       })

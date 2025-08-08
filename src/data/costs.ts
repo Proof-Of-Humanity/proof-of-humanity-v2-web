@@ -4,7 +4,7 @@ import {
   getChainRpc,
   supportedChains,
 } from "config/chains";
-import abis from "contracts/abis";
+import { getContractInfo } from "contracts";
 import { cache } from "react";
 import { Address, Hash, createPublicClient, http } from "viem";
 import { ContractData } from "./contract";
@@ -16,7 +16,7 @@ export const getArbitrationCost = cache(
       transport: http(getChainRpc(chain.id)),
     }).readContract({
       address: arbitrator,
-      abi: abis.KlerosLiquid,
+      abi: getContractInfo("KlerosLiquid", chain.id).abi,
       functionName: "arbitrationCost",
       args: [extraData],
     }),
@@ -27,11 +27,11 @@ export const getTotalCosts = cache(
     const res = await Promise.all(
       supportedChains.map(
         async (chain) =>
-          (await getArbitrationCost(
+          ((await getArbitrationCost(
             chain,
             contractData[chain.id].arbitrationInfo.arbitrator,
             contractData[chain.id].arbitrationInfo.extraData,
-          )) + BigInt(contractData[chain.id].baseDeposit),
+          )) as bigint) + BigInt(contractData[chain.id].baseDeposit),
       ),
     );
 
