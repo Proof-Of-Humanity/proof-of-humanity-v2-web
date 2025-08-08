@@ -42,12 +42,6 @@ export function getContractInfo<T extends ContractName>(
     chainId as keyof typeof contract.addresses
   ];
 
-  if (!address || !isAddress(address)) {
-    throw new Error(
-      `Invalid address for contract ${contractName} on chainId ${chainId}: ${address}`
-    );
-  }
-
   return {
     abi: contract.abi,
     address,
