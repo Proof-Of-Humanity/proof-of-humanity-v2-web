@@ -1,8 +1,8 @@
 import { HttpStatusCode } from "axios";
-import { SupportedChain, getChainRpc, paramToChain } from "config/chains";
+import { getChainRpc, paramToChain } from "config/chains";
 import datalake from "config/supabase";
-import { Contract } from "contracts";
-import abis from "contracts/abis";
+
+import { getContractInfo } from "contracts";
 import { NextRequest, NextResponse } from "next/server";
 import {
   Address,
@@ -51,8 +51,8 @@ export async function POST(
     });
 
     const isVoucherHuman = await publicClient.readContract({
-      abi: abis.ProofOfHumanity,
-      address: Contract.ProofOfHumanity[chain.id] as `0x${string}`,
+      abi: getContractInfo("ProofOfHumanity", chain.id).abi,
+      address: getContractInfo("ProofOfHumanity", chain.id).address as `0x${string}`,
       functionName: 'isHuman',
       args: [voucher],
     });
@@ -64,7 +64,7 @@ export async function POST(
       domain: {
         name: "Proof of Humanity",
         chainId: chain.id,
-        verifyingContract: Contract.ProofOfHumanity[chain.id] as `0x${string}`,
+        verifyingContract: getContractInfo("ProofOfHumanity", chain.id).address as `0x${string}`,
       },
       types: {
         IsHumanVoucher: [

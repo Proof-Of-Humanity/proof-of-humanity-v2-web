@@ -1,7 +1,7 @@
 import { SupportedChainId, getChainRpc, supportedChains } from "config/chains";
 import { Address, createPublicClient, http } from "viem";
 import Error from "next/error";
-import klerosLiquid from "contracts/abis/kleros-liquid";
+import { KlerosLiquid } from "../deployments/KlerosLiquid";
 
 export enum DisputeStatusEnum {
   Waiting,
@@ -54,7 +54,7 @@ export class APIArbitrator {
     return await this.publicClient
       .readContract({
         address: this.address,
-        abi: klerosLiquid as any,
+        abi: KlerosLiquid.abi,
         functionName: func,
         args: args,
       })

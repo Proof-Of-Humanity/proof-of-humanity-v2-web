@@ -1,7 +1,6 @@
 import { gnosis, gnosisChiado } from "viem/chains";
 import { sdk } from "config/subgraph";
-import { ChainSet, configSetSelection, Contract } from "contracts";
-import abis from "contracts/abis";
+import { ChainSet, configSetSelection, getContractInfo } from "contracts";
 import { config as wagmiConfig } from "config/appkit";
 import { readContract } from "@wagmi/core";
 
@@ -88,11 +87,17 @@ export const getProcessedCirclesData =
 export async function validateCirclesHumanity(
     walletAddress: string,
   ): Promise<boolean> {
+      const contractInfo = getContractInfo("CirclesHub", circlesChainId);
+      
+      if (!contractInfo.address) {
+        throw new Error(`CirclesHub contract not deployed on chain ${circlesChainId}`);
+      }
+      
       const isHuman = await readContract(wagmiConfig, {
-        address: Contract.CirclesHub[circlesChainId],
-        abi: abis.CirclesHub,
+        address: contractInfo.address,
+        abi: contractInfo.abi,
         functionName: "isHuman",
-        args: [walletAddress.trim()],
+        args: [walletAddress.trim() as `0x${string}`],
       });
   
       return isHuman as boolean;

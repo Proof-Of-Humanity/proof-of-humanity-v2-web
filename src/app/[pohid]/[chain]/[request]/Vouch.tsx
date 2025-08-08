@@ -5,7 +5,7 @@ import { Address, Hash } from "viem";
 import { useSignTypedData } from "wagmi";
 import { useEffectOnce } from "@legendapp/state/react";
 import axios from "axios";
-import { Contract } from "contracts";
+import { getContractInfo } from "contracts";
 import cn from "classnames";
 import { toast } from "react-toastify";
 import { SupportedChain } from "config/chains";
@@ -83,7 +83,7 @@ export default function Vouch({
       domain: {
         name: "Proof of Humanity",
         chainId: chain.id,
-        verifyingContract: Contract.ProofOfHumanity[chain.id] as any,
+        verifyingContract: getContractInfo("ProofOfHumanity", chain.id).address as `0x${string}`,
       },
       types: {
         IsHumanVoucher: [

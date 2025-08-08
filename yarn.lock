@@ -1072,7 +1072,6 @@
     preact "10.24.2"
     viem "^2.31.7"
     zustand "5.0.3"
-
 "@coinbase/wallet-sdk@4.3.0":
   version "4.3.0"
   resolved "https://registry.yarnpkg.com/@coinbase/wallet-sdk/-/wallet-sdk-4.3.0.tgz#03b8fce92ac2b3b7cf132f64d6008ac081569b4e"
@@ -1096,7 +1095,6 @@
     preact "10.24.2"
     viem "^2.27.2"
     zustand "5.0.3"
-
 "@cyntler/react-doc-viewer@^1.16.3":
   version "1.17.0"
   resolved "https://registry.yarnpkg.com/@cyntler/react-doc-viewer/-/react-doc-viewer-1.17.0.tgz#c122c972f5917f702bd25e1c7d1cda45102d8490"
