@@ -1,8 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useCapabilities, useSendCalls, useChainId } from "wagmi";
 import { encodeFunctionData,  } from "viem";
-import { Contract } from "contracts";
-import abis from "contracts/abis";
+import { getContractInfo } from "contracts/registry";
 import { BatchCall, BatchWriteParams, Effects } from "./types";
 import useChainParam from "hooks/useChainParam";
 
@@ -31,12 +30,12 @@ export default function useBatchWrite(effects?: Effects) {
     if (!calls.length || !chain) return [];
     
     return calls.map(call => {
-      const contractAddress = Contract[call.contract][chain.id] as `0x${string}`;
+      const { address, abi } = getContractInfo(call.contract, chain.id);
       
       return {
-        to: contractAddress,
+        to: address as `0x${string}`,
         data: encodeFunctionData({
-          abi: abis[call.contract],
+          abi,
           functionName: call.functionName,
           args: call.args,
         }),
@@ -106,7 +105,6 @@ export default function useBatchWrite(effects?: Effects) {
     {
       prepare: prepareStatus,
       write: sendStatus,
-      transaction: sendStatus,
     },
   ] as const;
 } 

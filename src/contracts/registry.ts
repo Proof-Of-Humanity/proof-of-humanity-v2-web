@@ -5,6 +5,7 @@ import { EthereumAMBBridge } from "./deployments/EthereumAMBBridge";
 import { CirclesIntegration } from "./deployments/CirclesIntegration";
 import { CirclesHub } from "./deployments/CirclesHub";
 import { KlerosLiquid } from "./deployments/KlerosLiquid";
+import { PnkRewardDistributer } from "./deployments/PnkRewardDistributer";
 
 export const contractRegistry = {
   ProofOfHumanity,
@@ -14,6 +15,7 @@ export const contractRegistry = {
   CirclesIntegration,
   CirclesHub,
   KlerosLiquid,
+  PnkRewardDistributer,
 } as const;
 
 export type ContractName = keyof typeof contractRegistry;
