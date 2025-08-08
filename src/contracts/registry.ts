@@ -5,7 +5,6 @@ import { EthereumAMBBridge } from "./deployments/EthereumAMBBridge";
 import { CirclesIntegration } from "./deployments/CirclesIntegration";
 import { CirclesHub } from "./deployments/CirclesHub";
 import { KlerosLiquid } from "./deployments/KlerosLiquid";
-import { isAddress } from "viem";
 
 export const contractRegistry = {
   ProofOfHumanity,
