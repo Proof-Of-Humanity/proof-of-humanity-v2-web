@@ -2,7 +2,7 @@ import { mainnet, sepolia, gnosis, gnosisChiado } from "viem/chains";
 import { configSetSelection, ChainSet } from "../../config";
 import abi from "./abi";
 
-const addresses = 
+const addresses: Record<number, `0x${string}` | undefined> =
   configSetSelection.chainSet === ChainSet.MAINNETS
     ? {
         [mainnet.id]: "0xbE9834097A4E97689d9B667441acafb456D0480A",

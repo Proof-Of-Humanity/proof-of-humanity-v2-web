@@ -1,7 +1,7 @@
 "use client";
 import React, { useCallback, useMemo } from "react";
 import Image from "next/image";
-import { useAccount, useChainId } from "wagmi";
+import { useAccount, useChainId, useSwitchChain } from "wagmi";
 import { useAppKit } from "@reown/appkit/react";
 import { getCurrentStake, getProcessedAirdropData } from "data/airdrop";
 import type { ProcessedAirdropData } from "data/airdrop";
@@ -14,8 +14,9 @@ import ActionButton from "components/ActionButton";
 import useBatchWrite from "contracts/hooks/useBatchWrite";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "react-toastify";
+import { idToChain } from "config/chains";
 
-export type EligibilityStatus = "disconnected" | "eligible" | "not-eligible" | "claimed" | "error";
+export type EligibilityStatus = "disconnected" | "wrong-chain" | "eligible" | "not-eligible" | "claimed" | "error";
 
 function formatPnkAmount(amount: bigint): string {
   const formatted = formatUnits(amount, 18);
@@ -94,28 +95,24 @@ interface StatusDisplay {
 interface ClaimSectionProps {
   amountPerClaim: bigint;
   humanitySubcourtId: bigint;
+  airdropChainId: number;
 }
 
-export default function ClaimSection({ amountPerClaim, humanitySubcourtId }: ClaimSectionProps) {
+export default function ClaimSection({ amountPerClaim, humanitySubcourtId, airdropChainId }: ClaimSectionProps) {
   const modal = useAppKit();
   const { address, isConnected } = useAccount();
   const chainId = useChainId();
+  const { switchChain } = useSwitchChain();
 
   const { data: currentStake = 0n, isLoading: isStakeLoading, error: stakeError } = useQuery<bigint>({
     queryKey: ["currentStake", address, chainId, humanitySubcourtId?.toString()],
-    queryFn: async () =>
-      getCurrentStake(address as Address, chainId as any, humanitySubcourtId),
+    queryFn: async () => getCurrentStake(address as Address, chainId as any, humanitySubcourtId),
     enabled: !!address && !!chainId,
   });
 
   const { data: eligibilityData, isLoading: isEligibilityLoading, refetch: refetchEligibilityStatus, error: eligibilityError } = useQuery<ProcessedAirdropData>({
     queryKey: ["eligibilityStatus", address, chainId],
-    queryFn: async () => {
-      if (!address || !chainId) {
-        throw new Error("Address or chainId not available");
-      }
-      return getProcessedAirdropData(address as Address, chainId as any);
-    },
+    queryFn: async () => getProcessedAirdropData(address as Address, chainId as any),
     enabled: isConnected && !!address && !!chainId,
   });
 
@@ -128,9 +125,13 @@ export default function ClaimSection({ amountPerClaim, humanitySubcourtId }: Cla
 
   const isFetching = isEligibilityLoading || isStakeLoading;
   const hasErrors = !!eligibilityError || !!stakeError;
+  const isOnSupportedChain = chainId === airdropChainId;
+  const airdropNetworkName = idToChain(airdropChainId)?.name;
 
   const eligibilityStatus: EligibilityStatus = !isConnected
     ? "disconnected"
+    : !isOnSupportedChain
+    ? "wrong-chain"
     : hasErrors
     ? "error"
     : eligibilityData?.claimStatus === "claimed"
@@ -155,9 +156,8 @@ export default function ClaimSection({ amountPerClaim, humanitySubcourtId }: Cla
       const msg = extractErrorMessage(err);
       if (msg.toLowerCase().includes("rejected") || msg.toLowerCase().includes("denied")) {
         toast.error("Transaction rejected");
-      } else if (msg.toLowerCase().includes("insufficient")) {
-        toast.error("Insufficient funds to complete the transaction.");
-      } else {
+      }
+      else{
         toast.error("Transaction failed. Please try again.");
       }
     },
@@ -168,12 +168,15 @@ export default function ClaimSection({ amountPerClaim, humanitySubcourtId }: Cla
   }), [refetchEligibilityStatus]);
 
   const [prepareBatch, _, txStatus] = useBatchWrite(batchWriteEffects);
-
   const isTxLoading = txStatus.write === "pending";
 
   const handleConnectWallet = useCallback(() => {
     modal.open({ view: "Connect" });
   }, [modal]);
+
+  const handleSwitchChain = useCallback(() => {
+    switchChain({ chainId: airdropChainId });
+  }, [switchChain, airdropChainId]);
 
   const handleClaimAndStake = useCallback(() => {
     if (!address) return;
@@ -212,6 +215,11 @@ export default function ClaimSection({ amountPerClaim, humanitySubcourtId }: Cla
           return {
             onClick: handleConnectWallet,
             label: "Connect wallet",
+          };
+        case "wrong-chain":
+          return {
+            onClick: handleSwitchChain,
+            label: "Switch Chain",
           };
         case "not-eligible":
         default:
@@ -257,6 +265,13 @@ export default function ClaimSection({ amountPerClaim, humanitySubcourtId }: Cla
           subText: "You need to be an included profile",
           textColor: "text-status-removed",
         };
+      case "wrong-chain":
+        return {
+          icon: <WarningCircle16Icon width={16} height={16} className="fill-orange" />,
+          text: "Wrong network",
+          subText: `Switch to ${airdropNetworkName} network`,
+          textColor: "text-orange",
+        };
       case "error":
         return {
           icon: <CrossCircle16Icon width={16} height={16} className="fill-red-500" />,
@@ -274,8 +289,8 @@ export default function ClaimSection({ amountPerClaim, humanitySubcourtId }: Cla
     }
   };
 
-  // Show loading state when connected but data is still loading
-    if (isConnected && isFetching) {
+  // Show loading state when connected, on supported chain, but data is still loading
+  if (isConnected && isOnSupportedChain && isFetching) {
     return <LoadingState />;
   }
 

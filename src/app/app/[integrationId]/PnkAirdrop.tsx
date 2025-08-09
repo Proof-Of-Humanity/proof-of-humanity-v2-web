@@ -9,15 +9,19 @@ import EmailNotifications from "components/Integrations/Airdrop/EmailNotificatio
 import KlerosInfoCard from "components/Integrations/Airdrop/KlerosInfoCard";
 import FeatureList from "components/FeatureList";
 import { useState } from "react";
+import { getHumanityCourtFeeForJuror } from "data/kleros";
+import { formatEth } from "utils/misc";
 
-const HUMANITY_SUBCOURT_ID = 1n;
+const HUMANITY_SUBCOURT_ID = 18n;
 
 interface PnkAirdropClientProps {
   integration: Integration;
   contractData: any;
+  airdropChainId: number;
+  coherenceReward: bigint;
 }
 
-function PnkAirdropClient({ integration, contractData }: PnkAirdropClientProps) {
+function PnkAirdropClient({ integration, contractData, airdropChainId, coherenceReward }: PnkAirdropClientProps) {
   const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
   
   const slidesCompleted = currentSlideIndex >= (integration.firstInfoSlide?.length ?? 0);
@@ -74,8 +78,8 @@ function PnkAirdropClient({ integration, contractData }: PnkAirdropClientProps) 
                   <div className="text-xs text-purple mb-5 ml-2">
                     <div className="flex flex-wrap gap-1">
                       <span>Staking APY: 4% |</span>
-                      <span>Coherence Rewards (Humanity court): y PNK + wETH</span>
-                    </div>
+                      <span>Coherence Rewards (Humanity court): {formatEth(coherenceReward)} xDAI</span>
+                    </div>  
                     <p className="mt-1 italic font-light">
                       (Values subject to change) The Coherence Rewards depend on how you vote.
                     </p>
@@ -89,6 +93,7 @@ function PnkAirdropClient({ integration, contractData }: PnkAirdropClientProps) 
                   {...{
                     amountPerClaim: contractData.amountPerClaim,
                     humanitySubcourtId: HUMANITY_SUBCOURT_ID,
+                    airdropChainId,
                   }}
                 />
               </div>
@@ -109,7 +114,10 @@ export default async function PnkAirdrop({ integration }: { integration: Integra
   const chainId =
     configSetSelection.chainSet === ChainSet.MAINNETS ? gnosis.id : gnosisChiado.id;
 
-  const contractData = await getAirdropContractData(chainId);
+  const [contractData, coherenceReward] = await Promise.all([
+    getAirdropContractData(chainId),
+    getHumanityCourtFeeForJuror(chainId)
+  ]);
 
-  return <PnkAirdropClient {...{ integration, contractData }} />;
+  return <PnkAirdropClient {...{ integration, contractData, airdropChainId: chainId, coherenceReward }} />;
 }
