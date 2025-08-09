@@ -5,36 +5,61 @@ import { sdk } from "config/subgraph";
 import { getContractInfo } from "contracts/registry";
 import type { HumanityIdByClaimerQuery, RewardClaimQuery } from "generated/graphql";
 
-export type RewardClaimStatus = {
-  claimed: boolean;
+export interface ProcessedAirdropData {
+  walletAddress: string;
+  humanityId: string | null;
+  claimStatus: "claimed" | "eligible" | "not_eligible" | "checking";
   amount: bigint;
   chainId: SupportedChainId | null;
-};
+}
 
-export const getRewardClaimStatus = cache(async (address: Address, chainId: SupportedChainId): Promise<RewardClaimStatus> => {
-  const now = BigInt(Math.ceil(Date.now() / 1000));
-
-  const humanityQuery = await sdk[chainId].HumanityIdByClaimer({ address, now });
-  const localResult = humanityQuery as HumanityIdByClaimerQuery;
-  const localHumanityId = localResult?.registrations?.[0]?.humanity?.id;
-
-  const humanityId: Hex | null = localHumanityId || localResult?.crossChainRegistrations?.[0]?.id || null;
-
-  if (!humanityId) {
-    return { claimed: false, amount: 0n, chainId: null };
+export const getProcessedAirdropData = cache(async (address: Address, chainId: SupportedChainId): Promise<ProcessedAirdropData> => {
+  if (!address) {
+    throw new Error("Address is required");
   }
 
-  const rewardClaimQuery = await sdk[chainId].RewardClaim({ id: humanityId });
-  const rewardClaimResult = rewardClaimQuery as RewardClaimQuery;
-  if (rewardClaimResult?.rewardClaim) {
+    const now = Math.ceil(Date.now() / 1000);
+
+    const humanityQuery = await sdk[chainId].HumanityIdByClaimer({ address, now });
+
+    if (!humanityQuery) {
+      throw new Error("Failed to fetch data from subgraph");
+    }
+
+    const localResult = humanityQuery as HumanityIdByClaimerQuery;
+    const localHumanityId = localResult?.registrations?.[0]?.humanity?.id;
+    const crossChainId = localResult?.crossChainRegistrations?.[0]?.id;
+    const humanityId = localHumanityId || crossChainId || null;
+
+    if (!humanityId) {
+      return {
+        walletAddress: address,
+        humanityId: null,
+        claimStatus: "not_eligible",
+        amount: 0n,
+        chainId: null,
+      };
+    }
+
+    const rewardClaimResult = await sdk[chainId].RewardClaim({ id: humanityId });
+    
+    if (rewardClaimResult?.rewardClaim) {
+      return {
+        walletAddress: address,
+        humanityId,
+        claimStatus: "claimed",
+        amount: BigInt(rewardClaimResult.rewardClaim.amount),
+        chainId,
+      };
+    }
+
     return {
-      claimed: true,
-      amount: BigInt(rewardClaimResult.rewardClaim.amount),
+      walletAddress: address,
+      humanityId,
+      claimStatus: "eligible",
+      amount: 0n,
       chainId,
     };
-  }
-
-  return { claimed: false, amount: 0n, chainId };
 });
 
 export const getAirdropContractData = cache(async (chainId: SupportedChainId) => {
@@ -68,7 +93,7 @@ export const getAirdropContractData = cache(async (chainId: SupportedChainId) =>
 export const getCurrentStake = cache(async (address: Address, chainId: SupportedChainId, subcourtId: bigint) => {
   const liquidInfo = getContractInfo("KlerosLiquid", chainId);
   if (!liquidInfo.address) {
-    return 0n; // KlerosLiquid not deployed yet
+    throw new Error(`KlerosLiquid not deployed on chain ${chainId}`);
   }
 
   const chain = idToChain(chainId);

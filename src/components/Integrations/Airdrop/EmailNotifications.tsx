@@ -1,11 +1,11 @@
 "use client";
 import React, { useState, useMemo, useCallback } from "react";
-import CheckCircleIcon from "icons/CheckCircle.svg";
-
 import ActionButton from "components/ActionButton";
 import LawBalance from "icons/LawBalance.svg";
 import Field from "components/Field";
-import Hourglass from "icons/Hourglass.svg";
+import FeatureList from "components/FeatureList";
+import CheckCircleIcon from "icons/CheckCircle.svg";
+import HourglassIcon from "icons/Hourglass.svg";
 
 export type EmailVerificationStatus = "unsubscribed" | "pending" | "verified";
 
@@ -18,8 +18,6 @@ export interface EmailNotificationsProps {
 }
 
 const EmailNotifications: React.FC<EmailNotificationsProps> = ({
-  onSubscribe,
-  onResendEmail,
   isLoading = false,
   verificationStatus = "unsubscribed",
   subscribedEmail,
@@ -27,16 +25,10 @@ const EmailNotifications: React.FC<EmailNotificationsProps> = ({
   const [email, setEmail] = useState("");
 
   const handleSubscribe = useCallback(() => {
-    if (email && onSubscribe) {
-      onSubscribe(email);
-    }
-  }, [email, onSubscribe]);
+  }, [email]);
 
   const handleResendEmail = useCallback(() => {
-    if (onResendEmail) {
-      onResendEmail();
-    }
-  }, [onResendEmail]);
+  }, []);
 
   const emailFieldProps = useMemo(() => {
     switch (verificationStatus) {
@@ -81,7 +73,7 @@ const EmailNotifications: React.FC<EmailNotificationsProps> = ({
       case "pending":
         return (
           <div className="flex items-center gap-2">
-            <Hourglass width={16} height={16} className="fill-purple flex-shrink-0" />
+            <HourglassIcon width={16} height={16} className="fill-purple flex-shrink-0" />
             <div>
               <span className="text-primaryText text-sm font-medium">Email Verification Pending</span>
               <div className="text-secondaryText text-sm">
@@ -115,7 +107,7 @@ const EmailNotifications: React.FC<EmailNotificationsProps> = ({
 
   return (
     <div className="w-full max-w-[1095px] mx-auto p-[1px] rounded-[30px] bg-gradient-to-br from-[#BE75FF] to-[#F9BFCE]">
-      <div className="rounded-[29px] bg-primaryBackground p-4 lg:p-6">
+      <div className="rounded-[29px] bg-primaryBackground p-2 lg:p-5">
         {/* Header */}
         <div className="flex items-center gap-2 mb-4">
           <LawBalance />
@@ -139,25 +131,23 @@ const EmailNotifications: React.FC<EmailNotificationsProps> = ({
         </p>
 
         {/* Benefits */}
-        <div className="space-y-3 mb-6">
-          <div className="flex items-start gap-2 mt-2">
-            <CheckCircleIcon width={16} height={16} className="fill-purple mt-1 flex-shrink-0" />
-            <div className="flex-1">
-              <span className="text-primaryText text-base">
-                Get a heads-up the moment you're drawn as a juror. No more missed cases, no more lost rewards.
-              </span>
-              <div className="text-primaryText text-base">
-                The email address is used exclusively for notifications.
-              </div>
-            </div>
-          </div>
-          
-          <div className="flex items-start gap-2">
-            <CheckCircleIcon width={16} height={16} className="fill-purple mt-0.5 flex-shrink-0" />
-            <span className="text-primaryText text-base">
-              Voting on time = getting paid.
-            </span>
-          </div>
+        <div className="mb-6">
+          <FeatureList
+            items={[
+              {
+                text: "Get a heads-up the moment you're drawn as a juror. No more missed cases, no more lost rewards.\nThe email address is used exclusively for notifications.",
+                iconType: 'check'
+              },
+              {
+                text: "Voting on time = getting paid.",
+                iconType: 'check'
+              }
+            ]}
+            spacing="normal"
+            iconWidth={16}
+            iconHeight={16}
+            iconClassName="fill-purple flex-shrink-0"
+          />
         </div>
 
         {/* Email Section - varies by verification status */}
