@@ -1,9 +1,9 @@
 import { cache } from "react";
-import { Address, Hex, createPublicClient, http } from "viem";
+import { Address, createPublicClient, http } from "viem";
 import { SupportedChainId, idToChain, getChainRpc } from "config/chains";
 import { sdk } from "config/subgraph";
 import { getContractInfo } from "contracts/registry";
-import type { HumanityIdByClaimerQuery, RewardClaimQuery } from "generated/graphql";
+import type { HumanityIdByClaimerQuery } from "generated/graphql";
 
 export interface ProcessedAirdropData {
   walletAddress: string;
