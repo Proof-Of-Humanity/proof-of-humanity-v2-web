@@ -4,16 +4,20 @@ import { encodeFunctionData,  } from "viem";
 import { getContractInfo } from "contracts/registry";
 import { BatchCall, BatchWriteParams, Effects } from "./types";
 
-// TODO: Simulate before sending
 export default function useBatchWrite(effects?: Effects) {
   // State
   const [calls, setCalls] = useState<BatchCall[]>([]);
   const [enabled, setEnabled] = useState(false);
   const chainId = useChainId();
 
-  const { data: capabilities } = useCapabilities();
-  const supportsBatchingTransaction = useMemo(() => capabilities?.[chainId]?.atomic?.status === "ready" 
-  || capabilities?.[chainId]?.atomic?.status === "supported", [capabilities, chainId])
+  const { data: capabilities , isLoading: isCapabilitiesLoading } = useCapabilities();
+
+  const supportsBatchingTransaction = useMemo(
+    () =>
+      capabilities?.[chainId]?.atomic?.status === "ready" ||
+      capabilities?.[chainId]?.atomic?.status === "supported",
+    [capabilities, chainId]
+  );
   
   // Native batch hooks
   const { 
@@ -41,10 +45,9 @@ export default function useBatchWrite(effects?: Effects) {
     });
   }, [calls, chainId]);
 
-  // Effects - Capability check & prepare
   useEffect(() => {
-    if (!enabled) return;
-    
+    if (!enabled || isCapabilitiesLoading) return;
+
     if (!supportsBatchingTransaction) {
       effects?.onFail?.(new Error("Wallet doesn't support atomic batch transactions (ERC-5792)"));
       setEnabled(false);
@@ -56,12 +59,11 @@ export default function useBatchWrite(effects?: Effects) {
         setEnabled(false);
       });
     }
-  }, [enabled,supportsBatchingTransaction, batchCallsData, sendCalls, effects]);
+  }, [enabled, isCapabilitiesLoading, supportsBatchingTransaction, batchCallsData, sendCalls, effects]);
 
   // Effects - Error handling
   useEffect(() => {
     if (sendError) {
-      console.log("sendError", sendError);
       effects?.onError?.(sendError as unknown);
     }
   }, [sendError, effects]);
@@ -89,12 +91,18 @@ export default function useBatchWrite(effects?: Effects) {
   const fire = () => {
     if (batchCallsData.length > 0 && supportsBatchingTransaction) {
       sendCalls({ calls: batchCallsData });
+      setEnabled(false);
     }
   };
 
   // Status mapping
-  const prepareStatus = supportsBatchingTransaction && batchCallsData.length > 0 ? "success" : 
-                       !supportsBatchingTransaction ? "error" : "idle";
+  const prepareStatus = isCapabilitiesLoading
+    ? "idle"
+    : supportsBatchingTransaction && batchCallsData.length > 0
+    ? "success"
+    : !supportsBatchingTransaction
+    ? "error"
+    : "idle";
 
   return [
     prepare,
