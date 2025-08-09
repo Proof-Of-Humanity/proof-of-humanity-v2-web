@@ -3,9 +3,9 @@ import React from "react";
 import Image from "next/image";
 import LeftArrowIcon from "icons/ArrowCircleLeft.svg";
 import RightArrowIcon from "icons/ArrowCircleRight.svg";
-import CheckCircleIcon from "icons/CheckCircle.svg";
 import { InfoSlide } from "types/integrations";
 import { addLinkToText } from "components/addLinkToText";
+import FeatureList, { FeatureItem } from "components/FeatureList";
 
 export type KlerosInfoCardProps = {
   slide: InfoSlide;
@@ -52,17 +52,19 @@ const KlerosInfoCard: React.FC<KlerosInfoCardProps> = ({
         
         {/* Bullet Points */}
         {slide.bulletPoints && slide.bulletPoints.length > 0 && (
-          <div className="mb-4 lg:mb-6 space-y-1 mt-4">
-            {slide.bulletPoints.map((point, index) => (
-              <div key={index} className="flex items-center gap-2">
-                <CheckCircleIcon
-                  width={16}
-                  height={16}
-                  className="flex-shrink-0 fill-purple"
-                />
-                <span className="text-purple text-sm sm:text-base leading-[1.36]">{point}</span>
-              </div>
-            ))}
+          <div className="mb-4 lg:mb-6 mt-4">
+            <FeatureList
+              items={slide.bulletPoints.map((point): FeatureItem => ({
+                text: point,
+                iconType: 'check'
+              }))}
+              spacing="compact"
+              iconWidth={16}
+              iconHeight={16}
+              iconClassName="flex-shrink-0 fill-purple"
+              textClassName="text-purple text-sm sm:text-base leading-[1.36] whitespace-pre-line"
+              className=""
+            />
           </div>
         )}
         

@@ -3,7 +3,6 @@ import { useCapabilities, useSendCalls, useChainId } from "wagmi";
 import { encodeFunctionData,  } from "viem";
 import { getContractInfo } from "contracts/registry";
 import { BatchCall, BatchWriteParams, Effects } from "./types";
-import useChainParam from "hooks/useChainParam";
 
 // TODO: Simulate before sending
 export default function useBatchWrite(effects?: Effects) {
@@ -11,9 +10,7 @@ export default function useBatchWrite(effects?: Effects) {
   const [calls, setCalls] = useState<BatchCall[]>([]);
   const [enabled, setEnabled] = useState(false);
   const chainId = useChainId();
-  
-  // Chain & capabilities
-  const chain = useChainParam();
+
   const { data: capabilities } = useCapabilities();
   const supportsBatchingTransaction = useMemo(() => capabilities?.[chainId]?.atomic?.status === "ready" 
   || capabilities?.[chainId]?.atomic?.status === "supported", [capabilities, chainId])
@@ -27,10 +24,10 @@ export default function useBatchWrite(effects?: Effects) {
 
   // Prepare batch calls for multiple contracts
   const batchCallsData = useMemo(() => {
-    if (!calls.length || !chain) return [];
+    if (!calls.length || !chainId) return [];
     
     return calls.map(call => {
-      const { address, abi } = getContractInfo(call.contract, chain.id);
+      const { address, abi } = getContractInfo(call.contract, chainId);
       
       return {
         to: address as `0x${string}`,
@@ -42,30 +39,30 @@ export default function useBatchWrite(effects?: Effects) {
         value: call.value || 0n,
       };
     });
-  }, [calls, chain]);
+  }, [calls, chainId]);
 
   // Effects - Capability check & prepare
   useEffect(() => {
     if (!enabled) return;
     
     if (!supportsBatchingTransaction) {
-      effects?.onFail?.(); // Wallet doesn't support batch
+      effects?.onFail?.(new Error("Wallet doesn't support atomic batch transactions (ERC-5792)"));
       setEnabled(false);
       return;
     }
-    
     if (batchCallsData.length > 0) {
       effects?.onReady?.(() => {
         sendCalls({ calls: batchCallsData });
         setEnabled(false);
       });
     }
-  }, [enabled, supportsBatchingTransaction, batchCallsData, sendCalls, effects]);
+  }, [enabled,supportsBatchingTransaction, batchCallsData, sendCalls, effects]);
 
   // Effects - Error handling
   useEffect(() => {
     if (sendError) {
-      effects?.onError?.();
+      console.log("sendError", sendError);
+      effects?.onError?.(sendError as unknown);
     }
   }, [sendError, effects]);
 
