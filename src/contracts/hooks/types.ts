@@ -30,8 +30,8 @@ export type WriteArgs<
 
 export interface Effects {
   onLoading?: () => void;
-  onError?: () => void;
-  onFail?: () => void;
+  onError?: (error?: unknown) => void;
+  onFail?: (error?: unknown) => void;
   onSuccess?: () => void;
   onReady?: (fire: () => void) => void;
 }
