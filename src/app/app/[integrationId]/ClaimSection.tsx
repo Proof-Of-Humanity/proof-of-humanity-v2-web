@@ -1,19 +1,21 @@
 "use client";
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useMemo } from "react";
 import Image from "next/image";
 import { useAccount, useChainId } from "wagmi";
 import { useAppKit } from "@reown/appkit/react";
-import { getCurrentStake, getRewardClaimStatus } from "data/airdrop";
-import { Address, formatUnits } from "viem";
-import CheckCircleIcon from "icons/components/CheckCircle";
-import CheckCircleIconMinor from "icons/components/CheckCircleMinor";
-import WarningCircleMinor from "icons/components/WarningCircle16";
-import CrossCircle from "icons/components/CrossCircle16";
-import EmailNotifications, { EmailVerificationStatus } from "components/Integrations/Airdrop/EmailNotifications";
+import { getCurrentStake, getProcessedAirdropData } from "data/airdrop";
+import type { ProcessedAirdropData } from "data/airdrop";
+import { Address, formatUnits, BaseError, ContractFunctionRevertedError } from "viem";
+import CheckCircleIcon from "icons/CheckCircle.svg";
+import CheckCircleMinorIcon from "icons/CheckCircleMinor.svg";
+import WarningCircle16Icon from "icons/WarningCircle16.svg";
+import CrossCircle16Icon from "icons/CrossCircle16.svg";
 import ActionButton from "components/ActionButton";
 import useBatchWrite from "contracts/hooks/useBatchWrite";
+import { useQuery } from "@tanstack/react-query";
+import { toast } from "react-toastify";
 
-export type EligibilityStatus = "disconnected" | "eligible" | "not-eligible" | "claimed";
+export type EligibilityStatus = "disconnected" | "eligible" | "not-eligible" | "claimed" | "error";
 
 function formatPnkAmount(amount: bigint): string {
   const formatted = formatUnits(amount, 18);
@@ -34,6 +36,54 @@ function PnkDisplay({ amount }: { amount?: bigint }) {
   );
 }
 
+function extractErrorMessage(error: unknown): string {
+  const defaultMessage = "Something went wrong. Please try again.";
+  try {
+    if (!error) return defaultMessage;
+    if (error instanceof BaseError) {
+      const reverted = error.walk((err) => err instanceof ContractFunctionRevertedError) as
+        | ContractFunctionRevertedError
+        | undefined;
+      if (reverted) {
+        const reason = (reverted as any).data?.errorName || (reverted as any).reason || reverted.shortMessage || reverted.message;
+        return reason ? `Transaction reverted: ${reason}` : defaultMessage;
+      }
+      const short = (error as any).shortMessage || (error as any).details || error.message;
+      if (typeof short === "string" && short.toLowerCase().includes("rejected")) {
+        return "Transaction rejected by user.";
+      }
+      return short || defaultMessage;
+    }
+    if (error instanceof Error) return error.message || defaultMessage;
+    const asString = typeof error === "string" ? error : JSON.stringify(error);
+    return asString || defaultMessage;
+  } catch {
+    return defaultMessage;
+  }
+}
+
+function LoadingSpinner() {
+  return (
+    <div className="flex items-center justify-center">
+      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple"></div>
+    </div>
+  );
+}
+
+function LoadingState() {
+  return (
+    <div className="lg:w-[391px] p-6 lg:p-8 bg-whiteBackground rounded-[30px] border-l-[1px] border-l-[#BE75FF]">
+      <div className="text-center">
+        <div className="text-purple text-sm font-medium mb-6">Loading...</div>
+        <LoadingSpinner />
+        <div className="mt-6 text-secondaryText text-sm">
+          Checking eligibility and fetching data...
+        </div>
+      </div>
+    </div>
+  );
+}
+
 interface StatusDisplay {
   icon: React.ReactNode;
   text: string;
@@ -47,70 +97,79 @@ interface ClaimSectionProps {
 }
 
 export default function ClaimSection({ amountPerClaim, humanitySubcourtId }: ClaimSectionProps) {
-  const [eligibilityStatus, setEligibilityStatus] = useState<EligibilityStatus>("disconnected");
-  const [showNotificationCard, setShowNotificationCard] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [isTransactionLoading, setIsTransactionLoading] = useState(false);
-  const [currentStake, setCurrentStake] = useState<bigint>(0n);
   const modal = useAppKit();
   const { address, isConnected } = useAccount();
   const chainId = useChainId();
 
-  // Notification state (no backend calls for now)
-  const [emailVerificationStatus] = useState<EmailVerificationStatus>("unsubscribed");
-  const [subscribedEmail] = useState<string>("");
-  const [isEmailLoading] = useState(false);
-
-  useEffect(() => {
-    if (address && chainId) {
-      getCurrentStake(address as Address, chainId as any, humanitySubcourtId).then((stake) => {
-        setCurrentStake(stake);
-      });
-    }
-  }, [address, chainId, humanitySubcourtId]);
-
-  const [prepareBatch] = useBatchWrite({
-    onFail: () => {
-      setIsTransactionLoading(false);
-      setError("Your wallet doesn't support atomic batch transactions (ERC-5792). Please use a wallet that supports batch calls.");
-    },
-    onReady: (fire) => {
-      setError(null);
-      setIsTransactionLoading(true);
-      fire();
-    },
-    onLoading: () => setIsTransactionLoading(true),
-    onError: () => {
-      setIsTransactionLoading(false);
-      setError("Transaction failed. Please try again.");
-    },
-    onSuccess: () => {
-      setIsTransactionLoading(false);
-      setEligibilityStatus("claimed");
-      setShowNotificationCard(true);
-      setError(null);
-    },
+  const { data: currentStake = 0n, isLoading: isStakeLoading, error: stakeError } = useQuery<bigint>({
+    queryKey: ["currentStake", address, chainId, humanitySubcourtId?.toString()],
+    queryFn: async () =>
+      getCurrentStake(address as Address, chainId as any, humanitySubcourtId),
+    enabled: !!address && !!chainId,
   });
 
-  useEffect(() => {
-    const run = async () => {
-      if (!isConnected || !address || !chainId) {
-        setEligibilityStatus("disconnected");
-        return;
+  const { data: eligibilityData, isLoading: isEligibilityLoading, refetch: refetchEligibilityStatus, error: eligibilityError } = useQuery<ProcessedAirdropData>({
+    queryKey: ["eligibilityStatus", address, chainId],
+    queryFn: async () => {
+      if (!address || !chainId) {
+        throw new Error("Address or chainId not available");
       }
-      try {
-        const status = await getRewardClaimStatus(address as Address, chainId as any);
-        if (status.claimed) {
-          setEligibilityStatus("claimed");
-        } else {
-          setEligibilityStatus("eligible");
-        }
-      } catch (e) {
-        setEligibilityStatus("not-eligible");
+      return getProcessedAirdropData(address as Address, chainId as any);
+    },
+    enabled: isConnected && !!address && !!chainId,
+  });
+
+  const queryErrorMessage =
+    stakeError
+      ? "Unable to load staking information. Please check your connection and try again."
+      : eligibilityError
+      ? "Unable to check eligibility. Please check your connection and try again."
+      : null;
+
+  const isFetching = isEligibilityLoading || isStakeLoading;
+  const hasErrors = !!eligibilityError || !!stakeError;
+
+  const eligibilityStatus: EligibilityStatus = !isConnected
+    ? "disconnected"
+    : hasErrors
+    ? "error"
+    : eligibilityData?.claimStatus === "claimed"
+    ? "claimed"
+    : eligibilityData?.claimStatus === "eligible"
+    ? "eligible"
+    : "not-eligible";
+
+  const batchWriteEffects = useMemo(() => ({
+    onFail: (err: any) => {
+      const msg = extractErrorMessage(err);
+      if (msg.includes("ERC-5792") || msg.toLowerCase().includes("batch")) {
+        toast.error("Please use a compatible wallet like MetaMask or WalletConnect.");
+      } else {
+        toast.error("Unable to prepare transaction. Please try again.");
       }
-    };
-    run();
-  }, [isConnected, address, chainId]);
+    },
+    onReady: (fire: () => void) => {
+      fire();
+    },
+    onError: (err: any) => {
+      const msg = extractErrorMessage(err);
+      if (msg.toLowerCase().includes("rejected") || msg.toLowerCase().includes("denied")) {
+        toast.error("Transaction rejected");
+      } else if (msg.toLowerCase().includes("insufficient")) {
+        toast.error("Insufficient funds to complete the transaction.");
+      } else {
+        toast.error("Transaction failed. Please try again.");
+      }
+    },
+    onSuccess: () => {
+      toast.success("Successfully claimed and staked PNK tokens!");
+      refetchEligibilityStatus();
+    },
+  }), [refetchEligibilityStatus]);
+
+  const [prepareBatch, _, txStatus] = useBatchWrite(batchWriteEffects);
+
+  const isTxLoading = txStatus.write === "pending";
 
   const handleConnectWallet = useCallback(() => {
     modal.open({ view: "Connect" });
@@ -138,53 +197,49 @@ export default function ClaimSection({ amountPerClaim, humanitySubcourtId }: Cla
   }, [address, amountPerClaim, currentStake, humanitySubcourtId, prepareBatch]);
 
   const renderActionButton = () => {
-    if (eligibilityStatus === "claimed") return null;
+    // No action button for claimed or error states
+    if (eligibilityStatus === "claimed" || eligibilityStatus === "error") return null;
 
-    switch (eligibilityStatus) {
-      case "eligible":
-        return (
-          <div className="mt-14 flex justify-center">
-            <ActionButton
-              onClick={handleClaimAndStake}
-              label="Claim & Stake"
-              disabled={isTransactionLoading}
-              isLoading={isTransactionLoading}
-              className="w-44 py-3"
-              variant="primary"
-            />
-          </div>
-        );
-      case "disconnected":
-        return (
-          <div className="mt-14 flex justify-center">
-            <ActionButton
-              onClick={handleConnectWallet}
-              label="Connect wallet"
-              disabled={isTransactionLoading}
-              isLoading={isTransactionLoading}
-              className="w-44 py-3"
-              variant="primary"
-            />
-          </div>
-        );
-      case "not-eligible":
-      default:
-        return (
-          <div className="mt-14 flex justify-center">
-            <ActionButton onClick={() => {}} label="Claim & Stake" disabled={true} className="w-44 py-3" variant="primary" />
-          </div>
-        );
-    }
+    const getButtonProps = () => {
+      switch (eligibilityStatus) {
+        case "eligible":
+          return {
+            onClick: handleClaimAndStake,
+            label: "Claim & Stake",
+            isLoading: isTxLoading,
+          };
+        case "disconnected":
+          return {
+            onClick: handleConnectWallet,
+            label: "Connect wallet",
+          };
+        case "not-eligible":
+        default:
+          return {
+            onClick: () => {},
+            label: "Claim & Stake",
+            disabled: true,
+          };
+      }
+    };
+
+    const buttonProps = getButtonProps();
+
+    return (
+      <div className="mt-14 flex justify-center">
+        <ActionButton
+          {...buttonProps}
+          className="w-44 py-3"
+        />
+      </div>
+    );
   };
-
-  const handleSubscribe = async (_email: string) => {};
-  const handleResendEmail = async () => {};
 
   const getStatusDisplay = (): StatusDisplay => {
     switch (eligibilityStatus) {
       case "claimed":
         return {
-          icon: <CheckCircleIconMinor />,
+          icon: <CheckCircleMinorIcon width={64} height={64} />,
           text: "Success!",
           subText: "Claimed & Staked on Humanity court",
           textColor: "text-status-registered",
@@ -197,65 +252,60 @@ export default function ClaimSection({ amountPerClaim, humanitySubcourtId }: Cla
         };
       case "not-eligible":
         return {
-          icon: <CrossCircle width={16} height={16} className="fill-status-removed" />,
+          icon: <CrossCircle16Icon width={16} height={16} className="fill-status-removed" />,
           text: "Not eligible:",
           subText: "You need to be an included profile",
           textColor: "text-status-removed",
         };
+      case "error":
+        return {
+          icon: <CrossCircle16Icon width={16} height={16} className="fill-red-500" />,
+          text: "Something went wrong",
+          subText: queryErrorMessage || "Please try again later",
+          textColor: "text-red-500",
+        };
       case "disconnected":
       default:
         return {
-          icon: <WarningCircleMinor width={16} height={16} className="fill-orange" />,
+          icon: <WarningCircle16Icon width={16} height={16} className="fill-orange" />,
           text: "Connect your wallet",
           textColor: "text-orange",
         };
     }
   };
 
+  // Show loading state when connected but data is still loading
+    if (isConnected && isFetching) {
+    return <LoadingState />;
+  }
+
   const statusDisplay = getStatusDisplay();
-  const isSuccess = eligibilityStatus === "claimed";
-
   return (
-    <>
-      {error ? <div className="w-full text-red-500 text-sm mb-2">{error}</div> : null}
-      <div className="lg:w-[391px] p-6 lg:p-8 bg-whiteBackground rounded-[30px] border-l-[1px] border-l-[#BE75FF]">
-        <div className="text-center">
-          {isSuccess ? (
-            <>
-              <div className="mb-6 flex justify-center">{statusDisplay.icon}</div>
-              <div className="text-purple text-sm font-medium mb-2">{statusDisplay.text}</div>
-              <PnkDisplay amount={amountPerClaim} />
-              <div className={`${statusDisplay.textColor} text-base font-normal`}>{statusDisplay.subText}</div>
-            </>
-          ) : (
-            <>
-              <div className="text-purple text-sm font-medium mb-1.5">Reward</div>
-              <PnkDisplay amount={amountPerClaim} />
-              <div className="mt-12">
-                <div className="flex items-center justify-center gap-2">
-                  {statusDisplay.icon}
-                  <span className={`text-base font-normal ${statusDisplay.textColor}`}>{statusDisplay.text}</span>
-                </div>
-                {statusDisplay.subText && <div className={`mt-1 ${statusDisplay.textColor} text-sm font-normal`}>{statusDisplay.subText}</div>}
+    <div className="lg:w-[391px] p-6 lg:p-8 bg-whiteBackground rounded-[30px] border-l-[1px] border-l-[#BE75FF]">
+      <div className="text-center">
+        { eligibilityStatus === "claimed" ? (
+          <>
+            <div className="mb-6 flex justify-center">{statusDisplay.icon}</div>
+            <div className="text-purple text-sm font-medium mb-2">{statusDisplay.text}</div>
+            <PnkDisplay amount={amountPerClaim} />
+            <div className={`${statusDisplay.textColor} text-base font-normal`}>{statusDisplay.subText}</div>
+          </>
+        ) : (
+          <>
+            <div className="text-purple text-sm font-medium mb-1.5">Reward</div>
+            <PnkDisplay amount={amountPerClaim} />
+            <div className="mt-12">
+              <div className="flex items-center justify-center gap-2">
+                {statusDisplay.icon}
+                <span className={`text-base font-normal ${statusDisplay.textColor}`}>{statusDisplay.text}</span>
               </div>
-            </>
-          )}
-          {renderActionButton()}
-        </div>
+              {statusDisplay.subText && <div className={`mt-1 ${statusDisplay.textColor} text-sm font-normal`}>{statusDisplay.subText}</div>}
+            </div>
+          </>
+        )}
+        {renderActionButton()}
       </div>
-
-      {showNotificationCard ? (
-        <div className="w-full mb-6 max-w-[1095px]">
-          <EmailNotifications
-            onSubscribe={handleSubscribe}
-            onResendEmail={handleResendEmail}
-            isLoading={isEmailLoading}
-            verificationStatus={emailVerificationStatus}
-            subscribedEmail={subscribedEmail}
-          />
-        </div>
-      ) : null}
-    </>
+    </div>
   );
 }
 
