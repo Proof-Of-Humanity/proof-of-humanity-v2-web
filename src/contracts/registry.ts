@@ -6,6 +6,7 @@ import { CirclesIntegration } from "./deployments/CirclesIntegration";
 import { CirclesHub } from "./deployments/CirclesHub";
 import { KlerosLiquid } from "./deployments/KlerosLiquid";
 import { PnkRewardDistributer } from "./deployments/PnkRewardDistributer";
+import { isAddress } from "viem";
 
 export const contractRegistry = {
   ProofOfHumanity,

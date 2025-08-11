@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { useCapabilities, useSendCalls, useChainId } from "wagmi";
+import { useCapabilities, useSendCalls, useChainId, useCallsStatus } from "wagmi";
 import { encodeFunctionData,  } from "viem";
 import { getContractInfo } from "contracts/registry";
 import { BatchCall, BatchWriteParams, Effects } from "./types";
@@ -23,8 +23,25 @@ export default function useBatchWrite(effects?: Effects) {
   const { 
     sendCalls, 
     status: sendStatus,
-    error: sendError 
+    data : sendData
   } = useSendCalls();
+
+  const {  data: callReceipts, error: callReceiptsError} = useCallsStatus({
+    id: sendData?.id ||  "",
+    query: {
+      enabled: !!sendData?.id,
+    }
+  });
+
+  const writeStatus = (
+    callReceipts?.status === "pending" || sendStatus === "pending"
+      ? "pending"
+      : callReceipts?.status === "success" && sendStatus === "success"
+      ? "success"
+      : callReceipts?.status === "failure" || sendStatus === "error"
+      ? "error"
+      : "idle"
+  );
 
   // Prepare batch calls for multiple contracts
   const batchCallsData = useMemo(() => {
@@ -61,26 +78,22 @@ export default function useBatchWrite(effects?: Effects) {
     }
   }, [enabled, isCapabilitiesLoading, supportsBatchingTransaction, batchCallsData, sendCalls, effects]);
 
-  // Effects - Error handling
-  useEffect(() => {
-    if (sendError) {
-      effects?.onError?.(sendError as unknown);
-    }
-  }, [sendError, effects]);
-
   // Effects - Status tracking
   useEffect(() => {
     if (!supportsBatchingTransaction) return;
     
-    switch (sendStatus) {
+    switch (writeStatus) {
       case "pending":
         effects?.onLoading?.();
         break;
       case "success":
         effects?.onSuccess?.();
         break;
+      case "error":
+        effects?.onError?.(callReceiptsError as unknown);
+        break;
     }
-  }, [supportsBatchingTransaction, effects, sendStatus]);
+  }, [supportsBatchingTransaction, effects, writeStatus ]);
 
   // Public API
   const prepare = ({ calls: newCalls }: BatchWriteParams) => {
@@ -109,7 +122,7 @@ export default function useBatchWrite(effects?: Effects) {
     fire,
     {
       prepare: prepareStatus,
-      write: sendStatus,
+      write: writeStatus,
     },
   ] as const;
 } 
