@@ -5,7 +5,8 @@ import { useAccount, useChainId, useSwitchChain } from "wagmi";
 import { useAppKit } from "@reown/appkit/react";
 import { getCurrentStake, getProcessedAirdropData } from "data/airdrop";
 import type { ProcessedAirdropData } from "data/airdrop";
-import { Address, formatUnits, BaseError, ContractFunctionRevertedError } from "viem";
+import { Address, formatUnits } from "viem";
+import { extractErrorMessage } from "utils/errors";
 import CheckCircleIcon from "icons/CheckCircle.svg";
 import CheckCircleMinorIcon from "icons/CheckCircleMinor.svg";
 import WarningCircle16Icon from "icons/WarningCircle16.svg";
@@ -37,31 +38,7 @@ function PnkDisplay({ amount }: { amount?: bigint }) {
   );
 }
 
-function extractErrorMessage(error: unknown): string {
-  const defaultMessage = "Something went wrong. Please try again.";
-  try {
-    if (!error) return defaultMessage;
-    if (error instanceof BaseError) {
-      const reverted = error.walk((err) => err instanceof ContractFunctionRevertedError) as
-        | ContractFunctionRevertedError
-        | undefined;
-      if (reverted) {
-        const reason = (reverted as any).data?.errorName || (reverted as any).reason || reverted.shortMessage || reverted.message;
-        return reason ? `Transaction reverted: ${reason}` : defaultMessage;
-      }
-      const short = (error as any).shortMessage || (error as any).details || error.message;
-      if (typeof short === "string" && short.toLowerCase().includes("rejected")) {
-        return "Transaction rejected by user.";
-      }
-      return short || defaultMessage;
-    }
-    if (error instanceof Error) return error.message || defaultMessage;
-    const asString = typeof error === "string" ? error : JSON.stringify(error);
-    return asString || defaultMessage;
-  } catch {
-    return defaultMessage;
-  }
-}
+ 
 
 function LoadingSpinner() {
   return (
@@ -144,7 +121,7 @@ export default function ClaimSection({ amountPerClaim, humanitySubcourtId, airdr
     onFail: (err: any) => {
       const msg = extractErrorMessage(err);
       if (msg.includes("ERC-5792") || msg.toLowerCase().includes("batch")) {
-        toast.error("Please use a compatible wallet like MetaMask or WalletConnect.");
+        toast.error("Please use a compatible wallet like MetaMask.");
       } else {
         toast.error("Unable to prepare transaction. Please try again.");
       }
