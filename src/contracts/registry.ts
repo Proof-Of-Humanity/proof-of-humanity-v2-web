@@ -36,7 +36,7 @@ export function getContractInfo<T extends ContractName>(
   const address = contract.addresses[
     chainId as keyof typeof contract.addresses
   ];
-
+  
   return {
     abi: contract.abi,
     address,

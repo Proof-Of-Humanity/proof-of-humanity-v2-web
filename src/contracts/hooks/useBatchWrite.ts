@@ -30,6 +30,7 @@ export default function useBatchWrite(effects?: Effects) {
     id: sendData?.id ||  "",
     query: {
       enabled: !!sendData?.id,
+      refetchInterval: 100
     }
   });
 
