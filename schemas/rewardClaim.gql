@@ -1,7 +1,6 @@
 query RewardClaim($id: ID!) {
   rewardClaim(id: $id) {
     id
-    humanityID
     claimer {
       id
     }
