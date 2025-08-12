@@ -7,21 +7,34 @@ import KlerosInfoCard from "components/Integrations/Airdrop/KlerosInfoCard";
 import FeatureList from "components/FeatureList";
 import { formatEth } from "utils/misc";
 import type { Integration } from "types/integrations";
-
-const HUMANITY_SUBCOURT_ID = 18n;
+import { SupportedChainId } from "config/chains";
+import { useAccount, useChainId } from "wagmi";
+import { useQuery } from "@tanstack/react-query";
+import { getProcessedAirdropData, type ProcessedAirdropData } from "data/airdrop";
+import type { Address } from "viem";
 
 export interface PnkAirdropClientProps {
   integration: Integration;
-  contractData: any;
-  airdropChainId: number;
+  contractData: {
+    amountPerClaim: bigint;
+  };
+  airdropChainId: SupportedChainId;
   coherenceReward: bigint;
   gnosisApy: number;
 }
 
 export default function PnkAirdropContent({ integration, contractData, airdropChainId, coherenceReward, gnosisApy }: PnkAirdropClientProps) {
   const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
+  const { address, isConnected } = useAccount();
+  const chainId = useChainId();
 
   const slidesCompleted = currentSlideIndex >= (integration.firstInfoSlide?.length ?? 0);
+
+  const { data: eligibilityData, isLoading: isEligibilityLoading, error: eligibilityError, refetch: refetchEligibilityStatus } = useQuery<ProcessedAirdropData>({
+    queryKey: ["eligibilityStatus", address, chainId],
+    queryFn: async () => getProcessedAirdropData(address as Address, airdropChainId),
+    enabled: isConnected && !!address && !!chainId,
+  });
 
   return (
     <div className="flex flex-col w-full md:w-10/12 space-y-8">
@@ -75,7 +88,7 @@ export default function PnkAirdropContent({ integration, contractData, airdropCh
                   <div className="text-xs text-purple mb-5 ml-2">
                     <div className="flex flex-wrap gap-1">
                       <span>Staking APY: {gnosisApy.toFixed(2)}% |</span>
-                      <span>Coherence Rewards (Humanity court): {formatEth(coherenceReward)} xDAI</span>
+                      <span>Coherence Rewards (Humanity court): {formatEth(coherenceReward)} xDAI + PNK</span>
                     </div>  
                     <p className="mt-1 italic font-light">
                       (Values subject to change) The Coherence Rewards depend on how you vote.
@@ -89,15 +102,18 @@ export default function PnkAirdropContent({ integration, contractData, airdropCh
                 <ClaimSection
                   {...{
                     amountPerClaim: contractData.amountPerClaim,
-                    humanitySubcourtId: HUMANITY_SUBCOURT_ID,
                     airdropChainId,
+                    eligibilityData,
+                    isEligibilityLoading,
+                    eligibilityError,
+                    refetchEligibilityStatus,
                   }}
                 />
               </div>
             </div>
           )}
         </div>
-        {slidesCompleted ? (
+        {slidesCompleted && eligibilityData?.claimStatus === "claimed" ? (
           <div className="flex flex-col justify-center items-center mb-6">
             <EmailNotifications />
           </div>

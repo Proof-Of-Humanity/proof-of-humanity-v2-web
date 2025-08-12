@@ -57,6 +57,11 @@ interface SnapshotData {
   };
 }
 
+
+export const getHumanitySubCourtId = (chainId: SupportedChainId): bigint => {
+  return chainId === 100 ? COURT_IDS.GNOSIS_HUMANITY_SUBCOURT_ID : COURT_IDS.CHIADO_HUMANITY_SUBCOURT_ID;
+};
+
 /**
  * Gets the court fee for jurors in the humanity subcourt for a given chain
  */
@@ -86,7 +91,8 @@ export const getHumanityCourtFeeForJuror = cache(async (chainId: SupportedChainI
     });
     
     return court[4];
-  });         
+  }); 
+
 
 /**
  * Calculates the KIP-66 target based on elapsed months since start date

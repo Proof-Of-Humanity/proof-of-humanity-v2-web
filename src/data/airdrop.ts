@@ -10,7 +10,6 @@ export interface ProcessedAirdropData {
   humanityId: string | null;
   claimStatus: "claimed" | "eligible" | "not_eligible" | "checking";
   amount: bigint;
-  chainId: SupportedChainId | null;
 }
 
 export const getProcessedAirdropData = cache(async (address: Address, chainId: SupportedChainId): Promise<ProcessedAirdropData> => {
@@ -37,7 +36,6 @@ export const getProcessedAirdropData = cache(async (address: Address, chainId: S
         humanityId: null,
         claimStatus: "not_eligible",
         amount: 0n,
-        chainId: null,
       };
     }
 
@@ -49,7 +47,6 @@ export const getProcessedAirdropData = cache(async (address: Address, chainId: S
         humanityId,
         claimStatus: "claimed",
         amount: BigInt(rewardClaimResult.rewardClaim.amount),
-        chainId,
       };
     }
 
@@ -58,7 +55,6 @@ export const getProcessedAirdropData = cache(async (address: Address, chainId: S
       humanityId,
       claimStatus: "eligible",
       amount: 0n,
-      chainId,
     };
 });
 

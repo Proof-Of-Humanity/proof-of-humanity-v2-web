@@ -1,11 +1,10 @@
 "use client";
 import React, { useCallback, useMemo } from "react";
-import Image from "next/image";
 import { useAccount, useChainId, useSwitchChain } from "wagmi";
 import { useAppKit } from "@reown/appkit/react";
-import { getCurrentStake, getProcessedAirdropData } from "data/airdrop";
+import { getCurrentStake } from "data/airdrop";
 import type { ProcessedAirdropData } from "data/airdrop";
-import { Address, formatUnits } from "viem";
+import { Address } from "viem";
 import { extractErrorMessage } from "utils/errors";
 import CheckCircleIcon from "icons/CheckCircle.svg";
 import CheckCircleMinorIcon from "icons/CheckCircleMinor.svg";
@@ -15,29 +14,11 @@ import ActionButton from "components/ActionButton";
 import useBatchWrite from "contracts/hooks/useBatchWrite";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "react-toastify";
-import { idToChain } from "config/chains";
+import { idToChain, SupportedChainId } from "config/chains";
+import { getHumanitySubCourtId } from "data/kleros";
+import PnkDisplay from "components/Integrations/Airdrop/PnkDisplay";
 
 export type EligibilityStatus = "disconnected" | "wrong-chain" | "eligible" | "not-eligible" | "claimed" | "error";
-
-function formatPnkAmount(amount: bigint): string {
-  const formatted = formatUnits(amount, 18);
-  const num = parseFloat(formatted);
-  if (num >= 1000) {
-    return `${(num / 1000).toFixed(1)}k PNK`;
-  }
-  return `${num.toFixed(0)} PNK`;
-}
-
-function PnkDisplay({ amount }: { amount?: bigint }) {
-  const displayText = amount ? formatPnkAmount(amount) : "";
-  return (
-    <div className="flex items-center justify-center gap-2 mb-6">
-      <Image src="/logo/pnk-token.svg" alt="PNK Token" width={24} height={24} />
-      <span className="text-primaryText text-2xl font-normal">{displayText}</span>
-    </div>
-  );
-}
-
  
 
 function LoadingSpinner() {
@@ -71,26 +52,24 @@ interface StatusDisplay {
 
 interface ClaimSectionProps {
   amountPerClaim: bigint;
-  humanitySubcourtId: bigint;
-  airdropChainId: number;
+  airdropChainId: SupportedChainId;
+  eligibilityData?: ProcessedAirdropData;
+  isEligibilityLoading?: boolean;
+  eligibilityError?: unknown;
+  refetchEligibilityStatus?: () => Promise<unknown>;
 }
 
-export default function ClaimSection({ amountPerClaim, humanitySubcourtId, airdropChainId }: ClaimSectionProps) {
+export default function ClaimSection({ amountPerClaim, airdropChainId, eligibilityData, isEligibilityLoading, eligibilityError, refetchEligibilityStatus }: ClaimSectionProps) {
   const modal = useAppKit();
   const { address, isConnected } = useAccount();
   const chainId = useChainId();
   const { switchChain } = useSwitchChain();
 
+  const humanitySubcourtId = getHumanitySubCourtId(airdropChainId);
   const { data: currentStake = 0n, isLoading: isStakeLoading, error: stakeError } = useQuery<bigint>({
     queryKey: ["currentStake", address, chainId, humanitySubcourtId?.toString()],
-    queryFn: async () => getCurrentStake(address as Address, chainId as any, humanitySubcourtId),
+    queryFn: async () => getCurrentStake(address as Address, airdropChainId, humanitySubcourtId),
     enabled: !!address && !!chainId,
-  });
-
-  const { data: eligibilityData, isLoading: isEligibilityLoading, refetch: refetchEligibilityStatus, error: eligibilityError } = useQuery<ProcessedAirdropData>({
-    queryKey: ["eligibilityStatus", address, chainId],
-    queryFn: async () => getProcessedAirdropData(address as Address, chainId as any),
-    enabled: isConnected && !!address && !!chainId,
   });
 
   const queryErrorMessage =
@@ -100,7 +79,7 @@ export default function ClaimSection({ amountPerClaim, humanitySubcourtId, airdr
       ? "Unable to check eligibility. Please check your connection and try again."
       : null;
 
-  const isFetching = isEligibilityLoading || isStakeLoading;
+  const isFetching = !!isEligibilityLoading || isStakeLoading;
   const hasErrors = !!eligibilityError || !!stakeError;
   const isOnSupportedChain = chainId === airdropChainId;
   const airdropNetworkName = idToChain(airdropChainId)?.name;
@@ -140,7 +119,9 @@ export default function ClaimSection({ amountPerClaim, humanitySubcourtId, airdr
     },
     onSuccess: () => {
       toast.success("Successfully claimed and staked PNK tokens!");
-      refetchEligibilityStatus();
+      setTimeout(() => {
+        refetchEligibilityStatus?.();
+      }, 1000);
     },
   }), [refetchEligibilityStatus]);
 
