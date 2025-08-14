@@ -1,109 +1,155 @@
 "use client";
-import React, { useState, useMemo, useCallback } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import ActionButton from "components/ActionButton";
 import LawBalance from "icons/LawBalance.svg";
 import Field from "components/Field";
 import FeatureList from "components/FeatureList";
-import CheckCircleIcon from "icons/CheckCircle.svg";
-import HourglassIcon from "icons/Hourglass.svg";
+// removed verification icons
+import { useAccount, useSignMessage } from "wagmi";
+import { useQuery, useMutation } from '@tanstack/react-query';
+import LoadingSpinner from "components/Integrations/Circles/LoadingSpinner";
+import { toast } from "react-toastify";
+import {
+  buildDefaultSelector,
+  buildSubscribeSettings,
+  fetchNotificationSettings,
+  updateNotificationSettings,
+  AttrString,
+  SettingsSelector,
+  SettingsUpdate,
+} from "data/notifications";
+import { getClaimerName } from "data/claimer";
+import { isValidEmailAddress } from "utils/validators";
+import { extractErrorMessage } from "utils/errors";
 
-export type EmailVerificationStatus = "unsubscribed" | "pending" | "verified";
+// Local storage helpers for caching signatures (per wallet address)
+const buildSignatureStorageKey = (walletAddress: string) =>
+    `poh:notifications:signature:${walletAddress.toLowerCase()}`;
 
-export interface EmailNotificationsProps {
-  onSubscribe?: (email: string) => void;
-  onResendEmail?: () => void;
-  isLoading?: boolean;
-  verificationStatus?: EmailVerificationStatus;
-  subscribedEmail?: string;
-}
 
-const EmailNotifications: React.FC<EmailNotificationsProps> = ({
-  isLoading = false,
-  verificationStatus = "unsubscribed",
-  subscribedEmail,
-}) => {
-  const [email, setEmail] = useState("");
+const getCachedSignature = (walletAddress: string | undefined): string | null => {
+  if (typeof window === "undefined" || !walletAddress) return null;
+  try {
+    const key = buildSignatureStorageKey(walletAddress);
+    const raw = window.localStorage.getItem(key);
+    if (!raw) return null;
+    return raw;
+  } catch {
+    // ignore malformed cache
+  }
+  return null;
+};
 
-  const handleSubscribe = useCallback(() => {
-  }, [email]);
+const setCachedSignature = (walletAddress: string | undefined, signature: string): void => {
+  if (typeof window === "undefined" || !walletAddress) return;
+  try {
+    const key = buildSignatureStorageKey(walletAddress);
+    window.localStorage.setItem(key, signature);
+  } catch {}
+};
 
-  const handleResendEmail = useCallback(() => {
+ const EmailNotifications = () => {
+  const { address, isConnected } = useAccount();
+  const { signMessageAsync } = useSignMessage();
+
+  const [userEmail, setUserEmail] = useState("");
+  const {data : displayName , isLoading: isLoadingDisplayName } = useQuery({
+    queryKey: ["displayName", address],
+    queryFn: async () => {
+      return await getClaimerName(address as `0x${string}`);
+    },
+    enabled: !!address,
+  });
+
+  const baseUrl = process.env.USER_SETTINGS_URL;
+
+  const signSettings = useCallback(
+    async (settings: object): Promise<string> => {
+      const message = JSON.stringify(settings);
+      const signature = await signMessageAsync({ message });
+      return signature;
+    },
+    [address, signMessageAsync]
+  );
+  
+
+  const {data : settings , isLoading: isLoadingSettings, refetch: refetchSettings, error: settingsError } = useQuery({
+    queryKey: ["notificationSettings", address],
+    queryFn: async () => {
+      const selector: SettingsSelector = buildDefaultSelector();
+      const signature = getCachedSignature(address);
+      if(!address || !signature) return null;
+      const data = await fetchNotificationSettings({
+        baseUrl,
+        address,
+        selector,
+        signature,
+      });
+      return data;
+    },
+    enabled: isConnected && !!address && !!baseUrl,
+    refetchOnWindowFocus: false,
+    retry: 1,
+  });
+
+  const item = settings?.payload?.settings?.Item as Record<string, unknown> | undefined;
+  const email = (item?.email as AttrString | undefined)?.S;
+
+  const isFetching = isLoadingSettings || isLoadingDisplayName;
+
+  const isEmailValid = userEmail.length === 0 ? true : isValidEmailAddress(userEmail);
+
+  useEffect(() => {
+    if (settingsError) toast.error("Failed to load notification settings");
+  }, [settingsError]);
+
+  useEffect(() => {
+    if (email && !userEmail) setUserEmail(email);
+  }, [email, userEmail]);
+
+  const {mutate: subscribe, isPending: isSubmitting } = useMutation({
+    mutationFn: async (args: { nextEmail: string; fullName?: string }) => {
+      if (!baseUrl) throw new Error("Missing USER_SETTINGS_URL");
+      if (!address) throw new Error("Wallet not connected");
+      const settings: SettingsUpdate = buildSubscribeSettings(args.nextEmail, args.fullName);
+      const signature = await signSettings(settings);
+      await updateNotificationSettings({
+        baseUrl,
+        address,
+        settings,
+        signature,
+      });
+      setCachedSignature(address, signature);
+    },
+    onSuccess: async () => {
+      toast.success("Successfully subscribed to notifications!");
+      refetchSettings?.();
+    },
+    onError: (err) => {
+      const message = extractErrorMessage(err);
+      if(message.includes("rejected") || message.includes("denied")) {
+        toast.error("Request Rejected");
+      } else {
+        toast.error("Failed to subscribe to notifications");
+      }
+    },
+  });
+  
+  const deriveNameFromEmail = useCallback((emailInput: string): string => {
+    const localPart = emailInput.split("@")[0] || "";
+    const cleaned = localPart.replace(/[^a-zA-Z0-9 _.-]/g, " ");
+    return cleaned.replace(/\s+/g, " ").trim();
   }, []);
 
-  const emailFieldProps = useMemo(() => {
-    switch (verificationStatus) {
-      case "pending":
-      case "verified":
-        return {
-          value: subscribedEmail || "",
-          disabled: true,
-          onChange: undefined as any,
-        };
-      default: // "unsubscribed"
-        return {
-          value: email,
-          onChange: (e: any) => setEmail(e.target.value),
-          disabled: isLoading,
-        };
+  const handleSubscribe = useCallback(() => {
+    if (!userEmail.trim()) {
+      toast.info("Please enter a valid email");
+      return;
     }
-  }, [verificationStatus, subscribedEmail, email, isLoading]);
+    const fallbackName = deriveNameFromEmail(userEmail);
+    subscribe({ nextEmail: userEmail.trim(), fullName: displayName || fallbackName });
+  }, [userEmail, subscribe, displayName, deriveNameFromEmail]);
 
-  const buttonProps = useMemo(() => {
-    switch (verificationStatus) {
-      case "pending":
-      case "verified":
-        return {
-          onClick: () => {},
-          label: "Save",
-          disabled: true,
-          isLoading: false,
-        };
-      default: // "unsubscribed"
-        return {
-          onClick: handleSubscribe,
-          label: "Subscribe",
-          disabled: !email || isLoading,
-          isLoading: isLoading,
-        };
-    }
-  }, [verificationStatus, handleSubscribe, email, isLoading]);
-
-  const renderNotification = () => {
-    switch (verificationStatus) {
-      case "pending":
-        return (
-          <div className="flex items-center gap-2">
-            <HourglassIcon width={16} height={16} className="fill-purple flex-shrink-0" />
-            <div>
-              <span className="text-primaryText text-sm font-medium">Email Verification Pending</span>
-              <div className="text-secondaryText text-sm">
-                We sent you a verification email. Please, verify it.Didn't receive the email?{" "}
-                <button
-                  onClick={handleResendEmail}
-                  className="text-purple underline hover:no-underline"
-                  disabled={isLoading}
-                >
-                  Resend it
-                </button>
-              </div>
-            </div>
-          </div>
-        );
-
-      case "verified":
-        return (
-          <div className="flex items-center gap-2">
-            <CheckCircleIcon width={16} height={16} className="fill-green-500 flex-shrink-0" />
-            <span className="text-primaryText text-sm font-medium">
-              Congratulations :) Your email has been verified!
-            </span>
-          </div>
-        );
-
-      default: // "unsubscribed"
-        return null;
-    }
-  };
 
   return (
     <div className="w-full max-w-[1095px] mx-auto p-[1px] rounded-[30px] bg-gradient-to-br from-[#BE75FF] to-[#F9BFCE]">
@@ -150,29 +196,42 @@ const EmailNotifications: React.FC<EmailNotificationsProps> = ({
           />
         </div>
 
-        {/* Email Section - varies by verification status */}
+        {/* Email Section */}
         <div className="space-y-4">
           <div>
             <label htmlFor="email" className="block text-orange text-sm font-medium mb-2 uppercase">
               EMAIL
             </label>
-            <div className="flex flex-col sm:flex-row">
-              <Field
-                id="email"
-                type="email"
-                {...emailFieldProps}
-                placeholder="myemail@email.com"
-                className="flex-1 px-4 py-3 border-2 border-orange rounded-lg text-primaryText placeholder-secondaryText focus:outline-none focus:border-purple"
-              />
-              <ActionButton
-                {...buttonProps}
-                className="sm:w-auto px-8"
-                variant="primary"
-              />
-            </div>
+            {isFetching ? (
+              <div className="flex items-center gap-2 py-3">
+                <LoadingSpinner />
+                <span className="text-secondaryText text-sm">Loading your preferences…</span>
+              </div>
+            ) : (
+              <div className="flex flex-col sm:flex-row">
+                <Field
+                  id="email"
+                  type="email"
+                  value={userEmail}
+                  onChange={(e) => setUserEmail(e.target.value)}
+                  disabled={isFetching}
+                  placeholder="myemail@email.com"
+                  className={`flex-1 px-4 py-3 border-2 rounded-lg text-primaryText placeholder-secondaryText focus:outline-none ${isEmailValid ? "border-orange focus:border-purple" : "border-red-500 focus:border-red-500"}`}
+                />
+                <ActionButton
+                  onClick={handleSubscribe}
+                  label="Subscribe"
+                  disabled={!userEmail || !isEmailValid || isFetching}
+                  isLoading={isSubmitting}
+                  className="sm:w-auto px-8"
+                  variant="primary"
+                />
+              </div>
+            )}
+            {!isFetching && !isEmailValid && (
+              <p className="mt-2 text-xs text-red-500">Please enter a valid email</p>
+            )}
           </div>
-          
-          {renderNotification()}
         </div>
       </div>
     </div>

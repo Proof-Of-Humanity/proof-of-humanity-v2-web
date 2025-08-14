@@ -73,7 +73,7 @@ const FeatureList: React.FC<FeatureListProps> = ({
     <div className={`${spacingMap[spacing]} ${className}`}>
       {items.map((item, index) => (
         <div key={index} className="flex items-start gap-2">
-          <div className="flex-shrink-0 mt-0.5">
+          <div className="flex-shrink-0 mt-1">
             {item.customIcon || renderIcon(item.iconType || 'check')}
           </div>
           <div className="flex-1">

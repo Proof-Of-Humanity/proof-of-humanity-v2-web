@@ -40,3 +40,14 @@ export const getClaimerData = cache(async (id: Address) => {
   sanitizeRegistration(out);
   return await sanitizeClaimerData(out, id);
 });
+
+export async function getClaimerName(id: Address): Promise<string | null> {
+    const res = await Promise.all(
+      supportedChains.map((chain) => sdk[chain.id].Claimer({ id })),
+    );
+    for (const r of res) {
+      const name = r?.claimer?.name;
+      if (name && name.trim()) return name.trim();
+    }
+    return null;
+}
