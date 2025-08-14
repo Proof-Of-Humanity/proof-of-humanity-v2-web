@@ -17,6 +17,7 @@ import { toast } from "react-toastify";
 import { idToChain, SupportedChainId } from "config/chains";
 import { getHumanitySubCourtId } from "data/kleros";
 import PnkDisplay from "components/Integrations/Airdrop/PnkDisplay";
+import { ChainSet, configSetSelection } from "contracts";
 
 export type EligibilityStatus = "disconnected" | "wrong-chain" | "eligible" | "not-eligible" | "claimed" | "error";
  
@@ -83,6 +84,7 @@ export default function ClaimSection({ amountPerClaim, airdropChainId, eligibili
   const hasErrors = !!eligibilityError || !!stakeError;
   const isOnSupportedChain = chainId === airdropChainId;
   const airdropNetworkName = idToChain(airdropChainId)?.name;
+  const isTestnet = configSetSelection.chainSet === ChainSet.TESTNETS;
 
   const eligibilityStatus: EligibilityStatus = !isConnected
     ? "disconnected"
@@ -262,6 +264,11 @@ export default function ClaimSection({ amountPerClaim, airdropChainId, eligibili
             <div className="text-purple text-sm font-medium mb-2">{statusDisplay.text}</div>
             <PnkDisplay amount={amountPerClaim} />
             <div className={`${statusDisplay.textColor} text-base font-normal`}>{statusDisplay.subText}</div>
+            {isTestnet && (
+              <div className="mt-3 text-secondaryText text-xs">
+                On testnet, you will be staked in the General Court.
+              </div>
+            )}
           </>
         ) : (
           <>
