@@ -23,7 +23,8 @@ export default function useBatchWrite(effects?: Effects) {
   const { 
     sendCalls, 
     status: sendStatus,
-    data : sendData
+    data : sendData,
+    error: sendError
   } = useSendCalls();
 
   const {  data: callReceipts, error: callReceiptsError} = useCallsStatus({
@@ -91,7 +92,7 @@ export default function useBatchWrite(effects?: Effects) {
         effects?.onSuccess?.();
         break;
       case "error":
-        effects?.onError?.(callReceiptsError as unknown);
+        effects?.onError?.(callReceiptsError || sendError);
         break;
     }
   }, [supportsBatchingTransaction, effects, writeStatus ]);

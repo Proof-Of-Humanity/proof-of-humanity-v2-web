@@ -12,14 +12,6 @@ export interface Envelope<TSettings> {
   };
 }
 
-export interface FetchResponseItem {
-  [key: string]: AttrString | AttrBool;
-}
-
-export interface FetchResponse {
-  payload: { settings: { Item?: FetchResponseItem } };
-}
-
 export function buildDefaultSelector(): SettingsSelector {
   return {
     email: true,
@@ -48,31 +40,6 @@ export function buildSubscribeSettings(email: string, fullName?: string): Settin
     courtNotificationSettingLose: { BOOL: true },
     courtNotificationSettingStake: { BOOL: true },
   };
-}
-
-export async function fetchNotificationSettings(params: {
-  baseUrl: string;
-  address: string;
-  selector: SettingsSelector;
-  signature: string;
-}): Promise<FetchResponse> {
-  const body: Envelope<SettingsSelector> = {
-    payload: {
-      address: params.address,
-      settings: params.selector,
-      signature: params.signature,
-    },
-  };
-  const response = await fetch(`${params.baseUrl}`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
-  });
-  if (!response.ok) {
-    throw new Error(`Failed to fetch notification settings: ${response.status}`);
-  }
-  const json = (await response.json()) as FetchResponse;
-  return json;
 }
 
 export async function updateNotificationSettings(params: {
