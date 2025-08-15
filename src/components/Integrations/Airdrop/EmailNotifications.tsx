@@ -1,59 +1,23 @@
 "use client";
-import React, { useState, useCallback, useEffect } from "react";
+ import React, { useState, useCallback } from "react";
 import ActionButton from "components/ActionButton";
 import LawBalance from "icons/LawBalance.svg";
 import Field from "components/Field";
 import FeatureList from "components/FeatureList";
-// removed verification icons
 import { useAccount, useSignMessage } from "wagmi";
 import { useQuery, useMutation } from '@tanstack/react-query';
-import LoadingSpinner from "components/Integrations/Circles/LoadingSpinner";
 import { toast } from "react-toastify";
-import {
-  buildDefaultSelector,
-  buildSubscribeSettings,
-  fetchNotificationSettings,
-  updateNotificationSettings,
-  AttrString,
-  SettingsSelector,
-  SettingsUpdate,
-} from "data/notifications";
+import { buildSubscribeSettings, updateNotificationSettings, SettingsUpdate } from "data/notifications";
 import { getClaimerName } from "data/claimer";
 import { isValidEmailAddress } from "utils/validators";
 import { extractErrorMessage } from "utils/errors";
 
-// Local storage helpers for caching signatures (per wallet address)
-const buildSignatureStorageKey = (walletAddress: string) =>
-    `poh:notifications:signature:${walletAddress.toLowerCase()}`;
-
-
-const getCachedSignature = (walletAddress: string | undefined): string | null => {
-  if (typeof window === "undefined" || !walletAddress) return null;
-  try {
-    const key = buildSignatureStorageKey(walletAddress);
-    const raw = window.localStorage.getItem(key);
-    if (!raw) return null;
-    return raw;
-  } catch {
-    // ignore malformed cache
-  }
-  return null;
-};
-
-const setCachedSignature = (walletAddress: string | undefined, signature: string): void => {
-  if (typeof window === "undefined" || !walletAddress) return;
-  try {
-    const key = buildSignatureStorageKey(walletAddress);
-    window.localStorage.setItem(key, signature);
-  } catch {}
-};
-
  const EmailNotifications = () => {
-  const { address, isConnected } = useAccount();
+  const { address } = useAccount();
   const { signMessageAsync } = useSignMessage();
 
   const [userEmail, setUserEmail] = useState("");
-  const {data : displayName , isLoading: isLoadingDisplayName } = useQuery({
+  const {data : displayName , isLoading: isFetching } = useQuery({
     queryKey: ["displayName", address],
     queryFn: async () => {
       return await getClaimerName(address as `0x${string}`);
@@ -71,41 +35,8 @@ const setCachedSignature = (walletAddress: string | undefined, signature: string
     },
     [address, signMessageAsync]
   );
-  
-
-  const {data : settings , isLoading: isLoadingSettings, refetch: refetchSettings, error: settingsError } = useQuery({
-    queryKey: ["notificationSettings", address],
-    queryFn: async () => {
-      const selector: SettingsSelector = buildDefaultSelector();
-      const signature = getCachedSignature(address);
-      if(!address || !signature) return null;
-      const data = await fetchNotificationSettings({
-        baseUrl,
-        address,
-        selector,
-        signature,
-      });
-      return data;
-    },
-    enabled: isConnected && !!address && !!baseUrl,
-    refetchOnWindowFocus: false,
-    retry: 1,
-  });
-
-  const item = settings?.payload?.settings?.Item as Record<string, unknown> | undefined;
-  const email = (item?.email as AttrString | undefined)?.S;
-
-  const isFetching = isLoadingSettings || isLoadingDisplayName;
 
   const isEmailValid = userEmail.length === 0 ? true : isValidEmailAddress(userEmail);
-
-  useEffect(() => {
-    if (settingsError) toast.error("Failed to load notification settings");
-  }, [settingsError]);
-
-  useEffect(() => {
-    if (email && !userEmail) setUserEmail(email);
-  }, [email, userEmail]);
 
   const {mutate: subscribe, isPending: isSubmitting } = useMutation({
     mutationFn: async (args: { nextEmail: string; fullName?: string }) => {
@@ -119,11 +50,9 @@ const setCachedSignature = (walletAddress: string | undefined, signature: string
         settings,
         signature,
       });
-      setCachedSignature(address, signature);
     },
     onSuccess: async () => {
       toast.success("Successfully subscribed to notifications!");
-      refetchSettings?.();
     },
     onError: (err) => {
       const message = extractErrorMessage(err);
@@ -202,12 +131,6 @@ const setCachedSignature = (walletAddress: string | undefined, signature: string
             <label htmlFor="email" className="block text-orange text-sm font-medium mb-2 uppercase">
               EMAIL
             </label>
-            {isFetching ? (
-              <div className="flex items-center gap-2 py-3">
-                <LoadingSpinner />
-                <span className="text-secondaryText text-sm">Loading your preferences…</span>
-              </div>
-            ) : (
               <div className="flex flex-col sm:flex-row">
                 <Field
                   id="email"
@@ -227,8 +150,7 @@ const setCachedSignature = (walletAddress: string | undefined, signature: string
                   variant="primary"
                 />
               </div>
-            )}
-            {!isFetching && !isEmailValid && (
+            {!isEmailValid && (
               <p className="mt-2 text-xs text-red-500">Please enter a valid email</p>
             )}
           </div>
