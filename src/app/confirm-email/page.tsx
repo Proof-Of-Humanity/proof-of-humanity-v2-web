@@ -1,5 +1,3 @@
-
-
 const ConfirmEmailPage = () => {
   return <div className="flex items-center justify-center text-primaryText">Email and Notifications comming soon</div>;
 };
@@ -170,4 +168,4 @@ export default ConfirmEmailPage;
 //   );
 // };
 
-// export default ConfirmEmailPage; 
+// export default ConfirmEmailPage;
