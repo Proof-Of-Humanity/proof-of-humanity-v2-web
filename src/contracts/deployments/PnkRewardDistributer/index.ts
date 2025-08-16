@@ -3,7 +3,7 @@ import abi from "./abi";
 
 const addresses: Record<number, `0x${string}` | undefined> = {
   [gnosis.id]: "0x",
-  [gnosisChiado.id]: "0xB582C9A96D955FCbe9e25212D357D33B9f011d46",
+  [gnosisChiado.id]: "0x717E96A7b3033Ce288E3f1cc479Bba1f0aEB04C5",
 };
 
 export const PnkRewardDistributer = {
