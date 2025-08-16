@@ -2,6 +2,7 @@
  import React, { useState, useCallback } from "react";
 import ActionButton from "components/ActionButton";
 import LawBalance from "icons/LawBalance.svg";
+import CheckCircle from "icons/CheckCircle.svg";
 import Field from "components/Field";
 import FeatureList from "components/FeatureList";
 import { useAccount, useSignMessage } from "wagmi";
@@ -38,7 +39,7 @@ import { extractErrorMessage } from "utils/errors";
 
   const isEmailValid = userEmail.length === 0 ? true : isValidEmailAddress(userEmail);
 
-  const {mutate: subscribe, isPending: isSubmitting } = useMutation({
+  const {mutate: subscribe, isPending: isSubmitting, isSuccess } = useMutation({
     mutationFn: async (args: { nextEmail: string; fullName?: string }) => {
       if (!baseUrl) throw new Error("Missing USER_SETTINGS_URL");
       if (!address) throw new Error("Wallet not connected");
@@ -152,6 +153,12 @@ import { extractErrorMessage } from "utils/errors";
               </div>
             {!isEmailValid && (
               <p className="mt-2 text-xs text-red-500">Please enter a valid email</p>
+            )}
+            {isSuccess && (
+              <div className="mt-2 flex items-center gap-2">
+                <CheckCircle className="w-4 h-4 fill-green-500" />
+                <p className="text-xs text-green-500">Successfully subscribed to notifications!</p>
+              </div>
             )}
           </div>
         </div>
