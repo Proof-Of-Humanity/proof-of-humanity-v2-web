@@ -14,7 +14,7 @@ const integrations: Record<string, Integration> = {
       {
         id: 'start',
         title: 'Start',
-        description: 'Sign up for |Metri wallet;https://app.metri.xyz|. ',
+        description: 'Sign up for [Metri wallet](https://app.metri.xyz). ',
         image: '/images/integrations/circles-start.png',
       },
       {
@@ -47,7 +47,7 @@ const integrations: Record<string, Integration> = {
       {
         id: 'collectCRC',
         title: 'Collecting CRC',
-        description: 'Once your Circles account is created you get 24 CRC (individual tokens) per day — one every hour. To mint POH Circles group tokens, sign in to |Circles UI;https://app.aboutcircles.com|, go to Contacts at the top, then select the POH Minter.',
+        description: 'Once your Circles account is created you get 24 CRC (individual tokens) per day — one every hour. To mint POH Circles group tokens, sign in to [Circles UI](https://app.aboutcircles.com), go to Contacts at the top, then select the POH Minter.',
         image: '/images/integrations/collect-crc.png',
       },
       {
@@ -89,8 +89,7 @@ const integrations: Record<string, Integration> = {
         description: 'Kleros is a decentralized dispute resolution protocol. Think of it as the “People’s Court” powered by Ethereum smart contracts and crowdsourced jurors. It’s used to settle disagreements where trust is hard — like freelancing, DeFi, content moderation, identity, crypto token listings, and more.',
         image: '/images/integrations/kleros-slide1.png',
         bulletPoints: [
-          'More than 1600+ disputes resolved',
-          'More than $x,xxx,xxx distributed as rewards for Jurors, and contributors.'
+          'More than 2000+ disputes resolved',
         ]
       },
       {
@@ -121,7 +120,7 @@ const integrations: Record<string, Integration> = {
         image: '/images/integrations/kleros-slide4.png',
         bulletPoints: [
           'Stake > Judge > Earn > Repeat',
-          'Visit: Kleros.io'
+          'Visit: [Kleros.io](https://kleros.io) | [Documentation](https://docs.kleros.io) | [klerosboard](https://klerosboard.com/1)'
         ]
       }
     ]

@@ -5,6 +5,7 @@ import CheckCircleMinorIcon from "icons/CheckCircleMinor.svg";
 import WarningCircleIcon from "icons/WarningCircle16.svg";
 import CrossCircleIcon from "icons/CrossCircle16.svg";
 import HourglassIcon from "icons/Hourglass.svg";
+import { addLinkToText } from "./addLinkToText";
 
 export interface FeatureItem {
   text: string;
@@ -78,7 +79,7 @@ const FeatureList: React.FC<FeatureListProps> = ({
           </div>
           <div className="flex-1">
             <span className={textClassName}>
-              {item.text}
+              {addLinkToText(item.text)}
             </span>
           </div>
         </div>
