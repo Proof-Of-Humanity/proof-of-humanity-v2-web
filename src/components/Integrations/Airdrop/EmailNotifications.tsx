@@ -127,7 +127,7 @@ import { extractErrorMessage } from "utils/errors";
         </div>
 
         {/* Email Section */}
-        <div className="space-y-4">
+        <div className="space-y-4 px-4 py-2 lg:px-0 lg:py-0">
           <div>
             <label htmlFor="email" className="block text-orange text-sm font-medium mb-2 uppercase">
               EMAIL
@@ -147,7 +147,7 @@ import { extractErrorMessage } from "utils/errors";
                   label="Subscribe"
                   disabled={!userEmail || !isEmailValid || isFetching}
                   isLoading={isSubmitting}
-                  className="sm:w-auto px-8"
+                  className="px-8 lg:mb-0 mb-2"
                   variant="primary"
                 />
               </div>

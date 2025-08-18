@@ -112,12 +112,10 @@ export default function PnkAirdropContent({ integration, contractData, airdropCh
               </div>
             </div>
           )}
+          {slidesCompleted && eligibilityData?.claimStatus === "claimed" && (
+              <EmailNotifications />
+          )}
         </div>
-        {slidesCompleted && eligibilityData?.claimStatus === "claimed" ? (
-          <div className="flex flex-col justify-center items-center mb-6">
-            <EmailNotifications />
-          </div>
-        ) : null}
       </div>
     </div>
   );

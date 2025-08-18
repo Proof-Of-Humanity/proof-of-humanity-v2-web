@@ -256,7 +256,7 @@ export default function ClaimSection({ amountPerClaim, airdropChainId, eligibili
 
   const statusDisplay = getStatusDisplay();
   return (
-    <div className="lg:w-[391px] p-6 lg:p-8 bg-whiteBackground rounded-[30px] border-l-[1px] border-l-[#BE75FF]">
+    <div className="lg:w-[391px] p-6 lg:p-8 bg-whiteBackground rounded-[30px] border-t-[1px] border-t-[#BE75FF] lg:border-t-0 lg:border-l-[1px] lg:border-l-[#BE75FF]">
       <div className="text-center">
         { eligibilityStatus === "claimed" ? (
           <>
