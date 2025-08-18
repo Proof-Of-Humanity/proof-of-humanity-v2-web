@@ -27,7 +27,7 @@ export default function Vouch({
   chain,
   address,
 }: VouchButtonProps) {
-  const [prepare, addVouch] = usePoHWrite(
+  const [prepare, addVouch , status] = usePoHWrite(
     "addVouch",
     useMemo(
       () => ({
@@ -49,12 +49,16 @@ export default function Vouch({
     prepare({ args: [claimer, pohId] });
   });
 
+  const isOnchainLoading =
+  status.prepare === "pending" ||
+  status.write === "pending";
+
   const expiration = useMemo(
     () => Math.floor(Date.now() / 1000) + 60 * 60 * 24 * 30 * 6,
     [],
   );
 
-  const { signTypedData } = useSignTypedData({
+  const { signTypedData , isPending} = useSignTypedData({
     mutation: {
       onSuccess: async (signature) => {
         try {
@@ -122,17 +126,24 @@ export default function Vouch({
             gasless vouch is possible, it cannot be removed. Gasless vouches
             expire after one year.
           </span>
-          <button
-            className={cn(
-              "outline-theme text-orange hover:btn-main mt-4 rounded p-2 text-xl font-medium outline -outline-offset-4 hover:outline-0",
-            )}
-            onClick={gaslessVouch}
-          >
-            VOUCH
-          </button>
+          <ActionButton 
+          onClick={gaslessVouch} 
+          label="VOUCH" className="mt-4" 
+          isLoading={isPending} 
+          disabled={isPending} 
+          />
           <span
-            className="text-orange mt-4 cursor-pointer text-sm underline underline-offset-2"
-            onClick={addVouch}
+            className={`text-orange mt-4 text-sm underline underline-offset-2 ${
+              isOnchainLoading
+                ? "opacity-50 cursor-not-allowed pointer-events-none"
+                : "cursor-pointer"
+            }`}
+            onClick={() => {
+              if (isOnchainLoading) return;
+              addVouch();
+            }}
+            aria-disabled={isOnchainLoading}
+            aria-busy={isOnchainLoading}
           >
             or vouch on chain
           </span>
