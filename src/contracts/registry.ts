@@ -30,13 +30,6 @@ export function getContractInfo<T extends ContractName>(
 ): ContractInfo<T> {
   const contract = contractRegistry[contractName];
   
-  if (!(chainId in contract.addresses)) {
-    throw new Error(
-      `Unsupported chainId ${chainId} for contract ${contractName}. ` +
-      `Supported chainIds: ${Object.keys(contract.addresses).join(', ')}`
-    );
-  }
-
   const address = contract.addresses[
     chainId as keyof typeof contract.addresses
   ];
