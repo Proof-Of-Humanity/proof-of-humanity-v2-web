@@ -18,8 +18,9 @@ export const getProcessedAirdropData = cache(async (address: Address, chainId: S
   }
 
     const now = Math.ceil(Date.now() / 1000);
+    const normalizedAddress = address.toLowerCase() as Address;
 
-    const humanityQuery = await sdk[chainId].HumanityIdByClaimer({ address, now });
+    const humanityQuery = await sdk[chainId].HumanityIdByClaimer({ address: normalizedAddress, now });
 
     if (!humanityQuery) {
       throw new Error("Failed to fetch data from subgraph");
