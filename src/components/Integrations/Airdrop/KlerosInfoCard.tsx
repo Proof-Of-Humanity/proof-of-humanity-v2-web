@@ -28,13 +28,15 @@ const KlerosInfoCard: React.FC<KlerosInfoCardProps> = ({
       {/* Image Container - Responsive with fixed aspect ratio */}
       <div className="flex justify-center w-full overflow-hidden rounded-t-[30px]">
         <div className="w-full lg:w-[900px] h-full px-4 sm:px-8 lg:px-0 mt-6 mb-2 lg:mt-12">
-          <Image
-            src={slide.image || ''}
-            alt={slide.title}
-            width={900}
-            height={521}
-            className="h-auto max-h-[200px] sm:max-h-[300px] my-4 sm:my-6 md:h-auto md:max-h-[521px] md:my-8 rounded-xl border-stroke border shadow"
-          />
+          {slide.image && (
+            <Image
+              src={slide.image}
+              alt={slide.title}
+              width={900}
+              height={521}
+              className="h-auto max-h-[200px] sm:max-h-[300px] my-4 sm:my-6 md:h-auto md:max-h-[521px] md:my-8 rounded-xl border-stroke border shadow"
+            />
+          )}
         </div>
       </div>
       
