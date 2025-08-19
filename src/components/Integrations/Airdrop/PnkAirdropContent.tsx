@@ -31,7 +31,7 @@ export default function PnkAirdropContent({ integration, contractData, airdropCh
   const slidesCompleted = currentSlideIndex >= (integration.firstInfoSlide?.length ?? 0);
 
   const { data: eligibilityData, isLoading: isEligibilityLoading, error: eligibilityError, refetch: refetchEligibilityStatus } = useQuery<ProcessedAirdropData>({
-    queryKey: ["eligibilityStatus", address, chainId],
+    queryKey: ["eligibilityStatus", address, chainId, airdropChainId],
     queryFn: async () => getProcessedAirdropData(address as Address, airdropChainId),
     enabled: isConnected && !!address && !!chainId,
   });
