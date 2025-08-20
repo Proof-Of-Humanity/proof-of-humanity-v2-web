@@ -7,10 +7,11 @@ export const legacyChain = sepolia;
 export type SupportedChain = ArrayElement<typeof supportedChains>;
 
 export function nameToChain(name: string): SupportedChain | null {
-  switch (name.toLowerCase()) {
+  const normalized = decodeURIComponent(name).toLowerCase();
+  switch (normalized) {
     case sepolia.name.toLowerCase():
       return sepolia;
-    case gnosisChiado.name.toLowerCase().replace(/ /g, "%20"):
+    case gnosisChiado.name.toLowerCase():
       return gnosisChiado;
     default:
       return null;

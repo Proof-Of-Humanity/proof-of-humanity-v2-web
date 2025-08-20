@@ -6,6 +6,7 @@ import { enableReactUse } from "@legendapp/state/config/enableReactUse";
 import { toast } from "react-toastify";
 import { useEffectOnce } from "@legendapp/state/react";
 import { SupportedChain } from "config/chains";
+import ActionButton from "components/ActionButton";
 
 enableReactUse();
 
@@ -27,7 +28,7 @@ export default function RemoveVouch({
   const loading = useLoading();
   const [pending] = loading.use();
 
-  const [prepareRemoveVouch, removeOnchainVouch] = usePoHWrite(
+  const [prepareRemoveVouch, removeOnchainVouch, status] = usePoHWrite(
     "removeVouch",
     useMemo(
       () => ({
@@ -54,13 +55,13 @@ export default function RemoveVouch({
     web3Loaded &&
     userChainId === chain.id && (
       <div className="flex gap-4">
-        <button
-          disabled={pending}
-          className="btn-main mb-2"
+        <ActionButton
           onClick={removeOnchainVouch}
-        >
-          Remove Vouch
-        </button>
+          label="Remove Vouch"
+          className="mb-2"
+          isLoading={status.write === "pending"}
+          disabled={status.write === "pending"}
+        />
       </div>
     )
   );
