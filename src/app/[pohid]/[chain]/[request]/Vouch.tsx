@@ -6,9 +6,9 @@ import { useSignTypedData } from "wagmi";
 import { useEffectOnce } from "@legendapp/state/react";
 import axios from "axios";
 import { getContractInfo } from "contracts";
-import cn from "classnames";
 import { toast } from "react-toastify";
 import { SupportedChain } from "config/chains";
+import ActionButton from "components/ActionButton";
 
 interface VouchButtonProps {
   pohId: Hash;
