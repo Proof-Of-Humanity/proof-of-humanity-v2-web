@@ -86,37 +86,40 @@ const integrations: Record<string, Integration> = {
       {
         id: 'klerosInfo',
         title: 'What is Kleros?',
-        description: 'Kleros is a decentralized dispute resolution protocol. Think of it as the “People’s Court” powered by Ethereum smart contracts and crowdsourced jurors. It’s used to settle disagreements where trust is hard — like freelancing, DeFi, content moderation, identity, crypto token listings, and more.',
+        description: 'Kleros is a decentralized dispute resolution protocol. Think of it as the “People’s Court” powered by Ethereum smart contracts and crowdsourced jurors. It’s used to settle disagreements where trust is hard like freelancing, DeFi, content moderation, identity, crypto token listings, and more.',
         image: '/images/integrations/kleros-slide1.png',
         bulletPoints: [
-          'More than 2000+ disputes resolved',
+          'More than 2000+ disputes resolved.',
+          'Millions of PNK staked securing the system.',
+          'Millions in crypto rewards paid to jurors across Ethereum and Gnosis.'
         ]
       },
       {
         id: 'howItWorks',
         title: 'How Does It Work?',
-        description: 'A dispute arises (e.g., "Did the job get done?", "Did the profile comply with the rules?")\n\n⚖️ The case is sent to Kleros\n👩‍⚖️ Jurors are randomly selected from a pool\n📜 Jurors review evidence & vote\n🧠 Majority wins — decision enforced by smart contract',
+        description: 'A dispute arises (e.g., "Did the job get done?", "Did the profile comply with the rules?")\n\n⚖️ The case is sent to Kleros\n👩‍⚖️ Jurors are randomly selected from a pool of users who have staked PNK tokens.\n📜 Jurors review evidence & vote\n🧠 Majority wins and decision is enforced by smart contract',
         image: '/images/integrations/kleros-slide2.png',
         bulletPoints: [
-          'Transparent',
-          'Enforced by code',
-          'Trustless'
+          'Decentralized',
+          'Fair',
+          'Autonomous'
         ]
       },
       {
         id: 'whyUseKleros',
         title: 'Why Use Kleros?',
-        description: '🔥 Unbiased Decisions — Jurors don\'t know each other\n🔒 Censorship-Resistant — No single point of control\n⚡ Fast & Affordable — Way cheaper than traditional courts\n🌍 Global by Default — Anyone, anywhere can get justice\n🎮 Game-Theory Powered — Incentives = honest outcomes',
+        description: '🔥Unbiased & Fair Decisions: Jurors don\'t know each other\n🔒 Censorship-Resistant & Trustless: No single point of control\n⚡ Fast and Affordable Justice: Way cheaper than traditional courts\n🌍 Global Access, Borderless Justice: Anyone, anywhere can get justice\n🎮 Game-Theory Powered: Honest outcomes through aligned incentives',
         image: '/images/integrations/kleros-slide3.png',
         bulletPoints: [
-          'You earn monthly staking rewards by staking PNK on Kleros Court',
-          'You can win additional rewards by working as a juror, or contributing to appeals.'
+          'Earn monthly rewards through the Juror Incentive Program by staking PNK.',
+          'Earn additional rewards by receiving arbitration fees when you vote coherently and by funding and winning an appeal.',
+          'Join Kleros in revolutionizing justice through decentralization by delivering fair, fast and low-cost dispute resolution.'
         ]
       },
       {
         id: 'becomeJuror',
-        title: 'How I Become a Juror?',
-        description: 'To become a juror, you stake PNK (Kleros\' token) into a specific court (eg. Humanity court), subscribe for notifications to get alerts when you are selected to judge a case. The more you stake, the more likely you are to be selected as a juror. But it\'s not free lunch...\n\n🧠 Vote well = 🤑 Earn fees + PNK\n🙃 Vote badly = 😬 Lose staked PNK\n\n💰 Earn PNK for fair rulings',
+        title: 'How to Become a Kleros Juror?',
+        description: 'To become a Kleros juror, you need to stake PNK (Kleros’ native token) into a specific court, for example, the Humanity Court. Once staked, subscribe to notifications so you’ll be notified when you’re randomly selected to judge a case.\n\n The more PNK you stake, the higher your chances of being selected. But remember, jurors are expected to vote honestly and coherently based on the evidence. Those who do can earn arbitration fees and bonuses. Those who don’t will lose part of their stake.\n\n✅ Coherent Vote (Align with the majority) = 🤑 Earn arbitration fees + extra PNK\n❌ Incoherent Vote (Against the majority) = 😬 Lose some staked PNK\n⚖️ Fair rulings are rewarded & the system keeps jurors honest.',
         image: '/images/integrations/kleros-slide4.png',
         bulletPoints: [
           'Stake > Judge > Earn > Repeat',
