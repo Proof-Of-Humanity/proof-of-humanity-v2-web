@@ -1,10 +1,10 @@
 import React from 'react';
 import Accordion from 'components/Accordion';
 import ProcessStepCard from 'components/Integrations/ProcessStepCard';
-import { ConnectionStep } from 'types/integrations';
+import { InfoSlide } from 'types/integrations';
 
 interface CirclesMintTokensStepProps {
-  steps: ConnectionStep[];
+  steps: InfoSlide[];
   currentStep: number;
   setCurrentStep: (step: number) => void;
   isOpen: boolean;

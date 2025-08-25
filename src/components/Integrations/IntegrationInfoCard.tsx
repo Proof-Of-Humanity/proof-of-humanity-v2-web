@@ -1,9 +1,10 @@
-import { ConnectionStep } from "types/integrations";
+import { InfoSlide } from "types/integrations";
 import Image from "next/image";
 import RightArrowIcon from "icons/ArrowCircleRight.svg"
 import LeftArrowIcon from "icons/ArrowCircleLeft.svg"
 import { addLinkToText } from "components/addLinkToText";
-function IntegrationInfoCard({ step, onPrevious, onNext , previousStep, nextStep}: { step: ConnectionStep, onPrevious: () => void, onNext: () => void, previousStep: boolean, nextStep: boolean }) {
+
+function IntegrationInfoCard({ step, onPrevious, onNext , previousStep, nextStep}: { step: InfoSlide, onPrevious: () => void, onNext: () => void, previousStep: boolean, nextStep: boolean }) {
     return (
         <div className="flex flex-col md:flex-row border rounded-[30px] overflow-hidden">
             {/* Left Column: Text content and navigation */}

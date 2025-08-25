@@ -1,0 +1,12 @@
+query RewardClaim($id: ID!) {
+  rewardClaim(id: $id) {
+    id
+    claimer {
+      id
+    }
+    amount
+    timestamp
+  }
+}
+
+

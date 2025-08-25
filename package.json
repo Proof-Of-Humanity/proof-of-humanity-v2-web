@@ -73,8 +73,8 @@
     "tailwind-merge": "^3.3.0",
     "timeago.js": "^4.0.2",
     "ua-parser-js": "^1.0.2",
-    "viem": "^2.21.50",
-    "wagmi": "^2.14.10"
+    "viem": "2.34.0",
+    "wagmi": "2.16.0"
   },
   "scripts": {
     "dev": "next dev",
