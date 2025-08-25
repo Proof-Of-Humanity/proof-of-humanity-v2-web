@@ -1,4 +1,3 @@
-import { cache } from "react";
 import { Address, createPublicClient, http } from "viem";
 import { SupportedChainId, idToChain, getChainRpc } from "config/chains";
 import { sdk } from "config/subgraph";
@@ -12,7 +11,7 @@ export interface ProcessedAirdropData {
   amount: bigint;
 }
 
-export const getProcessedAirdropData = cache(async (address: Address, chainId: SupportedChainId): Promise<ProcessedAirdropData> => {
+export async function getProcessedAirdropData(address: Address, chainId: SupportedChainId): Promise<ProcessedAirdropData> {
   if (!address) {
     throw new Error("Address is required");
   }
@@ -57,9 +56,9 @@ export const getProcessedAirdropData = cache(async (address: Address, chainId: S
       claimStatus: "eligible",
       amount: 0n,
     };
-});
+}
 
-export const getAirdropContractData = cache(async (chainId: SupportedChainId) => {
+export async function getAirdropContractData(chainId: SupportedChainId) {
   const distributorInfo = getContractInfo("PnkRewardDistributer", chainId);
   if (!distributorInfo.address) {
     throw new Error(`PnkRewardDistributer not deployed on chain ${chainId}`);
@@ -85,9 +84,9 @@ export const getAirdropContractData = cache(async (chainId: SupportedChainId) =>
     amountPerClaim: amountPerClaim as bigint,
     distributorAddress: distributorInfo.address,
   };
-});
+}
 
-export const getCurrentStake = cache(async (address: Address, chainId: SupportedChainId, subcourtId: bigint) => {
+export async function getCurrentStake(address: Address, chainId: SupportedChainId, subcourtId: bigint) {
   const liquidInfo = getContractInfo("KlerosLiquid", chainId);
   if (!liquidInfo.address) {
     throw new Error(`KlerosLiquid not deployed on chain ${chainId}`);
@@ -111,4 +110,4 @@ export const getCurrentStake = cache(async (address: Address, chainId: Supported
   });
 
   return stake as bigint;
-});
+}
