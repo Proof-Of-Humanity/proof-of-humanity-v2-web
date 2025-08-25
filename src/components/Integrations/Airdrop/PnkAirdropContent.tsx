@@ -12,6 +12,7 @@ import { useAccount, useChainId } from "wagmi";
 import { useQuery } from "@tanstack/react-query";
 import { getProcessedAirdropData, type ProcessedAirdropData } from "data/airdrop";
 import type { Address } from "viem";
+import ExternalLink from "components/ExternalLink";
 
 export interface PnkAirdropClientProps {
   integration: Integration;
@@ -43,7 +44,7 @@ export default function PnkAirdropContent({ integration, contractData, airdropCh
         <div className="flex flex-col justify-center items-center px-4 py-2 md:px-8 md:py-4 space-y-4">
           {!slidesCompleted && integration.firstInfoSlide ? (
             <>
-              <div className="text-orange text-center text-md">Learn more about Kleros to unlock the airdrop</div>
+              <ExternalLink href="https://kleros.io/" className="text-orange text-center text-md">Learn More About Kleros to Unlock the Airdrop</ExternalLink>
               <KlerosInfoCard
                 slide={integration.firstInfoSlide[currentSlideIndex]}
                 previousStep={currentSlideIndex > 0}
@@ -95,8 +96,7 @@ export default function PnkAirdropContent({ integration, contractData, airdropCh
                     </p>
                   </div>
                   <div className="text-secondaryText text-sm leading-relaxed">
-                    By staking, you'll have the chance to be selected as a juror, earn arbitration fees, receive monthly
-                    rewards through the Juror Incentive Program and become eligible for our next airdrop.
+                  By staking PNK, you get the chance to be selected as a juror, earn arbitration fees, receive monthly rewards through the Juror Incentive Program and potentially qualify for our next airdrop.
                   </div>
                 </div>
                 <ClaimSection
