@@ -2,6 +2,7 @@ query Me($id: ID!) {
   claimer(id: $id) {
     registration {
       id
+      expirationTime
     }
     currentRequest {
       index
