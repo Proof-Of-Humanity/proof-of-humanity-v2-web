@@ -7,7 +7,7 @@ import usePoHWrite from "contracts/hooks/usePoHWrite";
 import { useLoading } from "hooks/useLoading";
 import { Hash, formatEther, parseEther } from "viem";
 import useChainParam from "hooks/useChainParam";
-import { useChainId } from "wagmi";
+import { useAccount, useBalance, useChainId } from "wagmi";
 import { formatEth } from "utils/misc";
 
 interface FundButtonProps {
@@ -26,6 +26,8 @@ const FundButton: React.FC<FundButtonProps> = ({
   const chain = useChainParam()!;
   const userChainId = useChainId();
   const [addedFundInput, setAddedFundInput] = useState("");
+  const {isConnected, address} = useAccount();
+  const { data: balanceData } = useBalance({ address, chainId: userChainId });
   const loading = useLoading();
   const [isLoading, loadingMessage] = loading.use();
 
@@ -68,7 +70,20 @@ const FundButton: React.FC<FundButtonProps> = ({
       args: [pohId, BigInt(index)],
     });
   };
-  const isDisabled = !addedFundInput|| isLoading || userChainId !== chain.id || parseEther(addedFundInput) > remainingAmount;
+  const inputAmount = parseEther(addedFundInput);
+  const insufficientFunds = useMemo(() => {
+    const available = balanceData?.value ?? 0n;
+    return inputAmount > available;
+  }, [inputAmount, balanceData, addedFundInput]);
+
+  const exceedsRemaining = inputAmount != null && inputAmount > remainingAmount;
+  const isDisabled =
+    !isConnected ||
+    !addedFundInput ||
+    isLoading ||
+    userChainId !== chain.id ||
+    exceedsRemaining ||
+    insufficientFunds;
 
   return (
     <Modal

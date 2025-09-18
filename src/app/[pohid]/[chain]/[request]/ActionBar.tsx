@@ -1,17 +1,17 @@
 "use client";
 
 import { enableReactUse } from "@legendapp/state/config/enableReactUse";
-import { useEffectOnce } from "@legendapp/state/react";
 import ExternalLink from "components/ExternalLink";
 import TimeAgo from "components/TimeAgo";
+import ActionButton from "components/ActionButton";
 import usePoHWrite from "contracts/hooks/usePoHWrite";
 import { ContractData } from "data/contract";
 import { getMyData } from "data/user";
 import { RequestQuery } from "generated/graphql";
 import useChainParam from "hooks/useChainParam";
-import { useLoading } from "hooks/useLoading";
 import useWeb3Loaded from "hooks/useWeb3Loaded";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "react-toastify";
 import useSWR from "swr";
 import { getStatusLabel, getStatusColor, RequestStatus } from "utils/status";
@@ -85,133 +85,99 @@ export default function ActionBar({
 }: ActionBarProps) {
   const chain = useChainParam()!;
   const { address } = useAccount();
-  const loading = useLoading();
-  const [pending] = loading.use();
   const web3Loaded = useWeb3Loaded();
   const userChainId = useChainId();
   const { data: me } = useSWR(address, getMyData);
+  const router = useRouter();
 
-  // const [prepareMulticallAdvance, multicallAdvanceFire] = useWagmiWrite(
-  //   "Multicall3",
-  //   "aggregate",
-  //   useMemo(
-  //     () => ({
-  //       onLoading() {
-  //         loading.start();
-  //       },
-  //     }),
-  //     [loading]
-  //   )
-  // );
+  const hasWarnedOffchain = useRef(false);
 
-  const errorRef = useRef(false);
-  const offChainRef = useRef(false);
-  const [action, setAction] = useState(ActionType.NONE);
-  const [canAdvance, setCanAdvance] = useState(true);
-  const [didIVouchFor, setDidIVouchFor] = useState(false);
-  const [isVouchOnchain, setIsVouchOnchain] = useState(false);
-
-  const handleDidIVouchFor = () => {
-    return (
-      onChainVouches.length + offChainVouches.length >= 0 &&
-      (onChainVouches.some((voucherAddress) => {
-        if (
-          voucherAddress.toLocaleLowerCase() === address?.toLocaleLowerCase()
-        ) {
-          setIsVouchOnchain(true);
-          return true;
-        }
-        setIsVouchOnchain(false);
-        return false;
-      }) ||
-        offChainVouches.some((voucher) => {
-          if (
-            voucher.voucher.toLocaleLowerCase() === address?.toLocaleLowerCase()
-          ) {
-            if (!offChainRef.current && userChainId === chain.id) {
-              toast.error("Off chain vouches cannot be removed");
-              offChainRef.current = true;
-            }
-            return true;
-          }
-          return false;
-        }))
+  const {didIVouchFor, isVouchOnchain} = useMemo(() => {
+    const lowerAddr = address?.toLowerCase();
+    const onChainMatch = onChainVouches.some(
+      (voucherAddress) => voucherAddress.toLowerCase() === lowerAddr,
     );
-  };
+    const offChainMatch = offChainVouches.some(
+      (voucher) => voucher.voucher.toLowerCase() === lowerAddr,
+    );
+    return { didIVouchFor: onChainMatch || offChainMatch, isVouchOnchain: onChainMatch };
+  }, [onChainVouches, offChainVouches, address]);
+
+  const action = useMemo(() => {
+    if (status === "resolved" || status === "withdrawn") return ActionType.NONE;
+    if (index < 0 && index > -100) return ActionType.OLD_ACTIVE;
+    if (status === "disputed") return ActionType.DISPUTED;
+    if (status === "vouching") {
+      if (funded < arbitrationCost + BigInt(contractData.baseDeposit)) return ActionType.FUND;
+      if (validVouches >= contractData.requiredNumberOfVouches) return ActionType.ADVANCE;
+      if (
+        onChainVouches.length + offChainVouches.length >= 0 &&
+        didIVouchFor &&
+        isVouchOnchain
+      )
+        return ActionType.REMOVE_VOUCH;
+      return ActionType.VOUCH;
+    }
+    if (status == "resolving")
+      return +lastStatusChange + +contractData.challengePeriodDuration < Date.now() / 1000
+        ? ActionType.EXECUTE
+        : ActionType.CHALLENGE;
+    return ActionType.NONE;
+  }, [
+    status,
+    index,
+    funded,
+    arbitrationCost,
+    contractData.baseDeposit,
+    validVouches,
+    contractData.requiredNumberOfVouches,
+    onChainVouches,
+    offChainVouches,
+    didIVouchFor,
+    isVouchOnchain,
+    lastStatusChange,
+    contractData.challengePeriodDuration,
+  ]);
+
+  const [canAdvance, setCanAdvance] = useState(true);
+
   useEffect(() => {
-    setDidIVouchFor(handleDidIVouchFor());
-  }, [address, action, requester, revocation, chain, userChainId]);
+    const shouldWarn = didIVouchFor && !isVouchOnchain && userChainId === chain.id;
+    if (shouldWarn && !hasWarnedOffchain.current) {
+      toast.error("Off chain vouches cannot be removed", { toastId: "offchain-vouch" });
+      hasWarnedOffchain.current = true;
+    }
+  }, [didIVouchFor, isVouchOnchain, userChainId, chain.id]);
 
-  useEffectOnce(() => {
-    const checkVouchStatus = async () => {
-      if (status === "resolved" || status === "withdrawn")
-        setAction(ActionType.NONE);
-      else if (index < 0 && index > -100) setAction(ActionType.OLD_ACTIVE);
-      else if (status === "disputed") setAction(ActionType.DISPUTED);
-      else if (status === "vouching") {
-        if (funded < arbitrationCost + BigInt(contractData.baseDeposit))
-          setAction(ActionType.FUND);
-        else if (
-          validVouches >= contractData.requiredNumberOfVouches
-        )
-          setAction(ActionType.ADVANCE);
-        else if (
-          onChainVouches.length + offChainVouches.length >= 0 &&
-          didIVouchFor &&
-          isVouchOnchain
-        )
-          setAction(ActionType.REMOVE_VOUCH);
-        else setAction(ActionType.VOUCH);
-      } else if (status == "resolving")
-        setAction(
-          +lastStatusChange + +contractData.challengePeriodDuration <
-            Date.now() / 1000
-            ? ActionType.EXECUTE
-            : ActionType.CHALLENGE,
-        );
-    };
-    checkVouchStatus();
-  });
 
-  const [prepareExecute, execute] = usePoHWrite(
+  const [prepareExecute, execute, executeStatus] = usePoHWrite(
     "executeRequest",
     useMemo(
       () => ({
         onError() {
           toast.error("Transaction rejected");
         },
-        onLoading() {
-          loading.start();
-          toast.info("Transaction pending");
-        },
         onSuccess() {
-          toast.success("Requested executed successfully");
+          toast.success("Request executed successfully");
+          setTimeout(() => router.refresh(), 500);
         },
       }),
-      [loading],
+      [router],
     ),
   );
-  const [prepareAdvance, advanceFire] = usePoHWrite(
+  const [prepareAdvance, advanceFire, advanceStatus] = usePoHWrite(
     "advanceState",
     useMemo(
       () => ({
         onError() {
           toast.error("Transaction rejected");
         },
-        onLoading() {
-          loading.start();
-          toast.info("Transaction pending");
-        },
         onSuccess() {
           toast.success("Request advanced to resolving state");
-        },
-        onFail() {
-          !errorRef.current && toast.error("Advance is not possible");
-          errorRef.current = true;
-          setCanAdvance(false);
+          setTimeout(() => router.refresh(), 500);
         },
       }),
-      [loading],
+      [router],
     ),
   );
   const [prepareWithdraw, withdraw] = usePoHWrite(
@@ -221,25 +187,23 @@ export default function ActionBar({
         onError() {
           toast.error("Transaction rejected");
         },
-        onLoading() {
-          loading.start();
-          toast.info("Transaction pending");
-        },
         onSuccess() {
           toast.success("Request withdrawn successfully");
         },
       }),
-      [loading],
+      [],
     ),
   );
-  const advance = useCallback(
-    () => advanceFire(),
-    // || multicallAdvanceFire
-    [
-      advanceFire,
-      //  multicallAdvanceFire
-    ],
-  );
+
+  const isAdvanceLoading =
+    advanceStatus.write === "pending" ||
+    (advanceStatus.write === "success" && advanceStatus.transaction === "pending");
+  const isExecuteLoading =
+    executeStatus.write === "pending" ||
+    (executeStatus.write === "success" && executeStatus.transaction === "pending");
+
+  const isAdvancePrepareError = advanceStatus.prepare === "error";
+  const isExecutePrepareError = executeStatus.prepare === "error";
 
   useEffect(() => {
     if (action === ActionType.ADVANCE && !revocation) {
@@ -410,13 +374,14 @@ export default function ActionBar({
                   userChainId={userChainId}
                 />
               ) : null}
-              <button
-                disabled={pending || userChainId !== chain.id || !canAdvance}
-                className="btn-main mb-2"
-                onClick={advance}
-              >
-                Advance
-              </button>
+              <ActionButton
+                disabled={isAdvancePrepareError || userChainId !== chain.id || !canAdvance}
+                isLoading={isAdvanceLoading}
+                onClick={advanceFire}
+                label={isAdvanceLoading ? "Advancing" : "Advance"}
+                tooltip={isAdvancePrepareError ? "Advance not possible, please try again" : undefined}
+                className="mb-2"
+              />
             </div>
           </>
         )}
@@ -424,15 +389,14 @@ export default function ActionBar({
           <>
             <span className="text-slate-400">Ready to finalize.</span>
             <div className="flex flex-col justify-between gap-4 font-normal md:flex-row md:items-center">
-              <button
-                disabled={pending || userChainId !== chain.id}
-                className="btn-main mb-2"
-                onClick={() => {
-                  execute();
-                }}
-              >
-                Execute
-              </button>
+              <ActionButton
+                disabled={isExecutePrepareError || userChainId !== chain.id}
+                isLoading={isExecuteLoading}
+                onClick={execute}
+                label={isExecuteLoading ? "Executing" : "Execute"}
+                tooltip={isExecutePrepareError ? "Execute not possible, please try again" : undefined}
+                className="mb-2"
+              />
             </div>
           </>
         )}
