@@ -4,6 +4,7 @@ export interface Integration {
   title: string;
   description: string;
   logo: string;
+  darkLogo?: string;
   isActive: boolean;
   startPath: string;
   headerTitle?: string;

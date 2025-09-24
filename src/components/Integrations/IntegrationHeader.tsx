@@ -1,19 +1,23 @@
+"use client";
 import React from 'react';
 import Image from 'next/image';
 import { Integration } from 'types/integrations';
+import {useIsDarkMode } from 'hooks/useDarkMode';
 
 interface IntegrationHeaderProps {
   integration: Integration;
 }
 
 export default function IntegrationHeader({ integration }: IntegrationHeaderProps) {
+  const isDark = useIsDarkMode();
+  const src = isDark && integration.darkLogo ? integration.darkLogo : integration.logo;
   return (
     <div className="flex flex-col paper">
       <div className="p-4 md:p-6">
         {integration.logo && (
           <div className="mb-4 ml-1">
             <Image
-              src={integration.logo}
+              src={src}
               alt={`${integration.name} logo`}
               width={164}
               height={48}
