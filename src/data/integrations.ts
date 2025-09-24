@@ -79,6 +79,7 @@ const integrations: Record<string, Integration> = {
     headerDescription: 'Welcome to the Proof of Humanity Verified 10K Campaign! To celebrate our growing community and promote the adoption of decentralized identity, we\'re rewarding the first 10,000 verified humans on the PoH v2 registry with PNK tokens.',
     description: 'Earn PNK tokens for being human.',
     logo: '/images/kleros-logo.png',
+    darkLogo: '/logo/kleros.svg',
     isActive: true,
     startPath: 'app/pnk-airdrop',
     buttonText: 'Start Now',
