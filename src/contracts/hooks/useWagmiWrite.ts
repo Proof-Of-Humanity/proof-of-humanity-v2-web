@@ -54,7 +54,7 @@ export default function useWagmiWrite<
     }
   } as any);
 
-  const { writeContract, data, status} = useWriteContract();
+  const { writeContract, data, status, error: writeError} = useWriteContract();
   const { status: transactionStatus } = useWaitForTransactionReceipt({
     hash: data,
   });
@@ -78,6 +78,7 @@ export default function useWagmiWrite<
   useEffect(() => {
     switch (status) {
       case "error":
+        console.log(writeError);
         effects?.onError?.();
         setEnabled(false);
     }
