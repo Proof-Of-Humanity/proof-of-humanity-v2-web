@@ -344,28 +344,27 @@ const Appeal: React.FC<AppealProps> = ({
           </div>
           <div className="flex items-center">
             <BulletedNumber number={2} />
-
-            <span className="mx-2 mt-2 text-sm">
-              Independent jurors evaluated the evidence, policy compliance, and
-              voted in favor of:{" "}
-              {currentRulingFormatted === SideEnum.challenger
-                ? "Challenger"
-                : currentRulingFormatted === SideEnum.claimer
-                  ? "Claimer"
-                  : "Shared"}
-              .
-              <div className="mt-[-1.4rem]">
-                <ExternalLink
-                  className="text-orange mx-2 flex flex-row flex-wrap justify-end gap-x-[8px] text-sm font-semibold leading-none hover:text-orange-500 md:gap-2 lg:gap-3"
-                  href={`https://resolve.kleros.io/${chainId}/cases/${currentChallenge.disputeId}`}
-                >
-                  <span className="mt-1 text-right text-sm font-semibold leading-none">
-                    Check how the jury voted
-                  </span>
-                  <Arrow />
-                </ExternalLink>
-              </div>
-            </span>
+            <div className="mx-2 mt-2 w-full text-sm flex flex-col md:flex-row md:items-start md:justify-between gap-2">
+              <span className="flex-1">
+                Independent jurors evaluated the evidence, policy compliance, and
+                voted in favor of:{" "}
+                {currentRulingFormatted === SideEnum.challenger
+                  ? "Challenger"
+                  : currentRulingFormatted === SideEnum.claimer
+                    ? "Claimer"
+                    : "Shared"}
+                .
+              </span>
+              <ExternalLink
+                className="text-orange flex flex-row items-center gap-x-2 text-sm font-semibold leading-none hover:text-orange-500 md:self-center"
+                href={`https://resolve.kleros.io/${chainId}/cases/${currentChallenge.disputeId}`}
+              >
+                <span className="text-right text-sm font-semibold leading-none">
+                  Check how the jury voted
+                </span>
+                <Arrow />
+              </ExternalLink>
+            </div>
           </div>
           <div className="flex items-center">
             <BulletedNumber number={3} current={!loosingSideHasEnd} />
