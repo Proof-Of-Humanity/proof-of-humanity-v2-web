@@ -108,11 +108,14 @@ export default function Vouch({
     });
   };
 
+  const isRegistrationValid = !me?.expirationTime ? false : me.expirationTime > Date.now() / 1000;
+
   return (
     web3Loaded &&
     me &&
     me.homeChain?.id === chain.id &&
-    me.pohId && (
+    me.pohId &&
+    isRegistrationValid && (
       <>
         <button className="btn-main mb-2" onClick={() => setIsOpen(true)}>
           Vouch
