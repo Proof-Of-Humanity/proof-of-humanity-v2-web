@@ -27,11 +27,7 @@ export const getMyData = async (account: string) => {
 
   const homeChain = supportedChains.find(
     (_,i) =>
-      !!res[i]?.claimer?.registration &&
-      !(
-        res[i]?.claimer?.registration?.expirationTime <
-        Date.now() / 1000
-      ),
+      !!res[i]?.claimer?.registration
   );
 
   const requestChain = supportedChains.find(
@@ -43,6 +39,10 @@ export const getMyData = async (account: string) => {
     pohId:
       homeChain &&
       res[supportedChains.indexOf(homeChain as any)].claimer!.registration!.id,
+    expirationTime:
+      homeChain &&
+      res[supportedChains.indexOf(homeChain as any)].claimer!.registration!
+        .expirationTime,
     currentRequest: requestChain && {
       chain: requestChain,
       ...res[supportedChains.indexOf(requestChain as any)].claimer!
