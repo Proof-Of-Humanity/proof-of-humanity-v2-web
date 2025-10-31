@@ -44,7 +44,7 @@ export default function PnkAirdropContent({ integration, contractData, airdropCh
         <div className="flex flex-col justify-center items-center px-4 py-2 md:px-8 md:py-4 space-y-4">
           {!slidesCompleted && integration.firstInfoSlide ? (
             <>
-              <ExternalLink href="https://kleros.io/" className="text-orange text-center text-md">Learn More About Kleros to Unlock the Airdrop</ExternalLink>
+              <ExternalLink href="https://kleros.io/" className="text-purple text-center text-md my-4">Learn more about Kleros to unlock the airdrop</ExternalLink>
               <KlerosInfoCard
                 slide={integration.firstInfoSlide[currentSlideIndex]}
                 previousStep={currentSlideIndex > 0}
@@ -72,11 +72,11 @@ export default function PnkAirdropContent({ integration, contractData, airdropCh
                     <FeatureList
                       items={[
                         {
-                          text: "Claim your PNK tokens",
+                          text: "Double your PNK airdrop by staking for 180 days.",
                           iconType: 'check'
                         },
                         {
-                          text: "Get additional PNK by staking:",
+                          text: "Earn extra monthly PNK by staking.",
                           iconType: 'check'
                         }
                       ]}
@@ -89,14 +89,14 @@ export default function PnkAirdropContent({ integration, contractData, airdropCh
                   <div className="text-xs text-purple mb-5 ml-2">
                     <div className="flex flex-wrap gap-1">
                       <span>Staking APY: {gnosisApy.toFixed(2)}% |</span>
-                      <span>Coherence Rewards (Humanity court): {formatEth(coherenceReward)} xDAI + PNK</span>
+                      <span>Coherence Rewards (Humanity Court): {formatEth(coherenceReward)} xDAI + PNK</span>
                     </div>  
                     <p className="mt-1 italic font-light">
                       (Values subject to change) The Coherence Rewards depend on how you vote.
                     </p>
                   </div>
                   <div className="text-secondaryText text-sm leading-relaxed">
-                  By staking PNK, you get the chance to be selected as a juror, earn arbitration fees, receive monthly rewards through the Juror Incentive Program and potentially qualify for our next airdrop.
+                  Stake your PNK to unlock real earning potential! By staking PNK, you can be selected as a juror, earn arbitration fees, receive monthly rewards through the Juror Incentive Program and qualify for the next airdrop if you remain staked in the court for at least 180 days.
                   </div>
                 </div>
                 <ClaimSection

@@ -94,12 +94,12 @@ import { extractErrorMessage } from "utils/errors";
 
         {/* Title */}
         <h2 className="text-primaryText text-2xl font-semibold mb-4">
-          Don't forget to subscribe for notifications!
+        Subscribe to Get Notified About Earning Opportunities
         </h2>
 
         {/* Description */}
         <p className="text-primaryText text-sm mb-4 leading-relaxed">
-          We'll remind you when your actions are required on the Humanity court, and send you notifications on key moments to help you achieve the best of Kleros.
+        Get real-time alerts when new juror opportunities go live.
         </p>
         
         <p className="text-secondaryText text-sm mb-6 leading-relaxed">
@@ -111,11 +111,11 @@ import { extractErrorMessage } from "utils/errors";
           <FeatureList
             items={[
               {
-                text: "Get a heads-up the moment you're drawn as a juror. No more missed cases, no more lost rewards.\nThe email address is used exclusively for notifications.",
+                text: "Never miss a chance to earn. We’ll notify you as soon as you’re drawn. Your email will only be used for important updates.",
                 iconType: 'check'
               },
               {
-                text: "Voting on time = getting paid.",
+                text: "Voting coherently + voting on time = getting paid",
                 iconType: 'check'
               }
             ]}
