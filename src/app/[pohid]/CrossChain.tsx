@@ -11,9 +11,9 @@ import {
   idToChain,
   supportedChains,
 } from "config/chains";
-import { Contract, CreationBlockNumber } from "contracts";
-import abis from "contracts/abis";
-import gnosisAmbHelper from "contracts/abis/gnosis-amb-helper";
+import { CreationBlockNumber } from "contracts";
+
+import { getContractInfo } from "contracts";
 import useCCPoHWrite from "contracts/hooks/useCCPoHWrite";
 import useRelayWrite from "contracts/hooks/useRelayWrite";
 import { ContractData } from "data/contract";
@@ -127,12 +127,10 @@ export default function CrossChain({
         chain: supportedChains[sendingChainId],
         transport: http(getChainRpc(sendingChainId)),
       });
-      const sendingCCPoHAddress = Contract.CrossChainProofOfHumanity[
-        sendingChainId
-      ] as Address;
+      const sendingCCPoHAddress = getContractInfo("CrossChainProofOfHumanity", sendingChainId).address as Address;
       const allSendingTxs = await publicClientSending.getContractEvents({
         address: sendingCCPoHAddress,
-        abi: abis.CrossChainProofOfHumanity,
+        abi: getContractInfo("CrossChainProofOfHumanity", sendingChainId).abi,
         eventName: "UpdateInitiated",
         fromBlock: CreationBlockNumber.CrossChainProofOfHumanity[
           sendingChainId
@@ -167,12 +165,10 @@ export default function CrossChain({
         chain: supportedChains[chainId],
         transport: http(getChainRpc(chainId)),
       });
-      const receivingCCPoHAddress = Contract.CrossChainProofOfHumanity[
-        chainId
-      ] as Address;
+      const receivingCCPoHAddress = getContractInfo("CrossChainProofOfHumanity", chainId).address as Address;
       const allReceivingTxs = await publicClientReceiving.getContractEvents({
         address: receivingCCPoHAddress,
-        abi: abis.CrossChainProofOfHumanity,
+        abi: getContractInfo("CrossChainProofOfHumanity", chainId).abi,
         eventName: "UpdateReceived",
         fromBlock: CreationBlockNumber.CrossChainProofOfHumanity[
           chainId
@@ -247,9 +243,8 @@ export default function CrossChain({
               onClick={async () => {
                 await pendingRelayUpdate.publicClientSide
                   .readContract({
-                    address:
-                      Contract.GnosisAMBHelper[pendingRelayUpdate.sideChainId],
-                    abi: gnosisAmbHelper,
+                    address: getContractInfo("GnosisAMBHelper", pendingRelayUpdate.sideChainId).address as `0x${string}`,
+                    abi: getContractInfo("GnosisAMBHelper", pendingRelayUpdate.sideChainId).abi,
                     functionName: "getSignatures",
                     args: [pendingRelayUpdate.encodedData],
                   })
@@ -385,14 +380,13 @@ export default function CrossChain({
                         <button
                           className="text-blue-500 underline underline-offset-2"
                           onClick={async () => {
+                            const contractAddress = getContractInfo("CrossChainProofOfHumanity", chain.id).address;
                             const gatewayForChain = contractData[
                               homeChain.id
                             ].gateways.find(
                               (gateway) =>
                                 gateway.foreignProxy ===
-                                Contract.CrossChainProofOfHumanity[
-                                  chain.id
-                                ]?.toLowerCase(),
+                                (contractAddress ? contractAddress.toLowerCase() : undefined),
                             );
 
                             if (!gatewayForChain) return;
@@ -436,50 +430,21 @@ export default function CrossChain({
                 <button
                   className="text-blue-500 underline underline-offset-2"
                   onClick={async () => {
-                    if (!lastTransfer?.transferHash || !lastTransferChain) {
-                      toast.error("Transfer data not available");
-                      return;
-                    }
-                    try {
-                      const transferTimestamp = Number(
-                        lastTransfer.transferTimestamp,
-                      );
-
-                      const currentBlock = await publicClient.getBlockNumber();
-                      const currentBlockData = await publicClient.getBlock({
-                        blockNumber: currentBlock,
-                      });
-                      const currentTimestamp = Number(currentBlockData.timestamp);
-                      const avgBlockTime = 5; // Average block time for gnosis
-                      const timeDiff = currentTimestamp - transferTimestamp;
-                      const estimatedBlockDiff = Math.floor(timeDiff / avgBlockTime);
-                      const targetBlock = currentBlock - BigInt(estimatedBlockDiff);
-
-                      const fromBlock = targetBlock > 1000n ? targetBlock - 1000n : 1n;
-                      const toBlock = targetBlock + 1000n;
-                      console.log("fromBlock", fromBlock, "toBlock", toBlock, "targetBlock", targetBlock, "currentBlock", currentBlock);
-                      const transferEvents = await publicClient.getContractEvents({
-                        address:
-                          Contract.CrossChainProofOfHumanity[lastTransferChain.id] as Address,
-                        abi: abis.CrossChainProofOfHumanity,
-                        eventName: "TransferInitiated",
-                        fromBlock,
-                        toBlock,
-                        strict: true,
-                        args: { humanityId: pohId },
-                      });
-
-                      const matchingEvent = transferEvents.find(
-                        (event) =>
-                          event.args.transferHash === lastTransfer.transferHash,
-                      );
-
-                      if (!matchingEvent) {
-                        toast.error(
-                          "Transfer transaction not found in recent blocks.",
-                        );
-                        return;
-                      }
+                    const address = getContractInfo("CrossChainProofOfHumanity", lastTransferChain.id).address as Address;
+                    const allTxs = await publicClient.getContractEvents({
+                      address: address,
+                      abi: getContractInfo("CrossChainProofOfHumanity", lastTransferChain.id).abi,
+                      eventName: "TransferInitiated",
+                      fromBlock: CreationBlockNumber.CrossChainProofOfHumanity[
+                        lastTransferChain.id
+                      ] as bigint,
+                      strict: true,
+                      args: { humanityId: pohId },
+                    });
+                    const txHash = allTxs.find(
+                      (tx: any) =>
+                        tx.args.transferHash === lastTransfer?.transferHash,
+                    )?.transactionHash;
 
                       const tx = await publicClient.getTransactionReceipt({
                         hash: matchingEvent.transactionHash,
@@ -491,31 +456,23 @@ export default function CrossChain({
                       const encodedData =
                         `0x${data?.substring(130, subEnd)}` as `0x${string}`;
 
-                      await publicClient
-                        .readContract({
-                          address:
-                            Contract.GnosisAMBHelper[lastTransferChain.id],
-                          abi: gnosisAmbHelper,
-                          functionName: "getSignatures",
-                          args: [encodedData],
-                        })
-                        .then((signatures) => {
-                          prepareRelayWrite({
-                            args: [encodedData, signatures],
-                          });
-                        })
-                        .catch(() => {
-                          toast.info(
-                            "Confirmation takes around 10 minutes. Come back later.",
-                          );
+                    await publicClient
+                      .readContract({
+                        address: getContractInfo("GnosisAMBHelper", lastTransferChain.id).address as `0x${string}`,
+                        abi: getContractInfo("GnosisAMBHelper", lastTransferChain.id).abi,
+                        functionName: "getSignatures",
+                        args: [encodedData],
+                      })
+                      .then((signatures) => {
+                        prepareRelayWrite({
+                          args: [encodedData, signatures as `0x${string}`],
                         });
-                    } catch (error) {
-                      console.error(
-                        "Error while relaying transfer:",
-                        error,
-                      );
-                      toast.error("Failed to relay transfer.");
-                    }
+                      })
+                      .catch((e) => {
+                        toast.info(
+                          "Confirmation takes around 10 minutes. Come back later",
+                        );
+                      });
                   }}
                 >
                   Relay Transferring Profile

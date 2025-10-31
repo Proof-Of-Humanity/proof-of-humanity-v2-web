@@ -131,7 +131,7 @@ export default function useCirclesIntegration() {
       }
 
       writeLink({
-        args: [currentHumanityId, walletAddress.trim()], 
+        args: [currentHumanityId as `0x${string}`, walletAddress.trim() as `0x${string}`], 
       });
     } catch (error) {
       loading.stop();
@@ -155,7 +155,7 @@ export default function useCirclesIntegration() {
       }
       loading.start();
       writeRenew({
-        args: [currentHumanityId], 
+        args: [currentHumanityId as `0x${string}`], 
       });
     } catch (error) {
       loading.stop();

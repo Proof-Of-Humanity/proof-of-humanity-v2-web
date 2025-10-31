@@ -26,8 +26,10 @@ export const getMyData = async (account: string) => {
   sanitize(res);
 
   const homeChain = supportedChains.find(
-    (_, i) => res[i].claimer?.registration,
+    (_,i) =>
+      !!res[i]?.claimer?.registration
   );
+
   const requestChain = supportedChains.find(
     (_, i) => res[i].claimer?.currentRequest,
   );
@@ -37,6 +39,10 @@ export const getMyData = async (account: string) => {
     pohId:
       homeChain &&
       res[supportedChains.indexOf(homeChain as any)].claimer!.registration!.id,
+    expirationTime:
+      homeChain &&
+      res[supportedChains.indexOf(homeChain as any)].claimer!.registration!
+        .expirationTime,
     currentRequest: requestChain && {
       chain: requestChain,
       ...res[supportedChains.indexOf(requestChain as any)].claimer!
