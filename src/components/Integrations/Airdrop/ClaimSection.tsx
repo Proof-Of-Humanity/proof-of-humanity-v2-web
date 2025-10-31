@@ -18,6 +18,7 @@ import { idToChain, SupportedChainId } from "config/chains";
 import { getHumanitySubCourtId } from "data/kleros";
 import PnkDisplay from "components/Integrations/Airdrop/PnkDisplay";
 import { ChainSet, configSetSelection } from "contracts";
+import { useRouter } from "next/navigation";
 
 export type EligibilityStatus = "disconnected" | "wrong-chain" | "eligible" | "not-eligible" | "claimed" | "error";
  
@@ -65,6 +66,7 @@ export default function ClaimSection({ amountPerClaim, airdropChainId, eligibili
   const { address, isConnected } = useAccount();
   const chainId = useChainId();
   const { switchChain } = useSwitchChain();
+  const router = useRouter();
 
   const humanitySubcourtId = getHumanitySubCourtId(airdropChainId);
   const { data: currentStake = 0n, isLoading: isStakeLoading, error: stakeError } = useQuery<bigint>({
@@ -184,9 +186,10 @@ export default function ClaimSection({ amountPerClaim, airdropChainId, eligibili
         case "not-eligible":
         default:
           return {
-            onClick: () => {},
-            label: "Claim & Stake",
-            disabled: true,
+            onClick: () => {
+              router.push(`/${address}/claim`);
+            },
+            label: "Register",
           };
       }
     };
@@ -222,7 +225,7 @@ export default function ClaimSection({ amountPerClaim, airdropChainId, eligibili
         return {
           icon: <CrossCircle16Icon width={16} height={16} className="fill-status-removed" />,
           text: "Not eligible:",
-          subText: "You need to be an included profile",
+          subText: "You need to be a verified human",
           textColor: "text-status-removed",
         };
       case "wrong-chain":

@@ -6,6 +6,7 @@ import RightArrowIcon from "icons/ArrowCircleRight.svg";
 import { InfoSlide } from "types/integrations";
 import { addLinkToText } from "components/addLinkToText";
 import FeatureList, { FeatureItem } from "components/FeatureList";
+import BecomeJurorCard from "components/Integrations/Airdrop/BecomeJurorCard";
 
 export type KlerosInfoCardProps = {
   slide: InfoSlide;
@@ -22,6 +23,18 @@ const KlerosInfoCard: React.FC<KlerosInfoCardProps> = ({
   onPrevious,
   onNext,
 }) => {
+  // Use special component for "becomeJuror" slide
+  if (slide.id === "becomeJuror") {
+    return (
+      <BecomeJurorCard
+        slide={slide}
+        previousStep={previousStep}
+        nextStep={nextStep}
+        onPrevious={onPrevious}
+        onNext={onNext}
+      />
+    );
+  }
 
   return (
     <div className="flex flex-col border rounded-[30px] shadow w-full max-w-[1095px] h-auto lg:h-[1035px] mx-auto">
