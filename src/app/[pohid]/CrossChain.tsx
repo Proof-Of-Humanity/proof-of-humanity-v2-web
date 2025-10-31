@@ -446,16 +446,15 @@ export default function CrossChain({
                         tx.args.transferHash === lastTransfer?.transferHash,
                     )?.transactionHash;
 
-                    const tx = await publicClient.getTransactionReceipt({
-                      hash: txHash!,
-                    });
-                    const data = tx.logs.at(1)?.data;
+                      const tx = await publicClient.getTransactionReceipt({
+                        hash: matchingEvent.transactionHash,
+                      });
+                      const data = tx.logs.at(1)?.data;
 
-                    // Encoded data has a different length in Gnosis compared to Chiado
-                    const subEnd =
-                      lastTransferChain.id === gnosisChiado.id ? 754 : 748;
-                    const encodedData =
-                      `0x${data?.substring(130, subEnd)}` as `0x${string}`;
+                      const subEnd =
+                        lastTransferChain.id === gnosisChiado.id ? 754 : 748;
+                      const encodedData =
+                        `0x${data?.substring(130, subEnd)}` as `0x${string}`;
 
                     await publicClient
                       .readContract({
