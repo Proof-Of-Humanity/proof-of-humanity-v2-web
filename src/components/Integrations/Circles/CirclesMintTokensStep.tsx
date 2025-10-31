@@ -22,7 +22,7 @@ export default function CirclesMintTokensStep({
   
   return (
     <Accordion 
-      title="Step 3 - Mint your POH Circles group tokens" 
+      title="Step 3 - Join our group on Metri and earn $CRC" 
       className="w-full"
       isOpen={isOpen}
       onToggle={onToggle}
