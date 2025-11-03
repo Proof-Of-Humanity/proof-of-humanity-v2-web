@@ -36,6 +36,7 @@ const ProcessStepCard: React.FC<ProcessStepCardProps> = ({
       <div className="p-4 md:p-6 flex flex-col flex-1 bg-primaryBackground rounded-[30px]">
         <p className="text-primaryText text-xl md:text-2xl font-semibold">{step.title}</p>
         <p className="text-primaryText mt-4 flex-1 text-sm md:text-base">{addLinkToText(step.description)}</p>
+        {(previousStep || nextStep) && (
         <div className="flex mt-4 md:mt-6 space-x-2 md:space-x-4">
           <LeftArrowIcon 
             width={32} 
@@ -58,6 +59,7 @@ const ProcessStepCard: React.FC<ProcessStepCardProps> = ({
             tabIndex={nextStep ? 0 : -1}
           />
         </div>
+        )}
       </div>
     </div>
   );

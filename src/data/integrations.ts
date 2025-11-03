@@ -27,7 +27,7 @@ const integrations: Record<string, Integration> = {
         id: 'activateAccount',
         title: 'Activate your account',
         description: 'Share your QR code with an existing user to activate your account. Post your link on the |Circles Telegram community;https://t.me/about_circles| ↗️, and ask to get invited!',
-        disclaimer: 'IMPORTANT: You need to be invited into Circles to be able to join the POH-circles group.',
+        disclaimer: 'IMPORTANT: You need to be invited into Circles to be able to join the group.',
         image: '/images/integrations/circles-activate-account.png',
       },
       {
@@ -44,30 +44,30 @@ const integrations: Record<string, Integration> = {
       }
     ],
     mintSteps: [
-      {
-        id: 'collectCRC',
-        title: 'Collecting CRC',
-        description: 'Once your Circles account is created you get 24 CRC (individual tokens) per day — one every hour. To mint POH Circles group tokens, sign in to |Circles UI;https://app.aboutcircles.com|, go to Contacts at the top, then select the POH Minter.',
-        image: '/images/integrations/collect-crc.png',
-      },
-      {
-        id: 'selectPOHMinter',
-        title: 'Selecting the POH Minter',
-        description: 'The POH Minter transforms individual tokens into POH Circles group tokens. Click Send and select your personal tokens to start minting.',
-        image: '/images/integrations/select-poh-minter.png',
-      },
+      // {
+      //   id: 'collectCRC',
+      //   title: 'Collecting CRC',
+      //   description: 'Once your Circles account is created you get 24 CRC (individual tokens) per day — one every hour. To mint POH Circles group tokens, sign in to |Circles UI;https://app.aboutcircles.com|, go to Contacts at the top, then select the POH Minter.',
+      //   image: '/images/integrations/collect-crc.png',
+      // },
+      // {
+      //   id: 'selectPOHMinter',
+      //   title: 'Selecting the POH Minter',
+      //   description: 'The POH Minter transforms individual tokens into POH Circles group tokens. Click Send and select your personal tokens to start minting.',
+      //   image: '/images/integrations/select-poh-minter.png',
+      // },
       {
         id: 'mintGroupTokens',
         title: 'Minting our group $CRC tokens',
         description: 'Once you join the Metri App, you get 24 CRC (individual tokens) per day — one every hour. To mint our group\'s own $CRC tokens, use your phone to scan the QR code above, and swap your individual $CRCs for our group tokens.\n\nTo do this via the Metri app: visit your wallet balance, and \'Send\' the desired amount of individual $CRC you want to swap, to our group. You\'ll receive your group $CRC instantly.\n\nWe have benefits incoming for the largest holders of our group $CRC, soon!',
         image: '/images/integrations/mint-qr-code.png',
       },
-      {
-        id: 'success',
-        title: 'Success!',
-        description: 'Congratulations! You now have POH Circles group tokens.',
-        image: '/images/integrations/circles-success.png',
-      }
+      // {
+      //   id: 'success',
+      //   title: 'Success!',
+      //   description: 'Congratulations! You now have POH Circles group tokens.',
+      //   image: '/images/integrations/circles-success.png',
+      // }
     ],
   },
 };
