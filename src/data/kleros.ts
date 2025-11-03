@@ -18,6 +18,7 @@ const CONTRACTS = {
 
 const API_ENDPOINTS = {
   KLEROSBOARD_GNOSIS: "https://api.studio.thegraph.com/query/66145/klerosboard-gnosis/version/latest",
+  KLEROSBOARD_MAINNET: "https://api.studio.thegraph.com/query/66145/klerosboard-mainnet/version/latest",
   CLAIM_MODAL_RAW_URL: "https://raw.githubusercontent.com/kleros/court/master/src/components/claim-modal.js",
   IPFS_CDN_BASE: "https://cdn.kleros.link/ipfs",
 } as const;
@@ -25,9 +26,9 @@ const API_ENDPOINTS = {
 // Configuration constants
 const CONFIG = {
   GNOSIS_REWARD_SPLIT: 0.1, // 10% to Gnosis, 90% to Mainnet
-  KIP66_START_DATE: new Date(2023, 11, 1),
-  KIP66_INITIAL_TARGET: 0.28,
-  KIP66_MONTHLY_INCREMENT: 0.01,
+  KIP66_START_DATE: new Date(2025, 8, 1),
+  KIP66_INITIAL_TARGET: 0.33,
+  KIP66_MONTHLY_INCREMENT: 0.002,
   KIP66_MAX_TARGET: 0.5,
   TOKEN_DECIMALS: 1e18,
   MONTHS_PER_YEAR: 12,
@@ -219,30 +220,89 @@ async function getTotalStakedOnGnosis(): Promise<number> {
 }
 
 /**
- * Calculates the actual PNK supply (total supply minus coop multisig balance)
+ * Fetches the total amount of PNK staked on Mainnet
  */
-async function getActualPnkSupply(): Promise<number> {
+async function getTotalStakedOnMainnet(): Promise<number> {
+  // Try GraphQL API first
+  try {
+    const res = await fetch(API_ENDPOINTS.KLEROSBOARD_MAINNET, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ query: "{ klerosCounters { tokenStaked } }" }),
+    });
+    const data = await res.json() as KlerosGraphResponse;
+    const weiStr = data?.data?.klerosCounters?.[0]?.tokenStaked;
+    
+    if (typeof weiStr === "string") {
+      return Number(BigInt(weiStr)) / CONFIG.TOKEN_DECIMALS;
+    }
+  } catch {
+    // Fallback to snapshot data below
+  }
+
+  // Fallback to snapshot data
+  const claimModalSrc = await (await fetch(API_ENDPOINTS.CLAIM_MODAL_RAW_URL)).text();
+
+  const tryMonth = async (m: string, y: string): Promise<number | null> => {
+    const reg = new RegExp(`"(?<cid>[a-zA-Z0-9]*)/snapshot-${y}-${m}\\.json"`, "g");
+    const matches = Array.from(claimModalSrc.matchAll(reg));
+    
+    for (const match of matches) {
+      const url = `${API_ENDPOINTS.IPFS_CDN_BASE}/${match.groups?.cid}/snapshot-${y}-${m}.json`;
+      try {
+        const json = await (await fetch(url)).json() as SnapshotData;
+        const hex = json?.averageTotalStaked?.hex;
+        if (hex) {
+          return Number(BigInt(hex)) / CONFIG.TOKEN_DECIMALS;
+        }
+      } catch {
+        continue;
+      }
+    }
+    return null;
+  };
+
+  // Try current month first, then previous month
+  const { month, year } = getPreviousMonthAndYear();
+  let staked = await tryMonth(month, year);
+  if (staked !== null) return staked;
+
+  const prev = getPreviousMonthAndYear(new Date(Number(year), Number(month) - 1, 1));
+  staked = await tryMonth(prev.month, prev.year);
+  if (staked !== null) return staked;
+
+  throw new Error("Could not fetch total staked for Mainnet");
+}
+
+/**
+ * Fetches the total amount of PNK staked across Mainnet and Gnosis
+ */
+async function getTotalStakedAllChains(): Promise<number> {
+  const [mainnet, gnosis] = await Promise.all([
+    getTotalStakedOnMainnet().catch(() => 0),
+    getTotalStakedOnGnosis().catch(() => 0),
+  ]);
+  return mainnet + gnosis;
+}
+
+// (removed) getActualPnkSupply to match script behavior: we use totalSupply without deductions
+
+/**
+ * Fetches the total PNK supply (matches script behavior: no coop deduction)
+ */
+async function getTotalPnkSupply(): Promise<number> {
   const publicClient = createPublicClient({
     chain: mainnet,
     transport: http(getChainRpc(mainnet.id)),
   });
-  
-  const [totalSupply, coopBalance] = await Promise.all([
-    publicClient.readContract({ 
-      address: CONTRACTS.PNK_MAINNET_ADDRESS, 
-      abi: erc20Abi, 
-      functionName: "totalSupply" 
-    }),
-    publicClient.readContract({ 
-      address: CONTRACTS.PNK_MAINNET_ADDRESS, 
-      abi: erc20Abi, 
-      functionName: "balanceOf", 
-      args: [CONTRACTS.COOP_MULTISIG] 
-    }),
-  ]);
-  
-  const actualSupplyWei = (totalSupply as bigint) - (coopBalance as bigint);
-  return Number(actualSupplyWei) / CONFIG.TOKEN_DECIMALS;
+
+  const totalSupply = await publicClient.readContract({
+    address: CONTRACTS.PNK_MAINNET_ADDRESS,
+    abi: erc20Abi,
+    functionName: "totalSupply",
+  });
+
+  return Number(totalSupply as bigint) / CONFIG.TOKEN_DECIMALS;
 }
 
 /**
@@ -250,19 +310,16 @@ async function getActualPnkSupply(): Promise<number> {
  * @returns The APY as a percentage
  */
 export async function computeGnosisAPY(): Promise<number> {
-  const [totalStaked, lastMonthReward, actualSupply] = await Promise.all([
-    getTotalStakedOnGnosis(),
+  const [totalSupply, totalStakedAllChains, lastMonthReward, gnosisStaked] = await Promise.all([
+    getTotalPnkSupply(),
+    getTotalStakedAllChains(),
     getLastMonthReward(),
-    getActualPnkSupply(),
+    getTotalStakedOnGnosis(),
   ]);
 
-  if (!totalStaked || totalStaked <= 0) {
-    return 0;
-  }
-
   const target = getKip66Target();
-  const currentStakedRate = totalStaked / actualSupply;
+  const currentStakedRate = totalStakedAllChains / totalSupply;
   const chainReward = CONFIG.GNOSIS_REWARD_SPLIT * lastMonthReward * (1 + target - currentStakedRate);
   
-  return (chainReward / totalStaked) * CONFIG.MONTHS_PER_YEAR * CONFIG.PERCENTAGE_MULTIPLIER;
+  return (chainReward / gnosisStaked) * CONFIG.MONTHS_PER_YEAR * CONFIG.PERCENTAGE_MULTIPLIER;
 }
