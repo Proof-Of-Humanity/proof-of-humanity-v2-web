@@ -1,8 +1,10 @@
+"use client";
+
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Ref, forwardRef } from "react";
-import { prettifyId } from "utils/identifier";
 import Options from "./Options";
+import RegisterLink from "./RegisterLink";
 import WalletSection from "./WalletSection";
 
 interface MobileMenuProps {
@@ -12,11 +14,13 @@ interface MobileMenuProps {
   address?: `0x${string}`;
   web3Loaded: boolean;
   isConnected: boolean;
+  pendingRegisterIntent: boolean;
+  setPendingRegisterIntent: (value: boolean) => void;
 }
 
 const MobileMenu = forwardRef(
   (
-    { policy, me, pathname, address, web3Loaded, isConnected }: MobileMenuProps,
+    { policy, me, pathname, address, web3Loaded, isConnected, pendingRegisterIntent, setPendingRegisterIntent }: MobileMenuProps,
     ref: Ref<HTMLDivElement>,
   ) => {
     const searchParams = useSearchParams();
@@ -31,28 +35,14 @@ const MobileMenu = forwardRef(
           <Link href="/" className={`${pathname === "/" ? "font-bold" : ""}`}>
             Profiles
           </Link>
-          {me &&
-            (me.pohId ? (
-              <Link
-                href={`/${prettifyId(me.pohId)}`}
-                className={`text-lg ${pathname === `/${prettifyId(me.pohId)}` ? "font-bold" : ""}`}
-              >
-                PoH ID
-              </Link>
-            ) : (
-              <Link
-                href={
-                  me.currentRequest
-                    ? `/${prettifyId(me.currentRequest.humanity.id)}/${
-                        me.currentRequest.chain.name
-                      }/${me.currentRequest.index}`
-                    : `/${prettifyId(address!)}/claim`
-                }
-                className={`text-lg ${pathname.includes("/claim") ? "font-bold" : ""}`}
-              >
-                Register
-              </Link>
-            ))}
+          <RegisterLink
+            me={me}
+            address={address}
+            pathname={pathname}
+            pendingRegisterIntent={pendingRegisterIntent}
+            setPendingRegisterIntent={setPendingRegisterIntent}
+            className={`text-lg ${pathname.includes("/claim") ? "font-bold" : ""}`}
+          />
           <Link
             href={`/attachment?url=${policy}`}
             className={`text-lg ${currentUrl?.includes(policy) ? "font-bold" : ""}`}
