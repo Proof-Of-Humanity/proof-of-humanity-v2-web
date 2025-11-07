@@ -204,25 +204,25 @@ export default function ActionBar({
 
   const isAdvancePrepareError = advanceStatus.prepare === "error";
   const isExecutePrepareError = executeStatus.prepare === "error";
-
   useEffect(() => {
+    if(!address || userChainId !== chain.id) return;
     if (action === ActionType.ADVANCE && !revocation) {
-      setCanAdvance(true);
-      prepareAdvance({
-        args: [
-          requester,
-          onChainVouches,
-          offChainVouches.map((v) => {
-            const sig = hexToSignature(v.signature);
-            return {
-              expirationTime: v.expiration,
-              v: Number(sig.v),
-              r: sig.r,
-              s: sig.s,
-            };
-          }),
-        ],
-      });
+        prepareAdvance({
+          args: [
+            requester,
+            onChainVouches,
+            offChainVouches.map((v) => {
+              const sig = hexToSignature(v.signature);
+              return {
+                expirationTime: v.expiration,
+                v: Number(sig.v),
+                r: sig.r,
+                s: sig.s,
+              };
+            }),
+          ],
+        });
+        setCanAdvance(true);
     }
     if (action === ActionType.EXECUTE){
       prepareExecute({ args: [pohId, BigInt(index)] });
