@@ -7,7 +7,9 @@ const integrations: Record<string, Integration> = {
     title: 'Connect your Circles Wallet',
     description: 'Join our Metri group, earn 24 $CRC/day, and mint our group $CRC for upcoming perks!',
     logo: '/images/integrations/circles-logo.png',
-    isActive: true,
+    logoWidth: 164,
+    logoHeight: 48,
+    isActive: false, // Temporarily disabled - App section not displayed in UI
     startPath: 'app/circles',
     buttonText: 'Start Now',
     firstInfoSlide: [
@@ -76,9 +78,11 @@ const integrations: Record<string, Integration> = {
     name: 'PNK Airdrop',
     title: 'PNK Airdrop',
     headerTitle: 'Register. Earn. Stake. Repeat. Start Your Passive Income Journey with PNK!',
-    headerDescription: 'Welcome to the Proof of Humanity Verified 10K Campaign! To celebrate the launch of Proof of Humanity v2 and our growing community, we’re rewarding the first 10,000 verified humans on the PoH v2 registry with PNK tokens, which will be staked on Kleros Court to become a juror!',
+    headerDescription: 'Welcome to the Proof of Humanity Verified 10K Campaign! To celebrate the launch of Proof of Humanity v2 and our growing community, we\'re rewarding the first 10,000 verified humans on the PoH v2 registry with PNK tokens, which will be staked on Kleros Court to become a juror!',
     description: 'Earn PNK tokens for being human.',
     logo: '/images/kleros-logo.png',
+    logoWidth: 164,
+    logoHeight: 48,
     darkLogo: '/logo/kleros.svg',
     isActive: true,
     startPath: 'app/pnk-airdrop',
@@ -125,6 +129,54 @@ const integrations: Record<string, Integration> = {
         bulletPoints: [
           'Stake > Judge > Earn > Repeat',
           '🌐 [Kleros.io](https://kleros.io) | 📚 [Documentation](https://docs.kleros.io) | 📊 [Klerosboard](https://klerosboard.com/1)'
+        ]
+      }
+    ]
+  },
+
+  'seer-credits': {
+    id: 'seer-credits',
+    name: 'Seer Credits',
+    title: 'Claim and use your Seer Credits',
+    description: 'Free credits every month to trade on Seer\'s prediction markets.',
+    logo: '/images/integrations/seer-logo.png',
+    logoWidth: 103,
+    logoHeight: 48,
+    isActive: true,
+    startPath: 'app/seer-credits',
+    buttonText: 'Start Now',
+    firstInfoSlide: [
+      {
+        id: 'whatIsSeer',
+        title: 'What is Seer?',
+        description: 'Seer is a prediction market platform that lets people predict outcomes and **earn based on how accurate** their predictions are.\n\nIn Seer, users can make predictions about future outcomes like "Will Bitcoin ever reach a new all-time high before the end of the year?" or "Who will win the 2028 presidential election?" and **earn** if their predictions turn out to be correct.\n\nThink of it as a community-driven way to forecast events, where the wisdom of the crowd determines the **most likely outcome.**',
+        image: '/images/integrations/seer-slide1.png',
+        imageHeight: 1094,
+        imageWidth: 601,
+      },
+      {
+        id: 'whyDifferent',
+        title: 'Why is Seer different?',
+        description: 'Unlike traditional betting or centralized platforms, Seer operates on smart contracts, meaning no middleman, no manipulation and no hidden rules. Every outcome is transparent and verified.\n\n• **Transparent**: Created on the chain your engagement of Seer\'s in and Customers Transparent.\n• **Fair**: Community driven pricing and outcomes\n• **Decentralized**: No single party controls the platform',
+        image: '/images/integrations/seer-slide2.png',
+        imageHeight: 906,
+        imageWidth: 566,
+      },
+      {
+        id: 'howToUse',
+        title: 'What are Seer Credits?',
+        description: 'Get monthly peer Credits to verified Proof of Humanity users to use on the Seer Prediction Market platform.\n\n• Use them live: Seer Credits are monthly rewards given to verified Proof of Humanity users to use on the Seer Prediction Market platform.\n• Join them live: Seer Credits and play fees at Seer markets. Seer Credits can play fees in Seer and starting your own spending your own crypto.\n• Expire monthly: Use it or lose it. All unused credits will refresh when the month ends. Unused credits expire when the next cycle begins.',
+        image: '/images/integrations/seer-slide3.png',
+        imageHeight: 901,
+        imageWidth: 322,
+      },
+      {
+        id: 'howToUseSeerCredits',
+        title: 'How to use your Seer Credits?',
+        description: '~~Make sure your profile is verified on Proof of Humanity. Only verified humans are eligible to receive Seer Credits!~~\n\n1. Go to Seer and connect your wallet address that\'s **registered** with your Proof of Humanity profile.\n2. Once connected, you\'ll be able to **check** your Seer Credits balance.\n3. Use your Seer Credits to **take positions** in prediction markets.\n\n**Note:** Your credits refresh every month, so you\'ll receive a new balance automatically. Use them before the month ends. Unused credits expire when the next cycle begins.',
+        image: '/images/integrations/seer-slide4.png',
+        bulletPoints: [
+         'Visit: [seer.pm](https://seer.pm/) | [Documentation](https://seer-3.gitbook.io/seer-documentation)'
         ]
       }
     ]
