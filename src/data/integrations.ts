@@ -9,7 +9,7 @@ const integrations: Record<string, Integration> = {
     logo: '/images/integrations/circles-logo.png',
     logoWidth: 164,
     logoHeight: 48,
-    isActive: false, // Temporarily disabled - App section not displayed in UI
+    isActive: true, // Temporarily disabled - App section not displayed in UI
     startPath: 'app/circles',
     buttonText: 'Start Now',
     firstInfoSlide: [
@@ -142,6 +142,7 @@ const integrations: Record<string, Integration> = {
     logo: '/images/integrations/seer-logo.png',
     logoWidth: 103,
     logoHeight: 48,
+    darkLogo: '/images/seer-logo-white.png',
     isActive: true,
     startPath: 'app/seer-credits',
     buttonText: 'Start Now',
@@ -151,30 +152,32 @@ const integrations: Record<string, Integration> = {
         title: 'What is Seer?',
         description: 'Seer is a prediction market platform that lets people predict outcomes and **earn based on how accurate** their predictions are.\n\nIn Seer, users can make predictions about future outcomes like "Will Bitcoin ever reach a new all-time high before the end of the year?" or "Who will win the 2028 presidential election?" and **earn** if their predictions turn out to be correct.\n\nThink of it as a community-driven way to forecast events, where the wisdom of the crowd determines the **most likely outcome.**',
         image: '/images/integrations/seer-slide1.png',
-        imageHeight: 1094,
-        imageWidth: 601,
+        imageHeight: 601,
+        imageWidth: 1094,
       },
       {
         id: 'whyDifferent',
         title: 'Why is Seer different?',
-        description: 'Unlike traditional betting or centralized platforms, Seer operates on smart contracts, meaning no middleman, no manipulation and no hidden rules. Every outcome is transparent and verified.\n\n• **Transparent**: Created on the chain your engagement of Seer\'s in and Customers Transparent.\n• **Fair**: Community driven pricing and outcomes\n• **Decentralized**: No single party controls the platform',
+        description: 'Unlike traditional betting or centralized platforms, Seer runs entirely on smart contracts, meaning no middlemen, **no manipulation and no hidden rules**. Every market is open, verifiable and secured.\n\n• **Transparent**: Enables the creation and management of diverse, trustless markets via Reality.eth and Conditional Tokens Framework.\n• **Fair**: Kleros acts as a decentralized arbiter to resolve disputes and ensure fair, transparent outcomes.\n• **Create Your Own Markets**: Allows users to create custom prediction markets for any event or topic.\n• **Fair Rewards**: Easily trade market outcomes and earn rewards through prediction farming.',
         image: '/images/integrations/seer-slide2.png',
-        imageHeight: 906,
-        imageWidth: 566,
+        imageHeight: 566,
+        imageWidth: 906,
       },
       {
         id: 'howToUse',
         title: 'What are Seer Credits?',
-        description: 'Get monthly peer Credits to verified Proof of Humanity users to use on the Seer Prediction Market platform.\n\n• Use them live: Seer Credits are monthly rewards given to verified Proof of Humanity users to use on the Seer Prediction Market platform.\n• Join them live: Seer Credits and play fees at Seer markets. Seer Credits can play fees in Seer and starting your own spending your own crypto.\n• Expire monthly: Use it or lose it. All unused credits will refresh when the month ends. Unused credits expire when the next cycle begins.',
+        description: '~~Get monthly Seer Credits to predict, play and earn on Seer!~~\n\n• Monthly rewards given to **verified Proof of Humanity users** to use on the Seer platform.\n• **Use them like trading funds.** Open/close positions and pay fees on Seer without spending your own crypto.\n• **They\'re not tokens.** They\'re non-transferable, and can\'t be withdrawn.\n• **Auto-refill.** A fresh balance appears at the start of each month.\n• **Expires monthly.** Use it or lose it at month-end; unused credits don\'t roll over.',
         image: '/images/integrations/seer-slide3.png',
-        imageHeight: 901,
-        imageWidth: 322,
+        imageHeight: 322,
+        imageWidth: 901,
       },
       {
         id: 'howToUseSeerCredits',
         title: 'How to use your Seer Credits?',
         description: '~~Make sure your profile is verified on Proof of Humanity. Only verified humans are eligible to receive Seer Credits!~~\n\n1. Go to Seer and connect your wallet address that\'s **registered** with your Proof of Humanity profile.\n2. Once connected, you\'ll be able to **check** your Seer Credits balance.\n3. Use your Seer Credits to **take positions** in prediction markets.\n\n**Note:** Your credits refresh every month, so you\'ll receive a new balance automatically. Use them before the month ends. Unused credits expire when the next cycle begins.',
         image: '/images/integrations/seer-slide4.png',
+        imageHeight: 508,
+        imageWidth: 425,
         bulletPoints: [
          'Visit: [seer.pm](https://seer.pm/) | [Documentation](https://seer-3.gitbook.io/seer-documentation)'
         ]

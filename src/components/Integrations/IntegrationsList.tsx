@@ -17,7 +17,7 @@ export default function IntegrationsList({ integrations }: IntegrationsListProps
   }
 
   return (
-    <div className="flex gap-6 justify-start">
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
       {integrations.map((integration) => (
         <IntegrationCard key={integration.id} integration={integration} />
       ))}

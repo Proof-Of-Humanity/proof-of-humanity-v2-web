@@ -13,6 +13,7 @@ export default function IntegrationCard({ integration }: IntegrationCardProps) {
   const router = useRouter();
   const isDark = useIsDarkMode();
   const src = isDark && integration.darkLogo ? integration.darkLogo : integration.logo;
+  console.log(src);
   const logoWidth = integration.logoWidth || 164;
   const logoHeight = integration.logoHeight || 48;
   
@@ -21,7 +22,7 @@ export default function IntegrationCard({ integration }: IntegrationCardProps) {
   };
   
   return (
-    <div className="flex flex-col paper w-full sm:w-[calc(50%-12px)] lg:w-[calc(50%-12px)] xl:w-[570px]">
+    <div className="flex flex-col paper w-full">
       <div className="p-4 md:p-6">
         {integration.logo && (
           <div className="mb-4 flex items-center" style={{ height: `${logoHeight}px` }}>

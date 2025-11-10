@@ -1,10 +1,18 @@
 "use client";
-import { useState } from "react";
+import { useState, useCallback, useMemo } from "react";
 import IntegrationHeader from "components/Integrations/IntegrationHeader";
 import ProcessStepCard from "components/Integrations/ProcessStepCard";
 import SeerStatusCard, { SeerEligibilityStatus } from "./SeerStatusCard";
 import type { Integration } from "types/integrations";
 import ExternalLink from "components/ExternalLink";
+import { useAccount, useChainId } from "wagmi";
+import { useAppKit } from "@reown/appkit/react";
+import { useQuery } from "@tanstack/react-query";
+import { prettifyId } from "utils/identifier";
+import { useRouter } from "next/navigation";
+import { sdk } from "config/subgraph";
+import { Address } from "viem";
+import { supportedChains, SupportedChainId } from "config/chains";
 
 interface SeerCreditsProps {
   integration: Integration;
@@ -12,28 +20,86 @@ interface SeerCreditsProps {
 
 export default function SeerCredits({ integration }: SeerCreditsProps) {
   const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
-  
-  // Hardcoded status for UI demo - will be replaced with actual logic later
-  const [eligibilityStatus] = useState<SeerEligibilityStatus>("disconnected");
+  const { address, isConnected } = useAccount();
+  const chainId = useChainId();
+  const modal = useAppKit();
+  const router = useRouter();
 
   const slidesCompleted = currentSlideIndex >= (integration.firstInfoSlide?.length ?? 0);
 
-  const handleActionClick = () => {
+  // Query to check if user has an included profile (checking registrations and cross-chain registrations)
+  const { data: userData, isLoading } = useQuery({
+    queryKey: ["seerEligibility", address, chainId],
+    queryFn: async () => {
+      if (!address) return null;
+      
+      const normalizedAddress = address.toLowerCase() as Address;
+      const now = Math.ceil(Date.now() / 1000);
+
+      const results = await Promise.all(
+        supportedChains.map(async (chain) => {
+          try {
+            const data = await sdk[chain.id as SupportedChainId].HumanityIdByClaimer({ 
+              address: normalizedAddress, 
+              now 
+            });
+
+            const localRegistration = data?.registrations?.[0];
+            if (localRegistration?.humanity?.id) {
+              return {
+                hasValidRegistration: true,
+                humanityId: localRegistration.humanity.id,
+                chainId: chain.id
+              };
+            }
+
+            const crossChainRegistration = data?.crossChainRegistrations?.[0];
+            if (crossChainRegistration?.id) {
+              return {
+                hasValidRegistration: true,
+                humanityId: crossChainRegistration.id,
+                chainId: chain.id
+              };
+            }
+            
+            return { hasValidRegistration: false, humanityId: null, chainId: chain.id };
+          } catch (error) {
+            console.error(`Error checking chain ${chain.id}:`, error);
+            return { hasValidRegistration: false, humanityId: null, chainId: chain.id };
+          }
+        })
+      );
+
+      return results.find(r => r.hasValidRegistration) || { hasValidRegistration: false, humanityId: null };
+    },
+    enabled: isConnected && !!address,
+  });
+
+
+  const eligibilityStatus: SeerEligibilityStatus = useMemo(() => {
+    if (!isConnected) return "disconnected";
+    if (isLoading) return "disconnected";
+    if (userData?.hasValidRegistration) {
+      return "eligible";
+    }
+    return "not-eligible";
+  }, [isConnected, isLoading, userData]);
+
+  const handleActionClick = useCallback(() => {
     switch (eligibilityStatus) {
       case "eligible":
-        // Navigate to Seer platform
         window.open("https://seer.pm", "_blank");
         break;
       case "not-eligible":
-        // Navigate to registration page
-        window.location.href = "/claim";
+        if (address) {
+          router.push(`/${prettifyId(address)}/claim`);
+        }
         break;
       case "disconnected":
-        // Connect wallet - placeholder for now
-        console.log("Connect wallet clicked");
+        modal.open({ view: "Connect" });
         break;
     }
-  };
+  }, [eligibilityStatus, modal, router, address]);
 
   return (
     <div className="flex flex-col w-full md:w-10/12 space-y-8">
@@ -51,21 +117,14 @@ export default function SeerCredits({ integration }: SeerCreditsProps) {
               <ProcessStepCard
                 step={integration.firstInfoSlide[currentSlideIndex]}
                 previousStep={currentSlideIndex > 0}
-                nextStep={currentSlideIndex < integration.firstInfoSlide.length - 1}
+                nextStep={currentSlideIndex <= integration.firstInfoSlide.length - 1}
                 onPrevious={() => setCurrentSlideIndex(currentSlideIndex - 1)}
-                onNext={() => {
-                  if (currentSlideIndex < integration.firstInfoSlide.length - 1) {
-                    setCurrentSlideIndex(currentSlideIndex + 1);
-                  } else {
-                    setCurrentSlideIndex(integration.firstInfoSlide.length);
-                  }
-                }}
+                onNext={() => setCurrentSlideIndex(currentSlideIndex + 1)}
               />
             </>
           ) : (
             <div className="w-full max-w-[1095px] mx-auto p-[1px] rounded-[30px] bg-gradient-to-br from-[#F9BFCE] to-[#BE75FF]">
               <div className="flex flex-col lg:flex-row rounded-[29px] bg-primaryBackground">
-                {/* Left Content Area */}
                 <div className="flex-1 p-6 lg:p-8">
                   <h2 className="text-primaryText text-xl md:text-2xl font-semibold mb-4">
                     Claim and use your Seer Credits
@@ -75,8 +134,7 @@ export default function SeerCredits({ integration }: SeerCreditsProps) {
                       To qualify, you must be an Included profile.
                     </p>
                   </div>
-                  
-                  {/* Main Description */}
+
                   <div className="space-y-4">
                     <p className="text-purple text-base md:text-lg font-semibold">
                       Get monthly Seer Credits to predict, play and earn on Seer!
@@ -96,10 +154,10 @@ export default function SeerCredits({ integration }: SeerCreditsProps) {
                   </div>
                 </div>
 
-                {/* Right Status Card */}
                 <SeerStatusCard
                   status={eligibilityStatus}
                   onActionClick={handleActionClick}
+                  isLoading={isLoading && isConnected}
                 />
               </div>
             </div>

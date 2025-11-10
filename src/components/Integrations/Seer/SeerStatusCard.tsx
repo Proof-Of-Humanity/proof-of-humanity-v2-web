@@ -1,9 +1,10 @@
 "use client";
 import React from 'react';
-import HourglassIcon from "icons/Hourglass.svg";
+import Image from "next/image";
 import CheckCircleIcon from "icons/CheckCircle.svg";
 import WarningCircle16Icon from "icons/WarningCircle16.svg";
 import ActionButton from "components/ActionButton";
+import CrossCircle16Icon from "icons/CrossCircle16.svg";
 
 export type SeerEligibilityStatus = "eligible" | "not-eligible" | "disconnected";
 
@@ -14,19 +15,16 @@ interface SeerStatusCardProps {
 }
 
 export default function SeerStatusCard({ status, onActionClick, isLoading = false }: SeerStatusCardProps) {
-  
   const getStatusDisplay = () => {
     switch (status) {
       case "eligible":
         return {
-          icon: <CheckCircleIcon width={64} height={64} className="fill-green-500" />,
           text: "Eligible: Included profile",
           textColor: "text-green-500",
           buttonLabel: "Go to Seer",
         };
       case "not-eligible":
         return {
-          icon: <HourglassIcon width={64} height={64} className="fill-orange" />,
           text: "You need to be an included profile",
           textColor: "text-orange",
           buttonLabel: "Register Now",
@@ -34,7 +32,6 @@ export default function SeerStatusCard({ status, onActionClick, isLoading = fals
       case "disconnected":
       default:
         return {
-          icon: <WarningCircle16Icon width={64} height={64} className="fill-orange" />,
           text: "Connect to check your eligibility",
           textColor: "text-orange",
           buttonLabel: "Connect wallet",
@@ -42,45 +39,67 @@ export default function SeerStatusCard({ status, onActionClick, isLoading = fals
     }
   };
 
-  const { icon, text, textColor, buttonLabel } = getStatusDisplay();
+  const { buttonLabel } = getStatusDisplay();
+
+  // Show loading state
+  if (isLoading) {
+    return (
+      <div className="lg:w-[391px] p-6 lg:p-8 bg-whiteBackground rounded-[30px] border-t-[1px] border-t-[#BE75FF] lg:border-t-0 lg:border-l-[1px] lg:border-l-[#BE75FF]">
+        <div className="text-center">
+          <p className="text-purple text-sm font-medium mb-6">Reward</p>
+          <h3 className="text-primaryText text-xl font-semibold mb-6">Seer Credits</h3>
+          <div className="flex items-center justify-center my-8">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple"></div>
+          </div>
+          <div className="text-secondaryText text-sm">
+            Checking eligibility...
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="flex flex-col items-center justify-center lg:w-[380px] p-6 lg:p-8 space-y-6">
-      {/* Header */}
+    <div className="lg:w-[391px] p-6 lg:p-8 bg-whiteBackground rounded-[30px] border-t-[1px] border-t-[#BE75FF] lg:border-t-0 lg:border-l-[1px] lg:border-l-[#BE75FF]">
       <div className="text-center">
         <p className="text-purple text-sm font-medium mb-1">Reward</p>
         <h3 className="text-primaryText text-xl font-semibold">Seer Credits</h3>
       </div>
 
-      {/* Icon */}
-      <div className="flex items-center justify-center">
-        {icon}
-      </div>
+      {status != "disconnected" ? <div className="flex items-center justify-center m-2">
+        <Image
+          src="/logo/seers-credit-logo.svg"
+          alt="Seer Credits"
+          width={64}
+          height={64}
+        />
+      </div>: <div className='h-[48px]'></div>}
 
-      {/* Status Text */}
       <div className="text-center">
         {status === "not-eligible" && (
-          <div className="flex items-center justify-center mb-2">
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="mr-1">
-              <circle cx="8" cy="8" r="7" stroke="currentColor" strokeWidth="2" className="text-red-500" />
-              <line x1="5" y1="8" x2="11" y2="8" stroke="currentColor" strokeWidth="2" className="text-red-500" />
-            </svg>
-            <span className="text-red-500 text-sm font-medium">Not eligible:</span>
+          <div className="mb-2">
+            <div className="flex items-center justify-center mb-1">
+              <CrossCircle16Icon width={16} height={16} className="fill-status-removed" />
+              <span className="text-red-500 text-sm font-medium ml-1">Not eligible:</span>
+            </div>
+            <p className="text-red-500 text-sm">You need to be an included profile</p>
           </div>
         )}
         {status === "eligible" && (
-          <div className="flex items-center justify-center mb-2">
+          <span className="flex items-center justify-center mb-2">
             <CheckCircleIcon width={16} height={16} className="fill-green-500 mr-1" />
-            <span className="text-green-500 text-sm font-medium">Eligible:</span>
-          </div>
+            <span className="text-green-500 text-sm font-medium">Eligible: Included profile</span>
+          </span>
         )}
         {status === "disconnected" && (
-          <div className="flex items-center justify-center mb-2">
-            <WarningCircle16Icon width={16} height={16} className="fill-orange mr-1" />
-            <span className="text-orange text-sm font-medium">Disconnected</span>
+          <div className="mb-2">
+            <div className="flex items-center justify-center mb-1">
+              <WarningCircle16Icon width={16} height={16} className="fill-orange" />
+              <span className="text-orange text-sm font-medium ml-1">Disconnected</span>
+            </div>
+            <p className="text-orange text-sm">Connect to check your eligibility</p>
           </div>
         )}
-        <p className={`${textColor} text-sm`}>{text}</p>
       </div>
 
       {/* Action Button */}

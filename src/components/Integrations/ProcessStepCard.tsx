@@ -24,14 +24,14 @@ const ProcessStepCard: React.FC<ProcessStepCardProps> = ({
 }) => {
 
   return (
-    <div className="flex flex-col border rounded-[30px] shadow">
-      <div className="flex justify-center w-full overflow-hidden rounded-t-[30px]">
+    <div className="flex h-full flex-col border rounded-[30px] shadow min-w-[1095px]">
+      <div className="flex justify-center items-center rounded-t-[30px] min-h-[300px] sm:min-h-[400px] md:min-h-[500px]">
         <Image
           src={step.image || ''}
           alt={step.title}
           width={step.imageWidth || 900}
           height={step.imageHeight || 521}
-          className="my-4 sm:my-6 md:my-8 rounded-md border-stroke border shadow"
+          className="my-4 sm:my-6 md:my-8 rounded-md border-stroke border shadow max-w-full h-auto"
         />
       </div>
       <div className="p-4 md:p-6 flex flex-col flex-1 bg-primaryBackground rounded-[30px]">
