@@ -102,7 +102,6 @@ export default function SeerStatusCard({ status, onActionClick, isLoading = fals
         )}
       </div>
 
-      {/* Action Button */}
       <div className="mt-6 flex justify-center w-full">
         <ActionButton
           onClick={onActionClick}

@@ -9,7 +9,7 @@ const integrations: Record<string, Integration> = {
     logo: '/images/integrations/circles-logo.png',
     logoWidth: 164,
     logoHeight: 48,
-    isActive: true, // Temporarily disabled - App section not displayed in UI
+    isActive: false, // Temporarily disabled - App section not displayed in UI
     startPath: 'app/circles',
     buttonText: 'Start Now',
     firstInfoSlide: [
@@ -84,7 +84,7 @@ const integrations: Record<string, Integration> = {
     logoWidth: 164,
     logoHeight: 48,
     darkLogo: '/logo/kleros.svg',
-    isActive: true,
+    isActive: false,
     startPath: 'app/pnk-airdrop',
     buttonText: 'Start Now',
     firstInfoSlide: [
