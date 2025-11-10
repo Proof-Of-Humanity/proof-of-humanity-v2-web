@@ -12,6 +12,7 @@ import "./globals.css";
 import AppKitProvider from "../context/AppKitProvider";
 import HashBasedRedirectHandler from "../components/HashBasedRedirectHandler";
 import { SettingsPopoverProvider } from "../context/SettingsPopoverContext";
+import AirdropBanner from "../components/AirdropBanner";
 
 export const metadata: Metadata = {
   title: "Proof of Humanity V2",
@@ -38,6 +39,7 @@ export default async function RootLayout({ children }: RootLayoutProps) {
         <AppKitProvider>
           <SettingsPopoverProvider>
             <HashBasedRedirectHandler />
+            <AirdropBanner />
             <Header policy={ipfs(policy)} />
             <main className="flex-grow">{children}</main>
             <Footer />
