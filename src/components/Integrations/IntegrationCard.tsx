@@ -13,7 +13,6 @@ export default function IntegrationCard({ integration }: IntegrationCardProps) {
   const router = useRouter();
   const isDark = useIsDarkMode();
   const src = isDark && integration.darkLogo ? integration.darkLogo : integration.logo;
-  console.log(src);
   const logoWidth = integration.logoWidth || 164;
   const logoHeight = integration.logoHeight || 48;
   
