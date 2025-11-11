@@ -88,7 +88,7 @@ export default function SeerCredits({ integration }: SeerCreditsProps) {
   const handleActionClick = useCallback(() => {
     switch (eligibilityStatus) {
       case "eligible":
-        window.open("https://seer.pm", "_blank");
+        window.open("https://app.seer.pm/", "_blank");
         break;
       case "not-eligible":
         if (address) {

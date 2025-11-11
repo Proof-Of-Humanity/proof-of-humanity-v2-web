@@ -158,7 +158,7 @@ const integrations: Record<string, Integration> = {
       {
         id: 'whyDifferent',
         title: 'Why is Seer different?',
-        description: 'Unlike traditional betting or centralized platforms, Seer runs entirely on smart contracts, meaning no middlemen, **no manipulation and no hidden rules**. Every market is open, verifiable and secured.\n\n• **Transparent**: Enables the creation and management of diverse, trustless markets via Reality.eth and Conditional Tokens Framework.\n• **Fair**: Kleros acts as a decentralized arbiter to resolve disputes and ensure fair, transparent outcomes.\n• **Create Your Own Markets**: Allows users to create custom prediction markets for any event or topic.\n• **Fair Rewards**: Easily trade market outcomes and earn rewards through prediction farming.',
+        description: 'Unlike traditional betting or centralized platforms, Seer runs entirely on smart contracts, meaning no middlemen, **no manipulation and no hidden rules**. Every market is open, verifiable and secured.\n\n• **Transparent**: Enables the creation and management of diverse, trustless markets via [Reality.eth](https://reality.eth.limo/app/docs/html/index.html) and [Conditional Tokens Framework](https://conditional-tokens-docs.netlify.app/docs/introduction1).\n• **Fair**: [Kleros](https://kleros.io/) acts as a decentralized arbiter to resolve disputes and ensure fair, transparent outcomes.\n• **Create Your Own Markets**: Allows users to create custom prediction markets for any event or topic.\n• **Fair Rewards**: Easily trade market outcomes and earn rewards through prediction farming.',
         image: '/images/integrations/seer-slide2.png',
         imageHeight: 566,
         imageWidth: 906,
