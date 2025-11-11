@@ -143,7 +143,6 @@ export default function useCirclesIntegration() {
     walletAddress,
     loading,
     currentHumanityId,
-    humanityStatus,
     writeLink,
     circlesChain.id,
   ]);

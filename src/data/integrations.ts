@@ -7,7 +7,7 @@ const integrations: Record<string, Integration> = {
     title: 'Connect your Circles Wallet',
     description: 'Join our Metri group, earn 24 $CRC/day, and mint our group $CRC for upcoming perks!',
     logo: '/images/integrations/circles-logo.png',
-    isActive: true, // Temporarily disabled - App section not displayed in UI
+    isActive: true,
     startPath: 'app/circles',
     buttonText: 'Start Now',
     connectionSteps: [
