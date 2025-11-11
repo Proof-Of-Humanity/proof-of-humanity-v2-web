@@ -9,9 +9,8 @@ interface CirclesAddressDisplayProps {
 
 export default function CirclesAddressDisplay({ walletAddress }: CirclesAddressDisplayProps) {
   if (!walletAddress) return null;
-  
-  const isMainnet = configSetSelection.chainSet === ChainSet.MAINNETS;
-  const circlesUrl = `https://${isMainnet ? '' : 'staging.'}circles.garden/profile/${walletAddress}`;
+
+  const circlesUrl = "https://app.metri.xyz";
   
   return (
     <div className="flex items-center flex-wrap text-primaryText">

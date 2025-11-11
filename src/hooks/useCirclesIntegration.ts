@@ -190,7 +190,7 @@ export default function useCirclesIntegration() {
     let disabled = disableButton || !isWalletAddressValid; 
     if (humanityStatus === "invalid") {
       return { 
-        onClick: () => toast.error("No valid humanity linked to current address"), 
+        onClick: () => toast.error("Verification required. Become a verified human on PoH, then paste your Circles wallet to link."), 
         label: defaultLabel,
         disabled: disabled 
       };

@@ -22,7 +22,7 @@ export default function CirclesCreateAccountStep({
   
   return (
     <Accordion 
-      title="Step 1 - Create your Circles Account" 
+      title="Step 1 - Create your Circles account and get invited" 
       className="w-full"
       isOpen={isOpen}
       onToggle={onToggle}
