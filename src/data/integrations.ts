@@ -80,7 +80,7 @@ const integrations: Record<string, Integration> = {
     description: 'Earn PNK tokens for being human.',
     logo: '/images/kleros-logo.png',
     darkLogo: '/logo/kleros.svg',
-    isActive: true,
+    isActive: false,
     startPath: 'app/pnk-airdrop',
     buttonText: 'Start Now',
     firstInfoSlide: [
