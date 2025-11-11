@@ -41,7 +41,7 @@ export default function CirclesLinkAccountStep({
 }: CirclesLinkAccountStepProps) {
   return (
     <Accordion 
-      title="Step 2 - Link Account" 
+      title="Step 2 - Link your Circles account" 
       className="w-full"
       isOpen={isOpen}
       onToggle={onToggle}
@@ -69,9 +69,9 @@ export default function CirclesLinkAccountStep({
                 aria-label="Circles Wallet Address"
               />
               <div className="flex items-start text-sm mt-2">
-                <InfoIcon width={16} height={16} className="mt-1 mr-1 stroke-orange-400 stroke-2" />
+                <InfoIcon width={16} height={16} className="mt-0.5 mr-1 stroke-orange-400 stroke-2" />
                 <span className="text-secondaryText">
-                  Make sure this is your correct Circles address. You need to be invited into Circles to be able to join the POH-circles group. Make sure you were invited before proceeding. Please, double check it before linking the accounts as its a permanent action.
+                  Make sure this is your correct Circles address. You need to be invited into Circles to be able to join the group. Make sure you were invited before proceeding. Please, double check it before linking the accounts as its a <span className="text-[#EF4444] font-semibold">permanent action</span>.
                 </span>
               </div>
               {(() => {

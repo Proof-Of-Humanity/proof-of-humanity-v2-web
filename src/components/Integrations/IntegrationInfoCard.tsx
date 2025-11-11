@@ -12,9 +12,10 @@ function IntegrationInfoCard({ step, onPrevious, onNext , previousStep, nextStep
                 <p className="text-primaryText text-xl md:text-2xl font-semibold">{step.title}</p>
                 <p className="text-primaryText mt-4 md:mt-6 text-sm md:text-base">{addLinkToText(step.description)}</p>
                 {step.disclaimer && (
-                    <div className="text-orange-400 text-sm md:text-base mt-4">{step.disclaimer}</div>
+                    <div className="text-primaryText text-sm md:text-base mt-4"><span className="text-red-500">IMPORTANT:</span> You need to be invited into Circles to be able to join the group.</div>
                 )}
             </div> 
+            {(previousStep || nextStep) && (
             <div className="flex flex-row justify-center md:justify-end mt-4 md:mr-8">
             <LeftArrowIcon 
                  width={32} 
@@ -37,6 +38,7 @@ function IntegrationInfoCard({ step, onPrevious, onNext , previousStep, nextStep
                 tabIndex={nextStep ? 0 : -1}
                />
             </div>
+            )}
             </div>
             {/* Right Column: Image */}
             <div className="flex justify-center items-center w-full md:w-1/2 order-1 md:order-2">

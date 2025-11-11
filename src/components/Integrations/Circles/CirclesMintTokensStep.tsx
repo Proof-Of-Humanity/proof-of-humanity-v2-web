@@ -1,6 +1,6 @@
 import React from 'react';
 import Accordion from 'components/Accordion';
-import ProcessStepCard from 'components/Integrations/ProcessStepCard';
+import CirclesStepCard from 'components/Integrations/Circles/CirclesStepCard';
 import { ConnectionStep } from 'types/integrations';
 
 interface CirclesMintTokensStepProps {
@@ -22,13 +22,13 @@ export default function CirclesMintTokensStep({
   
   return (
     <Accordion 
-      title="Step 3 - Mint your POH Circles group tokens" 
+      title="Step 3 - Join our group on Metri and earn $CRC" 
       className="w-full"
       isOpen={isOpen}
       onToggle={onToggle}
     >
       <div className="p-4 md:p-6 flex flex-col w-full">
-        <ProcessStepCard 
+        <CirclesStepCard 
           step={steps[currentStep]} 
           onPrevious={() => setCurrentStep(currentStep - 1)}
           onNext={() => setCurrentStep(currentStep + 1)}
