@@ -143,6 +143,7 @@ export default function useCirclesIntegration() {
     walletAddress,
     loading,
     currentHumanityId,
+    humanityStatus,
     writeLink,
     circlesChain.id,
   ]);
@@ -190,7 +191,7 @@ export default function useCirclesIntegration() {
     let disabled = disableButton || !isWalletAddressValid; 
     if (humanityStatus === "invalid") {
       return { 
-        onClick: () => toast.error("No valid humanity linked to current address"), 
+        onClick: () => toast.error("Register and prove your humanity on this address, before linking to Circles."), 
         label: defaultLabel,
         disabled: disabled 
       };

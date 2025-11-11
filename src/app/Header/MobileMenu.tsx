@@ -59,11 +59,12 @@ const MobileMenu = forwardRef(
           >
             Policy
           </Link>
-          {/* Temporarily commented out - App section not displayed in UI
-          <Link href="/app" className={`${pathname === "/app" ? "font-bold" : ""}`}>
-            Apps
+          <Link 
+            href="/app" 
+            className={`${pathname.startsWith("/app") ? "font-bold" : ""}`}
+          >
+            Rewards
           </Link>
-          */}
         </nav>
 
         <div className="mt-4">

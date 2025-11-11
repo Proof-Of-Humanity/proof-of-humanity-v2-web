@@ -62,12 +62,11 @@ const DesktopNavigation = ({
       >
         Policy
       </Link>
-      {/* Temporarily commented out - App section not displayed in UI */}
       <Link 
         href="/app" 
         className={`${pathname.startsWith("/app") ? "font-bold" : ""}`}
       >
-        App
+        Rewards
       </Link>
      
     </div>

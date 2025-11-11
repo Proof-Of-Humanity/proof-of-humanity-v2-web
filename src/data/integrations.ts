@@ -14,7 +14,7 @@ const integrations: Record<string, Integration> = {
       {
         id: 'start',
         title: 'Start',
-        description: 'Sign up for |Metri wallet;https://app.metri.xyz|. ',
+        description: 'Sign up for |Metri;https://app.metri.xyz| on your desktop, or preferably your mobile browser.  ',
         image: '/images/integrations/circles-start.png',
       },
       {
@@ -59,7 +59,7 @@ const integrations: Record<string, Integration> = {
       {
         id: 'mintGroupTokens',
         title: 'Minting our group $CRC tokens',
-        description: 'Once you join the Metri App, you get 24 CRC (individual tokens) per day — one every hour. To mint our group\'s own $CRC tokens, use your phone to scan the QR code above, and swap your individual $CRCs for our group tokens.\n\nTo do this via the Metri app: visit your wallet balance, and \'Send\' the desired amount of individual $CRC you want to swap, to our group. You\'ll receive your group $CRC instantly.\n\nWe have benefits incoming for the largest holders of our group $CRC, soon!',
+        description: 'Once you join the Metri App, you get 24 CRC (individual tokens) per day — one every hour. To mint our group\'s own $CRC tokens, use your phone to scan the QR code above, and swap your individual $CRCs for our group tokens.\nTo do this via the Metri app: visit your wallet balance, and \'Send\' the desired amount of individual $CRC you want to swap, to our group. You\'ll receive your group $CRC instantly.\n\nWe have benefits incoming for the largest holders of our group $CRC, soon! \n If you’re on desktop, click |here;https://app.metri.xyz/transfer/0x9a450CF5AAFa348A3d4857CbDD49e23819F08A0e/crc| to mint our group $CRC',
         image: '/images/integrations/mint-qr-code.png',
       },
       // {
