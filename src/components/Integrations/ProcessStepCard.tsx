@@ -25,14 +25,16 @@ const ProcessStepCard: React.FC<ProcessStepCardProps> = ({
 
   return (
     <div className="flex h-full flex-col border rounded-[30px] shadow w-full max-w-[1095px]">
-      <div className="flex justify-center items-center rounded-t-[30px] h-[300px] sm:h-[400px] md:h-[500px]">
-        <Image
-          src={step.image || ''}
-          alt={step.title}
-          width={step.imageWidth || 900}
-          height={step.imageHeight || 521}
-          className="my-4 sm:my-6 md:my-8 rounded-md border-stroke border shadow max-w-full h-auto object-contain"
-        />
+      <div className="flex justify-center items-center rounded-t-[30px] h-[300px] sm:h-[400px] md:h-[500px] overflow-hidden px-4 sm:px-6 md:px-8">
+        <div className="relative w-full h-full flex items-center justify-center">
+          <Image
+            src={step.image || ''}
+            alt={step.title}
+            width={step.imageWidth}
+            height={step.imageHeight}
+            className="rounded-md border-stroke border shadow max-w-full max-h-full"
+          />
+        </div>
       </div>
       <div className="p-4 md:p-6 flex flex-col flex-1 bg-primaryBackground rounded-[30px]">
         <p className="text-primaryText text-xl md:text-2xl font-semibold">{step.title}</p>
@@ -69,7 +71,6 @@ const ProcessStepCard: React.FC<ProcessStepCardProps> = ({
             tabIndex={nextStep ? 0 : -1}
           />
         </div>
-        )}
       </div>
     </div>
   );

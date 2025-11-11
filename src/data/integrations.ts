@@ -9,14 +9,14 @@ const integrations: Record<string, Integration> = {
     logo: '/images/integrations/circles-logo.png',
     logoWidth: 164,
     logoHeight: 48,
-    isActive: false, // Temporarily disabled - App section not displayed in UI
+    isActive: true,
     startPath: 'app/circles',
     buttonText: 'Start Now',
     firstInfoSlide: [
       {
         id: 'start',
         title: 'Start',
-        description: 'Sign up for |Metri;https://app.metri.xyz| on your desktop, or preferably your mobile browser.  ',
+        description: 'Sign up for [Metri](https://app.metri.xyz) on your desktop, or preferably your mobile browser.  ',
         image: '/images/integrations/circles-start.png',
       },
       {
@@ -28,7 +28,7 @@ const integrations: Record<string, Integration> = {
       {
         id: 'activateAccount',
         title: 'Activate your account',
-        description: 'Share your QR code with an existing user to activate your account. Post your link on the |Circles Telegram community;https://t.me/about_circles| ↗️, and ask to get invited!',
+        description: 'Share your QR code with an existing user to activate your account. Post your link on the [Circles Telegram community](https://t.me/about_circles) ↗️, and ask to get invited!',
         disclaimer: 'IMPORTANT: You need to be invited into Circles to be able to join the group.',
         image: '/images/integrations/circles-activate-account.png',
       },
@@ -45,7 +45,7 @@ const integrations: Record<string, Integration> = {
         image: '/images/integrations/circles-copy-address.png',
       }
     ],
-    mintSteps: [
+    secondInfoSlide: [
       // {
       //   id: 'collectCRC',
       //   title: 'Collecting CRC',
@@ -140,7 +140,7 @@ const integrations: Record<string, Integration> = {
     title: 'Claim and use your Seer Credits',
     description: 'Free credits every month to trade on Seer\'s prediction markets.',
     logo: '/images/integrations/seer-logo.png',
-    logoWidth: 103,
+    logoWidth: 164,
     logoHeight: 48,
     darkLogo: '/images/seer-logo-white.png',
     isActive: true,

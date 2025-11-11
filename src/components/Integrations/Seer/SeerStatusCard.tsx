@@ -82,20 +82,17 @@ export default function SeerStatusCard({ status, onActionClick, isLoading = fals
       </div>: <div className='h-[48px]'></div>}
 
       <div className="text-center">
-        {status === "eligible" ? (
-          <div className="flex items-center justify-center mb-2">
+        <div className="mb-2">
+          <div className="flex items-center justify-center mb-1">
             {icon}
-            <span className={`${textColor} text-sm font-medium`}>{label} {text}</span>
+            <span className={`${textColor} text-sm font-medium ml-1`}>{label}</span>
           </div>
-        ) : (
-          <div className="mb-2">
-            <div className="flex items-center justify-center mb-1">
-              {icon}
-              <span className={`${textColor} text-sm font-medium ml-1`}>{label}</span>
-            </div>
+          {status === "eligible" ? (
+            <span className={`${textColor} text-sm font-medium`}>{text}</span>
+          ) : (
             <p className={`${textColor} text-sm`}>{text}</p>
-          </div>
-        )}
+          )}
+        </div>
       </div>
 
       <div className="mt-6 flex justify-center w-full">
