@@ -34,7 +34,7 @@ const CirclesStepCard: React.FC<ProcessStepCardProps> = ({
         />
         <p className="text-secondaryText text-base mb-4">
           If you're on desktop, 
-            <a href="https://app.metri.xyz/transfer/0x9a450CF5AAFa348A3d4857CbDD49e23819F08A0e/crc" className="text-orange font-medium hover:text-orange/80 hover:cursor-pointer" target="_blank" rel="noopener noreferrer"> click here </a>
+            <a href="https://app.metri.xyz/transfer/0x9a450CF5AAFa348A3d4857CbDD49e23819F08A0e/crc?data=0xf3f5858942140fd2894eeb8b74cd0ed72d24fc6675d352a2884b1be2f32256fe" className="text-orange font-medium hover:text-orange/80 hover:cursor-pointer" target="_blank" rel="noopener noreferrer"> click here </a>
             to mint our group $CRC
         </p>
       </div>
