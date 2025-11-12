@@ -5,7 +5,7 @@ import Label from "components/Label";
 import Previewed from "components/Previewed";
 import AuthGuard from "components/AuthGuard";
 import TimeAgo from "components/TimeAgo";
-import { SupportedChainId, idToChain } from "config/chains";
+import { SupportedChainId, idToChain, getForeignChain } from "config/chains";
 import { ContractData } from "data/contract";
 import DocumentIcon from "icons/NoteMajor.svg";
 import Image from "next/image";
@@ -13,12 +13,13 @@ import { prettifyId } from "utils/identifier";
 import { ipfs } from "utils/ipfs";
 import { formatEth } from "utils/misc";
 import { formatEther } from "viem";
-import { useAccount, useBalance, useChainId } from "wagmi";
+import { useAccount, useBalance, useChainId, useSwitchChain } from "wagmi";
 import { MediaState, SubmissionState } from "./Form";
 
 interface ReviewProps {
   arbitrationInfo: ContractData["arbitrationInfo"];
   totalCost: bigint;
+  totalCosts: Record<SupportedChainId, bigint>;
   selfFunded$: ObservablePrimitiveBaseFns<number>;
   state$: ObservableObject<SubmissionState>;
   media$: ObservableObject<MediaState>;
@@ -29,6 +30,7 @@ interface ReviewProps {
 function Review({
   arbitrationInfo,
   totalCost,
+  totalCosts,
   selfFunded$,
   state$,
   media$,
@@ -41,10 +43,21 @@ function Review({
   const { photo, video } = media$.use();
   const { address } = useAccount();
   const chainId = useChainId() as SupportedChainId;
+  const { switchChain } = useSwitchChain();
 
   const { data: balance } = useBalance({ address, chainId });
 
-  const { nativeCurrency } = idToChain(chainId)!;
+  const currentChain = idToChain(chainId)!;
+  const { nativeCurrency } = currentChain;
+
+  const foreignChainId = getForeignChain(chainId);
+  const foreignChain = idToChain(foreignChainId)!;
+  const foreignCost = totalCosts[foreignChainId];
+
+  const jumperUrl = `https://jumper.exchange/?toChain=${currentChain.id}&toToken=0x0000000000000000000000000000000000000000`;
+  
+  // Assume Gnosis is always cheaper (1 xDAI = 1 USD) until we have ETH/USD price feeds
+  const isCurrentChainCheaper = chainId === 100;
 
   return (
     <>
@@ -131,7 +144,14 @@ function Review({
                 </strong>
               </span>
             )}
+              <ExternalLink
+                href={jumperUrl}
+                className="text-purple ml-auto cursor-pointer font-semibold text-sm normal-case"
+              >
+                Need {currentChain.nativeCurrency.symbol}? bridge to {currentChain.name} →
+              </ExternalLink>
           </div>
+
         </Label>
         <div className="txt mb-16 flex flex-col">
           <div className="inline-flex items-center">
@@ -154,6 +174,12 @@ function Review({
               {formatEther(totalCost)}
             </span>{" "}
             {nativeCurrency.symbol}
+            {!isCurrentChainCheaper && (
+              <span className="text-purple mx-1 cursor-pointer font-semibold text-sm"
+              onClick={() => switchChain?.({ chainId: foreignChainId })}>
+                Switch to {foreignChain.name} for a smaller deposit ({formatEther(foreignCost)} {foreignChain.nativeCurrency.symbol})
+              </span>
+            )}
           </div>
 
           <span className="mt-2 text-blue-500">
