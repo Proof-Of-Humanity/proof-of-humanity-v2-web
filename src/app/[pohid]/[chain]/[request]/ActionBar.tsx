@@ -302,25 +302,26 @@ export default function ActionBar({
               </div>
 
               <div className="flex gap-4">
-                {action === ActionType.FUND && (
-                  <FundButton
-                    pohId={pohId}
-                    totalCost={
-                      BigInt(contractData.baseDeposit) + arbitrationCost
-                    }
-                    index={index}
-                    funded={funded}
-                  />
-                )}
-
                 {requester.toLocaleLowerCase() === address?.toLowerCase() ? (
-                  <button
-                    disabled={userChainId !== chain.id}
-                    className="btn-main mb-2"
-                    onClick={withdraw}
-                  >
-                    Withdraw
-                  </button>
+                  <>
+                    {action === ActionType.FUND && (
+                      <FundButton
+                        pohId={pohId}
+                        totalCost={
+                          BigInt(contractData.baseDeposit) + arbitrationCost
+                        }
+                        index={index}
+                        funded={funded}
+                      />
+                    )}
+                    <button
+                      disabled={userChainId !== chain.id}
+                      className="btn-sec mb-2"
+                      onClick={withdraw}
+                    >
+                      Withdraw
+                    </button>
+                  </>
                 ) : !didIVouchFor ? (
                   <Vouch
                     pohId={pohId}

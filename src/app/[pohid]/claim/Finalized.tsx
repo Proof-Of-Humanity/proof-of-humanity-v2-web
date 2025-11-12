@@ -1,4 +1,5 @@
 import Link from "next/link";
+import ExternalLink from "components/ExternalLink";
 
 interface FinalizedProps {
   requiredVouches: number;
@@ -29,13 +30,16 @@ const Finalized: React.FC<FinalizedProps> = ({ requiredVouches }) => (
         <ul className="ml-6 list-disc">
           {requiredVouches && (
             <li>
-              Receive{" "}
-              <strong className="text-status-vouching">
-                {requiredVouches} vouch{requiredVouches !== 1 && "es"}
-              </strong>{" "}
-              from{" "}
-              <strong className="text-status-registered">registered</strong>{" "}
-              humans
+              Get a vouch from a registered human.{" "}
+              <ExternalLink
+                href="https://forms.gle/Yagjs1BSYSyH2RseA"
+                className="text-orange font-semibold underline underline-offset-2"
+              >
+                Get a vouch
+              </ExternalLink>
+              <span className="ml-1">
+                ↗️
+              </span>
             </li>
           )}
           <li>
