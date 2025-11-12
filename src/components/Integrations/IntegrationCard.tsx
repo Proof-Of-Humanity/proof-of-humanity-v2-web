@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import {useIsDarkMode } from "hooks/useDarkMode";
 import { useRouter } from "next/navigation";
 import { Integration } from "types/integrations";
 
@@ -10,21 +11,26 @@ interface IntegrationCardProps {
 
 export default function IntegrationCard({ integration }: IntegrationCardProps) {
   const router = useRouter();
+  const isDark = useIsDarkMode();
+  const src = isDark && integration.darkLogo ? integration.darkLogo : integration.logo;
+  const logoWidth = integration.logoWidth || 164;
+  const logoHeight = integration.logoHeight || 48;
   
   const handleNavigation = () => {
     router.push(integration.startPath);
   };
   
   return (
-    <div className="flex flex-col paper w-full lg:w-[570px]">
+    <div className="flex flex-col paper w-full">
       <div className="p-4 md:p-6">
         {integration.logo && (
-          <div className="mb-4">
+          <div className="mb-4 flex items-center" style={{ height: `${logoHeight}px` }}>
             <Image
-              src={integration.logo}
+              src={src}
               alt={`${integration.name} logo`}
-              width={164}
-              height={48}
+              width={logoWidth}
+              height={logoHeight}
+              style={{ width: "auto", height: "100%", maxHeight: `${logoHeight}px` }}
             />
           </div>
         )}

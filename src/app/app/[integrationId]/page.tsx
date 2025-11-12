@@ -3,6 +3,8 @@ import { getIntegration } from "data/integrations";
 import CirclesIntegration from "./CirclesIntegration";
 import { Integration } from "types/integrations";
 import { redirect } from "next/navigation";
+import PnkAirdrop from "./PnkAirdrop";
+import SeerCredits from "components/Integrations/Seer/SeerCredits";
 
 interface IntegrationPageProps {
   params: {
@@ -38,7 +40,9 @@ export default async function IntegrationPage({
   // Create a mapping of integration IDs to their respective components
   const IntegrationComponents: Record<string, React.ComponentType<{integration: Integration}>> = {
     circles: CirclesIntegration,
-  };
+    'pnk-airdrop': PnkAirdrop,
+    'seer-credits': SeerCredits,
+  };  
 
   const IntegrationComponent = IntegrationComponents[integration.id];
   

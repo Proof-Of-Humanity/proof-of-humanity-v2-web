@@ -1509,6 +1509,8 @@ export type Query = {
   requesterFund?: Maybe<RequesterFund>;
   requesterFunds: Array<RequesterFund>;
   requests: Array<Request>;
+  rewardClaim?: Maybe<RewardClaim>;
+  rewardClaims: Array<RewardClaim>;
   round?: Maybe<Round>;
   rounds: Array<Round>;
   status?: Maybe<Status>;
@@ -1901,6 +1903,24 @@ export type QueryRequestsArgs = {
   skip?: InputMaybe<Scalars['Int']>;
   subgraphError?: _SubgraphErrorPolicy_;
   where?: InputMaybe<Request_Filter>;
+};
+
+
+export type QueryRewardClaimArgs = {
+  block?: InputMaybe<Block_Height>;
+  id: Scalars['ID'];
+  subgraphError?: _SubgraphErrorPolicy_;
+};
+
+
+export type QueryRewardClaimsArgs = {
+  block?: InputMaybe<Block_Height>;
+  first?: InputMaybe<Scalars['Int']>;
+  orderBy?: InputMaybe<RewardClaim_OrderBy>;
+  orderDirection?: InputMaybe<OrderDirection>;
+  skip?: InputMaybe<Scalars['Int']>;
+  subgraphError?: _SubgraphErrorPolicy_;
+  where?: InputMaybe<RewardClaim_Filter>;
 };
 
 
@@ -2549,6 +2569,78 @@ export enum RequesterFund_OrderBy {
   Withdrawn = 'withdrawn'
 }
 
+export type RewardClaim = {
+  __typename?: 'RewardClaim';
+  amount: Scalars['BigInt'];
+  claimer: Claimer;
+  id: Scalars['Bytes'];
+  timestamp: Scalars['BigInt'];
+};
+
+export type RewardClaim_Filter = {
+  /** Filter for the block changed event. */
+  _change_block?: InputMaybe<BlockChangedFilter>;
+  amount?: InputMaybe<Scalars['BigInt']>;
+  amount_gt?: InputMaybe<Scalars['BigInt']>;
+  amount_gte?: InputMaybe<Scalars['BigInt']>;
+  amount_in?: InputMaybe<Array<Scalars['BigInt']>>;
+  amount_lt?: InputMaybe<Scalars['BigInt']>;
+  amount_lte?: InputMaybe<Scalars['BigInt']>;
+  amount_not?: InputMaybe<Scalars['BigInt']>;
+  amount_not_in?: InputMaybe<Array<Scalars['BigInt']>>;
+  and?: InputMaybe<Array<InputMaybe<RewardClaim_Filter>>>;
+  claimer?: InputMaybe<Scalars['String']>;
+  claimer_?: InputMaybe<Claimer_Filter>;
+  claimer_contains?: InputMaybe<Scalars['String']>;
+  claimer_contains_nocase?: InputMaybe<Scalars['String']>;
+  claimer_ends_with?: InputMaybe<Scalars['String']>;
+  claimer_ends_with_nocase?: InputMaybe<Scalars['String']>;
+  claimer_gt?: InputMaybe<Scalars['String']>;
+  claimer_gte?: InputMaybe<Scalars['String']>;
+  claimer_in?: InputMaybe<Array<Scalars['String']>>;
+  claimer_lt?: InputMaybe<Scalars['String']>;
+  claimer_lte?: InputMaybe<Scalars['String']>;
+  claimer_not?: InputMaybe<Scalars['String']>;
+  claimer_not_contains?: InputMaybe<Scalars['String']>;
+  claimer_not_contains_nocase?: InputMaybe<Scalars['String']>;
+  claimer_not_ends_with?: InputMaybe<Scalars['String']>;
+  claimer_not_ends_with_nocase?: InputMaybe<Scalars['String']>;
+  claimer_not_in?: InputMaybe<Array<Scalars['String']>>;
+  claimer_not_starts_with?: InputMaybe<Scalars['String']>;
+  claimer_not_starts_with_nocase?: InputMaybe<Scalars['String']>;
+  claimer_starts_with?: InputMaybe<Scalars['String']>;
+  claimer_starts_with_nocase?: InputMaybe<Scalars['String']>;
+  id?: InputMaybe<Scalars['Bytes']>;
+  id_contains?: InputMaybe<Scalars['Bytes']>;
+  id_gt?: InputMaybe<Scalars['Bytes']>;
+  id_gte?: InputMaybe<Scalars['Bytes']>;
+  id_in?: InputMaybe<Array<Scalars['Bytes']>>;
+  id_lt?: InputMaybe<Scalars['Bytes']>;
+  id_lte?: InputMaybe<Scalars['Bytes']>;
+  id_not?: InputMaybe<Scalars['Bytes']>;
+  id_not_contains?: InputMaybe<Scalars['Bytes']>;
+  id_not_in?: InputMaybe<Array<Scalars['Bytes']>>;
+  or?: InputMaybe<Array<InputMaybe<RewardClaim_Filter>>>;
+  timestamp?: InputMaybe<Scalars['BigInt']>;
+  timestamp_gt?: InputMaybe<Scalars['BigInt']>;
+  timestamp_gte?: InputMaybe<Scalars['BigInt']>;
+  timestamp_in?: InputMaybe<Array<Scalars['BigInt']>>;
+  timestamp_lt?: InputMaybe<Scalars['BigInt']>;
+  timestamp_lte?: InputMaybe<Scalars['BigInt']>;
+  timestamp_not?: InputMaybe<Scalars['BigInt']>;
+  timestamp_not_in?: InputMaybe<Array<Scalars['BigInt']>>;
+};
+
+export enum RewardClaim_OrderBy {
+  Amount = 'amount',
+  Claimer = 'claimer',
+  ClaimerId = 'claimer__id',
+  ClaimerName = 'claimer__name',
+  ClaimerNbVouchesReceived = 'claimer__nbVouchesReceived',
+  Id = 'id',
+  Timestamp = 'timestamp'
+}
+
 export type Round = {
   __typename?: 'Round';
   challenge: Challenge;
@@ -3006,6 +3098,14 @@ export type GetHumanityWithCircleAccountByIdQueryVariables = Exact<{
 
 export type GetHumanityWithCircleAccountByIdQuery = { __typename?: 'Query', humanity?: { __typename?: 'Humanity', id: any, circleAccount?: { __typename?: 'CirclesAccount', id: any, trustExpiryTime: any } | null } | null };
 
+export type HumanityIdByClaimerQueryVariables = Exact<{
+  address: Scalars['String'];
+  now: Scalars['BigInt'];
+}>;
+
+
+export type HumanityIdByClaimerQuery = { __typename?: 'Query', registrations: Array<{ __typename?: 'Registration', humanity: { __typename?: 'Humanity', id: any } }>, crossChainRegistrations: Array<{ __typename?: 'CrossChainRegistration', id: any }> };
+
 export type RequestsToAdvanceQueryVariables = Exact<{ [key: string]: never; }>;
 
 
@@ -3059,6 +3159,13 @@ export type RequestsQueryVariables = Exact<{
 
 
 export type RequestsQuery = { __typename?: 'Query', requests: Array<{ __typename?: 'Request', id: any, index: any, revocation: boolean, registrationEvidenceRevokedReq: string, creationTime: any, expirationTime?: any | null, lastStatusChange: any, requester: any, winnerParty?: { __typename?: 'Party', id: string } | null, status: { __typename?: 'Status', id: string }, claimer: { __typename?: 'Claimer', id: any, name?: string | null }, humanity: { __typename?: 'Humanity', id: any, nbRequests: any, nbLegacyRequests: any, registration?: { __typename?: 'Registration', expirationTime: any, claimer: { __typename?: 'Claimer', id: any } } | null, winnerClaim: Array<{ __typename?: 'Request', index: any, resolutionTime: any, evidenceGroup: { __typename?: 'EvidenceGroup', evidence: Array<{ __typename?: 'Evidence', uri: string }> } }> }, evidenceGroup: { __typename?: 'EvidenceGroup', evidence: Array<{ __typename?: 'Evidence', uri: string }> } }> };
+
+export type RewardClaimQueryVariables = Exact<{
+  id: Scalars['ID'];
+}>;
+
+
+export type RewardClaimQuery = { __typename?: 'Query', rewardClaim?: { __typename?: 'RewardClaim', id: any, amount: any, timestamp: any, claimer: { __typename?: 'Claimer', id: any } } | null };
 
 export type IsSyncedQueryVariables = Exact<{
   block: Scalars['Int'];
@@ -3131,6 +3238,21 @@ export const GetHumanityWithCircleAccountByIdDocument = gql`
       id
       trustExpiryTime
     }
+  }
+}
+    `;
+export const HumanityIdByClaimerDocument = gql`
+    query HumanityIdByClaimer($address: String!, $now: BigInt!) {
+  registrations(where: {claimer: $address, expirationTime_gt: $now}, first: 1) {
+    humanity {
+      id
+    }
+  }
+  crossChainRegistrations(
+    where: {claimer: $address, expirationTime_gt: $now}
+    first: 1
+  ) {
+    id
   }
 }
     `;
@@ -3427,6 +3549,18 @@ export const RequestsDocument = gql`
   }
 }
     ${WinnerClaimFragmentDoc}`;
+export const RewardClaimDocument = gql`
+    query RewardClaim($id: ID!) {
+  rewardClaim(id: $id) {
+    id
+    claimer {
+      id
+    }
+    amount
+    timestamp
+  }
+}
+    `;
 export const IsSyncedDocument = gql`
     query IsSynced($block: Int!) {
   _meta(block: {number: $block}) {
@@ -3460,14 +3594,17 @@ const defaultWrapper: SdkFunctionWrapper = (action, _operationName, _operationTy
 
 export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = defaultWrapper) {
   return {
-    GetCirclesAccountsByaddress(variables: GetCirclesAccountsByaddressQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<GetCirclesAccountsByaddressQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<GetCirclesAccountsByaddressQuery>(GetCirclesAccountsByaddressDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'GetCirclesAccountsByaddress', 'query');
+    GetCirclesAccountsByaddress(variables: GetCirclesAccountsByaddressQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<GetCirclesAccountsByaddressQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<GetCirclesAccountsByaddressQuery>({ document: GetCirclesAccountsByaddressDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'GetCirclesAccountsByaddress', 'query', variables);
     },
-    GetHumanityWithCircleAccountById(variables: GetHumanityWithCircleAccountByIdQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<GetHumanityWithCircleAccountByIdQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<GetHumanityWithCircleAccountByIdQuery>(GetHumanityWithCircleAccountByIdDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'GetHumanityWithCircleAccountById', 'query');
+    GetHumanityWithCircleAccountById(variables: GetHumanityWithCircleAccountByIdQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<GetHumanityWithCircleAccountByIdQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<GetHumanityWithCircleAccountByIdQuery>({ document: GetHumanityWithCircleAccountByIdDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'GetHumanityWithCircleAccountById', 'query', variables);
     },
-    RequestsToAdvance(variables?: RequestsToAdvanceQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<RequestsToAdvanceQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<RequestsToAdvanceQuery>(RequestsToAdvanceDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'RequestsToAdvance', 'query');
+    HumanityIdByClaimer(variables: HumanityIdByClaimerQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<HumanityIdByClaimerQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<HumanityIdByClaimerQuery>({ document: HumanityIdByClaimerDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'HumanityIdByClaimer', 'query', variables);
+    },
+    RequestsToAdvance(variables?: RequestsToAdvanceQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<RequestsToAdvanceQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<RequestsToAdvanceQuery>({ document: RequestsToAdvanceDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'RequestsToAdvance', 'query', variables);
     },
     Claimer(variables: ClaimerQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<ClaimerQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<ClaimerQuery>({ document: ClaimerDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'Claimer', 'query', variables);
@@ -3489,6 +3626,9 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     },
     Requests(variables?: RequestsQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<RequestsQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<RequestsQuery>({ document: RequestsDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'Requests', 'query', variables);
+    },
+    RewardClaim(variables: RewardClaimQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<RewardClaimQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<RewardClaimQuery>({ document: RewardClaimDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'RewardClaim', 'query', variables);
     },
     IsSynced(variables: IsSyncedQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<IsSyncedQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<IsSyncedQuery>({ document: IsSyncedDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'IsSynced', 'query', variables);

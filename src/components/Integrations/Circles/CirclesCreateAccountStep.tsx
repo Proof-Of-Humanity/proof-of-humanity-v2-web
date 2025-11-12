@@ -1,10 +1,10 @@
 import React from 'react';
 import Accordion from 'components/Accordion';
 import IntegrationInfoCard from 'components/Integrations/IntegrationInfoCard';
-import { ConnectionStep } from 'types/integrations';
+import { InfoSlide } from 'types/integrations';
 
 interface CirclesCreateAccountStepProps {
-  steps: ConnectionStep[];
+  steps: InfoSlide[];
   currentStep: number;
   setCurrentStep: (step: number) => void;
   isOpen: boolean;

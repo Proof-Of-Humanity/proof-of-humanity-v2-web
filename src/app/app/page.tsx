@@ -14,7 +14,7 @@ export default async function AppPage() {
     <div className="content-wide flex flex-col">
       <div className="mb-6">
         <h1 className="flex items-center gap-2 text-2xl font-semibold text-primaryText">
-          <span className="text-primary text-orange"><ConnectIcon /></span> App
+          <span className="text-primary text-orange"><ConnectIcon /></span> Rewards
         </h1>
         <p className="mt-2 text-base text-gray-700 text-secondaryText">
           Unlock exclusive airdrops & rewards with your Proof of Humanity profile. Ready to get rewarded for being part of the Proof of Humanity (PoH) community? Start claiming rewards now and make the most of your PoH identity!

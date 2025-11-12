@@ -23,6 +23,7 @@ const nextConfig = {
     SEPOLIA_SUBGRAPH_URL: process.env.SEPOLIA_SUBGRAPH_URL,
     WALLET_CONNECT_PROJECT_ID: process.env.WALLET_CONNECT_PROJECT_ID,
     ATLAS_URI: process.env.ATLAS_URI,
+    USER_SETTINGS_URL: process.env.USER_SETTINGS_URL,
   },
   images: {
     remotePatterns: [
