@@ -5,6 +5,8 @@ import { EthereumAMBBridge } from "./deployments/EthereumAMBBridge";
 import { CirclesIntegration } from "./deployments/CirclesIntegration";
 import { CirclesHub } from "./deployments/CirclesHub";
 import { KlerosLiquid } from "./deployments/KlerosLiquid";
+import { PnkRewardDistributer } from "./deployments/PnkRewardDistributer";
+import { isAddress } from "viem";
 
 export const contractRegistry = {
   ProofOfHumanity,
@@ -14,6 +16,7 @@ export const contractRegistry = {
   CirclesIntegration,
   CirclesHub,
   KlerosLiquid,
+  PnkRewardDistributer,
 } as const;
 
 export type ContractName = keyof typeof contractRegistry;
@@ -33,7 +36,7 @@ export function getContractInfo<T extends ContractName>(
   const address = contract.addresses[
     chainId as keyof typeof contract.addresses
   ];
-
+  
   return {
     abi: contract.abi,
     address,

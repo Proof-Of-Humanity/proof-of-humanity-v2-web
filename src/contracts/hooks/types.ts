@@ -30,8 +30,24 @@ export type WriteArgs<
 
 export interface Effects {
   onLoading?: () => void;
-  onError?: () => void;
-  onFail?: () => void;
+  onError?: (error?: unknown) => void;
+  onFail?: (error?: unknown) => void;
   onSuccess?: () => void;
   onReady?: (fire: () => void) => void;
 }
+
+// Batch transaction types
+export type BatchCall<
+  C extends ContractName = ContractName,
+  F extends WriteFunctionName<C> = WriteFunctionName<C>
+> = {
+  contract: C;
+  functionName: F;
+  args: WriteArgs<C, F>;
+  value?: bigint;
+};
+
+export type BatchWriteParams = {
+  calls: BatchCall[];
+  value?: bigint;
+};

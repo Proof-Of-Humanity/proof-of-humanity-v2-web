@@ -306,6 +306,7 @@ export default function Form({ contractData, totalCosts, renewal }: FormProps) {
           [Step.review]: () => (
             <ReviewStep
               totalCost={totalCosts[chainId]}
+              totalCosts={totalCosts}
               state$={state$}
               arbitrationInfo={contractData[chainId].arbitrationInfo}
               media$={media$}

@@ -16,6 +16,7 @@ declare global {
       DEPLOYED_APP: string;
       WALLET_CONNECT_PROJECT_ID: string;
       ATLAS_URI: string;
+      USER_SETTINGS_URL: string;
     }
   }
 }

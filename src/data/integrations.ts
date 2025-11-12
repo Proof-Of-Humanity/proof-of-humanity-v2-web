@@ -7,14 +7,16 @@ const integrations: Record<string, Integration> = {
     title: 'Connect your Circles Wallet',
     description: 'Join our Metri group, earn 24 $CRC/day, and mint our group $CRC for upcoming perks!',
     logo: '/images/integrations/circles-logo.png',
+    logoWidth: 164,
+    logoHeight: 48,
     isActive: true,
     startPath: 'app/circles',
     buttonText: 'Start Now',
-    connectionSteps: [
+    firstInfoSlide: [
       {
         id: 'start',
         title: 'Start',
-        description: 'Sign up for |Metri;https://app.metri.xyz| on your desktop, or preferably your mobile browser.  ',
+        description: 'Sign up for [Metri](https://app.metri.xyz) on your desktop, or preferably your mobile browser.  ',
         image: '/images/integrations/circles-start.png',
       },
       {
@@ -26,7 +28,7 @@ const integrations: Record<string, Integration> = {
       {
         id: 'activateAccount',
         title: 'Activate your account',
-        description: 'Share your QR code with an existing user to activate your account. Post your link on the |Circles Telegram community;https://t.me/about_circles| ↗️, and ask to get invited!',
+        description: 'Share your QR code with an existing user to activate your account. Post your link on the [Circles Telegram community](https://t.me/about_circles) ↗️, and ask to get invited!',
         disclaimer: 'IMPORTANT: You need to be invited into Circles to be able to join the group.',
         image: '/images/integrations/circles-activate-account.png',
       },
@@ -43,7 +45,7 @@ const integrations: Record<string, Integration> = {
         image: '/images/integrations/circles-copy-address.png',
       }
     ],
-    mintSteps: [
+    secondInfoSlide: [
       // {
       //   id: 'collectCRC',
       //   title: 'Collecting CRC',
@@ -69,6 +71,118 @@ const integrations: Record<string, Integration> = {
       //   image: '/images/integrations/circles-success.png',
       // }
     ],
+  },
+
+  'pnk-airdrop': {
+    id: 'pnk-airdrop',
+    name: 'PNK Airdrop',
+    title: 'PNK Airdrop',
+    headerTitle: 'Register. Earn. Stake. Repeat. Start Your Passive Income Journey with PNK!',
+    headerDescription: 'Welcome to the Proof of Humanity Verified 10K Campaign! To celebrate the launch of Proof of Humanity v2 and our growing community, we\'re rewarding the first 10,000 verified humans on the PoH v2 registry with PNK tokens, which will be staked on Kleros Court to become a juror!',
+    description: 'Earn PNK tokens for being human.',
+    logo: '/images/kleros-logo.png',
+    logoWidth: 164,
+    logoHeight: 48,
+    darkLogo: '/logo/kleros.svg',
+    isActive: false,
+    startPath: 'app/pnk-airdrop',
+    buttonText: 'Start Now',
+    firstInfoSlide: [
+      {
+        id: 'klerosInfo',
+        title: 'What is Kleros?',
+        description: 'Kleros is a decentralized dispute resolution protocol. Think of it as the “People’s Court” powered by Ethereum smart contracts and crowdsourced jurors. It’s used to settle disagreements where trust is hard like freelancing, DeFi, content moderation, identity, crypto token listings, and more.',
+        image: '/images/integrations/kleros-slide1.png',
+        bulletPoints: [
+          'More than 2,000+ disputes resolved.',
+          'Millions of PNK staked, securing the system.',
+          'Millions in crypto rewards paid to jurors across Ethereum and Gnosis Chain.'
+        ]
+      },
+      {
+        id: 'howItWorks',
+        title: 'How Does It Work?',
+        description: 'A dispute arises (e.g., "Did the challenge profile comply with the PoH Registry Policy")\n\n⚖️ The case is sent to Kleros.\n👩‍⚖️ Jurors are randomly selected from a pool of users who have staked PNK tokens.\n📜 Jurors review evidence & vote.\n🧠 Majority wins and decision is enforced by smart contract.',
+        image: '/images/integrations/kleros-slide2.png',
+        bulletPoints: [
+          'Decentralized',
+          'Fair',
+          'Autonomous'
+        ]
+      },
+      {
+        id: 'whyUseKleros',
+        title: 'Why Use Kleros?',
+        description: '🔥 Unbiased & Fair Decisions: Jurors don\'t know each other\n🔒 Censorship-Resistant & Trustless: No single point of control\n⚡ Fast and Affordable Justice: Way cheaper than traditional courts\n🌍 Global Access, Borderless Justice: Anyone, anywhere can get justice\n🎮 Game-Theory Powered: Honest outcomes through aligned incentives',
+        image: '/images/integrations/kleros-slide3.png',
+        bulletPoints: [
+          'Stake PNK to join the Monthly Juror Incentive Program.',
+          'Earn more by making coherent votes and funding successful appeals.',
+          'Be part of the decentralized justice movement with Kleros.'
+        ]
+      },
+      {
+        id: 'becomeJuror',
+        title: 'Turn Your PNK Into Passive Income: Become a Juror!',
+        description: 'To become a Kleros juror, you need to stake PNK (Kleros\' native token) in a specific court. For example, the Humanity Court. Once staked, subscribe to notifications so you\'ll be alerted when you\'re randomly selected to judge a case.\n\nThe more PNK you stake, the higher your chances of being selected. But remember, jurors are expected to vote honestly and coherently based on the evidence.\n\n✅ Coherent Vote (Align with the majority) = 🤑 Earn arbitration fees + extra PNK\n❌ Incoherent Vote (Against the majority) = 😬 Lose some staked PNK',
+        image: '/images/integrations/kleros-slide4.png',
+        bulletPoints: [
+          'Stake > Judge > Earn > Repeat',
+          '🌐 [Kleros.io](https://kleros.io) | 📚 [Documentation](https://docs.kleros.io) | 📊 [Klerosboard](https://klerosboard.com/1)'
+        ]
+      }
+    ]
+  },
+
+  'seer-credits': {
+    id: 'seer-credits',
+    name: 'Seer Credits',
+    title: 'Claim and use your Seer Credits',
+    description: 'Free credits every month to trade on Seer\'s prediction markets.',
+    logo: '/images/integrations/seer-logo.png',
+    logoWidth: 164,
+    logoHeight: 48,
+    darkLogo: '/images/seer-logo-white.png',
+    isActive: true,
+    startPath: 'app/seer-credits',
+    buttonText: 'Start Now',
+    firstInfoSlide: [
+      {
+        id: 'whatIsSeer',
+        title: 'What is Seer?',
+        description: 'Seer is a prediction market platform that lets people predict outcomes and **earn based on how accurate** their predictions are.\n\nIn Seer, users can make predictions about future outcomes like "Will Bitcoin ever reach a new all-time high before the end of the year?" or "Who will win the 2028 presidential election?" and **earn** if their predictions turn out to be correct.\n\nThink of it as a community-driven way to forecast events, where the wisdom of the crowd determines the **most likely outcome.**',
+        image: '/images/integrations/seer-slide1.png',
+        imageHeight: 601,
+        imageWidth: 1094,
+      },
+      {
+        id: 'whyDifferent',
+        title: 'Why is Seer different?',
+        description: 'Unlike traditional betting or centralized platforms, Seer runs entirely on smart contracts, meaning **no middlemen, no manipulation and no hidden rules**. Every market is open, verifiable and secured.\n\n• **Transparent**: Enables the creation and management of diverse, trustless markets via [Reality.eth](https://reality.eth.limo/app/docs/html/index.html) and [Conditional Tokens Framework](https://conditional-tokens-docs.netlify.app/docs/introduction1).\n• **Fair**: [Kleros](https://kleros.io/) acts as a decentralized arbiter to resolve disputes and ensure fair, transparent outcomes.\n• **Create Your Own Markets**: Allows users to create custom prediction markets for any event or topic.\n• **Fair Rewards**: Easily trade market outcomes and earn rewards through prediction farming.',
+        image: '/images/integrations/seer-slide2.png',
+        imageHeight: 566,
+        imageWidth: 906,
+      },
+      {
+        id: 'howToUse',
+        title: 'What are Seer Credits?',
+        description: '~~Get monthly Seer Credits to predict, play and earn on Seer!~~\n\n• Monthly rewards given to **verified Proof of Humanity users** to use on the Seer platform.\n• **Use them like trading funds.** Open/close positions and pay fees on Seer without spending your own crypto.\n• **They\'re not tokens.** They\'re non-transferable, and can\'t be withdrawn.\n• **Auto-refill.** A fresh balance appears at the start of each month.\n• **Expires monthly.** Use it or lose it at month-end; unused credits don\'t roll over.',
+        image: '/images/integrations/seer-slide3.png',
+        imageHeight: 322,
+        imageWidth: 901,
+      },
+      {
+        id: 'howToUseSeerCredits',
+        title: 'How to use your Seer Credits?',
+        description: '~~Make sure your profile is verified on Proof of Humanity. Only verified humans are eligible to receive Seer Credits!~~\n\n1. Go to Seer and connect your wallet address that\'s **registered** with your Proof of Humanity profile.\n2. Once connected, you\'ll be able to **check** your Seer Credits balance.\n3. Use your Seer Credits to **take positions** in prediction markets.\n\n**Note:** Your credits refresh every month, so you\'ll receive a new balance automatically. Use them before the month ends. Unused credits expire when the next cycle begins.',
+        image: '/images/integrations/seer-slide4.png',
+        imageHeight: 508,
+        imageWidth: 425,
+        bulletPoints: [
+         'Visit: [seer.pm](https://seer.pm/) | [Documentation](https://seer-3.gitbook.io/seer-documentation)'
+        ]
+      }
+    ]
   },
 };
 
