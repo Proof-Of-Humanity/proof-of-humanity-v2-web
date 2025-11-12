@@ -146,7 +146,7 @@ function Review({
             )}
               <ExternalLink
                 href={jumperUrl}
-                className="text-purple ml-auto cursor-pointer font-semibold text-sm normal-case"
+                className="text-purple-600 ml-auto cursor-pointer font-semibold text-sm normal-case"
               >
                 Need {currentChain.nativeCurrency.symbol}? bridge to {currentChain.name} →
               </ExternalLink>
@@ -175,7 +175,7 @@ function Review({
             </span>{" "}
             {nativeCurrency.symbol}
             {!isCurrentChainCheaper && (
-              <span className="text-purple mx-1 cursor-pointer font-semibold text-sm"
+              <span className="text-purple-600 mx-1 cursor-pointer font-semibold text-sm"
               onClick={() => switchChain?.({ chainId: foreignChainId })}>
                 Switch to {foreignChain.name} for a smaller deposit ({formatEther(foreignCost)} {foreignChain.nativeCurrency.symbol})
               </span>
