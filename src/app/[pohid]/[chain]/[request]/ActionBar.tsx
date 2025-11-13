@@ -302,7 +302,7 @@ export default function ActionBar({
               </div>
 
               <div className="flex gap-4">
-                {requester.toLocaleLowerCase() === address?.toLowerCase() ? (
+              {requester.toLocaleLowerCase() === address?.toLowerCase() ? (
                   <>
                     {action === ActionType.FUND && (
                       <FundButton
@@ -322,24 +322,38 @@ export default function ActionBar({
                       Withdraw
                     </button>
                   </>
-                ) : !didIVouchFor ? (
-                  <Vouch
-                    pohId={pohId}
-                    claimer={requester}
-                    web3Loaded={web3Loaded}
-                    me={me}
-                    chain={chain}
-                    address={address}
-                  />
-                ) : isVouchOnchain ? (
-                  <RemoveVouch
-                    requester={requester}
-                    pohId={pohId}
-                    web3Loaded={web3Loaded}
-                    chain={chain}
-                    userChainId={userChainId}
-                  />
-                ) : null}
+                ) : (
+                  <>
+                    {!didIVouchFor ? (
+                      <Vouch
+                        pohId={pohId}
+                        claimer={requester}
+                        web3Loaded={web3Loaded}
+                        me={me}
+                        chain={chain}
+                        address={address}
+                      />
+                    ) : isVouchOnchain ? (
+                      <RemoveVouch
+                        requester={requester}
+                        pohId={pohId}
+                        web3Loaded={web3Loaded}
+                        chain={chain}
+                        userChainId={userChainId}
+                      />
+                    ) : null}
+                    {action === ActionType.FUND && (
+                      <FundButton
+                        pohId={pohId}
+                        totalCost={
+                          BigInt(contractData.baseDeposit) + arbitrationCost
+                        }
+                        index={index}
+                        funded={funded}
+                      />
+                    )}
+                  </>
+                )}
               </div>
             </>
           )}
