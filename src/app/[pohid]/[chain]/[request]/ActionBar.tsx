@@ -204,25 +204,25 @@ export default function ActionBar({
 
   const isAdvancePrepareError = advanceStatus.prepare === "error";
   const isExecutePrepareError = executeStatus.prepare === "error";
-
   useEffect(() => {
+    if(!address || userChainId !== chain.id) return;
     if (action === ActionType.ADVANCE && !revocation) {
-      setCanAdvance(true);
-      prepareAdvance({
-        args: [
-          requester,
-          onChainVouches,
-          offChainVouches.map((v) => {
-            const sig = hexToSignature(v.signature);
-            return {
-              expirationTime: v.expiration,
-              v: Number(sig.v),
-              r: sig.r,
-              s: sig.s,
-            };
-          }),
-        ],
-      });
+        prepareAdvance({
+          args: [
+            requester,
+            onChainVouches,
+            offChainVouches.map((v) => {
+              const sig = hexToSignature(v.signature);
+              return {
+                expirationTime: v.expiration,
+                v: Number(sig.v),
+                r: sig.r,
+                s: sig.s,
+              };
+            }),
+          ],
+        });
+        setCanAdvance(true);
     }
     if (action === ActionType.EXECUTE){
       prepareExecute({ args: [pohId, BigInt(index)] });
@@ -302,25 +302,26 @@ export default function ActionBar({
               </div>
 
               <div className="flex gap-4">
-                {action === ActionType.FUND && (
-                  <FundButton
-                    pohId={pohId}
-                    totalCost={
-                      BigInt(contractData.baseDeposit) + arbitrationCost
-                    }
-                    index={index}
-                    funded={funded}
-                  />
-                )}
-
                 {requester.toLocaleLowerCase() === address?.toLowerCase() ? (
-                  <button
-                    disabled={userChainId !== chain.id}
-                    className="btn-main mb-2"
-                    onClick={withdraw}
-                  >
-                    Withdraw
-                  </button>
+                  <>
+                    {action === ActionType.FUND && (
+                      <FundButton
+                        pohId={pohId}
+                        totalCost={
+                          BigInt(contractData.baseDeposit) + arbitrationCost
+                        }
+                        index={index}
+                        funded={funded}
+                      />
+                    )}
+                    <button
+                      disabled={userChainId !== chain.id}
+                      className="btn-sec mb-2"
+                      onClick={withdraw}
+                    >
+                      Withdraw
+                    </button>
+                  </>
                 ) : !didIVouchFor ? (
                   <Vouch
                     pohId={pohId}

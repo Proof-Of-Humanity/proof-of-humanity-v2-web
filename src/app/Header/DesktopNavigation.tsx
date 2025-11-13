@@ -1,8 +1,10 @@
+"use client";
+
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { sepolia } from "viem/chains";
 import ExternalLink from "components/ExternalLink";
-import { prettifyId } from "utils/identifier";
+import RegisterLink from "./RegisterLink";
 
 interface DesktopNavigationProps {
   web3Loaded: boolean;
@@ -11,6 +13,8 @@ interface DesktopNavigationProps {
   policy: string;
   me: any;
   address?: `0x${string}`;
+  pendingRegisterIntent: boolean;
+  setPendingRegisterIntent: (value: boolean) => void;
 }
 
 const DesktopNavigation = ({
@@ -20,6 +24,8 @@ const DesktopNavigation = ({
   policy,
   me,
   address,
+  pendingRegisterIntent,
+  setPendingRegisterIntent,
 }: DesktopNavigationProps) => {
   const searchParams = useSearchParams();
   const currentUrl = searchParams.get("url");
@@ -34,28 +40,14 @@ const DesktopNavigation = ({
       <Link href="/" className={`${pathname === "/" ? "font-bold" : ""}`}>
         Profiles
       </Link>
-      {me &&
-        (me.pohId ? (
-          <Link
-            href={`/${prettifyId(me.pohId)}`}
-            className={`${pathname === `/${prettifyId(me.pohId)}` ? "font-bold" : ""}`}
-          >
-            PoH ID
-          </Link>
-        ) : (
-          <Link
-            href={
-              me.currentRequest
-                ? `/${prettifyId(me.currentRequest.humanity.id)}/${
-                    me.currentRequest.chain.name
-                  }/${me.currentRequest.index}`
-                : `/${prettifyId(address!)}/claim`
-            }
-            className={`${pathname.includes("/claim") ? "font-bold" : ""}`}
-          >
-            Register
-          </Link>
-        ))}
+      <RegisterLink
+        me={me}
+        address={address}
+        pathname={pathname}
+        pendingRegisterIntent={pendingRegisterIntent}
+        setPendingRegisterIntent={setPendingRegisterIntent}
+        className={`${pathname.includes("/claim") ? "font-bold" : ""}`}
+      />
       <Link
         href={`/attachment?url=${encodeURIComponent(policy)}`}
         className={`${currentUrl?.includes(policy) ? "font-bold" : ""}`}

@@ -1,7 +1,7 @@
 import React from 'react';
 import Accordion from 'components/Accordion';
 import CirclesStepCard from 'components/Integrations/Circles/CirclesStepCard';
-import { ConnectionStep } from 'types/integrations';
+import { InfoSlide } from 'types/integrations';
 
 interface CirclesMintTokensStepProps {
   steps: InfoSlide[];

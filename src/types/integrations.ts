@@ -4,6 +4,8 @@ export interface Integration {
   title: string;
   description: string;
   logo: string;
+  logoWidth?: number;
+  logoHeight?: number;
   darkLogo?: string;
   isActive: boolean;
   startPath: string;
@@ -22,7 +24,10 @@ export interface InfoSlide {
   disclaimer?: string;
   externalLink?: string;
   image?: string;
+  imageWidth?: number;
+  imageHeight?: number;
   bulletPoints?: string[];
+  featureList?: Array<{ text: string; iconType?: 'check' | 'success' | 'warning' | 'error' | 'pending' }>;
 }
 
 export interface ExternalLink {

@@ -11,6 +11,9 @@ interface IntegrationHeaderProps {
 export default function IntegrationHeader({ integration }: IntegrationHeaderProps) {
   const isDark = useIsDarkMode();
   const src = isDark && integration.darkLogo ? integration.darkLogo : integration.logo;
+  const logoWidth = integration.logoWidth || 164;
+  const logoHeight = integration.logoHeight || 48;
+  
   return (
     <div className="flex flex-col paper">
       <div className="p-4 md:p-6">
@@ -19,9 +22,8 @@ export default function IntegrationHeader({ integration }: IntegrationHeaderProp
             <Image
               src={src}
               alt={`${integration.name} logo`}
-              width={164}
-              height={48}
-
+              width={logoWidth}
+              height={logoHeight}
             />
           </div>
         )}

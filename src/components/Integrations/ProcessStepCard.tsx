@@ -5,6 +5,7 @@ import LeftArrowIcon from "icons/ArrowCircleLeft.svg";
 import RightArrowIcon from "icons/ArrowCircleRight.svg";
 import { InfoSlide } from "types/integrations";
 import { addLinkToText } from "components/addLinkToText";
+import FeatureList, { FeatureItem } from "components/FeatureList";
 
 export type ProcessStepCardProps = {
   step: InfoSlide;
@@ -23,20 +24,31 @@ const ProcessStepCard: React.FC<ProcessStepCardProps> = ({
 }) => {
 
   return (
-    <div className="flex flex-col border rounded-[30px] shadow">
-      <div className="flex justify-center w-full overflow-hidden rounded-t-[30px]">
-        <Image
-          src={step.image || ''}
-          alt={step.title}
-          width={900}
-          height={521}
-          className="h-auto object-contain max-h-[200px] sm:max-h-[300px] my-4 sm:my-6 md:h-auto md:max-h-[521px] md:my-8 rounded-md border-stroke border shadow"
-        />
+    <div className="flex h-full flex-col border rounded-[30px] shadow w-full max-w-[1095px]">
+      <div className="flex justify-center items-center rounded-t-[30px] h-[300px] sm:h-[400px] md:h-[500px] overflow-hidden px-4 sm:px-6 md:px-8">
+        <div className="relative w-full h-full flex items-center justify-center">
+          <Image
+            src={step.image || ''}
+            alt={step.title}
+            width={step.imageWidth}
+            height={step.imageHeight}
+            className="rounded-md border-stroke border shadow max-w-full max-h-full"
+          />
+        </div>
       </div>
       <div className="p-4 md:p-6 flex flex-col flex-1 bg-primaryBackground rounded-[30px]">
         <p className="text-primaryText text-xl md:text-2xl font-semibold">{step.title}</p>
         <p className="text-primaryText mt-4 flex-1 text-sm md:text-base">{addLinkToText(step.description)}</p>
-        {(previousStep || nextStep) && (
+        {step.bulletPoints && step.bulletPoints.length > 0 && (
+          <FeatureList 
+            items={step.bulletPoints.map((point): FeatureItem => ({
+              text: point,
+              iconType: 'check'
+            }))} 
+            className="mt-4"
+            textClassName="text-primaryText text-sm md:text-base"
+          />
+        )}
         <div className="flex mt-4 md:mt-6 space-x-2 md:space-x-4">
           <LeftArrowIcon 
             width={32} 
@@ -59,7 +71,6 @@ const ProcessStepCard: React.FC<ProcessStepCardProps> = ({
             tabIndex={nextStep ? 0 : -1}
           />
         </div>
-        )}
       </div>
     </div>
   );
