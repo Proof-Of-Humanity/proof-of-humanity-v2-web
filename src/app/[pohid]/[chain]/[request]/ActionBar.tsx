@@ -303,7 +303,7 @@ export default function ActionBar({
               </div>
 
               <div className="flex gap-4">
-                {requester.toLocaleLowerCase() === address?.toLowerCase() ? (
+              {requester.toLocaleLowerCase() === address?.toLowerCase() ? (
                   <>
                     {action === ActionType.FUND && (
                       <FundButton
