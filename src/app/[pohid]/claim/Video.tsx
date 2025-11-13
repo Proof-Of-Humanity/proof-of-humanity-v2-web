@@ -1,4 +1,5 @@
 import { ObservableObject } from "@legendapp/state";
+import Checklist from "components/Checklist";
 import Uploader from "components/Uploader";
 import Webcam from "components/Webcam";
 import getBlobDuration from "get-blob-duration";
@@ -142,7 +143,44 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
       </span>
 
       {!showCamera && !video && (
-        <div className="bordered relative mt-12 grid w-full grid-cols-2">
+        <Checklist
+          title="Video Checklist"
+          warning="Not following these guidelines will result in a loss of funds."
+          items={[
+            {
+              text: "Show your wallet address & your face in the same frame. Face forward, centered, well lit.",
+              isValid: true,
+            },
+            {
+              text: "No filters, background blur, or beauty effects.",
+              isValid: false,
+            },
+            {
+              text: "Address must read left→right (not mirrored) and match the connected wallet.",
+              isValid: true,
+            },
+            {
+              text: 'Say exactly: "I certify that I am a real human and that I am not already registered in this registry."',
+              isValid: true,
+            },
+            {
+              text: "No cuts, edits, or music.",
+              isValid: false,
+            },
+            {
+              text: "Show wallet address on a phone screen—clear, no shine. If on paper, confirm every character matches.",
+              isValid: true,
+            },
+            {
+              text: "Eyes, nose, mouth clearly visible (eyeglasses allowed, given no glare/reflection covering eyes).",
+              isValid: true,
+            },
+          ]}
+        />
+      )}
+
+      {!showCamera && !video && (
+        <div className="bordered relative mt-6 grid w-full grid-cols-2">
           <Uploader
             className="bg-whiteBackground flex h-full items-center justify-center rounded p-2 outline-dotted outline-white"
             type="video"
