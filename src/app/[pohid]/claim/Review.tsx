@@ -134,10 +134,10 @@ function Review({
         <Field label="Account" value={address} disabled />
 
         <Label>
-          <div className="flex items-center">
-            Initial deposit
+          <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
+            <span>Initial deposit</span>
             {balance && (
-              <span className="text-primaryText ml-8 normal-case">
+              <span className="text-primaryText normal-case">
                 Your balance:{" "}
                 <strong>
                   {formatEth(balance.value)} {nativeCurrency.symbol}
@@ -146,7 +146,7 @@ function Review({
             )}
               <ExternalLink
                 href={jumperUrl}
-                className="text-purple-600 ml-auto cursor-pointer font-semibold text-sm normal-case"
+                className="text-purple-600 cursor-pointer font-semibold text-sm normal-case hover:underline hover:text-purple-500 py-1 rounded transition-all sm:ml-auto"
               >
                 Need {currentChain.nativeCurrency.symbol}? bridge to {currentChain.name} →
               </ExternalLink>
@@ -154,8 +154,8 @@ function Review({
 
         </Label>
         <div className="txt mb-16 flex flex-col">
-          <div className="inline-flex items-center">
-            <div className="mr-2 w-48">
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="w-48">
               <Field
                 type="number"
                 className="no-spinner text-right"
@@ -166,19 +166,22 @@ function Review({
                 onChange={(event) => selfFunded$.set(+event.target.value)}
               />
             </div>
-            of
+            <span>of</span>
             <span
               onClick={() => selfFunded$.set(formatEth(totalCost))}
-              className="text-orange mx-1 cursor-pointer font-semibold underline underline-offset-2"
+              className="text-orange cursor-pointer font-semibold underline underline-offset-2"
             >
               {formatEther(totalCost)}
-            </span>{" "}
-            {nativeCurrency.symbol}
+            </span>
+            <span>{nativeCurrency.symbol}</span>
             {!isCurrentChainCheaper && (
-              <span className="text-purple-600 mx-1 cursor-pointer font-semibold text-sm"
-              onClick={() => switchChain?.({ chainId: foreignChainId })}>
-                Switch to {foreignChain.name} for a smaller deposit ({formatEther(foreignCost)} {foreignChain.nativeCurrency.symbol})
-              </span>
+              <>
+                <span className="hidden xl:block">•</span>
+                <span className="text-purple-600 cursor-pointer font-semibold text-sm hover:underline hover:text-purple-500 py-1 rounded transition-all inline-flex items-center"
+                onClick={() => switchChain?.({ chainId: foreignChainId })}>
+                  Switch to {foreignChain.name} for a smaller deposit ({formatEther(foreignCost)} {foreignChain.nativeCurrency.symbol})
+                </span>
+              </>
             )}
           </div>
 
