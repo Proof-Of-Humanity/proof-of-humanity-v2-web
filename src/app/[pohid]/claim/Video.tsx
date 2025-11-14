@@ -122,7 +122,7 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
 
       <span className="mx-12 my-8 flex flex-col text-center">
         <span>
-          You must record yourself holding a sign with your wallet address
+        Record a short video: hold your phone showing this wallet address (readable, no glare)
         </span>
         <strong className="my-2">{address}</strong>
         <span>and say the phrase</span>
@@ -180,9 +180,17 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
       )}
 
       {!showCamera && !video && (
-        <div className="bordered relative mt-6 grid w-full grid-cols-2">
+        <div className="mt-6 flex w-full flex-col items-center">
+          <button
+            className="gradient flex w-full max-w-xl items-center justify-center gap-3 rounded-full px-6 py-4 text-lg font-semibold text-white shadow-lg transition hover:opacity-90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+            onClick={() => setShowCamera(true)}
+          >
+            <CameraIcon className="h-6 w-6 fill-white" />
+            <span>Record with camera</span>
+          </button>
+
           <Uploader
-            className="bg-whiteBackground flex h-full items-center justify-center rounded p-2 outline-dotted outline-white"
+            className="mt-2 text-base font-semibold text-primary underline underline-offset-2 hover:text-slate-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-300"
             type="video"
             onDrop={async (received) => {
               try {
@@ -223,26 +231,12 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
               }
             }}
           >
-            <div className="bg-orange mr-4 flex h-12 w-12 items-center justify-center rounded-full">
-              <UploadIcon className="h-6 w-6" />
-            </div>
-            <span className="text-lg font-medium">Upload video</span>
+            <span>Upload video instead</span>
           </Uploader>
 
-          <span className="bg-whiteBackground text-orange absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-slate-200 p-1 text-xs font-semibold">
-            OR
+          <span className="mt-2 text-xs text-primaryText">
+            Formats: webm, mp4, avi, mov
           </span>
-
-          <button
-            className="flex items-center justify-center p-2 text-lg font-medium text-white"
-            onClick={() => setShowCamera(true)}
-          >
-            <div className="flex flex-col">
-              <span>Record with</span>
-              <span>camera</span>
-            </div>
-            <CameraIcon className="ml-4 h-12 fill-white" />
-          </button>
         </div>
       )}
 
