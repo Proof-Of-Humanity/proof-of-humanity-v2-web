@@ -12,7 +12,7 @@ import CircleTick from "icons/CircleTickMinor.svg";
 import CheckmarkIcon from "icons/MobileAcceptMajor.svg";
 import ResetIcon from "icons/ResetMinor.svg";
 import ZoomIcon from "icons/SearchMajor.svg";
-import CameraIcon from "icons/camera-24.svg";
+import CameraIcon from "icons/cameraMajor.svg";
 import Image, { StaticImageData } from "next/image";
 import { useRef, useState } from "react";
 import Cropper from "react-easy-crop";

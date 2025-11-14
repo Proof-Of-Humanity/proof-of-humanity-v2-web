@@ -6,7 +6,6 @@ import getBlobDuration from "get-blob-duration";
 import useFullscreen from "hooks/useFullscreen";
 import CameraIcon from "icons/CameraMajor.svg";
 import ResetIcon from "icons/ResetMinor.svg";
-import UploadIcon from "icons/upload.svg";
 import React, { useRef, useState } from "react";
 import ReactWebcam from "react-webcam";
 import { IS_IOS } from "utils/media";
