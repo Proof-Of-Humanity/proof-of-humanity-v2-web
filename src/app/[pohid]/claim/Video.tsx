@@ -1,11 +1,11 @@
 import { ObservableObject } from "@legendapp/state";
+import Checklist from "components/Checklist";
 import Uploader from "components/Uploader";
 import Webcam from "components/Webcam";
 import getBlobDuration from "get-blob-duration";
 import useFullscreen from "hooks/useFullscreen";
 import CameraIcon from "icons/CameraMajor.svg";
 import ResetIcon from "icons/ResetMinor.svg";
-import UploadIcon from "icons/upload.svg";
 import React, { useRef, useState } from "react";
 import ReactWebcam from "react-webcam";
 import { IS_IOS } from "utils/media";
@@ -121,7 +121,7 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
 
       <span className="mx-12 my-8 flex flex-col text-center">
         <span>
-          You must record yourself holding a sign with your wallet address
+        Record a short video: hold your phone showing this wallet address (readable, no glare)
         </span>
         <strong className="my-2">{address}</strong>
         <span>and say the phrase</span>
@@ -142,9 +142,54 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
       </span>
 
       {!showCamera && !video && (
-        <div className="bordered relative mt-12 grid w-full grid-cols-2">
+        <Checklist
+          title="Video Checklist"
+          warning="Not following these guidelines will result in a loss of funds."
+          items={[
+            {
+              text: "Show your wallet address & your face in the same frame. Face forward, centered, well lit.",
+              isValid: true,
+            },
+            {
+              text: "No filters, background blur, or beauty effects.",
+              isValid: false,
+            },
+            {
+              text: "Address must read left→right (not mirrored) and match the connected wallet.",
+              isValid: true,
+            },
+            {
+              text: 'Say exactly: "I certify that I am a real human and that I am not already registered in this registry."',
+              isValid: true,
+            },
+            {
+              text: "No cuts, edits, or music.",
+              isValid: false,
+            },
+            {
+              text: "Show wallet address on a phone screen—clear, no shine. If on paper, confirm every character matches.",
+              isValid: true,
+            },
+            {
+              text: "Eyes, nose, mouth clearly visible (eyeglasses allowed, given no glare/reflection covering eyes).",
+              isValid: true,
+            },
+          ]}
+        />
+      )}
+
+      {!showCamera && !video && (
+        <div className="mt-6 flex w-full flex-col items-center">
+          <button
+            className="gradient flex w-full max-w-xl items-center justify-center gap-3 rounded-full px-6 py-4 text-lg font-semibold text-white shadow-lg transition hover:opacity-90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+            onClick={() => setShowCamera(true)}
+          >
+            <CameraIcon className="h-6 w-6 fill-white" />
+            <span>Record with camera</span>
+          </button>
+
           <Uploader
-            className="bg-whiteBackground flex h-full items-center justify-center rounded p-2 outline-dotted outline-white"
+            className="mt-2 text-base font-semibold text-primary underline underline-offset-2 hover:text-slate-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-300"
             type="video"
             onDrop={async (received) => {
               try {
@@ -185,26 +230,12 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
               }
             }}
           >
-            <div className="bg-orange mr-4 flex h-12 w-12 items-center justify-center rounded-full">
-              <UploadIcon className="h-6 w-6" />
-            </div>
-            <span className="text-lg font-medium">Upload video</span>
+            <span>Upload video instead</span>
           </Uploader>
 
-          <span className="bg-whiteBackground text-orange absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-slate-200 p-1 text-xs font-semibold">
-            OR
+          <span className="mt-2 text-xs text-primaryText">
+            Formats: webm, mp4, avi, mov
           </span>
-
-          <button
-            className="flex items-center justify-center p-2 text-lg font-medium text-white"
-            onClick={() => setShowCamera(true)}
-          >
-            <div className="flex flex-col">
-              <span>Record with</span>
-              <span>camera</span>
-            </div>
-            <CameraIcon className="ml-4 h-12 fill-white" />
-          </button>
         </div>
       )}
 

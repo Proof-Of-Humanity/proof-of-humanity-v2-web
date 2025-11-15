@@ -302,8 +302,10 @@ export default function ActionBar({
               </div>
 
               <div className="flex gap-4">
-                {requester.toLocaleLowerCase() === address?.toLowerCase() ? (
+              {requester.toLocaleLowerCase() === address?.toLowerCase() ? (
                   <>
+                  <div className="flex flex-col">
+                    <div className="flex flex-row gap-2">
                     {action === ActionType.FUND && (
                       <FundButton
                         pohId={pohId}
@@ -316,30 +318,54 @@ export default function ActionBar({
                     )}
                     <button
                       disabled={userChainId !== chain.id}
-                      className="btn-sec mb-2"
+                      className="btn-sec mb-2 normal-case"
                       onClick={withdraw}
                     >
                       Withdraw
                     </button>
+                    </div>
+                    {(action === ActionType.FUND && validVouches > 0) &&  (
+                      <ExternalLink
+                        href="https://forms.gle/Yagjs1BSYSyH2RseA"
+                        className="text-purple-600 underline underline-offset-4 text-sm font-semibold text-end"
+                      >
+                        Get a vouch ↗️
+                      </ExternalLink>
+                    )}
+                    </div>
                   </>
-                ) : !didIVouchFor ? (
-                  <Vouch
-                    pohId={pohId}
-                    claimer={requester}
-                    web3Loaded={web3Loaded}
-                    me={me}
-                    chain={chain}
-                    address={address}
-                  />
-                ) : isVouchOnchain ? (
-                  <RemoveVouch
-                    requester={requester}
-                    pohId={pohId}
-                    web3Loaded={web3Loaded}
-                    chain={chain}
-                    userChainId={userChainId}
-                  />
-                ) : null}
+                ) : (
+                  <>
+                    {!didIVouchFor ? (
+                      <Vouch
+                        pohId={pohId}
+                        claimer={requester}
+                        web3Loaded={web3Loaded}
+                        me={me}
+                        chain={chain}
+                        address={address}
+                      />
+                    ) : isVouchOnchain ? (
+                      <RemoveVouch
+                        requester={requester}
+                        pohId={pohId}
+                        web3Loaded={web3Loaded}
+                        chain={chain}
+                        userChainId={userChainId}
+                      />
+                    ) : null}
+                    {action === ActionType.FUND && (
+                      <FundButton
+                        pohId={pohId}
+                        totalCost={
+                          BigInt(contractData.baseDeposit) + arbitrationCost
+                        }
+                        index={index}
+                        funded={funded}
+                      />
+                    )}
+                  </>
+                )}
               </div>
             </>
           )}
