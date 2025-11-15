@@ -304,27 +304,41 @@ export default function ActionBar({
 
               <div className="flex gap-4">
               {requester.toLocaleLowerCase() === address?.toLowerCase() ? (
-                  <>
-                    {action === ActionType.FUND && (
-                      <FundButton
-                        pohId={pohId}
-                        totalCost={
-                          BigInt(contractData.baseDeposit) + arbitrationCost
+                  <div className="flex flex-col">
+                    <div className="flex flex-row gap-2">
+                      {action === ActionType.FUND && (
+                        <FundButton
+                          pohId={pohId}
+                          totalCost={
+                            BigInt(contractData.baseDeposit) + arbitrationCost
+                          }
+                          index={index}
+                          funded={funded}
+                        />
+                      )}
+                      <ActionButton
+                        disabled={isWithdrawPrepareError || userChainId !== chain.id}
+                        isLoading={isWithdrawLoading}
+                        onClick={withdraw}
+                        variant="secondary"
+                        label={isWithdrawLoading ? "Withdrawing" : "Withdraw"}
+                        tooltip={
+                          isWithdrawPrepareError
+                            ? "Withdraw not possible, please try again"
+                            : undefined
                         }
-                        index={index}
-                        funded={funded}
+                        className="mb-2"
                       />
+                    </div>
+                    {validVouches < contractData.requiredNumberOfVouches && (
+                      <ExternalLink
+                        href="https://forms.gle/Yagjs1BSYSyH2RseA"
+                        className="text-purple-600 underline underline-offset-4 text-sm font-semibold text-end"
+                      >
+                        Get a vouch ↗️
+                      </ExternalLink>
                     )}
-                    <ActionButton
-                      disabled={isWithdrawPrepareError || userChainId !== chain.id}
-                      isLoading={isWithdrawLoading}
-                      onClick={withdraw}
-                      variant="secondary"
-                      label={isWithdrawLoading ? "Withdrawing" : "Withdraw"}
-                      tooltip={isWithdrawPrepareError ? "Withdraw not possible, please try again" : undefined}
-                      className="mb-2"
-                    />
-                  </>
+                  </div>
                 ) : !didIVouchFor ? (
                   <>
                     {action === ActionType.FUND && (
