@@ -140,7 +140,6 @@ export default function ActionBar({
   ]);
 
   const [canAdvance, setCanAdvance] = useState(true);
-  contractData.requiredNumberOfVouches = 1;
 
   useEffect(() => {
     const shouldWarn = didIVouchFor && !isVouchOnchain && userChainId === chain.id;
