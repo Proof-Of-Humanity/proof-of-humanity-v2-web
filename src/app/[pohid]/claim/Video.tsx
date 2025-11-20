@@ -1,6 +1,5 @@
 import { ObservableObject } from "@legendapp/state";
 import Checklist from "components/Checklist";
-import Uploader from "components/Uploader";
 import Webcam from "components/Webcam";
 import getBlobDuration from "get-blob-duration";
 import useFullscreen from "hooks/useFullscreen";
@@ -187,55 +186,6 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
             <CameraIcon className="h-6 w-6 fill-white" />
             <span>Record with camera</span>
           </button>
-
-          <Uploader
-            className="mt-2 text-base font-semibold text-primary underline underline-offset-2 hover:text-slate-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-300"
-            type="video"
-            onDrop={async (received) => {
-              try {
-                const file = received[0];
-                if (!ALLOWED_VIDEO_TYPES.includes(file.type)) {
-                  const msg =
-                    "Uploaded file type: " +
-                    file.type.split("/")[1] +
-                    ". ".concat(ERROR_MSG.fileType);
-                  videoError(msg);
-                  return console.error(msg);
-                }
-                const blob = new Blob([file], { type: file.type });
-                const uri = URL.createObjectURL(blob);
-
-                await checkVideoDuration(blob);
-                checkVideoSize(blob);
-                const vid = document.createElement("video");
-                vid.crossOrigin = "anonymous";
-                vid.src = uri;
-                vid.preload = "auto";
-
-                vid.addEventListener("loadeddata", async () => {
-                  if (
-                    vid.videoWidth < MIN_DIMS.width ||
-                    vid.videoHeight < MIN_DIMS.height
-                  ) {
-                    videoError(ERROR_MSG.dimensions);
-                    return console.error(ERROR_MSG.dimensions);
-                  }
-
-                  setRecording(false);
-                  video$.set({ uri, content: blob });
-                });
-              } catch (error: any) {
-                videoError(ERROR_MSG.unexpected);
-                return console.error(error);
-              }
-            }}
-          >
-            <span>Upload video instead</span>
-          </Uploader>
-
-          <span className="mt-2 text-xs text-primaryText">
-            Formats: webm, mp4, avi, mov
-          </span>
         </div>
       )}
 

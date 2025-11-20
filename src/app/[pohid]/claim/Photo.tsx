@@ -3,7 +3,6 @@
 import { ObservableObject } from "@legendapp/state";
 import Checklist from "components/Checklist";
 import Previewed from "components/Previewed";
-import Uploader from "components/Uploader";
 import Webcam from "components/Webcam";
 import useFullscreen from "hooks/useFullscreen";
 import { useLoading } from "hooks/useLoading";
@@ -217,27 +216,6 @@ function Photo({ advance, photo$ }: PhotoProps) {
               <CameraIcon className="h-6 w-6 fill-white" />
               <span>Take with camera</span>
             </button>
-
-            <Uploader
-              className="mt-2 text-base font-semibold text-primary underline underline-offset-2 hover:text-slate-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-300"
-              type="image"
-              onDrop={async (received) => {
-                const file = received[0];
-                setOriginalPhoto({
-                  uri: URL.createObjectURL(
-                    new Blob([file], { type: file.type }),
-                  ),
-                  buffer: Buffer.from(await file.arrayBuffer()),
-                });
-              }}
-              disabled={!!originalPhoto}
-            >
-              <span>Upload photo instead</span>
-            </Uploader>
-
-            <span className="mt-2 text-xs text-primaryText">
-              Formats: jpg, jpeg, png, webp
-            </span>
           </div>
         </div>
       )}

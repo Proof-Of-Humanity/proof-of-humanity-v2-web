@@ -3,6 +3,7 @@ import { useState } from "react";
 import { useAccount } from "wagmi";
 import { SubmissionState } from "./Form";
 import { ObservableObject } from "@legendapp/state";
+import ExternalLink from "components/ExternalLink";
 
 interface InfoProps {
   advance: () => void;
@@ -11,7 +12,9 @@ interface InfoProps {
 
 function Info({ advance, state$ }: InfoProps) {
   const { address } = useAccount();
-  const [tookNotice, setTookNotice] = useState(false);
+  const [walletNotice, setWalletNotice] = useState(false);
+  const [duplicateNotice, setDuplicateNotice] = useState(false);
+  const [showDetails, setShowDetails] = useState(false);
   const name = state$.name.use();
 
   return (
@@ -38,13 +41,13 @@ function Info({ advance, state$ }: InfoProps) {
         onChange={(e) => state$.name.set(e.target.value)}
       />
 
-      <div className="mb-16 mt-8 flex cursor-pointer items-center">
+      <div className="mb-4 mt-8 flex items-start">
         <input
-          id="notice"
+          id="wallet-notice"
           type="checkbox"
-          className="checkbox mx-2 cursor-pointer"
-          checked={tookNotice}
-          onChange={() => setTookNotice((c) => !c)}
+          className="checkbox mt-1 cursor-pointer"
+          checked={walletNotice}
+          onChange={() => setWalletNotice((c) => !c)}
         />
         <label className="cursor-pointer" htmlFor="notice">
           I understand this wallet will be irreversibly linked to my real-world
@@ -53,9 +56,77 @@ function Info({ advance, state$ }: InfoProps) {
         </label>
       </div>
 
+      <div className="mb-8 flex flex-col items-start">
+        <div className="flex items-start">
+          <input
+            id="duplicate-notice"
+            type="checkbox"
+            className="checkbox mt-1 cursor-pointer"
+            checked={duplicateNotice}
+            onChange={() => setDuplicateNotice((c) => !c)}
+          />
+          <label className="ml-3 cursor-pointer text-slate-800" htmlFor="duplicate-notice">
+            I've never had a PoH profile. I understand that if I had one before, a new submission can be challenged
+            as a duplicate, and my{" "}
+            <span className="text-red-500 font-medium">deposit may be lost.</span>
+          </label>
+        </div>
+        
+        <button
+          className="ml-7 mt-2 flex items-center gap-1 text-sm text-slate-500 hover:text-slate-700"
+          onClick={() => setShowDetails((s) => !s)}
+        >
+          Details {showDetails ? <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" className="lucide lucide-chevron-down h-3 w-3 transition-transform rotate-180"><path d="m6 9 6 6 6-6"></path></svg> : <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" className="lucide lucide-chevron-down h-3 w-3 transition-transform"><path d="m6 9 6 6 6-6"></path></svg>}
+        </button>
+
+        {showDetails && (
+          <div className="ml-7 mt-3 bg-orange-50/30 p-5 text-sm border-l-[#F5E5DD] border-l-2" style={{ color: '#737373' }}>
+            <p className="mb-3">
+              If you've ever had a PoH profile (v1 or v2, on any chain/status), do not start a new one. Click on your profile's{" "}
+              <strong className="font-semibold" style={{ color: '#737373' }}>PoH ID</strong> and select the relevant option:
+            </p>
+            <ul className="mb-4 list-disc space-y-2 pl-5">
+              <li>
+                <strong className="font-semibold" style={{ color: '#737373' }}>Renew</strong> — use the same wallet to extend/refresh your profile or update your name/alias.
+              </li>
+              <li>
+                <strong className="font-semibold" style={{ color: '#737373' }}>Claim Humanity</strong> — use a different/new wallet if you changed or lost the old one, or if someone already
+                registered you (even incorrectly). Works for expired / withdrawn / revoked / rejected / pending / challenged profiles.
+              </li>
+              <li>
+                <strong className="font-semibold" style={{ color: '#737373' }}>Revoke</strong> — if you opened a duplicate submission, revoke it and use the correct flow above.
+              </li>
+            </ul>
+            <div className="flex items-center gap-2">
+              <span>Find your past profiles:</span>
+              <ExternalLink 
+                href="https://app.proofofhumanity.id/" 
+                className="inline-flex h-6 items-center justify-center gap-2 whitespace-nowrap rounded-full border border-orange-200 bg-background/50 px-3 text-xs font-medium ring-offset-background transition-all hover:border-orange-500 hover:bg-orange-500/10 hover:text-orange-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
+              >
+                PoH V1
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-arrow-up-right h-3 w-3">
+                  <path d="M7 7h10v10"></path>
+                  <path d="M7 17 17 7"></path>
+                </svg>
+              </ExternalLink>
+              <ExternalLink 
+                href="https://v2.proofofhumanity.id/" 
+                className="inline-flex h-6 items-center justify-center gap-2 whitespace-nowrap rounded-full border border-orange-200 bg-background/50 px-3 text-xs font-medium ring-offset-background transition-all hover:border-orange-500 hover:bg-orange-500/10 hover:text-orange-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
+              >
+                PoH V2
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-arrow-up-right h-3 w-3">
+                  <path d="M7 7h10v10"></path>
+                  <path d="M7 17 17 7"></path>
+                </svg>
+              </ExternalLink>
+            </div>
+          </div>
+        )}
+      </div>
+
       <button
         className="btn-main"
-        disabled={!name || !tookNotice}
+        disabled={!name || !walletNotice || !duplicateNotice}
         onClick={advance}
       >
         NEXT
