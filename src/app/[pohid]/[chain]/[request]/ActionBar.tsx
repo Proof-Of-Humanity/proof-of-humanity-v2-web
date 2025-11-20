@@ -138,6 +138,7 @@ export default function ActionBar({
   ]);
 
   const [canAdvance, setCanAdvance] = useState(true);
+  contractData.requiredNumberOfVouches = 1;
 
 
   const [prepareExecute, execute, executeStatus] = usePoHWrite(
