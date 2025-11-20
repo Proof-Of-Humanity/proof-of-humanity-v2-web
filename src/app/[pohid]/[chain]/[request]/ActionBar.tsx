@@ -140,6 +140,7 @@ export default function ActionBar({
   ]);
 
   const [canAdvance, setCanAdvance] = useState(true);
+  contractData.requiredNumberOfVouches = 1;
 
   useEffect(() => {
     const shouldWarn = didIVouchFor && !isVouchOnchain && userChainId === chain.id;
@@ -324,7 +325,7 @@ export default function ActionBar({
                       Withdraw
                     </button>
                     </div>
-                    {(action === ActionType.FUND && validVouches > 0) &&  (
+                    { validVouches <= contractData.requiredNumberOfVouches &&  (
                       <ExternalLink
                         href="https://forms.gle/Yagjs1BSYSyH2RseA"
                         className="text-purple-600 underline underline-offset-4 text-sm font-semibold text-end"
