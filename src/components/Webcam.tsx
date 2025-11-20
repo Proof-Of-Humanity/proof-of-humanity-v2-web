@@ -7,7 +7,6 @@ import MaximizeIcon from "icons/MaximizeMinor.svg";
 import MinimizeIcon from "icons/MinimizeMinor.svg";
 import PauseIcon from "icons/PauseMajor.svg";
 import PlayIcon from "icons/PlayMajor.svg";
-import MirrorIcon from "icons/ProductReturnsMinor.svg";
 import SmileyIcon from "icons/SmileyHappyMajor.svg";
 
 interface CameraButtonInterface {
@@ -160,16 +159,6 @@ const Webcam: React.FC<WebcamProps> = ({
               <FlipCameraIcon className="h-8 w-8 fill-white" />
             </CameraButton>
           )}
-          <CameraButton
-            secondary
-            className={cn(
-              "left-4",
-              IS_MOBILE && devices.length > 1 ? "top-20" : "top-4",
-            )}
-            onClick={() => setMirrored((o) => !o)}
-          >
-            <MirrorIcon className="h-8 w-8 fill-white" />
-          </CameraButton>
           <CameraButton
             secondary
             className="right-4 top-4"
