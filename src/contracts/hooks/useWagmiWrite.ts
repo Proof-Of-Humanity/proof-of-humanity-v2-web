@@ -42,7 +42,7 @@ export default function useWagmiWrite<
   
   const [enabled, setEnabled] = useState(false);
 
-  const { data: prepared, status: prepareStatus} = useSimulateContract({
+  const { data: prepared, status: prepareStatus, error: prepareError} = useSimulateContract({
    address: contractInfo.address as `0x${string}`,
     abi: contractInfo.abi as Abi,
     functionName,
@@ -69,6 +69,7 @@ export default function useWagmiWrite<
         break;
       case "error":
         if(enabled){
+          console.error(prepareError);
           effects?.onFail?.();
           setEnabled(false);
         }
