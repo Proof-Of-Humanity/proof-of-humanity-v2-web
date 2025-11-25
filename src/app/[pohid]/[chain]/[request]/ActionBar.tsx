@@ -138,6 +138,7 @@ export default function ActionBar({
   ]);
 
   const [canAdvance, setCanAdvance] = useState(true);
+  contractData.requiredNumberOfVouches = 1;
 
 
   const [prepareExecute, execute, executeStatus] = usePoHWrite(
@@ -333,9 +334,25 @@ export default function ActionBar({
                     {validVouches < contractData.requiredNumberOfVouches && (
                       <ExternalLink
                         href="https://forms.gle/Yagjs1BSYSyH2RseA"
-                        className="text-purple-600 underline underline-offset-4 text-sm font-semibold text-end"
+                        className="text-purple hover:opacity-80 underline underline-offset-4 text-sm font-medium inline-flex items-center gap-1 group transition-colors justify-center"
                       >
-                        Get a vouch ↗️
+                        Get a vouch
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          width="24"
+                          height="24"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          className="lucide lucide-external-link h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
+                        >
+                          <path d="M15 3h6v6"></path>
+                          <path d="M10 14 21 3"></path>
+                          <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+                        </svg>
                       </ExternalLink>
                     )}
                   </div>
