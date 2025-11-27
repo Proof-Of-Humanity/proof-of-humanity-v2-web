@@ -224,7 +224,7 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
       )}
 
       {pending && (
-        <div className="flex flex-col items-center">
+        <div className="flex flex-col items-center mt-4">
           <button className="btn-main" disabled>
             <Image
               alt="loading"
