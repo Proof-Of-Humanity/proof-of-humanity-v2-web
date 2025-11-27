@@ -135,7 +135,8 @@ let ffmpeg: FFmpeg;
 
 export const loadFFMPEG = async () => {
   if (ffmpeg && ffmpeg.isLoaded()) return;
-  ffmpeg = createFFmpeg({ log: false, corePath: "/dist/ffmpeg-core.js" });
+  //TODO: use better approch later to load ffmpeg
+  ffmpeg = createFFmpeg({ log: false, corePath: "https://unpkg.com/@ffmpeg/core@0.12.10/dist/umd/ffmpeg-core.js" });
   await ffmpeg.load();
 };
 

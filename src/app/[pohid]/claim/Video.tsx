@@ -3,11 +3,14 @@ import Checklist from "components/Checklist";
 import Webcam from "components/Webcam";
 import getBlobDuration from "get-blob-duration";
 import useFullscreen from "hooks/useFullscreen";
+import { useLoading } from "hooks/useLoading";
 import CameraIcon from "icons/CameraMajor.svg";
 import ResetIcon from "icons/ResetMinor.svg";
+import Image from "next/image";
 import React, { useRef, useState } from "react";
 import ReactWebcam from "react-webcam";
-import { IS_IOS } from "utils/media";
+import { toast } from "react-toastify";
+import { IS_IOS, videoSanitizer } from "utils/media";
 import { useAccount } from "wagmi";
 import { MediaState } from "./Form";
 
@@ -51,6 +54,9 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
 
   const [recorder, setRecorder] = useState<MediaRecorder | null>(null);
 
+  const loading = useLoading();
+  const [pending, loadingMessage] = loading.use();
+
   const checkVideoSize = (blob: Blob) => {
     if (MAX_SIZE_BYTES && blob.size > MAX_SIZE_BYTES) {
       videoError(ERROR_MSG.size);
@@ -73,6 +79,8 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
     });
 
     mediaRecorder.ondataavailable = async ({ data }) => {
+      loading.start("Processing video");
+
       const newlyRecorded = ([] as BlobPart[]).concat(data);
       const blob = new Blob(newlyRecorded, {
         type: IS_IOS ? 'video/mp4' : 'video/webm',
@@ -81,8 +89,19 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
       await checkVideoDuration(blob);
       checkVideoSize(blob);
 
-      video$.set({ content: blob, uri: URL.createObjectURL(blob) });
-      setShowCamera(false);
+      try {
+        const buffer = await blob.arrayBuffer();
+        const sanitized = await videoSanitizer(buffer);
+        const sanitizedBlob = new Blob([new Uint8Array(sanitized as ArrayBuffer)], { type: 'video/mp4' });
+
+        video$.set({ content: sanitizedBlob, uri: URL.createObjectURL(sanitizedBlob) });
+        setShowCamera(false);
+      } catch (err: any) {
+        toast.error(err.message || "Failed to process video");
+        console.error("Video sanitization error:", err);
+      } finally {
+        loading.stop();
+      }
     };
 
     mediaRecorder.onstop = async () => {
@@ -204,7 +223,22 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
         </div>
       )}
 
-      {!!video && (
+      {pending && (
+        <div className="flex flex-col items-center">
+          <button className="btn-main" disabled>
+            <Image
+              alt="loading"
+              src="/logo/poh-white.svg"
+              className="animate-flip"
+              height={12}
+              width={12}
+            />
+            {loadingMessage}...
+          </button>
+        </div>
+      )}
+
+      {!!video && !pending && (
         <div className="flex flex-col items-center">
           <video src={video.uri} controls />
           <button className="btn-main mt-4" onClick={advance}>
@@ -213,7 +247,7 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
         </div>
       )}
 
-      {(showCamera || !!video) && (
+      {(showCamera || !!video) && !pending && (
         <button
           className="centered text-orange mt-4 text-lg font-semibold uppercase"
           onClick={() => retakeVideo()}
