@@ -170,7 +170,7 @@ export default function ActionBar({
       [router],
     ),
   );
-  const [prepareWithdraw, withdraw] = usePoHWrite(
+  const [prepareWithdraw, withdraw, withdrawStatus] = usePoHWrite(
     "withdrawRequest",
     useMemo(
       () => ({
@@ -179,9 +179,10 @@ export default function ActionBar({
         },
         onSuccess() {
           toast.success("Request withdrawn successfully");
+          setTimeout(() => router.refresh(), 500);
         },
       }),
-      [],
+      [router],
     ),
   );
 
@@ -191,9 +192,13 @@ export default function ActionBar({
   const isExecuteLoading =
     executeStatus.write === "pending" ||
     (executeStatus.write === "success" && executeStatus.transaction === "pending");
+  const isWithdrawLoading =
+    withdrawStatus.write === "pending" ||
+    (withdrawStatus.write === "success" && withdrawStatus.transaction === "pending");
 
   const isAdvancePrepareError = advanceStatus.prepare === "error";
   const isExecutePrepareError = executeStatus.prepare === "error";
+  const isWithdrawPrepareError = withdrawStatus.prepare === "error";
   useEffect(() => {
     if(!address || userChainId !== chain.id) return;
     if (action === ActionType.ADVANCE && !revocation) {
@@ -310,13 +315,15 @@ export default function ActionBar({
                         funded={funded}
                       />
                     )}
-                    <button
-                      disabled={userChainId !== chain.id}
-                      className="btn-sec mb-2"
+                    <ActionButton
+                      disabled={isWithdrawPrepareError || userChainId !== chain.id}
+                      isLoading={isWithdrawLoading}
                       onClick={withdraw}
-                    >
-                      Withdraw
-                    </button>
+                      variant="secondary"
+                      label={isWithdrawLoading ? "Withdrawing" : "Withdraw"}
+                      tooltip={isWithdrawPrepareError ? "Withdraw not possible, please try again" : undefined}
+                      className="mb-2"
+                    />
                   </>
                 ) : !didIVouchFor ? (
                   <>
@@ -376,13 +383,15 @@ export default function ActionBar({
 
             <div className="flex gap-4">
               {requester.toLocaleLowerCase() === address?.toLowerCase() ? (
-                <button
-                  disabled={userChainId !== chain.id}
-                  className="btn-sec mb-2"
-                  onClick={withdraw}
-                >
-                  Withdraw
-                </button>
+              <ActionButton
+               disabled={isWithdrawPrepareError || userChainId !== chain.id}
+               isLoading={isWithdrawLoading}
+               onClick={withdraw}
+               variant = "secondary"
+               label={"Withdraw"}
+               tooltip={isWithdrawPrepareError ? "Withdraw not possible, please try again": undefined}
+               className="mb-2"
+             />
               ) : !didIVouchFor ? (
                 <Vouch
                   pohId={pohId}
