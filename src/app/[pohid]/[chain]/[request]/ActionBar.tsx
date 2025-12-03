@@ -11,7 +11,7 @@ import { RequestQuery } from "generated/graphql";
 import useChainParam from "hooks/useChainParam";
 import useWeb3Loaded from "hooks/useWeb3Loaded";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "react-toastify";
 import useSWR from "swr";
 import { getStatusLabel, getStatusColor, RequestStatus } from "utils/status";
@@ -90,8 +90,6 @@ export default function ActionBar({
   const { data: me } = useSWR(address, getMyData);
   const router = useRouter();
 
-  const hasWarnedOffchain = useRef(false);
-
   const {didIVouchFor, isVouchOnchain} = useMemo(() => {
     const lowerAddr = address?.toLowerCase();
     const onChainMatch = onChainVouches.some(
@@ -140,14 +138,6 @@ export default function ActionBar({
   ]);
 
   const [canAdvance, setCanAdvance] = useState(true);
-
-  useEffect(() => {
-    const shouldWarn = didIVouchFor && !isVouchOnchain && userChainId === chain.id;
-    if (shouldWarn && !hasWarnedOffchain.current) {
-      toast.error("Off chain vouches cannot be removed", { toastId: "offchain-vouch" });
-      hasWarnedOffchain.current = true;
-    }
-  }, [didIVouchFor, isVouchOnchain, userChainId, chain.id]);
 
 
   const [prepareExecute, execute, executeStatus] = usePoHWrite(
@@ -280,17 +270,23 @@ export default function ActionBar({
             <>
               <div className="flex gap-6">
                 <span className="text-slate-400">
-                  It needs{" "}
-                  <strong className={`text-status-${statusColor}`}>
-                    {contractData.requiredNumberOfVouches}
-                  </strong>{" "}
-                  {+contractData.requiredNumberOfVouches === 1
-                    ? "vouch"
-                    : "vouches"}{" "}
-                  to proceed
+                  {validVouches < contractData.requiredNumberOfVouches && (
+                    <>
+                      It needs{" "}
+                      <strong className={`text-status-${statusColor}`}>
+                        {contractData.requiredNumberOfVouches}
+                      </strong>{" "}
+                      {+contractData.requiredNumberOfVouches === 1
+                        ? "vouch"
+                        : "vouches"}{" "}
+                      to proceed
+                    </>
+                  )}
                   {!!(totalCost - funded) && (
                     <>
-                      {" + "}
+                      {validVouches < contractData.requiredNumberOfVouches
+                        ? " + "
+                        : "It needs "}
                       <strong className={`text-status-${statusColor}`}>
                         {formatEther(totalCost - funded)}{" "}
                         {chain.nativeCurrency.symbol}
@@ -323,23 +319,53 @@ export default function ActionBar({
                     </button>
                   </>
                 ) : !didIVouchFor ? (
-                  <Vouch
-                    pohId={pohId}
-                    claimer={requester}
-                    web3Loaded={web3Loaded}
-                    me={me}
-                    chain={chain}
-                    address={address}
-                  />
-                ) : isVouchOnchain ? (
-                  <RemoveVouch
-                    requester={requester}
-                    pohId={pohId}
-                    web3Loaded={web3Loaded}
-                    chain={chain}
-                    userChainId={userChainId}
-                  />
-                ) : null}
+                  <>
+                    {action === ActionType.FUND && (
+                      <FundButton
+                        pohId={pohId}
+                        totalCost={
+                          BigInt(contractData.baseDeposit) + arbitrationCost
+                        }
+                        index={index}
+                        funded={funded}
+                      />
+                    )}
+                    <Vouch
+                      pohId={pohId}
+                      claimer={requester}
+                      web3Loaded={web3Loaded}
+                      me={me}
+                      chain={chain}
+                      address={address}
+                    />
+                  </>
+                ) : (
+                  <>
+                    {action === ActionType.FUND && (
+                      <FundButton
+                        pohId={pohId}
+                        totalCost={
+                          BigInt(contractData.baseDeposit) + arbitrationCost
+                        }
+                        index={index}
+                        funded={funded}
+                      />
+                    )}
+                    <RemoveVouch
+                      requester={requester}
+                      pohId={pohId}
+                      web3Loaded={web3Loaded}
+                      chain={chain}
+                      userChainId={userChainId}
+                      disabled={!isVouchOnchain}
+                      tooltip={
+                        !isVouchOnchain
+                          ? "Off chain vouches cannot be removed"
+                          : undefined
+                      }
+                    />
+                  </>
+                )}
               </div>
             </>
           )}
