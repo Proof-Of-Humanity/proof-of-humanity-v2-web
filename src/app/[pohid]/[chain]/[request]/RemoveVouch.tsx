@@ -16,6 +16,8 @@ interface RemoveVouchProps {
   web3Loaded: any;
   chain: SupportedChain;
   userChainId: number;
+  disabled?: boolean;
+  tooltip?: string;
 }
 
 export default function RemoveVouch({
@@ -24,6 +26,8 @@ export default function RemoveVouch({
   web3Loaded,
   chain,
   userChainId,
+  disabled,
+  tooltip,
 }: RemoveVouchProps) {
   const loading = useLoading();
   const [pending] = loading.use();
@@ -53,14 +57,15 @@ export default function RemoveVouch({
 
   return (
     web3Loaded &&
-    userChainId === chain.id && (
+    (userChainId === chain.id || disabled) && (
       <div className="flex gap-4">
         <ActionButton
           onClick={removeOnchainVouch}
           label="Remove Vouch"
           className="mb-2"
           isLoading={status.write === "pending"}
-          disabled={status.write === "pending"}
+          disabled={status.write === "pending" || disabled || userChainId !== chain.id}
+          tooltip={tooltip}
         />
       </div>
     )
