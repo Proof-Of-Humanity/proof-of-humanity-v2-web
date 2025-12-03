@@ -7,6 +7,7 @@ import usePoHWrite from "contracts/hooks/usePoHWrite";
 import { useLoading } from "hooks/useLoading";
 import { Hash, formatEther, parseEther } from "viem";
 import useChainParam from "hooks/useChainParam";
+import { useRouter } from "next/navigation";
 import { useAccount, useBalance, useChainId } from "wagmi";
 import { formatEth } from "utils/misc";
 
@@ -23,9 +24,11 @@ const FundButton: React.FC<FundButtonProps> = ({
   totalCost,
   funded,
 }) => {
+  const router = useRouter();
   const chain = useChainParam()!;
   const userChainId = useChainId();
   const [addedFundInput, setAddedFundInput] = useState("");
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const {isConnected, address} = useAccount();
   const { data: balanceData } = useBalance({ address, chainId: userChainId });
   const loading = useLoading();
@@ -52,9 +55,11 @@ const FundButton: React.FC<FundButtonProps> = ({
           toast.success("Request funded successfully");
 
           setAddedFundInput("");
+          setIsModalOpen(false);
+          setTimeout(() => router.refresh(), 500);
         },
       }),
-      [loading],
+      [loading, router],
     ),
   );
 
@@ -86,12 +91,17 @@ const FundButton: React.FC<FundButtonProps> = ({
     insufficientFunds;
 
   return (
-    <Modal
-      formal
-      header="Fund"
-      trigger={<button className="btn-main mb-2">Fund</button>}
-    >
-      <div className="flex flex-col p-4">
+    <>
+      <button className="btn-main mb-2" onClick={() => setIsModalOpen(true)}>
+        Fund
+      </button>
+      <Modal
+        formal
+        header="Fund"
+        open={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+      >
+        <div className="flex flex-col p-4">
         <div className="flex w-full justify-center rounded p-4 font-bold">
           <span
             onClick={() => setAddedFundInput(formatEth(remainingAmount).toString())}
@@ -120,7 +130,8 @@ const FundButton: React.FC<FundButtonProps> = ({
           label={loadingMessage || "Fund request"}
         />
       </div>
-    </Modal>
+      </Modal>
+    </>
   );
 };
 
