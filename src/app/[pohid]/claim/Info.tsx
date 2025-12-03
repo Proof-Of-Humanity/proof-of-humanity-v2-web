@@ -47,8 +47,8 @@ function Info({ advance, state$ }: InfoProps) {
           onChange={() => setTookNotice((c) => !c)}
         />
         <label className="cursor-pointer" htmlFor="notice">
-          I understand this wallet will be irreversebly linked to my real world
-          person and I will not use that wallet for any private or sensitive
+          I understand this wallet will be irreversibly linked to my real-world
+          identity and I will not use that wallet for any private or sensitive
           information.
         </label>
       </div>
