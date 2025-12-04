@@ -139,7 +139,6 @@ export default function ActionBar({
 
   const [canAdvance, setCanAdvance] = useState(true);
 
-
   const [prepareExecute, execute, executeStatus] = usePoHWrite(
     "executeRequest",
     useMemo(
@@ -303,28 +302,58 @@ export default function ActionBar({
               </div>
 
               <div className="flex gap-4">
-                {requester.toLocaleLowerCase() === address?.toLowerCase() ? (
-                  <>
-                    {action === ActionType.FUND && (
-                      <FundButton
-                        pohId={pohId}
-                        totalCost={
-                          BigInt(contractData.baseDeposit) + arbitrationCost
+              {requester.toLocaleLowerCase() === address?.toLowerCase() ? (
+                  <div className="flex flex-col">
+                    <div className="flex flex-row gap-2">
+                      {action === ActionType.FUND && (
+                        <FundButton
+                          pohId={pohId}
+                          totalCost={
+                            BigInt(contractData.baseDeposit) + arbitrationCost
+                          }
+                          index={index}
+                          funded={funded}
+                        />
+                      )}
+                      <ActionButton
+                        disabled={isWithdrawPrepareError || userChainId !== chain.id}
+                        isLoading={isWithdrawLoading}
+                        onClick={withdraw}
+                        variant="secondary"
+                        label={isWithdrawLoading ? "Withdrawing" : "Withdraw"}
+                        tooltip={
+                          isWithdrawPrepareError
+                            ? "Withdraw not possible, please try again"
+                            : undefined
                         }
-                        index={index}
-                        funded={funded}
+                        className="mb-2"
                       />
+                    </div>
+                    {validVouches < contractData.requiredNumberOfVouches && (
+                      <ExternalLink
+                        href="https://forms.gle/Yagjs1BSYSyH2RseA"
+                        className="text-purple hover:opacity-80 underline underline-offset-4 text-sm font-medium inline-flex items-center gap-1 group transition-colors justify-end"
+                      >
+                        Get a vouch
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          width="24"
+                          height="24"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          className="lucide lucide-external-link h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
+                        >
+                          <path d="M15 3h6v6"></path>
+                          <path d="M10 14 21 3"></path>
+                          <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+                        </svg>
+                      </ExternalLink>
                     )}
-                    <ActionButton
-                      disabled={isWithdrawPrepareError || userChainId !== chain.id}
-                      isLoading={isWithdrawLoading}
-                      onClick={withdraw}
-                      variant="secondary"
-                      label={isWithdrawLoading ? "Withdrawing" : "Withdraw"}
-                      tooltip={isWithdrawPrepareError ? "Withdraw not possible, please try again" : undefined}
-                      className="mb-2"
-                    />
-                  </>
+                  </div>
                 ) : !didIVouchFor ? (
                   <>
                     {action === ActionType.FUND && (
@@ -490,7 +519,7 @@ export default function ActionBar({
               />
 
               <ExternalLink
-                href={`https://resolve.kleros.io/${chain.id}/cases/${currentChallenge.disputeId}`}
+                href={`https://klerosboard.com/${chain.id}/cases/${currentChallenge.disputeId}`}
                 className="btn-main gradient h-[48px] rounded
                 items-center
                 justify-center
