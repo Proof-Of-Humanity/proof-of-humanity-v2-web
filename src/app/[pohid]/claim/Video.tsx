@@ -177,7 +177,7 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
               isValid: true,
             },
             {
-              text: 'Say exactly: "I certify that I am a real human and that I am not already registered in this registry."',
+              text: `Say exactly: "${phrase}"`,
               isValid: true,
             },
             {

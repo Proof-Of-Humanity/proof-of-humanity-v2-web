@@ -49,7 +49,7 @@ function Info({ advance, state$ }: InfoProps) {
           checked={walletNotice}
           onChange={() => setWalletNotice((c) => !c)}
         />
-        <label className="cursor-pointer" htmlFor="notice">
+        <label className="ml-3 cursor-pointer" htmlFor="notice">
           I understand this wallet will be irreversibly linked to my real-world
           identity and I will not use that wallet for any private or sensitive
           information.
@@ -66,8 +66,8 @@ function Info({ advance, state$ }: InfoProps) {
             onChange={() => setDuplicateNotice((c) => !c)}
           />
           <label className="ml-3 cursor-pointer text-slate-800" htmlFor="duplicate-notice">
-            I've never had a PoH profile. I understand that if I had one before, a new submission can be challenged
-            as a duplicate, and my{" "}
+          I'm not currently registered on PoH, and don't have an active profile. 
+          I understand that a duplicate submission can be challenged, and my{" "}
             <span className="text-red-500 font-medium">deposit may be lost.</span>
           </label>
         </div>
@@ -82,19 +82,21 @@ function Info({ advance, state$ }: InfoProps) {
         {showDetails && (
           <div className="ml-7 mt-3 bg-orange-50/30 p-5 text-sm border-l-[#F5E5DD] border-l-2" style={{ color: '#737373' }}>
             <p className="mb-3">
-              If you've ever had a PoH profile (v1 or v2, on any chain/status), do not start a new one. Click on your profile's{" "}
-              <strong className="font-semibold" style={{ color: '#737373' }}>PoH ID</strong> and select the relevant option:
+              <span className="font-medium">Coming from PoH v1 and registering on v2 for the first time?</span> You can either:<span className="font-medium">(a)</span> claim your past v1 profile, or <span className="font-medium">(b)</span>  register on the current product (v2) with your new wallet. Simultaneous submissions aren't allowed.
+            </p>
+            <p className="mb-3">
+              Click on your profile's <strong className="font-medium" style={{ color: '#737373' }}>PoH ID</strong> and select the relevant option:
             </p>
             <ul className="mb-4 list-disc space-y-2 pl-5">
               <li>
-                <strong className="font-semibold" style={{ color: '#737373' }}>Renew</strong> — use the same wallet to extend/refresh your profile or update your name/alias.
+                <strong className="font-semibold" style={{ color: '#737373' }}>Renew</strong> — use the same wallet to extend/refresh your v2 profile or update your name/alias.
               </li>
               <li>
                 <strong className="font-semibold" style={{ color: '#737373' }}>Claim Humanity</strong> — use a different/new wallet if you changed or lost the old one, or if someone already
                 registered you (even incorrectly). Works for expired / withdrawn / revoked / rejected / pending / challenged profiles.
               </li>
               <li>
-                <strong className="font-semibold" style={{ color: '#737373' }}>Revoke</strong> — if you opened a duplicate submission, revoke it and use the correct flow above.
+                <strong className="font-semibold" style={{ color: '#737373' }}>Revoke</strong> — if you opened a duplicate submission, revoke it and then use the correct flow above.
               </li>
             </ul>
             <div className="flex items-center gap-2">
