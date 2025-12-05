@@ -80,7 +80,7 @@ function Info({ advance, state$ }: InfoProps) {
         </button>
 
         {showDetails && (
-          <div className="ml-7 mt-3 bg-orange-50/30 dark:bg-dark-lightOrange p-5 text-sm border-l-[#F5E5DD] dark:border-l-dark-orange border-l-2 text-secondaryText">
+          <div className="ml-7 mt-3 p-5 text-sm border-l-[#F5E5DD] dark:border-l-dark-orange border-l-2 text-secondaryText">
             <p className="mb-3">
              <span className="font-medium">Coming from PoH v1 and registering on v2 for the first time? </span> You can either: <strong className="font-semibold">(a)</strong> claim your past (v1) profile, or <strong className="font-semibold">(b)</strong> register on the current interface (v2) with your <strong className="font-semibold">previously used</strong>, or <strong className="font-semibold">new</strong> wallet. Simultaneous submissions not allowed.
             </p>
