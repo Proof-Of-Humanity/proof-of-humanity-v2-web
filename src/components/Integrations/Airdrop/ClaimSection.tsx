@@ -162,11 +162,18 @@ export default function ClaimSection({ amountPerClaim, airdropChainId, eligibili
   }, [address, amountPerClaim, currentStake, humanitySubcourtId, prepareBatch]);
 
   const renderActionButton = () => {
-    // No action button for claimed or error states
-    if (eligibilityStatus === "claimed" || eligibilityStatus === "error") return null;
+    // No action button for error state
+    if (eligibilityStatus === "error") return null;
 
     const getButtonProps = () => {
       switch (eligibilityStatus) {
+        case "claimed":
+          return {
+            onClick: () => {
+              router.push("/app");
+            },
+            label: "Claim More Rewards",
+          };
         case "eligible":
           return {
             onClick: handleClaimAndStake,
@@ -196,11 +203,14 @@ export default function ClaimSection({ amountPerClaim, airdropChainId, eligibili
 
     const buttonProps = getButtonProps();
 
+    const marginClass = eligibilityStatus === "claimed" ? "mt-6" : "mt-14";
+    const widthClass = eligibilityStatus === "claimed" ? "w-full" : "w-44";
+
     return (
-      <div className="mt-14 flex justify-center">
+      <div className={`${marginClass} flex justify-center`}>
         <ActionButton
           {...buttonProps}
-          className="w-44 py-3"
+          className={`${widthClass} py-3`}
         />
       </div>
     );
@@ -247,6 +257,7 @@ export default function ClaimSection({ amountPerClaim, airdropChainId, eligibili
         return {
           icon: <WarningCircle16Icon width={16} height={16} className="fill-orange" />,
           text: "Connect your wallet",
+          subText: "Connect to check your eligibility",
           textColor: "text-orange",
         };
     }
@@ -266,9 +277,9 @@ export default function ClaimSection({ amountPerClaim, airdropChainId, eligibili
             <div className="mb-6 flex justify-center">{statusDisplay.icon}</div>
             <div className="text-purple text-sm font-medium mb-2">{statusDisplay.text}</div>
             <PnkDisplay amount={amountPerClaim} />
-            <div className={`${statusDisplay.textColor} text-base font-normal`}>{statusDisplay.subText}</div>
+            <div className={`${statusDisplay.textColor} text-base font-normal mb-6`}>{statusDisplay.subText}</div>
             {isTestnet && (
-              <div className="mt-3 text-secondaryText text-xs">
+              <div className="mt-3 mb-6 text-secondaryText text-xs">
                 On testnet, you will be staked in the General Court.
               </div>
             )}
