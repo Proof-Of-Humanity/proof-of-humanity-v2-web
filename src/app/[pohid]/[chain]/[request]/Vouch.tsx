@@ -1,3 +1,4 @@
+import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import Modal from "components/Modal";
 import usePoHWrite from "contracts/hooks/usePoHWrite";
@@ -27,6 +28,7 @@ export default function Vouch({
   chain,
   address,
 }: VouchButtonProps) {
+  const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
   const [prepare, addVouch , status] = usePoHWrite(
     "addVouch",
@@ -41,6 +43,7 @@ export default function Vouch({
         onSuccess() {
           toast.success("Vouched successfully");
           setIsOpen(false);
+          setTimeout(() => router.refresh(), 1000);
         },
       }),
       [],
@@ -73,6 +76,7 @@ export default function Vouch({
           });
           toast.success("Vouched successfully");
           setIsOpen(false);
+          router.refresh();
         } catch (err) {
           console.error(err);
           toast.error("Error vouching. Please try again.");
