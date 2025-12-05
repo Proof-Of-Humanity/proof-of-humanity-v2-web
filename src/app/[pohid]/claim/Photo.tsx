@@ -147,21 +147,12 @@ function Photo({ advance, photo$ }: PhotoProps) {
       </span>
 
       {!showCamera && !originalPhoto && !photo && (
-        <div className="flex flex-col items-center">
-          <div className="flex w-full flex-col pb-8 sm:flex-row">
-            <div className="m-auto flex w-fit flex-col items-center">
-              <span className="pb-2 font-semibold">Facing the camera</span>
-              <div className="grid grid-cols-2 gap-2">
-                <ExamplePic src="/images/front-facing.jpg" />
-                <ExamplePic src="/images/not-front-facing.jpg" wrong={true} />
-              </div>
-            </div>
-
-            <div className="m-auto flex w-fit flex-col items-center">
-              <span className="pb-2 font-semibold">No filters</span>
-              <div className="grid w-fit grid-cols-1">
-                <ExamplePic src="/images/b&w.jpg" wrong={true} />
-              </div>
+        <div className="flex flex-col items-center gap-8">
+          <div className="flex w-fit flex-col items-center">
+            <span className="pb-2 font-semibold">Facing the camera</span>
+            <div className="grid grid-cols-2 gap-2">
+              <ExamplePic src="/images/front-facing.jpg" />
+              <ExamplePic src="/images/not-front-facing.jpg" wrong={true} />
             </div>
           </div>
 
@@ -188,16 +179,8 @@ function Photo({ advance, photo$ }: PhotoProps) {
                 isValid: true,
               },
               {
-                text: "No filters, background blur, or beauty effects.",
-                isValid: false,
-              },
-              {
                 text: "Eyes, nose, mouth visible (eyeglasses allowed, given no glare/reflection covering eyes).",
                 isValid: true,
-              },
-              {
-                text: 'Not mirrored (turn selfie "mirror" off).',
-                isValid: false,
               },
               {
                 text: "No masks/veils covering facial features.",

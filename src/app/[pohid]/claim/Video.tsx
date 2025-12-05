@@ -150,15 +150,6 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
         </span>
       </span>
 
-      <span className="mx-12 my-8 flex flex-col text-center">
-        <span>
-          <strong>
-            Upload only in accepted formats (webm, mp4, avi, and mov) to avoid
-            losing your deposit
-          </strong>
-        </span>
-      </span>
-
       {!showCamera && !video && (
         <Checklist
           title="Video Checklist"
@@ -169,20 +160,12 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
               isValid: true,
             },
             {
-              text: "No filters, background blur, or beauty effects.",
-              isValid: false,
-            },
-            {
               text: "Address must read left→right (not mirrored) and match the connected wallet.",
               isValid: true,
             },
             {
               text: `Say exactly: "${phrase}"`,
               isValid: true,
-            },
-            {
-              text: "No cuts, edits, or music.",
-              isValid: false,
             },
             {
               text: "Show wallet address on a phone screen—clear, no shine. If on paper, confirm every character matches.",
