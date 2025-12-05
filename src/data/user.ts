@@ -24,15 +24,10 @@ export const getMyData = async (account: string) => {
     supportedChains.map((chain) => sdk[chain.id].Me({ id: account })),
   );
   sanitize(res);
-  const homeChain = supportedChains.filter((_, i) => {
+  const homeChain = supportedChains.find((_, i) => {
     const registration = res[i]?.claimer?.registration;
     return !!registration && registration.expirationTime > Date.now() / 1000;
   })
-  .find(
-    (_,i) =>
-      !!res[i]?.claimer?.registration
-  );
-
   const requestChain = supportedChains.find(
     (_, i) => res[i].claimer?.currentRequest,
   );
