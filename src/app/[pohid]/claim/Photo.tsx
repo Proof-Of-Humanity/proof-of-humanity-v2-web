@@ -1,8 +1,8 @@
 "use client";
 
 import { ObservableObject } from "@legendapp/state";
+import Checklist from "components/Checklist";
 import Previewed from "components/Previewed";
-import Uploader from "components/Uploader";
 import Webcam from "components/Webcam";
 import useFullscreen from "hooks/useFullscreen";
 import { useLoading } from "hooks/useLoading";
@@ -11,8 +11,7 @@ import CircleTick from "icons/CircleTickMinor.svg";
 import CheckmarkIcon from "icons/MobileAcceptMajor.svg";
 import ResetIcon from "icons/ResetMinor.svg";
 import ZoomIcon from "icons/SearchMajor.svg";
-import CameraIcon from "icons/camera.svg";
-import UploadIcon from "icons/upload.svg";
+import CameraIcon from "icons/CameraMajor.svg";
 import Image, { StaticImageData } from "next/image";
 import { useRef, useState } from "react";
 import Cropper from "react-easy-crop";
@@ -148,21 +147,12 @@ function Photo({ advance, photo$ }: PhotoProps) {
       </span>
 
       {!showCamera && !originalPhoto && !photo && (
-        <div className="flex flex-col items-center">
-          <div className="flex w-full flex-col pb-8 sm:flex-row">
-            <div className="m-auto flex w-fit flex-col items-center">
-              <span className="pb-2 font-semibold">Facing the camera</span>
-              <div className="grid grid-cols-2 gap-2">
-                <ExamplePic src="/images/front-facing.jpg" />
-                <ExamplePic src="/images/not-front-facing.jpg" wrong={true} />
-              </div>
-            </div>
-
-            <div className="m-auto flex w-fit flex-col items-center">
-              <span className="pb-2 font-semibold">No filters</span>
-              <div className="grid w-fit grid-cols-1">
-                <ExamplePic src="/images/b&w.jpg" wrong={true} />
-              </div>
+        <div className="flex flex-col items-center gap-8">
+          <div className="flex w-fit flex-col items-center">
+            <span className="pb-2 font-semibold">Facing the camera</span>
+            <div className="grid grid-cols-2 gap-2">
+              <ExamplePic src="/images/front-facing.jpg" />
+              <ExamplePic src="/images/not-front-facing.jpg" wrong={true} />
             </div>
           </div>
 
@@ -176,56 +166,44 @@ function Photo({ advance, photo$ }: PhotoProps) {
               <ExamplePic src="/images/glasses.jpg" />
               <ExamplePic src="/images/sunglasses.jpg" wrong={true} />
             </div>
-
-            <div className="flex w-fit flex-col items-center">
-              <br />
-              <span className="pb-2 font-semibold">
-                Upload only in accepted formats (jpg, jpeg, png and webp) to
-                avoid losing your deposit
-              </span>
-            </div>
           </div>
 
-          <div className="bordered relative mt-12 grid w-full grid-cols-2">
-            <Uploader
-              className="bg-whiteBackground flex h-full items-center justify-center rounded p-2 outline-dotted outline-white"
-              type="image"
-              onDrop={async (received) => {
-                const file = received[0];
-                setOriginalPhoto({
-                  uri: URL.createObjectURL(
-                    new Blob([file], { type: file.type }),
-                  ),
-                  buffer: Buffer.from(await file.arrayBuffer()),
-                });
-              }}
-              disabled={!!originalPhoto}
-            >
-              <div className="bg-orange mr-4 flex h-12 w-12 items-center justify-center rounded-full">
-                <UploadIcon className="h-6 w-6" />
-              </div>
-              <span className="text-lg font-medium">Upload photo</span>
-            </Uploader>
+          {!showCamera && !originalPhoto && !photo && (
+        <>
+          <Checklist
+            title="Photo Checklist"
+            warning="Not following these guidelines will result in a loss of funds."
+            items={[
+              {
+                text: "Face forward, centered, well lit.",
+                isValid: true,
+              },
+              {
+                text: "Eyes, nose, mouth visible (eyeglasses allowed, given no glare/reflection covering eyes).",
+                isValid: true,
+              },
+              {
+                text: "No masks/veils covering facial features.",
+                isValid: false,
+              },
+            ]}
+          />
+        </>
+      )}
 
-            <span className="bg-whiteBackground text-orange absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-slate-200 p-1 text-xs font-semibold">
-              OR
-            </span>
-
+          <div className="mt-6 flex w-full flex-col items-center">
             <button
-              className="flex items-center justify-center p-2 text-lg text-white"
+              className="gradient flex w-full max-w-xl items-center justify-center gap-3 rounded-full px-6 py-4 text-lg font-semibold text-white shadow-lg transition hover:opacity-90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
               onClick={() => setShowCamera(true)}
             >
-              <div className="flex flex-col font-medium">
-                <span>Take with</span>
-                <span>camera</span>
-              </div>
-              <CameraIcon className="ml-4 h-12 fill-white" />
+              <CameraIcon className="h-6 w-6 fill-white" />
+              <span>Take with camera</span>
             </button>
           </div>
         </div>
       )}
 
-      {showCamera && (
+      {showCamera && (  
         <div tabIndex={0} ref={fullscreenRef}>
           <Webcam
             fullscreen={isFullscreen}

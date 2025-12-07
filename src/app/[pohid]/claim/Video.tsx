@@ -1,14 +1,16 @@
 import { ObservableObject } from "@legendapp/state";
-import Uploader from "components/Uploader";
+import Checklist from "components/Checklist";
 import Webcam from "components/Webcam";
 import getBlobDuration from "get-blob-duration";
 import useFullscreen from "hooks/useFullscreen";
+import { useLoading } from "hooks/useLoading";
 import CameraIcon from "icons/CameraMajor.svg";
 import ResetIcon from "icons/ResetMinor.svg";
-import UploadIcon from "icons/upload.svg";
+import Image from "next/image";
 import React, { useRef, useState } from "react";
 import ReactWebcam from "react-webcam";
-import { IS_IOS } from "utils/media";
+import { toast } from "react-toastify";
+import { IS_IOS, videoSanitizer } from "utils/media";
 import { useAccount } from "wagmi";
 import { MediaState } from "./Form";
 
@@ -52,6 +54,9 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
 
   const [recorder, setRecorder] = useState<MediaRecorder | null>(null);
 
+  const loading = useLoading();
+  const [pending, loadingMessage] = loading.use();
+
   const checkVideoSize = (blob: Blob) => {
     if (MAX_SIZE_BYTES && blob.size > MAX_SIZE_BYTES) {
       videoError(ERROR_MSG.size);
@@ -74,6 +79,8 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
     });
 
     mediaRecorder.ondataavailable = async ({ data }) => {
+      loading.start("Processing video");
+
       const newlyRecorded = ([] as BlobPart[]).concat(data);
       const blob = new Blob(newlyRecorded, {
         type: IS_IOS ? 'video/mp4' : 'video/webm',
@@ -82,8 +89,19 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
       await checkVideoDuration(blob);
       checkVideoSize(blob);
 
-      video$.set({ content: blob, uri: URL.createObjectURL(blob) });
-      setShowCamera(false);
+      try {
+        const buffer = await blob.arrayBuffer();
+        const sanitized = await videoSanitizer(buffer);
+        const sanitizedBlob = new Blob([new Uint8Array(sanitized as ArrayBuffer)], { type: 'video/mp4' });
+
+        video$.set({ content: sanitizedBlob, uri: URL.createObjectURL(sanitizedBlob) });
+        setShowCamera(false);
+      } catch (err: any) {
+        toast.error(err.message || "Failed to process video");
+        console.error("Video sanitization error:", err);
+      } finally {
+        loading.stop();
+      }
     };
 
     mediaRecorder.onstop = async () => {
@@ -121,7 +139,7 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
 
       <span className="mx-12 my-8 flex flex-col text-center">
         <span>
-          You must record yourself holding a sign with your wallet address
+        Record a short video: hold your phone showing this wallet address (readable, no glare)
         </span>
         <strong className="my-2">{address}</strong>
         <span>and say the phrase</span>
@@ -132,78 +150,43 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
         </span>
       </span>
 
-      <span className="mx-12 my-8 flex flex-col text-center">
-        <span>
-          <strong>
-            Upload only in accepted formats (webm, mp4, avi, and mov) to avoid
-            losing your deposit
-          </strong>
-        </span>
-      </span>
+      {!showCamera && !video && (
+        <Checklist
+          title="Video Checklist"
+          warning="Not following these guidelines will result in a loss of funds."
+          items={[
+            {
+              text: "Show your wallet address & your face in the same frame. Face forward, centered, well lit.",
+              isValid: true,
+            },
+            {
+              text: "Address must read left→right (not mirrored) and match the connected wallet.",
+              isValid: true,
+            },
+            {
+              text: `Say exactly: "${phrase}"`,
+              isValid: true,
+            },
+            {
+              text: "Show wallet address on a phone screen—clear, no shine. If on paper, confirm every character matches.",
+              isValid: true,
+            },
+            {
+              text: "Eyes, nose, mouth clearly visible (eyeglasses allowed, given no glare/reflection covering eyes).",
+              isValid: true,
+            },
+          ]}
+        />
+      )}
 
       {!showCamera && !video && (
-        <div className="bordered relative mt-12 grid w-full grid-cols-2">
-          <Uploader
-            className="bg-whiteBackground flex h-full items-center justify-center rounded p-2 outline-dotted outline-white"
-            type="video"
-            onDrop={async (received) => {
-              try {
-                const file = received[0];
-                if (!ALLOWED_VIDEO_TYPES.includes(file.type)) {
-                  const msg =
-                    "Uploaded file type: " +
-                    file.type.split("/")[1] +
-                    ". ".concat(ERROR_MSG.fileType);
-                  videoError(msg);
-                  return console.error(msg);
-                }
-                const blob = new Blob([file], { type: file.type });
-                const uri = URL.createObjectURL(blob);
-
-                await checkVideoDuration(blob);
-                checkVideoSize(blob);
-                const vid = document.createElement("video");
-                vid.crossOrigin = "anonymous";
-                vid.src = uri;
-                vid.preload = "auto";
-
-                vid.addEventListener("loadeddata", async () => {
-                  if (
-                    vid.videoWidth < MIN_DIMS.width ||
-                    vid.videoHeight < MIN_DIMS.height
-                  ) {
-                    videoError(ERROR_MSG.dimensions);
-                    return console.error(ERROR_MSG.dimensions);
-                  }
-
-                  setRecording(false);
-                  video$.set({ uri, content: blob });
-                });
-              } catch (error: any) {
-                videoError(ERROR_MSG.unexpected);
-                return console.error(error);
-              }
-            }}
-          >
-            <div className="bg-orange mr-4 flex h-12 w-12 items-center justify-center rounded-full">
-              <UploadIcon className="h-6 w-6" />
-            </div>
-            <span className="text-lg font-medium">Upload video</span>
-          </Uploader>
-
-          <span className="bg-whiteBackground text-orange absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-slate-200 p-1 text-xs font-semibold">
-            OR
-          </span>
-
+        <div className="mt-6 flex w-full flex-col items-center">
           <button
-            className="flex items-center justify-center p-2 text-lg font-medium text-white"
+            className="gradient flex w-full max-w-xl items-center justify-center gap-3 rounded-full px-6 py-4 text-lg font-semibold text-white shadow-lg transition hover:opacity-90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
             onClick={() => setShowCamera(true)}
           >
-            <div className="flex flex-col">
-              <span>Record with</span>
-              <span>camera</span>
-            </div>
-            <CameraIcon className="ml-4 h-12 fill-white" />
+            <CameraIcon className="h-6 w-6 fill-white" />
+            <span>Record with camera</span>
           </button>
         </div>
       )}
@@ -223,7 +206,22 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
         </div>
       )}
 
-      {!!video && (
+      {pending && (
+        <div className="flex flex-col items-center mt-4">
+          <button className="btn-main" disabled>
+            <Image
+              alt="loading"
+              src="/logo/poh-white.svg"
+              className="animate-flip"
+              height={12}
+              width={12}
+            />
+            {loadingMessage}...
+          </button>
+        </div>
+      )}
+
+      {!!video && !pending && (
         <div className="flex flex-col items-center">
           <video src={video.uri} controls />
           <button className="btn-main mt-4" onClick={advance}>
@@ -232,7 +230,7 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
         </div>
       )}
 
-      {(showCamera || !!video) && (
+      {(showCamera || !!video) && !pending && (
         <button
           className="centered text-orange mt-4 text-lg font-semibold uppercase"
           onClick={() => retakeVideo()}
