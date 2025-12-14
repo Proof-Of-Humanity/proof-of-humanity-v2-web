@@ -210,7 +210,7 @@ function RequestsGrid() {
           ) {
             const where = {
               ...getRequestStatusFilter(status),
-              ...(search ? { claimer_: { name_contains: search } } : {}),
+              ...(search ? { claimer_: { name_contains_nocase: search } } : {}),
             };
 
             const skipNumber = loadContinued ? chainStacks[chain.id].length : 0;
@@ -259,7 +259,7 @@ function RequestsGrid() {
       <div className="my-4 flex gap-1 py-2 md:gap-2">
         <input
           className="border-stroke text-primaryText bg-whiteBackground w-full rounded border p-2 md:mr-2"
-          placeholder="Search (case sensitive)"
+          placeholder="Search"
           onChange={(e) => setSearchQuery(e.target.value)}
         />
         <Dropdown
