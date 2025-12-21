@@ -1,0 +1,24 @@
+query CrossChainUpdates($humanityId: Bytes!) {
+  outUpdates(
+    where: { humanityId: $humanityId }
+    orderBy: timestamp
+    orderDirection: desc
+  ) {
+    id
+    humanityId
+    txHash
+    logIndex
+    timestamp
+  }
+  inUpdates(
+    where: { humanityId: $humanityId }
+    orderBy: timestamp
+    orderDirection: desc
+  ) {
+    id
+    humanityId
+    txHash
+    logIndex
+    timestamp
+  }
+}
