@@ -22,7 +22,7 @@ import { HumanityQuery } from "generated/graphql";
 import { sdk } from "config/subgraph";
 import { useLoading } from "hooks/useLoading";
 import useWeb3Loaded from "hooks/useWeb3Loaded";
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "react-toastify";
 import { timeAgo } from "utils/time";
 import { Address, Hash, createPublicClient, http, decodeEventLog, TransactionReceipt, Log } from "viem";
@@ -315,7 +315,7 @@ export default function CrossChain({
       transport: http(getChainRpc(lastTransferChain.id)),
     });
 
-  const checkPendingUpdate = async () => {
+  const checkPendingUpdate = useCallback(async () => {
     if (
       !web3Loaded
     ) {
@@ -396,7 +396,7 @@ export default function CrossChain({
 
     // No pending update - message has been relayed
     setPendingRelayUpdate({} as RelayUpdateParams);
-  };
+  }, [web3Loaded, homeChain, pohId]);
 
   const handleExecuteRelay = async () => {
     loading.start("Fetching signatures...");
@@ -552,7 +552,7 @@ export default function CrossChain({
     if (winningStatus !== "transferring" && winningStatus !== "transferred") {
       checkPendingUpdate();
     }
-  }, [web3Loaded, chainId, winningStatus]);
+  }, [checkPendingUpdate, winningStatus]);
 
   return (
     <div className="flex w-full flex-col border-t p-4 sm:flex-row sm:items-center sm:justify-between">
