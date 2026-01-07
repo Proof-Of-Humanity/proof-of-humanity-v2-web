@@ -3,11 +3,24 @@ const nextConfig = {
   async headers() {
     return [
       {
-        source: '/:path*',
+        source: '/:pohid/claim/:path*',
         headers: [
           {
             key: 'Cross-Origin-Embedder-Policy',
-            value: 'require-corp',
+            value: 'credentialless',
+          },
+          {
+            key: 'Cross-Origin-Opener-Policy',
+            value: 'same-origin',
+          },
+        ],
+      },
+      {
+        source: '/ffmpeg/:path*',
+        headers: [
+          {
+            key: 'Cross-Origin-Embedder-Policy',
+            value: 'credentialless',
           },
           {
             key: 'Cross-Origin-Opener-Policy',
