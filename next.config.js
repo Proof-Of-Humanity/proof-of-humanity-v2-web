@@ -3,6 +3,31 @@ const nextConfig = {
   async headers() {
     return [
       {
+        // Default security headers for all routes
+        // Provides baseline protection without requiring CORP for cross-origin resources
+        source: '/:path*',
+        headers: [
+          {
+            key: 'Cross-Origin-Opener-Policy',
+            value: 'same-origin',
+          },
+          {
+            key: 'X-Content-Type-Options',
+            value: 'nosniff',
+          },
+          {
+            key: 'X-Frame-Options',
+            value: 'DENY',
+          },
+          {
+            key: 'Referrer-Policy',
+            value: 'strict-origin-when-cross-origin',
+          },
+        ],
+      },
+      {
+        // Strict headers for claim pages that use FFmpeg/SharedArrayBuffer
+        // credentialless allows cross-origin resources without credentials while enabling SharedArrayBuffer
         source: '/:pohid/claim/:path*',
         headers: [
           {
@@ -13,9 +38,14 @@ const nextConfig = {
             key: 'Cross-Origin-Opener-Policy',
             value: 'same-origin',
           },
+          {
+            key: 'Cross-Origin-Resource-Policy',
+            value: 'cross-origin',
+          },
         ],
       },
       {
+        // Strict headers for FFmpeg worker files
         source: '/ffmpeg/:path*',
         headers: [
           {
@@ -25,6 +55,10 @@ const nextConfig = {
           {
             key: 'Cross-Origin-Opener-Policy',
             value: 'same-origin',
+          },
+          {
+            key: 'Cross-Origin-Resource-Policy',
+            value: 'cross-origin',
           },
         ],
       },
