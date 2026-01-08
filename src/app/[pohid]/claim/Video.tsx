@@ -10,7 +10,7 @@ import Image from "next/image";
 import React, { useRef, useState } from "react";
 import ReactWebcam from "react-webcam";
 import { toast } from "react-toastify";
-import { IS_IOS, videoSanitizer } from "utils/media";
+import { IS_IOS, videoSanitizer, detectVideoFormat, getVideoMimeType } from "utils/media";
 import { useAccount } from "wagmi";
 import { MediaState } from "./Form";
 
@@ -57,13 +57,6 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
   const loading = useLoading();
   const [pending, loadingMessage] = loading.use();
 
-  const checkVideoSize = (blob: Blob) => {
-    if (MAX_SIZE_BYTES && blob.size > MAX_SIZE_BYTES) {
-      videoError(ERROR_MSG.size);
-      return console.error(ERROR_MSG.size);
-    }
-  };
-
   const checkVideoDuration = async (blob: Blob) => {
     const duration = await getBlobDuration(blob);
     if (duration > MAX_DURATION) {
@@ -87,15 +80,33 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
       });
 
       await checkVideoDuration(blob);
-      checkVideoSize(blob);
+
+      const needsCompression = MAX_SIZE_BYTES && blob.size > MAX_SIZE_BYTES;
+      if (needsCompression) {
+        loading.start("Compressing video");
+      }
 
       try {
         const buffer = await blob.arrayBuffer();
-        const sanitized = await videoSanitizer(buffer);
-        const sanitizedBlob = new Blob([new Uint8Array(sanitized as ArrayBuffer)], { type: 'video/mp4' });
+        const sanitized = await videoSanitizer(buffer, MAX_SIZE_BYTES);
+        const sanitizedArray = new Uint8Array(sanitized as ArrayBuffer);
+        
+        const detectedFormat = detectVideoFormat(sanitizedArray);
+        const outputType = getVideoMimeType(detectedFormat);
+        const sanitizedBlob = new Blob([sanitizedArray], { type: outputType });
+
+        if (MAX_SIZE_BYTES && sanitizedBlob.size > MAX_SIZE_BYTES) {
+          videoError(ERROR_MSG.size);
+          console.error(ERROR_MSG.size);
+          return;
+        }
 
         video$.set({ content: sanitizedBlob, uri: URL.createObjectURL(sanitizedBlob) });
         setShowCamera(false);
+        
+        if (needsCompression) {
+          toast.success("Video compressed successfully");
+        }
       } catch (err: any) {
         toast.error(err.message || "Failed to process video");
         console.error("Video sanitization error:", err);
