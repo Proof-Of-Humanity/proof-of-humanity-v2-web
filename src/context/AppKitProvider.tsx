@@ -3,10 +3,11 @@
 import { wagmiAdapter, projectId } from '../config/appkit'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { createAppKit } from '@reown/appkit/react'
-import { mainnet } from '@reown/appkit/networks'
+import { gnosis, mainnet } from '@reown/appkit/networks'
 import React, { useEffect, useState, type ReactNode } from 'react'
 import { WagmiProvider } from 'wagmi'
 import { supportedChains } from '../config/chains'
+import AutoSwitchNetwork from 'components/AutoSwitchNetwork'
 import { Products } from '@kleros/kleros-app'
 import dynamic from 'next/dynamic'
 
@@ -23,7 +24,7 @@ if (!projectId) {
 createAppKit({
   adapters: [wagmiAdapter],
   networks: supportedChains as any,
-  defaultNetwork: mainnet,
+  defaultNetwork: gnosis,
   projectId,
   features: {
     analytics: true,
@@ -45,6 +46,7 @@ export default function AppKitProvider({ children }: AppKitProviderProps) {
   return (
     <WagmiProvider config={wagmiAdapter.wagmiConfig}>
       <QueryClientProvider client={queryClient}>
+        <AutoSwitchNetwork />
         <DynamicAtlasProvider
             config={{
               uri: process.env.ATLAS_URI,

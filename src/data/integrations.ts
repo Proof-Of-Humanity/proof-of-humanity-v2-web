@@ -4,25 +4,25 @@ const integrations: Record<string, Integration> = {
   circles: {
     id: 'circles',
     name: 'Circles Wallet',
-    title: 'Connect your Circles Wallet',
-    description: 'Join our Metri group, earn 24 $CRC/day, and mint our group $CRC for upcoming perks!',
+    title: 'Start Earning 24 $CRC Per Day',
+    description: 'Join our group on the Gnosis App to start your daily income and unlock exclusive perks!',
     logo: '/images/integrations/circles-logo.png',
     logoWidth: 164,
     logoHeight: 48,
     isActive: true,
     startPath: 'app/circles',
-    buttonText: 'Start Now',
+    buttonText: 'Start Earning',
     firstInfoSlide: [
       {
         id: 'start',
         title: 'Start',
-        description: 'Sign up for [Metri](https://app.metri.xyz) on your desktop, or preferably your mobile browser.  ',
+        description: 'Sign up for the [Gnosis App](https://app.gnosis.io/) on your desktop, or preferably your mobile browser.',
         image: '/images/integrations/circles-start.png',
       },
       {
         id: 'createProfile',
         title: 'Create a profile',
-        description: 'Log in and create a profile. Follow the simple steps within Circles to create your wallet and secure it with a passkey stored in your device\'s password manager.',
+        description: 'Log in and create a profile. Follow the simple steps within the Gnosis App to create your wallet and secure it with a passkey stored in your device\'s password manager.',
         image: '/images/integrations/circles-create-profile.png',
       },
       {
@@ -41,35 +41,17 @@ const integrations: Record<string, Integration> = {
       {
         id: 'copyAddress',
         title: 'Copy your address',
-        description: 'Click on the copy icon to copy your wallet address. After this step, go back to the POH app to paste your address and finish your Circles connection (Step 2 below).',
+        description: 'Click on the ‘copy’ icon to copy your wallet address. Now go back to the Proof Of Humanity page to paste your address and finish your Circles connection (Step 2 below).',
         image: '/images/integrations/circles-copy-address.png',
       }
     ],
     secondInfoSlide: [
-      // {
-      //   id: 'collectCRC',
-      //   title: 'Collecting CRC',
-      //   description: 'Once your Circles account is created you get 24 CRC (individual tokens) per day — one every hour. To mint POH Circles group tokens, sign in to |Circles UI;https://app.aboutcircles.com|, go to Contacts at the top, then select the POH Minter.',
-      //   image: '/images/integrations/collect-crc.png',
-      // },
-      // {
-      //   id: 'selectPOHMinter',
-      //   title: 'Selecting the POH Minter',
-      //   description: 'The POH Minter transforms individual tokens into POH Circles group tokens. Click Send and select your personal tokens to start minting.',
-      //   image: '/images/integrations/select-poh-minter.png',
-      // },
       {
         id: 'mintGroupTokens',
         title: 'Minting our group $CRC tokens',
-        description: 'Once you join the Metri App, you get 24 CRC (individual tokens) per day — one every hour. To mint our group\'s own $CRC tokens, use your phone to scan the QR code above, and swap your individual $CRCs for our group tokens.\n\nTo do this via the Metri app: visit your wallet balance, and \'Send\' the desired amount of individual $CRC you want to swap, to our group. You\'ll receive your group $CRC instantly.',
-        image: '/images/integrations/mint-qr-code.png',
+        description: 'Once you join the Gnosis App, you get 24 CRC (individual tokens) per day — one every hour. To mint our group\'s own $CRC tokens, use your phone to scan the QR code above, and swap your individual $CRCs for our group tokens.\n\nTo do this via the Gnosis app: visit your wallet balance, and \'Send\' the desired amount of individual $CRC you want to swap, to our group. You\'ll receive your group $CRC instantly.',
+        image: '/images/integrations/new-gnosis-app-qr.png',
       },
-      // {
-      //   id: 'success',
-      //   title: 'Success!',
-      //   description: 'Congratulations! You now have POH Circles group tokens.',
-      //   image: '/images/integrations/circles-success.png',
-      // }
     ],
   },
 
@@ -137,15 +119,15 @@ const integrations: Record<string, Integration> = {
   'seer-credits': {
     id: 'seer-credits',
     name: 'Seer Credits',
-    title: 'Claim and use your Seer Credits',
-    description: 'Free credits every month to trade on Seer\'s prediction markets.',
+    title: 'Unlock Your $10 Seer Balance',
+    description: 'Claim your credits now and place your first prediction on the Seer market.',
     logo: '/images/integrations/seer-logo.png',
     logoWidth: 164,
     logoHeight: 48,
     darkLogo: '/images/seer-logo-white.png',
     isActive: true,
     startPath: 'app/seer-credits',
-    buttonText: 'Start Now',
+    buttonText: 'Claim $10',
     firstInfoSlide: [
       {
         id: 'whatIsSeer',

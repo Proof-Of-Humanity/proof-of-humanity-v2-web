@@ -13,6 +13,7 @@ export interface ActionButtonProps {
   className?: string;
   variant?: ActionButtonVariant;
   tooltip?: string;
+  wrongChainTooltip?: string;
 }
 
 const buttonStyles = {
@@ -34,6 +35,7 @@ export default function ActionButton({
   className = '',
   variant = 'primary',
   tooltip,
+  wrongChainTooltip,
 }: ActionButtonProps) {
 
   const mergedButtonClasses = twMerge(
@@ -62,19 +64,22 @@ export default function ActionButton({
     <button
       onClick={onClick}
       aria-label={ariaLabel || label}
-      className={tooltip ? mergedButtonClasses : twMerge(mergedButtonClasses, className)}
+      className={tooltip || wrongChainTooltip ? mergedButtonClasses : twMerge(mergedButtonClasses, className)}
       disabled={disabled || isLoading}
     >
       {buttonContent}
     </button>
   );
 
-  if (tooltip) {
+  // Show wrong chain tooltip if provided and button is disabled
+  const displayTooltip = wrongChainTooltip && disabled ? wrongChainTooltip : tooltip;
+
+  if (displayTooltip) {
     return (
       <div className={mergedWrapperClasses}>
         {button}
         <span className="opacity-0 group-hover:opacity-100 absolute bottom-full left-1/2 z-10 mb-2 w-max -translate-x-1/2 rounded-md bg-neutral-700 px-3 py-2 text-center text-sm text-white transition-opacity pointer-events-none">
-          {tooltip}
+          {displayTooltip}
           <span className="absolute top-full left-1/2 h-0 w-0 -translate-x-1/2 border-x-[5px] border-x-transparent border-t-[5px] border-t-neutral-700" />
         </span>
       </div>

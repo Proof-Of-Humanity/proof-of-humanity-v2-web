@@ -41,7 +41,7 @@ export default function CirclesLinkAccountStep({
 }: CirclesLinkAccountStepProps) {
   return (
     <Accordion 
-      title="Step 2 - Link your Circles account" 
+      title="Step 2: Link Your Gnosis App (Circles) Account" 
       className="w-full"
       isOpen={isOpen}
       onToggle={onToggle}
@@ -61,7 +61,7 @@ export default function CirclesLinkAccountStep({
         <>
           {linkStatus === "idle" && (
             <div className="p-4 md:p-6 flex flex-col w-full ">
-              <Label className="normal-case mt-0">Paste your Circles Wallet Address</Label>
+              <Label className="normal-case mt-0">Paste your Gnosis App (Circles) Wallet Address</Label>
               <Field
                 value={walletAddress}
                 onChange={onAddressChange}

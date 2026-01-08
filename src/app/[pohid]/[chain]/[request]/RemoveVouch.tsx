@@ -5,7 +5,7 @@ import { useLoading } from "hooks/useLoading";
 import { enableReactUse } from "@legendapp/state/config/enableReactUse";
 import { toast } from "react-toastify";
 import { useEffectOnce } from "@legendapp/state/react";
-import { SupportedChain } from "config/chains";
+import { SupportedChain, idToChain } from "config/chains";
 import ActionButton from "components/ActionButton";
 
 enableReactUse();
@@ -66,6 +66,7 @@ export default function RemoveVouch({
           isLoading={status.write === "pending"}
           disabled={status.write === "pending" || disabled || userChainId !== chain.id}
           tooltip={tooltip}
+          wrongChainTooltip={userChainId !== chain.id ? `Switch your chain above to ${idToChain(chain.id)?.name || 'the correct chain'}` : undefined}
         />
       </div>
     )

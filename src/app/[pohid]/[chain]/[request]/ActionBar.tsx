@@ -18,6 +18,7 @@ import { getStatusLabel, getStatusColor, RequestStatus } from "utils/status";
 import { ActionType } from "utils/enums";
 import { Address, Hash, formatEther, hexToSignature } from "viem";
 import { useAccount, useChainId } from "wagmi";
+import { idToChain } from "config/chains";
 import Appeal from "./Appeal";
 import Challenge from "./Challenge";
 import FundButton from "./Funding";
@@ -326,6 +327,7 @@ export default function ActionBar({
                             ? "Withdraw not possible, please try again"
                             : undefined
                         }
+                        wrongChainTooltip={userChainId !== chain.id ? `Switch your chain above to ${idToChain(chain.id)?.name || 'the correct chain'}` : undefined}
                         className="mb-2"
                       />
                     </div>
@@ -419,6 +421,7 @@ export default function ActionBar({
                variant = "secondary"
                label={"Withdraw"}
                tooltip={isWithdrawPrepareError ? "Withdraw not possible, please try again": undefined}
+               wrongChainTooltip={userChainId !== chain.id ? `Switch your chain above to ${idToChain(chain.id)?.name || 'the correct chain'}` : undefined}
                className="mb-2"
              />
               ) : !didIVouchFor ? (
@@ -445,6 +448,7 @@ export default function ActionBar({
                 onClick={advanceFire}
                 label={isAdvanceLoading ? "Advancing" : "Advance"}
                 tooltip={isAdvancePrepareError ? "Advance not possible, please try again" : undefined}
+                wrongChainTooltip={userChainId !== chain.id ? `Switch your chain above to ${idToChain(chain.id)?.name || 'the correct chain'}` : undefined}
                 className="mb-2"
               />
             </div>
@@ -460,6 +464,7 @@ export default function ActionBar({
                 onClick={execute}
                 label={isExecuteLoading ? "Executing" : "Execute"}
                 tooltip={isExecutePrepareError ? "Execute not possible, please try again" : undefined}
+                wrongChainTooltip={userChainId !== chain.id ? `Switch your chain above to ${idToChain(chain.id)?.name || 'the correct chain'}` : undefined}
                 className="mb-2"
               />
             </div>

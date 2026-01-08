@@ -10,6 +10,7 @@ import useChainParam from "hooks/useChainParam";
 import { useRouter } from "next/navigation";
 import { useAccount, useBalance, useChainId } from "wagmi";
 import { formatEth } from "utils/misc";
+import { idToChain } from "config/chains";
 
 interface FundButtonProps {
   pohId: Hash;
@@ -128,6 +129,7 @@ const FundButton: React.FC<FundButtonProps> = ({
           onClick={handleSubmit}
           className="mt-12"
           label={loadingMessage || "Fund request"}
+          wrongChainTooltip={userChainId !== chain.id ? `Switch your chain above to ${idToChain(chain.id)?.name || 'the correct chain'}` : undefined}
         />
       </div>
       </Modal>
