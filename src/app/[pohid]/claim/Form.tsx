@@ -247,6 +247,7 @@ export default function Form({ contractData, totalCosts, renewal }: FormProps) {
 
   return (
     <>
+      <VideoSupportCheck />
       <Show if={() => step$.get() !== Step.finalized}>
         {() => (
           <div className="flex w-full cursor-default select-none items-center">

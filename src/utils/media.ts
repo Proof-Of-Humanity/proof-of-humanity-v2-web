@@ -142,6 +142,12 @@ export const getCroppedPhoto = async (
 let ffmpeg: FFmpeg;
 
 export const loadFFMPEG = async () => {
+  if (typeof SharedArrayBuffer === 'undefined') {
+    throw new Error(
+      "Video processing is not available. Please refresh the page (Cmd+R or Ctrl+R) and try again."
+    );
+  }
+  
   if (ffmpeg && ffmpeg.isLoaded()) return;
   
   ffmpeg = createFFmpeg({ 
