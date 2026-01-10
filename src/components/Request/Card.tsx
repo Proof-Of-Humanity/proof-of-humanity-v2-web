@@ -10,10 +10,11 @@ import { WinnerClaimFragment } from "generated/graphql";
 import useIPFS from "hooks/useIPFS";
 import { EvidenceFile, RegistrationFile } from "types/docs";
 import { shortenAddress } from "utils/address";
-import {getStatusLabel, getStatusColor, RequestStatus} from "utils/status";
+import {getStatusLabel, getStatusColor, getStatusTooltip, RequestStatus} from "utils/status";
 import { prettifyId } from "utils/identifier";
 import { ipfs } from "utils/ipfs";
 import { RequestsQueryItem } from "./Grid";
+import InfoIcon from "icons/info.svg";
 
 interface ContentProps {
   chainId: SupportedChainId;
@@ -78,7 +79,7 @@ const Content = ({
           : "";
 
   return (
-    <div className="bg-whiteBackground flex h-full flex-col items-center p-3">
+    <div className="flex h-full flex-col items-center p-3">
       <div
         className={"h-32 w-32 rounded-full bg-cover bg-center bg-no-repeat"}
         style={{ backgroundImage: `url('${ipfs(data?.photo!)}')` }}
@@ -107,20 +108,29 @@ function Card({
 }: CardInterface) {
 
   const statusColor = getStatusColor(requestStatus);
+  const tooltip = getStatusTooltip(requestStatus);
 
   const chain = idToChain(chainId)!;
   return (
     <Link
       href={`/${prettifyId(pohId)}/${chain.name.toLowerCase()}/${index}`}
-      className="h-84 border-stroke bg-whiteBackground wiggle cursor-pointer flex-col overflow-hidden rounded border shadow-sm transition duration-150 ease-out hover:z-10 hover:scale-105 hover:shadow-xl"
+      className="h-84 border-stroke bg-whiteBackground wiggle cursor-pointer flex-col rounded border shadow-sm transition duration-150 ease-out hover:z-10 hover:scale-105 hover:shadow-xl"
     >
       <div className="justify-between font-light">
-        <div className={`h-1 w-full bg-status-${statusColor}`} />
+        <div className={`h-1 w-full bg-status-${statusColor} rounded-t`} />
         <div className="centered p-2 font-medium">
           <span className={`text-status-${statusColor}`}>
             {getStatusLabel(requestStatus)}
           </span>
-          <span className={`dot ml-2 bg-status-${statusColor}`} />
+          <div className="group relative ml-2 flex items-center">
+            <InfoIcon className={`h-4 w-4 stroke-current stroke-2 text-status-${statusColor}`} />
+            {tooltip && (
+              <span className="opacity-0 group-hover:opacity-100 absolute bottom-full left-1/2 z-50 mb-2 w-max max-w-[200px] -translate-x-1/2 rounded-md bg-neutral-700 px-3 py-2 text-center text-sm text-white transition-opacity pointer-events-none whitespace-normal">
+                {tooltip}
+                <span className="absolute top-full left-1/2 h-0 w-0 -translate-x-1/2 border-x-[5px] border-x-transparent border-t-[5px] border-t-neutral-700" />
+              </span>
+            )}
+          </div>
         </div>
       </div>
 

@@ -1,6 +1,6 @@
 import { gnosis, mainnet } from '@reown/appkit/networks';
 
-export const supportedChains = [mainnet, gnosis];
+export const supportedChains = [gnosis, mainnet];
 
 export const legacyChain = mainnet;
 

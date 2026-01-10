@@ -22,7 +22,7 @@ export default function CirclesCreateAccountStep({
   
   return (
     <Accordion 
-      title="Step 1 - Create your Circles account and get invited" 
+      title="Step 1 - Create your Gnosis App account, and get invited to Circles" 
       className="w-full"
       isOpen={isOpen}
       onToggle={onToggle}

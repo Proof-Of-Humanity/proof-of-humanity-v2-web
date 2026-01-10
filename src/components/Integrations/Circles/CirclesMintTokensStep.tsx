@@ -22,7 +22,7 @@ export default function CirclesMintTokensStep({
   
   return (
     <Accordion 
-      title="Step 3 - Join our group on Metri and earn $CRC" 
+      title="Step 3 - Join Our Group On the Gnosis App And Earn $CRC" 
       className="w-full"
       isOpen={isOpen}
       onToggle={onToggle}
