@@ -10,7 +10,9 @@ import CheckCircleIcon from "icons/CheckCircle.svg";
 import CheckCircleMinorIcon from "icons/CheckCircleMinor.svg";
 import WarningCircle16Icon from "icons/WarningCircle16.svg";
 import CrossCircle16Icon from "icons/CrossCircle16.svg";
+import NewTabIcon from "icons/NewTab.svg";
 import ActionButton from "components/ActionButton";
+import ExternalLink from "components/ExternalLink";
 import useBatchWrite from "contracts/hooks/useBatchWrite";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "react-toastify";
@@ -298,6 +300,16 @@ export default function ClaimSection({ amountPerClaim, airdropChainId, eligibili
           </>
         )}
         {renderActionButton()}
+        <div className="mt-4 flex items-center hover:text-purple text-purple-300 justify-center gap-1 text-sm hover:cursor-pointer">
+          <span>Trouble claiming?</span>
+          <ExternalLink
+            href="https://kleros.gitbook.io/docs/products/proof-of-humanity/poh-faq"
+            className="flex items-center gap-1 "
+          >
+            See FAQs
+            <NewTabIcon width={12} height={12} />
+          </ExternalLink>
+        </div>
       </div>
     </div>
   );
