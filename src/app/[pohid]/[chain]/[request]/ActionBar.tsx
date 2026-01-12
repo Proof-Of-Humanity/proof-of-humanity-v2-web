@@ -262,7 +262,7 @@ export default function ActionBar({
       <div className="flex items-center">
         <span className="mr-4">Status</span>
         <span
-          className={`rounded-full px-3 py-1 text-white bg-status-${statusColor}`}
+          className={`rounded-full px-3 py-1 text-white bg-status-${statusColor} whitespace-nowrap`}
         >
           {getStatusLabel(requestStatus, 'actionBar')}
         </span>
