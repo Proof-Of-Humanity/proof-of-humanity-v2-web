@@ -325,9 +325,10 @@ export default function ActionBar({
                         tooltip={
                           isWithdrawPrepareError
                             ? "Withdraw not possible, please try again"
+                            : userChainId !== chain.id 
+                            ? `Switch your chain above to ${idToChain(chain.id)?.name || 'the correct chain'}`
                             : undefined
                         }
-                        wrongChainTooltip={userChainId !== chain.id ? `Switch your chain above to ${idToChain(chain.id)?.name || 'the correct chain'}` : undefined}
                         className="mb-2"
                       />
                     </div>
@@ -420,8 +421,7 @@ export default function ActionBar({
                onClick={withdraw}
                variant = "secondary"
                label={"Withdraw"}
-               tooltip={isWithdrawPrepareError ? "Withdraw not possible, please try again": undefined}
-               wrongChainTooltip={userChainId !== chain.id ? `Switch your chain above to ${idToChain(chain.id)?.name || 'the correct chain'}` : undefined}
+               tooltip={isWithdrawPrepareError ? "Withdraw not possible, please try again" : userChainId !== chain.id ? `Switch your chain above to ${idToChain(chain.id)?.name || 'the correct chain'}` : undefined}
                className="mb-2"
              />
               ) : !didIVouchFor ? (
@@ -447,8 +447,7 @@ export default function ActionBar({
                 isLoading={isAdvanceLoading}
                 onClick={advanceFire}
                 label={isAdvanceLoading ? "Advancing" : "Advance"}
-                tooltip={isAdvancePrepareError ? "Advance not possible, please try again" : undefined}
-                wrongChainTooltip={userChainId !== chain.id ? `Switch your chain above to ${idToChain(chain.id)?.name || 'the correct chain'}` : undefined}
+                tooltip={isAdvancePrepareError ? "Advance not possible, please try again" : userChainId !== chain.id ? `Switch your chain above to ${idToChain(chain.id)?.name || 'the correct chain'}` : undefined}
                 className="mb-2"
               />
             </div>
@@ -463,8 +462,7 @@ export default function ActionBar({
                 isLoading={isExecuteLoading}
                 onClick={execute}
                 label={isExecuteLoading ? "Executing" : "Execute"}
-                tooltip={isExecutePrepareError ? "Execute not possible, please try again" : undefined}
-                wrongChainTooltip={userChainId !== chain.id ? `Switch your chain above to ${idToChain(chain.id)?.name || 'the correct chain'}` : undefined}
+                tooltip={isExecutePrepareError ? "Execute not possible, please try again" : userChainId !== chain.id ? `Switch your chain above to ${idToChain(chain.id)?.name || 'the correct chain'}` : undefined}
                 className="mb-2"
               />
             </div>

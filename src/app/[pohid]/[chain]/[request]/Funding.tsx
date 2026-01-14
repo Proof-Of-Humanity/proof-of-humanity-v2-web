@@ -83,6 +83,7 @@ const FundButton: React.FC<FundButtonProps> = ({
   }, [inputAmount, balanceData, addedFundInput]);
 
   const exceedsRemaining = inputAmount != null && inputAmount > remainingAmount;
+  
   const isDisabled =
     !isConnected ||
     !addedFundInput ||
@@ -91,11 +92,25 @@ const FundButton: React.FC<FundButtonProps> = ({
     exceedsRemaining ||
     insufficientFunds;
 
+  const getTooltipMessage = () => {
+    if (!isConnected) return "Please connect your wallet";
+    if (userChainId !== chain.id) return `Switch your chain above to ${idToChain(chain.id)?.name || 'the correct chain'}`;
+    if (!addedFundInput) return "Please enter an amount to fund";
+    if (exceedsRemaining) return `Amount exceeds remaining needed (${formatEth(remainingAmount)} ${chain.nativeCurrency.symbol})`;
+    if (insufficientFunds) return `Insufficient balance. You have ${formatEth(balanceData?.value ?? 0n)} ${chain.nativeCurrency.symbol}`;
+    if (isLoading) return "Transaction in progress";
+    return undefined;
+  };
+
   return (
     <>
-      <button className="btn-main mb-2" onClick={() => setIsModalOpen(true)}>
-        Fund
-      </button>
+      <ActionButton
+        onClick={() => setIsModalOpen(true)}
+        label="Fund"
+        className="mb-2"
+        disabled={userChainId !== chain.id}
+        tooltip={userChainId !== chain.id ? `Switch your chain above to ${idToChain(chain.id)?.name || 'the correct chain'}` : undefined}
+      />
       <Modal
         formal
         header="Fund"
@@ -127,9 +142,9 @@ const FundButton: React.FC<FundButtonProps> = ({
           disabled={isDisabled}
           isLoading={isLoading}
           onClick={handleSubmit}
-          className="mt-12"
+          className="mt-6 mx-auto"
           label={loadingMessage || "Fund request"}
-          wrongChainTooltip={userChainId !== chain.id ? `Switch your chain above to ${idToChain(chain.id)?.name || 'the correct chain'}` : undefined}
+          tooltip={getTooltipMessage()}
         />
       </div>
       </Modal>

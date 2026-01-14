@@ -65,8 +65,7 @@ export default function RemoveVouch({
           className="mb-2"
           isLoading={status.write === "pending"}
           disabled={status.write === "pending" || disabled || userChainId !== chain.id}
-          tooltip={tooltip}
-          wrongChainTooltip={userChainId !== chain.id ? `Switch your chain above to ${idToChain(chain.id)?.name || 'the correct chain'}` : undefined}
+          tooltip={tooltip || (userChainId !== chain.id ? `Switch your chain above to ${idToChain(chain.id)?.name || 'the correct chain'}` : undefined)}
         />
       </div>
     )

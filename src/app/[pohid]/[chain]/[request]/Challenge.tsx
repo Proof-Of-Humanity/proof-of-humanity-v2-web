@@ -213,7 +213,14 @@ export default function Challenge({
     <Modal
       formal
       header="Challenge"
-      trigger={<button className="btn-main">Challenge</button>}
+      trigger={
+        <ActionButton
+          onClick={() => {}}
+          label="Challenge"
+          disabled={userChainId !== chain.id}
+          tooltip={userChainId !== chain.id ? `Switch your chain above to ${idToChain(chain.id)?.name || 'the correct chain'}` : undefined}
+        />
+      }
     >
       <div className="flex flex-col flex-wrap items-center p-4">
         <ALink className="flex" href={ipfs(arbitrationInfo.policy)}>
@@ -266,7 +273,7 @@ export default function Challenge({
               onClick: submit,
               isLoading,
               label: loadingMessage || "Challenge request",
-              wrongChainTooltip: userChainId !== chain.id ? `Switch your chain above to ${idToChain(chain.id)?.name || 'the correct chain'}` : undefined,
+              tooltip: userChainId !== chain.id ? `Switch your chain above to ${idToChain(chain.id)?.name || 'the correct chain'}` : undefined,
             }}
           />
         </AuthGuard>

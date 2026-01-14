@@ -2,27 +2,37 @@ import { useEffect, useRef } from 'react';
 import { useAccount, useChainId, useSwitchChain } from 'wagmi';
 import { gnosis } from 'viem/chains';
 
-const STORAGE_KEY = 'poh-autoswitch-gnosis-prompted';
-
 export function useAutoSwitchToGnosis() {
-  const { isConnected } = useAccount();
+  const { isConnected, address } = useAccount();
   const chainId = useChainId();
   const { switchChain } = useSwitchChain();
-  const hasRun = useRef(false);
+  const hasAttemptedSwitch = useRef(false);
+  const isSwitching = useRef(false);
+  const hasBeenOnGnosis = useRef(false);
 
   useEffect(() => {
-    if (!isConnected) return;
-    const hasPrompted = sessionStorage.getItem(STORAGE_KEY);
-    
-    if (!hasPrompted && !hasRun.current) {
-        if (chainId !== gnosis.id) {
-            hasRun.current = true;
-            sessionStorage.setItem(STORAGE_KEY, 'true');
-            switchChain({ chainId: gnosis.id });
-        } else {
-             // If already connected to Gnosis, mark as handled so we don't switch them back if they manually switch to Eth later
-             sessionStorage.setItem(STORAGE_KEY, 'true');
-        }
+    if (!isConnected || !address || !switchChain) {
+      hasAttemptedSwitch.current = false;
+      hasBeenOnGnosis.current = false;
+      return;
     }
-  }, [isConnected, chainId, switchChain]);
+
+    if (chainId === gnosis.id) {
+      hasBeenOnGnosis.current = true;
+    }
+
+    if (chainId !== gnosis.id && !hasAttemptedSwitch.current && !hasBeenOnGnosis.current && !isSwitching.current) {
+        hasAttemptedSwitch.current = true;
+        isSwitching.current = true;
+        
+        switchChain({ chainId: gnosis.id }, {
+            onSuccess: () => {
+                isSwitching.current = false;
+            },
+            onError: () => {
+                isSwitching.current = false;
+            }
+        });
+    }
+  }, [isConnected, address, chainId, switchChain]);
 }
