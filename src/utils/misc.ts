@@ -8,7 +8,7 @@ export const shuffleArray = <T>(array: T[]): T[] => {
   return array;
 };
 
-export const concatBuffers = (...buffers: ArrayBufferLike[]) => {
+export const concatBuffers = (...buffers: ArrayBufferLike[]): Uint8Array<ArrayBuffer> => {
   const totalByteLength = buffers.reduce((sum, bf) => sum + bf.byteLength, 0);
   const temporary = new Uint8Array(totalByteLength);
 

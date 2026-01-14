@@ -1,7 +1,6 @@
 import { ObservableObject } from "@legendapp/state";
 import Checklist from "components/Checklist";
 import Webcam from "components/Webcam";
-import getBlobDuration from "get-blob-duration";
 import useFullscreen from "hooks/useFullscreen";
 import { useLoading } from "hooks/useLoading";
 import CameraIcon from "icons/CameraMajor.svg";
@@ -10,7 +9,7 @@ import Image from "next/image";
 import React, { useRef, useState } from "react";
 import ReactWebcam from "react-webcam";
 import { toast } from "react-toastify";
-import { IS_IOS, videoSanitizer } from "utils/media";
+import { IS_IOS, videoSanitizer, detectVideoFormat, getVideoMimeType } from "utils/media";
 import { useAccount } from "wagmi";
 import { MediaState } from "./Form";
 
@@ -44,6 +43,8 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
 
   const { address } = useAccount();
 
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
+
   const fullscreenRef = useRef(null);
   const { isFullscreen, setFullscreen, toggleFullscreen } =
     useFullscreen(fullscreenRef);
@@ -57,23 +58,11 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
   const loading = useLoading();
   const [pending, loadingMessage] = loading.use();
 
-  const checkVideoSize = (blob: Blob) => {
-    if (MAX_SIZE_BYTES && blob.size > MAX_SIZE_BYTES) {
-      videoError(ERROR_MSG.size);
-      return console.error(ERROR_MSG.size);
-    }
-  };
-
-  const checkVideoDuration = async (blob: Blob) => {
-    const duration = await getBlobDuration(blob);
-    if (duration > MAX_DURATION) {
-      videoError(ERROR_MSG.duration);
-      return console.error(ERROR_MSG.duration);
-    }
-  };
-
   const startRecording = () => {
     if (!camera || !camera.stream) return;
+    
+    if (timerRef.current) clearTimeout(timerRef.current);
+    
     const mediaRecorder = new MediaRecorder(camera.stream, {
       mimeType: IS_IOS ? 'video/mp4;codecs="h264"' : 'video/webm; codecs="vp8"',
     });
@@ -81,21 +70,37 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
     mediaRecorder.ondataavailable = async ({ data }) => {
       loading.start("Processing video");
 
-      const newlyRecorded = ([] as BlobPart[]).concat(data);
-      const blob = new Blob(newlyRecorded, {
-        type: IS_IOS ? 'video/mp4' : 'video/webm',
-      });
-
-      await checkVideoDuration(blob);
-      checkVideoSize(blob);
-
       try {
+        const newlyRecorded = ([] as BlobPart[]).concat(data);
+        const blob = new Blob(newlyRecorded, {
+          type: IS_IOS ? 'video/mp4' : 'video/webm',
+        });
+
+        const needsCompression = MAX_SIZE_BYTES && blob.size > MAX_SIZE_BYTES;
+        if (needsCompression) {
+          loading.start("Compressing video");
+        }
+
         const buffer = await blob.arrayBuffer();
-        const sanitized = await videoSanitizer(buffer);
-        const sanitizedBlob = new Blob([new Uint8Array(sanitized as ArrayBuffer)], { type: 'video/mp4' });
+        const sanitized = await videoSanitizer(buffer, MAX_SIZE_BYTES);
+        const sanitizedArray = new Uint8Array(sanitized as ArrayBuffer);
+        
+        const detectedFormat = detectVideoFormat(sanitizedArray);
+        const outputType = getVideoMimeType(detectedFormat);
+        const sanitizedBlob = new Blob([sanitizedArray], { type: outputType });
+
+        if (MAX_SIZE_BYTES && sanitizedBlob.size > MAX_SIZE_BYTES) {
+          videoError(ERROR_MSG.size);
+          console.error(ERROR_MSG.size);
+          return;
+        }
 
         video$.set({ content: sanitizedBlob, uri: URL.createObjectURL(sanitizedBlob) });
         setShowCamera(false);
+        
+        if (needsCompression) {
+          toast.success("Video compressed successfully");
+        }
       } catch (err: any) {
         toast.error(err.message || "Failed to process video");
         console.error("Video sanitization error:", err);
@@ -105,6 +110,7 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
     };
 
     mediaRecorder.onstop = async () => {
+      if (timerRef.current) clearTimeout(timerRef.current);
       setFullscreen(false);
       setRecording(false);
     };
@@ -113,9 +119,21 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
 
     setRecorder(mediaRecorder);
     setRecording(true);
+    
+    // Auto-stop recording at MAX_DURATION
+    timerRef.current = setTimeout(() => {
+      if (mediaRecorder.state === "recording") {
+        mediaRecorder.ondataavailable = null; // Discard the recorded data
+        mediaRecorder.stop();
+        setRecording(false);
+        setFullscreen(false);
+        toast.error("Upload duration of 20 seconds exceeded. Please record a shorter version.");
+      }
+    }, MAX_DURATION * 1000);
   };
 
   const stopRecording = () => {
+    if (timerRef.current) clearTimeout(timerRef.current);
     if (!recorder || !recording) return;
     recorder.stop();
   };
@@ -192,18 +210,46 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
       )}
 
       {showCamera && (
-        <div tabIndex={0} ref={fullscreenRef}>
-          <Webcam
-            isVideo
-            overlay
-            recording={recording}
-            action={recording ? stopRecording : startRecording}
-            fullscreen={isFullscreen}
-            toggleFullscreen={toggleFullscreen}
-            loadCamera={setCamera}
-            phrase={phrase}
+        <>
+          <div tabIndex={0} ref={fullscreenRef}>
+            <Webcam
+              isVideo
+              overlay
+              recording={recording}
+              action={recording ? stopRecording : startRecording}
+              fullscreen={isFullscreen}
+              toggleFullscreen={toggleFullscreen}
+              loadCamera={setCamera}
+              phrase={phrase}
+            />
+          </div>
+          <Checklist
+            title="Video Checklist"
+            warning="Not following these guidelines will result in a loss of funds."
+            items={[
+              {
+                text: "Show your wallet address & your face in the same frame. Face forward, centered, well lit.",
+                isValid: true,
+              },
+              {
+                text: "Address must read left→right (not mirrored) and match the connected wallet.",
+                isValid: true,
+              },
+              {
+                text: `Say exactly: "${phrase}"`,
+                isValid: true,
+              },
+              {
+                text: "Show wallet address on a phone screen—clear, no shine. If on paper, confirm every character matches.",
+                isValid: true,
+              },
+              {
+                text: "Eyes, nose, mouth clearly visible (eyeglasses allowed, given no glare/reflection covering eyes).",
+                isValid: true,
+              },
+            ]}
           />
-        </div>
+        </>
       )}
 
       {pending && (
