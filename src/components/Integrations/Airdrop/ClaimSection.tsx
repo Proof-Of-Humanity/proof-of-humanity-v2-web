@@ -303,7 +303,7 @@ export default function ClaimSection({ amountPerClaim, airdropChainId, eligibili
         <div className="mt-4 flex items-center hover:text-purple text-purple-300 justify-center gap-1 text-sm hover:cursor-pointer">
           <span>Trouble claiming?</span>
           <ExternalLink
-            href="https://kleros.gitbook.io/docs/products/proof-of-humanity/poh-faq"
+            href="https://kleros.notion.site/poh-airdrop-faqs"
             className="flex items-center gap-1 "
           >
             See FAQs
