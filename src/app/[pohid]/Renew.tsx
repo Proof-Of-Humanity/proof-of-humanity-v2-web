@@ -21,7 +21,12 @@ export default function Renew({
   if (!web3Loaded || claimer !== address?.toLowerCase()) return null;
 
   return (
-    <Link className="btn-main mb-4 mt-6" href={`/${prettifyId(pohId)}/claim`}>
+    <Link 
+      className="btn-main mb-4 mt-6" 
+      href={`/${prettifyId(pohId)}/claim`}
+      target="_blank"
+      rel="noopener noreferrer"
+    >
       Renew
     </Link>
   );
