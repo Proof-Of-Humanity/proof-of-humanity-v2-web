@@ -41,7 +41,7 @@ export default function CirclesLinkAccountStep({
 }: CirclesLinkAccountStepProps) {
   return (
     <Accordion 
-      title="Step 2: Link Your Gnosis App (Circles) Account" 
+      title="Step 2 - Link Your Gnosis App (Circles) Account" 
       className="w-full"
       isOpen={isOpen}
       onToggle={onToggle}

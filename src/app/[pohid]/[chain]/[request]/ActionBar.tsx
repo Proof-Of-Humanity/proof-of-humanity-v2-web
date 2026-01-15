@@ -334,7 +334,7 @@ export default function ActionBar({
                     </div>
                     {validVouches < contractData.requiredNumberOfVouches && (
                       <ExternalLink
-                        href="https://forms.gle/Yagjs1BSYSyH2RseA"
+                        href="https://t.me/proofhumanity"
                         className="text-purple hover:opacity-80 underline underline-offset-4 text-sm font-medium inline-flex items-center gap-1 group transition-colors justify-end"
                       >
                         Get a vouch

@@ -32,7 +32,7 @@ const Finalized: React.FC<FinalizedProps> = ({ requiredVouches }) => (
             <li>
               Get a vouch from a registered human.{" "}
               <ExternalLink
-                href="https://forms.gle/Yagjs1BSYSyH2RseA"
+                href="https://t.me/proofhumanity"
                 className="text-orange font-semibold underline underline-offset-2"
               >
                 Get a vouch
