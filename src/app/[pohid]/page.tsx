@@ -317,7 +317,12 @@ async function Profile({ params: { pohid } }: PageProps) {
             <>
               <span className="text-orange mb-6">Not claimed</span>
               {!pendingRequests.length?
-              <Link className="btn-main mb-6 w-48" href={`/${pohId}/claim`}>
+              <Link 
+                className="btn-main mb-6 w-48" 
+                href={`/${pohId}/claim`}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
                 Claim humanity
               </Link> : null}
              

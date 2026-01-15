@@ -1351,6 +1351,74 @@ export enum InTransfer_OrderBy {
   Id = 'id'
 }
 
+export type InUpdate = {
+  __typename?: 'InUpdate';
+  humanityId: Scalars['Bytes'];
+  id: Scalars['ID'];
+  logIndex: Scalars['BigInt'];
+  timestamp: Scalars['BigInt'];
+  txHash: Scalars['Bytes'];
+};
+
+export type InUpdate_Filter = {
+  /** Filter for the block changed event. */
+  _change_block?: InputMaybe<BlockChangedFilter>;
+  and?: InputMaybe<Array<InputMaybe<InUpdate_Filter>>>;
+  humanityId?: InputMaybe<Scalars['Bytes']>;
+  humanityId_contains?: InputMaybe<Scalars['Bytes']>;
+  humanityId_gt?: InputMaybe<Scalars['Bytes']>;
+  humanityId_gte?: InputMaybe<Scalars['Bytes']>;
+  humanityId_in?: InputMaybe<Array<Scalars['Bytes']>>;
+  humanityId_lt?: InputMaybe<Scalars['Bytes']>;
+  humanityId_lte?: InputMaybe<Scalars['Bytes']>;
+  humanityId_not?: InputMaybe<Scalars['Bytes']>;
+  humanityId_not_contains?: InputMaybe<Scalars['Bytes']>;
+  humanityId_not_in?: InputMaybe<Array<Scalars['Bytes']>>;
+  id?: InputMaybe<Scalars['ID']>;
+  id_gt?: InputMaybe<Scalars['ID']>;
+  id_gte?: InputMaybe<Scalars['ID']>;
+  id_in?: InputMaybe<Array<Scalars['ID']>>;
+  id_lt?: InputMaybe<Scalars['ID']>;
+  id_lte?: InputMaybe<Scalars['ID']>;
+  id_not?: InputMaybe<Scalars['ID']>;
+  id_not_in?: InputMaybe<Array<Scalars['ID']>>;
+  logIndex?: InputMaybe<Scalars['BigInt']>;
+  logIndex_gt?: InputMaybe<Scalars['BigInt']>;
+  logIndex_gte?: InputMaybe<Scalars['BigInt']>;
+  logIndex_in?: InputMaybe<Array<Scalars['BigInt']>>;
+  logIndex_lt?: InputMaybe<Scalars['BigInt']>;
+  logIndex_lte?: InputMaybe<Scalars['BigInt']>;
+  logIndex_not?: InputMaybe<Scalars['BigInt']>;
+  logIndex_not_in?: InputMaybe<Array<Scalars['BigInt']>>;
+  or?: InputMaybe<Array<InputMaybe<InUpdate_Filter>>>;
+  timestamp?: InputMaybe<Scalars['BigInt']>;
+  timestamp_gt?: InputMaybe<Scalars['BigInt']>;
+  timestamp_gte?: InputMaybe<Scalars['BigInt']>;
+  timestamp_in?: InputMaybe<Array<Scalars['BigInt']>>;
+  timestamp_lt?: InputMaybe<Scalars['BigInt']>;
+  timestamp_lte?: InputMaybe<Scalars['BigInt']>;
+  timestamp_not?: InputMaybe<Scalars['BigInt']>;
+  timestamp_not_in?: InputMaybe<Array<Scalars['BigInt']>>;
+  txHash?: InputMaybe<Scalars['Bytes']>;
+  txHash_contains?: InputMaybe<Scalars['Bytes']>;
+  txHash_gt?: InputMaybe<Scalars['Bytes']>;
+  txHash_gte?: InputMaybe<Scalars['Bytes']>;
+  txHash_in?: InputMaybe<Array<Scalars['Bytes']>>;
+  txHash_lt?: InputMaybe<Scalars['Bytes']>;
+  txHash_lte?: InputMaybe<Scalars['Bytes']>;
+  txHash_not?: InputMaybe<Scalars['Bytes']>;
+  txHash_not_contains?: InputMaybe<Scalars['Bytes']>;
+  txHash_not_in?: InputMaybe<Array<Scalars['Bytes']>>;
+};
+
+export enum InUpdate_OrderBy {
+  HumanityId = 'humanityId',
+  Id = 'id',
+  LogIndex = 'logIndex',
+  Timestamp = 'timestamp',
+  TxHash = 'txHash'
+}
+
 /** Defines the order direction, either ascending or descending */
 export enum OrderDirection {
   Asc = 'asc',
@@ -1415,6 +1483,74 @@ export enum OutTransfer_OrderBy {
   Id = 'id',
   TransferHash = 'transferHash',
   TransferTimestamp = 'transferTimestamp'
+}
+
+export type OutUpdate = {
+  __typename?: 'OutUpdate';
+  humanityId: Scalars['Bytes'];
+  id: Scalars['ID'];
+  logIndex: Scalars['BigInt'];
+  timestamp: Scalars['BigInt'];
+  txHash: Scalars['Bytes'];
+};
+
+export type OutUpdate_Filter = {
+  /** Filter for the block changed event. */
+  _change_block?: InputMaybe<BlockChangedFilter>;
+  and?: InputMaybe<Array<InputMaybe<OutUpdate_Filter>>>;
+  humanityId?: InputMaybe<Scalars['Bytes']>;
+  humanityId_contains?: InputMaybe<Scalars['Bytes']>;
+  humanityId_gt?: InputMaybe<Scalars['Bytes']>;
+  humanityId_gte?: InputMaybe<Scalars['Bytes']>;
+  humanityId_in?: InputMaybe<Array<Scalars['Bytes']>>;
+  humanityId_lt?: InputMaybe<Scalars['Bytes']>;
+  humanityId_lte?: InputMaybe<Scalars['Bytes']>;
+  humanityId_not?: InputMaybe<Scalars['Bytes']>;
+  humanityId_not_contains?: InputMaybe<Scalars['Bytes']>;
+  humanityId_not_in?: InputMaybe<Array<Scalars['Bytes']>>;
+  id?: InputMaybe<Scalars['ID']>;
+  id_gt?: InputMaybe<Scalars['ID']>;
+  id_gte?: InputMaybe<Scalars['ID']>;
+  id_in?: InputMaybe<Array<Scalars['ID']>>;
+  id_lt?: InputMaybe<Scalars['ID']>;
+  id_lte?: InputMaybe<Scalars['ID']>;
+  id_not?: InputMaybe<Scalars['ID']>;
+  id_not_in?: InputMaybe<Array<Scalars['ID']>>;
+  logIndex?: InputMaybe<Scalars['BigInt']>;
+  logIndex_gt?: InputMaybe<Scalars['BigInt']>;
+  logIndex_gte?: InputMaybe<Scalars['BigInt']>;
+  logIndex_in?: InputMaybe<Array<Scalars['BigInt']>>;
+  logIndex_lt?: InputMaybe<Scalars['BigInt']>;
+  logIndex_lte?: InputMaybe<Scalars['BigInt']>;
+  logIndex_not?: InputMaybe<Scalars['BigInt']>;
+  logIndex_not_in?: InputMaybe<Array<Scalars['BigInt']>>;
+  or?: InputMaybe<Array<InputMaybe<OutUpdate_Filter>>>;
+  timestamp?: InputMaybe<Scalars['BigInt']>;
+  timestamp_gt?: InputMaybe<Scalars['BigInt']>;
+  timestamp_gte?: InputMaybe<Scalars['BigInt']>;
+  timestamp_in?: InputMaybe<Array<Scalars['BigInt']>>;
+  timestamp_lt?: InputMaybe<Scalars['BigInt']>;
+  timestamp_lte?: InputMaybe<Scalars['BigInt']>;
+  timestamp_not?: InputMaybe<Scalars['BigInt']>;
+  timestamp_not_in?: InputMaybe<Array<Scalars['BigInt']>>;
+  txHash?: InputMaybe<Scalars['Bytes']>;
+  txHash_contains?: InputMaybe<Scalars['Bytes']>;
+  txHash_gt?: InputMaybe<Scalars['Bytes']>;
+  txHash_gte?: InputMaybe<Scalars['Bytes']>;
+  txHash_in?: InputMaybe<Array<Scalars['Bytes']>>;
+  txHash_lt?: InputMaybe<Scalars['Bytes']>;
+  txHash_lte?: InputMaybe<Scalars['Bytes']>;
+  txHash_not?: InputMaybe<Scalars['Bytes']>;
+  txHash_not_contains?: InputMaybe<Scalars['Bytes']>;
+  txHash_not_in?: InputMaybe<Array<Scalars['Bytes']>>;
+};
+
+export enum OutUpdate_OrderBy {
+  HumanityId = 'humanityId',
+  Id = 'id',
+  LogIndex = 'logIndex',
+  Timestamp = 'timestamp',
+  TxHash = 'txHash'
 }
 
 export type Party = {
@@ -1497,8 +1633,12 @@ export type Query = {
   humanity?: Maybe<Humanity>;
   inTransfer?: Maybe<InTransfer>;
   inTransfers: Array<InTransfer>;
+  inUpdate?: Maybe<InUpdate>;
+  inUpdates: Array<InUpdate>;
   outTransfer?: Maybe<OutTransfer>;
   outTransfers: Array<OutTransfer>;
+  outUpdate?: Maybe<OutUpdate>;
+  outUpdates: Array<OutUpdate>;
   parties: Array<Party>;
   party?: Maybe<Party>;
   reason?: Maybe<Reason>;
@@ -1509,8 +1649,6 @@ export type Query = {
   requesterFund?: Maybe<RequesterFund>;
   requesterFunds: Array<RequesterFund>;
   requests: Array<Request>;
-  rewardClaim?: Maybe<RewardClaim>;
-  rewardClaims: Array<RewardClaim>;
   round?: Maybe<Round>;
   rounds: Array<Round>;
   status?: Maybe<Status>;
@@ -1798,6 +1936,24 @@ export type QueryInTransfersArgs = {
 };
 
 
+export type QueryInUpdateArgs = {
+  block?: InputMaybe<Block_Height>;
+  id: Scalars['ID'];
+  subgraphError?: _SubgraphErrorPolicy_;
+};
+
+
+export type QueryInUpdatesArgs = {
+  block?: InputMaybe<Block_Height>;
+  first?: InputMaybe<Scalars['Int']>;
+  orderBy?: InputMaybe<InUpdate_OrderBy>;
+  orderDirection?: InputMaybe<OrderDirection>;
+  skip?: InputMaybe<Scalars['Int']>;
+  subgraphError?: _SubgraphErrorPolicy_;
+  where?: InputMaybe<InUpdate_Filter>;
+};
+
+
 export type QueryOutTransferArgs = {
   block?: InputMaybe<Block_Height>;
   id: Scalars['ID'];
@@ -1813,6 +1969,24 @@ export type QueryOutTransfersArgs = {
   skip?: InputMaybe<Scalars['Int']>;
   subgraphError?: _SubgraphErrorPolicy_;
   where?: InputMaybe<OutTransfer_Filter>;
+};
+
+
+export type QueryOutUpdateArgs = {
+  block?: InputMaybe<Block_Height>;
+  id: Scalars['ID'];
+  subgraphError?: _SubgraphErrorPolicy_;
+};
+
+
+export type QueryOutUpdatesArgs = {
+  block?: InputMaybe<Block_Height>;
+  first?: InputMaybe<Scalars['Int']>;
+  orderBy?: InputMaybe<OutUpdate_OrderBy>;
+  orderDirection?: InputMaybe<OrderDirection>;
+  skip?: InputMaybe<Scalars['Int']>;
+  subgraphError?: _SubgraphErrorPolicy_;
+  where?: InputMaybe<OutUpdate_Filter>;
 };
 
 
@@ -1903,24 +2077,6 @@ export type QueryRequestsArgs = {
   skip?: InputMaybe<Scalars['Int']>;
   subgraphError?: _SubgraphErrorPolicy_;
   where?: InputMaybe<Request_Filter>;
-};
-
-
-export type QueryRewardClaimArgs = {
-  block?: InputMaybe<Block_Height>;
-  id: Scalars['ID'];
-  subgraphError?: _SubgraphErrorPolicy_;
-};
-
-
-export type QueryRewardClaimsArgs = {
-  block?: InputMaybe<Block_Height>;
-  first?: InputMaybe<Scalars['Int']>;
-  orderBy?: InputMaybe<RewardClaim_OrderBy>;
-  orderDirection?: InputMaybe<OrderDirection>;
-  skip?: InputMaybe<Scalars['Int']>;
-  subgraphError?: _SubgraphErrorPolicy_;
-  where?: InputMaybe<RewardClaim_Filter>;
 };
 
 
@@ -2569,78 +2725,6 @@ export enum RequesterFund_OrderBy {
   Withdrawn = 'withdrawn'
 }
 
-export type RewardClaim = {
-  __typename?: 'RewardClaim';
-  amount: Scalars['BigInt'];
-  claimer: Claimer;
-  id: Scalars['Bytes'];
-  timestamp: Scalars['BigInt'];
-};
-
-export type RewardClaim_Filter = {
-  /** Filter for the block changed event. */
-  _change_block?: InputMaybe<BlockChangedFilter>;
-  amount?: InputMaybe<Scalars['BigInt']>;
-  amount_gt?: InputMaybe<Scalars['BigInt']>;
-  amount_gte?: InputMaybe<Scalars['BigInt']>;
-  amount_in?: InputMaybe<Array<Scalars['BigInt']>>;
-  amount_lt?: InputMaybe<Scalars['BigInt']>;
-  amount_lte?: InputMaybe<Scalars['BigInt']>;
-  amount_not?: InputMaybe<Scalars['BigInt']>;
-  amount_not_in?: InputMaybe<Array<Scalars['BigInt']>>;
-  and?: InputMaybe<Array<InputMaybe<RewardClaim_Filter>>>;
-  claimer?: InputMaybe<Scalars['String']>;
-  claimer_?: InputMaybe<Claimer_Filter>;
-  claimer_contains?: InputMaybe<Scalars['String']>;
-  claimer_contains_nocase?: InputMaybe<Scalars['String']>;
-  claimer_ends_with?: InputMaybe<Scalars['String']>;
-  claimer_ends_with_nocase?: InputMaybe<Scalars['String']>;
-  claimer_gt?: InputMaybe<Scalars['String']>;
-  claimer_gte?: InputMaybe<Scalars['String']>;
-  claimer_in?: InputMaybe<Array<Scalars['String']>>;
-  claimer_lt?: InputMaybe<Scalars['String']>;
-  claimer_lte?: InputMaybe<Scalars['String']>;
-  claimer_not?: InputMaybe<Scalars['String']>;
-  claimer_not_contains?: InputMaybe<Scalars['String']>;
-  claimer_not_contains_nocase?: InputMaybe<Scalars['String']>;
-  claimer_not_ends_with?: InputMaybe<Scalars['String']>;
-  claimer_not_ends_with_nocase?: InputMaybe<Scalars['String']>;
-  claimer_not_in?: InputMaybe<Array<Scalars['String']>>;
-  claimer_not_starts_with?: InputMaybe<Scalars['String']>;
-  claimer_not_starts_with_nocase?: InputMaybe<Scalars['String']>;
-  claimer_starts_with?: InputMaybe<Scalars['String']>;
-  claimer_starts_with_nocase?: InputMaybe<Scalars['String']>;
-  id?: InputMaybe<Scalars['Bytes']>;
-  id_contains?: InputMaybe<Scalars['Bytes']>;
-  id_gt?: InputMaybe<Scalars['Bytes']>;
-  id_gte?: InputMaybe<Scalars['Bytes']>;
-  id_in?: InputMaybe<Array<Scalars['Bytes']>>;
-  id_lt?: InputMaybe<Scalars['Bytes']>;
-  id_lte?: InputMaybe<Scalars['Bytes']>;
-  id_not?: InputMaybe<Scalars['Bytes']>;
-  id_not_contains?: InputMaybe<Scalars['Bytes']>;
-  id_not_in?: InputMaybe<Array<Scalars['Bytes']>>;
-  or?: InputMaybe<Array<InputMaybe<RewardClaim_Filter>>>;
-  timestamp?: InputMaybe<Scalars['BigInt']>;
-  timestamp_gt?: InputMaybe<Scalars['BigInt']>;
-  timestamp_gte?: InputMaybe<Scalars['BigInt']>;
-  timestamp_in?: InputMaybe<Array<Scalars['BigInt']>>;
-  timestamp_lt?: InputMaybe<Scalars['BigInt']>;
-  timestamp_lte?: InputMaybe<Scalars['BigInt']>;
-  timestamp_not?: InputMaybe<Scalars['BigInt']>;
-  timestamp_not_in?: InputMaybe<Array<Scalars['BigInt']>>;
-};
-
-export enum RewardClaim_OrderBy {
-  Amount = 'amount',
-  Claimer = 'claimer',
-  ClaimerId = 'claimer__id',
-  ClaimerName = 'claimer__name',
-  ClaimerNbVouchesReceived = 'claimer__nbVouchesReceived',
-  Id = 'id',
-  Timestamp = 'timestamp'
-}
-
 export type Round = {
   __typename?: 'Round';
   challenge: Challenge;
@@ -3067,7 +3151,6 @@ export type _Meta_ = {
    * will be null if the _meta field has a block constraint that asks for
    * a block number. It will be filled if the _meta field has no block constraint
    * and therefore asks for the latest  block
-   *
    */
   block: _Block_;
   /** The deployment ID */
@@ -3123,6 +3206,13 @@ export type ContractQueryVariables = Exact<{ [key: string]: never; }>;
 
 export type ContractQuery = { __typename?: 'Query', contract?: { __typename?: 'Contract', baseDeposit: any, humanityLifespan: any, renewalPeriodDuration: any, challengePeriodDuration: any, requiredNumberOfVouches: any, latestArbitratorHistory?: { __typename?: 'ArbitratorHistory', arbitrator: any, extraData: any, updateTime: any, registrationMeta: string, clearingMeta: string } | null } | null, crossChainGateways: Array<{ __typename?: 'CrossChainGateway', id: any, foreignProxy: any }> };
 
+export type CrossChainUpdatesQueryVariables = Exact<{
+  humanityId: Scalars['Bytes'];
+}>;
+
+
+export type CrossChainUpdatesQuery = { __typename?: 'Query', outUpdates: Array<{ __typename?: 'OutUpdate', id: string, humanityId: any, txHash: any, logIndex: any, timestamp: any }>, inUpdates: Array<{ __typename?: 'InUpdate', id: string, humanityId: any, txHash: any, logIndex: any, timestamp: any }> };
+
 export type HumanityQueryVariables = Exact<{
   id: Scalars['ID'];
 }>;
@@ -3159,13 +3249,6 @@ export type RequestsQueryVariables = Exact<{
 
 
 export type RequestsQuery = { __typename?: 'Query', requests: Array<{ __typename?: 'Request', id: any, index: any, revocation: boolean, registrationEvidenceRevokedReq: string, creationTime: any, expirationTime?: any | null, lastStatusChange: any, requester: any, winnerParty?: { __typename?: 'Party', id: string } | null, status: { __typename?: 'Status', id: string }, claimer: { __typename?: 'Claimer', id: any, name?: string | null }, humanity: { __typename?: 'Humanity', id: any, nbRequests: any, nbLegacyRequests: any, registration?: { __typename?: 'Registration', expirationTime: any, claimer: { __typename?: 'Claimer', id: any } } | null, winnerClaim: Array<{ __typename?: 'Request', index: any, resolutionTime: any, evidenceGroup: { __typename?: 'EvidenceGroup', evidence: Array<{ __typename?: 'Evidence', uri: string }> } }> }, evidenceGroup: { __typename?: 'EvidenceGroup', evidence: Array<{ __typename?: 'Evidence', uri: string }> } }> };
-
-export type RewardClaimQueryVariables = Exact<{
-  id: Scalars['ID'];
-}>;
-
-
-export type RewardClaimQuery = { __typename?: 'Query', rewardClaim?: { __typename?: 'RewardClaim', id: any, amount: any, timestamp: any, claimer: { __typename?: 'Claimer', id: any } } | null };
 
 export type IsSyncedQueryVariables = Exact<{
   block: Scalars['Int'];
@@ -3321,6 +3404,32 @@ export const ContractDocument = gql`
   crossChainGateways {
     id
     foreignProxy
+  }
+}
+    `;
+export const CrossChainUpdatesDocument = gql`
+    query CrossChainUpdates($humanityId: Bytes!) {
+  outUpdates(
+    where: {humanityId: $humanityId}
+    orderBy: timestamp
+    orderDirection: desc
+  ) {
+    id
+    humanityId
+    txHash
+    logIndex
+    timestamp
+  }
+  inUpdates(
+    where: {humanityId: $humanityId}
+    orderBy: timestamp
+    orderDirection: desc
+  ) {
+    id
+    humanityId
+    txHash
+    logIndex
+    timestamp
   }
 }
     `;
@@ -3549,18 +3658,6 @@ export const RequestsDocument = gql`
   }
 }
     ${WinnerClaimFragmentDoc}`;
-export const RewardClaimDocument = gql`
-    query RewardClaim($id: ID!) {
-  rewardClaim(id: $id) {
-    id
-    claimer {
-      id
-    }
-    amount
-    timestamp
-  }
-}
-    `;
 export const IsSyncedDocument = gql`
     query IsSynced($block: Int!) {
   _meta(block: {number: $block}) {
@@ -3612,6 +3709,9 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     Contract(variables?: ContractQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<ContractQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<ContractQuery>({ document: ContractDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'Contract', 'query', variables);
     },
+    CrossChainUpdates(variables: CrossChainUpdatesQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<CrossChainUpdatesQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<CrossChainUpdatesQuery>({ document: CrossChainUpdatesDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'CrossChainUpdates', 'query', variables);
+    },
     Humanity(variables: HumanityQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<HumanityQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<HumanityQuery>({ document: HumanityDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'Humanity', 'query', variables);
     },
@@ -3626,9 +3726,6 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     },
     Requests(variables?: RequestsQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<RequestsQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<RequestsQuery>({ document: RequestsDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'Requests', 'query', variables);
-    },
-    RewardClaim(variables: RewardClaimQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<RewardClaimQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<RewardClaimQuery>({ document: RewardClaimDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'RewardClaim', 'query', variables);
     },
     IsSynced(variables: IsSyncedQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<IsSyncedQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<IsSyncedQuery>({ document: IsSyncedDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'IsSynced', 'query', variables);
