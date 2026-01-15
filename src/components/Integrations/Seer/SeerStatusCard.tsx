@@ -69,7 +69,7 @@ export default function SeerStatusCard({ status, onActionClick, isLoading = fals
     <div className="lg:w-[391px] p-6 lg:p-8 bg-whiteBackground rounded-[30px] border-t-[1px] border-t-[#BE75FF] lg:border-t-0 lg:border-l-[1px] lg:border-l-[#BE75FF]">
       <div className="text-center">
         <p className="text-purple text-sm font-medium mb-1">Reward</p>
-        <h3 className="text-primaryText text-xl font-semibold">Unlock Your $10 Seer Balance</h3>
+        <h3 className="text-primaryText text-xl font-semibold">Seer Credits</h3>
       </div>
 
       {status != "disconnected" ? <div className="flex items-center justify-center m-2">
