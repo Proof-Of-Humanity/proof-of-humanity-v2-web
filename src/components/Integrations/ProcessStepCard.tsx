@@ -67,7 +67,7 @@ const ProcessStepCard: React.FC<ProcessStepCardProps> = ({
     setAnimationState('exiting');
     setTimeout(() => {
       onPrevious();
-    }, 200);
+    }, 250);
   }, [previousStep, animationState, onPrevious]);
 
   const handleNext = useCallback(() => {
@@ -84,7 +84,7 @@ const ProcessStepCard: React.FC<ProcessStepCardProps> = ({
       setAnimationState('exiting');
       setTimeout(() => {
         onNext();
-      }, 200);
+      }, 250);
     }
   }, [nextStep, isLastSlide, animationState, onNext, onLastSlideComplete]);
 
@@ -177,8 +177,9 @@ const ProcessStepCard: React.FC<ProcessStepCardProps> = ({
             height={32} 
             className={`transition-all duration-200 ${previousStep && !isAnimating ? 'opacity-100 cursor-pointer hover:scale-110' : 'opacity-50 cursor-not-allowed pointer-events-none'}`}
             onClick={handlePrevious}
-            onKeyDown={(e: React.KeyboardEvent<HTMLButtonElement>) => previousStep && !isAnimating && e.key === 'Enter' && handlePrevious()}
+            onKeyDown={(e: React.KeyboardEvent<HTMLButtonElement>) => previousStep && !isAnimating && (e.key === 'Enter' || e.key === ' ' || e.key === 'Spacebar') && handlePrevious()}
             aria-label="Previous step"
+            aria-disabled={!(previousStep && !isAnimating)}
             role="button"
             tabIndex={previousStep && !isAnimating ? 0 : -1}
           />
@@ -187,8 +188,9 @@ const ProcessStepCard: React.FC<ProcessStepCardProps> = ({
             height={32} 
             className={`ml-2 transition-all duration-200 ${(nextStep || isLastSlide) && !isAnimating ? 'opacity-100 cursor-pointer hover:scale-110' : 'opacity-50 cursor-not-allowed pointer-events-none'}`}
             onClick={handleNext}
-            onKeyDown={(e: React.KeyboardEvent<HTMLButtonElement>) => (nextStep || isLastSlide) && !isAnimating && e.key === 'Enter' && handleNext()}
+            onKeyDown={(e: React.KeyboardEvent<HTMLButtonElement>) => (nextStep || isLastSlide) && !isAnimating && (e.key === 'Enter' || e.key === ' ' || e.key === 'Spacebar') && handleNext()}
             aria-label={isLastSlide ? "Complete and continue" : "Next step"}
+            aria-disabled={!((nextStep || isLastSlide) && !isAnimating)}
             role="button"
             tabIndex={(nextStep || isLastSlide) && !isAnimating ? 0 : -1}
           />

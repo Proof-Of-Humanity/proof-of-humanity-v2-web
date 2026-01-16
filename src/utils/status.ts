@@ -124,7 +124,7 @@ const STATUS_CONFIG: Record<RequestStatus, StatusConfig> = {
   },
   [RequestStatus.TRANSFERRED]: {
     baseLabel: "Transferred",
-    tooltip: "Profile moved to a diffent chain",
+    tooltip: "Profile moved to a different chain",
     color: STATUS_COLORS.transferred,
     filter: { status: "transferred" }
   },

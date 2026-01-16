@@ -50,7 +50,7 @@ export default async function Request({ params }: PageProps) {
   ]);
   if (!request) return <span>Error occured</span>;
   if (chain.id === legacyChain.id && request.status.id === "vouching")
-    return <span>Error occured</span>;
+    return <span>Request not found</span>;
 
   const arbitrationCost = await getArbitrationCost(
     chain,
