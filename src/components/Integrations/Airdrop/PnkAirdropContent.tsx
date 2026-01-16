@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import IntegrationHeader from "components/Integrations/IntegrationHeader";
 import ClaimSection from "components/Integrations/Airdrop/ClaimSection";
 import EmailNotifications from "components/Integrations/Airdrop/EmailNotifications";
@@ -29,6 +29,21 @@ export default function PnkAirdropContent({ integration, contractData, airdropCh
   const chainId = useChainId();
 
   const slidesCompleted = currentSlideIndex >= (integration.firstInfoSlide?.length ?? 0);
+
+  // Preload all slide images on component mount
+  useEffect(() => {
+    if (integration.firstInfoSlide) {
+      integration.firstInfoSlide.forEach((slide) => {
+        if (slide.image) {
+          const link = document.createElement('link');
+          link.rel = 'preload';
+          link.as = 'image';
+          link.href = slide.image;
+          document.head.appendChild(link);
+        }
+      });
+    }
+  }, [integration.firstInfoSlide]);
 
   const { data: eligibilityData, isLoading: isEligibilityLoading, error: eligibilityError, refetch: refetchEligibilityStatus } = useQuery<ProcessedAirdropData>({
     queryKey: ["eligibilityStatus", address, chainId, airdropChainId],
