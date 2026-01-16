@@ -3225,7 +3225,7 @@ export type MeQueryVariables = Exact<{
 }>;
 
 
-export type MeQuery = { __typename?: 'Query', claimer?: { __typename?: 'Claimer', registration?: { __typename?: 'Registration', id: any, expirationTime: any } | null, currentRequest?: { __typename?: 'Request', index: any, humanity: { __typename?: 'Humanity', id: any } } | null } | null };
+export type MeQuery = { __typename?: 'Query', claimer?: { __typename?: 'Claimer', registration?: { __typename?: 'Registration', id: any, expirationTime: any } | null, currentRequest?: { __typename?: 'Request', index: any, status: { __typename?: 'Status', id: string }, humanity: { __typename?: 'Humanity', id: any } } | null } | null };
 
 export type RegistrationQueryVariables = Exact<{
   id: Scalars['ID'];
@@ -3498,6 +3498,9 @@ export const MeDocument = gql`
     }
     currentRequest {
       index
+      status {
+        id
+      }
       humanity {
         id
       }
