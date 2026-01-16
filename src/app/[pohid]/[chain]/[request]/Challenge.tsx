@@ -20,6 +20,8 @@ import { useAtlasProvider, Roles } from "@kleros/kleros-app";
 import { toast } from "react-toastify";
 import AuthGuard from "components/AuthGuard";
 import ActionButton from "components/ActionButton";
+import { useChainId } from "wagmi";
+import { idToChain } from "config/chains";
 
 type Reason =
   | "none"
@@ -116,6 +118,7 @@ export default function Challenge({
 }: ChallengeInterface) {
   const { uploadFile } = useAtlasProvider();
   const chain = useChainParam()!;
+  const userChainId = useChainId();
   
   const loading = useLoading();
   const [isLoading, loadingMessage] = loading.use();
@@ -206,12 +209,18 @@ export default function Challenge({
     { reason: "sybilAttack" as Reason, text: "Sybil Attack" },
     { reason: "deceased" as Reason, text: "Deceased" },
   ];
-
   return (
     <Modal
       formal
       header="Challenge"
-      trigger={<button className="btn-main">Challenge</button>}
+      trigger={
+        <ActionButton
+          onClick={() => {}}
+          label="Challenge"
+          disabled={userChainId !== chain.id}
+          tooltip={userChainId !== chain.id ? `Switch your chain above to ${idToChain(chain.id)?.name || 'the correct chain'}` : undefined}
+        />
+      }
     >
       <div className="flex flex-col flex-wrap items-center p-4">
         <ALink className="flex" href={ipfs(arbitrationInfo.policy)}>
@@ -258,12 +267,13 @@ export default function Challenge({
             {...{
               disabled:
                 (!revocation
-                  ? !justification || reason === "none"
-                  : !justification),
+                  ? !justification || reason === "none" || userChainId !== chain.id
+                  : !justification || userChainId !== chain.id),
               className: "mt-12",
               onClick: submit,
               isLoading,
               label: loadingMessage || "Challenge request",
+              tooltip: userChainId !== chain.id ? `Switch your chain above to ${idToChain(chain.id)?.name || 'the correct chain'}` : undefined,
             }}
           />
         </AuthGuard>

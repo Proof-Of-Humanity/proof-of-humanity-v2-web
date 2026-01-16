@@ -36,12 +36,14 @@ type StatusColor = typeof STATUS_COLORS[keyof typeof STATUS_COLORS];
 
 type StaticFilterConfig = {
   baseLabel: string;
+  tooltip?: string;
   color: StatusColor;
   filter: Request_Filter;
 };
 
 type DynamicFilterConfig = {
   baseLabel: string;
+  tooltip?: string;
   color: StatusColor;
   getFilter: () => Request_Filter;
 };
@@ -51,32 +53,38 @@ type StatusConfig = StaticFilterConfig | DynamicFilterConfig;
 // Centralized status configuration
 const STATUS_CONFIG: Record<RequestStatus, StatusConfig> = {
   [RequestStatus.VOUCHING]: {
-    baseLabel: "Vouching",
+    baseLabel: "Needs Vouch",
+    tooltip: "Profile submitted; still needs a vouch and/or full deposit.",
     color: STATUS_COLORS.vouching,
     filter: { status: "vouching" }
   },
   [RequestStatus.PENDING_CLAIM]: {
-    baseLabel: "Claim", 
+    baseLabel: "In Review", 
+    tooltip: "Submission challenge window is open; can be challenged.",
     color: STATUS_COLORS.claim,
     filter: { status: "resolving", revocation: false }
   },
   [RequestStatus.PENDING_REVOCATION]: {
-    baseLabel: "Revocation",
+    baseLabel: "Removal Proposed",
+    tooltip: "Someone asked to remove profile; challenge window open.",
     color: STATUS_COLORS.revocation,
     filter: { status: "resolving", revocation: true }
   },
   [RequestStatus.DISPUTED_CLAIM]: {
-    baseLabel: "Disputed",
+    baseLabel: "Challenged",
+    tooltip: "Submission challenged; Kleros is judging.",
     color: STATUS_COLORS.challenged,
     filter: { status: "disputed", revocation: false }
   },
   [RequestStatus.DISPUTED_REVOCATION]: {
-    baseLabel: "Disputed",
+    baseLabel: "Removal Challenged",
+    tooltip: "Profile removal is challenged; Kleros is judging.",
     color: STATUS_COLORS.challenged, 
     filter: { status: "disputed", revocation: true }
   },
   [RequestStatus.RESOLVED_CLAIM]: {
-    baseLabel: "Included",
+    baseLabel: "Verified Human",
+    tooltip: "Submission accepted; included as human.",
     color: STATUS_COLORS.registered,
     getFilter: () => ({ 
       status: "resolved", 
@@ -86,17 +94,20 @@ const STATUS_CONFIG: Record<RequestStatus, StatusConfig> = {
     })
   },
   [RequestStatus.RESOLVED_REVOCATION]: {
-    baseLabel: "Revoked",
+    baseLabel: "Removed",
+    tooltip: "Profile removed after due process.",
     color: STATUS_COLORS.removed,
     filter: { status: "resolved", revocation: true }
   },
   [RequestStatus.REJECTED]: {
     baseLabel: "Rejected",
+    tooltip: "Submission was rejected after being challenged.",
     color: STATUS_COLORS.rejected,
     filter: { status: "resolved", revocation: false, winnerParty_: { id_not: "requester" } }
   },
   [RequestStatus.EXPIRED]: {
     baseLabel: "Expired", 
+    tooltip: "Registration expired; needs renewal to stay verified.",
     color: STATUS_COLORS.expired,
     getFilter: () => ({ 
       status: "resolved", 
@@ -107,16 +118,19 @@ const STATUS_CONFIG: Record<RequestStatus, StatusConfig> = {
   },
   [RequestStatus.WITHDRAWN]: {
     baseLabel: "Withdrawn",
+    tooltip: "Submitter cancelled before verification.",
     color: STATUS_COLORS.withdrawn,
     filter: { status: "withdrawn" }
   },
   [RequestStatus.TRANSFERRED]: {
     baseLabel: "Transferred",
+    tooltip: "Profile moved to a different chain",
     color: STATUS_COLORS.transferred,
     filter: { status: "transferred" }
   },
   [RequestStatus.TRANSFERRING]: {
-    baseLabel: "Update",
+    baseLabel: "Pending Update",
+    tooltip: "Profile is being moved to a different chain",
     color: STATUS_COLORS.transferring,
     filter: { status: "transferring" }
   },
@@ -124,29 +138,6 @@ const STATUS_CONFIG: Record<RequestStatus, StatusConfig> = {
     baseLabel: "All",
     color: STATUS_COLORS.white,
     filter: {}
-  }
-};
-
-// Helper function to generate card labels (more descriptive)
-const getCardLabel = (status: RequestStatus): string => {
-  const config = STATUS_CONFIG[status];
-  switch (status) {
-    case RequestStatus.PENDING_CLAIM:
-      return `Pending ${config.baseLabel}`;
-    case RequestStatus.PENDING_REVOCATION:
-      return `Pending ${config.baseLabel}`;
-    case RequestStatus.DISPUTED_CLAIM:
-      return `${config.baseLabel} Claim`;
-    case RequestStatus.DISPUTED_REVOCATION:
-      return `${config.baseLabel} Revocation`;
-    case RequestStatus.RESOLVED_CLAIM:
-      return `Resolved Claim`;
-    case RequestStatus.RESOLVED_REVOCATION:
-      return `Resolved Revocation`;
-    case RequestStatus.TRANSFERRING:
-      return `Pending Update`;
-    default:
-      return config.baseLabel;
   }
 };
 
@@ -273,7 +264,17 @@ export const getStatus = (
  */
 export const getStatusLabel = (status: RequestStatus, component: 'actionBar' | 'card' = 'card'): string => {
   const config = STATUS_CONFIG[status];
-  return component === 'actionBar' ? config.baseLabel : getCardLabel(status);
+  return config.baseLabel;
+};
+
+/**
+ * Helper function to get the tooltip for a RequestStatus enum value.
+ * @param status RequestStatus enum value
+ * @returns Tooltip string
+ */
+export const getStatusTooltip = (status: RequestStatus): string | undefined => {
+  const config = STATUS_CONFIG[status];
+  return config.tooltip;
 };
 
 /**

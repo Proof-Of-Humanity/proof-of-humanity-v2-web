@@ -3,6 +3,7 @@ import {
   SupportedChainId,
   getForeignChain,
   supportedChains,
+  legacyChain,
 } from "config/chains";
 import { sdk } from "config/subgraph";
 import { RequestsQuery } from "generated/graphql";
@@ -36,7 +37,10 @@ const completeCrossChains = async (
   const res = await Promise.all(
     supportedChains.map((chain) =>
       sdk[chain.id].Requests({
-        where: { humanity_: { id_in: humIds[getForeignChain(chain.id)] } },
+        where: {
+          humanity_: { id_in: humIds[getForeignChain(chain.id)] },
+          ...(chain.id === legacyChain.id ? { status_not: "vouching" } : {}),
+        },
         first: PROFILES_DISPLAY_REQUIRED_REQS,
       }),
     ),
@@ -52,7 +56,11 @@ const completeCrossChains = async (
 const _getPagedRequests = async () => {
   const res = await Promise.all(
     supportedChains.map((chain) =>
-      sdk[chain.id].Requests({ first: PROFILES_DISPLAY_REQUIRED_REQS }),
+      sdk[chain.id].Requests({
+        first: PROFILES_DISPLAY_REQUIRED_REQS,
+        where:
+          chain.id === legacyChain.id ? { status_not: "vouching" } : undefined,
+      }),
     ),
   );
   const out = supportedChains.reduce(
@@ -68,7 +76,10 @@ export const getRequestsLoadingPromises = async (
   skipNumber: number,
 ): Promise<RequestsQuery> => {
   return sdk[chainId].Requests({
-    where,
+    where: {
+      ...where,
+      ...(chainId === legacyChain.id ? { status_not: "vouching" } : {}),
+    },
     first: PROFILES_DISPLAY_REQUIRED_REQS,
     skip: skipNumber,
   });
