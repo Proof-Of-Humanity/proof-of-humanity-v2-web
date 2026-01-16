@@ -1,5 +1,6 @@
 "use client";
 import React, { useState, useEffect, useCallback, useRef } from "react";
+import { createPortal } from "react-dom";
 import Image from "next/image";
 import LeftArrowIcon from "icons/ArrowCircleLeft.svg";
 import RightArrowIcon from "icons/ArrowCircleRight.svg";
@@ -103,7 +104,7 @@ const ProcessStepCard: React.FC<ProcessStepCardProps> = ({
 
   // Show PoH logo animation overlay when transitioning to claim page
   if (showExitAnimation) {
-    return (
+    return createPortal(
       <div className="backdrop z-50">
         <div className="flex flex-col items-center">
           <Image
@@ -117,7 +118,8 @@ const ProcessStepCard: React.FC<ProcessStepCardProps> = ({
             Loading...
           </p>
         </div>
-      </div>
+      </div>,
+      document.body
     );
   }
 
