@@ -318,6 +318,8 @@ export default function Form({ contractData, totalCosts, renewal }: FormProps) {
           [Step.finalized]: () => (
             <Finalized
               requiredVouches={contractData[chainId].requiredNumberOfVouches}
+              challengePeriodDuration={Number(contractData[chainId].challengePeriodDuration)}
+              pohId={params.pohid as string}
             />
           ),
         }}

@@ -24,7 +24,7 @@ export default function AirdropBanner() {
               height={20}
             />
           </div>
-          <div className="flex flex-wrap items-center justify-center gap-x-2 text-sm sm:text-base">
+          <div className="flex flex-wrap items-center justify-center gap-x-1 text-sm sm:text-base">
             <span className="font-bold">Airdrop for early adopters:</span>
             <span>Register yourself as human,</span>
             <span className="font-bold">claim 1,200 $PNK</span>
