@@ -21,9 +21,9 @@ export default function SeerStatusCard({ status, onActionClick, isLoading = fals
         return {
           icon: <CheckCircleIcon width={16} height={16} className="fill-green-500 mr-1" />,
           label: "Eligible",
-          text: "Credits worth $10 appear in Seer on the 1st of each month (auto-refill)",
+          text: "Credits worth $10 appear in Seer on the 1st of each month(auto-refill)",
           textColor: "text-green-500",
-          buttonLabel: "Go to Seer",
+          buttonLabel: "Claim $10",
         };
       case "not-eligible":
         return {
@@ -53,7 +53,7 @@ export default function SeerStatusCard({ status, onActionClick, isLoading = fals
       <div className="lg:w-[391px] p-6 lg:p-8 bg-whiteBackground rounded-[30px] border-t-[1px] border-t-[#BE75FF] lg:border-t-0 lg:border-l-[1px] lg:border-l-[#BE75FF]">
         <div className="text-center">
           <p className="text-purple text-sm font-medium mb-6">Reward</p>
-          <h3 className="text-primaryText text-xl font-semibold mb-6">Seer Credits</h3>
+          <h3 className="text-primaryText text-xl font-semibold mb-6">Unlock Your $10 Seer Balance</h3>
           <div className="flex items-center justify-center my-8">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple"></div>
           </div>

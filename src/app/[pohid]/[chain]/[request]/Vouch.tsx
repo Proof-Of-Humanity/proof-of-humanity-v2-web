@@ -3,12 +3,12 @@ import { useMemo, useState } from "react";
 import Modal from "components/Modal";
 import usePoHWrite from "contracts/hooks/usePoHWrite";
 import { Address, Hash } from "viem";
-import { useSignTypedData } from "wagmi";
+import { useSignTypedData, useChainId } from "wagmi";
 import { useEffectOnce } from "@legendapp/state/react";
 import axios from "axios";
 import { getContractInfo } from "contracts";
 import { toast } from "react-toastify";
-import { SupportedChain } from "config/chains";
+import { SupportedChain, idToChain } from "config/chains";
 import ActionButton from "components/ActionButton";
 
 interface VouchButtonProps {
@@ -29,6 +29,7 @@ export default function Vouch({
   address,
 }: VouchButtonProps) {
   const router = useRouter();
+  const userChainId = useChainId();
   const [isOpen, setIsOpen] = useState(false);
   const [prepare, addVouch , status] = usePoHWrite(
     "addVouch",
@@ -121,9 +122,13 @@ export default function Vouch({
     me.pohId &&
     isRegistrationValid && (
       <>
-        <button className="btn-main mb-2" onClick={() => setIsOpen(true)}>
-          Vouch
-        </button>
+        <ActionButton
+          onClick={() => setIsOpen(true)}
+          label="Vouch"
+          className="mb-2"
+          disabled={userChainId !== chain.id}
+          tooltip={userChainId !== chain.id ? `Switch your chain above to ${idToChain(chain.id)?.name || 'the correct chain'}` : undefined}
+        />
         <Modal
           formal
           header="Vouch"

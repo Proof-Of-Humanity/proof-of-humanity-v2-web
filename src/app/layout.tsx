@@ -13,6 +13,7 @@ import AppKitProvider from "../context/AppKitProvider";
 import HashBasedRedirectHandler from "../components/HashBasedRedirectHandler";
 import { SettingsPopoverProvider } from "../context/SettingsPopoverContext";
 import AirdropBanner from "../components/AirdropBanner";
+import MobileBlocker from "components/MobileBlocker";
 
 export const metadata: Metadata = {
   title: "Proof of Humanity V2",
@@ -38,6 +39,7 @@ export default async function RootLayout({ children }: RootLayoutProps) {
       >
         <AppKitProvider>
           <SettingsPopoverProvider>
+            <MobileBlocker/>
             <HashBasedRedirectHandler />
             <AirdropBanner />
             <Header policy={ipfs(policy)} />

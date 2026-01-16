@@ -8,6 +8,7 @@ import {
   getForeignChain,
   idToChain,
   supportedChains,
+  legacyChain,
 } from "config/chains";
 import { getContractDataAllChains } from "data/contract";
 import { getArbitrationCost } from "data/costs";
@@ -124,7 +125,7 @@ async function Profile({ params: { pohid } }: PageProps) {
   const pendingRequests = supportedChains.reduce(
     (acc, chain) => [
       ...acc,
-      ...(humanity[chain.id].humanity
+          ...(humanity[chain.id].humanity
         ? humanity[chain.id]!.humanity!.requests.filter((req) => {
             return (
               req.status.id !== "withdrawn" &&
@@ -158,7 +159,7 @@ async function Profile({ params: { pohid } }: PageProps) {
     supportedChains.reduce<PoHRequest[]>(
       (acc, chain) => [
         ...acc,
-        ...(humanity[chain.id]?.humanity?.requests
+          ...(humanity[chain.id]?.humanity?.requests
           ? humanity[chain.id]!.humanity!.requests.filter(
               (req) =>
                 !pendingRequests.some(

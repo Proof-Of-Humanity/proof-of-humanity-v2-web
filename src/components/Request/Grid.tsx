@@ -208,7 +208,7 @@ function RequestsGrid() {
             displayedForChain + REQUESTS_BATCH_SIZE >=
               chainStacks[chain.id].length
           ) {
-            const where = {
+            const where: any = {
               ...getRequestStatusFilter(status),
               ...(search ? { claimer_: { name_contains: search } } : {}),
             };
