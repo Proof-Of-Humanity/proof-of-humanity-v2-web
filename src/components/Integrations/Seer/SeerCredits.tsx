@@ -116,10 +116,14 @@ export default function SeerCredits({ integration }: SeerCreditsProps) {
               </ExternalLink>
               <ProcessStepCard
                 step={integration.firstInfoSlide[currentSlideIndex]}
+                allSlides={integration.firstInfoSlide}
+                currentIndex={currentSlideIndex}
                 previousStep={currentSlideIndex > 0}
-                nextStep={currentSlideIndex <= integration.firstInfoSlide.length - 1}
+                nextStep={currentSlideIndex < integration.firstInfoSlide.length - 1}
+                isLastSlide={currentSlideIndex === integration.firstInfoSlide.length - 1}
                 onPrevious={() => setCurrentSlideIndex(currentSlideIndex - 1)}
                 onNext={() => setCurrentSlideIndex(currentSlideIndex + 1)}
+                onLastSlideComplete={() => setCurrentSlideIndex(currentSlideIndex + 1)}
               />
             </>
           ) : (
