@@ -63,11 +63,41 @@ module.exports = {
       },
       animation: {
         flip: "flip 5s linear infinite",
+        slideInFromRight: "slideInFromRight 0.3s ease-out forwards",
+        slideInFromLeft: "slideInFromLeft 0.3s ease-out forwards",
+        slideOutLeft: "slideOutLeft 0.25s ease-in forwards",
+        slideOutRight: "slideOutRight 0.25s ease-in forwards",
+        fadeOut: "fadeOut 0.4s ease-out forwards",
+        fadeIn: "fadeIn 0.3s ease-out forwards",
       },
       keyframes: {
         flip: {
           "0%, 100%": { transform: "rotateY(0deg)" },
           "50%": { transform: "rotateY(360deg)" },
+        },
+        slideInFromRight: {
+          "0%": { opacity: "0", transform: "translateX(20px)" },
+          "100%": { opacity: "1", transform: "translateX(0)" },
+        },
+        slideInFromLeft: {
+          "0%": { opacity: "0", transform: "translateX(-20px)" },
+          "100%": { opacity: "1", transform: "translateX(0)" },
+        },
+        slideOutLeft: {
+          "0%": { opacity: "1", transform: "translateX(0)" },
+          "100%": { opacity: "0", transform: "translateX(-20px)" },
+        },
+        slideOutRight: {
+          "0%": { opacity: "1", transform: "translateX(0)" },
+          "100%": { opacity: "0", transform: "translateX(20px)" },
+        },
+        fadeOut: {
+          "0%": { opacity: "1" },
+          "100%": { opacity: "0" },
+        },
+        fadeIn: {
+          "0%": { opacity: "0" },
+          "100%": { opacity: "1" },
         },
         // progress: {
         //   "0%": { transform: "scaleX(1)" },

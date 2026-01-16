@@ -61,9 +61,11 @@ export default function PnkAirdropContent({ integration, contractData, airdropCh
               <KlerosInfoCard
                 slide={integration.firstInfoSlide[currentSlideIndex]}
                 previousStep={currentSlideIndex > 0}
-                nextStep={currentSlideIndex <= (integration.firstInfoSlide.length - 1)}
+                nextStep={currentSlideIndex < (integration.firstInfoSlide.length - 1)}
+                isLastSlide={currentSlideIndex === (integration.firstInfoSlide.length - 1)}
                 onPrevious={() => setCurrentSlideIndex(currentSlideIndex - 1)}
                 onNext={() => setCurrentSlideIndex(currentSlideIndex + 1)}
+                onLastSlideComplete={() => setCurrentSlideIndex(currentSlideIndex + 1)}
               />
             </>
           ) : (
