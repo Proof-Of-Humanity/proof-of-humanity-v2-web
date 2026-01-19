@@ -81,7 +81,7 @@ export default function ClaimSection({ amountPerClaim, airdropChainId, eligibili
     stakeError
       ? "Unable to load staking information. Please check your connection and try again."
       : eligibilityError
-      ? "Unable to check eligibility. Please check your connection and try again."
+      ? "Unable to check eligibility. Please check your connection and try again or try using a EIP-7702 wallet like metamask"
       : null;
 
   const isFetching = !!isEligibilityLoading || isStakeLoading;
