@@ -21,7 +21,9 @@ export const getHumanityData = cache(async (pohId: Hash) => {
       supportedChains.findIndex((c) => c.id === legacyChain.id)
     ].humanity!.requests = res[
       supportedChains.findIndex((c) => c.id === legacyChain.id)
-    ].humanity!.requests.filter((r) => r.status.id !== "vouching");
+    ].humanity!.requests.filter(
+      (r) => !(r.status.id === "vouching" && Number(r.index) <= -1)
+    );
   }
 
   const out = supportedChains.reduce(

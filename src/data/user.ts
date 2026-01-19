@@ -33,7 +33,8 @@ export const getMyData = async (account: string) => {
       res[i].claimer?.currentRequest &&
       !(
         chain.id === legacyChain.id &&
-        res[i].claimer!.currentRequest!.status.id === "vouching"
+        res[i].claimer!.currentRequest!.status.id === "vouching" &&
+        Number(res[i].claimer!.currentRequest!.index) <= -1
       ),
   );
 

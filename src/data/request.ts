@@ -39,7 +39,6 @@ const completeCrossChains = async (
       sdk[chain.id].Requests({
         where: {
           humanity_: { id_in: humIds[getForeignChain(chain.id)] },
-          ...(chain.id === legacyChain.id ? { status_not: "vouching" } : {}),
         },
         first: PROFILES_DISPLAY_REQUIRED_REQS,
       }),
@@ -47,7 +46,15 @@ const completeCrossChains = async (
   );
 
   const outPlus = supportedChains.reduce(
-    (acc, chain, i) => ({ ...acc, [chain.id]: res[i].requests }),
+    (acc, chain, i) => ({
+      ...acc,
+      [chain.id]:
+        chain.id === legacyChain.id
+          ? res[i].requests.filter(
+              (r) => !(r.status.id === "vouching" && Number(r.index) <= -1)
+            )
+          : res[i].requests,
+    }),
     {} as Record<SupportedChainId, RequestsQuery["requests"]>,
   );
   return mergeObjectsWithArrays(out, outPlus);
@@ -58,13 +65,19 @@ const _getPagedRequests = async () => {
     supportedChains.map((chain) =>
       sdk[chain.id].Requests({
         first: PROFILES_DISPLAY_REQUIRED_REQS,
-        where:
-          chain.id === legacyChain.id ? { status_not: "vouching" } : undefined,
       }),
     ),
   );
   const out = supportedChains.reduce(
-    (acc, chain, i) => ({ ...acc, [chain.id]: res[i].requests }),
+    (acc, chain, i) => ({
+      ...acc,
+      [chain.id]:
+        chain.id === legacyChain.id
+          ? res[i].requests.filter(
+              (r) => !(r.status.id === "vouching" && Number(r.index) <= -1)
+            )
+          : res[i].requests,
+    }),
     {} as Record<SupportedChainId, RequestsQuery["requests"]>,
   );
   return await completeCrossChains(out);
@@ -75,14 +88,22 @@ export const getRequestsLoadingPromises = async (
   where: any,
   skipNumber: number,
 ): Promise<RequestsQuery> => {
-  return sdk[chainId].Requests({
+  const result = await sdk[chainId].Requests({
     where: {
       ...where,
-      ...(chainId === legacyChain.id ? { status_not: "vouching" } : {}),
     },
     first: PROFILES_DISPLAY_REQUIRED_REQS,
     skip: skipNumber,
   });
+
+  // Manually filter out legacy vouching requests (index <= -1) for legacy chain
+  if (chainId === legacyChain.id) {
+    result.requests = result.requests.filter(
+      (r) => !(r.status.id === "vouching" && Number(r.index) <= -1)
+    );
+  }
+
+  return result;
 };
 
 export const getRequestsInitData = async () => {

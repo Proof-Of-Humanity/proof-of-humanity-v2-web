@@ -13,6 +13,7 @@ export type BecomeJurorCardProps = {
   nextStep: boolean;
   onPrevious: () => void;
   onNext: () => void;
+  className?: string;
 };
 
 const BecomeJurorCard: React.FC<BecomeJurorCardProps> = ({
@@ -21,6 +22,7 @@ const BecomeJurorCard: React.FC<BecomeJurorCardProps> = ({
   nextStep,
   onPrevious,
   onNext,
+  className = "",
 }) => {
   const descriptionLines = slide.description.split('\n\n');
   const mainDescription = descriptionLines[0] || '';
@@ -50,7 +52,7 @@ const BecomeJurorCard: React.FC<BecomeJurorCardProps> = ({
   );
 
   return (
-    <div className="flex flex-col border rounded-[30px] shadow w-full max-w-[1095px] h-auto lg:h-[1035px] mx-auto">
+    <div className={`flex flex-col border rounded-[30px] shadow w-full max-w-[1095px] h-auto lg:h-[1035px] mx-auto ${className}`}>
       {/* Image */}
       <div className="flex justify-center w-full overflow-hidden rounded-t-[30px]">
         <div className="w-full lg:w-[900px] px-4 sm:px-8 lg:px-0 mt-6 mb-2 lg:mt-12">

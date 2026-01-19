@@ -6,6 +6,9 @@ query Me($id: ID!) {
     }
     currentRequest {
       index
+      status {
+        id
+      }
       humanity {
         id
       }

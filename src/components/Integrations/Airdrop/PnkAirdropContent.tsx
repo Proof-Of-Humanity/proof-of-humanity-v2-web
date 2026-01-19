@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import IntegrationHeader from "components/Integrations/IntegrationHeader";
 import ClaimSection from "components/Integrations/Airdrop/ClaimSection";
 import EmailNotifications from "components/Integrations/Airdrop/EmailNotifications";
@@ -12,7 +12,6 @@ import { useAccount, useChainId } from "wagmi";
 import { useQuery } from "@tanstack/react-query";
 import { getProcessedAirdropData, type ProcessedAirdropData } from "data/airdrop";
 import type { Address } from "viem";
-import ExternalLink from "components/ExternalLink";
 
 export interface PnkAirdropClientProps {
   integration: Integration;
@@ -31,6 +30,21 @@ export default function PnkAirdropContent({ integration, contractData, airdropCh
 
   const slidesCompleted = currentSlideIndex >= (integration.firstInfoSlide?.length ?? 0);
 
+  // Preload all slide images on component mount
+  useEffect(() => {
+    if (integration.firstInfoSlide) {
+      integration.firstInfoSlide.forEach((slide) => {
+        if (slide.image) {
+          const link = document.createElement('link');
+          link.rel = 'preload';
+          link.as = 'image';
+          link.href = slide.image;
+          document.head.appendChild(link);
+        }
+      });
+    }
+  }, [integration.firstInfoSlide]);
+
   const { data: eligibilityData, isLoading: isEligibilityLoading, error: eligibilityError, refetch: refetchEligibilityStatus } = useQuery<ProcessedAirdropData>({
     queryKey: ["eligibilityStatus", address, chainId, airdropChainId],
     queryFn: async () => getProcessedAirdropData(address as Address, airdropChainId),
@@ -44,13 +58,14 @@ export default function PnkAirdropContent({ integration, contractData, airdropCh
         <div className="flex flex-col justify-center items-center px-4 py-2 md:px-8 md:py-4 space-y-4">
           {!slidesCompleted && integration.firstInfoSlide ? (
             <>
-              <ExternalLink href="https://kleros.io/" className="text-purple text-center text-md my-4">Learn more about Kleros to unlock the airdrop</ExternalLink>
               <KlerosInfoCard
                 slide={integration.firstInfoSlide[currentSlideIndex]}
                 previousStep={currentSlideIndex > 0}
-                nextStep={currentSlideIndex <= (integration.firstInfoSlide.length - 1)}
+                nextStep={currentSlideIndex < (integration.firstInfoSlide.length - 1)}
+                isLastSlide={currentSlideIndex === (integration.firstInfoSlide.length - 1)}
                 onPrevious={() => setCurrentSlideIndex(currentSlideIndex - 1)}
                 onNext={() => setCurrentSlideIndex(currentSlideIndex + 1)}
+                onLastSlideComplete={() => setCurrentSlideIndex(currentSlideIndex + 1)}
               />
             </>
           ) : (
@@ -65,7 +80,7 @@ export default function PnkAirdropContent({ integration, contractData, airdropCh
                       To qualify, you must be an included profile.
                     </p>
                     <p className="text-secondaryText text-sm mb-6">
-                      Claim & Stake your airdrop on the Humanity court. Deadline: December 31, 2025.
+                      Claim & Stake your airdrop on the Humanity court.
                     </p>
                   </div>
                   <div className="mb-2">
