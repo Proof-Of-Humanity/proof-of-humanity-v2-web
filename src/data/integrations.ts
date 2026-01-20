@@ -66,7 +66,7 @@ const integrations: Record<string, Integration> = {
     logoWidth: 164,
     logoHeight: 48,
     darkLogo: '/logo/kleros.svg',
-    isActive: true,
+    isActive: false,
     startPath: 'app/pnk-airdrop',
     buttonText: 'Start Now',
     firstInfoSlide: [
