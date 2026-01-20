@@ -1,4 +1,4 @@
-import { supportedChains } from "config/chains";
+import { supportedChains, legacyChain } from "config/chains";
 import { sdk } from "config/subgraph";
 import { MeQuery } from "generated/graphql";
 
@@ -29,7 +29,13 @@ export const getMyData = async (account: string) => {
     return !!registration && registration.expirationTime > Date.now() / 1000;
   })
   const requestChain = supportedChains.find(
-    (_, i) => res[i].claimer?.currentRequest,
+    (chain, i) =>
+      res[i].claimer?.currentRequest &&
+      !(
+        chain.id === legacyChain.id &&
+        res[i].claimer!.currentRequest!.status.id === "vouching" &&
+        Number(res[i].claimer!.currentRequest!.index) <= -1
+      ),
   );
 
   return {

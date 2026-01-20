@@ -18,6 +18,7 @@ import { getStatusLabel, getStatusColor, RequestStatus } from "utils/status";
 import { ActionType } from "utils/enums";
 import { Address, Hash, formatEther, hexToSignature } from "viem";
 import { useAccount, useChainId } from "wagmi";
+import { idToChain } from "config/chains";
 import Appeal from "./Appeal";
 import Challenge from "./Challenge";
 import FundButton from "./Funding";
@@ -261,7 +262,7 @@ export default function ActionBar({
       <div className="flex items-center">
         <span className="mr-4">Status</span>
         <span
-          className={`rounded-full px-3 py-1 text-white bg-status-${statusColor}`}
+          className={`rounded-full px-3 py-1 text-white bg-status-${statusColor} whitespace-nowrap`}
         >
           {getStatusLabel(requestStatus, 'actionBar')}
         </span>
@@ -324,6 +325,8 @@ export default function ActionBar({
                         tooltip={
                           isWithdrawPrepareError
                             ? "Withdraw not possible, please try again"
+                            : userChainId !== chain.id 
+                            ? `Switch your chain above to ${idToChain(chain.id)?.name || 'the correct chain'}`
                             : undefined
                         }
                         className="mb-2"
@@ -331,7 +334,7 @@ export default function ActionBar({
                     </div>
                     {validVouches < contractData.requiredNumberOfVouches && (
                       <ExternalLink
-                        href="https://forms.gle/Yagjs1BSYSyH2RseA"
+                        href="https://t.me/proofhumanity"
                         className="text-purple hover:opacity-80 underline underline-offset-4 text-sm font-medium inline-flex items-center gap-1 group transition-colors justify-end"
                       >
                         Get a vouch
@@ -418,7 +421,7 @@ export default function ActionBar({
                onClick={withdraw}
                variant = "secondary"
                label={"Withdraw"}
-               tooltip={isWithdrawPrepareError ? "Withdraw not possible, please try again": undefined}
+               tooltip={isWithdrawPrepareError ? "Withdraw not possible, please try again" : userChainId !== chain.id ? `Switch your chain above to ${idToChain(chain.id)?.name || 'the correct chain'}` : undefined}
                className="mb-2"
              />
               ) : !didIVouchFor ? (
@@ -444,7 +447,7 @@ export default function ActionBar({
                 isLoading={isAdvanceLoading}
                 onClick={advanceFire}
                 label={isAdvanceLoading ? "Advancing" : "Advance"}
-                tooltip={isAdvancePrepareError ? "Advance not possible, please try again" : undefined}
+                tooltip={isAdvancePrepareError ? "Advance not possible, please try again" : userChainId !== chain.id ? `Switch your chain above to ${idToChain(chain.id)?.name || 'the correct chain'}` : undefined}
                 className="mb-2"
               />
             </div>
@@ -459,7 +462,7 @@ export default function ActionBar({
                 isLoading={isExecuteLoading}
                 onClick={execute}
                 label={isExecuteLoading ? "Executing" : "Execute"}
-                tooltip={isExecutePrepareError ? "Execute not possible, please try again" : undefined}
+                tooltip={isExecutePrepareError ? "Execute not possible, please try again" : userChainId !== chain.id ? `Switch your chain above to ${idToChain(chain.id)?.name || 'the correct chain'}` : undefined}
                 className="mb-2"
               />
             </div>

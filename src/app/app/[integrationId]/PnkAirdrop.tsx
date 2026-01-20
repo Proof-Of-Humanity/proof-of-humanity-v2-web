@@ -1,7 +1,7 @@
 import { Integration } from "types/integrations";
 import { getAirdropContractData } from "data/airdrop";
 import { ChainSet, configSetSelection } from "contracts";
-import { gnosis, gnosisChiado, sepolia } from "viem/chains";
+import { gnosis, sepolia } from "viem/chains";
 import PnkAirdropContent from "components/Integrations/Airdrop/PnkAirdropContent";
 import { computeGnosisAPY, getHumanityCourtFeeForJuror } from "data/kleros";
 

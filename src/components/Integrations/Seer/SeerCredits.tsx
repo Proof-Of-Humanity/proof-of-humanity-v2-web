@@ -1,5 +1,5 @@
 "use client";
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo, useEffect } from "react";
 import IntegrationHeader from "components/Integrations/IntegrationHeader";
 import ProcessStepCard from "components/Integrations/ProcessStepCard";
 import SeerStatusCard, { SeerEligibilityStatus } from "./SeerStatusCard";
@@ -20,6 +20,21 @@ interface SeerCreditsProps {
 
 export default function SeerCredits({ integration }: SeerCreditsProps) {
   const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
+
+  // Preload all slide images on component mount
+  useEffect(() => {
+    if (integration.firstInfoSlide) {
+      integration.firstInfoSlide.forEach((slide) => {
+        if (slide.image) {
+          const link = document.createElement('link');
+          link.rel = 'preload';
+          link.as = 'image';
+          link.href = slide.image;
+          document.head.appendChild(link);
+        }
+      });
+    }
+  }, [integration.firstInfoSlide]);
   const { address, isConnected } = useAccount();
   const chainId = useChainId();
   const modal = useAppKit();
@@ -116,10 +131,14 @@ export default function SeerCredits({ integration }: SeerCreditsProps) {
               </ExternalLink>
               <ProcessStepCard
                 step={integration.firstInfoSlide[currentSlideIndex]}
+                allSlides={integration.firstInfoSlide}
+                currentIndex={currentSlideIndex}
                 previousStep={currentSlideIndex > 0}
-                nextStep={currentSlideIndex <= integration.firstInfoSlide.length - 1}
+                nextStep={currentSlideIndex < integration.firstInfoSlide.length - 1}
+                isLastSlide={currentSlideIndex === integration.firstInfoSlide.length - 1}
                 onPrevious={() => setCurrentSlideIndex(currentSlideIndex - 1)}
                 onNext={() => setCurrentSlideIndex(currentSlideIndex + 1)}
+                onLastSlideComplete={() => setCurrentSlideIndex(currentSlideIndex + 1)}
               />
             </>
           ) : (

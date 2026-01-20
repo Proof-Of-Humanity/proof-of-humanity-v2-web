@@ -9,6 +9,7 @@ import Identicon from "components/Identicon";
 import Modal from "components/Modal";
 import Progress from "components/Progress";
 import TimeAgo from "components/TimeAgo";
+import ActionButton from "components/ActionButton";
 import { SupportedChainId, idToChain } from "config/chains";
 import {
   APIArbitrator,
@@ -26,6 +27,7 @@ import { toast } from "react-toastify";
 import {RequestStatus, getStatusLabel } from "utils/status";
 import { eth2Wei, formatEth } from "utils/misc";
 import { Address } from "viem";
+import { useChainId } from "wagmi";
 
 interface SideFundingProps {
   side: SideEnum;
@@ -50,6 +52,7 @@ const SideFunding: React.FC<SideFundingProps> = ({
   chainId,
   loosingSideHasEnd,
 }) => {
+  const userChainId = useChainId();
   const title = side === SideEnum.claimer ? "Claimer" : "Challenger";
   const shrunkAddress: string =
     requester.substring(0, 6) + " ... " + requester.slice(-4);
@@ -97,22 +100,17 @@ const SideFunding: React.FC<SideFundingProps> = ({
           type="number"
           onChange={(v) => setRequesterInput(eth2Wei(+v.target.value))}
         />
-        <button
-          className={`gradient rounded px-4 text-white ${
-            !contributor || errorRef.current || loosingSideHasEnd
-              ? "cursor-not-allowed opacity-50"
-              : ""
-          }`}
-          disabled={!contributor || errorRef.current || loosingSideHasEnd}
+        <ActionButton
           onClick={async () => {
             prepareFundAppeal({
               args: [arbitrator as Address, BigInt(disputeId), side],
               value: requesterInput,
             });
           }}
-        >
-          Fund
-        </button>
+          label="Fund"
+          disabled={!contributor || errorRef.current || loosingSideHasEnd || userChainId !== chainId}
+          tooltip={userChainId !== chainId ? `Switch your chain above to ${idToChain(chainId)?.name || 'the correct chain'}` : undefined}
+        />
       </div>
       <Progress
         value={valueProgress}

@@ -3,6 +3,7 @@ import {
   SupportedChainId,
   getForeignChain,
   supportedChains,
+  legacyChain,
 } from "config/chains";
 import { sdk } from "config/subgraph";
 import { RequestsQuery } from "generated/graphql";
@@ -36,14 +37,24 @@ const completeCrossChains = async (
   const res = await Promise.all(
     supportedChains.map((chain) =>
       sdk[chain.id].Requests({
-        where: { humanity_: { id_in: humIds[getForeignChain(chain.id)] } },
+        where: {
+          humanity_: { id_in: humIds[getForeignChain(chain.id)] },
+        },
         first: PROFILES_DISPLAY_REQUIRED_REQS,
       }),
     ),
   );
 
   const outPlus = supportedChains.reduce(
-    (acc, chain, i) => ({ ...acc, [chain.id]: res[i].requests }),
+    (acc, chain, i) => ({
+      ...acc,
+      [chain.id]:
+        chain.id === legacyChain.id
+          ? res[i].requests.filter(
+              (r) => !(r.status.id === "vouching" && Number(r.index) <= -1)
+            )
+          : res[i].requests,
+    }),
     {} as Record<SupportedChainId, RequestsQuery["requests"]>,
   );
   return mergeObjectsWithArrays(out, outPlus);
@@ -52,11 +63,21 @@ const completeCrossChains = async (
 const _getPagedRequests = async () => {
   const res = await Promise.all(
     supportedChains.map((chain) =>
-      sdk[chain.id].Requests({ first: PROFILES_DISPLAY_REQUIRED_REQS }),
+      sdk[chain.id].Requests({
+        first: PROFILES_DISPLAY_REQUIRED_REQS,
+      }),
     ),
   );
   const out = supportedChains.reduce(
-    (acc, chain, i) => ({ ...acc, [chain.id]: res[i].requests }),
+    (acc, chain, i) => ({
+      ...acc,
+      [chain.id]:
+        chain.id === legacyChain.id
+          ? res[i].requests.filter(
+              (r) => !(r.status.id === "vouching" && Number(r.index) <= -1)
+            )
+          : res[i].requests,
+    }),
     {} as Record<SupportedChainId, RequestsQuery["requests"]>,
   );
   return await completeCrossChains(out);
@@ -67,11 +88,22 @@ export const getRequestsLoadingPromises = async (
   where: any,
   skipNumber: number,
 ): Promise<RequestsQuery> => {
-  return sdk[chainId].Requests({
-    where,
+  const result = await sdk[chainId].Requests({
+    where: {
+      ...where,
+    },
     first: PROFILES_DISPLAY_REQUIRED_REQS,
     skip: skipNumber,
   });
+
+  // Manually filter out legacy vouching requests (index <= -1) for legacy chain
+  if (chainId === legacyChain.id) {
+    result.requests = result.requests.filter(
+      (r) => !(r.status.id === "vouching" && Number(r.index) <= -1)
+    );
+  }
+
+  return result;
 };
 
 export const getRequestsInitData = async () => {

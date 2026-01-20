@@ -13,6 +13,7 @@ import {
   explorerLink,
   paramToChain,
   supportedChains,
+  legacyChain,
 } from "config/chains";
 import { getClaimerData } from "data/claimer";
 import { getContractData } from "data/contract";
@@ -48,6 +49,13 @@ export default async function Request({ params }: PageProps) {
     getContractData(chain.id),
   ]);
   if (!request) return <span>Error occured</span>;
+  if (
+    chain.id === legacyChain.id &&
+    request.status.id === "vouching" &&
+    Number(request.index) <= -1
+  )
+    return <span>Request not found</span>;
+
   const arbitrationCost = await getArbitrationCost(
     chain,
     contractData.arbitrationInfo.arbitrator,
