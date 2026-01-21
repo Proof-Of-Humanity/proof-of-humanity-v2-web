@@ -8,6 +8,7 @@
     "@graphql-codegen/typescript-graphql-request": "^6.3.0",
     "@graphql-codegen/typescript-operations": "2.3.6",
     "@logtail/node": "^0.4.12",
+    "@netlify/functions": "^5.1.2",
     "@supabase/supabase-js": "^2.36.0",
     "@svgr/webpack": "^8.1.0",
     "@tailwindcss/forms": "^0.5.2",
