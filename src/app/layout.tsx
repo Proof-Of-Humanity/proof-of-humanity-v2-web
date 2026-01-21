@@ -41,7 +41,7 @@ export default async function RootLayout({ children }: RootLayoutProps) {
           <SettingsPopoverProvider>
             <MobileBlocker/>
             <HashBasedRedirectHandler />
-            <AirdropBanner />
+            {/* <AirdropBanner /> */}
             <Header policy={ipfs(policy)} />
             <main className="flex-grow">{children}</main>
             <Footer />
