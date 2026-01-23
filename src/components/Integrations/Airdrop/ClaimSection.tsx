@@ -1,5 +1,5 @@
 "use client";
-import React, { useCallback, useMemo } from "react";
+import React, { useCallback, useMemo, useState } from "react";
 import { useAccount, useChainId, useSwitchChain } from "wagmi";
 import { useAppKit } from "@reown/appkit/react";
 import { getCurrentStake } from "data/airdrop";
@@ -69,6 +69,7 @@ export default function ClaimSection({ amountPerClaim, airdropChainId, eligibili
   const chainId = useChainId();
   const { switchChain } = useSwitchChain();
   const router = useRouter();
+  const [optimisticClaimed, setOptimisticClaimed] = useState(false);
 
   const humanitySubcourtId = getHumanitySubCourtId(airdropChainId);
   const { data: currentStake = 0n, isLoading: isStakeLoading, error: stakeError } = useQuery<bigint>({
@@ -96,7 +97,7 @@ export default function ClaimSection({ amountPerClaim, airdropChainId, eligibili
     ? "wrong-chain"
     : hasErrors
     ? "error"
-    : eligibilityData?.claimStatus === "claimed"
+    : eligibilityData?.claimStatus === "claimed" || optimisticClaimed
     ? "claimed"
     : eligibilityData?.claimStatus === "eligible"
     ? "eligible"
@@ -125,9 +126,16 @@ export default function ClaimSection({ amountPerClaim, airdropChainId, eligibili
     },
     onSuccess: () => {
       toast.success("Successfully claimed and staked PNK tokens!");
-      setTimeout(() => {
-        refetchEligibilityStatus?.();
-      }, 1000);
+      setOptimisticClaimed(true);
+      
+      const pollRefetch = async () => {
+        // Poll every 4 seconds for 1 minute to allow subgraph to sync
+        for (let i = 0; i < 15; i++) {
+          await new Promise((resolve) => setTimeout(resolve, 4000));
+          await refetchEligibilityStatus?.();
+        }
+      };
+      pollRefetch();
     },
   }), [refetchEligibilityStatus]);
 
