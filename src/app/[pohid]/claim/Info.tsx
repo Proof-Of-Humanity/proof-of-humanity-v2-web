@@ -35,7 +35,7 @@ function Info({ advance, state$ }: InfoProps) {
 
       <Field label="Connected wallet" value={address} disabled />
       <Field
-        label="Display Name"
+        label="First and Last Name"
         placeholder="name by which you are known"
         value={name}
         onChange={(e) => state$.name.set(e.target.value)}

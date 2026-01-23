@@ -230,7 +230,7 @@ export default function ClaimSection({ amountPerClaim, airdropChainId, eligibili
       case "eligible":
         return {
           icon: <CheckCircleIcon width={16} height={16} className="text-status-registered" />,
-          text: "Eligible: Included profile",
+          text: "Eligible: Verified human",
           textColor: "text-status-registered",
         };
       case "not-eligible":
