@@ -2526,6 +2526,18 @@
     "@emnapi/runtime" "^1.4.3"
     "@tybys/wasm-util" "^0.10.0"
 
+"@netlify/functions@^5.1.2":
+  version "5.1.2"
+  resolved "https://registry.yarnpkg.com/@netlify/functions/-/functions-5.1.2.tgz#a18a141c989f3c5e6963d5d4c0613f106854ae0c"
+  integrity sha512-tpPiLSkQatuexH8AdAZ8RlALvT7ixOE9VhvpkzQGNvihcms8hzmvUDuSxQa7UneTj/sHsdirnXmnJ+nmf+Nx/w==
+  dependencies:
+    "@netlify/types" "2.3.0"
+
+"@netlify/types@2.3.0":
+  version "2.3.0"
+  resolved "https://registry.yarnpkg.com/@netlify/types/-/types-2.3.0.tgz#db4dc8e0a5f288cfb6d9f23f02202f2d68a06959"
+  integrity sha512-5gxMWh/S7wr0uHKSTbMv4bjWmWSpwpeLYvErWeVNAPll5/QNFo9aWimMAUuh8ReLY3/fg92XAroVVu7+z27Snw==
+
 "@next/env@14.2.35":
   version "14.2.35"
   resolved "https://registry.yarnpkg.com/@next/env/-/env-14.2.35.tgz#e979016d0ca8500a47d41ffd02625fe29b8df35a"
