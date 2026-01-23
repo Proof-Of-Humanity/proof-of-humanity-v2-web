@@ -4,7 +4,8 @@ import { privateKeyToAccount } from 'viem/accounts';
 import { mainnet } from 'viem/chains';
 import { GraphQLClient, gql } from 'graphql-request';
 
-const SIMULATE = Boolean(process.env.ETH_STATE_UPDATE_SIMULATE); 
+const SIMULATE = process.env.ETH_STATE_UPDATE_SIMULATE == "true";
+console.log("SIMULATE:", SIMULATE);
 const rpcUrl = process.env.MAINNET_RPC;
 const privateKey = process.env.PRIVATE_KEY;
 const TX_BATCH_SIZE = 15;
@@ -184,7 +185,7 @@ async function updateStateEthGnosis() {
 
             batchCalls.push({
                 target: ccpohAddress,
-                allowFailure: true,
+                allowFailure: false,
                 callData: callData
             });
         }
