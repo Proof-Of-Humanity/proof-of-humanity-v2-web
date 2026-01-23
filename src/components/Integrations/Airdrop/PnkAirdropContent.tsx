@@ -25,6 +25,7 @@ export interface PnkAirdropClientProps {
 
 export default function PnkAirdropContent({ integration, contractData, airdropChainId, coherenceReward, gnosisApy }: PnkAirdropClientProps) {
   const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
+  const [optimisticClaimed, setOptimisticClaimed] = useState(false);
   const { address, isConnected } = useAccount();
   const chainId = useChainId();
 
@@ -122,12 +123,14 @@ export default function PnkAirdropContent({ integration, contractData, airdropCh
                     isEligibilityLoading,
                     eligibilityError,
                     refetchEligibilityStatus,
+                    optimisticClaimed,
+                    setOptimisticClaimed,
                   }}
                 />
               </div>
             </div>
           )}
-          {slidesCompleted && eligibilityData?.claimStatus === "claimed" && (
+          {slidesCompleted && (eligibilityData?.claimStatus === "claimed" || optimisticClaimed) && (
               <EmailNotifications />
           )}
         </div>

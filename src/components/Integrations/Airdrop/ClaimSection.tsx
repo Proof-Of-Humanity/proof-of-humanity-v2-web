@@ -1,5 +1,5 @@
 "use client";
-import React, { useCallback, useMemo, useState } from "react";
+import React, { useCallback, useMemo } from "react";
 import { useAccount, useChainId, useSwitchChain } from "wagmi";
 import { useAppKit } from "@reown/appkit/react";
 import { getCurrentStake } from "data/airdrop";
@@ -61,15 +61,16 @@ interface ClaimSectionProps {
   isEligibilityLoading?: boolean;
   eligibilityError?: unknown;
   refetchEligibilityStatus?: () => Promise<unknown>;
+  optimisticClaimed: boolean;
+  setOptimisticClaimed: (claimed: boolean) => void;
 }
 
-export default function ClaimSection({ amountPerClaim, airdropChainId, eligibilityData, isEligibilityLoading, eligibilityError, refetchEligibilityStatus }: ClaimSectionProps) {
+export default function ClaimSection({ amountPerClaim, airdropChainId, eligibilityData, isEligibilityLoading, eligibilityError, refetchEligibilityStatus, optimisticClaimed, setOptimisticClaimed }: ClaimSectionProps) {
   const modal = useAppKit();
   const { address, isConnected } = useAccount();
   const chainId = useChainId();
   const { switchChain } = useSwitchChain();
   const router = useRouter();
-  const [optimisticClaimed, setOptimisticClaimed] = useState(false);
 
   const humanitySubcourtId = getHumanitySubCourtId(airdropChainId);
   const { data: currentStake = 0n, isLoading: isStakeLoading, error: stakeError } = useQuery<bigint>({
@@ -132,12 +133,17 @@ export default function ClaimSection({ amountPerClaim, airdropChainId, eligibili
         // Poll every 4 seconds for 1 minute to allow subgraph to sync
         for (let i = 0; i < 15; i++) {
           await new Promise((resolve) => setTimeout(resolve, 4000));
-          await refetchEligibilityStatus?.();
+          const result = await refetchEligibilityStatus?.();
+          const data = (result as { data?: ProcessedAirdropData })?.data;
+          
+          if (data?.claimStatus === "claimed") {
+            break;
+          }
         }
       };
       pollRefetch();
     },
-  }), [refetchEligibilityStatus]);
+  }), [refetchEligibilityStatus, setOptimisticClaimed]);
 
   const [prepareBatch, _, txStatus] = useBatchWrite(batchWriteEffects);
   const isTxLoading = txStatus.write === "pending";
