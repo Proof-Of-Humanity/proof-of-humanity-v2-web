@@ -185,7 +185,7 @@ async function updateStateEthGnosis() {
 
             batchCalls.push({
                 target: ccpohAddress,
-                allowFailure: true,
+                allowFailure: false,
                 callData: callData
             });
         }
