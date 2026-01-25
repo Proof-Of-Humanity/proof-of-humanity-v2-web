@@ -12,7 +12,7 @@ const Finalized: React.FC<FinalizedProps> = ({ requiredVouches, challengePeriodD
   const days = challengePeriodDuration / 86400;
 
   return (
-    <div className="my-8 flex w-full flex-col items-center">
+    <div className="my-8 flex w-full flex-col items-center text-primaryText">
       <div className="text-center text-2xl font-normal">
         <span>
           🎉 Welcome to
@@ -32,16 +32,16 @@ const Finalized: React.FC<FinalizedProps> = ({ requiredVouches, challengePeriodD
 
       <div className="my-8 flex w-full max-w-2xl flex-col lg:max-w-4xl">
         <div className="mb-6 flex flex-col items-center">
-          <h3 className="mb-2 font-bold uppercase tracking-wider text-slate-700">Next Steps</h3>
-          <div className="h-px w-full px-2 bg-slate-200" />
+          <h3 className="mb-2 font-bold uppercase tracking-wider text-primaryText">Next Steps</h3>
+          <div className="w-full px-2 border-b border-stroke" />
         </div>
 
         <div className="flex flex-col space-y-6 text-left">
           {requiredVouches > 0 && (
             <div className="flex gap-3">
-              <span className="text-slate-400">1.</span>
-              <div className="text-slate-600">
-                <span className="font-bold text-slate-900">Get Vouched:</span> Ask a registered human to vouch for you.{" "}
+              <span className="text-secondaryText">1.</span>
+              <div className="text-secondaryText">
+                <span className="font-bold text-primaryText">Get Vouched:</span> Ask a registered human to vouch for you.{" "}
                 <ExternalLink
                   href="https://t.me/proofhumanity"
                   className="text-orange whitespace-nowrap font-semibold hover:text-orange-400 inline-flex items-center gap-1"
@@ -54,23 +54,23 @@ const Finalized: React.FC<FinalizedProps> = ({ requiredVouches, challengePeriodD
           )}
 
           <div className="flex gap-3">
-            <span className="text-slate-400">{requiredVouches > 0 ? "2." : "1."}</span>
-            <div className="text-slate-600">
-              <span className="font-bold text-slate-900">Fund Deposit:</span> Submit your full security deposit (if not done already). <span className="text-sm text-slate-400">Fully refunded once you attain the 'Verified Human' status, or slashed if your profile is 'Rejected' due to failure to follow our submission policy.</span>
+            <span className="text-secondaryText">{requiredVouches > 0 ? "2." : "1."}</span>
+            <div className="text-secondaryText">
+              <span className="font-bold text-primaryText">Fund Deposit:</span> Submit your full security deposit (if not done already). <span className="text-sm text-secondaryText">Fully refunded once you attain the 'Verified Human' status, or slashed if your profile is 'Rejected' due to failure to follow our submission policy.</span>
             </div>
           </div>
 
           <div className="flex gap-3">
-            <span className="text-slate-400">{requiredVouches > 0 ? "3." : "2."}</span>
-            <div className="text-slate-600">
-              <span className="font-bold text-slate-900">Wait {days} Days:</span> Once the above steps are done, a security timer starts.
+            <span className="text-secondaryText">{requiredVouches > 0 ? "3." : "2."}</span>
+            <div className="text-secondaryText">
+              <span className="font-bold text-primaryText">Wait {days} Days:</span> Once the above steps are done, a security timer starts.
             </div>
           </div>
 
           <div className="flex gap-3">
-            <span className="text-slate-400">{requiredVouches > 0 ? "4." : "3."}</span>
-            <div className="text-slate-600">
-              <span className="font-bold text-slate-900">Claim:</span> Return to your profile to register it, and claim your airdrop{" "}
+            <span className="text-secondaryText">{requiredVouches > 0 ? "4." : "3."}</span>
+            <div className="text-secondaryText">
+              <span className="font-bold text-primaryText">Claim:</span> Return to your profile to register it, and claim your airdrop{" "}
               <Link href={`/app/pnk-airdrop`} className="text-orange font-semibold hover:text-orange-400">
                 here.
               </Link>

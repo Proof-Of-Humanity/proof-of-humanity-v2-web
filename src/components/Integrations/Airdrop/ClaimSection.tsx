@@ -61,9 +61,11 @@ interface ClaimSectionProps {
   isEligibilityLoading?: boolean;
   eligibilityError?: unknown;
   refetchEligibilityStatus?: () => Promise<unknown>;
+  optimisticClaimed: boolean;
+  setOptimisticClaimed: (claimed: boolean) => void;
 }
 
-export default function ClaimSection({ amountPerClaim, airdropChainId, eligibilityData, isEligibilityLoading, eligibilityError, refetchEligibilityStatus }: ClaimSectionProps) {
+export default function ClaimSection({ amountPerClaim, airdropChainId, eligibilityData, isEligibilityLoading, eligibilityError, refetchEligibilityStatus, optimisticClaimed, setOptimisticClaimed }: ClaimSectionProps) {
   const modal = useAppKit();
   const { address, isConnected } = useAccount();
   const chainId = useChainId();
@@ -96,7 +98,7 @@ export default function ClaimSection({ amountPerClaim, airdropChainId, eligibili
     ? "wrong-chain"
     : hasErrors
     ? "error"
-    : eligibilityData?.claimStatus === "claimed"
+    : eligibilityData?.claimStatus === "claimed" || optimisticClaimed
     ? "claimed"
     : eligibilityData?.claimStatus === "eligible"
     ? "eligible"
@@ -125,11 +127,23 @@ export default function ClaimSection({ amountPerClaim, airdropChainId, eligibili
     },
     onSuccess: () => {
       toast.success("Successfully claimed and staked PNK tokens!");
-      setTimeout(() => {
-        refetchEligibilityStatus?.();
-      }, 1000);
+      setOptimisticClaimed(true);
+      
+      const pollRefetch = async () => {
+        // Poll every 4 seconds for 1 minute to allow subgraph to sync
+        for (let i = 0; i < 15; i++) {
+          await new Promise((resolve) => setTimeout(resolve, 4000));
+          const result = await refetchEligibilityStatus?.();
+          const data = (result as { data?: ProcessedAirdropData })?.data;
+          
+          if (data?.claimStatus === "claimed") {
+            break;
+          }
+        }
+      };
+      pollRefetch();
     },
-  }), [refetchEligibilityStatus]);
+  }), [refetchEligibilityStatus, setOptimisticClaimed]);
 
   const [prepareBatch, _, txStatus] = useBatchWrite(batchWriteEffects);
   const isTxLoading = txStatus.write === "pending";
@@ -230,7 +244,7 @@ export default function ClaimSection({ amountPerClaim, airdropChainId, eligibili
       case "eligible":
         return {
           icon: <CheckCircleIcon width={16} height={16} className="text-status-registered" />,
-          text: "Eligible: Included profile",
+          text: "Eligible: Verified human",
           textColor: "text-status-registered",
         };
       case "not-eligible":
