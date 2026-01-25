@@ -149,7 +149,7 @@ export default function ActionBar({
         },
         onSuccess() {
           toast.success("Request executed successfully");
-          setTimeout(() => router.refresh(), 500);
+          setTimeout(() => router.refresh(), 1000);
         },
       }),
       [router],
@@ -164,7 +164,7 @@ export default function ActionBar({
         },
         onSuccess() {
           toast.success("Request advanced to resolving state");
-          setTimeout(() => router.refresh(), 500);
+          setTimeout(() => router.refresh(), 1000);
         },
       }),
       [router],
@@ -179,7 +179,7 @@ export default function ActionBar({
         },
         onSuccess() {
           toast.success("Request withdrawn successfully");
-          setTimeout(() => router.refresh(), 500);
+          setTimeout(() => router.refresh(), 1000);
         },
       }),
       [router],

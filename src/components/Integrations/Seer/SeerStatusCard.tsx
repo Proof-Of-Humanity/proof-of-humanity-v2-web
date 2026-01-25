@@ -21,7 +21,7 @@ export default function SeerStatusCard({ status, onActionClick, isLoading = fals
         return {
           icon: <CheckCircleIcon width={16} height={16} className="fill-green-500 mr-1" />,
           label: "Eligible",
-          text: "Credits worth $10 appear in Seer on the 1st of each month(auto-refill)",
+          text: "Credits worth $10 appear in Seer on the 1st of each month (auto-refill)",
           textColor: "text-green-500",
           buttonLabel: "Claim $10",
         };
