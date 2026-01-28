@@ -108,7 +108,7 @@ export default function ClaimSection({ amountPerClaim, airdropChainId, eligibili
     onFail: (err: any) => {
       const msg = extractErrorMessage(err);
       if (msg.includes("ERC-5792") || msg.toLowerCase().includes("batch")) {
-        toast.error("Please use a compatible wallet like MetaMask.");
+        toast.error("Please use a compatible wallet like MetaMask, and turn on Smart Account (Settings > Advanced > Use Smart Account (ON) to proceed.");
       } else {
         toast.error("Unable to prepare transaction. Please try again.");
       }
