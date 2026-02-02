@@ -59,7 +59,7 @@ const integrations: Record<string, Integration> = {
     id: 'pnk-airdrop',
     name: 'PNK Airdrop',
     title: 'PNK Airdrop',
-    headerTitle: 'Register. Earn. Stake. Repeat. Start Your Passive Income Journey with PNK!',
+    headerTitle: 'Register. Earn. Stake. Repeat. Start Your Earning Journey with PNK!',
     headerDescription: 'Welcome to the Proof of Humanity Verified 10K Campaign! To celebrate the launch of Proof of Humanity v2 and our growing community, we\'re rewarding the first 10,000 verified humans on the PoH v2 registry with PNK tokens, which will be staked on Kleros Court to become a juror!',
     description: 'Earn PNK tokens for being human.',
     logo: '/images/kleros-logo.png',
@@ -105,7 +105,7 @@ const integrations: Record<string, Integration> = {
       },
       {
         id: 'becomeJuror',
-        title: 'Turn Your PNK Into Passive Income: Become a Juror!',
+        title: 'Turn Your PNK Into Earning Opportunities: Become a Juror!',
         description: 'To become a Kleros juror, you need to stake PNK (Kleros\' native token) in a specific court. For example, the Humanity Court. Once staked, subscribe to notifications so you\'ll be alerted when you\'re randomly selected to judge a case.\n\nThe more PNK you stake, the higher your chances of being selected. But remember, jurors are expected to vote honestly and coherently based on the evidence.\n\n✅ Coherent Vote (Align with the majority) = 🤑 Earn arbitration fees + extra PNK\n❌ Incoherent Vote (Against the majority) = 😬 Lose some staked PNK',
         image: '/images/integrations/kleros-slide4.png',
         bulletPoints: [
