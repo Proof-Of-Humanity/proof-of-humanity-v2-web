@@ -53,11 +53,10 @@ const FundButton: React.FC<FundButtonProps> = ({
         },
         onSuccess() {
           loading.stop();
-          toast.success("Request funded successfully");
-
-          setAddedFundInput("");
           setIsModalOpen(false);
-          setTimeout(() => router.refresh(), 500);
+          setAddedFundInput("");
+          toast.success("Request funded successfully");
+          setTimeout(() => router.refresh(), 1000);
         },
       }),
       [loading, router],
