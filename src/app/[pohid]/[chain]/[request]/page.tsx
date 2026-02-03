@@ -71,13 +71,14 @@ export default async function Request({ params }: PageProps) {
     signature: Hash;
   }[] = [];
 
-  if (request.status.id === "vouching") {
+  if (1) {
     onChainVouches = request.claimer.vouchesReceived.map(
       (v) => v.from.id as Address,
     );
     offChainVouches.push(
       ...(await getOffChainVouches(chain.id, request.claimer.id, pohId)),
     );
+    console.log(offChainVouches);
 
     // If offChain voucher has been registered before, it will appear at subgraph,
     // so we remove it from onChain since the contract has no data of it
