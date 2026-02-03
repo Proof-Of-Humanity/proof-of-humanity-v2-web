@@ -90,7 +90,7 @@ export async function POST(
       .eq("pohId", pohId.toLowerCase())
       .eq("voucher", voucher.toLowerCase());
  */
-    await datalake
+    const { data, error } = await datalake
       .from("poh-vouchdb")
       .upsert({
         chainId: chain.id,
@@ -101,6 +101,13 @@ export async function POST(
         signature: signature.toLowerCase(),
       })
       .select();
+    console.log(error);
+
+    if(error)
+      return NextResponse.json(
+        { message: "Something went wrong,please try again later" },
+        { status: HttpStatusCode.InternalServerError },
+      );
 
     return NextResponse.json(
       { message: "Vouch added" },
