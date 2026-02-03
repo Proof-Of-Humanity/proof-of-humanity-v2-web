@@ -84,32 +84,51 @@ export async function POST(
 
     if (!validSignature) throw new Error("Invalid signature");
 
-    /*     await datalake
+    // Prepare the vouch data
+    const vouchData = {
+      chainId: chain.id,
+      pohId: pohId.toLowerCase(),
+      claimer: claimer.toLowerCase(),
+      voucher: voucher.toLowerCase(),
+      expiration,
+      signature: signature.toLowerCase(),
+    };
+    
+    console.log(`[vouch/add] Upserting vouch to DB:`, vouchData);
+
+    const { data, error } = await datalake
       .from("poh-vouchdb")
-      .delete()
-      .eq("pohId", pohId.toLowerCase())
-      .eq("voucher", voucher.toLowerCase());
- */
-    await datalake
-      .from("poh-vouchdb")
-      .upsert({
-        chainId: chain.id,
-        pohId: pohId.toLowerCase(),
-        claimer: claimer.toLowerCase(),
-        voucher: voucher.toLowerCase(),
-        expiration,
-        signature: signature.toLowerCase(),
-      })
+      .upsert(vouchData)
       .select();
+
+    if (error) {
+      console.error(`[vouch/add] DB ERROR:`, error);
+      console.error(`[vouch/add] DB Error details:`, {
+        message: error.message,
+        code: error.code,
+        details: error.details,
+        hint: error.hint,
+      });
+      throw new Error(`Database error: ${error.message}`);
+    }
+
+    console.log(`[vouch/add] DB SUCCESS - Rows affected:`, data?.length || 0);
+    console.log(`[vouch/add] Stored data:`, data);
 
     return NextResponse.json(
       { message: "Vouch added" },
       { status: HttpStatusCode.Accepted },
     );
   } catch (err: any) {
-    console.log(err);
+    console.error(`[vouch/add] ERROR:`, err.message || err);
+    
+    // Return specific error messages
+    const message = err.message?.startsWith("Database error") 
+      ? "Failed to save vouch" 
+      : err.message || "Something went wrong";
+    
     return NextResponse.json(
-      { message: "Something went wrong" },
+      { message },
       { status: HttpStatusCode.InternalServerError },
     );
   }
