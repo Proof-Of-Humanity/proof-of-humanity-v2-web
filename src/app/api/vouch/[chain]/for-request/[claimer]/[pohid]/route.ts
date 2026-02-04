@@ -20,12 +20,16 @@ export async function GET(
 
     if (!chain) throw new Error("unsupported chain");
 
+    console.log("params",params,chain.id);
+
     const { data, error } = await datalake
       .from("poh-vouchdb")
       .select("*")
       .eq("chainId", chain.id)
       .eq("pohId", params.pohid.toLowerCase())
       .eq("claimer", params.claimer.toLowerCase());
+    console.log("api",data);
+    console.log(error);
 
     if (error) throw new Error(error.message);
 
