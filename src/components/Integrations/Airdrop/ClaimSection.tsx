@@ -24,7 +24,7 @@ import { ChainSet, configSetSelection } from "contracts";
 import { useRouter } from "next/navigation";
 
 export type EligibilityStatus = "disconnected" | "wrong-chain" | "eligible" | "not-eligible" | "claimed" | "error";
- 
+
 
 function LoadingSpinner() {
   return (
@@ -84,8 +84,8 @@ export default function ClaimSection({ amountPerClaim, airdropChainId, eligibili
     stakeError
       ? "Unable to load staking information. Please check your connection and try again."
       : eligibilityError
-      ? "Unable to check eligibility. Please check your connection and try again or try using a EIP-7702 wallet like metamask"
-      : null;
+        ? "Unable to check eligibility. Please check your connection and try again or try using a EIP-7702 wallet like metamask"
+        : null;
 
   const isFetching = !!isEligibilityLoading || isStakeLoading;
   const hasErrors = !!eligibilityError || !!stakeError;
@@ -93,17 +93,19 @@ export default function ClaimSection({ amountPerClaim, airdropChainId, eligibili
   const airdropNetworkName = idToChain(airdropChainId)?.name;
   const isTestnet = configSetSelection.chainSet === ChainSet.TESTNETS;
 
-  const eligibilityStatus: EligibilityStatus = !isConnected
-    ? "disconnected"
-    : !isOnSupportedChain
-    ? "wrong-chain"
-    : hasErrors
-    ? "error"
-    : eligibilityData?.claimStatus === "claimed" || optimisticClaimed
-    ? "claimed"
-    : eligibilityData?.claimStatus === "eligible"
-    ? "eligible"
-    : "not-eligible";
+  // const eligibilityStatus: EligibilityStatus = !isConnected
+  //   ? "disconnected"
+  //   : !isOnSupportedChain
+  //   ? "wrong-chain"
+  //   : hasErrors
+  //   ? "error"
+  //   : eligibilityData?.claimStatus === "claimed" || optimisticClaimed
+  //   ? "claimed"
+  //   : eligibilityData?.claimStatus === "eligible"
+  //   ? "eligible"
+  //   : "not-eligible";
+
+  const eligibilityStatus = "claimed";
 
   const batchWriteEffects = useMemo(() => ({
     onFail: (err: any) => {
@@ -122,21 +124,21 @@ export default function ClaimSection({ amountPerClaim, airdropChainId, eligibili
       if (msg.toLowerCase().includes("rejected") || msg.toLowerCase().includes("denied")) {
         toast.error("Transaction rejected");
       }
-      else{
+      else {
         toast.error("Transaction failed. Please try again.");
       }
     },
     onSuccess: () => {
       toast.success("Successfully claimed and staked PNK tokens!");
       setOptimisticClaimed(true);
-      
+
       const pollRefetch = async () => {
         // Poll every 4 seconds for 1 minute to allow subgraph to sync
         for (let i = 0; i < 15; i++) {
           await new Promise((resolve) => setTimeout(resolve, 4000));
           const result = await refetchEligibilityStatus?.();
           const data = (result as { data?: ProcessedAirdropData })?.data;
-          
+
           if (data?.claimStatus === "claimed") {
             break;
           }

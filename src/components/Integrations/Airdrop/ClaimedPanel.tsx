@@ -60,23 +60,24 @@ export default function ClaimedPanel({ amountPerClaim, isTestnet }: ClaimedPanel
   const alertsPending = hasEmail && !isEmailVerified;
   const showForm = !hasEmail || isEditing;
 
-  // Auto-show modal once after sign-in if user hasn't enabled alerts
+  // Auto-show modal once after sign-in if user hasn't set an email
   useEffect(() => {
-    if (isVerified && !isFetchingUser && !hasShownModal.current && !alertsEnabled) {
+    if (isVerified && !isFetchingUser && !hasShownModal.current && !hasEmail) {
       setShowModal(true);
       hasShownModal.current = true;
     }
-  }, [isVerified, isFetchingUser, alertsEnabled]);
+  }, [isVerified, isFetchingUser, hasEmail]);
 
   const { mutate: submitEmail, isPending: isSubmitting } = useMutation({
-    mutationFn: async (args: { nextEmail: string }) => {
+    mutationFn: async (args: { nextEmail: string; isResend?: boolean }): Promise<boolean> => {
       if (!address) throw new Error("Wallet not connected");
       const trimmedEmail = args.nextEmail.trim();
       if (user?.email) {
-        if (user.email.toLowerCase() === trimmedEmail.toLowerCase()) return;
+        // Skip same-email check if this is a resend request
+        if (!args.isResend && user.email.toLowerCase() === trimmedEmail.toLowerCase()) return false;
         const updated = await updateEmail({ newEmail: trimmedEmail });
         if (!updated) throw new Error("Failed to update email");
-        return;
+        return true;
       }
       try {
         const added = await addUser({ email: trimmedEmail });
@@ -85,9 +86,14 @@ export default function ClaimedPanel({ amountPerClaim, isTestnet }: ClaimedPanel
         const updated = await updateEmail({ newEmail: trimmedEmail });
         if (!updated) throw new Error("Failed to update email");
       }
+      return true;
     },
-    onSuccess: () => {
-      toast.success("Email saved! Check your inbox to verify.");
+    onSuccess: (wasUpdated) => {
+      if (wasUpdated) {
+        toast.success("Email saved! Check your inbox to verify.");
+      } else {
+        toast.info("Email is already set to this address.");
+      }
       setUserEmail("");
       setIsEditing(false);
     },
@@ -111,7 +117,7 @@ export default function ClaimedPanel({ amountPerClaim, isTestnet }: ClaimedPanel
 
   const handleResendVerification = useCallback(() => {
     if (!user?.email) return;
-    submitEmail({ nextEmail: user.email });
+    submitEmail({ nextEmail: user.email, isResend: true });
   }, [user?.email, submitEmail]);
 
   const handleStartEditing = useCallback(() => {
@@ -129,10 +135,10 @@ export default function ClaimedPanel({ amountPerClaim, isTestnet }: ClaimedPanel
   const stepBadge = !isVerified
     ? { label: "Sign In", className: "bg-grey text-purple" }
     : alertsEnabled
-    ? { label: "Enabled", className: "bg-green-50 text-green-600" }
-    : alertsPending
-    ? { label: "Unverified", className: "bg-lightOrange text-orange" }
-    : { label: "Pending", className: "bg-lightOrange text-orange" };
+      ? { label: "Enabled", className: "bg-green-50 text-green-600" }
+      : alertsPending
+        ? { label: "Unverified", className: "bg-lightOrange text-orange" }
+        : { label: "Pending", className: "bg-lightOrange text-orange" };
 
   return (
     <>
@@ -186,7 +192,7 @@ export default function ClaimedPanel({ amountPerClaim, isTestnet }: ClaimedPanel
               <h4 className="text-primaryText text-xs font-semibold">
                 Sign in to manage juror alerts
               </h4>
-              <p className="text-secondaryText text-[11px] mt-0.5 leading-relaxed">
+              <p className="text-secondaryText text-xs mt-0.5 leading-relaxed">
                 Sign in with your wallet to check your alert status or enable notifications.
               </p>
             </div>
@@ -204,20 +210,20 @@ export default function ClaimedPanel({ amountPerClaim, isTestnet }: ClaimedPanel
           <div className="flex items-start gap-2 mb-2">
             <WarningCircle16Icon width={16} height={16} className="fill-orange flex-shrink-0" />
             <div>
-              <h4 className="text-primaryText text-xs font-semibold">
+              <h4 className="text-primaryText text-sm font-semibold">
                 {isEditing ? "Change email" : "Juror alerts not enabled"}
               </h4>
-              <p className="text-secondaryText text-[11px] mt-0.5 leading-relaxed">
+              <p className="text-secondaryText text-xs mt-0.5 leading-relaxed">
                 {isEditing
                   ? "Enter a new email address for juror alerts."
                   : (
                     <>
-                      Consider enabling alerts to avoid missing draws, and{" "}
+                      Consider enabling alerts to avoid missing draws and{" "}
                       <ExternalLink
                         href="https://docs.kleros.io/products/court/kleros-juror-tutorial#staking-and-cases"
                         className="text-purple hover:underline"
                       >
-                        hence your stake.
+                        losing your stake.
                       </ExternalLink>
                     </>
                   )}
@@ -257,6 +263,7 @@ export default function ClaimedPanel({ amountPerClaim, isTestnet }: ClaimedPanel
 
           {isEditing && (
             <button
+              type="button"
               onClick={handleCancelEditing}
               className="mt-2 text-secondaryText text-xs hover:text-primaryText transition"
             >
@@ -285,6 +292,7 @@ export default function ClaimedPanel({ amountPerClaim, isTestnet }: ClaimedPanel
               )}
               <div className="flex items-center gap-3 mt-2">
                 <button
+                  type="button"
                   onClick={handleResendVerification}
                   disabled={isBusy || !canUpdateEmail}
                   className="text-purple text-xs font-medium hover:underline disabled:opacity-50"
@@ -292,6 +300,7 @@ export default function ClaimedPanel({ amountPerClaim, isTestnet }: ClaimedPanel
                   Resend verification
                 </button>
                 <button
+                  type="button"
                   onClick={handleStartEditing}
                   disabled={!canUpdateEmail}
                   className="text-orange text-xs font-medium hover:underline disabled:opacity-50"
@@ -315,6 +324,7 @@ export default function ClaimedPanel({ amountPerClaim, isTestnet }: ClaimedPanel
                 We&apos;ll notify you when you&apos;re drawn.
               </p>
               <button
+                type="button"
                 onClick={handleStartEditing}
                 disabled={!canUpdateEmail}
                 className="mt-1 text-orange text-xs font-medium hover:underline disabled:opacity-50"
