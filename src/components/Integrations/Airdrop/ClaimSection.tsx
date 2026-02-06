@@ -19,6 +19,7 @@ import { toast } from "react-toastify";
 import { idToChain, SupportedChainId } from "config/chains";
 import { getHumanitySubCourtId } from "data/kleros";
 import PnkDisplay from "components/Integrations/Airdrop/PnkDisplay";
+import ClaimedPanel from "components/Integrations/Airdrop/ClaimedPanel";
 import { ChainSet, configSetSelection } from "contracts";
 import { useRouter } from "next/navigation";
 
@@ -279,40 +280,35 @@ export default function ClaimSection({ amountPerClaim, airdropChainId, eligibili
     }
   };
 
-  // Show loading state when connected, on supported chain, but data is still loading
+
   if (isConnected && isOnSupportedChain && isFetching) {
     return <LoadingState />;
   }
 
   const statusDisplay = getStatusDisplay();
+
+  if (eligibilityStatus === "claimed") {
+    return (
+      <div className="lg:w-[440px] p-6 lg:p-8 bg-whiteBackground rounded-[30px] border-t-[1px] border-t-[#BE75FF] lg:border-t-0 lg:border-l-[1px] lg:border-l-[#BE75FF]">
+        <div className="text-center">
+          <ClaimedPanel amountPerClaim={amountPerClaim} isTestnet={isTestnet} />
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="lg:w-[391px] p-6 lg:p-8 bg-whiteBackground rounded-[30px] border-t-[1px] border-t-[#BE75FF] lg:border-t-0 lg:border-l-[1px] lg:border-l-[#BE75FF]">
       <div className="text-center">
-        { eligibilityStatus === "claimed" ? (
-          <>
-            <div className="mb-6 flex justify-center">{statusDisplay.icon}</div>
-            <div className="text-purple text-sm font-medium mb-2">{statusDisplay.text}</div>
-            <PnkDisplay amount={amountPerClaim} />
-            <div className={`${statusDisplay.textColor} text-base font-normal mb-6`}>{statusDisplay.subText}</div>
-            {isTestnet && (
-              <div className="mt-3 mb-6 text-secondaryText text-xs">
-                On testnet, you will be staked in the General Court.
-              </div>
-            )}
-          </>
-        ) : (
-          <>
-            <div className="text-purple text-sm font-medium mb-1.5">Reward</div>
-            <PnkDisplay amount={amountPerClaim} />
-            <div className="mt-12">
-              <div className="flex items-center justify-center gap-2">
-                {statusDisplay.icon}
-                <span className={`text-base font-normal ${statusDisplay.textColor}`}>{statusDisplay.text}</span>
-              </div>
-              {statusDisplay.subText && <div className={`mt-1 ${statusDisplay.textColor} text-sm font-normal`}>{statusDisplay.subText}</div>}
-            </div>
-          </>
-        )}
+        <div className="text-purple text-sm font-medium mb-1.5">Reward</div>
+        <PnkDisplay amount={amountPerClaim} />
+        <div className="mt-12">
+          <div className="flex items-center justify-center gap-2">
+            {statusDisplay.icon}
+            <span className={`text-base font-normal ${statusDisplay.textColor}`}>{statusDisplay.text}</span>
+          </div>
+          {statusDisplay.subText && <div className={`mt-1 ${statusDisplay.textColor} text-sm font-normal`}>{statusDisplay.subText}</div>}
+        </div>
         {renderActionButton()}
         <ExternalLink
           href="https://kleros.notion.site/poh-airdrop-faqs"
