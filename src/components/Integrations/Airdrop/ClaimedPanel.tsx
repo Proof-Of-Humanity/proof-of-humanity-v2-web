@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useCallback, useEffect, useRef } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAccount } from "wagmi";
 import { useMutation } from "@tanstack/react-query";
@@ -43,8 +43,8 @@ export default function ClaimedPanel({ amountPerClaim, isTestnet }: ClaimedPanel
   const [userEmail, setUserEmail] = useState("");
   const [isEditing, setIsEditing] = useState(false);
   const [showModal, setShowModal] = useState(false);
-  const hasShownModal = useRef(false);
-  const isEmailValid = userEmail.length === 0 ? true : isValidEmailAddress(userEmail);
+  const trimmedEmail = userEmail.trim();
+  const isEmailValid = trimmedEmail.length === 0 ? true : isValidEmailAddress(trimmedEmail);
 
   // Derived email state
   const hasEmail = !!user?.email;
@@ -60,13 +60,23 @@ export default function ClaimedPanel({ amountPerClaim, isTestnet }: ClaimedPanel
   const alertsPending = hasEmail && !isEmailVerified;
   const showForm = !hasEmail || isEditing;
 
-  // Auto-show modal once after sign-in if user hasn't set an email
+  // Auto-show modal when mounted if user is signed in and hasn't set an email
   useEffect(() => {
-    if (isVerified && !isFetchingUser && !hasShownModal.current && !hasEmail) {
+    if (isVerified && !isFetchingUser && !hasEmail) {
       setShowModal(true);
-      hasShownModal.current = true;
     }
   }, [isVerified, isFetchingUser, hasEmail]);
+
+  // Reset local email UI state on wallet switch (not on initial mount).
+  const prevAddress = React.useRef(address);
+  useEffect(() => {
+    if (prevAddress.current !== undefined && prevAddress.current !== address) {
+      setShowModal(false);
+      setIsEditing(false);
+      setUserEmail("");
+    }
+    prevAddress.current = address;
+  }, [address]);
 
   const { mutate: submitEmail, isPending: isSubmitting } = useMutation({
     mutationFn: async (args: { nextEmail: string; isResend?: boolean }): Promise<boolean> => {
@@ -98,7 +108,7 @@ export default function ClaimedPanel({ amountPerClaim, isTestnet }: ClaimedPanel
       setIsEditing(false);
     },
     onError: (err) => {
-      const message = extractErrorMessage(err);
+      const message = extractErrorMessage(err).toLowerCase();
       if (message.includes("rejected") || message.includes("denied")) {
         toast.error("Request Rejected");
       } else {
@@ -108,12 +118,12 @@ export default function ClaimedPanel({ amountPerClaim, isTestnet }: ClaimedPanel
   });
 
   const handleSubmitEmail = useCallback(() => {
-    if (!userEmail.trim()) {
+    if (!trimmedEmail) {
       toast.info("Please enter a valid email");
       return;
     }
-    submitEmail({ nextEmail: userEmail.trim() });
-  }, [userEmail, submitEmail]);
+    submitEmail({ nextEmail: trimmedEmail });
+  }, [trimmedEmail, submitEmail]);
 
   const handleResendVerification = useCallback(() => {
     if (!user?.email) return;
@@ -244,7 +254,7 @@ export default function ClaimedPanel({ amountPerClaim, isTestnet }: ClaimedPanel
               <ActionButton
                 onClick={handleSubmitEmail}
                 label={isEditing ? "Save" : "Enable"}
-                disabled={!userEmail || !isEmailValid || isBusy || (isEditing && !canUpdateEmail)}
+                disabled={!trimmedEmail || !isEmailValid || isBusy || (isEditing && !canUpdateEmail)}
                 isLoading={isBusy}
                 variant="primary"
                 className="px-4 py-1.5 text-sm whitespace-nowrap"
@@ -302,7 +312,7 @@ export default function ClaimedPanel({ amountPerClaim, isTestnet }: ClaimedPanel
                 <button
                   type="button"
                   onClick={handleStartEditing}
-                  disabled={!canUpdateEmail}
+                  disabled={isBusy || !canUpdateEmail}
                   className="text-orange text-xs font-medium hover:underline disabled:opacity-50"
                 >
                   Change email
@@ -326,7 +336,7 @@ export default function ClaimedPanel({ amountPerClaim, isTestnet }: ClaimedPanel
               <button
                 type="button"
                 onClick={handleStartEditing}
-                disabled={!canUpdateEmail}
+                disabled={isBusy || !canUpdateEmail}
                 className="mt-1 text-orange text-xs font-medium hover:underline disabled:opacity-50"
               >
                 Change email
@@ -361,6 +371,7 @@ export default function ClaimedPanel({ amountPerClaim, isTestnet }: ClaimedPanel
           <NewTabIcon width={12} height={12} />
         </span>
       </ExternalLink>
+      {console.log('[ClaimedPanel] Rendering JurorAlertsModal with open:', showModal)}
       <JurorAlertsModal
         open={showModal}
         onClose={() => setShowModal(false)}

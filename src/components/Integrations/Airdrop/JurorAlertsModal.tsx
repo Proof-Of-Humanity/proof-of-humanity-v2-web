@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect, useRef } from "react";
 import { useAccount } from "wagmi";
 import { useMutation } from "@tanstack/react-query";
 import { toast } from "react-toastify";
@@ -16,6 +16,7 @@ import { isValidEmailAddress } from "utils/validators";
 import { extractErrorMessage } from "utils/errors";
 
 type ModalStep = "warning" | "email";
+type SubmitEmailResult = "saved" | "unchanged";
 
 interface JurorAlertsModalProps {
   open: boolean;
@@ -26,6 +27,7 @@ export default function JurorAlertsModal({ open, onClose }: JurorAlertsModalProp
   const [step, setStep] = useState<ModalStep>("warning");
   const [acknowledged, setAcknowledged] = useState(false);
   const [email, setEmail] = useState("");
+  const wasOpen = useRef(false);
   const { address } = useAccount();
   const {
     addUser,
@@ -35,37 +37,65 @@ export default function JurorAlertsModal({ open, onClose }: JurorAlertsModalProp
     isUpdatingUser,
   } = useAtlasProvider();
 
-  const isEmailValid = email.length === 0 ? true : isValidEmailAddress(email);
+  const trimmedEmail = email.trim();
+  const isEmailValid = trimmedEmail.length === 0 ? true : isValidEmailAddress(trimmedEmail);
   const emailUpdateableAt = user?.emailUpdateableAt ? new Date(user.emailUpdateableAt) : null;
   const canUpdateEmail = !emailUpdateableAt || new Date() >= emailUpdateableAt;
   const minutesUntilUpdateable = emailUpdateableAt && !canUpdateEmail
     ? Math.max(1, Math.round((emailUpdateableAt.getTime() - Date.now()) / 60000))
     : 0;
 
+  useEffect(() => {
+    if (open && !wasOpen.current) {
+      setStep("warning");
+      setAcknowledged(false);
+      setEmail(user?.email ?? "");
+    }
+    wasOpen.current = open;
+  }, [open, user?.email]);
+
+  const handleModalClose = useCallback(() => {
+    // Keep "continue without alerts" acknowledgment explicit on warning step.
+    if (step === "warning" && !acknowledged) return;
+    setStep("warning");
+    setAcknowledged(false);
+    setEmail("");
+    onClose();
+  }, [acknowledged, onClose, step]);
+
   const { mutate: submitEmail, isPending: isSubmitting } = useMutation({
-    mutationFn: async (args: { nextEmail: string }) => {
+    mutationFn: async (args: { nextEmail: string }): Promise<SubmitEmailResult> => {
       if (!address) throw new Error("Wallet not connected");
-      const trimmedEmail = args.nextEmail.trim();
+      const nextEmail = args.nextEmail.trim();
       if (user?.email) {
-        if (user.email.toLowerCase() === trimmedEmail.toLowerCase()) return;
-        const updated = await updateEmail({ newEmail: trimmedEmail });
+        const isSameEmail = user.email.toLowerCase() === nextEmail.toLowerCase();
+        if (isSameEmail && user.isEmailVerified) return "unchanged";
+        const updated = await updateEmail({ newEmail: nextEmail });
         if (!updated) throw new Error("Failed to update email");
-        return;
+        return "saved";
       }
       try {
-        const added = await addUser({ email: trimmedEmail });
+        const added = await addUser({ email: nextEmail });
         if (!added) throw new Error("Failed to save email");
       } catch {
-        const updated = await updateEmail({ newEmail: trimmedEmail });
+        const updated = await updateEmail({ newEmail: nextEmail });
         if (!updated) throw new Error("Failed to update email");
       }
+      return "saved";
     },
-    onSuccess: () => {
+    onSuccess: (result) => {
+      if (result === "unchanged") {
+        toast.info("Email is already verified with this address.");
+        return;
+      }
       toast.success("Email saved! Check your inbox to verify.");
+      setStep("warning");
+      setAcknowledged(false);
+      setEmail("");
       onClose();
     },
     onError: (err) => {
-      const message = extractErrorMessage(err);
+      const message = extractErrorMessage(err).toLowerCase();
       if (message.includes("rejected") || message.includes("denied")) {
         toast.error("Request Rejected");
       } else {
@@ -75,17 +105,17 @@ export default function JurorAlertsModal({ open, onClose }: JurorAlertsModalProp
   });
 
   const handleSubmit = useCallback(() => {
-    if (!email.trim()) {
+    if (!trimmedEmail) {
       toast.info("Please enter a valid email");
       return;
     }
-    submitEmail({ nextEmail: email.trim() });
-  }, [email, submitEmail]);
+    submitEmail({ nextEmail: trimmedEmail });
+  }, [trimmedEmail, submitEmail]);
 
   const isBusy = isSubmitting || isAddingUser || isUpdatingUser;
 
   return (
-    <Modal open={open} formal header="Action required">
+    <Modal open={open} onClose={handleModalClose} formal header="Action required">
       {step === "warning" ? (
         /* ── Step 1: Warning ── */
         <div className="p-6">
@@ -137,7 +167,7 @@ export default function JurorAlertsModal({ open, onClose }: JurorAlertsModalProp
           </label>
 
           <ActionButton
-            onClick={onClose}
+            onClick={handleModalClose}
             label="Continue without alerts"
             variant="secondary"
             disabled={!acknowledged}
@@ -188,7 +218,7 @@ export default function JurorAlertsModal({ open, onClose }: JurorAlertsModalProp
             <ActionButton
               onClick={handleSubmit}
               label="Enable Alerts"
-              disabled={!email || !isEmailValid || isBusy || !canUpdateEmail}
+              disabled={!trimmedEmail || !isEmailValid || isBusy || !canUpdateEmail}
               isLoading={isBusy}
               variant="primary"
               className="w-full py-3 mt-4"

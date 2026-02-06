@@ -93,17 +93,19 @@ export default function ClaimSection({ amountPerClaim, airdropChainId, eligibili
   const airdropNetworkName = idToChain(airdropChainId)?.name;
   const isTestnet = configSetSelection.chainSet === ChainSet.TESTNETS;
 
-  const eligibilityStatus: EligibilityStatus = !isConnected
-    ? "disconnected"
-    : !isOnSupportedChain
-      ? "wrong-chain"
-      : hasErrors
-        ? "error"
-        : eligibilityData?.claimStatus === "claimed" || optimisticClaimed
-          ? "claimed"
-          : eligibilityData?.claimStatus === "eligible"
-            ? "eligible"
-            : "not-eligible";
+  // const eligibilityStatus: EligibilityStatus = !isConnected
+  //   ? "disconnected"
+  //   : !isOnSupportedChain
+  //     ? "wrong-chain"
+  //     : hasErrors
+  //       ? "error"
+  //       : eligibilityData?.claimStatus === "claimed" || optimisticClaimed
+  //         ? "claimed"
+  //         : eligibilityData?.claimStatus === "eligible"
+  //           ? "eligible"
+  //           : "not-eligible";
+
+  const eligibilityStatus = "claimed";
 
   const batchWriteEffects = useMemo(() => ({
     onFail: (err: any) => {

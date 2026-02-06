@@ -11,27 +11,22 @@ import CheckCircleMinor from 'icons/CheckCircleMinor.svg';
 import WarningCircleMinor from 'icons/WarningCircleMinor.svg';
 import MinusCircleMinor from 'icons/MinusCircleMinor.svg';
 import ActionButton from 'components/ActionButton';
-import { useSettingsPopover } from 'context/SettingsPopoverContext';
 
 const ConfirmEmailPage: React.FC = () => {
   const searchParams = useSearchParams();
   const router = useRouter();
   const { confirmEmail } = useAtlasProvider();
-  const { openSettingsPopover } = useSettingsPopover();
 
   const address = searchParams.get('address');
   const token = searchParams.get('token');
 
-  const { data, isPending, isError, status: queryStatus } = useQuery({
+  const { data, isPending, isError } = useQuery({
     queryKey: ['confirmEmail', address, token],
     queryFn: async () => {
-      console.log('[ConfirmEmail] queryFn called with:', { address, token });
       if (!address || !token) {
         throw new Error('Missing address or token');
       }
-      const result = await confirmEmail({ address, token });
-      console.log('[ConfirmEmail] confirmEmail result:', result);
-      return result;
+      return confirmEmail({ address, token });
     },
     enabled: !!address && !!token,
     staleTime: Infinity,
@@ -42,41 +37,30 @@ const ConfirmEmailPage: React.FC = () => {
     refetchOnReconnect: false,
   });
 
-  console.log('[ConfirmEmail] render - queryStatus:', queryStatus, 'isPending:', isPending, 'isError:', isError, 'data:', data);
-
   const getVerificationStatus = () => {
-    console.log('[ConfirmEmail] getVerificationStatus - address:', address, 'token:', token, 'isPending:', isPending, 'isError:', isError, 'data:', data);
     // Still loading or no params
     if (!address || !token) {
-      console.log('[ConfirmEmail] status: invalid (no params)');
       return 'invalid';
     }
     if (isPending) {
-      console.log('[ConfirmEmail] status: loading');
       return 'loading';
     }
     if (isError) {
-      console.log('[ConfirmEmail] status: invalid (error)');
       return 'invalid';
     }
     if (data?.isConfirmed) {
-      console.log('[ConfirmEmail] status: success');
       return 'success';
     }
     if (data?.isTokenExpired) {
-      console.log('[ConfirmEmail] status: expired');
       return 'expired';
     }
     if (data?.isTokenInvalid) {
-      console.log('[ConfirmEmail] status: invalid (token invalid)');
       return 'invalid';
     }
-    console.log('[ConfirmEmail] status: invalid (fallback)');
     return 'invalid';
   };
 
   const status = getVerificationStatus();
-  console.log('[ConfirmEmail] final status:', status);
 
   interface StatusConfig {
     title: string | React.ReactNode;
@@ -113,13 +97,13 @@ const ConfirmEmailPage: React.FC = () => {
     },
     expired: {
       title: 'Verification link expired...',
-      description: 'Oops, the email verification link has expired. No worries! Go to settings and click on Resend it to receive another verification email.',
+      description: 'Oops, this verification link has expired. Return to the app and use Juror Alerts to resend a new verification email.',
       titleColor: 'text-status-revocation',
-      buttonText: 'Open Settings',
+      buttonText: 'Go to App',
       icon: WarningCircleMinor,
       largeIcon: WarningCircle,
       onClick: () => {
-        openSettingsPopover();
+        router.push('/app');
       },
     },
     invalid: {

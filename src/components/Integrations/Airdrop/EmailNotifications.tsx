@@ -1,5 +1,5 @@
 "use client";
- import React, { useState, useCallback } from "react";
+import React, { useState, useCallback } from "react";
 import ActionButton from "components/ActionButton";
 import LawBalance from "icons/LawBalance.svg";
 import CheckCircle from "icons/CheckCircle.svg";
@@ -13,7 +13,7 @@ import { getClaimerName } from "data/claimer";
 import { isValidEmailAddress } from "utils/validators";
 import { extractErrorMessage } from "utils/errors";
 
- const EmailNotifications = () => {
+const EmailNotifications = () => {
   const { address } = useAccount();
   const { signMessageAsync } = useSignMessage();
 
@@ -37,9 +37,10 @@ import { extractErrorMessage } from "utils/errors";
     [address, signMessageAsync]
   );
 
-  const isEmailValid = userEmail.length === 0 ? true : isValidEmailAddress(userEmail);
+  const trimmedEmail = userEmail.trim();
+  const isEmailValid = trimmedEmail.length === 0 ? true : isValidEmailAddress(trimmedEmail);
 
-  const {mutate: subscribe, isPending: isSubmitting, isSuccess } = useMutation({
+  const {mutate: subscribe, isPending: isSubmitting, isSuccess, reset: resetSubscriptionState } = useMutation({
     mutationFn: async (args: { nextEmail: string; fullName?: string }) => {
       if (!baseUrl) throw new Error("Missing USER_SETTINGS_URL");
       if (!address) throw new Error("Wallet not connected");
@@ -56,7 +57,7 @@ import { extractErrorMessage } from "utils/errors";
       toast.success("Successfully subscribed to notifications!");
     },
     onError: (err) => {
-      const message = extractErrorMessage(err);
+      const message = extractErrorMessage(err).toLowerCase();
       if(message.includes("rejected") || message.includes("denied")) {
         toast.error("Request Rejected");
       } else {
@@ -72,13 +73,13 @@ import { extractErrorMessage } from "utils/errors";
   }, []);
 
   const handleSubscribe = useCallback(() => {
-    if (!userEmail.trim()) {
+    if (!trimmedEmail) {
       toast.info("Please enter a valid email");
       return;
     }
-    const fallbackName = deriveNameFromEmail(userEmail);
-    subscribe({ nextEmail: userEmail.trim(), fullName: displayName || fallbackName });
-  }, [userEmail, subscribe, displayName, deriveNameFromEmail]);
+    const fallbackName = deriveNameFromEmail(trimmedEmail);
+    subscribe({ nextEmail: trimmedEmail, fullName: displayName || fallbackName });
+  }, [trimmedEmail, subscribe, displayName, deriveNameFromEmail]);
 
 
   return (
@@ -137,7 +138,10 @@ import { extractErrorMessage } from "utils/errors";
                   id="email"
                   type="email"
                   value={userEmail}
-                  onChange={(e) => setUserEmail(e.target.value)}
+                  onChange={(e) => {
+                    if (isSuccess) resetSubscriptionState();
+                    setUserEmail(e.target.value);
+                  }}
                   disabled={isFetching}
                   placeholder="myemail@email.com"
                   className={`flex-1 px-4 py-3 border-2 rounded-lg text-primaryText placeholder-secondaryText focus:outline-none ${isEmailValid ? "border-orange focus:border-purple" : "border-red-500 focus:border-red-500"}`}
@@ -145,7 +149,7 @@ import { extractErrorMessage } from "utils/errors";
                 <ActionButton
                   onClick={handleSubscribe}
                   label="Subscribe"
-                  disabled={!userEmail || !isEmailValid || isFetching}
+                  disabled={!address || !trimmedEmail || !isEmailValid || isFetching}
                   isLoading={isSubmitting}
                   className="px-8 lg:mb-0 mb-2"
                   variant="primary"
