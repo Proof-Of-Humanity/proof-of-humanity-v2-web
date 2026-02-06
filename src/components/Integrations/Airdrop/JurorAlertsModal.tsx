@@ -36,6 +36,11 @@ export default function JurorAlertsModal({ open, onClose }: JurorAlertsModalProp
   } = useAtlasProvider();
 
   const isEmailValid = email.length === 0 ? true : isValidEmailAddress(email);
+  const emailUpdateableAt = user?.emailUpdateableAt ? new Date(user.emailUpdateableAt) : null;
+  const canUpdateEmail = !emailUpdateableAt || new Date() >= emailUpdateableAt;
+  const minutesUntilUpdateable = emailUpdateableAt && !canUpdateEmail
+    ? Math.max(1, Math.round((emailUpdateableAt.getTime() - Date.now()) / 60000))
+    : 0;
 
   const { mutate: submitEmail, isPending: isSubmitting } = useMutation({
     mutationFn: async (args: { nextEmail: string }) => {
@@ -105,7 +110,7 @@ export default function JurorAlertsModal({ open, onClose }: JurorAlertsModalProp
             variant="primary"
             className="w-full py-3 mb-4"
           />
-          
+
           <div className="flex items-center gap-3 mb-4">
             <div className="flex-1 h-px border-t border-stroke" />
             <span className="text-secondaryText text-xs uppercase">or</span>
@@ -172,13 +177,18 @@ export default function JurorAlertsModal({ open, onClose }: JurorAlertsModalProp
             {!isEmailValid && (
               <p className="mt-1 text-xs text-red-500">Please enter a valid email</p>
             )}
+            {!canUpdateEmail && (
+              <p className="mt-1 text-xs text-secondaryText italic">
+                You can update again in {minutesUntilUpdateable} {minutesUntilUpdateable === 1 ? "minute" : "minutes"}.
+              </p>
+            )}
           </div>
 
           <AuthGuard signInButtonProps={{ className: "w-full py-3 mt-4" }}>
             <ActionButton
               onClick={handleSubmit}
               label="Enable Alerts"
-              disabled={!email || !isEmailValid || isBusy}
+              disabled={!email || !isEmailValid || isBusy || !canUpdateEmail}
               isLoading={isBusy}
               variant="primary"
               className="w-full py-3 mt-4"

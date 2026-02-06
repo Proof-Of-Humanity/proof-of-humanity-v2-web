@@ -8,6 +8,7 @@ import { useAtlasProvider } from "@kleros/kleros-app";
 
 import ActionButton from "components/ActionButton";
 import AuthGuard from "components/AuthGuard";
+import SignInButton from "components/SignInButton";
 import ExternalLink from "components/ExternalLink";
 import Field from "components/Field";
 import PnkDisplay from "components/Integrations/Airdrop/PnkDisplay";
@@ -30,6 +31,7 @@ export default function ClaimedPanel({ amountPerClaim, isTestnet }: ClaimedPanel
   const router = useRouter();
   const { address } = useAccount();
   const {
+    isVerified,
     addUser,
     updateEmail,
     user,
@@ -47,18 +49,24 @@ export default function ClaimedPanel({ amountPerClaim, isTestnet }: ClaimedPanel
   // Derived email state
   const hasEmail = !!user?.email;
   const isEmailVerified = user?.isEmailVerified ?? false;
+  const emailUpdateableAt = user?.emailUpdateableAt ? new Date(user.emailUpdateableAt) : null;
+  const canUpdateEmail = !emailUpdateableAt || new Date() >= emailUpdateableAt;
+  const minutesUntilUpdateable = emailUpdateableAt && !canUpdateEmail
+    ? Math.max(1, Math.round((emailUpdateableAt.getTime() - Date.now()) / 60000))
+    : 0;
+
   // Stepper status
   const alertsEnabled = hasEmail && isEmailVerified;
   const alertsPending = hasEmail && !isEmailVerified;
   const showForm = !hasEmail || isEditing;
 
-  // Auto-show modal once on mount if user hasn't enabled alerts
+  // Auto-show modal once after sign-in if user hasn't enabled alerts
   useEffect(() => {
-    if (!isFetchingUser && !hasShownModal.current && !alertsEnabled) {
+    if (isVerified && !isFetchingUser && !hasShownModal.current && !alertsEnabled) {
       setShowModal(true);
       hasShownModal.current = true;
     }
-  }, [isFetchingUser, alertsEnabled]);
+  }, [isVerified, isFetchingUser, alertsEnabled]);
 
   const { mutate: submitEmail, isPending: isSubmitting } = useMutation({
     mutationFn: async (args: { nextEmail: string }) => {
@@ -118,7 +126,9 @@ export default function ClaimedPanel({ amountPerClaim, isTestnet }: ClaimedPanel
 
   const isBusy = isSubmitting || isAddingUser || isUpdatingUser || isFetchingUser;
 
-  const stepBadge = alertsEnabled
+  const stepBadge = !isVerified
+    ? { label: "Sign In", className: "bg-grey text-purple" }
+    : alertsEnabled
     ? { label: "Enabled", className: "bg-green-50 text-green-600" }
     : alertsPending
     ? { label: "Unverified", className: "bg-lightOrange text-orange" }
@@ -154,6 +164,8 @@ export default function ClaimedPanel({ amountPerClaim, isTestnet }: ClaimedPanel
         <div className="flex items-center gap-1">
           {alertsEnabled ? (
             <CheckCircleIcon width={22} height={22} className="text-status-registered flex-shrink-0 mt-1" />
+          ) : !isVerified ? (
+            <WarningCircle16Icon width={22} height={22} className="fill-purple flex-shrink-0 mt-1" />
           ) : (
             <WarningCircle16Icon width={22} height={22} className="fill-orange flex-shrink-0 mt-1" />
           )}
@@ -165,7 +177,23 @@ export default function ClaimedPanel({ amountPerClaim, isTestnet }: ClaimedPanel
           </span>
         </div>
       </div>
-      {isFetchingUser ? (
+      {!isVerified ? (
+        /* State 0: Not signed in */
+        <div className="border border-stroke rounded-lg p-3 mb-4 text-left">
+          <div className="flex items-start gap-2 mb-3">
+            <WarningCircle16Icon width={16} height={16} className="fill-purple flex-shrink-0 mt-0.5" />
+            <div>
+              <h4 className="text-primaryText text-xs font-semibold">
+                Sign in to manage juror alerts
+              </h4>
+              <p className="text-secondaryText text-[11px] mt-0.5 leading-relaxed">
+                Sign in with your wallet to check your alert status or enable notifications.
+              </p>
+            </div>
+          </div>
+          <SignInButton className="w-full py-2 text-sm" />
+        </div>
+      ) : isFetchingUser ? (
         /* State 1: Loading */
         <div className="border border-stroke rounded-lg p-3 mb-4 flex items-center justify-center">
           <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-purple" />
@@ -210,7 +238,7 @@ export default function ClaimedPanel({ amountPerClaim, isTestnet }: ClaimedPanel
               <ActionButton
                 onClick={handleSubmitEmail}
                 label={isEditing ? "Save" : "Enable"}
-                disabled={!userEmail || !isEmailValid || isBusy}
+                disabled={!userEmail || !isEmailValid || isBusy || (isEditing && !canUpdateEmail)}
                 isLoading={isBusy}
                 variant="primary"
                 className="px-4 py-1.5 text-sm whitespace-nowrap"
@@ -220,6 +248,11 @@ export default function ClaimedPanel({ amountPerClaim, isTestnet }: ClaimedPanel
 
           {!isEmailValid && (
             <p className="mt-1 text-[11px] text-red-500">Please enter a valid email</p>
+          )}
+          {isEditing && !canUpdateEmail && (
+            <p className="mt-1 text-[11px] text-secondaryText italic">
+              You can update again in {minutesUntilUpdateable} {minutesUntilUpdateable === 1 ? "minute" : "minutes"}.
+            </p>
           )}
 
           {isEditing && (
@@ -245,17 +278,23 @@ export default function ClaimedPanel({ amountPerClaim, isTestnet }: ClaimedPanel
                 <span className="text-primaryText font-medium">{user?.email}</span>.
                 Check your inbox and spam folder.
               </p>
+              {!canUpdateEmail && (
+                <p className="text-secondaryText text-[11px] mt-1 italic">
+                  You can update again in {minutesUntilUpdateable} {minutesUntilUpdateable === 1 ? "minute" : "minutes"}.
+                </p>
+              )}
               <div className="flex items-center gap-3 mt-2">
                 <button
                   onClick={handleResendVerification}
-                  disabled={isBusy}
+                  disabled={isBusy || !canUpdateEmail}
                   className="text-purple text-xs font-medium hover:underline disabled:opacity-50"
                 >
                   Resend verification
                 </button>
                 <button
                   onClick={handleStartEditing}
-                  className="text-orange text-xs font-medium hover:underline"
+                  disabled={!canUpdateEmail}
+                  className="text-orange text-xs font-medium hover:underline disabled:opacity-50"
                 >
                   Change email
                 </button>
@@ -277,10 +316,16 @@ export default function ClaimedPanel({ amountPerClaim, isTestnet }: ClaimedPanel
               </p>
               <button
                 onClick={handleStartEditing}
-                className="mt-1 text-orange text-xs font-medium hover:underline"
+                disabled={!canUpdateEmail}
+                className="mt-1 text-orange text-xs font-medium hover:underline disabled:opacity-50"
               >
                 Change email
               </button>
+              {!canUpdateEmail && (
+                <p className="text-secondaryText text-[11px] mt-0.5 italic">
+                  Updateable in {minutesUntilUpdateable} {minutesUntilUpdateable === 1 ? "minute" : "minutes"}.
+                </p>
+              )}
             </div>
           </div>
         </div>
