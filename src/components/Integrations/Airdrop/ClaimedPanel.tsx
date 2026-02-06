@@ -153,7 +153,6 @@ export default function ClaimedPanel({ amountPerClaim, isTestnet }: ClaimedPanel
 
   return (
     <>
-      {/* ── Success Header ── */}
       <div className="mb-4 flex justify-center">
         <CheckCircleMinorIcon width={64} height={64} />
       </div>
@@ -169,7 +168,6 @@ export default function ClaimedPanel({ amountPerClaim, isTestnet }: ClaimedPanel
       )}
 
       <div className="border border-stroke rounded-lg p-3 mb-3 text-left">
-        {/* Step 1 */}
         <div className="flex items-center gap-1">
           <CheckCircleIcon width={22} height={22} className="text-status-registered flex-shrink-0 mt-1" />
           <span className="text-primaryText text-sm font-medium">
