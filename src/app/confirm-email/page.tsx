@@ -11,6 +11,28 @@ import CheckCircleMinor from 'icons/CheckCircleMinor.svg';
 import WarningCircleMinor from 'icons/WarningCircleMinor.svg';
 import MinusCircleMinor from 'icons/MinusCircleMinor.svg';
 import ActionButton from 'components/ActionButton';
+import { extractStatusCode } from 'utils/errors';
+
+type VerificationStatus = 'loading' | 'success' | 'expired' | 'invalid' | 'error';
+
+const getVerificationErrorDescription = (error: unknown): string => {
+  const statusCode = extractStatusCode(error);
+
+  if (statusCode === 401 || statusCode === 403) {
+    return 'Your verification session expired. Please request a new email link.';
+  }
+  if (statusCode === 408 || statusCode === 504) {
+    return 'Verification timed out. Please try again.';
+  }
+  if (statusCode === 429) {
+    return 'Too many attempts. Please wait a minute and retry.';
+  }
+  if (statusCode !== null && statusCode >= 500) {
+    return 'Verification service is temporarily unavailable. Please try again.';
+  }
+
+  return 'We could not verify your email right now. Please check your connection and try again.';
+};
 
 const ConfirmEmailPage: React.FC = () => {
   const searchParams = useSearchParams();
@@ -20,7 +42,7 @@ const ConfirmEmailPage: React.FC = () => {
   const address = searchParams.get('address');
   const token = searchParams.get('token');
 
-  const { data, isPending, isError } = useQuery({
+  const { data, isPending, isError, error, refetch } = useQuery({
     queryKey: ['confirmEmail', address, token],
     queryFn: async () => {
       if (!address || !token) {
@@ -37,7 +59,7 @@ const ConfirmEmailPage: React.FC = () => {
     refetchOnReconnect: false,
   });
 
-  const getVerificationStatus = () => {
+  const getVerificationStatus = (): VerificationStatus => {
     // Still loading or no params
     if (!address || !token) {
       return 'invalid';
@@ -45,8 +67,8 @@ const ConfirmEmailPage: React.FC = () => {
     if (isPending) {
       return 'loading';
     }
-    if (isError) {
-      return 'invalid';
+    if (isError || data?.isError) {
+      return 'error';
     }
     if (data?.isConfirmed) {
       return 'success';
@@ -72,7 +94,7 @@ const ConfirmEmailPage: React.FC = () => {
     buttonText?: string;
   }
 
-  const statusConfig: Record<'loading' | 'success' | 'expired' | 'invalid', StatusConfig> = {
+  const statusConfig: Record<VerificationStatus, StatusConfig> = {
     loading: {
       title: 'Verifying your email...',
       description: 'Please wait while we confirm your email address.',
@@ -115,6 +137,17 @@ const ConfirmEmailPage: React.FC = () => {
       largeIcon: MinusCircle,
       onClick: () => {
         window.open('https://t.me/proofhumanity', '_blank');
+      },
+    },
+    error: {
+      title: 'Could not verify right now',
+      description: getVerificationErrorDescription(error),
+      titleColor: 'text-status-revocation',
+      buttonText: 'Try Again',
+      icon: WarningCircleMinor,
+      largeIcon: WarningCircle,
+      onClick: () => {
+        void refetch();
       },
     },
   };

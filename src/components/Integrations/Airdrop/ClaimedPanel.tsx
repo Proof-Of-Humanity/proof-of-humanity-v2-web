@@ -20,7 +20,7 @@ import WarningCircle16Icon from "icons/WarningCircle16.svg";
 import NewTabIcon from "icons/NewTab.svg";
 
 import { isValidEmailAddress } from "utils/validators";
-import { extractErrorMessage } from "utils/errors";
+import { getEmailFlowErrorMessage } from "utils/emailFlowErrors";
 
 interface ClaimedPanelProps {
   amountPerClaim: bigint;
@@ -49,25 +49,25 @@ export default function ClaimedPanel({ amountPerClaim, isTestnet }: ClaimedPanel
   // Derived email state
   const hasEmail = !!user?.email;
   const isEmailVerified = user?.isEmailVerified ?? false;
-  const emailUpdateableAt = user?.emailUpdateableAt ? new Date(user.emailUpdateableAt) : null;
+  const parsedEmailUpdateableAt = user?.emailUpdateableAt ? new Date(user.emailUpdateableAt) : null;
+  const emailUpdateableAt = parsedEmailUpdateableAt && !Number.isNaN(parsedEmailUpdateableAt.getTime())
+    ? parsedEmailUpdateableAt
+    : null;
   const canUpdateEmail = !emailUpdateableAt || new Date() >= emailUpdateableAt;
   const minutesUntilUpdateable = emailUpdateableAt && !canUpdateEmail
     ? Math.max(1, Math.round((emailUpdateableAt.getTime() - Date.now()) / 60000))
     : 0;
 
-  // Stepper status
   const alertsEnabled = hasEmail && isEmailVerified;
   const alertsPending = hasEmail && !isEmailVerified;
   const showForm = !hasEmail || isEditing;
 
-  // Auto-show modal when mounted if user is signed in and hasn't set an email
   useEffect(() => {
     if (isVerified && !isFetchingUser && !hasEmail) {
       setShowModal(true);
     }
   }, [isVerified, isFetchingUser, hasEmail]);
 
-  // Reset local email UI state on wallet switch (not on initial mount).
   const prevAddress = React.useRef(address);
   useEffect(() => {
     if (prevAddress.current !== undefined && prevAddress.current !== address) {
@@ -98,8 +98,14 @@ export default function ClaimedPanel({ amountPerClaim, isTestnet }: ClaimedPanel
       }
       return true;
     },
-    onSuccess: (wasUpdated) => {
-      if (wasUpdated) {
+    onSuccess: (wasUpdated, variables) => {
+      if (variables?.isResend) {
+        if (wasUpdated) {
+          toast.success("Verification email resent. Check your inbox and spam folder.");
+        } else {
+          toast.info("Verification email is already pending for this address.");
+        }
+      } else if (wasUpdated) {
         toast.success("Email saved! Check your inbox to verify.");
       } else {
         toast.info("Email is already set to this address.");
@@ -107,13 +113,8 @@ export default function ClaimedPanel({ amountPerClaim, isTestnet }: ClaimedPanel
       setUserEmail("");
       setIsEditing(false);
     },
-    onError: (err) => {
-      const message = extractErrorMessage(err).toLowerCase();
-      if (message.includes("rejected") || message.includes("denied")) {
-        toast.error("Request Rejected");
-      } else {
-        toast.error("Failed to save email");
-      }
+    onError: (err, variables) => {
+      toast.error(getEmailFlowErrorMessage(err, { isResend: variables?.isResend }));
     },
   });
 
@@ -167,7 +168,6 @@ export default function ClaimedPanel({ amountPerClaim, isTestnet }: ClaimedPanel
         </div>
       )}
 
-      {/* ── Vertical Stepper ── */}
       <div className="border border-stroke rounded-lg p-3 mb-3 text-left">
         {/* Step 1 */}
         <div className="flex items-center gap-1">
@@ -351,7 +351,6 @@ export default function ClaimedPanel({ amountPerClaim, isTestnet }: ClaimedPanel
         </div>
       )}
 
-      {/* ── CTA ── */}
       <div className="mt-2 flex justify-center">
         <ActionButton
           onClick={() => router.push("/app")}

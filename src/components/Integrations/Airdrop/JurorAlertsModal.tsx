@@ -13,7 +13,7 @@ import Field from "components/Field";
 import WarningCircle16Icon from "icons/WarningCircle16.svg";
 
 import { isValidEmailAddress } from "utils/validators";
-import { extractErrorMessage } from "utils/errors";
+import { getEmailFlowErrorMessage } from "utils/emailFlowErrors";
 
 type ModalStep = "warning" | "email";
 type SubmitEmailResult = "saved" | "unchanged";
@@ -39,7 +39,10 @@ export default function JurorAlertsModal({ open, onClose }: JurorAlertsModalProp
 
   const trimmedEmail = email.trim();
   const isEmailValid = trimmedEmail.length === 0 ? true : isValidEmailAddress(trimmedEmail);
-  const emailUpdateableAt = user?.emailUpdateableAt ? new Date(user.emailUpdateableAt) : null;
+  const parsedEmailUpdateableAt = user?.emailUpdateableAt ? new Date(user.emailUpdateableAt) : null;
+  const emailUpdateableAt = parsedEmailUpdateableAt && !Number.isNaN(parsedEmailUpdateableAt.getTime())
+    ? parsedEmailUpdateableAt
+    : null;
   const canUpdateEmail = !emailUpdateableAt || new Date() >= emailUpdateableAt;
   const minutesUntilUpdateable = emailUpdateableAt && !canUpdateEmail
     ? Math.max(1, Math.round((emailUpdateableAt.getTime() - Date.now()) / 60000))
@@ -95,12 +98,7 @@ export default function JurorAlertsModal({ open, onClose }: JurorAlertsModalProp
       onClose();
     },
     onError: (err) => {
-      const message = extractErrorMessage(err).toLowerCase();
-      if (message.includes("rejected") || message.includes("denied")) {
-        toast.error("Request Rejected");
-      } else {
-        toast.error("Failed to save email");
-      }
+      toast.error(getEmailFlowErrorMessage(err));
     },
   });
 
@@ -117,7 +115,6 @@ export default function JurorAlertsModal({ open, onClose }: JurorAlertsModalProp
   return (
     <Modal open={open} onClose={handleModalClose} formal header="Action required">
       {step === "warning" ? (
-        /* ── Step 1: Warning ── */
         <div className="p-6">
           <ul className="space-y-3 mb-6">
             <li className="flex items-start gap-2">
@@ -175,7 +172,6 @@ export default function JurorAlertsModal({ open, onClose }: JurorAlertsModalProp
           />
         </div>
       ) : (
-        /* ── Step 2: Email Form ── */
         <div className="p-6">
           <ul className="space-y-3 mb-6">
             <li className="flex items-start gap-2">
