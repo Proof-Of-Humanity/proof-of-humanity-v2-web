@@ -20,4 +20,17 @@ export function extractErrorMessage(error: unknown): string {
   return defaultMessage;
 }
 
+export function extractStatusCode(error: unknown): number | null {
+  if (error && typeof error === "object") {
+    const withStatus = error as { status?: unknown };
+    if (typeof withStatus.status === "number") return withStatus.status;
+
+    const withResponse = error as { response?: { status?: unknown } };
+    if (typeof withResponse.response?.status === "number") return withResponse.response.status;
+  }
+
+  const message = extractErrorMessage(error);
+  const match = message.match(/\b([1-5]\d{2})\b/);
+  return match ? Number(match[1]) : null;
+}
 
