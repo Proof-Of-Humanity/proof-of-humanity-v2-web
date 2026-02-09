@@ -26,47 +26,31 @@ export default function JurorAlertsModal({ open, onClose }: JurorAlertsModalProp
   const [email, setEmail] = useState("");
   const wasOpen = useRef(false);
   const {
-    user,
     isAddingUser,
     isUpdatingUser,
   } = useAtlasProvider();
 
   const trimmedEmail = email.trim();
   const isEmailValid = trimmedEmail.length === 0 ? true : isValidEmailAddress(trimmedEmail);
-  const parsedEmailUpdateableAt = user?.emailUpdateableAt ? new Date(user.emailUpdateableAt) : null;
-  const emailUpdateableAt = parsedEmailUpdateableAt && !Number.isNaN(parsedEmailUpdateableAt.getTime())
-    ? parsedEmailUpdateableAt
-    : null;
-  const canUpdateEmail = !emailUpdateableAt || new Date() >= emailUpdateableAt;
-  const minutesUntilUpdateable = emailUpdateableAt && !canUpdateEmail
-    ? Math.max(1, Math.round((emailUpdateableAt.getTime() - Date.now()) / 60000))
-    : 0;
 
   useEffect(() => {
     if (open && !wasOpen.current) {
       setStep("warning");
       setAcknowledged(false);
-      setEmail(user?.email ?? "");
+      setEmail("");
     }
     wasOpen.current = open;
-  }, [open, user?.email]);
+  }, [open]);
 
   const handleModalClose = useCallback(() => {
     // Keep "continue without alerts" acknowledgment explicit on warning step.
     if (step === "warning" && !acknowledged) return;
-    setStep("warning");
-    setAcknowledged(false);
-    setEmail("");
     onClose();
   }, [acknowledged, onClose, step]);
 
   const { mutate: submitEmail, isPending: isSubmitting } = useSubmitEmail({
     onSuccess: (wasUpdated) => {
       if (!wasUpdated) return;
-
-      setStep("warning");
-      setAcknowledged(false);
-      setEmail("");
       onClose();
     },
   });
@@ -172,18 +156,13 @@ export default function JurorAlertsModal({ open, onClose }: JurorAlertsModalProp
             {!isEmailValid && (
               <p className="mt-1 text-xs text-red-500">Please enter a valid email</p>
             )}
-            {!canUpdateEmail && (
-              <p className="mt-1 text-xs text-secondaryText italic">
-                You can update again in {minutesUntilUpdateable} {minutesUntilUpdateable === 1 ? "minute" : "minutes"}.
-              </p>
-            )}
           </div>
 
           <AuthGuard signInButtonProps={{ className: "w-full py-3 mt-4" }}>
             <ActionButton
               onClick={handleSubmit}
               label="Enable Alerts"
-              disabled={!trimmedEmail || !isEmailValid || isBusy || !canUpdateEmail}
+              disabled={!trimmedEmail || !isEmailValid || isBusy}
               isLoading={isBusy}
               variant="primary"
               className="w-full py-3 mt-4"
