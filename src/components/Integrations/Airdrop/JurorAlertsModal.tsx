@@ -1,7 +1,5 @@
 "use client";
 import React, { useState, useCallback, useEffect, useRef } from "react";
-import { useAccount } from "wagmi";
-import { useMutation } from "@tanstack/react-query";
 import { toast } from "react-toastify";
 import { useAtlasProvider } from "@kleros/kleros-app";
 
@@ -11,12 +9,11 @@ import AuthGuard from "components/AuthGuard";
 import ExternalLink from "components/ExternalLink";
 import Field from "components/Field";
 import WarningCircle16Icon from "icons/WarningCircle16.svg";
+import { useSubmitEmail } from "components/Integrations/Airdrop/useSubmitEmail";
 
 import { isValidEmailAddress } from "utils/validators";
-import { getEmailFlowErrorMessage } from "utils/emailFlowErrors";
 
 type ModalStep = "warning" | "email";
-type SubmitEmailResult = "saved" | "unchanged";
 
 interface JurorAlertsModalProps {
   open: boolean;
@@ -28,10 +25,7 @@ export default function JurorAlertsModal({ open, onClose }: JurorAlertsModalProp
   const [acknowledged, setAcknowledged] = useState(false);
   const [email, setEmail] = useState("");
   const wasOpen = useRef(false);
-  const { address } = useAccount();
   const {
-    addUser,
-    updateEmail,
     user,
     isAddingUser,
     isUpdatingUser,
@@ -66,39 +60,14 @@ export default function JurorAlertsModal({ open, onClose }: JurorAlertsModalProp
     onClose();
   }, [acknowledged, onClose, step]);
 
-  const { mutate: submitEmail, isPending: isSubmitting } = useMutation({
-    mutationFn: async (args: { nextEmail: string }): Promise<SubmitEmailResult> => {
-      if (!address) throw new Error("Wallet not connected");
-      const nextEmail = args.nextEmail.trim();
-      if (user?.email) {
-        const isSameEmail = user.email.toLowerCase() === nextEmail.toLowerCase();
-        if (isSameEmail && user.isEmailVerified) return "unchanged";
-        const updated = await updateEmail({ newEmail: nextEmail });
-        if (!updated) throw new Error("Failed to update email");
-        return "saved";
-      }
-      try {
-        const added = await addUser({ email: nextEmail });
-        if (!added) throw new Error("Failed to save email");
-      } catch {
-        const updated = await updateEmail({ newEmail: nextEmail });
-        if (!updated) throw new Error("Failed to update email");
-      }
-      return "saved";
-    },
-    onSuccess: (result) => {
-      if (result === "unchanged") {
-        toast.info("Email is already verified with this address.");
-        return;
-      }
-      toast.success("Email saved! Check your inbox to verify.");
+  const { mutate: submitEmail, isPending: isSubmitting } = useSubmitEmail({
+    onSuccess: (wasUpdated) => {
+      if (!wasUpdated) return;
+
       setStep("warning");
       setAcknowledged(false);
       setEmail("");
       onClose();
-    },
-    onError: (err) => {
-      toast.error(getEmailFlowErrorMessage(err));
     },
   });
 

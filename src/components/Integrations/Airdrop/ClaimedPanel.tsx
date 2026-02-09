@@ -2,7 +2,6 @@
 import React, { useState, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAccount } from "wagmi";
-import { useMutation } from "@tanstack/react-query";
 import { toast } from "react-toastify";
 import { useAtlasProvider } from "@kleros/kleros-app";
 
@@ -13,6 +12,7 @@ import ExternalLink from "components/ExternalLink";
 import Field from "components/Field";
 import PnkDisplay from "components/Integrations/Airdrop/PnkDisplay";
 import JurorAlertsModal from "components/Integrations/Airdrop/JurorAlertsModal";
+import { useSubmitEmail } from "components/Integrations/Airdrop/useSubmitEmail";
 
 import CheckCircleMinorIcon from "icons/CheckCircleMinor.svg";
 import CheckCircleIcon from "icons/CheckCircle.svg";
@@ -20,7 +20,6 @@ import WarningCircle16Icon from "icons/WarningCircle16.svg";
 import NewTabIcon from "icons/NewTab.svg";
 
 import { isValidEmailAddress } from "utils/validators";
-import { getEmailFlowErrorMessage } from "utils/emailFlowErrors";
 
 interface ClaimedPanelProps {
   amountPerClaim: bigint;
@@ -32,8 +31,6 @@ export default function ClaimedPanel({ amountPerClaim, isTestnet }: ClaimedPanel
   const { address } = useAccount();
   const {
     isVerified,
-    addUser,
-    updateEmail,
     user,
     isFetchingUser,
     isAddingUser,
@@ -78,43 +75,10 @@ export default function ClaimedPanel({ amountPerClaim, isTestnet }: ClaimedPanel
     prevAddress.current = address;
   }, [address]);
 
-  const { mutate: submitEmail, isPending: isSubmitting } = useMutation({
-    mutationFn: async (args: { nextEmail: string; isResend?: boolean }): Promise<boolean> => {
-      if (!address) throw new Error("Wallet not connected");
-      const trimmedEmail = args.nextEmail.trim();
-      if (user?.email) {
-        // Skip same-email check if this is a resend request
-        if (!args.isResend && user.email.toLowerCase() === trimmedEmail.toLowerCase()) return false;
-        const updated = await updateEmail({ newEmail: trimmedEmail });
-        if (!updated) throw new Error("Failed to update email");
-        return true;
-      }
-      try {
-        const added = await addUser({ email: trimmedEmail });
-        if (!added) throw new Error("Failed to save email");
-      } catch {
-        const updated = await updateEmail({ newEmail: trimmedEmail });
-        if (!updated) throw new Error("Failed to update email");
-      }
-      return true;
-    },
-    onSuccess: (wasUpdated, variables) => {
-      if (variables?.isResend) {
-        if (wasUpdated) {
-          toast.success("Verification email resent. Check your inbox and spam folder.");
-        } else {
-          toast.info("Verification email is already pending for this address.");
-        }
-      } else if (wasUpdated) {
-        toast.success("Email saved! Check your inbox to verify.");
-      } else {
-        toast.info("Email is already set to this address.");
-      }
+  const { mutate: submitEmail, isPending: isSubmitting } = useSubmitEmail({
+    onSuccess: () => {
       setUserEmail("");
       setIsEditing(false);
-    },
-    onError: (err, variables) => {
-      toast.error(getEmailFlowErrorMessage(err, { isResend: variables?.isResend }));
     },
   });
 
@@ -368,7 +332,6 @@ export default function ClaimedPanel({ amountPerClaim, isTestnet }: ClaimedPanel
           <NewTabIcon width={12} height={12} />
         </span>
       </ExternalLink>
-      {console.log('[ClaimedPanel] Rendering JurorAlertsModal with open:', showModal)}
       <JurorAlertsModal
         open={showModal}
         onClose={() => setShowModal(false)}

@@ -127,7 +127,7 @@ const integrations: Record<string, Integration> = {
     darkLogo: '/images/seer-logo-white.png',
     isActive: true,
     startPath: 'app/seer-credits',
-    buttonText: 'Claim $10',
+    buttonText: 'Start Trading',
     firstInfoSlide: [
       {
         id: 'whatIsSeer',
