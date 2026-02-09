@@ -110,7 +110,7 @@ export default function ClaimedPanel({ amountPerClaim, isTestnet }: ClaimedPanel
   const stepBadge = !isVerified
     ? { label: "Sign In", className: "bg-grey text-purple" }
     : alertsEnabled
-      ? { label: "Enabled", className: "bg-green-50 text-green-600" }
+      ? { label: "Enabled", className: "badge-success" }
       : alertsPending
         ? { label: "Unverified", className: "bg-lightOrange text-orange" }
         : { label: "Pending", className: "bg-lightOrange text-orange" };
@@ -285,7 +285,7 @@ export default function ClaimedPanel({ amountPerClaim, isTestnet }: ClaimedPanel
         </div>
       ) : (
         /* State 4: Email verified */
-        <div className="bg-green-50 border border-green-200 rounded-lg p-3 mb-4 text-left">
+        <div className="box-success rounded-lg p-3 mb-4 text-left">
           <div className="flex items-start gap-2">
             <CheckCircleIcon width={22} height={22} className="text-status-registered flex-shrink-0" />
             <div>
