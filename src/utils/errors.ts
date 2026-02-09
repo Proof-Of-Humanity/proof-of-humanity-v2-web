@@ -30,7 +30,7 @@ export function extractStatusCode(error: unknown): number | null {
   }
 
   const message = extractErrorMessage(error);
-  const match = message.match(/\b([1-5]\d{2})\b/);
+  const match = message.match(/\b(?:status(?:Code)?|status|code|http(?:-status)?)[:\s]*([1-5]\d{2})\b/i);
   return match ? Number(match[1]) : null;
 }
 
