@@ -19,11 +19,12 @@ import { toast } from "react-toastify";
 import { idToChain, SupportedChainId } from "config/chains";
 import { getHumanitySubCourtId } from "data/kleros";
 import PnkDisplay from "components/Integrations/Airdrop/PnkDisplay";
+import ClaimedPanel from "components/Integrations/Airdrop/ClaimedPanel";
 import { ChainSet, configSetSelection } from "contracts";
 import { useRouter } from "next/navigation";
 
 export type EligibilityStatus = "disconnected" | "wrong-chain" | "eligible" | "not-eligible" | "claimed" | "error";
- 
+
 
 function LoadingSpinner() {
   return (
@@ -83,8 +84,8 @@ export default function ClaimSection({ amountPerClaim, airdropChainId, eligibili
     stakeError
       ? "Unable to load staking information. Please check your connection and try again."
       : eligibilityError
-      ? "Unable to check eligibility. Please check your connection and try again or try using a EIP-7702 wallet like metamask"
-      : null;
+        ? "Unable to check eligibility. Please check your connection and try again or try using a EIP-7702 wallet like metamask"
+        : null;
 
   const isFetching = !!isEligibilityLoading || isStakeLoading;
   const hasErrors = !!eligibilityError || !!stakeError;
@@ -95,14 +96,14 @@ export default function ClaimSection({ amountPerClaim, airdropChainId, eligibili
   const eligibilityStatus: EligibilityStatus = !isConnected
     ? "disconnected"
     : !isOnSupportedChain
-    ? "wrong-chain"
-    : hasErrors
-    ? "error"
-    : eligibilityData?.claimStatus === "claimed" || optimisticClaimed
-    ? "claimed"
-    : eligibilityData?.claimStatus === "eligible"
-    ? "eligible"
-    : "not-eligible";
+      ? "wrong-chain"
+      : hasErrors
+        ? "error"
+        : eligibilityData?.claimStatus === "claimed" || optimisticClaimed
+          ? "claimed"
+          : eligibilityData?.claimStatus === "eligible"
+            ? "eligible"
+            : "not-eligible";
 
   const batchWriteEffects = useMemo(() => ({
     onFail: (err: any) => {
@@ -121,21 +122,21 @@ export default function ClaimSection({ amountPerClaim, airdropChainId, eligibili
       if (msg.toLowerCase().includes("rejected") || msg.toLowerCase().includes("denied")) {
         toast.error("Transaction rejected");
       }
-      else{
+      else {
         toast.error("Transaction failed. Please try again.");
       }
     },
     onSuccess: () => {
       toast.success("Successfully claimed and staked PNK tokens!");
       setOptimisticClaimed(true);
-      
+
       const pollRefetch = async () => {
         // Poll every 4 seconds for 1 minute to allow subgraph to sync
         for (let i = 0; i < 15; i++) {
           await new Promise((resolve) => setTimeout(resolve, 4000));
           const result = await refetchEligibilityStatus?.();
           const data = (result as { data?: ProcessedAirdropData })?.data;
-          
+
           if (data?.claimStatus === "claimed") {
             break;
           }
@@ -279,40 +280,35 @@ export default function ClaimSection({ amountPerClaim, airdropChainId, eligibili
     }
   };
 
-  // Show loading state when connected, on supported chain, but data is still loading
+
   if (isConnected && isOnSupportedChain && isFetching) {
     return <LoadingState />;
   }
 
   const statusDisplay = getStatusDisplay();
+
+  if (eligibilityStatus === "claimed") {
+    return (
+      <div className="lg:w-[440px] p-6 lg:p-8 bg-whiteBackground rounded-[30px] border-t-[1px] border-t-[#BE75FF] lg:border-t-0 lg:border-l-[1px] lg:border-l-[#BE75FF]">
+        <div className="text-center">
+          <ClaimedPanel amountPerClaim={amountPerClaim} isTestnet={isTestnet} />
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="lg:w-[391px] p-6 lg:p-8 bg-whiteBackground rounded-[30px] border-t-[1px] border-t-[#BE75FF] lg:border-t-0 lg:border-l-[1px] lg:border-l-[#BE75FF]">
       <div className="text-center">
-        { eligibilityStatus === "claimed" ? (
-          <>
-            <div className="mb-6 flex justify-center">{statusDisplay.icon}</div>
-            <div className="text-purple text-sm font-medium mb-2">{statusDisplay.text}</div>
-            <PnkDisplay amount={amountPerClaim} />
-            <div className={`${statusDisplay.textColor} text-base font-normal mb-6`}>{statusDisplay.subText}</div>
-            {isTestnet && (
-              <div className="mt-3 mb-6 text-secondaryText text-xs">
-                On testnet, you will be staked in the General Court.
-              </div>
-            )}
-          </>
-        ) : (
-          <>
-            <div className="text-purple text-sm font-medium mb-1.5">Reward</div>
-            <PnkDisplay amount={amountPerClaim} />
-            <div className="mt-12">
-              <div className="flex items-center justify-center gap-2">
-                {statusDisplay.icon}
-                <span className={`text-base font-normal ${statusDisplay.textColor}`}>{statusDisplay.text}</span>
-              </div>
-              {statusDisplay.subText && <div className={`mt-1 ${statusDisplay.textColor} text-sm font-normal`}>{statusDisplay.subText}</div>}
-            </div>
-          </>
-        )}
+        <div className="text-purple text-sm font-medium mb-1.5">Reward</div>
+        <PnkDisplay amount={amountPerClaim} />
+        <div className="mt-12">
+          <div className="flex items-center justify-center gap-2">
+            {statusDisplay.icon}
+            <span className={`text-base font-normal ${statusDisplay.textColor}`}>{statusDisplay.text}</span>
+          </div>
+          {statusDisplay.subText && <div className={`mt-1 ${statusDisplay.textColor} text-sm font-normal`}>{statusDisplay.subText}</div>}
+        </div>
         {renderActionButton()}
         <ExternalLink
           href="https://kleros.notion.site/poh-airdrop-faqs"
