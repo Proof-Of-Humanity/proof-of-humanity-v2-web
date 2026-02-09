@@ -68,6 +68,25 @@
   .paper {
     @apply bg-whiteBackground border-stroke text-primaryText rounded border shadow;
   }
+
+  /* Custom classes for success states to ensure dark mode compatibility */
+  .box-success {
+    @apply bg-green-50 border border-green-200;
+  }
+
+  .dark .box-success {
+    background-color: rgba(20, 83, 45, 0.2); /* green-900 at 20% opacity */
+    @apply border-green-800;
+  }
+
+  .badge-success {
+    @apply bg-green-50 text-green-600;
+  }
+
+  .dark .badge-success {
+    background-color: rgba(20, 83, 45, 0.2);
+    @apply text-green-400;
+  }
 }
 
 @tailwind utilities;
