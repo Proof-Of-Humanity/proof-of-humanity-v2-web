@@ -119,15 +119,15 @@ const integrations: Record<string, Integration> = {
   'seer-credits': {
     id: 'seer-credits',
     name: 'Seer Credits',
-    title: 'Unlock Your $10 Seer Balance',
-    description: 'Claim your credits now and place your first prediction on the Seer market.',
+    title: 'Unlock your $10 / month Seer Balance',
+    description: 'Claim your credits every month, and place your predictions on Seer.',
     logo: '/images/integrations/seer-logo.png',
     logoWidth: 164,
     logoHeight: 48,
     darkLogo: '/images/seer-logo-white.png',
     isActive: true,
     startPath: 'app/seer-credits',
-    buttonText: 'Claim $10',
+    buttonText: 'Start Trading',
     firstInfoSlide: [
       {
         id: 'whatIsSeer',
@@ -148,7 +148,7 @@ const integrations: Record<string, Integration> = {
       {
         id: 'howToUse',
         title: 'What are Seer Credits?',
-        description: '~~Get monthly Seer Credits to predict, play and earn on Seer!~~\n\n• Monthly rewards given to **verified Proof of Humanity users** to use on the Seer platform.\n• **Use them like trading funds.** Open/close positions and pay fees on Seer without spending your own crypto.\n• **They\'re not tokens.** They\'re non-transferable, and can\'t be withdrawn.\n• **Auto-refill.** A fresh balance appears at the start of each month.\n• **Expires monthly.** Use it or lose it at month-end; unused credits don\'t roll over.',
+        description: '~~Get monthly Seer Credits to predict, play and earn on Seer!~~\n\n• Monthly rewards given to **verified Proof of Humanity users** to use on the Seer platform.\n• **Use them like trading funds.** Open/close positions on Seer without spending your own crypto.\n• **They\'re not tokens.** They\'re non-transferable, and can\'t be withdrawn.\n• **Auto-refill.** A fresh balance appears at the start of each month.\n• **Expires monthly.** Use it or lose it at month-end; unused credits don\'t roll over.',
         image: '/images/integrations/seer-slide3.png',
         imageHeight: 322,
         imageWidth: 901,
@@ -161,7 +161,7 @@ const integrations: Record<string, Integration> = {
         imageHeight: 508,
         imageWidth: 425,
         bulletPoints: [
-         'Visit: [seer.pm](https://seer.pm/) | [Documentation](https://seer-3.gitbook.io/seer-documentation)'
+          'Visit: [seer.pm](https://seer.pm/) | [Documentation](https://seer-3.gitbook.io/seer-documentation)'
         ]
       }
     ]

@@ -23,7 +23,7 @@ export default function SeerStatusCard({ status, onActionClick, isLoading = fals
           label: "Eligible",
           text: "Credits worth $10 appear in Seer on the 1st of each month (auto-refill)",
           textColor: "text-green-500",
-          buttonLabel: "Claim $10",
+          buttonLabel: "Start Trading",
         };
       case "not-eligible":
         return {
@@ -79,7 +79,7 @@ export default function SeerStatusCard({ status, onActionClick, isLoading = fals
           width={64}
           height={64}
         />
-      </div>: <div className='h-[48px]'></div>}
+      </div> : <div className='h-[48px]'></div>}
 
       <div className="text-center">
         <div className="mb-2">
