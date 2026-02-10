@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useCapabilities, useSendCalls, useChainId, useCallsStatus } from "wagmi";
-import { encodeFunctionData,  } from "viem";
+import { encodeFunctionData, } from "viem";
 import { getContractInfo } from "contracts/registry";
 import { BatchCall, BatchWriteParams, Effects } from "./types";
 
@@ -10,7 +10,8 @@ export default function useBatchWrite(effects?: Effects) {
   const [enabled, setEnabled] = useState(false);
   const chainId = useChainId();
 
-  const { data: capabilities , isLoading: isCapabilitiesLoading } = useCapabilities();
+  const { data: capabilities, isLoading: isCapabilitiesLoading } = useCapabilities();
+  console.log(capabilities);
 
   const supportsBatchingTransaction = useMemo(
     () =>
@@ -18,17 +19,18 @@ export default function useBatchWrite(effects?: Effects) {
       capabilities?.[chainId]?.atomic?.status === "supported",
     [capabilities, chainId]
   );
-  
+  console.log(supportsBatchingTransaction);
+
   // Native batch hooks
-  const { 
-    sendCalls, 
+  const {
+    sendCalls,
     status: sendStatus,
-    data : sendData,
+    data: sendData,
     error: sendError
   } = useSendCalls();
 
-  const {  data: callReceipts, error: callReceiptsError} = useCallsStatus({
-    id: sendData?.id ||  "",
+  const { data: callReceipts, error: callReceiptsError } = useCallsStatus({
+    id: sendData?.id || "",
     query: {
       enabled: !!sendData?.id,
       refetchInterval: 100
@@ -39,19 +41,19 @@ export default function useBatchWrite(effects?: Effects) {
     callReceipts?.status === "pending" || sendStatus === "pending"
       ? "pending"
       : callReceipts?.status === "success" && sendStatus === "success"
-      ? "success"
-      : callReceipts?.status === "failure" || sendStatus === "error"
-      ? "error"
-      : "idle"
+        ? "success"
+        : callReceipts?.status === "failure" || sendStatus === "error"
+          ? "error"
+          : "idle"
   );
 
   // Prepare batch calls for multiple contracts
   const batchCallsData = useMemo(() => {
     if (!calls.length || !chainId) return [];
-    
+
     return calls.map(call => {
       const { address, abi } = getContractInfo(call.contract, chainId);
-      
+
       return {
         to: address as `0x${string}`,
         data: encodeFunctionData({
@@ -83,7 +85,7 @@ export default function useBatchWrite(effects?: Effects) {
   // Effects - Status tracking
   useEffect(() => {
     if (!supportsBatchingTransaction) return;
-    
+
     switch (writeStatus) {
       case "pending":
         effects?.onLoading?.();
@@ -95,7 +97,7 @@ export default function useBatchWrite(effects?: Effects) {
         effects?.onError?.(callReceiptsError || sendError);
         break;
     }
-  }, [supportsBatchingTransaction, effects, writeStatus ]);
+  }, [supportsBatchingTransaction, effects, writeStatus]);
 
   // Public API
   const prepare = ({ calls: newCalls }: BatchWriteParams) => {
@@ -114,10 +116,10 @@ export default function useBatchWrite(effects?: Effects) {
   const prepareStatus = isCapabilitiesLoading
     ? "idle"
     : supportsBatchingTransaction && batchCallsData.length > 0
-    ? "success"
-    : !supportsBatchingTransaction
-    ? "error"
-    : "idle";
+      ? "success"
+      : !supportsBatchingTransaction
+        ? "error"
+        : "idle";
 
   return [
     prepare,
