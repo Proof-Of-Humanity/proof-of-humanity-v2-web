@@ -10,8 +10,8 @@ export default function useBatchWrite(effects?: Effects) {
   const [enabled, setEnabled] = useState(false);
   const chainId = useChainId();
 
-  const { data: capabilities, isLoading: isCapabilitiesLoading } = useCapabilities();
-  console.log(capabilities);
+  const { data: capabilities, isLoading: isCapabilitiesLoading, error: capabilitiesError } = useCapabilities();
+  console.log("capabilities:", capabilities, capabilitiesError);
 
   const supportsBatchingTransaction = useMemo(
     () =>
@@ -19,7 +19,7 @@ export default function useBatchWrite(effects?: Effects) {
       capabilities?.[chainId]?.atomic?.status === "supported",
     [capabilities, chainId]
   );
-  console.log(supportsBatchingTransaction);
+  console.log("supportsBatchingTransaction:", supportsBatchingTransaction);
 
   // Native batch hooks
   const {
@@ -81,6 +81,15 @@ export default function useBatchWrite(effects?: Effects) {
       });
     }
   }, [enabled, isCapabilitiesLoading, supportsBatchingTransaction, batchCallsData, sendCalls, effects]);
+
+  useEffect(() => {
+    if (callReceiptsError) {
+      console.error("callReceiptsError:", callReceiptsError);
+    }
+    if (sendError) {
+      console.error("sendError:", sendError);
+    }
+  }, [callReceiptsError, sendError]);
 
   // Effects - Status tracking
   useEffect(() => {
