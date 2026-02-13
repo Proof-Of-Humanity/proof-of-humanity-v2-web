@@ -21,7 +21,6 @@ interface IHeader {
 export default function Header({ policy }: IHeader) {
   const [menuOpen, setMenuOpen] = useState<boolean>(false);
   const [isDarkMode, setIsDarkMode] = useState<boolean>(false);
-  const [pendingRegisterIntent, setPendingRegisterIntent] = useState<boolean>(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const pathname = usePathname();
   const { isConnected, address } = useAccount();
@@ -105,14 +104,14 @@ export default function Header({ policy }: IHeader) {
 
       <div className="lg:absolute lg:left-1/2 lg:-translate-x-1/2 lg:transform">
         <DesktopNavigation
-          {...{ address, me, policy, pathname, chain: chain!, web3Loaded, pendingRegisterIntent, setPendingRegisterIntent }}
+          {...{ address, me, policy, pathname, chain: chain!, web3Loaded }}
         />
       </div>
 
       {menuOpen && (
         <MobileMenu
           ref={menuRef}
-          {...{ isConnected, web3Loaded, address, pathname, me, policy, pendingRegisterIntent, setPendingRegisterIntent }}
+          {...{ isConnected, web3Loaded, address, pathname, me, policy }}
         />
       )}
 

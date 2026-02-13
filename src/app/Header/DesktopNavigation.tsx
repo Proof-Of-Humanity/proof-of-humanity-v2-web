@@ -13,8 +13,6 @@ interface DesktopNavigationProps {
   policy: string;
   me: any;
   address?: `0x${string}`;
-  pendingRegisterIntent: boolean;
-  setPendingRegisterIntent: (value: boolean) => void;
 }
 
 const DesktopNavigation = ({
@@ -24,8 +22,6 @@ const DesktopNavigation = ({
   policy,
   me,
   address,
-  pendingRegisterIntent,
-  setPendingRegisterIntent,
 }: DesktopNavigationProps) => {
   const searchParams = useSearchParams();
   const currentUrl = searchParams.get("url");
@@ -43,9 +39,6 @@ const DesktopNavigation = ({
       <RegisterLink
         me={me}
         address={address}
-        pathname={pathname}
-        pendingRegisterIntent={pendingRegisterIntent}
-        setPendingRegisterIntent={setPendingRegisterIntent}
         className={`${pathname.includes("/claim") ? "font-bold" : ""}`}
       />
       <Link

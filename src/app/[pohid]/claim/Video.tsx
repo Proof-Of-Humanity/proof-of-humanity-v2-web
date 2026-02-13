@@ -110,7 +110,6 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
       const lowFpsError =
         "Your camera is running too slowly right now. Improve lighting, close background apps, and try again.";
       videoError(lowFpsError);
-      toast.error(lowFpsError);
       return;
     }
 
@@ -167,7 +166,6 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
           setVideoValidationError(lowResError);
           video$.delete();
           videoError(lowResError);
-          toast.error(lowResError);
           return;
         }
 
@@ -180,7 +178,6 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
           setVideoValidationError(lowProcessedFpsError);
           video$.delete();
           videoError(lowProcessedFpsError);
-          toast.error(lowProcessedFpsError);
           return;
         }
 
@@ -200,7 +197,6 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
           setVideoValidationError(lowBitrateError);
           video$.delete();
           videoError(lowBitrateError);
-          toast.error(lowBitrateError);
           return;
         }
 

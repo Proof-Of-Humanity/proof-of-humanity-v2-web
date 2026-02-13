@@ -109,9 +109,9 @@ const Webcam: React.FC<WebcamProps> = ({
     !IS_MOBILE && currentCamera ? currentCamera : undefined;
   const videoConstraints = isVideo
     ? {
-        width: { min: 640, ideal: 1280, max: 1280 },
-        height: { min: 480, ideal: 720, max: 720 },
-        frameRate: { min: 24, ideal: 30, max: 30 },
+        width: { min: 640, ideal: 1280 },
+        height: { min: 480, ideal: 720 },
+        frameRate: { min: 24, ideal: 30 },
         deviceId: selectedDeviceId,
         facingMode,
       }
