@@ -11,7 +11,7 @@ import Label from "components/Label";
 import Modal from "components/Modal";
 import TimeAgo from "components/TimeAgo";
 import Uploader from "components/Uploader";
-import { explorerLink } from "config/chains";
+import { explorerLink, idToChain } from "config/chains";
 import { Effects } from "contracts/hooks/types";
 import usePoHWrite from "contracts/hooks/usePoHWrite";
 import { RequestQuery } from "generated/graphql";
@@ -30,6 +30,7 @@ import { Address, Hash } from "viem";
 import { useChainId } from "wagmi";
 import { useAtlasProvider, Roles } from "@kleros/kleros-app";
 import AuthGuard from "components/AuthGuard";
+import ActionButton from "components/ActionButton";
 
 enableReactUse();
 
@@ -103,7 +104,7 @@ export default function Evidence({
   const [modalOpen, setModalOpen] = useState(false);
   const loading = useLoading();
   const [pending] = loading.use();
-  
+
   const { uploadFile } = useAtlasProvider();
   const [prepare] = usePoHWrite(
     "submitEvidence",
@@ -139,43 +140,43 @@ export default function Evidence({
 
     let evidenceFileURI;
     try {
-    if (file) {
-      evidenceFileURI = await uploadFile(file, Roles.Evidence);
-      if (!evidenceFileURI) {
-        toast.error("Failed to upload file.");
+      if (file) {
+        evidenceFileURI = await uploadFile(file, Roles.Evidence);
+        if (!evidenceFileURI) {
+          toast.error("Failed to upload file.");
+          loading.stop();
+          return;
+        }
+      }
+
+      const evidenceJson = {
+        name: title,
+        description: description,
+        evidence: evidenceFileURI,
+      };
+
+      const evidenceTextFile = new File(
+        [JSON.stringify(evidenceJson)],
+        "evidence",
+        {
+          type: "text/plain",
+        }
+      );
+
+      const evidenceUri = await uploadFile(evidenceTextFile, Roles.Evidence);
+
+      if (!evidenceUri) {
+        toast.error("Failed to upload evidence.");
         loading.stop();
         return;
       }
-    }
 
-    const evidenceJson = {
-      name: title,
-      description: description,
-      evidence: evidenceFileURI,
-    };
-
-    const evidenceTextFile = new File(
-      [JSON.stringify(evidenceJson)],
-      "evidence",
-      {
-        type: "text/plain",
-      }
-    );
-
-    const evidenceUri = await uploadFile(evidenceTextFile, Roles.Evidence);
-    
-    if (!evidenceUri) {
-      toast.error("Failed to upload evidence.");
-      loading.stop();
-      return;
-    }
-
-    state$.uri.set(evidenceUri);
-  } catch (error) {
-    toast.error(`Failed to upload evidence : 
+      state$.uri.set(evidenceUri);
+    } catch (error) {
+      toast.error(`Failed to upload evidence : 
       ${error instanceof Error ? error.message : "Unknown error"}`);
-    loading.stop();
-  }
+      loading.stop();
+    }
   };
 
   state$.onChange(({ value }) => {
@@ -197,13 +198,17 @@ export default function Evidence({
           open={modalOpen}
           header="Evidence"
           trigger={
-            <button
+            <ActionButton
               disabled={isEvidenceDisabled}
               onClick={() => setModalOpen(true)}
-              className="btn-main mx-2 mt-2 w-48 self-end"
-            >
-              Add evidence
-            </button>
+              label="Add Evidence"
+              className="mx-2 mt-4 self-end"
+              tooltip={
+                isEvidenceDisabled
+                  ? `Switch your chain above to ${idToChain(chainReq.id)?.name || "the correct chain"}`
+                  : undefined
+              }
+            />
           }
         >
           <div className="bg-whiteBackground flex flex-col flex-wrap p-4">
