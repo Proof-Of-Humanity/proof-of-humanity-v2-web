@@ -35,8 +35,14 @@ const RegisterLink = ({
       const registerUrl = me?.currentRequest
         ? `/${prettifyId(me.currentRequest.humanity.id)}/${me.currentRequest.chain.name}/${me.currentRequest.index}`
         : `/${prettifyId(address)}/claim`;
-      
-      router.push(registerUrl);
+
+      const isClaimRoute = registerUrl.includes("/claim");
+      if (isClaimRoute) {
+        const opened = window.open(registerUrl, "_blank", "noopener,noreferrer");
+        if (!opened) router.push(registerUrl);
+      } else {
+        router.push(registerUrl);
+      }
     }
   }, [pendingRegisterIntent, isConnected, address, me, router, setPendingRegisterIntent]);
 
@@ -64,12 +70,15 @@ const RegisterLink = ({
         ? `/${prettifyId(me.currentRequest.humanity.id)}/${me.currentRequest.chain.name}/${me.currentRequest.index}`
         : `/${prettifyId(address)}/claim`)
     : "#"; // Use # as placeholder when not connected
+  const shouldOpenInNewTab = registerUrl.includes("/claim");
 
   return (
     <Link
       href={registerUrl}
       onClick={handleClick}
       className={className}
+      target={shouldOpenInNewTab ? "_blank" : undefined}
+      rel={shouldOpenInNewTab ? "noopener noreferrer" : undefined}
     >
       Register
     </Link>
@@ -77,4 +86,3 @@ const RegisterLink = ({
 };
 
 export default RegisterLink;
-

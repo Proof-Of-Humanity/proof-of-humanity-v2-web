@@ -9,7 +9,6 @@ import { useAccount, useChainId } from "wagmi";
 import { useAppKit } from "@reown/appkit/react";
 import { useQuery } from "@tanstack/react-query";
 import { prettifyId } from "utils/identifier";
-import { useRouter } from "next/navigation";
 import { sdk } from "config/subgraph";
 import { Address } from "viem";
 import { supportedChains, SupportedChainId } from "config/chains";
@@ -38,7 +37,6 @@ export default function SeerCredits({ integration }: SeerCreditsProps) {
   const { address, isConnected } = useAccount();
   const chainId = useChainId();
   const modal = useAppKit();
-  const router = useRouter();
 
   const slidesCompleted = currentSlideIndex >= (integration.firstInfoSlide?.length ?? 0);
 
@@ -107,14 +105,19 @@ export default function SeerCredits({ integration }: SeerCreditsProps) {
         break;
       case "not-eligible":
         if (address) {
-          router.push(`/${prettifyId(address)}/claim`);
+          const opened = window.open(
+            `/${prettifyId(address)}/claim`,
+            "_blank",
+            "noopener,noreferrer",
+          );
+          if (!opened) window.location.assign(`/${prettifyId(address)}/claim`);
         }
         break;
       case "disconnected":
         modal.open({ view: "Connect" });
         break;
     }
-  }, [eligibilityStatus, modal, router, address]);
+  }, [eligibilityStatus, modal, address]);
 
   return (
     <div className="flex flex-col w-full md:w-10/12 space-y-8">
@@ -186,4 +189,3 @@ export default function SeerCredits({ integration }: SeerCreditsProps) {
     </div>
   );
 }
-

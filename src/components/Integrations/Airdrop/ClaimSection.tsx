@@ -211,7 +211,13 @@ export default function ClaimSection({ amountPerClaim, airdropChainId, eligibili
         default:
           return {
             onClick: () => {
-              router.push(`/${address}/claim`);
+              if (!address) return;
+              const opened = window.open(
+                `/${address}/claim`,
+                "_blank",
+                "noopener,noreferrer",
+              );
+              if (!opened) window.location.assign(`/${address}/claim`);
             },
             label: "Register",
           };
@@ -324,5 +330,4 @@ export default function ClaimSection({ amountPerClaim, airdropChainId, eligibili
     </div>
   );
 }
-
 
