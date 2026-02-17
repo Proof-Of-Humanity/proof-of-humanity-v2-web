@@ -79,10 +79,12 @@ const SideFunding: React.FC<SideFundingProps> = ({
           fire();
         },
         onSuccess() {
+          loading.stop();
           toast.success("Funded appeal successfully");
           onSuccess?.();
         },
         onFail() {
+          loading.stop();
           !errorRef.current &&
             toast.info(
               "Transaction is not possible! Do you have enough funds?",

@@ -190,14 +190,6 @@ export const videoSanitizer = async (
     const shouldCompress =
       sizeLimitBytes > 0 && inputBuffer.byteLength > sizeLimitBytes;
     let ffmpegArgs: string[];
-    let compressionMode: "copy" | "bitrate-target" | "crf-fallback" = "copy";
-
-    console.info("[Video Sanitizer] Decision", {
-      format: inputFormat,
-      inputSizeBytes: inputBuffer.byteLength,
-      maxSizeBytes: sizeLimitBytes || null,
-      shouldCompress,
-    });
 
     if (shouldCompress) {
       let duration = 0;
@@ -224,13 +216,6 @@ export const videoSanitizer = async (
         const originalSizeBytes = inputBuffer.byteLength;
         const originalBitrate = (originalSizeBytes * 8) / duration;
         const targetBitrate = Math.floor(originalBitrate * 0.7);
-        compressionMode = "bitrate-target";
-
-        console.info("[Video Sanitizer] Compression mode", {
-          mode: compressionMode,
-          durationSeconds: Number(duration.toFixed(3)),
-          targetBitrate,
-        });
 
         ffmpegArgs = [
           "-i",
@@ -255,10 +240,6 @@ export const videoSanitizer = async (
 
         ffmpegArgs.push("-preset", "fast");
       } else {
-        compressionMode = "crf-fallback";
-        console.info("[Video Sanitizer] Compression mode", {
-          mode: compressionMode,
-        });
         ffmpegArgs = [
           "-i",
           inputName,
@@ -282,7 +263,6 @@ export const videoSanitizer = async (
         ffmpegArgs.push("-threads", "4");
       }
     } else {
-      compressionMode = "copy";
       ffmpegArgs = ["-i", inputName, "-map_metadata", "-1", "-c", "copy"];
     }
 
@@ -299,12 +279,6 @@ export const videoSanitizer = async (
     }
 
     const outputData = ffmpeg.FS("readFile", outputFilename);
-    console.info("[Video Sanitizer] Result", {
-      mode: compressionMode,
-      inputSizeBytes: inputBuffer.byteLength,
-      outputSizeBytes: outputData.byteLength,
-      bytesDelta: outputData.byteLength - inputBuffer.byteLength,
-    });
 
     try {
       ffmpeg.FS("unlink", inputName);

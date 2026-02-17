@@ -29,6 +29,8 @@ const MAX_FRAME_GAP_MS = 220;
 const MIN_AVERAGE_BITRATE_SD = 600_000; // bits/s
 const MIN_AVERAGE_BITRATE_HD = 1_100_000; // bits/s
 const MIN_AVERAGE_BITRATE_FHD = 2_000_000; // bits/s
+const RECORDER_VIDEO_BITRATE_BPS = 2_500_000;
+const RECORDER_AUDIO_BITRATE_BPS = 96_000;
 
 const readVideoMetadata = (
   blob: Blob,
@@ -106,7 +108,10 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
     const [videoTrack] = camera.stream.getVideoTracks();
     const captureFrameRate = videoTrack?.getSettings().frameRate;
 
-    if (captureFrameRate && captureFrameRate < MIN_CAPTURE_FPS) {
+    if (
+      typeof captureFrameRate === "number" &&
+      captureFrameRate < MIN_CAPTURE_FPS
+    ) {
       const lowFpsError =
         "Your camera is running too slowly right now. Improve lighting, close background apps, and try again.";
       videoError(lowFpsError);
@@ -115,15 +120,40 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
 
     const mediaRecorder = new MediaRecorder(camera.stream, {
       mimeType: IS_IOS ? 'video/mp4;codecs="h264"' : 'video/webm; codecs="vp8"',
+      videoBitsPerSecond: RECORDER_VIDEO_BITRATE_BPS,
+      audioBitsPerSecond: RECORDER_AUDIO_BITRATE_BPS,
     });
+    const recordedChunks: BlobPart[] = [];
+    let discardRecording = false;
 
-    mediaRecorder.ondataavailable = async ({ data }) => {
+    mediaRecorder.ondataavailable = ({ data }) => {
+      if (discardRecording) return;
+      if (!data || data.size === 0) return;
+
+      recordedChunks.push(data);
+    };
+
+    mediaRecorder.onstop = async () => {
+      if (timerRef.current) clearTimeout(timerRef.current);
+      setFullscreen(false);
+      setRecording(false);
+
+      if (discardRecording) return;
+
+      if (recordedChunks.length === 0) {
+        const noDataError = "No video data captured. Please try recording again.";
+        setVideoValidationError(noDataError);
+        videoError(noDataError);
+        toast.error(noDataError);
+        return;
+      }
+
       setVideoValidationError(null);
       setVideoQualityWarning(null);
       loading.start("Processing video");
 
       try {
-        const blob = new Blob([data], {
+        const blob = new Blob(recordedChunks, {
           type: IS_IOS ? "video/mp4" : "video/webm",
         });
 
@@ -170,7 +200,7 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
         }
 
         if (
-          frameTiming?.effectiveFps &&
+          typeof frameTiming?.effectiveFps === "number" &&
           frameTiming.effectiveFps < MIN_CAPTURE_FPS
         ) {
           const lowProcessedFpsError =
@@ -182,7 +212,7 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
         }
 
         if (
-          frameTiming?.maxFrameGapMs &&
+          typeof frameTiming?.maxFrameGapMs === "number" &&
           frameTiming.maxFrameGapMs > MAX_FRAME_GAP_MS
         ) {
           const frameGapWarning =
@@ -192,12 +222,10 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
         }
 
         if (averageBitrate > 0 && averageBitrate < minAverageBitrate) {
-          const lowBitrateError =
-            'Video quality is too low to verify clearly. Use good lighting and a stable camera, and record in your camera\’s higher quality mode.';
-          setVideoValidationError(lowBitrateError);
-          video$.delete();
-          videoError(lowBitrateError);
-          return;
+          const lowBitrateWarning =
+            'Video bitrate is lower than recommended. For better clarity, use good lighting and your camera\’s higher quality mode.';
+          setVideoQualityWarning(lowBitrateWarning);
+          toast.warn(lowBitrateWarning);
         }
 
         setVideoValidationError(null);
@@ -215,12 +243,6 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
       }
     };
 
-    mediaRecorder.onstop = async () => {
-      if (timerRef.current) clearTimeout(timerRef.current);
-      setFullscreen(false);
-      setRecording(false);
-    };
-
     mediaRecorder.start();
 
     setRecorder(mediaRecorder);
@@ -229,7 +251,8 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
     //Auto - stop recording at MAX_DURATION
     timerRef.current = setTimeout(() => {
       if (mediaRecorder.state === "recording") {
-        mediaRecorder.ondataavailable = null; // Discard the recorded data
+        discardRecording = true;
+        recordedChunks.length = 0;
         mediaRecorder.stop();
         setRecording(false);
         setFullscreen(false);
