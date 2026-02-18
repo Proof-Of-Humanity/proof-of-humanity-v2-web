@@ -2,28 +2,18 @@ import {
   getAllTimeUniqueEstimate,
   getCorsHeaders,
   getMetricsRangeTotal,
-  isOriginAllowed,
   toUtcDayStart,
 } from "../../src/utils/seerAnalytics";
 
 export default async (request: Request) => {
-  const origin = request.headers.get("origin");
-  const corsHeaders = getCorsHeaders(origin);
+  const corsHeaders = getCorsHeaders();
 
   if (request.method === "OPTIONS") {
-    if (!isOriginAllowed(origin)) {
-      return new Response(null, { status: 403, headers: corsHeaders });
-    }
-
     return new Response(null, { status: 204, headers: corsHeaders });
   }
 
   if (request.method !== "GET") {
     return new Response(null, { status: 405, headers: corsHeaders });
-  }
-
-  if (!isOriginAllowed(origin)) {
-    return new Response(null, { status: 403, headers: corsHeaders });
   }
 
   const url = new URL(request.url);

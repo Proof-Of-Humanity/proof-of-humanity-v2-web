@@ -12,9 +12,6 @@ const RETRY_BASE_DELAY_MS = 25;
 const RETRY_JITTER_MS = 75;
 export const SHARD_COUNT = 4;
 const HLL_REGISTERS = 1024;
-const ALLOWED_ORIGINS: string[] = [
-  "https://frabjous-marigold-8334d9.netlify.app",
-];
 
 const MAINNET_CHAINS = [
   { chain: mainnet, rpcEnv: "MAINNET_RPC" },
@@ -33,24 +30,13 @@ type AnalyticsBlob = {
 export const toUtcDayStart = (unixSeconds: number) =>
   Math.floor(unixSeconds / DAY_SECONDS) * DAY_SECONDS;
 
-export const isOriginAllowed = (origin: string | null) => {
-  if (!origin) return true;
-  if (ALLOWED_ORIGINS.length === 0) return true;
-  return ALLOWED_ORIGINS.includes(origin);
-};
-
-export const getCorsHeaders = (origin: string | null): Record<string, string> => {
-  const headers: Record<string, string> = {
+export const getCorsHeaders = (): Record<string, string> => {
+  return {
+    "Access-Control-Allow-Origin": "*",
     "Access-Control-Allow-Headers": "Content-Type",
     "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
     Vary: "Origin",
   };
-
-  if (origin && isOriginAllowed(origin)) {
-    headers["Access-Control-Allow-Origin"] = origin;
-  }
-
-  return headers;
 };
 
 export const incrementByKey = async (key: string, hashedAddress: string) => {
