@@ -1,7 +1,7 @@
 import { getStore } from "@netlify/blobs";
 import { HyperLogLog } from "bloom-filters";
-import { supportedChains, getChainRpc } from "../../src/config/chains";
-import { getContractInfo } from "../../src/contracts/registry";
+import { supportedChains, getChainRpc } from "../config/chains";
+import { getContractInfo } from "../contracts/registry";
 import { Address, createPublicClient, http, isAddress } from "viem";
 
 const STORE_NAME = "analytics";

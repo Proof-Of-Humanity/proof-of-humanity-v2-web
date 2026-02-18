@@ -4,7 +4,7 @@ import {
   getMetricsRangeTotal,
   isOriginAllowed,
   toUtcDayStart,
-} from "./_seerAnalytics";
+} from "../../src/utils/seerAnalytics";
 
 export default async (request: Request) => {
   const origin = request.headers.get("origin");

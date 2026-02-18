@@ -4,7 +4,7 @@ import {
   isHumanOnAnySupportedChain,
   SHARD_COUNT,
   toUtcDayStart,
-} from "./_seerAnalytics";
+} from "../../src/utils/seerAnalytics";
 import { createHash } from "node:crypto";
 import { Address, isAddress } from "viem";
 
