@@ -1,8 +1,9 @@
 import { getStore } from "@netlify/blobs";
 import { HyperLogLog } from "bloom-filters";
-import { supportedChains, getChainRpc } from "../config/chains";
+import { ChainSet, configSetSelection } from "../contracts/config";
 import { getContractInfo } from "../contracts/registry";
 import { Address, createPublicClient, http, isAddress } from "viem";
+import { gnosis, gnosisChiado, mainnet, sepolia } from "viem/chains";
 
 const STORE_NAME = "analytics";
 const DAY_SECONDS = 86_400;
@@ -14,6 +15,16 @@ const HLL_REGISTERS = 1024;
 const ALLOWED_ORIGINS: string[] = [
   "https://frabjous-marigold-8334d9.netlify.app",
 ];
+
+const MAINNET_CHAINS = [
+  { chain: mainnet, rpcEnv: "MAINNET_RPC" },
+  { chain: gnosis, rpcEnv: "GNOSIS_RPC" },
+] as const;
+
+const TESTNET_CHAINS = [
+  { chain: sepolia, rpcEnv: "SEPOLIA_RPC" },
+  { chain: gnosisChiado, rpcEnv: "CHIADO_RPC" },
+] as const;
 
 type AnalyticsBlob = {
   hll: unknown;
@@ -137,16 +148,27 @@ export const isHumanOnAnySupportedChain = async (address: Address) => {
   if (!address || !isAddress(address)) {
     return false;
   }
-  const checks = supportedChains.map(async (chain) => {
+  const chainConfigs =
+    configSetSelection.chainSet === ChainSet.MAINNETS
+      ? MAINNET_CHAINS
+      : TESTNET_CHAINS;
+
+  const checks = chainConfigs.map(async ({ chain, rpcEnv }) => {
     try {
+      const rpc = process.env[rpcEnv];
+      if (!rpc) return false;
+
+      const contract = getContractInfo("ProofOfHumanity", chain.id);
+      if (!contract.address) return false;
+
       const client = createPublicClient({
         chain,
-        transport: http(getChainRpc(chain.id)),
+        transport: http(rpc),
       });
 
       const isHuman = await client.readContract({
-        abi: getContractInfo("ProofOfHumanity", chain.id).abi,
-        address: getContractInfo("ProofOfHumanity", chain.id).address as `0x${string}`,
+        abi: contract.abi,
+        address: contract.address,
         functionName: "isHuman",
         args: [address],
       });
