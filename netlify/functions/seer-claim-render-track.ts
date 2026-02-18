@@ -5,21 +5,23 @@ import {
   SHARD_COUNT,
   toUtcDayStart,
 } from "../../src/utils/seerAnalytics";
-import { createHash } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
 import { Address, isAddress } from "viem";
 
 type TrackBody = {
   address?: string;
 };
 
-const runTrackJob = async (address: Address) => {
+const runTrackJob = async (address: Address, requestId: string) => {
+  console.info("[seer-analytics] track start", { requestId });
   const isHuman = await isHumanOnAnySupportedChain(address);
+  console.info("[seer-analytics] human check complete", { requestId, isHuman });
   if (!isHuman) return;
 
   const dayStart = toUtcDayStart(Math.floor(Date.now() / 1000));
   const salt = process.env.SEER_ANALYTICS_HASH_SALT;
   if (!salt) {
-    console.error("[seer-analytics] Missing SEER_ANALYTICS_HASH_SALT");
+    console.error("[seer-analytics] missing salt", { requestId });
     return;
   }
 
@@ -34,6 +36,12 @@ const runTrackJob = async (address: Address) => {
   // shard to allocate this hash to
   const dayShard = Number.parseInt(dayHash.slice(0, 8), 16) % SHARD_COUNT;
   const allTimeShard = Number.parseInt(allTimeHash.slice(0, 8), 16) % SHARD_COUNT;
+  console.info("[seer-analytics] shard assignment", {
+    requestId,
+    dayStart,
+    dayShard,
+    allTimeShard,
+  });
 
   const isDayWritten = await incrementByKey(
     `seer-claim/${dayStart}/${dayShard}`,
@@ -43,12 +51,18 @@ const runTrackJob = async (address: Address) => {
     `seer-claim/all/${allTimeShard}`,
     allTimeHash,
   );
+  console.info("[seer-analytics] write result", {
+    requestId,
+    isDayWritten,
+    isAllTimeWritten,
+  });
   if (!isDayWritten || !isAllTimeWritten) {
-    console.warn("[seer-analytics] write skipped after retries");
+    console.warn("[seer-analytics] write skipped after retries", { requestId });
   }
 };
 
 export default async (request: Request, context: Context) => {
+  const requestId = randomUUID();
   const corsHeaders = {
     "Access-Control-Allow-Origin": "*",
     "Access-Control-Allow-Headers": "Content-Type",
@@ -56,10 +70,12 @@ export default async (request: Request, context: Context) => {
   };
 
   if (request.method === "OPTIONS") {
+    console.info("[seer-analytics] preflight", { requestId });
     return new Response(null, { status: 204, headers: corsHeaders });
   }
 
   if (request.method !== "POST") {
+    console.warn("[seer-analytics] invalid method", { requestId, method: request.method });
     return new Response(null, { status: 405, headers: corsHeaders });
   }
 
@@ -67,17 +83,19 @@ export default async (request: Request, context: Context) => {
   try {
     body = (await request.json()) as TrackBody;
   } catch {
+    console.warn("[seer-analytics] invalid json body", { requestId });
     return new Response(null, { status: 400, headers: corsHeaders });
   }
   const { address } = body;
 
   if (!address || !isAddress(address)) {
+    console.warn("[seer-analytics] invalid address payload", { requestId });
     return new Response(null, { status: 400, headers: corsHeaders });
   }
 
-  const trackPromise = runTrackJob(address).catch(
-    (error) => {
-      console.error("[seer-analytics] track job failed", error);
+  const trackPromise = runTrackJob(address, requestId).catch(
+    () => {
+      console.error("[seer-analytics] track job failed", { requestId });
     },
   );
 
@@ -85,8 +103,10 @@ export default async (request: Request, context: Context) => {
     waitUntil?: (promise: Promise<unknown>) => void;
   };
   if (waitUntilContext.waitUntil) {
+    console.info("[seer-analytics] accepted async", { requestId });
     waitUntilContext.waitUntil(trackPromise);
   } else {
+    console.info("[seer-analytics] accepted sync fallback", { requestId });
     await trackPromise;
   }
 
