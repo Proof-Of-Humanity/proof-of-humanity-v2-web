@@ -112,7 +112,7 @@ export default function Header({ policy }: IHeader) {
       {menuOpen && (
         <MobileMenu
           ref={menuRef}
-          {...{ isConnected, web3Loaded, address, pathname, me, policy, pendingRegisterIntent, setPendingRegisterIntent }}
+          {...{ isConnected, web3Loaded, address, pathname, me, policy, chain: chain!, pendingRegisterIntent, setPendingRegisterIntent }}
         />
       )}
 

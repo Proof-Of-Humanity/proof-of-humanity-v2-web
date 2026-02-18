@@ -14,13 +14,14 @@ interface MobileMenuProps {
   address?: `0x${string}`;
   web3Loaded: boolean;
   isConnected: boolean;
+  chain: { id: number; name: string };
   pendingRegisterIntent: boolean;
   setPendingRegisterIntent: (value: boolean) => void;
 }
 
 const MobileMenu = forwardRef(
   (
-    { policy, me, pathname, address, web3Loaded, isConnected, pendingRegisterIntent, setPendingRegisterIntent }: MobileMenuProps,
+    { policy, me, pathname, address, web3Loaded, isConnected, chain, pendingRegisterIntent, setPendingRegisterIntent }: MobileMenuProps,
     ref: Ref<HTMLDivElement>,
   ) => {
     const searchParams = useSearchParams();
@@ -60,7 +61,7 @@ const MobileMenu = forwardRef(
         <div className="mt-4">
           <WalletSection
             {...{
-              chain: { id: 1, name: "Ethereum" },
+              chain,
               address,
               isConnected,
               web3Loaded,

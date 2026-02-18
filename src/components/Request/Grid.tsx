@@ -256,7 +256,7 @@ function RequestsGrid() {
   return (
     <>
       <SubgraphsStatus />
-      <div className="my-4 flex gap-1 py-2 md:gap-2">
+      <div className="my-4 flex flex-col gap-2 py-2 sm:flex-row sm:gap-1 md:gap-2">
         <input
           className="border-stroke text-primaryText bg-whiteBackground w-full rounded border p-2 md:mr-2"
           placeholder="Search (case sensitive)"
