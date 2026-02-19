@@ -36,25 +36,21 @@ export default async (request: Request) => {
     );
   }
 
-  const fromParam = url.searchParams.get("from");
-  const toParam = url.searchParams.get("to");
-  const from = Number(fromParam);
-  const to = Number(toParam);
-
-  if (!fromParam || !toParam || !Number.isFinite(from) || !Number.isFinite(to) || from < 0 || to < 0 || from > to) {
+  const dayParam = url.searchParams.get("day");
+  const day = Number(dayParam);
+  if (!dayParam || !Number.isFinite(day) || day < 0) {
     return new Response(null, { status: 400, headers: corsHeaders });
   }
 
-  const startDay = toUtcDayStart(from);
-  const endDay = toUtcDayStart(to);
-  const totalUniqueEstimate = await getMetricsRangeTotal(startDay, endDay);
+  const dayStart = toUtcDayStart(day);
+  const uniqueEstimate = await getMetricsRangeTotal(dayStart, dayStart);
 
   return new Response(
     JSON.stringify({
       metric: "seer_claim_render",
-      from,
-      to,
-      totalUniqueEstimate,
+      scope: "day",
+      day: dayStart,
+      uniqueEstimate,
     }),
     {
       status: 200,
