@@ -1,5 +1,5 @@
 import { getStore } from "@netlify/blobs";
-import { HyperLogLog } from "bloom-filters";
+import { createHash } from "node:crypto";
 import { ChainSet, configSetSelection } from "../contracts/config";
 import { getContractInfo } from "../contracts/registry";
 import { Address, createPublicClient, http, isAddress } from "viem";
@@ -11,7 +11,27 @@ const MAX_RETRIES = 3;
 const RETRY_BASE_DELAY_MS = 25;
 const RETRY_JITTER_MS = 75;
 export const SHARD_COUNT = 4;
-const HLL_REGISTERS = 1024;
+
+// Use 2^10 registers (1024) for ~3.25% std error.
+const HLL_PRECISION = 10;
+const HLL_REGISTERS = 1 << HLL_PRECISION;
+const TWO_POW_32 = Math.pow(2, 32);
+
+type SeerHll = {
+  version: 2;
+  precision: number;
+  registers: number[];
+};
+
+type LegacyHll = {
+  type?: string;
+  _nbRegisters?: number;
+  _registers?: number[];
+};
+
+type AnalyticsBlob = {
+  hll: unknown;
+};
 
 const MAINNET_CHAINS = [
   { chain: mainnet, rpcEnv: "MAINNET_RPC" },
@@ -22,10 +42,6 @@ const TESTNET_CHAINS = [
   { chain: sepolia, rpcEnv: "SEPOLIA_RPC" },
   { chain: gnosisChiado, rpcEnv: "CHIADO_RPC" },
 ] as const;
-
-type AnalyticsBlob = {
-  hll: unknown;
-};
 
 export const toUtcDayStart = (unixSeconds: number) =>
   Math.floor(unixSeconds / DAY_SECONDS) * DAY_SECONDS;
@@ -39,20 +55,149 @@ export const getCorsHeaders = (): Record<string, string> => {
   };
 };
 
+const createEmptySketch = (): SeerHll => ({
+  version: 2,
+  precision: HLL_PRECISION,
+  registers: Array.from({ length: HLL_REGISTERS }, () => 0),
+});
+
+const isLegacySketch = (value: unknown): value is LegacyHll => {
+  if (!value || typeof value !== "object") return false;
+  const maybe = value as LegacyHll;
+  return (
+    maybe.type === "HyperLogLog" &&
+    typeof maybe._nbRegisters === "number" &&
+    Array.isArray(maybe._registers)
+  );
+};
+
+const isCurrentSketch = (value: unknown): value is SeerHll => {
+  if (!value || typeof value !== "object") return false;
+  const maybe = value as SeerHll;
+  return (
+    maybe.version === 2 &&
+    typeof maybe.precision === "number" &&
+    Array.isArray(maybe.registers)
+  );
+};
+
+const loadSketch = (value: unknown): SeerHll => {
+  if (isCurrentSketch(value)) {
+    if (value.precision !== HLL_PRECISION) {
+      return createEmptySketch();
+    }
+
+    if (value.registers.length !== HLL_REGISTERS) {
+      return createEmptySketch();
+    }
+
+    return {
+      version: 2,
+      precision: HLL_PRECISION,
+      registers: value.registers.map((v) => Number(v) || 0),
+    };
+  }
+
+  if (isLegacySketch(value)) {
+    if (value._nbRegisters !== HLL_REGISTERS || !value._registers) {
+      return createEmptySketch();
+    }
+
+    if (value._registers.length !== HLL_REGISTERS) {
+      return createEmptySketch();
+    }
+
+    return {
+      version: 2,
+      precision: HLL_PRECISION,
+      registers: value._registers.map((v) => Number(v) || 0),
+    };
+  }
+
+  return createEmptySketch();
+};
+
+const alphaForM = (m: number) => {
+  if (m < 16) return 1;
+  if (m < 32) return 0.673;
+  if (m < 64) return 0.697;
+  if (m < 128) return 0.709;
+  return 0.7213 / (1.0 + 1.079 / m);
+};
+
+const hashTo64Bits = (value: string): bigint => {
+  const digest = createHash("sha256").update(value).digest("hex");
+  return BigInt(`0x${digest.slice(0, 16)}`);
+};
+
+const countLeadingZeros = (value: bigint, bitLength: number): number => {
+  for (let i = bitLength - 1; i >= 0; i -= 1) {
+    if (((value >> BigInt(i)) & 1n) === 1n) {
+      return bitLength - 1 - i;
+    }
+  }
+
+  return bitLength;
+};
+
+const updateSketch = (sketch: SeerHll, element: string) => {
+  const hash64 = hashTo64Bits(element);
+  const remainingBits = 64 - sketch.precision;
+
+  const registerIndex = Number(
+    hash64 >> BigInt(64 - sketch.precision),
+  );
+  const remainingMask = (1n << BigInt(remainingBits)) - 1n;
+  const remainder = hash64 & remainingMask;
+
+  // HLL rho(w): position of first 1 bit in remainder + 1.
+  const rho = countLeadingZeros(remainder, remainingBits) + 1;
+  sketch.registers[registerIndex] = Math.max(sketch.registers[registerIndex], rho);
+};
+
+const mergeSketches = (left: SeerHll, right: SeerHll): SeerHll => {
+  const merged = createEmptySketch();
+  for (let i = 0; i < HLL_REGISTERS; i += 1) {
+    merged.registers[i] = Math.max(left.registers[i], right.registers[i]);
+  }
+
+  return merged;
+};
+
+const estimateSketch = (sketch: SeerHll): number => {
+  const m = HLL_REGISTERS;
+  const alpha = alphaForM(m);
+  const z = sketch.registers.reduce((acc, value) => acc + Math.pow(2, -value), 0);
+  const raw = (alpha * m * m) / z;
+
+  if (raw <= (5 / 2) * m) {
+    const zeroCount = sketch.registers.filter((value) => value === 0).length;
+    if (zeroCount > 0) {
+      return m * Math.log(m / zeroCount);
+    }
+
+    return raw;
+  }
+
+  if (raw <= TWO_POW_32 / 30) {
+    return raw;
+  }
+
+  return -TWO_POW_32 * Math.log(1 - raw / TWO_POW_32);
+};
+
 export const incrementByKey = async (key: string, hashedAddress: string) => {
   const store = getStore(STORE_NAME);
 
   for (let attempt = 0; attempt < MAX_RETRIES; attempt += 1) {
     const current = await store.getWithMetadata(key, { type: "json", consistency: "strong" });
     const currentData = current?.data as AnalyticsBlob | undefined;
-    const hll = currentData?.hll
-      ? HyperLogLog.fromJSON(currentData.hll as any)
-      : new HyperLogLog(HLL_REGISTERS);
+    const sketch = loadSketch(currentData?.hll);
 
-    hll.update(hashedAddress);
+    updateSketch(sketch, hashedAddress);
 
     const next: AnalyticsBlob = {
-      hll: hll.saveAsJSON(),
+      hll: sketch,
     };
 
     const result = current
@@ -68,7 +213,6 @@ export const incrementByKey = async (key: string, hashedAddress: string) => {
 
   return false;
 };
-
 
 export const getMetricsRangeTotal = async (
   startDay: number,
@@ -91,18 +235,18 @@ export const getMetricsRangeTotal = async (
     }
   }
   const results = await Promise.all(shardReads);
-  const mergedByDay = new Map<number, HyperLogLog>();
+  const mergedByDay = new Map<number, SeerHll>();
 
   for (const { day, value } of results) {
     if (!value?.hll) continue;
-    const hll = HyperLogLog.fromJSON(value.hll as any);
+    const sketch = loadSketch(value.hll);
     const current = mergedByDay.get(day);
-    mergedByDay.set(day, current ? current.merge(hll) : hll);
+    mergedByDay.set(day, current ? mergeSketches(current, sketch) : sketch);
   }
 
   let totalUniqueEstimate = 0;
   for (const day of dayStarts) {
-    totalUniqueEstimate += mergedByDay.get(day)?.count() || 0;
+    totalUniqueEstimate += estimateSketch(mergedByDay.get(day) || createEmptySketch());
   }
 
   return totalUniqueEstimate;
@@ -110,24 +254,23 @@ export const getMetricsRangeTotal = async (
 
 export const getAllTimeUniqueEstimate = async () => {
   const store = getStore(STORE_NAME);
-  let merged: HyperLogLog | null = null;
+  let merged: SeerHll | null = null;
 
-  //merge all the shards to get the final HLL
   for (let shard = 0; shard < SHARD_COUNT; shard += 1) {
     const value = (await store.get(`seer-claim/all/${shard}`, {
       type: "json",
     })) as AnalyticsBlob | null;
     if (!value?.hll) continue;
-    const hll = HyperLogLog.fromJSON(value.hll as any);
+    const sketch = loadSketch(value.hll);
 
     if (!merged) {
-      merged = hll;
+      merged = sketch;
     } else {
-      merged = merged.merge(hll);
+      merged = mergeSketches(merged, sketch);
     }
   }
 
-  return merged ? merged.count() : 0;
+  return merged ? estimateSketch(merged) : 0;
 };
 
 export const isHumanOnAnySupportedChain = async (address: Address) => {
