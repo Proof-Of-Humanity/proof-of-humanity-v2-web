@@ -30,6 +30,7 @@ export const CameraButton: React.FC<CameraButtonInterface> = ({
         : "outline-theme h-16 w-16 outline outline-2 outline-offset-2",
       className,
     )}
+    style={{ touchAction: "manipulation" }}
     onClick={onClick}
   >
     {children}
@@ -107,9 +108,9 @@ const Webcam: React.FC<WebcamProps> = ({
   const ActionIcon = isVideo ? (recording ? PauseIcon : PlayIcon) : SmileyIcon;
 
   return (
-    <div className="relative">
+    <div className="relative min-h-[300px] sm:min-h-[400px] overflow-hidden">
       <ReactWebcam
-        className="h-full w-full bg-red-500/50"
+        className="h-full w-full aspect-video object-cover bg-red-500/50"
         ref={loadCamera}
         mirrored={mirrored}
         screenshotFormat={"image/jpeg"}
@@ -129,7 +130,6 @@ const Webcam: React.FC<WebcamProps> = ({
           facingMode,
         }}
         onCanPlayThrough={() => false}
-        onClick={(e) => e.preventDefault()}
         onUserMedia={onUserMedia}
         onUserMediaError={onUserMediaError}
         audioConstraints={{
@@ -170,7 +170,7 @@ const Webcam: React.FC<WebcamProps> = ({
       )}
 
       <CameraButton
-        className="bottom-8 left-1/2 -translate-x-1/2 opacity-90"
+        className="z-10 bottom-8 left-1/2 -translate-x-1/2 opacity-90"
         onClick={action}
       >
         <ActionIcon className="h-12 w-12 fill-white" />

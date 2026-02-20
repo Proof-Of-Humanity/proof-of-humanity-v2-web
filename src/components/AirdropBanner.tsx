@@ -15,7 +15,7 @@ export default function AirdropBanner() {
         href="/app/pnk-airdrop"
         className="block cursor-pointer hover:opacity-90 transition-opacity"
       >
-        <div className="flex items-center justify-center gap-2 text-white text-center">
+        <div className="flex items-center justify-center gap-2 text-white text-center pr-10 sm:pr-12">
           <div className="flex-shrink-0">
             <Image
               src="/logo/poh-white.svg"

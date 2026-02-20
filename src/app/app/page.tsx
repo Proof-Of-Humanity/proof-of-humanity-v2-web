@@ -11,7 +11,7 @@ export default async function AppPage() {
   const integrations = await getIntegrations();
   
   return (
-    <div className="content-wide flex flex-col">
+    <div className="content-wide mt-6 flex flex-col">
       <div className="mb-6">
         <h1 className="flex items-center gap-2 text-2xl font-semibold text-primaryText">
           <span className="text-primary text-orange"><ConnectIcon /></span> Rewards

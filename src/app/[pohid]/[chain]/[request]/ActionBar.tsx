@@ -258,7 +258,7 @@ export default function ActionBar({
   const statusColor = getStatusColor(requestStatus);
 
   return (
-    <div className="paper border-stroke bg-whiteBackground text-primaryText flex flex-col items-center justify-between gap-[12px] px-[24px] py-[24px] md:flex-row lg:gap-[20px]">
+    <div className="paper border-stroke bg-whiteBackground text-primaryText flex flex-col items-center justify-between gap-3 px-4 py-4 sm:px-6 sm:py-6 md:flex-row lg:gap-5">
       <div className="flex items-center">
         <span className="mr-4">Status</span>
         <span
@@ -267,13 +267,13 @@ export default function ActionBar({
           {getStatusLabel(requestStatus, 'actionBar')}
         </span>
       </div>
-      <div className="flex w-full flex-col justify-between gap-[12px] font-normal md:flex-row md:items-center">
+      <div className="flex w-full flex-col items-center justify-between gap-[12px] font-normal md:flex-row md:items-center">
         {web3Loaded &&
           (action === ActionType.REMOVE_VOUCH ||
             action === ActionType.VOUCH ||
             action === ActionType.FUND) && (
             <>
-              <div className="flex gap-6">
+              <div className="flex gap-6 text-center md:text-left">
                 <span className="text-slate-400">
                   {validVouches < contractData.requiredNumberOfVouches && (
                     <>
@@ -302,7 +302,7 @@ export default function ActionBar({
                 </span>
               </div>
 
-              <div className="flex gap-4">
+              <div className="flex flex-wrap justify-center md:justify-end gap-4">
               {requester.toLocaleLowerCase() === address?.toLowerCase() ? (
                   <div className="flex flex-col">
                     <div className="flex flex-row gap-2">
@@ -335,7 +335,7 @@ export default function ActionBar({
                     {validVouches < contractData.requiredNumberOfVouches && (
                       <ExternalLink
                         href="https://t.me/proofhumanity"
-                        className="text-purple hover:opacity-80 underline underline-offset-4 text-sm font-medium inline-flex items-center gap-1 group transition-colors justify-end"
+                        className="text-purple hover:opacity-80 underline underline-offset-4 text-sm font-medium inline-flex items-center gap-1 group transition-colors justify-center md:justify-end"
                       >
                         Get a vouch
                         <svg
