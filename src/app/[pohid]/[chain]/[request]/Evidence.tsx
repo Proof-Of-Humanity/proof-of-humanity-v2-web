@@ -22,6 +22,8 @@ import DocumentIcon from "icons/NoteMajor.svg";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "react-toastify";
 import useSWR from "swr";
+import { useRouter } from "next/navigation";
+import ActionButton from "components/ActionButton";
 import { EvidenceFile, MetaEvidenceFile } from "types/docs";
 import { shortenAddress } from "utils/address";
 import { ipfsFetch, ipfs } from "utils/ipfs";
@@ -103,7 +105,8 @@ export default function Evidence({
   const [modalOpen, setModalOpen] = useState(false);
   const loading = useLoading();
   const [pending] = loading.use();
-  
+  const router = useRouter();
+
   const { uploadFile } = useAtlasProvider();
   const [prepare] = usePoHWrite(
     "submitEvidence",
@@ -119,7 +122,9 @@ export default function Evidence({
         },
         onSuccess() {
           loading.stop();
-          toast.success("Request created");
+          toast.success("Requests created");
+          setModalOpen(false);
+          router.refresh();
         },
       }),
       [loading],
@@ -139,43 +144,43 @@ export default function Evidence({
 
     let evidenceFileURI;
     try {
-    if (file) {
-      evidenceFileURI = await uploadFile(file, Roles.Evidence);
-      if (!evidenceFileURI) {
-        toast.error("Failed to upload file.");
+      if (file) {
+        evidenceFileURI = await uploadFile(file, Roles.Evidence);
+        if (!evidenceFileURI) {
+          toast.error("Failed to upload file.");
+          loading.stop();
+          return;
+        }
+      }
+
+      const evidenceJson = {
+        name: title,
+        description: description,
+        evidence: evidenceFileURI,
+      };
+
+      const evidenceTextFile = new File(
+        [JSON.stringify(evidenceJson)],
+        "evidence",
+        {
+          type: "text/plain",
+        }
+      );
+
+      const evidenceUri = await uploadFile(evidenceTextFile, Roles.Evidence);
+
+      if (!evidenceUri) {
+        toast.error("Failed to upload evidence.");
         loading.stop();
         return;
       }
-    }
 
-    const evidenceJson = {
-      name: title,
-      description: description,
-      evidence: evidenceFileURI,
-    };
-
-    const evidenceTextFile = new File(
-      [JSON.stringify(evidenceJson)],
-      "evidence",
-      {
-        type: "text/plain",
-      }
-    );
-
-    const evidenceUri = await uploadFile(evidenceTextFile, Roles.Evidence);
-    
-    if (!evidenceUri) {
-      toast.error("Failed to upload evidence.");
-      loading.stop();
-      return;
-    }
-
-    state$.uri.set(evidenceUri);
-  } catch (error) {
-    toast.error(`Failed to upload evidence : 
+      state$.uri.set(evidenceUri);
+    } catch (error) {
+      toast.error(`Failed to upload evidence : 
       ${error instanceof Error ? error.message : "Unknown error"}`);
-    loading.stop();
-  }
+      loading.stop();
+    }
   };
 
   state$.onChange(({ value }) => {
@@ -249,13 +254,13 @@ export default function Evidence({
               </Uploader>
             </div>
             <AuthGuard signInButtonProps={{ className: "mt-12" }}>
-              <button
+              <ActionButton
                 disabled={pending}
-                className="btn-main mt-12"
+                isLoading={pending}
+                className="mt-12"
                 onClick={submit}
-              >
-                Submit
-              </button>
+                label="Submit"
+              />
             </AuthGuard>
           </div>
         </Modal>

@@ -24,10 +24,11 @@ import { useLoading } from "hooks/useLoading";
 import Image from "next/image";
 import { useMemo, useRef, useState } from "react";
 import { toast } from "react-toastify";
-import {RequestStatus, getStatusLabel } from "utils/status";
+import { RequestStatus } from "utils/status";
 import { eth2Wei, formatEth } from "utils/misc";
 import { Address } from "viem";
 import { useChainId } from "wagmi";
+import { useRouter } from "next/navigation";
 
 interface SideFundingProps {
   side: SideEnum;
@@ -39,6 +40,7 @@ interface SideFundingProps {
   appealCost: bigint;
   chainId: SupportedChainId;
   loosingSideHasEnd: boolean;
+  onSuccess?: () => void;
 }
 
 const SideFunding: React.FC<SideFundingProps> = ({
@@ -51,6 +53,7 @@ const SideFunding: React.FC<SideFundingProps> = ({
   appealCost,
   chainId,
   loosingSideHasEnd,
+  onSuccess,
 }) => {
   const userChainId = useChainId();
   const title = side === SideEnum.claimer ? "Claimer" : "Challenger";
@@ -58,6 +61,7 @@ const SideFunding: React.FC<SideFundingProps> = ({
     requester.substring(0, 6) + " ... " + requester.slice(-4);
   const [requesterInput, setRequesterInput] = useState(0n);
   const loading = useLoading();
+  const [isLoading] = loading.use();
   const errorRef = useRef(false);
 
   const value = (formatEth(requesterFunds) * 100) / formatEth(appealCost);
@@ -74,7 +78,13 @@ const SideFunding: React.FC<SideFundingProps> = ({
         onReady(fire) {
           fire();
         },
+        onSuccess() {
+          loading.stop();
+          toast.success("Funded appeal successfully");
+          onSuccess?.();
+        },
         onFail() {
+          loading.stop();
           !errorRef.current &&
             toast.info(
               "Transaction is not possible! Do you have enough funds?",
@@ -109,6 +119,7 @@ const SideFunding: React.FC<SideFundingProps> = ({
           }}
           label="Fund"
           disabled={!contributor || errorRef.current || loosingSideHasEnd || userChainId !== chainId}
+          isLoading={isLoading}
           tooltip={userChainId !== chainId ? `Switch your chain above to ${idToChain(chainId)?.name || 'the correct chain'}` : undefined}
         />
       </div>
@@ -168,6 +179,13 @@ const Appeal: React.FC<AppealProps> = ({
   const [loading, setLoading] = useState(true);
   const [claimerFunds, setClaimerFunds] = useState(0n);
   const [challengerFunds, setChallengerFunds] = useState(0n);
+  const router = useRouter();
+  const [isAppealModalOpen, setAppealModalOpen] = useState(false);
+
+  const handleFundSuccess = () => {
+    setAppealModalOpen(false);
+    router.refresh();
+  };
 
   useEffectOnce(() => {
     const formatCurrentRuling = (currentRuling: SideEnum) => {
@@ -291,8 +309,9 @@ const Appeal: React.FC<AppealProps> = ({
     !loading ? (
     <Modal
       header={`Appeal case #${disputeId}`}
+      open={isAppealModalOpen}
       trigger={
-        <button className="
+        <button onClick={() => setAppealModalOpen(true)} className="
           btn-sec 
           py-2
           rounded
@@ -423,6 +442,7 @@ const Appeal: React.FC<AppealProps> = ({
                 ? loosingSideHasEnd
                 : false
             }
+            onSuccess={handleFundSuccess}
           />
           <SideFunding
             side={SideEnum.challenger}
@@ -438,6 +458,7 @@ const Appeal: React.FC<AppealProps> = ({
                 ? loosingSideHasEnd
                 : false
             }
+            onSuccess={handleFundSuccess}
           />
         </div>
       </div>

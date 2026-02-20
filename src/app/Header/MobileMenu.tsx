@@ -14,13 +14,11 @@ interface MobileMenuProps {
   address?: `0x${string}`;
   web3Loaded: boolean;
   isConnected: boolean;
-  pendingRegisterIntent: boolean;
-  setPendingRegisterIntent: (value: boolean) => void;
 }
 
 const MobileMenu = forwardRef(
   (
-    { policy, me, pathname, address, web3Loaded, isConnected, pendingRegisterIntent, setPendingRegisterIntent }: MobileMenuProps,
+    { policy, me, pathname, address, web3Loaded, isConnected }: MobileMenuProps,
     ref: Ref<HTMLDivElement>,
   ) => {
     const searchParams = useSearchParams();
@@ -38,9 +36,6 @@ const MobileMenu = forwardRef(
           <RegisterLink
             me={me}
             address={address}
-            pathname={pathname}
-            pendingRegisterIntent={pendingRegisterIntent}
-            setPendingRegisterIntent={setPendingRegisterIntent}
             className={`text-lg ${pathname.includes("/claim") ? "font-bold" : ""}`}
           />
           <Link

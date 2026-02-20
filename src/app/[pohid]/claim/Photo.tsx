@@ -3,6 +3,7 @@
 import { ObservableObject } from "@legendapp/state";
 import Checklist from "components/Checklist";
 import Previewed from "components/Previewed";
+import Uploader from "components/Uploader";
 import Webcam from "components/Webcam";
 import useFullscreen from "hooks/useFullscreen";
 import { useLoading } from "hooks/useLoading";
@@ -13,21 +14,19 @@ import ResetIcon from "icons/ResetMinor.svg";
 import ZoomIcon from "icons/SearchMajor.svg";
 import CameraIcon from "icons/CameraMajor.svg";
 import Image, { StaticImageData } from "next/image";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Cropper from "react-easy-crop";
 import type { Area, Point } from "react-easy-crop/types";
 import { toast } from "react-toastify";
 import ReactWebcam from "react-webcam";
-import { getCroppedPhoto, sanitizeImage } from "utils/media";
+import { getCroppedPhoto, sanitizeImage, validatePhotoUpload, PHOTO_LIMITS } from "utils/media";
 import { base64ToUint8Array } from "utils/misc";
 import { MediaState } from "./Form";
 
-const MIN_DIMS = { width: 256, height: 256 }; // PXs
-const MAX_SIZE = 3; // Megabytes
-const MAX_SIZE_BYTES = 1024 * 1024 * MAX_SIZE; // Bytes
+const MIN_DIMS = { width: PHOTO_LIMITS.minWidth, height: PHOTO_LIMITS.minHeight }; // PXs
 const ERROR_MSG = {
-  dimensions: `Photo dimensions are too small. Minimum dimensions are ${MIN_DIMS.width}px by ${MIN_DIMS.height}px`,
-  size: `Photo is oversized. Maximum allowed size is ${MAX_SIZE}mb`,
+  dimensions: `Photo dimensions are too small. Minimum dimensions are ${PHOTO_LIMITS.minWidth}px by ${PHOTO_LIMITS.minHeight}px`,
+  size: `Photo is oversized. Maximum allowed size is ${PHOTO_LIMITS.maxSizeMb}mb`,
 };
 
 interface PhotoProps {
@@ -86,25 +85,25 @@ function Photo({ advance, photo$ }: PhotoProps) {
     }
 
     loading.start("Cropping photo");
-
-    const cropped = await getCroppedPhoto(originalPhoto.uri, cropPixels);
-    if (!cropped) return;
-
     try {
+      const cropped = await getCroppedPhoto(originalPhoto.uri, cropPixels);
+      if (!cropped) return;
+
       const sanitized = await sanitizeImage(
         Buffer.from(base64ToUint8Array(cropped.split(",")[1])),
       );
-      if (sanitized.size > MAX_SIZE_BYTES) {
+      if (sanitized.size > PHOTO_LIMITS.maxSizeBytes) {
         toast.error(ERROR_MSG.size);
-        //return console.error("Size error");
+        return;
       }
 
+      if (photo?.uri) URL.revokeObjectURL(photo.uri);
       photo$.set({ content: sanitized, uri: URL.createObjectURL(sanitized) });
     } catch (err: any) {
       toast.error(err.message);
+    } finally {
+      loading.stop();
     }
-
-    loading.stop();
   };
 
   const takePhoto = async () => {
@@ -115,6 +114,7 @@ function Photo({ advance, photo$ }: PhotoProps) {
     if (!screenshot) return;
 
     const buffer = Buffer.from(base64ToUint8Array(screenshot.split(",")[1]));
+    if (originalPhoto?.uri) URL.revokeObjectURL(originalPhoto.uri);
     setOriginalPhoto({
       uri: URL.createObjectURL(new Blob([buffer], { type: "buffer" })),
       buffer,
@@ -125,6 +125,8 @@ function Photo({ advance, photo$ }: PhotoProps) {
 
   const retakePhoto = () => {
     setShowCamera(false);
+    if (photo?.uri) URL.revokeObjectURL(photo.uri);
+    if (originalPhoto?.uri) URL.revokeObjectURL(originalPhoto.uri);
     photo$.delete();
     setOriginalPhoto(null);
     setZoom(1);
@@ -132,6 +134,13 @@ function Photo({ advance, photo$ }: PhotoProps) {
     setCropPixels(null);
     loading.stop();
   };
+
+  useEffect(
+    () => () => {
+      if (originalPhoto?.uri) URL.revokeObjectURL(originalPhoto.uri);
+    },
+    [originalPhoto?.uri],
+  );
 
   return (
     <>
@@ -169,27 +178,27 @@ function Photo({ advance, photo$ }: PhotoProps) {
           </div>
 
           {!showCamera && !originalPhoto && !photo && (
-        <>
-          <Checklist
-            title="Photo Checklist"
-            warning="Not following these guidelines will result in a loss of funds."
-            items={[
-              {
-                text: "Face forward, centered, well lit.",
-                isValid: true,
-              },
-              {
-                text: "Eyes, nose, mouth visible (eyeglasses allowed, given no glare/reflection covering eyes).",
-                isValid: true,
-              },
-              {
-                text: "No masks/veils covering facial features.",
-                isValid: false,
-              },
-            ]}
-          />
-        </>
-      )}
+            <>
+              <Checklist
+                title="Photo Checklist"
+                warning="Not following these guidelines will result in a loss of funds."
+                items={[
+                  {
+                    text: "Face forward, centered, well lit.",
+                    isValid: true,
+                  },
+                  {
+                    text: "Eyes, nose, mouth visible (eyeglasses allowed, given no glare/reflection covering eyes).",
+                    isValid: true,
+                  },
+                  {
+                    text: "No masks/veils covering facial features.",
+                    isValid: false,
+                  },
+                ]}
+              />
+            </>
+          )}
 
           <div className="mt-6 flex w-full flex-col items-center">
             <button
@@ -197,13 +206,42 @@ function Photo({ advance, photo$ }: PhotoProps) {
               onClick={() => setShowCamera(true)}
             >
               <CameraIcon className="h-6 w-6 fill-white" />
-              <span>Take with camera</span>
+              <span>Take with Camera (Recommended)</span>
             </button>
+
+            <span className="mt-2 text-sm font-semibold text-primaryText">
+              OR
+            </span>
+
+            <Uploader
+              className="mt-1 text-base font-semibold text-primary underline underline-offset-2 hover:text-orange focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-300"
+              type="image"
+              onDrop={async (received) => {
+                const file = received[0];
+                if (!file) return;
+                const uploadResult = validatePhotoUpload(file);
+                if (!uploadResult.ok) {
+                  toast.error(uploadResult.error);
+                  return;
+                }
+                const nextBuffer = Buffer.from(await file.arrayBuffer());
+                setOriginalPhoto((prev) => {
+                  if (prev?.uri) URL.revokeObjectURL(prev.uri);
+                  return {
+                    uri: URL.createObjectURL(new Blob([file], { type: file.type })),
+                    buffer: nextBuffer,
+                  };
+                });
+              }}
+              disabled={!!originalPhoto}
+            >
+              <span>Upload photo</span>
+            </Uploader>
           </div>
         </div>
       )}
 
-      {showCamera && (  
+      {showCamera && (
         <div tabIndex={0} ref={fullscreenRef}>
           <Webcam
             fullscreen={isFullscreen}
