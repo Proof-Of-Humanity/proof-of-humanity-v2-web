@@ -188,9 +188,21 @@ const estimateSketch = (sketch: SeerHll): number => {
 
 export const incrementByKey = async (key: string, hashedAddress: string) => {
   const store = getStore(STORE_NAME);
+  console.info("[seer-analytics] increment start", {
+    key,
+    hashedAddress,
+    maxRetries: MAX_RETRIES,
+  });
 
   for (let attempt = 0; attempt < MAX_RETRIES; attempt += 1) {
+    console.info("[seer-analytics] increment attempt", { key, hashedAddress, attempt });
     const current = await store.getWithMetadata(key, { type: "json", consistency: "strong" });
+    console.info("[seer-analytics] increment current state", {
+      key,
+      attempt,
+      exists: Boolean(current),
+      etag: current?.etag || null,
+    });
     const currentData = current?.data as AnalyticsBlob | undefined;
     const sketch = loadSketch(currentData?.hll);
 
@@ -203,14 +215,25 @@ export const incrementByKey = async (key: string, hashedAddress: string) => {
     const result = current
       ? await store.setJSON(key, next, { onlyIfMatch: current.etag })
       : await store.setJSON(key, next, { onlyIfNew: true });
+    console.info("[seer-analytics] increment write result", {
+      key,
+      attempt,
+      modified: result.modified,
+    });
 
     if (result.modified) return true;
 
     const delay =
       RETRY_BASE_DELAY_MS + Math.floor(Math.random() * RETRY_JITTER_MS);
+    console.warn("[seer-analytics] increment retry scheduled", {
+      key,
+      attempt,
+      delay,
+    });
     await new Promise((resolve) => setTimeout(resolve, delay));
   }
 
+  console.error("[seer-analytics] increment failed after retries", { key, hashedAddress });
   return false;
 };
 
@@ -218,12 +241,14 @@ export const getMetricsRangeTotal = async (
   startDay: number,
   endDay: number,
 ) => {
+  console.info("[seer-analytics] get range total start", { startDay, endDay });
   const store = getStore(STORE_NAME);
   const dayStarts: number[] = [];
 
   for (let day = startDay; day <= endDay; day += DAY_SECONDS) {
     dayStarts.push(day);
   }
+  console.info("[seer-analytics] get range day list", { dayStarts });
 
   const shardReads: Promise<{ day: number; value: AnalyticsBlob | null }>[] = [];
   for (const day of dayStarts) {
@@ -235,6 +260,9 @@ export const getMetricsRangeTotal = async (
     }
   }
   const results = await Promise.all(shardReads);
+  console.info("[seer-analytics] get range shard reads complete", {
+    readCount: results.length,
+  });
   const mergedByDay = new Map<number, SeerHll>();
 
   for (const { day, value } of results) {
@@ -246,13 +274,17 @@ export const getMetricsRangeTotal = async (
 
   let totalUniqueEstimate = 0;
   for (const day of dayStarts) {
-    totalUniqueEstimate += estimateSketch(mergedByDay.get(day) || createEmptySketch());
+    const dayEstimate = estimateSketch(mergedByDay.get(day) || createEmptySketch());
+    console.info("[seer-analytics] get range day estimate", { day, dayEstimate });
+    totalUniqueEstimate += dayEstimate;
   }
 
+  console.info("[seer-analytics] get range total done", { totalUniqueEstimate });
   return totalUniqueEstimate;
 };
 
 export const getAllTimeUniqueEstimate = async () => {
+  console.info("[seer-analytics] get all-time start");
   const store = getStore(STORE_NAME);
   let merged: SeerHll | null = null;
 
@@ -260,7 +292,11 @@ export const getAllTimeUniqueEstimate = async () => {
     const value = (await store.get(`seer-claim/all/${shard}`, {
       type: "json",
     })) as AnalyticsBlob | null;
-    if (!value?.hll) continue;
+    if (!value?.hll) {
+      console.info("[seer-analytics] get all-time shard empty", { shard });
+      continue;
+    }
+    console.info("[seer-analytics] get all-time shard loaded", { shard });
     const sketch = loadSketch(value.hll);
 
     if (!merged) {
@@ -270,25 +306,38 @@ export const getAllTimeUniqueEstimate = async () => {
     }
   }
 
-  return merged ? estimateSketch(merged) : 0;
+  const uniqueEstimate = merged ? estimateSketch(merged) : 0;
+  console.info("[seer-analytics] get all-time done", { uniqueEstimate });
+  return uniqueEstimate;
 };
 
 export const isHumanOnAnySupportedChain = async (address: Address) => {
   if (!address || !isAddress(address)) {
+    console.warn("[seer-analytics] isHuman invalid address", { address });
     return false;
   }
   const chainConfigs =
     configSetSelection.chainSet === ChainSet.MAINNETS
       ? MAINNET_CHAINS
       : TESTNET_CHAINS;
+  console.info("[seer-analytics] isHuman start", {
+    address,
+    chainIds: chainConfigs.map(({ chain }) => chain.id),
+  });
 
   const checks = chainConfigs.map(async ({ chain, rpcEnv }) => {
     try {
       const rpc = process.env[rpcEnv];
-      if (!rpc) return false;
+      if (!rpc) {
+        console.warn("[seer-analytics] isHuman missing rpc", { address, chainId: chain.id, rpcEnv });
+        return false;
+      }
 
       const contract = getContractInfo("ProofOfHumanity", chain.id);
-      if (!contract.address) return false;
+      if (!contract.address) {
+        console.warn("[seer-analytics] isHuman missing contract", { address, chainId: chain.id });
+        return false;
+      }
 
       const client = createPublicClient({
         chain,
@@ -301,12 +350,25 @@ export const isHumanOnAnySupportedChain = async (address: Address) => {
         functionName: "isHuman",
         args: [address],
       });
+      console.info("[seer-analytics] isHuman chain result", {
+        address,
+        chainId: chain.id,
+        isHuman: Boolean(isHuman),
+      });
 
       return Boolean(isHuman);
-    } catch {
+    } catch (error) {
+      console.error("[seer-analytics] isHuman chain error", {
+        address,
+        chainId: chain.id,
+        message: error instanceof Error ? error.message : String(error),
+      });
       return false;
     }
   });
 
-  return (await Promise.all(checks)).some(Boolean);
+  const results = await Promise.all(checks);
+  const finalResult = results.some(Boolean);
+  console.info("[seer-analytics] isHuman final", { address, finalResult });
+  return finalResult;
 };

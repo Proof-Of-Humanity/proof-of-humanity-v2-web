@@ -13,9 +13,9 @@ type TrackBody = {
 };
 
 const runTrackJob = async (address: Address, requestId: string) => {
-  console.info("[seer-analytics] track start", { requestId });
+  console.info("[seer-analytics] track start", { requestId, address });
   const isHuman = await isHumanOnAnySupportedChain(address);
-  console.info("[seer-analytics] human check complete", { requestId, isHuman });
+  console.info("[seer-analytics] human check complete", { requestId, address, isHuman });
   if (!isHuman) return;
 
   const dayStart = toUtcDayStart(Math.floor(Date.now() / 1000));
@@ -32,6 +32,12 @@ const runTrackJob = async (address: Address, requestId: string) => {
   const allTimeHash = createHash("sha256")
     .update(`${salt}|${address.toLowerCase()}|all`)
     .digest("hex");
+  console.info("[seer-analytics] hashes prepared", {
+    requestId,
+    address,
+    dayHash,
+    allTimeHash,
+  });
 
   // shard to allocate this hash to
   const dayShard = Number.parseInt(dayHash.slice(0, 8), 16) % SHARD_COUNT;
@@ -63,6 +69,11 @@ const runTrackJob = async (address: Address, requestId: string) => {
 
 export default async (request: Request, context: Context) => {
   const requestId = randomUUID();
+  console.info("[seer-analytics] request received", {
+    requestId,
+    method: request.method,
+    origin: request.headers.get("origin"),
+  });
   const corsHeaders = {
     "Access-Control-Allow-Origin": "*",
     "Access-Control-Allow-Headers": "Content-Type",
@@ -87,6 +98,7 @@ export default async (request: Request, context: Context) => {
     return new Response(null, { status: 400, headers: corsHeaders });
   }
   const { address } = body;
+  console.info("[seer-analytics] request body parsed", { requestId, address });
 
   if (!address || !isAddress(address)) {
     console.warn("[seer-analytics] invalid address payload", { requestId });
@@ -94,8 +106,12 @@ export default async (request: Request, context: Context) => {
   }
 
   const trackPromise = runTrackJob(address, requestId).catch(
-    () => {
-      console.error("[seer-analytics] track job failed", { requestId });
+    (error) => {
+      console.error("[seer-analytics] track job failed", {
+        requestId,
+        address,
+        message: error instanceof Error ? error.message : String(error),
+      });
     },
   );
 
