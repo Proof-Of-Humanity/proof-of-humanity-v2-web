@@ -1,7 +1,6 @@
 import type { Context } from "@netlify/functions";
 import {
   incrementByKey,
-  isHumanOnAnySupportedChain,
   SHARD_COUNT,
   toUtcDayStart,
 } from "../../src/utils/seerAnalytics";
@@ -14,9 +13,9 @@ type TrackBody = {
 
 const runTrackJob = async (address: Address, requestId: string) => {
   console.info("[seer-analytics] track start", { requestId, address });
-  const isHuman = await isHumanOnAnySupportedChain(address);
-  console.info("[seer-analytics] human check complete", { requestId, address, isHuman });
-  if (!isHuman) return;
+  // const isHuman = await isHumanOnAnySupportedChain(address);
+  // console.info("[seer-analytics] human check complete", { requestId, address, isHuman });
+  // if (!isHuman) return;
 
   const dayStart = toUtcDayStart(Math.floor(Date.now() / 1000));
   const salt = process.env.SEER_ANALYTICS_HASH_SALT;
