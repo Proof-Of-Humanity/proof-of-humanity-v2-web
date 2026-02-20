@@ -30,10 +30,10 @@ const MobileMenu = forwardRef(
     return (
       <div
         ref={ref}
-        className="header-background absolute right-0 top-16 z-10 w-64 rounded p-4 shadow-lg md:hidden"
+        className="header-background absolute left-0 right-0 top-16 z-10 w-full p-4 shadow-lg md:hidden"
       >
-        <nav className="flex flex-col gap-y-4">
-          <Link href="/" className={`${pathname === "/" ? "font-bold" : ""}`}>
+        <nav className="flex flex-col items-center gap-y-4 text-center">
+          <Link href="/" className={`text-lg ${pathname === "/" ? "font-bold" : ""}`}>
             Profiles
           </Link>
           <RegisterLink
@@ -50,15 +50,15 @@ const MobileMenu = forwardRef(
           >
             Policy
           </Link>
-          <Link 
-            href="/app" 
-            className={`${pathname.startsWith("/app") ? "font-bold" : ""}`}
+          <Link
+            href="/app"
+            className={`text-lg ${pathname.startsWith("/app") ? "font-bold" : ""}`}
           >
             Rewards
           </Link>
         </nav>
 
-        <div className="mt-4">
+        <div className="mt-4 flex justify-center">
           <WalletSection
             {...{
               chain,
@@ -68,7 +68,9 @@ const MobileMenu = forwardRef(
             }}
           />
         </div>
-        <Options />
+        <div className="mt-3 flex justify-center">
+          <Options />
+        </div>
       </div>
     );
   },

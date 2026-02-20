@@ -523,13 +523,7 @@ export default function ActionBar({
 
               <ExternalLink
                 href={`https://klerosboard.com/${chain.id}/cases/${currentChallenge.disputeId}`}
-                className="btn-main gradient h-[48px] rounded
-                w-full md:w-auto
-                items-center
-                justify-center
-                p-2
-                whitespace-nowrap
-                "
+                className="btn-main gradient h-[48px] rounded w-full md:w-auto items-center justify-center p-2 whitespace-nowrap text-center"
               >
                 View case #{currentChallenge.disputeId}
               </ExternalLink>
