@@ -103,22 +103,24 @@ export default function Header({ policy }: IHeader) {
         <Hamburger />
       </button>
 
-      <div className="lg:absolute lg:left-1/2 lg:-translate-x-1/2 lg:transform">
-        <DesktopNavigation
-          {...{ address, me, policy, pathname, chain: chain!, web3Loaded, pendingRegisterIntent, setPendingRegisterIntent }}
-        />
-      </div>
+      {chain && (
+        <div className="lg:absolute lg:left-1/2 lg:-translate-x-1/2 lg:transform">
+          <DesktopNavigation
+            {...{ address, me, policy, pathname, chain, web3Loaded, pendingRegisterIntent, setPendingRegisterIntent }}
+          />
+        </div>
+      )}
 
-      {menuOpen && (
+      {menuOpen && chain && (
         <MobileMenu
           ref={menuRef}
-          {...{ isConnected, web3Loaded, address, pathname, me, policy, pendingRegisterIntent, setPendingRegisterIntent }}
+          {...{ isConnected, web3Loaded, address, pathname, me, policy, chain, pendingRegisterIntent, setPendingRegisterIntent }}
         />
       )}
 
       <div className="flex flex-row items-center">
         <div className="hidden md:block">
-          <WalletSection {...{ chain: chain!, address, isConnected, web3Loaded }} />
+          {chain && <WalletSection {...{ chain, address, isConnected, web3Loaded }} />}
         </div>
         <div className="hidden md:block">
           <Options />

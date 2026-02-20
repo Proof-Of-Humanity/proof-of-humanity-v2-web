@@ -9,7 +9,7 @@ import Image from "next/image";
 import React, { useRef, useState } from "react";
 import ReactWebcam from "react-webcam";
 import { toast } from "react-toastify";
-import { IS_IOS, videoSanitizer, detectVideoFormat, getVideoMimeType } from "utils/media";
+import { videoSanitizer, detectVideoFormat, getVideoMimeType } from "utils/media";
 import { useAccount } from "wagmi";
 import { MediaState } from "./Form";
 
@@ -60,12 +60,33 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
 
   const startRecording = () => {
     if (!camera || !camera.stream) return;
-    
+
+    const videoTrack = camera.stream.getVideoTracks()[0];
+    if (!videoTrack || videoTrack.readyState !== 'live') {
+      toast.error("Camera not ready. Please wait a moment and try again.");
+      return;
+    }
+
     if (timerRef.current) clearTimeout(timerRef.current);
-    
-    const mediaRecorder = new MediaRecorder(camera.stream, {
-      mimeType: IS_IOS ? 'video/mp4;codecs="h264"' : 'video/webm; codecs="vp8"',
-    });
+
+    const getSupportedMimeType = () => {
+      const types = [
+        'video/webm;codecs="vp9,opus"',
+        'video/webm;codecs="vp8,opus"',
+        'video/webm;codecs="vp8"',
+        'video/webm',
+        'video/mp4;codecs="h264,aac"',
+        'video/mp4;codecs="h264"',
+        'video/mp4',
+      ];
+      for (const type of types) {
+        if (MediaRecorder.isTypeSupported(type)) return type;
+      }
+      return undefined;
+    };
+
+    const mimeType = getSupportedMimeType();
+    const mediaRecorder = new MediaRecorder(camera.stream, mimeType ? { mimeType } : undefined);
 
     mediaRecorder.ondataavailable = async ({ data }) => {
       loading.start("Processing video");
@@ -73,7 +94,7 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
       try {
         const newlyRecorded = ([] as BlobPart[]).concat(data);
         const blob = new Blob(newlyRecorded, {
-          type: IS_IOS ? 'video/mp4' : 'video/webm',
+          type: mediaRecorder.mimeType || 'video/webm',
         });
 
         const needsCompression = MAX_SIZE_BYTES && blob.size > MAX_SIZE_BYTES;
@@ -155,11 +176,11 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
         <div className="divider mt-4 w-2/3" />
       </span>
 
-      <span className="mx-12 my-8 flex flex-col text-center">
+      <span className="mx-4 sm:mx-12 my-8 flex flex-col text-center">
         <span>
         Record a short video: hold your phone showing this wallet address (readable, no glare)
         </span>
-        <strong className="my-2">{address}</strong>
+        <strong className="my-2 break-all text-sm sm:text-base font-mono">{address}</strong>
         <span>and say the phrase</span>
         <span className="my-2">
           <code className="text-orange">"</code>

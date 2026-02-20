@@ -14,13 +14,14 @@ interface MobileMenuProps {
   address?: `0x${string}`;
   web3Loaded: boolean;
   isConnected: boolean;
+  chain: { id: number; name: string };
   pendingRegisterIntent: boolean;
   setPendingRegisterIntent: (value: boolean) => void;
 }
 
 const MobileMenu = forwardRef(
   (
-    { policy, me, pathname, address, web3Loaded, isConnected, pendingRegisterIntent, setPendingRegisterIntent }: MobileMenuProps,
+    { policy, me, pathname, address, web3Loaded, isConnected, chain, pendingRegisterIntent, setPendingRegisterIntent }: MobileMenuProps,
     ref: Ref<HTMLDivElement>,
   ) => {
     const searchParams = useSearchParams();
@@ -29,10 +30,10 @@ const MobileMenu = forwardRef(
     return (
       <div
         ref={ref}
-        className="header-background absolute right-0 top-16 z-10 w-64 rounded p-4 shadow-lg md:hidden"
+        className="header-background absolute left-0 right-0 top-16 z-10 w-full p-4 shadow-lg md:hidden"
       >
-        <nav className="flex flex-col gap-y-4">
-          <Link href="/" className={`${pathname === "/" ? "font-bold" : ""}`}>
+        <nav className="flex flex-col items-center gap-y-4 text-center">
+          <Link href="/" className={`text-lg ${pathname === "/" ? "font-bold" : ""}`}>
             Profiles
           </Link>
           <RegisterLink
@@ -49,25 +50,27 @@ const MobileMenu = forwardRef(
           >
             Policy
           </Link>
-          <Link 
-            href="/app" 
-            className={`${pathname.startsWith("/app") ? "font-bold" : ""}`}
+          <Link
+            href="/app"
+            className={`text-lg ${pathname.startsWith("/app") ? "font-bold" : ""}`}
           >
             Rewards
           </Link>
         </nav>
 
-        <div className="mt-4">
+        <div className="mt-4 flex justify-center">
           <WalletSection
             {...{
-              chain: { id: 1, name: "Ethereum" },
+              chain,
               address,
               isConnected,
               web3Loaded,
             }}
           />
         </div>
-        <Options />
+        <div className="mt-3 flex justify-center">
+          <Options />
+        </div>
       </div>
     );
   },

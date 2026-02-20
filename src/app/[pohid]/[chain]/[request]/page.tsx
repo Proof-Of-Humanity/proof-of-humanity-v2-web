@@ -256,7 +256,7 @@ export default async function Request({ params }: PageProps) {
   //const policyUpdate = request.arbitratorHistory.updateTime;
 
   return (
-    <div className="content mx-auto flex w-[84vw] max-w-[1500px] flex-col justify-center font-semibold md:w-[76vw]">
+    <div className="content mx-auto flex w-[92vw] sm:w-[84vw] max-w-[1500px] flex-col justify-center font-semibold md:w-[76vw]">
       <ActionBar
         arbitrationCost={arbitrationCost}
         index={request.index}
@@ -344,8 +344,8 @@ export default async function Request({ params }: PageProps) {
           </div>
 
           <div className="flex w-full flex-col p-[24px] lg:p-[32px]">
-            <div className="mb-8 flex flex-col-reverse justify-between md:flex-row">
-              <div className="flex items-center">
+            <div className="mb-8 flex flex-col-reverse items-center md:items-stretch justify-between md:flex-row">
+              <div className="flex items-center justify-center md:justify-start">
                 <Identicon diameter={24} address={request.claimer.id} />
                 <ExternalLink
                   className="ml-2 font-semibold text-slate-400 hover:text-slate-600"
@@ -356,7 +356,7 @@ export default async function Request({ params }: PageProps) {
                   {request.claimer.id.slice(20)}
                 </ExternalLink>
               </div>
-              <span className="text-primaryText flex items-center">
+              <span className="text-primaryText flex items-center justify-center md:justify-start mb-2 md:mb-0">
                 <ChainLogo
                   chainId={chain.id}
                   className="fill-primaryText m-1 h-4 w-4"
@@ -365,7 +365,7 @@ export default async function Request({ params }: PageProps) {
               </span>
             </div>
             <div className="mb-4 h-1 w-full border-b"></div>
-            <div className="mb-2 flex flex-col-reverse justify-between md:flex-row">
+            <div className="mb-2 flex flex-col-reverse items-center md:items-stretch justify-between md:flex-row">
               <Info
                 label="POH ID"
                 nbRequests={
@@ -374,7 +374,7 @@ export default async function Request({ params }: PageProps) {
                 }
               />
             </div>
-            <div className="text-orange mb-8 flex flex-wrap gap-x-[8px] gap-y-[8px] font-medium">
+            <div className="text-orange mb-8 flex flex-wrap gap-x-[8px] gap-y-[8px] font-medium justify-center md:justify-start">
               <Link
                 className="text-orange flex flex-row flex-wrap gap-x-[8px] font-semibold hover:text-orange-500"
                 href={`/${prettifyId(pohId)}`}
@@ -427,10 +427,10 @@ export default async function Request({ params }: PageProps) {
 
             <div className="flex w-full flex-wrap justify-between gap-2 md:flex-row md:items-center">
               {policyLink && (
-                <div className="flex grid w-full flex-col justify-items-end font-normal md:flex-row md:items-end">
+                <div className="flex w-full flex-col items-center md:flex-row md:items-end md:justify-end font-normal">
                   <Link
                     href={`/attachment?url=${ipfs(policyLink)}`}
-                    className="flex justify-center items-center text-primaryText ml-2"
+                    className="flex justify-center items-center text-primaryText ml-0 md:ml-2"
                   >
                     <DocumentIcon className="fill-orange h-6 w-6"/>
                     <div className="text-primaryText group relative flex py-[8px]">
