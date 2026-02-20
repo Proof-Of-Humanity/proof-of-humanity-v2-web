@@ -1,5 +1,6 @@
 import { ObservableObject } from "@legendapp/state";
 import Checklist from "components/Checklist";
+import Uploader from "components/Uploader";
 import Webcam from "components/Webcam";
 import useFullscreen from "hooks/useFullscreen";
 import { useLoading } from "hooks/useLoading";
@@ -31,6 +32,27 @@ const MIN_AVERAGE_BITRATE_HD = 1_100_000; // bits/s
 const MIN_AVERAGE_BITRATE_FHD = 2_000_000; // bits/s
 const RECORDER_VIDEO_BITRATE_BPS = 2_500_000;
 const RECORDER_AUDIO_BITRATE_BPS = 96_000;
+const ALLOWED_VIDEO_TYPES = [
+  "video/webm",
+  "video/mp4",
+  "video/x-msvideo",
+  "video/avi",
+  "video/quicktime",
+  "video/mov",
+];
+const ALLOWED_VIDEO_FORMATS = "webm, mp4, avi, mov";
+
+const DURATION_ERROR_MSG = `Video is too long. Maximum allowed duration is ${MAX_DURATION} seconds`;
+const DIMENSION_ERROR_MSG = `Video dimensions are too small. Minimum dimensions are ${MIN_DIMENSION}px by ${MIN_DIMENSION}px`;
+
+const getUploadedTypeLabel = (type: string) => {
+  if (!type) return "unknown";
+  if (type === "video/x-msvideo" || type === "video/avi") return "avi";
+  if (type === "video/quicktime" || type === "video/mov") return "mov";
+
+  const [, subtype] = type.split("/");
+  return subtype || type;
+};
 
 const readVideoMetadata = (
   blob: Blob,
@@ -100,6 +122,114 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
   const loading = useLoading();
   const [pending, loadingMessage] = loading.use();
 
+  const setValidationError = (message: string) => {
+    setVideoValidationError(message);
+    setVideoQualityWarning(null);
+    videoError(message);
+  };
+
+  const processVideoBlob = async (blob: Blob) => {
+    const needsCompression = blob.size > MAX_SIZE_BYTES;
+    if (needsCompression) {
+      loading.start("Compressing video");
+    }
+
+    const buffer = await blob.arrayBuffer();
+    const sanitized = await videoSanitizer(buffer, MAX_SIZE_BYTES);
+    const sanitizedArray = new Uint8Array(sanitized as ArrayBuffer);
+    const detectedFormat = detectVideoFormat(sanitizedArray);
+    const outputType = getVideoMimeType(detectedFormat);
+    const sanitizedBlob = new Blob([sanitizedArray], { type: outputType });
+    const frameTiming = await analyzeVideoFrameTiming(sanitizedArray.buffer);
+    const { duration, width, height } = await readVideoMetadata(sanitizedBlob);
+    const shortEdge = Math.min(width, height);
+    const averageBitrate =
+      duration > 0 ? Math.floor((sanitizedBlob.size * 8) / duration) : 0;
+    const minAverageBitrate = getMinAverageBitrate(width, height);
+
+    if (duration > MAX_DURATION) {
+      setValidationError(DURATION_ERROR_MSG);
+      return;
+    }
+
+    if (sanitizedBlob.size > MAX_SIZE_BYTES) {
+      setValidationError(MAX_SIZE_ERROR_MSG);
+      return;
+    }
+
+    if (shortEdge < MIN_DIMENSION) {
+      setValidationError(DIMENSION_ERROR_MSG);
+      return;
+    }
+
+    if (
+      typeof frameTiming?.effectiveFps === "number" &&
+      frameTiming.effectiveFps < MIN_CAPTURE_FPS
+    ) {
+      const lowProcessedFpsError =
+        "Video looks choppy to verify clearly. Please improve lighting, close background apps, and record again.";
+      setValidationError(lowProcessedFpsError);
+      return;
+    }
+
+    setVideoQualityWarning(null);
+    if (
+      typeof frameTiming?.maxFrameGapMs === "number" &&
+      frameTiming.maxFrameGapMs > MAX_FRAME_GAP_MS
+    ) {
+      const frameGapWarning =
+        "Video may look choppy.Please verify before submitting.";
+      setVideoQualityWarning(frameGapWarning);
+      toast.warn(frameGapWarning);
+    }
+
+    if (averageBitrate > 0 && averageBitrate < minAverageBitrate) {
+      const lowBitrateWarning =
+        "Video bitrate is lower than recommended. For better clarity, use good lighting and your camera's higher quality mode.";
+      setVideoQualityWarning(lowBitrateWarning);
+      toast.warn(lowBitrateWarning);
+    }
+
+    setVideoValidationError(null);
+    video$.set({
+      content: sanitizedBlob,
+      uri: URL.createObjectURL(sanitizedBlob),
+    });
+    setRecording(false);
+    setShowCamera(false);
+
+    if (needsCompression) {
+      toast.success("Video compressed successfully");
+    }
+  };
+
+  const handleUploadedVideo = async (received: File[]) => {
+    const file = received[0];
+    if (!file) return;
+
+    if (!ALLOWED_VIDEO_TYPES.includes(file.type)) {
+      const msg = `Uploaded file type: ${getUploadedTypeLabel(file.type)}. Unsupported video format. Please use ${ALLOWED_VIDEO_FORMATS}.`;
+      setValidationError(msg);
+      console.error(msg);
+      return;
+    }
+
+    setVideoValidationError(null);
+    setVideoQualityWarning(null);
+    loading.start("Processing video");
+
+    try {
+      await processVideoBlob(file);
+    } catch (err: any) {
+      const processingError = err.message || "Failed to process video";
+      setValidationError(processingError);
+      toast.error(processingError);
+      console.error("Video upload processing error:", err);
+    } finally {
+      loading.stop();
+    }
+  };
+
   const startRecording = () => {
     if (!camera || !camera.stream) return;
 
@@ -142,8 +272,7 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
 
       if (recordedChunks.length === 0) {
         const noDataError = "No video data captured. Please try recording again.";
-        setVideoValidationError(noDataError);
-        videoError(noDataError);
+        setValidationError(noDataError);
         toast.error(noDataError);
         return;
       }
@@ -156,86 +285,10 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
         const blob = new Blob(recordedChunks, {
           type: IS_IOS ? "video/mp4" : "video/webm",
         });
-
-        const needsCompression = blob.size > MAX_SIZE_BYTES;
-        if (needsCompression) {
-          loading.start("Compressing video");
-        }
-
-        const buffer = await blob.arrayBuffer();
-        const sanitized = await videoSanitizer(buffer, MAX_SIZE_BYTES);
-        const sanitizedArray = new Uint8Array(sanitized as ArrayBuffer);
-
-        const detectedFormat = detectVideoFormat(sanitizedArray);
-        const outputType = getVideoMimeType(detectedFormat);
-        const sanitizedBlob = new Blob([sanitizedArray], { type: outputType });
-        video$.set({
-          content: sanitizedBlob,
-          uri: URL.createObjectURL(sanitizedBlob),
-        });
-        setShowCamera(false);
-        const frameTiming = await analyzeVideoFrameTiming(
-          sanitizedArray.buffer,
-        );
-        const { duration, width, height } =
-          await readVideoMetadata(sanitizedBlob);
-        const shortEdge = Math.min(width, height);
-        const averageBitrate =
-          duration > 0 ? Math.floor((sanitizedBlob.size * 8) / duration) : 0;
-        const minAverageBitrate = getMinAverageBitrate(width, height);
-
-        if (sanitizedBlob.size > MAX_SIZE_BYTES) {
-          setVideoValidationError(MAX_SIZE_ERROR_MSG);
-          videoError(MAX_SIZE_ERROR_MSG);
-          return;
-        }
-
-        if (shortEdge < MIN_DIMENSION) {
-          const lowResError =
-            'Video does\'t meet the minimum resolution requirements.';
-          setVideoValidationError(lowResError);
-          video$.delete();
-          videoError(lowResError);
-          return;
-        }
-
-        if (
-          typeof frameTiming?.effectiveFps === "number" &&
-          frameTiming.effectiveFps < MIN_CAPTURE_FPS
-        ) {
-          const lowProcessedFpsError =
-            'Video looks choppy to verify clearly. Please improve lighting, close background apps, and record again.';
-          setVideoValidationError(lowProcessedFpsError);
-          video$.delete();
-          videoError(lowProcessedFpsError);
-          return;
-        }
-
-        if (
-          typeof frameTiming?.maxFrameGapMs === "number" &&
-          frameTiming.maxFrameGapMs > MAX_FRAME_GAP_MS
-        ) {
-          const frameGapWarning =
-            'Video may look choppy.Please verify before submitting.';
-          setVideoQualityWarning(frameGapWarning);
-          toast.warn(frameGapWarning);
-        }
-
-        if (averageBitrate > 0 && averageBitrate < minAverageBitrate) {
-          const lowBitrateWarning =
-            'Video bitrate is lower than recommended. For better clarity, use good lighting and your camera\’s higher quality mode.';
-          setVideoQualityWarning(lowBitrateWarning);
-          toast.warn(lowBitrateWarning);
-        }
-
-        setVideoValidationError(null);
-
-        if (needsCompression) {
-          toast.success("Video compressed successfully");
-        }
+        await processVideoBlob(blob);
       } catch (err: any) {
         const processingError = err.message || "Failed to process video";
-        setVideoValidationError(processingError);
+        setValidationError(processingError);
         toast.error(processingError);
         console.error("Video sanitization error:", err);
       } finally {
@@ -338,8 +391,18 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
             onClick={() => setShowCamera(true)}
           >
             <CameraIcon className="h-6 w-6 fill-white" />
-            <span>Record with camera</span>
+            <span>Record with Camera (Recommended)</span>
           </button>
+
+          <span className="mt-2 text-sm font-semibold text-primaryText">OR</span>
+
+          <Uploader
+            className="mt-1 text-base font-semibold text-primary underline underline-offset-2 hover:text-orange focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-300"
+            type="video"
+            onDrop={handleUploadedVideo}
+          >
+            <span>Upload video</span>
+          </Uploader>
         </div>
       )}
 
