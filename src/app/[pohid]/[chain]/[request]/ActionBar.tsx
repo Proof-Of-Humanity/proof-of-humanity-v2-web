@@ -302,10 +302,10 @@ export default function ActionBar({
                 </span>
               </div>
 
-              <div className="flex flex-wrap justify-center md:justify-end gap-4">
+              <div className="flex w-full flex-col md:flex-row md:flex-wrap justify-center md:justify-end gap-3 md:gap-4">
               {requester.toLocaleLowerCase() === address?.toLowerCase() ? (
-                  <div className="flex flex-col">
-                    <div className="flex flex-row gap-2">
+                  <div className="flex w-full md:w-auto flex-col gap-2">
+                    <div className="flex w-full flex-col md:flex-row gap-2">
                       {action === ActionType.FUND && (
                         <FundButton
                           pohId={pohId}
@@ -413,7 +413,7 @@ export default function ActionBar({
           <>
             <span className="text-slate-400">Ready to advance</span>
 
-            <div className="flex gap-4">
+            <div className="flex w-full flex-col md:flex-row gap-3 md:gap-4">
               {requester.toLocaleLowerCase() === address?.toLowerCase() ? (
               <ActionButton
                disabled={isWithdrawPrepareError || userChainId !== chain.id}
@@ -505,7 +505,7 @@ export default function ActionBar({
               .
             </span>
 
-            <div className="flex gap-4 flex-wrap lg:flex-nowrap ">
+            <div className="flex w-full flex-col md:flex-row gap-3 md:gap-4 flex-wrap lg:flex-nowrap">
               <Appeal
                 pohId={pohId}
                 requestIndex={index}
@@ -524,6 +524,7 @@ export default function ActionBar({
               <ExternalLink
                 href={`https://klerosboard.com/${chain.id}/cases/${currentChallenge.disputeId}`}
                 className="btn-main gradient h-[48px] rounded
+                w-full md:w-auto
                 items-center
                 justify-center
                 p-2

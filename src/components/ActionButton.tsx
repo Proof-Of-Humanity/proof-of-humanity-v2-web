@@ -23,7 +23,7 @@ const buttonStyles = {
 };
 
 const buttonBaseClass =
-  'normal-case disabled:opacity-50 disabled:cursor-not-allowed px-5 py-2';
+  'w-full md:w-auto normal-case disabled:opacity-50 disabled:cursor-not-allowed px-5 py-2';
 
 export default function ActionButton({
   onClick,
@@ -41,7 +41,7 @@ export default function ActionButton({
     buttonBaseClass
   );
 
-  const mergedWrapperClasses = twMerge("relative group w-fit", className);
+  const mergedWrapperClasses = twMerge("relative group w-full md:w-fit", className);
 
   const buttonContent = (
     <>
