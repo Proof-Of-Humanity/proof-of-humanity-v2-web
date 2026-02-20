@@ -16,79 +16,16 @@ import {
   videoSanitizer,
   detectVideoFormat,
   getVideoMimeType,
+  readVideoMetadata,
+  VIDEO_LIMITS,
+  validateVideoType,
+  validateVideoMetadata,
+  validateVideoQuality,
 } from "utils/media";
 import { useAccount } from "wagmi";
 import { MediaState } from "./Form";
 
-const MAX_DURATION = 20; // Seconds
-const MAX_SIZE = 10; // Megabytes
-const MAX_SIZE_BYTES = 1024 * 1024 * MAX_SIZE; // Bytes
-const MAX_SIZE_ERROR_MSG = `Video is oversized. Maximum allowed size is ${MAX_SIZE}mb`;
-const MIN_DIMENSION = 352; // PX
-const MIN_CAPTURE_FPS = 20;
-const MAX_FRAME_GAP_MS = 220;
-const MIN_AVERAGE_BITRATE_SD = 600_000; // bits/s
-const MIN_AVERAGE_BITRATE_HD = 1_100_000; // bits/s
-const MIN_AVERAGE_BITRATE_FHD = 2_000_000; // bits/s
-const RECORDER_VIDEO_BITRATE_BPS = 2_500_000;
-const RECORDER_AUDIO_BITRATE_BPS = 96_000;
-const ALLOWED_VIDEO_TYPES = [
-  "video/webm",
-  "video/mp4",
-  "video/x-msvideo",
-  "video/avi",
-  "video/quicktime",
-  "video/mov",
-];
-const ALLOWED_VIDEO_FORMATS = "webm, mp4, avi, mov";
 
-const DURATION_ERROR_MSG = `Video is too long. Maximum allowed duration is ${MAX_DURATION} seconds`;
-const DIMENSION_ERROR_MSG = `Video dimensions are too small. Minimum dimensions are ${MIN_DIMENSION}px by ${MIN_DIMENSION}px`;
-
-const getUploadedTypeLabel = (type: string) => {
-  if (!type) return "unknown";
-  if (type === "video/x-msvideo" || type === "video/avi") return "avi";
-  if (type === "video/quicktime" || type === "video/mov") return "mov";
-
-  const [, subtype] = type.split("/");
-  return subtype || type;
-};
-
-const readVideoMetadata = (
-  blob: Blob,
-): Promise<{ duration: number; width: number; height: number }> =>
-  new Promise((resolve, reject) => {
-    const video = document.createElement("video");
-    const objectUrl = URL.createObjectURL(blob);
-
-    const cleanup = () => {
-      URL.revokeObjectURL(objectUrl);
-      video.removeAttribute("src");
-      video.load();
-    };
-
-    video.preload = "metadata";
-    video.onloadedmetadata = () => {
-      const duration = Number.isFinite(video.duration) ? video.duration : 0;
-      const width = video.videoWidth || 0;
-      const height = video.videoHeight || 0;
-      cleanup();
-      resolve({ duration, width, height });
-    };
-    video.onerror = () => {
-      cleanup();
-      reject(new Error("Unable to read video metadata."));
-    };
-    video.src = objectUrl;
-  });
-
-const getMinAverageBitrate = (width: number, height: number) => {
-  const longEdge = Math.max(width, height);
-
-  if (longEdge > 1280) return MIN_AVERAGE_BITRATE_FHD;
-  if (longEdge > 854) return MIN_AVERAGE_BITRATE_HD;
-  return MIN_AVERAGE_BITRATE_SD;
-};
 interface PhotoProps {
   advance: () => void;
   video$: ObservableObject<MediaState["video"]>;
@@ -96,12 +33,18 @@ interface PhotoProps {
   videoError: (error: string) => void;
 }
 
+const GENERIC_VIDEO_PROCESSING_ERROR =
+  "Something went wrong while processing the video. Please try again.";
+const INVALID_VIDEO_FILE_ERROR =
+  "Invalid or corrupted video file. Please upload a valid WEBM, MP4, AVI, or MOV video.";
+
 function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
   const video = video$.use();
 
   const { address } = useAccount();
 
   const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const cancelledRef = useRef(false);
 
   const fullscreenRef = useRef(null);
   const { isFullscreen, setFullscreen, toggleFullscreen } =
@@ -116,6 +59,7 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
   const [videoQualityWarning, setVideoQualityWarning] = useState<string | null>(
     null,
   );
+  const [rawPreviewUri, setRawPreviewUri] = useState<string | null>(null);
 
   const [recorder, setRecorder] = useState<MediaRecorder | null>(null);
 
@@ -129,68 +73,79 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
   };
 
   const processVideoBlob = async (blob: Blob) => {
-    const needsCompression = blob.size > MAX_SIZE_BYTES;
+    // Show a raw preview immediately so user sees their video while processing
+    const previewUrl = URL.createObjectURL(blob);
+    setRawPreviewUri(previewUrl);
+
+    // 1. Sanitize via FFmpeg (strips metadata, compresses if needed)
+    const needsCompression = blob.size > VIDEO_LIMITS.maxSizeBytes;
     if (needsCompression) {
       loading.start("Compressing video");
     }
 
     const buffer = await blob.arrayBuffer();
-    const sanitized = await videoSanitizer(buffer, MAX_SIZE_BYTES);
-    const sanitizedArray = new Uint8Array(sanitized as ArrayBuffer);
+    if (cancelledRef.current) return;
+
+    const sanitized = await videoSanitizer(buffer, VIDEO_LIMITS.maxSizeBytes);
+    if (cancelledRef.current) return;
+
+    const sanitizedArray = sanitized;
     const detectedFormat = detectVideoFormat(sanitizedArray);
+    if (!detectedFormat) {
+      throw new Error(INVALID_VIDEO_FILE_ERROR);
+    }
     const outputType = getVideoMimeType(detectedFormat);
-    const sanitizedBlob = new Blob([sanitizedArray], { type: outputType });
-    const frameTiming = await analyzeVideoFrameTiming(sanitizedArray.buffer);
-    const { duration, width, height } = await readVideoMetadata(sanitizedBlob);
-    const shortEdge = Math.min(width, height);
-    const averageBitrate =
-      duration > 0 ? Math.floor((sanitizedBlob.size * 8) / duration) : 0;
-    const minAverageBitrate = getMinAverageBitrate(width, height);
+    const sanitizedBlob = new Blob([sanitizedArray.slice().buffer], {
+      type: outputType,
+    });
 
-    if (duration > MAX_DURATION) {
-      setValidationError(DURATION_ERROR_MSG);
+    // 2. Extract metadata and frame timing
+    const [frameTiming, { duration, width, height }] = await Promise.all([
+      analyzeVideoFrameTiming(sanitizedArray.buffer),
+      readVideoMetadata(sanitizedBlob),
+    ]);
+    if (cancelledRef.current) return;
+
+    // 3. Validate hard limits (duration, size, dimensions)
+    const metaResult = validateVideoMetadata({
+      duration,
+      width,
+      height,
+      sizeBytes: sanitizedBlob.size,
+    });
+    if (!metaResult.ok) {
+      setValidationError(metaResult.error);
       return;
     }
 
-    if (sanitizedBlob.size > MAX_SIZE_BYTES) {
-      setValidationError(MAX_SIZE_ERROR_MSG);
+    // 4. Validate quality (FPS, frame gaps, bitrate)
+    const qualityResult = validateVideoQuality(frameTiming, {
+      duration,
+      width,
+      height,
+      sizeBytes: sanitizedBlob.size,
+    });
+    if (!qualityResult.ok) {
+      setValidationError(qualityResult.error);
       return;
     }
 
-    if (shortEdge < MIN_DIMENSION) {
-      setValidationError(DIMENSION_ERROR_MSG);
-      return;
-    }
+    // Final cancel check before committing
+    if (cancelledRef.current) return;
 
-    if (
-      typeof frameTiming?.effectiveFps === "number" &&
-      frameTiming.effectiveFps < MIN_CAPTURE_FPS
-    ) {
-      const lowProcessedFpsError =
-        "Video looks choppy to verify clearly. Please improve lighting, close background apps, and record again.";
-      setValidationError(lowProcessedFpsError);
-      return;
-    }
-
+    // 5. Apply warnings (non-blocking)
     setVideoQualityWarning(null);
-    if (
-      typeof frameTiming?.maxFrameGapMs === "number" &&
-      frameTiming.maxFrameGapMs > MAX_FRAME_GAP_MS
-    ) {
-      const frameGapWarning =
-        "Video may look choppy.Please verify before submitting.";
-      setVideoQualityWarning(frameGapWarning);
-      toast.warn(frameGapWarning);
+    if (qualityResult.warnings.length > 0) {
+      const warning = qualityResult.warnings[0];
+      setVideoQualityWarning(warning);
+      toast.warn(warning);
     }
 
-    if (averageBitrate > 0 && averageBitrate < minAverageBitrate) {
-      const lowBitrateWarning =
-        "Video bitrate is lower than recommended. For better clarity, use good lighting and your camera's higher quality mode.";
-      setVideoQualityWarning(lowBitrateWarning);
-      toast.warn(lowBitrateWarning);
-    }
-
+    // 6. Accept video
     setVideoValidationError(null);
+    URL.revokeObjectURL(previewUrl);
+    setRawPreviewUri(null);
+
     video$.set({
       content: sanitizedBlob,
       uri: URL.createObjectURL(sanitizedBlob),
@@ -207,23 +162,39 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
     const file = received[0];
     if (!file) return;
 
-    if (!ALLOWED_VIDEO_TYPES.includes(file.type)) {
-      const msg = `Uploaded file type: ${getUploadedTypeLabel(file.type)}. Unsupported video format. Please use ${ALLOWED_VIDEO_FORMATS}.`;
-      setValidationError(msg);
-      console.error(msg);
+    const typeResult = validateVideoType(file.type);
+    if (!typeResult.ok) {
+      setValidationError(typeResult.error);
+      console.error(typeResult.error);
       return;
+    }
+
+    // Pre-compression duration check — reject obviously long videos without wasting FFmpeg time
+    try {
+      const rawMeta = await readVideoMetadata(file);
+      if (rawMeta.duration > VIDEO_LIMITS.maxDurationSec) {
+        setValidationError(
+          `Video is too long (${Math.round(rawMeta.duration)}s). Maximum allowed duration is ${VIDEO_LIMITS.maxDurationSec} seconds.`,
+        );
+        return;
+      }
+    } catch {
+      // If we can't read metadata pre-check, proceed anyway — FFmpeg will catch issues
     }
 
     setVideoValidationError(null);
     setVideoQualityWarning(null);
+    cancelledRef.current = false;
     loading.start("Processing video");
 
     try {
       await processVideoBlob(file);
     } catch (err: any) {
-      const processingError = err.message || "Failed to process video";
-      setValidationError(processingError);
-      toast.error(processingError);
+      if (err instanceof Error && err.message === INVALID_VIDEO_FILE_ERROR) {
+        setValidationError(INVALID_VIDEO_FILE_ERROR);
+      } else {
+        setValidationError(GENERIC_VIDEO_PROCESSING_ERROR);
+      }
       console.error("Video upload processing error:", err);
     } finally {
       loading.stop();
@@ -240,7 +211,7 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
 
     if (
       typeof captureFrameRate === "number" &&
-      captureFrameRate < MIN_CAPTURE_FPS
+      captureFrameRate < VIDEO_LIMITS.minCaptureFps
     ) {
       const lowFpsError =
         "Your camera is running too slowly right now. Improve lighting, close background apps, and try again.";
@@ -250,8 +221,8 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
 
     const mediaRecorder = new MediaRecorder(camera.stream, {
       mimeType: IS_IOS ? 'video/mp4;codecs="h264"' : 'video/webm; codecs="vp8"',
-      videoBitsPerSecond: RECORDER_VIDEO_BITRATE_BPS,
-      audioBitsPerSecond: RECORDER_AUDIO_BITRATE_BPS,
+      videoBitsPerSecond: VIDEO_LIMITS.recorderVideoBps,
+      audioBitsPerSecond: VIDEO_LIMITS.recorderAudioBps,
     });
     const recordedChunks: BlobPart[] = [];
     let discardRecording = false;
@@ -273,12 +244,12 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
       if (recordedChunks.length === 0) {
         const noDataError = "No video data captured. Please try recording again.";
         setValidationError(noDataError);
-        toast.error(noDataError);
         return;
       }
 
       setVideoValidationError(null);
       setVideoQualityWarning(null);
+      cancelledRef.current = false;
       loading.start("Processing video");
 
       try {
@@ -287,9 +258,11 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
         });
         await processVideoBlob(blob);
       } catch (err: any) {
-        const processingError = err.message || "Failed to process video";
-        setValidationError(processingError);
-        toast.error(processingError);
+        if (err instanceof Error && err.message === INVALID_VIDEO_FILE_ERROR) {
+          setValidationError(INVALID_VIDEO_FILE_ERROR);
+        } else {
+          setValidationError(GENERIC_VIDEO_PROCESSING_ERROR);
+        }
         console.error("Video sanitization error:", err);
       } finally {
         loading.stop();
@@ -313,7 +286,7 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
           "Upload duration of 20 seconds exceeded. Please record a shorter version.",
         );
       }
-    }, MAX_DURATION * 1000);
+    }, VIDEO_LIMITS.maxDurationSec * 1000);
   };
 
   const stopRecording = () => {
@@ -323,16 +296,52 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
   };
 
   const retakeVideo = () => {
+    // Signal any in-flight processing to bail out
+    cancelledRef.current = true;
+
     setShowCamera(false);
     setRecording(false);
     setVideoValidationError(null);
     setVideoQualityWarning(null);
+    loading.stop();
+    if (rawPreviewUri) URL.revokeObjectURL(rawPreviewUri);
+    setRawPreviewUri(null);
     video$.delete();
   };
 
   const phrase = isRenewal
     ? "I certify I am a real human and I reapply to keep being part of this registry"
     : "I certify that I am a real human and that I am not already registered in this registry";
+
+  // ─── Derived visual state ────────────────────────────────────────
+  const isPreparing = pending && !rawPreviewUri;
+  const isProcessing = pending && !!rawPreviewUri;
+  const hasError = !pending && !!rawPreviewUri && !!videoValidationError;
+  const isAccepted = !!video && !pending;
+  const isSourceSelection = !showCamera && !video && !pending && !rawPreviewUri;
+
+  const checklistItems = [
+    {
+      text: "Show your wallet address & your face in the same frame. Face forward, centered, well lit.",
+      isValid: true,
+    },
+    {
+      text: "Address must read left→right (not mirrored) and match the connected wallet.",
+      isValid: true,
+    },
+    {
+      text: `Say exactly: "${phrase}"`,
+      isValid: true,
+    },
+    {
+      text: "Show wallet address on a phone screen—clear, no shine. If on paper, confirm every character matches.",
+      isValid: true,
+    },
+    {
+      text: "Eyes, nose, mouth clearly visible (eyeglasses allowed, given no glare/reflection covering eyes).",
+      isValid: true,
+    },
+  ];
 
   return (
     <>
@@ -349,64 +358,45 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
         <strong className="my-2">{address}</strong>
         <span>and say the phrase</span>
         <span className="my-2">
-          <code className="text-orange">"</code>
+          <code className="text-orange">&quot;</code>
           <strong>{phrase}</strong>
-          <code className="text-orange">"</code>
+          <code className="text-orange">&quot;</code>
         </span>
       </span>
 
-      {!showCamera && !video && (
-        <Checklist
-          title="Video Checklist"
-          warning="Not following these guidelines will result in a loss of funds."
-          items={[
-            {
-              text: "Show your wallet address & your face in the same frame. Face forward, centered, well lit.",
-              isValid: true,
-            },
-            {
-              text: "Address must read left→right (not mirrored) and match the connected wallet.",
-              isValid: true,
-            },
-            {
-              text: `Say exactly: "${phrase}"`,
-              isValid: true,
-            },
-            {
-              text: "Show wallet address on a phone screen—clear, no shine. If on paper, confirm every character matches.",
-              isValid: true,
-            },
-            {
-              text: "Eyes, nose, mouth clearly visible (eyeglasses allowed, given no glare/reflection covering eyes).",
-              isValid: true,
-            },
-          ]}
-        />
+      {/* ── S1: Source Selection ── */}
+      {isSourceSelection && (
+        <>
+          <Checklist
+            title="Video Checklist"
+            warning="Not following these guidelines will result in a loss of funds."
+            items={checklistItems}
+          />
+
+          <div className="mt-6 flex w-full flex-col items-center">
+            <button
+              className="gradient flex w-full max-w-xl items-center justify-center gap-3 rounded-full px-6 py-4 text-lg font-semibold text-white shadow-lg transition hover:opacity-90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+              onClick={() => setShowCamera(true)}
+            >
+              <CameraIcon className="h-6 w-6 fill-white" />
+              <span>Record with Camera (Recommended)</span>
+            </button>
+
+            <span className="mt-2 text-sm font-semibold text-primaryText">OR</span>
+
+            <Uploader
+              className="mt-1 text-base font-semibold text-primary underline underline-offset-2 hover:text-orange focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-300"
+              type="video"
+              onDrop={handleUploadedVideo}
+            >
+              <span>Upload video</span>
+            </Uploader>
+          </div>
+        </>
       )}
 
-      {!showCamera && !video && (
-        <div className="mt-6 flex w-full flex-col items-center">
-          <button
-            className="gradient flex w-full max-w-xl items-center justify-center gap-3 rounded-full px-6 py-4 text-lg font-semibold text-white shadow-lg transition hover:opacity-90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
-            onClick={() => setShowCamera(true)}
-          >
-            <CameraIcon className="h-6 w-6 fill-white" />
-            <span>Record with Camera (Recommended)</span>
-          </button>
-
-          <span className="mt-2 text-sm font-semibold text-primaryText">OR</span>
-
-          <Uploader
-            className="mt-1 text-base font-semibold text-primary underline underline-offset-2 hover:text-orange focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-300"
-            type="video"
-            onDrop={handleUploadedVideo}
-          >
-            <span>Upload video</span>
-          </Uploader>
-        </div>
-      )}
-
-      {showCamera && (
+      {/* ── S2: Camera Live ── */}
+      {showCamera && !pending && (
         <>
           <div tabIndex={0} ref={fullscreenRef}>
             <Webcam
@@ -423,33 +413,13 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
           <Checklist
             title="Video Checklist"
             warning="Not following these guidelines will result in a loss of funds."
-            items={[
-              {
-                text: "Show your wallet address & your face in the same frame. Face forward, centered, well lit.",
-                isValid: true,
-              },
-              {
-                text: "Address must read left→right (not mirrored) and match the connected wallet.",
-                isValid: true,
-              },
-              {
-                text: `Say exactly: "${phrase}"`,
-                isValid: true,
-              },
-              {
-                text: "Show wallet address on a phone screen—clear, no shine. If on paper, confirm every character matches.",
-                isValid: true,
-              },
-              {
-                text: "Eyes, nose, mouth clearly visible (eyeglasses allowed, given no glare/reflection covering eyes).",
-                isValid: true,
-              },
-            ]}
+            items={checklistItems}
           />
         </>
       )}
 
-      {pending && (
+      {/* ── S3: Processing ── */}
+      {isPreparing && (
         <div className="mt-4 flex flex-col items-center">
           <button className="btn-main" disabled>
             <Image
@@ -459,41 +429,74 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
               height={12}
               width={12}
             />
-            {loadingMessage}...
+            {loadingMessage || "Processing video"}...
           </button>
         </div>
       )}
 
-      {!!video && !pending && (
+      {/* ── S3: Processing with raw preview ── */}
+      {isProcessing && (
+        <div className="mt-4 flex flex-col items-center">
+          <div className="relative w-full max-w-xl">
+            <video
+              src={rawPreviewUri!}
+              className="w-full rounded-lg opacity-60"
+              muted
+              playsInline
+            />
+            <div className="absolute inset-0 flex flex-col items-center justify-center rounded-lg bg-black/40">
+              <Image
+                alt="loading"
+                src="/logo/poh-white.svg"
+                className="animate-flip"
+                height={24}
+                width={24}
+              />
+              <span className="mt-2 text-sm font-semibold text-white">
+                {loadingMessage}...
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── S4/S5: Accepted (± warning) ── */}
+      {isAccepted && (
         <div className="flex flex-col items-center">
-          <video src={video.uri} controls />
+          <video src={video.uri} controls className="w-full max-w-xl rounded-lg" />
           {videoQualityWarning && (
             <span className="mt-3 text-center text-sm text-amber-500">
               {videoQualityWarning}
             </span>
           )}
-          {videoValidationError && (
-            <span className="mt-3 text-center text-sm text-red-500">
-              {videoValidationError}
-            </span>
-          )}
           <button
-            className="btn-main mt-4 disabled:cursor-not-allowed disabled:opacity-50"
+            className="btn-main mt-4"
             onClick={advance}
-            disabled={!!videoValidationError}
           >
             Next
           </button>
         </div>
       )}
 
-      {(showCamera || !!video) && !pending && (
+      {/* ── S6: Error with preview ── */}
+      {hasError && (
+        <div className="flex flex-col items-center">
+          <video src={rawPreviewUri!} controls className="w-full max-w-xl rounded-lg" />
+          <span className="mt-3 text-center text-sm text-red-500">
+            {videoValidationError}
+          </span>
+        </div>
+      )}
+
+      {/* ── Bottom action button ── */}
+      {((showCamera && !pending) || isAccepted || isProcessing || isPreparing || hasError) && (
         <button
-          className="centered text-orange mt-4 text-lg font-semibold uppercase"
+          className="centered text-orange mt-4 text-lg font-semibold uppercase disabled:opacity-50"
           onClick={() => retakeVideo()}
+          disabled={recording}
         >
           <ResetIcon className="fill-orange mr-2 h-6 w-6" />
-          {showCamera ? "Return" : "Retake"}
+          {(isProcessing || isPreparing) ? "Cancel" : showCamera ? "Return" : "Retake"}
         </button>
       )}
     </>

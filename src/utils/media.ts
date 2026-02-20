@@ -4,5 +4,20 @@ export {
   analyzeVideoFrameTiming,
   detectVideoFormat,
   getVideoMimeType,
+  readVideoMetadata,
   videoSanitizer,
 } from "./media.video";
+export type { VideoFrameTimingMetrics } from "./media.video";
+export {
+  getMinAverageBitrate,
+  getUploadedTypeLabel,
+  PHOTO_LIMITS,
+  VIDEO_LIMITS,
+  validatePhotoSize,
+  validatePhotoDimensions,
+  validatePhotoUpload,
+  validateVideoMetadata,
+  validateVideoQuality,
+  validateVideoType,
+} from "./media.validation";
+export type { ValidationResult, VideoMetadata } from "./media.validation";

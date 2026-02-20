@@ -9,8 +9,8 @@ interface UploaderProps
 }
 
 const MEDIA_TYPES = {
-  image: { "image/*": [".jpg", ".jpeg", ".png"] },
-  video: { "video/*": [".mp4", ".webm", ".mov", ".qt"] },
+  image: { "image/*": [".jpg", ".jpeg", ".png", ".webp"] },
+  video: { "video/*": [".mp4", ".webm", ".mov", ".qt", ".avi"] },
 };
 
 const Uploader: React.FC<UploaderProps> = ({
