@@ -176,6 +176,46 @@ export const analyzeVideoFrameTiming = async (
   return null;
 };
 
+export const getPrimaryVideoCodec = async (
+  inputBuffer: ArrayBufferLike,
+): Promise<string | null> => {
+  let inputName: string | null = null;
+  try {
+    await loadFFMPEG();
+
+    const inputArray = new Uint8Array(inputBuffer);
+    const inputFormat = detectVideoFormat(inputArray);
+    if (!inputFormat) throw new Error(INVALID_VIDEO_FILE_ERROR);
+
+    inputName = `${randomString(16)}.${inputFormat}`;
+    ffmpeg.FS("writeFile", inputName, inputArray);
+
+    let codec: string | null = null;
+    ffmpeg.setLogger(({ message }) => {
+      if (codec) return;
+
+      const codecMatch = message.match(/Video:\s*([a-zA-Z0-9_]+)/);
+      if (!codecMatch) return;
+
+      codec = codecMatch[1].toLowerCase();
+    });
+
+    try {
+      await ffmpeg.run("-i", inputName);
+    } catch {
+      // Expected since probe has no output target.
+    }
+
+    return codec;
+  } finally {
+    try {
+      if (inputName) ffmpeg.FS("unlink", inputName);
+    } catch {
+      // ignore cleanup failures
+    }
+  }
+};
+
 export const readVideoMetadata = (
   blob: Blob,
 ): Promise<{ duration: number; width: number; height: number }> =>
@@ -208,13 +248,12 @@ export const videoSanitizer = async (
   inputBuffer: ArrayBufferLike,
   maxSizeBytes?: number,
 ): Promise<Uint8Array> => {
-  const originalInput = new Uint8Array(inputBuffer);
   let inputName: string | null = null;
   let outputFilename: string | null = null;
   try {
     await loadFFMPEG();
 
-    const inputArray = originalInput;
+    const inputArray = new Uint8Array(inputBuffer);
     const inputFormat = detectVideoFormat(inputArray);
     if (!inputFormat) throw new Error(INVALID_VIDEO_FILE_ERROR);
     inputName = `${randomString(16)}.${inputFormat}`;
@@ -307,22 +346,11 @@ export const videoSanitizer = async (
     }
 
     ffmpegArgs.push(outputFilename);
-    try {
-      await ffmpeg.run(...ffmpegArgs);
-    } catch (err) {
-      console.error("❌ [FFmpeg] Processing failed:", err);
-      return originalInput;
-    }
-
-    try {
-      return ffmpeg.FS("readFile", outputFilename);
-    } catch (err) {
-      console.error("❌ [FFmpeg] Output file missing after processing:", err);
-      return originalInput;
-    }
+    await ffmpeg.run(...ffmpegArgs);
+    return ffmpeg.FS("readFile", outputFilename);
   } catch (err) {
     console.error("❌ [Video Sanitizer] Error during processing:", err);
-    return originalInput;
+    throw err instanceof Error ? err : new Error("Video sanitization failed.");
   } finally {
     try {
       if (inputName) ffmpeg.FS("unlink", inputName);

@@ -7,24 +7,18 @@ import { useLoading } from "hooks/useLoading";
 import CameraIcon from "icons/CameraMajor.svg";
 import ResetIcon from "icons/ResetMinor.svg";
 import Image from "next/image";
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import ReactWebcam from "react-webcam";
 import { toast } from "react-toastify";
 import {
   IS_IOS,
-  analyzeVideoFrameTiming,
-  videoSanitizer,
-  detectVideoFormat,
-  getVideoMimeType,
-  readVideoMetadata,
+  processVideoInput,
+  VIDEO_PIPELINE_MESSAGES,
   VIDEO_LIMITS,
-  validateVideoType,
-  validateVideoMetadata,
-  validateVideoQuality,
+  type VideoInputSource,
 } from "utils/media";
 import { useAccount } from "wagmi";
 import { MediaState } from "./Form";
-
 
 interface PhotoProps {
   advance: () => void;
@@ -32,11 +26,6 @@ interface PhotoProps {
   isRenewal: boolean;
   videoError: (error: string) => void;
 }
-
-const GENERIC_VIDEO_PROCESSING_ERROR =
-  "Something went wrong while processing the video. Please try again.";
-const INVALID_VIDEO_FILE_ERROR =
-  "Invalid or corrupted video file. Please upload a valid WEBM, MP4, AVI, or MOV video.";
 
 function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
   const video = video$.use();
@@ -72,88 +61,54 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
     videoError(message);
   };
 
-  const processVideoBlob = async (blob: Blob) => {
+  const setGenericProcessingError = () => {
+    setValidationError(VIDEO_PIPELINE_MESSAGES.genericProcessingError);
+  };
+
+  const processVideoBlob = async (blob: Blob, source: VideoInputSource) => {
     // Show a raw preview immediately so user sees their video while processing
     const previewUrl = URL.createObjectURL(blob);
-    setRawPreviewUri(previewUrl);
+    setRawPreviewUri((prev) => {
+      if (prev) URL.revokeObjectURL(prev);
+      return previewUrl;
+    });
 
-    // 1. Sanitize via FFmpeg (strips metadata, compresses if needed)
     const needsCompression = blob.size > VIDEO_LIMITS.maxSizeBytes;
     if (needsCompression) {
       loading.start("Compressing video");
     }
 
-    const buffer = await blob.arrayBuffer();
-    if (cancelledRef.current) return;
-
-    const sanitized = await videoSanitizer(buffer, VIDEO_LIMITS.maxSizeBytes);
-    if (cancelledRef.current) return;
-
-    const sanitizedArray = sanitized;
-    const detectedFormat = detectVideoFormat(sanitizedArray);
-    if (!detectedFormat) {
-      throw new Error(INVALID_VIDEO_FILE_ERROR);
-    }
-    const outputType = getVideoMimeType(detectedFormat);
-    const sanitizedBlob = new Blob([sanitizedArray.slice().buffer], {
-      type: outputType,
-    });
-
-    // 2. Extract metadata and frame timing
-    const [frameTiming, { duration, width, height }] = await Promise.all([
-      analyzeVideoFrameTiming(sanitizedArray.buffer),
-      readVideoMetadata(sanitizedBlob),
-    ]);
-    if (cancelledRef.current) return;
-
-    // 3. Validate hard limits (duration, size, dimensions)
-    const metaResult = validateVideoMetadata({
-      duration,
-      width,
-      height,
-      sizeBytes: sanitizedBlob.size,
-    });
-    if (!metaResult.ok) {
-      setValidationError(metaResult.error);
+    const result = await processVideoInput(blob, source);
+    if (cancelledRef.current) {
+      URL.revokeObjectURL(previewUrl);
       return;
     }
 
-    // 4. Validate quality (FPS, frame gaps, bitrate)
-    const qualityResult = validateVideoQuality(frameTiming, {
-      duration,
-      width,
-      height,
-      sizeBytes: sanitizedBlob.size,
-    });
-    if (!qualityResult.ok) {
-      setValidationError(qualityResult.error);
+    if (!result.ok) {
+      setValidationError(result.error.userMessage);
       return;
     }
 
-    // Final cancel check before committing
-    if (cancelledRef.current) return;
-
-    // 5. Apply warnings (non-blocking)
     setVideoQualityWarning(null);
-    if (qualityResult.warnings.length > 0) {
-      const warning = qualityResult.warnings[0];
+    if (result.data.warnings.length > 0) {
+      const warning = result.data.warnings[0];
       setVideoQualityWarning(warning);
       toast.warn(warning);
     }
 
-    // 6. Accept video
     setVideoValidationError(null);
     URL.revokeObjectURL(previewUrl);
     setRawPreviewUri(null);
 
+    if (video?.uri) URL.revokeObjectURL(video.uri);
     video$.set({
-      content: sanitizedBlob,
-      uri: URL.createObjectURL(sanitizedBlob),
+      content: result.data.blob,
+      uri: URL.createObjectURL(result.data.blob),
     });
     setRecording(false);
     setShowCamera(false);
 
-    if (needsCompression) {
+    if (needsCompression && result.data.didCompress) {
       toast.success("Video compressed successfully");
     }
   };
@@ -162,39 +117,15 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
     const file = received[0];
     if (!file) return;
 
-    const typeResult = validateVideoType(file.type);
-    if (!typeResult.ok) {
-      setValidationError(typeResult.error);
-      console.error(typeResult.error);
-      return;
-    }
-
-    // Pre-compression duration check — reject obviously long videos without wasting FFmpeg time
-    try {
-      const rawMeta = await readVideoMetadata(file);
-      if (rawMeta.duration > VIDEO_LIMITS.maxDurationSec) {
-        setValidationError(
-          `Video is too long (${Math.round(rawMeta.duration)}s). Maximum allowed duration is ${VIDEO_LIMITS.maxDurationSec} seconds.`,
-        );
-        return;
-      }
-    } catch {
-      // If we can't read metadata pre-check, proceed anyway — FFmpeg will catch issues
-    }
-
     setVideoValidationError(null);
     setVideoQualityWarning(null);
     cancelledRef.current = false;
     loading.start("Processing video");
 
     try {
-      await processVideoBlob(file);
-    } catch (err: any) {
-      if (err instanceof Error && err.message === INVALID_VIDEO_FILE_ERROR) {
-        setValidationError(INVALID_VIDEO_FILE_ERROR);
-      } else {
-        setValidationError(GENERIC_VIDEO_PROCESSING_ERROR);
-      }
+      await processVideoBlob(file, "upload");
+    } catch (err: unknown) {
+      setGenericProcessingError();
       console.error("Video upload processing error:", err);
     } finally {
       loading.stop();
@@ -224,6 +155,7 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
       videoBitsPerSecond: VIDEO_LIMITS.recorderVideoBps,
       audioBitsPerSecond: VIDEO_LIMITS.recorderAudioBps,
     });
+
     const recordedChunks: BlobPart[] = [];
     let discardRecording = false;
 
@@ -256,13 +188,9 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
         const blob = new Blob(recordedChunks, {
           type: IS_IOS ? "video/mp4" : "video/webm",
         });
-        await processVideoBlob(blob);
-      } catch (err: any) {
-        if (err instanceof Error && err.message === INVALID_VIDEO_FILE_ERROR) {
-          setValidationError(INVALID_VIDEO_FILE_ERROR);
-        } else {
-          setValidationError(GENERIC_VIDEO_PROCESSING_ERROR);
-        }
+        await processVideoBlob(blob, "record");
+      } catch (err: unknown) {
+        setGenericProcessingError();
         console.error("Video sanitization error:", err);
       } finally {
         loading.stop();
@@ -306,8 +234,16 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
     loading.stop();
     if (rawPreviewUri) URL.revokeObjectURL(rawPreviewUri);
     setRawPreviewUri(null);
+    if (video?.uri) URL.revokeObjectURL(video.uri);
     video$.delete();
   };
+
+  useEffect(
+    () => () => {
+      if (rawPreviewUri) URL.revokeObjectURL(rawPreviewUri);
+    },
+    [rawPreviewUri],
+  );
 
   const phrase = isRenewal
     ? "I certify I am a real human and I reapply to keep being part of this registry"

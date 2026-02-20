@@ -14,9 +14,7 @@ export const VIDEO_LIMITS = {
         "video/webm",
         "video/mp4",
         "video/x-msvideo",
-        "video/avi",
         "video/quicktime",
-        "video/mov",
     ] as readonly string[],
     allowedFormatsLabel: "webm, mp4, avi, mov",
 } as const;
@@ -51,11 +49,21 @@ const fail = (error: string): ValidationResult => ({ ok: false, error });
 
 /** Check if a MIME type is in the allowed video types list. */
 export function validateVideoType(mimeType: string): ValidationResult {
-    if (VIDEO_LIMITS.allowedTypes.includes(mimeType)) return pass();
+    const normalizedType = normalizeVideoMimeType(mimeType);
+    if (VIDEO_LIMITS.allowedTypes.includes(normalizedType)) return pass();
     const label = getUploadedTypeLabel(mimeType);
     return fail(
         `Uploaded file type: ${label}. Unsupported video format. Please use ${VIDEO_LIMITS.allowedFormatsLabel}.`,
     );
+}
+
+/** Normalize browser MIME aliases to backend-accepted canonical video MIME types. */
+export function normalizeVideoMimeType(type: string): string {
+    const baseType = type.split(";")[0]?.trim().toLowerCase();
+    if (!baseType) return type;
+    if (baseType === "video/avi") return "video/x-msvideo";
+    if (baseType === "video/mov") return "video/quicktime";
+    return baseType;
 }
 
 /**

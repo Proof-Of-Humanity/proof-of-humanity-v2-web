@@ -14,7 +14,7 @@ import ResetIcon from "icons/ResetMinor.svg";
 import ZoomIcon from "icons/SearchMajor.svg";
 import CameraIcon from "icons/CameraMajor.svg";
 import Image, { StaticImageData } from "next/image";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Cropper from "react-easy-crop";
 import type { Area, Point } from "react-easy-crop/types";
 import { toast } from "react-toastify";
@@ -85,11 +85,10 @@ function Photo({ advance, photo$ }: PhotoProps) {
     }
 
     loading.start("Cropping photo");
-
-    const cropped = await getCroppedPhoto(originalPhoto.uri, cropPixels);
-    if (!cropped) return;
-
     try {
+      const cropped = await getCroppedPhoto(originalPhoto.uri, cropPixels);
+      if (!cropped) return;
+
       const sanitized = await sanitizeImage(
         Buffer.from(base64ToUint8Array(cropped.split(",")[1])),
       );
@@ -98,12 +97,13 @@ function Photo({ advance, photo$ }: PhotoProps) {
         return;
       }
 
+      if (photo?.uri) URL.revokeObjectURL(photo.uri);
       photo$.set({ content: sanitized, uri: URL.createObjectURL(sanitized) });
     } catch (err: any) {
       toast.error(err.message);
+    } finally {
+      loading.stop();
     }
-
-    loading.stop();
   };
 
   const takePhoto = async () => {
@@ -114,6 +114,7 @@ function Photo({ advance, photo$ }: PhotoProps) {
     if (!screenshot) return;
 
     const buffer = Buffer.from(base64ToUint8Array(screenshot.split(",")[1]));
+    if (originalPhoto?.uri) URL.revokeObjectURL(originalPhoto.uri);
     setOriginalPhoto({
       uri: URL.createObjectURL(new Blob([buffer], { type: "buffer" })),
       buffer,
@@ -124,6 +125,8 @@ function Photo({ advance, photo$ }: PhotoProps) {
 
   const retakePhoto = () => {
     setShowCamera(false);
+    if (photo?.uri) URL.revokeObjectURL(photo.uri);
+    if (originalPhoto?.uri) URL.revokeObjectURL(originalPhoto.uri);
     photo$.delete();
     setOriginalPhoto(null);
     setZoom(1);
@@ -131,6 +134,13 @@ function Photo({ advance, photo$ }: PhotoProps) {
     setCropPixels(null);
     loading.stop();
   };
+
+  useEffect(
+    () => () => {
+      if (originalPhoto?.uri) URL.revokeObjectURL(originalPhoto.uri);
+    },
+    [originalPhoto?.uri],
+  );
 
   return (
     <>
@@ -214,9 +224,13 @@ function Photo({ advance, photo$ }: PhotoProps) {
                   toast.error(uploadResult.error);
                   return;
                 }
-                setOriginalPhoto({
-                  uri: URL.createObjectURL(new Blob([file], { type: file.type })),
-                  buffer: Buffer.from(await file.arrayBuffer()),
+                const nextBuffer = Buffer.from(await file.arrayBuffer());
+                setOriginalPhoto((prev) => {
+                  if (prev?.uri) URL.revokeObjectURL(prev.uri);
+                  return {
+                    uri: URL.createObjectURL(new Blob([file], { type: file.type })),
+                    buffer: nextBuffer,
+                  };
                 });
               }}
               disabled={!!originalPhoto}

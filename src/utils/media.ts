@@ -8,6 +8,14 @@ export {
   videoSanitizer,
 } from "./media.video";
 export type { VideoFrameTimingMetrics } from "./media.video";
+export { processVideoInput, VIDEO_PIPELINE_MESSAGES } from "./video.pipeline";
+export type {
+  VideoInputSource,
+  VideoPipelineError,
+  VideoPipelineErrorCode,
+  VideoPipelineResult,
+  VideoPipelineSuccess,
+} from "./video.pipeline";
 export {
   getMinAverageBitrate,
   getUploadedTypeLabel,
