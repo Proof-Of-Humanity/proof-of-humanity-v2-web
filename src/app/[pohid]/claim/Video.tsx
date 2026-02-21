@@ -12,10 +12,9 @@ import ReactWebcam from "react-webcam";
 import { toast } from "react-toastify";
 import {
   IS_IOS,
+  MEDIA_MESSAGES,
   processVideoInput,
-  VIDEO_PIPELINE_MESSAGES,
   VIDEO_LIMITS,
-  type VideoInputSource,
 } from "utils/media";
 import { useAccount } from "wagmi";
 import { MediaState } from "./Form";
@@ -62,10 +61,10 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
   };
 
   const setGenericProcessingError = () => {
-    setValidationError(VIDEO_PIPELINE_MESSAGES.genericProcessingError);
+    setValidationError(MEDIA_MESSAGES.genericVideoProcessingError);
   };
 
-  const processVideoBlob = async (blob: Blob, source: VideoInputSource) => {
+  const processVideoBlob = async (blob: Blob) => {
     // Show a raw preview immediately so user sees their video while processing
     const previewUrl = URL.createObjectURL(blob);
     setRawPreviewUri((prev) => {
@@ -78,20 +77,22 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
       loading.start("Compressing video");
     }
 
-    const result = await processVideoInput(blob, source);
+    const result = await processVideoInput(blob);
     if (cancelledRef.current) {
       URL.revokeObjectURL(previewUrl);
       return;
     }
 
-    if (!result.ok) {
+    if (!result.success) {
       setValidationError(result.error.userMessage);
       return;
     }
 
+    const processed = result.data;
+
     setVideoQualityWarning(null);
-    if (result.data.warnings.length > 0) {
-      const warning = result.data.warnings[0];
+    if (processed.warnings.length > 0) {
+      const warning = processed.warnings[0];
       setVideoQualityWarning(warning);
       toast.warn(warning);
     }
@@ -102,13 +103,13 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
 
     if (video?.uri) URL.revokeObjectURL(video.uri);
     video$.set({
-      content: result.data.blob,
-      uri: URL.createObjectURL(result.data.blob),
+      content: processed.blob,
+      uri: URL.createObjectURL(processed.blob),
     });
     setRecording(false);
     setShowCamera(false);
 
-    if (needsCompression && result.data.didCompress) {
+    if (needsCompression && processed.didCompress) {
       toast.success("Video compressed successfully");
     }
   };
@@ -123,7 +124,7 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
     loading.start("Processing video");
 
     try {
-      await processVideoBlob(file, "upload");
+      await processVideoBlob(file);
     } catch (err: unknown) {
       setGenericProcessingError();
       console.error("Video upload processing error:", err);
@@ -188,7 +189,7 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
         const blob = new Blob(recordedChunks, {
           type: IS_IOS ? "video/mp4" : "video/webm",
         });
-        await processVideoBlob(blob, "record");
+        await processVideoBlob(blob);
       } catch (err: unknown) {
         setGenericProcessingError();
         console.error("Video sanitization error:", err);

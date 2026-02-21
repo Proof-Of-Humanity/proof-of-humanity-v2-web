@@ -1,10 +1,10 @@
 import { FFmpeg, createFFmpeg } from "@ffmpeg/ffmpeg";
+import { MEDIA_MESSAGES } from "./media.messages";
 import { randomString } from "./misc";
 
 let ffmpeg: FFmpeg;
 
-const INVALID_VIDEO_FILE_ERROR =
-  "Invalid or corrupted video file. Please upload a valid WEBM, MP4, AVI, or MOV video.";
+const UNRECOGNIZED_FORMAT_ERROR = MEDIA_MESSAGES.invalidVideoFile;
 
 const loadFFMPEG = async () => {
   if (typeof SharedArrayBuffer === "undefined") {
@@ -96,7 +96,7 @@ export const analyzeVideoFrameTiming = async (
 
     const inputArray = new Uint8Array(inputBuffer);
     const inputFormat = detectVideoFormat(inputArray);
-    if (!inputFormat) throw new Error(INVALID_VIDEO_FILE_ERROR);
+    if (!inputFormat) throw new Error(UNRECOGNIZED_FORMAT_ERROR);
     const inputName = `${randomString(16)}.${inputFormat}`;
 
     ffmpeg.FS("writeFile", inputName, inputArray);
@@ -185,7 +185,7 @@ export const getPrimaryVideoCodec = async (
 
     const inputArray = new Uint8Array(inputBuffer);
     const inputFormat = detectVideoFormat(inputArray);
-    if (!inputFormat) throw new Error(INVALID_VIDEO_FILE_ERROR);
+    if (!inputFormat) throw new Error(UNRECOGNIZED_FORMAT_ERROR);
 
     inputName = `${randomString(16)}.${inputFormat}`;
     ffmpeg.FS("writeFile", inputName, inputArray);
@@ -255,7 +255,7 @@ export const videoSanitizer = async (
 
     const inputArray = new Uint8Array(inputBuffer);
     const inputFormat = detectVideoFormat(inputArray);
-    if (!inputFormat) throw new Error(INVALID_VIDEO_FILE_ERROR);
+    if (!inputFormat) throw new Error(UNRECOGNIZED_FORMAT_ERROR);
     inputName = `${randomString(16)}.${inputFormat}`;
     outputFilename = `${randomString(16)}.${inputFormat}`;
 

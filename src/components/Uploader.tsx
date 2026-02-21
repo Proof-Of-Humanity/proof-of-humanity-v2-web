@@ -1,5 +1,6 @@
 import React from "react";
 import { useDropzone } from "react-dropzone";
+import { MEDIA_UPLOAD_ACCEPT } from "utils/media";
 
 interface UploaderProps
   extends Omit<React.HTMLAttributes<HTMLDivElement>, "onDrop"> {
@@ -7,11 +8,6 @@ interface UploaderProps
   type: "all" | "video" | "image";
   disabled?: boolean;
 }
-
-const MEDIA_TYPES = {
-  image: { "image/*": [".jpg", ".jpeg", ".png", ".webp"] },
-  video: { "video/*": [".mp4", ".webm", ".mov", ".qt", ".avi"] },
-};
 
 const Uploader: React.FC<UploaderProps> = ({
   onDrop,
@@ -24,7 +20,7 @@ const Uploader: React.FC<UploaderProps> = ({
     onDrop,
     disabled,
     multiple: false,
-    accept: type !== "all" ? MEDIA_TYPES[type] : undefined,
+    accept: type !== "all" ? MEDIA_UPLOAD_ACCEPT[type] : undefined,
   });
 
   return (

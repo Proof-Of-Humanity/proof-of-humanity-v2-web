@@ -19,15 +19,16 @@ import Cropper from "react-easy-crop";
 import type { Area, Point } from "react-easy-crop/types";
 import { toast } from "react-toastify";
 import ReactWebcam from "react-webcam";
-import { getCroppedPhoto, sanitizeImage, validatePhotoUpload, PHOTO_LIMITS } from "utils/media";
+import {
+  getCroppedPhoto,
+  sanitizeImage,
+  validatePhotoUpload,
+  validatePhotoDimensions,
+  validatePhotoSize,
+  PHOTO_LIMITS,
+} from "utils/media";
 import { base64ToUint8Array } from "utils/misc";
 import { MediaState } from "./Form";
-
-const MIN_DIMS = { width: PHOTO_LIMITS.minWidth, height: PHOTO_LIMITS.minHeight }; // PXs
-const ERROR_MSG = {
-  dimensions: `Photo dimensions are too small. Minimum dimensions are ${PHOTO_LIMITS.minWidth}px by ${PHOTO_LIMITS.minHeight}px`,
-  size: `Photo is oversized. Maximum allowed size is ${PHOTO_LIMITS.maxSizeMb}mb`,
-};
 
 interface PhotoProps {
   advance: () => void;
@@ -61,7 +62,6 @@ function Photo({ advance, photo$ }: PhotoProps) {
 
   const [originalPhoto, setOriginalPhoto] = useState<{
     uri: string;
-    buffer: Buffer;
   } | null>(null);
 
   const [showCamera, setShowCamera] = useState(false);
@@ -70,18 +70,18 @@ function Photo({ advance, photo$ }: PhotoProps) {
   const [crop, setCrop] = useState<Point>({ x: 0, y: 0 });
   const [maxZoom, setMaxZoom] = useState(3);
   const [zoom, setZoom] = useState(1);
+  const cropTooSmallRef = useRef(false);
 
   const loading = useLoading();
   const [pending, loadingMessage] = loading.use();
 
   const onCrop = async () => {
     if (!cropPixels || !originalPhoto) return;
-    if (
-      cropPixels.width < MIN_DIMS.width ||
-      cropPixels.height < MIN_DIMS.height
-    ) {
-      toast.error(ERROR_MSG.dimensions);
-      return console.error("Dimensions error");
+
+    const dimensionError = validatePhotoDimensions(cropPixels.width, cropPixels.height);
+    if (dimensionError) {
+      toast.error(dimensionError);
+      return;
     }
 
     loading.start("Cropping photo");
@@ -92,8 +92,10 @@ function Photo({ advance, photo$ }: PhotoProps) {
       const sanitized = await sanitizeImage(
         Buffer.from(base64ToUint8Array(cropped.split(",")[1])),
       );
-      if (sanitized.size > PHOTO_LIMITS.maxSizeBytes) {
-        toast.error(ERROR_MSG.size);
+
+      const sizeError = validatePhotoSize(sanitized.size);
+      if (sizeError) {
+        toast.error(sizeError);
         return;
       }
 
@@ -116,8 +118,7 @@ function Photo({ advance, photo$ }: PhotoProps) {
     const buffer = Buffer.from(base64ToUint8Array(screenshot.split(",")[1]));
     if (originalPhoto?.uri) URL.revokeObjectURL(originalPhoto.uri);
     setOriginalPhoto({
-      uri: URL.createObjectURL(new Blob([buffer], { type: "buffer" })),
-      buffer,
+      uri: URL.createObjectURL(new Blob([buffer], { type: "image/jpeg" })),
     });
 
     setShowCamera(false);
@@ -132,6 +133,7 @@ function Photo({ advance, photo$ }: PhotoProps) {
     setZoom(1);
     setCrop({ x: 0, y: 0 });
     setCropPixels(null);
+    cropTooSmallRef.current = false;
     loading.stop();
   };
 
@@ -177,28 +179,24 @@ function Photo({ advance, photo$ }: PhotoProps) {
             </div>
           </div>
 
-          {!showCamera && !originalPhoto && !photo && (
-            <>
-              <Checklist
-                title="Photo Checklist"
-                warning="Not following these guidelines will result in a loss of funds."
-                items={[
-                  {
-                    text: "Face forward, centered, well lit.",
-                    isValid: true,
-                  },
-                  {
-                    text: "Eyes, nose, mouth visible (eyeglasses allowed, given no glare/reflection covering eyes).",
-                    isValid: true,
-                  },
-                  {
-                    text: "No masks/veils covering facial features.",
-                    isValid: false,
-                  },
-                ]}
-              />
-            </>
-          )}
+          <Checklist
+            title="Photo Checklist"
+            warning="Not following these guidelines will result in a loss of funds."
+            items={[
+              {
+                text: "Face forward, centered, well lit.",
+                isValid: true,
+              },
+              {
+                text: "Eyes, nose, mouth visible (eyeglasses allowed, given no glare/reflection covering eyes).",
+                isValid: true,
+              },
+              {
+                text: "No masks/veils covering facial features.",
+                isValid: false,
+              },
+            ]}
+          />
 
           <div className="mt-6 flex w-full flex-col items-center">
             <button
@@ -216,20 +214,18 @@ function Photo({ advance, photo$ }: PhotoProps) {
             <Uploader
               className="mt-1 text-base font-semibold text-primary underline underline-offset-2 hover:text-orange focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-300"
               type="image"
-              onDrop={async (received) => {
+              onDrop={(received) => {
                 const file = received[0];
                 if (!file) return;
-                const uploadResult = validatePhotoUpload(file);
-                if (!uploadResult.ok) {
-                  toast.error(uploadResult.error);
+                const uploadError = validatePhotoUpload(file);
+                if (uploadError) {
+                  toast.error(uploadError);
                   return;
                 }
-                const nextBuffer = Buffer.from(await file.arrayBuffer());
                 setOriginalPhoto((prev) => {
                   if (prev?.uri) URL.revokeObjectURL(prev.uri);
                   return {
-                    uri: URL.createObjectURL(new Blob([file], { type: file.type })),
-                    buffer: nextBuffer,
+                    uri: URL.createObjectURL(file),
                   };
                 });
               }}
@@ -278,19 +274,24 @@ function Photo({ advance, photo$ }: PhotoProps) {
               onCropChange={setCrop}
               onCropComplete={(_area, croppedPixels) => {
                 setCropPixels(croppedPixels);
-                if (
-                  croppedPixels.width < MIN_DIMS.width ||
-                  croppedPixels.height < MIN_DIMS.height
-                ) {
-                  toast.error(ERROR_MSG.dimensions);
-                  console.error("Size error");
+                const dimensionError = validatePhotoDimensions(
+                  croppedPixels.width,
+                  croppedPixels.height,
+                );
+                const tooSmall = !!dimensionError;
+                if (tooSmall && !cropTooSmallRef.current) {
+                  cropTooSmallRef.current = true;
+                  toast.error(dimensionError);
+                } else if (!tooSmall) {
+                  cropTooSmallRef.current = false;
                 }
               }}
               onZoomChange={setZoom}
               onMediaLoaded={(media) => {
                 setMaxZoom(
                   Math.floor(
-                    Math.min(media.naturalWidth, media.naturalHeight) / 256,
+                    Math.min(media.naturalWidth, media.naturalHeight) /
+                      Math.min(PHOTO_LIMITS.minWidth, PHOTO_LIMITS.minHeight),
                   ),
                 );
               }}
