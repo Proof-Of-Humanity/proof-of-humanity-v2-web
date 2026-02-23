@@ -1,6 +1,8 @@
 import { ObservableObject } from "@legendapp/state";
 import Checklist from "components/Checklist";
+import Uploader from "components/Uploader";
 import Webcam from "components/Webcam";
+import getBlobDuration from "get-blob-duration";
 import useFullscreen from "hooks/useFullscreen";
 import { useLoading } from "hooks/useLoading";
 import CameraIcon from "icons/CameraMajor.svg";
@@ -9,7 +11,12 @@ import Image from "next/image";
 import React, { useRef, useState } from "react";
 import ReactWebcam from "react-webcam";
 import { toast } from "react-toastify";
-import { IS_IOS, videoSanitizer, detectVideoFormat, getVideoMimeType } from "utils/media";
+import {
+  detectVideoFormat,
+  getVideoMimeType,
+  IS_IOS,
+  videoSanitizer,
+} from "utils/media";
 import { useAccount } from "wagmi";
 import { MediaState } from "./Form";
 
@@ -18,6 +25,8 @@ const ALLOWED_VIDEO_TYPES = [
   "video/mp4",
   "video/avi",
   "video/mov",
+  "video/quicktime",
+  "video/x-msvideo",
 ];
 const MIN_DIMS = { width: 352, height: 352 }; // PXs
 
@@ -58,11 +67,30 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
   const loading = useLoading();
   const [pending, loadingMessage] = loading.use();
 
+  const checkVideoSize = (blob: Blob) => {
+    if (MAX_SIZE_BYTES && blob.size > MAX_SIZE_BYTES) {
+      videoError(ERROR_MSG.size);
+      console.error(ERROR_MSG.size);
+      return false;
+    }
+    return true;
+  };
+
+  const checkVideoDuration = async (blob: Blob) => {
+    const duration = await getBlobDuration(blob);
+    if (duration > MAX_DURATION) {
+      videoError(ERROR_MSG.duration);
+      console.error(ERROR_MSG.duration);
+      return false;
+    }
+    return true;
+  };
+
   const startRecording = () => {
     if (!camera || !camera.stream) return;
-    
+
     if (timerRef.current) clearTimeout(timerRef.current);
-    
+
     const mediaRecorder = new MediaRecorder(camera.stream, {
       mimeType: IS_IOS ? 'video/mp4;codecs="h264"' : 'video/webm; codecs="vp8"',
     });
@@ -84,7 +112,7 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
         const buffer = await blob.arrayBuffer();
         const sanitized = await videoSanitizer(buffer, MAX_SIZE_BYTES);
         const sanitizedArray = new Uint8Array(sanitized as ArrayBuffer);
-        
+
         const detectedFormat = detectVideoFormat(sanitizedArray);
         const outputType = getVideoMimeType(detectedFormat);
         const sanitizedBlob = new Blob([sanitizedArray], { type: outputType });
@@ -97,7 +125,7 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
 
         video$.set({ content: sanitizedBlob, uri: URL.createObjectURL(sanitizedBlob) });
         setShowCamera(false);
-        
+
         if (needsCompression) {
           toast.success("Video compressed successfully");
         }
@@ -119,7 +147,7 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
 
     setRecorder(mediaRecorder);
     setRecording(true);
-    
+
     // Auto-stop recording at MAX_DURATION
     timerRef.current = setTimeout(() => {
       if (mediaRecorder.state === "recording") {
@@ -157,7 +185,7 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
 
       <span className="mx-12 my-8 flex flex-col text-center">
         <span>
-        Record a short video: hold your phone showing this wallet address (readable, no glare)
+          Record a short video: hold your phone showing this wallet address (readable, no glare)
         </span>
         <strong className="my-2">{address}</strong>
         <span>and say the phrase</span>
@@ -204,8 +232,61 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
             onClick={() => setShowCamera(true)}
           >
             <CameraIcon className="h-6 w-6 fill-white" />
-            <span>Record with camera</span>
+            <span>Record with Camera (Recommended)</span>
           </button>
+
+          <span className="mt-2 text-sm font-semibold text-primaryText">OR</span>
+
+          <Uploader
+            className="mt-1 text-base font-semibold text-primary underline underline-offset-2 hover:text-orange focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-300"
+            type="video"
+            onDrop={async (received) => {
+              try {
+                const file = received[0];
+                if (!file) return;
+
+                if (!ALLOWED_VIDEO_TYPES.includes(file.type)) {
+                  const msg =
+                    "Uploaded file type: " +
+                    file.type.split("/")[1] +
+                    ". ".concat(ERROR_MSG.fileType);
+                  videoError(msg);
+                  console.error(msg);
+                  return;
+                }
+
+                const blob = new Blob([file], { type: file.type });
+                const uri = URL.createObjectURL(blob);
+
+                if (!(await checkVideoDuration(blob))) return;
+                if (!checkVideoSize(blob)) return;
+
+                const vid = document.createElement("video");
+                vid.crossOrigin = "anonymous";
+                vid.src = uri;
+                vid.preload = "auto";
+
+                vid.addEventListener("loadeddata", () => {
+                  if (
+                    vid.videoWidth < MIN_DIMS.width ||
+                    vid.videoHeight < MIN_DIMS.height
+                  ) {
+                    videoError(ERROR_MSG.dimensions);
+                    console.error(ERROR_MSG.dimensions);
+                    return;
+                  }
+
+                  setRecording(false);
+                  video$.set({ uri, content: blob });
+                });
+              } catch (error: any) {
+                videoError(ERROR_MSG.unexpected);
+                console.error(error);
+              }
+            }}
+          >
+            <span>Upload video</span>
+          </Uploader>
         </div>
       )}
 
