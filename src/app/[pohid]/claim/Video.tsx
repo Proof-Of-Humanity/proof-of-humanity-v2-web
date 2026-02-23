@@ -25,6 +25,8 @@ const ALLOWED_VIDEO_TYPES = [
   "video/mp4",
   "video/avi",
   "video/mov",
+  "video/quicktime",
+  "video/x-msvideo",
 ];
 const MIN_DIMS = { width: 352, height: 352 }; // PXs
 
@@ -86,9 +88,9 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
 
   const startRecording = () => {
     if (!camera || !camera.stream) return;
-    
+
     if (timerRef.current) clearTimeout(timerRef.current);
-    
+
     const mediaRecorder = new MediaRecorder(camera.stream, {
       mimeType: IS_IOS ? 'video/mp4;codecs="h264"' : 'video/webm; codecs="vp8"',
     });
@@ -110,7 +112,7 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
         const buffer = await blob.arrayBuffer();
         const sanitized = await videoSanitizer(buffer, MAX_SIZE_BYTES);
         const sanitizedArray = new Uint8Array(sanitized as ArrayBuffer);
-        
+
         const detectedFormat = detectVideoFormat(sanitizedArray);
         const outputType = getVideoMimeType(detectedFormat);
         const sanitizedBlob = new Blob([sanitizedArray], { type: outputType });
@@ -123,7 +125,7 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
 
         video$.set({ content: sanitizedBlob, uri: URL.createObjectURL(sanitizedBlob) });
         setShowCamera(false);
-        
+
         if (needsCompression) {
           toast.success("Video compressed successfully");
         }
@@ -145,7 +147,7 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
 
     setRecorder(mediaRecorder);
     setRecording(true);
-    
+
     // Auto-stop recording at MAX_DURATION
     timerRef.current = setTimeout(() => {
       if (mediaRecorder.state === "recording") {
@@ -183,7 +185,7 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
 
       <span className="mx-12 my-8 flex flex-col text-center">
         <span>
-        Record a short video: hold your phone showing this wallet address (readable, no glare)
+          Record a short video: hold your phone showing this wallet address (readable, no glare)
         </span>
         <strong className="my-2">{address}</strong>
         <span>and say the phrase</span>
