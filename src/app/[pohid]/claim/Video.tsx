@@ -1,5 +1,6 @@
 import { ObservableObject } from "@legendapp/state";
 import Checklist from "components/Checklist";
+import Uploader from "components/Uploader";
 import Webcam from "components/Webcam";
 import useFullscreen from "hooks/useFullscreen";
 import { useLoading } from "hooks/useLoading";
@@ -16,7 +17,9 @@ import { MediaState } from "./Form";
 const ALLOWED_VIDEO_TYPES = [
   "video/webm",
   "video/mp4",
+  "video/x-msvideo",
   "video/avi",
+  "video/quicktime",
   "video/mov",
 ];
 const MIN_DIMS = { width: 352, height: 352 }; // PXs
@@ -30,6 +33,15 @@ const ERROR_MSG = {
   size: `Video is oversized. Maximum allowed size is ${MAX_SIZE}mb`,
   fileType: `Unsupported video format. Please use ${ALLOWED_VIDEO_TYPES.map((t) => t.split("/")[1]).join(", ")}`,
   unexpected: "Unexpected error. Check format/codecs used.",
+};
+
+const getUploadedTypeLabel = (type: string) => {
+  if (!type) return "unknown";
+  if (type === "video/x-msvideo" || type === "video/avi") return "avi";
+  if (type === "video/quicktime" || type === "video/mov") return "mov";
+
+  const [, subtype] = type.split("/");
+  return subtype || type;
 };
 interface PhotoProps {
   advance: () => void;
@@ -58,6 +70,58 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
   const loading = useLoading();
   const [pending, loadingMessage] = loading.use();
 
+  const processVideoBlob = async (blob: Blob) => {
+    const needsCompression = MAX_SIZE_BYTES && blob.size > MAX_SIZE_BYTES;
+    if (needsCompression) {
+      loading.start("Compressing video");
+    }
+
+    const buffer = await blob.arrayBuffer();
+    const sanitized = await videoSanitizer(buffer, MAX_SIZE_BYTES);
+    const sanitizedArray = new Uint8Array(sanitized as ArrayBuffer);
+
+    const detectedFormat = detectVideoFormat(sanitizedArray);
+    const outputType = getVideoMimeType(detectedFormat);
+    const sanitizedBlob = new Blob([sanitizedArray], { type: outputType });
+
+    if (MAX_SIZE_BYTES && sanitizedBlob.size > MAX_SIZE_BYTES) {
+      videoError(ERROR_MSG.size);
+      console.error(ERROR_MSG.size);
+      return;
+    }
+
+    video$.set({ content: sanitizedBlob, uri: URL.createObjectURL(sanitizedBlob) });
+    setShowCamera(false);
+
+    if (needsCompression) {
+      toast.success("Video compressed successfully");
+    }
+  };
+
+  const handleUploadedVideo = async (received: File[]) => {
+    const file = received[0];
+    if (!file) return;
+
+    if (!ALLOWED_VIDEO_TYPES.includes(file.type)) {
+      const msg = `Uploaded file type: ${getUploadedTypeLabel(file.type)}. ${ERROR_MSG.fileType}`;
+      videoError(msg);
+      toast.error(msg);
+      console.error(msg);
+      return;
+    }
+
+    loading.start("Processing video");
+
+    try {
+      await processVideoBlob(file);
+    } catch (err: any) {
+      toast.error(err.message || "Failed to process video");
+      console.error("Video upload processing error:", err);
+    } finally {
+      loading.stop();
+    }
+  };
+
   const startRecording = () => {
     if (!camera || !camera.stream) return;
     
@@ -75,32 +139,7 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
         const blob = new Blob(newlyRecorded, {
           type: IS_IOS ? 'video/mp4' : 'video/webm',
         });
-
-        const needsCompression = MAX_SIZE_BYTES && blob.size > MAX_SIZE_BYTES;
-        if (needsCompression) {
-          loading.start("Compressing video");
-        }
-
-        const buffer = await blob.arrayBuffer();
-        const sanitized = await videoSanitizer(buffer, MAX_SIZE_BYTES);
-        const sanitizedArray = new Uint8Array(sanitized as ArrayBuffer);
-        
-        const detectedFormat = detectVideoFormat(sanitizedArray);
-        const outputType = getVideoMimeType(detectedFormat);
-        const sanitizedBlob = new Blob([sanitizedArray], { type: outputType });
-
-        if (MAX_SIZE_BYTES && sanitizedBlob.size > MAX_SIZE_BYTES) {
-          videoError(ERROR_MSG.size);
-          console.error(ERROR_MSG.size);
-          return;
-        }
-
-        video$.set({ content: sanitizedBlob, uri: URL.createObjectURL(sanitizedBlob) });
-        setShowCamera(false);
-        
-        if (needsCompression) {
-          toast.success("Video compressed successfully");
-        }
+        await processVideoBlob(blob);
       } catch (err: any) {
         toast.error(err.message || "Failed to process video");
         console.error("Video sanitization error:", err);
@@ -206,6 +245,16 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
             <CameraIcon className="h-6 w-6 fill-white" />
             <span>Record with camera</span>
           </button>
+
+          <span className="mt-2 text-sm font-semibold text-primaryText">OR</span>
+
+          <Uploader
+            className="mt-1 text-base font-semibold text-primary underline underline-offset-2 hover:text-orange focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-300"
+            type="video"
+            onDrop={handleUploadedVideo}
+          >
+            <span>Upload video</span>
+          </Uploader>
         </div>
       )}
 
