@@ -122,7 +122,7 @@ export default function Evidence({
         },
         onSuccess() {
           loading.stop();
-          toast.success("Requests created");
+          toast.success("Evidence submitted successfully");
           setModalOpen(false);
           router.refresh();
         },

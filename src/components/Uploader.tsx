@@ -23,8 +23,12 @@ const Uploader: React.FC<UploaderProps> = ({
     accept: type !== "all" ? MEDIA_UPLOAD_ACCEPT[type] : undefined,
   });
 
+  const wrapperClasses = disabled
+    ? "flex cursor-not-allowed flex-col opacity-50"
+    : "flex cursor-pointer flex-col";
+
   return (
-    <div className="flex cursor-pointer flex-col">
+    <div className={wrapperClasses}>
       <div {...props} {...getRootProps()}>
         <input {...getInputProps()} />
         {children}

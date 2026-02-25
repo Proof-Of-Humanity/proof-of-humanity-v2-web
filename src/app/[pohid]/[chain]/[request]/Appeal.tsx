@@ -310,6 +310,7 @@ const Appeal: React.FC<AppealProps> = ({
     <Modal
       header={`Appeal case #${disputeId}`}
       open={isAppealModalOpen}
+      onClose={() => setAppealModalOpen(false)}
       trigger={
         <button onClick={() => setAppealModalOpen(true)} className="
           btn-sec 

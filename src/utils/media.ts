@@ -1,13 +1,13 @@
 export { IS_IOS, IS_MOBILE } from "./media.device";
 export { getCroppedPhoto, sanitizeImage } from "./media.image";
 export {
-  analyzeVideoFrameTiming,
+  probeVideoMetrics,
   detectVideoFormat,
   getVideoMimeType,
   readVideoMetadata,
   videoSanitizer,
 } from "./media.video";
-export type { VideoFrameTimingMetrics } from "./media.video";
+export type { VideoFrameTimingMetrics, VideoProbeMetrics } from "./media.video";
 export { MEDIA_MESSAGES } from "./media.messages";
 export { processVideoInput } from "./video.pipeline";
 export type {
@@ -17,7 +17,6 @@ export type {
   VideoPipelineSuccess,
 } from "./video.pipeline";
 export {
-  getMinAverageBitrate,
   getUploadedTypeLabel,
   IMAGE_ALLOWED_MIME_TYPES,
   IMAGE_UPLOAD_EXTENSIONS,

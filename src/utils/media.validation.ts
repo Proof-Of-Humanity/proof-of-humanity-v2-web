@@ -47,9 +47,9 @@ export const VIDEO_LIMITS = {
   allowedFormatsLabel: VIDEO_ALLOWED_FORMATS_LABEL,
 } as const;
 
-const MIN_AVERAGE_BITRATE_SD = 600_000; // bits/s
-const MIN_AVERAGE_BITRATE_HD = 1_100_000;
-const MIN_AVERAGE_BITRATE_FHD = 2_000_000;
+const MIN_AVERAGE_BITRATE_SD = 340; // kb/s
+const MIN_AVERAGE_BITRATE_HD = 680;
+const MIN_AVERAGE_BITRATE_FHD = 1_275;
 
 // ─── Photo Limits ───────────────────────────────────────────────
 export const PHOTO_LIMITS = {
@@ -77,6 +77,11 @@ export interface VideoValidationError {
 export interface VideoQualityValidationResult {
   warnings: string[];
   error: VideoValidationError | null;
+}
+
+export interface VideoQualityValidationOptions {
+  measuredBitrateKbps?: number | null;
+  isFallbackEstimate?: boolean;
 }
 
 export type PhotoValidationError = string | null;
@@ -159,7 +164,7 @@ export function validateVideoSize(sizeBytes: number): VideoValidationError | nul
   return null;
 }
 
-export function getMinAverageBitrate(width: number, height: number): number {
+function getMinBitrateKbps(width: number, height: number): number {
   const longEdge = Math.max(width, height);
   if (longEdge > 1280) return MIN_AVERAGE_BITRATE_FHD;
   if (longEdge > 854) return MIN_AVERAGE_BITRATE_HD;
@@ -174,6 +179,7 @@ export function getMinAverageBitrate(width: number, height: number): number {
 export function validateVideoQuality(
   frameTiming: VideoFrameTimingMetrics | null,
   meta: VideoMetadata,
+  options: VideoQualityValidationOptions = {},
 ): VideoQualityValidationResult {
   // Hard error: effective FPS too low
   if (
@@ -200,12 +206,17 @@ export function validateVideoQuality(
     warnings.push("Video may look choppy. Please verify before submitting.");
   }
 
-  // Warning: low average bitrate
+  // Warning: low bitrate (prefer probed bitrate when available, otherwise estimate)
   const { duration, width, height, sizeBytes } = meta;
-  const averageBitrate = duration > 0 ? Math.floor((sizeBytes * 8) / duration) : 0;
-  const minBitrate = getMinAverageBitrate(width, height);
+  const averageBitrateKbps = duration > 0 ? Math.floor((sizeBytes * 8) / duration / 1000) : 0;
+  const measuredBitrate = options.measuredBitrateKbps;
+  const bitrateForCheck =
+    typeof measuredBitrate === "number" && Number.isFinite(measuredBitrate) && measuredBitrate > 0
+      ? Math.floor(measuredBitrate)
+      : averageBitrateKbps;
+  const minBitrate = getMinBitrateKbps(width, height);
 
-  if (averageBitrate > 0 && averageBitrate < minBitrate) {
+  if (bitrateForCheck > 0 && bitrateForCheck < minBitrate) {
     warnings.push(
       "Video bitrate is lower than recommended. For better clarity, use good lighting and your camera's higher quality mode.",
     );
