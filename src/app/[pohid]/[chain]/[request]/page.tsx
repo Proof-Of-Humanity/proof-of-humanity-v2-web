@@ -425,7 +425,6 @@ export default async function Request({ params }: PageProps) {
                   <video
                     className="w-full cursor-pointer rounded"
                     src={ipfs(registrationFile.video)}
-                    controls
                   />
                 }
               />
