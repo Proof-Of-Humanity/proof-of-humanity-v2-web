@@ -117,7 +117,7 @@ function Review({
           uri={video!.uri}
           trigger={
             <video
-              className="mt-4 h-48 cursor-pointer sm:ml-8 sm:mt-0"
+              className="mt-4 h-48 w-auto max-w-full cursor-pointer rounded sm:ml-8 sm:mt-0"
               src={video!.uri}
             />
           }

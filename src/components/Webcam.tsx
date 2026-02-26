@@ -108,9 +108,9 @@ const Webcam: React.FC<WebcamProps> = ({
   const ActionIcon = isVideo ? (recording ? PauseIcon : PlayIcon) : SmileyIcon;
 
   return (
-    <div className="relative min-h-[300px] sm:min-h-[400px] overflow-hidden">
+    <div className="relative min-h-[300px] sm:min-h-[400px] overflow-hidden bg-black flex items-center justify-center">
       <ReactWebcam
-        className="h-full w-full aspect-video object-cover bg-red-500/50"
+        className="h-full w-full aspect-video object-contain"
         ref={loadCamera}
         mirrored={mirrored}
         screenshotFormat={"image/jpeg"}

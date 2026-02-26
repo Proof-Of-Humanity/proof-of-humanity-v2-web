@@ -27,9 +27,12 @@ export default function Previewed({
           </div>
           {isVideo && (
             <video
-              className="absolute-centered fixed z-30 max-h-screen rounded"
+              className="absolute-centered fixed z-30 max-h-screen max-w-[100vw] rounded p-2 sm:p-0"
               src={uri}
               controls
+              playsInline
+              // @ts-expect-error webkit-playsinline is a non-standard attribute for older iOS Safari
+              webkit-playsinline=""
               onEnded={close}
             />
           )}

@@ -1,5 +1,6 @@
 import { ObservableObject } from "@legendapp/state";
 import Checklist from "components/Checklist";
+import Previewed from "components/Previewed";
 import Webcam from "components/Webcam";
 import useFullscreen from "hooks/useFullscreen";
 import { useLoading } from "hooks/useLoading";
@@ -290,7 +291,19 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
 
       {!!video && !pending && (
         <div className="flex flex-col items-center">
-          <video src={video.uri} controls />
+          <Previewed
+            isVideo
+            uri={video.uri}
+            trigger={
+              <video
+                className="w-full max-w-xl cursor-pointer rounded"
+                src={video.uri}
+              />
+            }
+          />
+          <span className="text-secondaryText mt-1 text-sm">
+            Tap video to preview fullscreen
+          </span>
           <button className="btn-main mt-4" onClick={advance}>
             Next
           </button>

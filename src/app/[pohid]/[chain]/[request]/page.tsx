@@ -418,10 +418,16 @@ export default async function Request({ params }: PageProps) {
             </div>
 
             {registrationFile && (
-              <video
-                className="w-full"
-                src={ipfs(registrationFile.video)}
-                controls
+              <Previewed
+                isVideo
+                uri={ipfs(registrationFile.video)}
+                trigger={
+                  <video
+                    className="w-full cursor-pointer rounded"
+                    src={ipfs(registrationFile.video)}
+                    controls
+                  />
+                }
               />
             )}
 
