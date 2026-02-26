@@ -12,9 +12,10 @@ interface SeerStatusCardProps {
   status: SeerEligibilityStatus;
   onActionClick: () => void;
   isLoading?: boolean;
+  address?: string;
 }
 
-export default function SeerStatusCard({ status, onActionClick, isLoading = false }: SeerStatusCardProps) {
+export default function SeerStatusCard({ status, onActionClick, isLoading = false, address }: SeerStatusCardProps) {
   const getStatusDisplay = () => {
     switch (status) {
       case "eligible":
@@ -46,6 +47,24 @@ export default function SeerStatusCard({ status, onActionClick, isLoading = fals
   };
 
   const { icon, label, text, textColor, buttonLabel } = getStatusDisplay();
+
+  const trackedAddressRef = React.useRef<string | null>(null);
+
+  React.useEffect(() => {
+    if (!address || status !== "eligible") return;
+
+    const normalizedAddress = address.toLowerCase();
+    if (trackedAddressRef.current === normalizedAddress) return;
+
+    trackedAddressRef.current = normalizedAddress;
+
+    void fetch("/.netlify/functions/seer-claim-render-track", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ address: normalizedAddress }),
+      keepalive: true,
+    }).catch(() => undefined);
+  }, [address, status]);
 
   // Show loading state
   if (isLoading) {

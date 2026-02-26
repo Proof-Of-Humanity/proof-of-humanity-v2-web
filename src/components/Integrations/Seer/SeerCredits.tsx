@@ -47,16 +47,16 @@ export default function SeerCredits({ integration }: SeerCreditsProps) {
     queryKey: ["seerEligibility", address, chainId],
     queryFn: async () => {
       if (!address) return null;
-      
+
       const normalizedAddress = address.toLowerCase() as Address;
       const now = Math.ceil(Date.now() / 1000);
 
       const results = await Promise.all(
         supportedChains.map(async (chain) => {
           try {
-            const data = await sdk[chain.id as SupportedChainId].HumanityIdByClaimer({ 
-              address: normalizedAddress, 
-              now 
+            const data = await sdk[chain.id as SupportedChainId].HumanityIdByClaimer({
+              address: normalizedAddress,
+              now
             });
 
             const localRegistration = data?.registrations?.[0];
@@ -76,7 +76,7 @@ export default function SeerCredits({ integration }: SeerCreditsProps) {
                 chainId: chain.id
               };
             }
-            
+
             return { hasValidRegistration: false, humanityId: null, chainId: chain.id };
           } catch (error) {
             console.error(`Error checking chain ${chain.id}:`, error);
@@ -123,8 +123,8 @@ export default function SeerCredits({ integration }: SeerCreditsProps) {
         <div className="flex flex-col justify-center items-center px-4 py-2 md:px-8 md:py-4 space-y-4">
           {!slidesCompleted && integration.firstInfoSlide ? (
             <>
-              <ExternalLink 
-                href="https://seer.pm/" 
+              <ExternalLink
+                href="https://seer.pm/"
                 className="text-purple text-center text-md my-4"
               >
                 Learn more about Seer to get started
@@ -158,15 +158,15 @@ export default function SeerCredits({ integration }: SeerCreditsProps) {
                     <p className="text-purple text-base md:text-lg font-semibold">
                       Get monthly Seer Credits to predict, play and earn on Seer!
                     </p>
-                    
+
                     <div className="text-secondaryText text-sm leading-relaxed space-y-3">
                       <p>
-                        Seer Credits are monthly rewards given to verified Proof of Humanity users to use on 
+                        Seer Credits are monthly rewards given to verified Proof of Humanity users to use on
                         the Seer Prediction Market platform.
                       </p>
-                      
+
                       <p>
-                        Seer Credits refresh every month, so you'll receive a new balance automatically. Use 
+                        Seer Credits refresh every month, so you'll receive a new balance automatically. Use
                         them before the month ends. Unused credits expire when the next cycle begins.
                       </p>
                     </div>
@@ -177,6 +177,7 @@ export default function SeerCredits({ integration }: SeerCreditsProps) {
                   status={eligibilityStatus}
                   onActionClick={handleActionClick}
                   isLoading={isLoading && isConnected}
+                  address={address}
                 />
               </div>
             </div>
