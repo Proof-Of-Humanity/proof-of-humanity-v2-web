@@ -16,10 +16,39 @@ import {
   detectVideoFormat,
   getVideoMimeType,
   IS_IOS,
+  IS_MOBILE,
   videoSanitizer,
 } from "utils/media";
 import { useAccount } from "wagmi";
 import { MediaState } from "./Form";
+
+// Extract first frame from a video blob URL as a data URL for use as poster
+function generateVideoThumbnail(blobUrl: string): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const video = document.createElement("video");
+    video.crossOrigin = "anonymous";
+    video.muted = true;
+    video.playsInline = true;
+    video.preload = "auto";
+    video.src = blobUrl;
+
+    video.onloadeddata = () => {
+      video.currentTime = 0.001;
+    };
+
+    video.onseeked = () => {
+      const canvas = document.createElement("canvas");
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) { reject(new Error("No canvas context")); return; }
+      ctx.drawImage(video, 0, 0);
+      resolve(canvas.toDataURL("image/jpeg", 0.8));
+    };
+
+    video.onerror = () => reject(new Error("Video load error"));
+  });
+}
 
 const ALLOWED_VIDEO_TYPES = [
   "video/webm",
@@ -130,7 +159,13 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
           return;
         }
 
-        video$.set({ content: sanitizedBlob, uri: URL.createObjectURL(sanitizedBlob) });
+        const uri = URL.createObjectURL(sanitizedBlob);
+        let poster: string | undefined;
+        if (IS_MOBILE) {
+          loading.start("Generating preview");
+          poster = await generateVideoThumbnail(uri).catch(() => undefined);
+        }
+        video$.set({ content: sanitizedBlob, uri, poster });
         setShowCamera(false);
 
         if (needsCompression) {
@@ -273,7 +308,7 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
                 vid.src = uri;
                 vid.preload = "auto";
 
-                vid.addEventListener("loadeddata", () => {
+                vid.addEventListener("loadeddata", async () => {
                   if (
                     vid.videoWidth < MIN_DIMS.width ||
                     vid.videoHeight < MIN_DIMS.height
@@ -283,8 +318,14 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
                     return;
                   }
 
+                  let poster: string | undefined;
+                  if (IS_MOBILE) {
+                    loading.start("Generating preview");
+                    poster = await generateVideoThumbnail(uri).catch(() => undefined);
+                    loading.stop();
+                  }
                   setRecording(false);
-                  video$.set({ uri, content: blob });
+                  video$.set({ uri, content: blob, poster });
                 });
               } catch (error: any) {
                 videoError(ERROR_MSG.unexpected);
@@ -364,6 +405,9 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
               <video
                 className="w-full max-w-xl cursor-pointer rounded"
                 src={video.uri}
+                poster={IS_MOBILE ? video.poster : undefined}
+                preload="metadata"
+                playsInline
               />
             }
           />

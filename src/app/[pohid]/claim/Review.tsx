@@ -14,6 +14,7 @@ import { ipfs } from "utils/ipfs";
 import { formatEth } from "utils/misc";
 import { formatEther } from "viem";
 import { useAccount, useBalance, useChainId, useSwitchChain } from "wagmi";
+import { IS_MOBILE } from "utils/media";
 import { MediaState, SubmissionState } from "./Form";
 
 interface ReviewProps {
@@ -119,6 +120,9 @@ function Review({
             <video
               className="mt-4 h-48 w-auto max-w-full cursor-pointer rounded sm:ml-8 sm:mt-0"
               src={video!.uri}
+              poster={IS_MOBILE ? video!.poster : undefined}
+              preload="metadata"
+              playsInline
             />
           }
         />

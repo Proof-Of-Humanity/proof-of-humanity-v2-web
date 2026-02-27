@@ -44,7 +44,7 @@ export enum Step {
 
 export interface MediaState {
   photo: { uri: string; content: Blob } | null;
-  video: { uri: string; content: Blob } | null;
+  video: { uri: string; content: Blob; poster?: string } | null;
 }
 
 export interface SubmissionState {
