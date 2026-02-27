@@ -31,6 +31,7 @@ import ActionBar from "./ActionBar";
 import Evidence from "./Evidence";
 import Info from "./Info";
 import DocumentIcon from "components/DocumentIcon";
+import VideoThumbnail from "components/VideoThumbnail";
 import { getStatus } from "utils/status";
 
 interface PageProps {
@@ -422,7 +423,7 @@ export default async function Request({ params }: PageProps) {
                 isVideo
                 uri={ipfs(registrationFile.video)}
                 trigger={
-                  <video
+                  <VideoThumbnail
                     className="w-full cursor-pointer rounded"
                     src={ipfs(registrationFile.video)}
                   />

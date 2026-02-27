@@ -5,6 +5,7 @@ import Label from "components/Label";
 import Previewed from "components/Previewed";
 import AuthGuard from "components/AuthGuard";
 import TimeAgo from "components/TimeAgo";
+import VideoThumbnail from "components/VideoThumbnail";
 import { SupportedChainId, idToChain, getForeignChain } from "config/chains";
 import { ContractData } from "data/contract";
 import DocumentIcon from "icons/NoteMajor.svg";
@@ -14,7 +15,6 @@ import { ipfs } from "utils/ipfs";
 import { formatEth } from "utils/misc";
 import { formatEther } from "viem";
 import { useAccount, useBalance, useChainId, useSwitchChain } from "wagmi";
-import { IS_MOBILE } from "utils/media";
 import { MediaState, SubmissionState } from "./Form";
 
 interface ReviewProps {
@@ -117,12 +117,9 @@ function Review({
           isVideo
           uri={video!.uri}
           trigger={
-            <video
+            <VideoThumbnail
               className="mt-4 h-48 w-auto max-w-full cursor-pointer rounded sm:ml-8 sm:mt-0"
               src={video!.uri}
-              poster={IS_MOBILE ? video!.poster : undefined}
-              preload="metadata"
-              playsInline
             />
           }
         />
