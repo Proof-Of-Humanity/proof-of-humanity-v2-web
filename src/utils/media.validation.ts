@@ -40,7 +40,11 @@ export const VIDEO_LIMITS = {
   maxSizeBytes: 10 * 1024 * 1024, // 10 MB
   minDimensionPx: 352,
   minCaptureFps: 20,
-  maxFrameGapMs: 220,
+  freezeWarningMinSec: 1.2,
+  freezeWarningRatio: 0.25,
+  blurWarningThreshold: 9,
+  minLumaWarning: 55,
+  minAudioDurationWarning: 3.0,
   recorderVideoBps: 2_500_000,
   recorderAudioBps: 96_000,
   allowedTypes: VIDEO_ALLOWED_MIME_TYPES,
@@ -82,6 +86,14 @@ export interface VideoQualityValidationResult {
 export interface VideoQualityValidationOptions {
   measuredBitrateKbps?: number | null;
   isFallbackEstimate?: boolean;
+  probeSignals?: {
+    blurMean?: number | null;
+    averageLuma?: number | null;
+    nonSilenceSec?: number | null;
+    hasAudio?: boolean | null;
+    maxFreezeDurationSec?: number | null;
+    freezeRatio?: number | null;
+  } | null;
 }
 
 export type PhotoValidationError = string | null;
@@ -172,8 +184,8 @@ function getMinBitrateKbps(width: number, height: number): number {
 }
 
 /**
- * Validate quality-related metrics: effective FPS, frame gaps, bitrate.
- * Returns warnings for non-blocking issues (frame gap, low bitrate)
+ * Validate quality-related metrics: effective FPS, bitrate, blur/light/audio/freeze.
+ * Returns warnings for non-blocking issues
  * and a hard error for choppy video (low FPS).
  */
 export function validateVideoQuality(
@@ -181,32 +193,76 @@ export function validateVideoQuality(
   meta: VideoMetadata,
   options: VideoQualityValidationOptions = {},
 ): VideoQualityValidationResult {
-  // Hard error: effective FPS too low
+  let error: VideoValidationError | null = null;
   if (
     typeof frameTiming?.effectiveFps === "number" &&
     frameTiming.effectiveFps < VIDEO_LIMITS.minCaptureFps
   ) {
-    return {
-      warnings: [],
-      error: {
-        code: "LOW_FPS",
-        userMessage:
-          "Video looks choppy to verify clearly. Please improve lighting, close background apps, and record again.",
-      },
+    error = {
+      code: "LOW_FPS",
+      userMessage:
+        "Video looks choppy to verify clearly. Please improve lighting, close background apps, and record again.",
     };
   }
 
   const warnings: string[] = [];
 
-  // Warning: large frame gap
-  if (
-    typeof frameTiming?.maxFrameGapMs === "number" &&
-    frameTiming.maxFrameGapMs > VIDEO_LIMITS.maxFrameGapMs
-  ) {
-    warnings.push("Video may look choppy. Please verify before submitting.");
+  const blurMean = options.probeSignals?.blurMean;
+  const hasBlurWarning =
+    typeof blurMean === "number" &&
+    Number.isFinite(blurMean) &&
+    blurMean >= VIDEO_LIMITS.blurWarningThreshold;
+  if (hasBlurWarning) {
+    warnings.push(
+      "Video appears blurry. Please keep your camera steady and ensure your face and wallet text are in focus.",
+    );
   }
 
-  // Warning: low bitrate (prefer probed bitrate when available, otherwise estimate)
+  const averageLuma = options.probeSignals?.averageLuma;
+  const hasLowLightWarning =
+    typeof averageLuma === "number" &&
+    Number.isFinite(averageLuma) &&
+    averageLuma < VIDEO_LIMITS.minLumaWarning;
+  if (hasLowLightWarning) {
+    warnings.push(
+      "Video appears too dark. Please improve lighting so your face and wallet text are clearly visible.",
+    );
+  }
+
+  const maxFreezeDurationSec = options.probeSignals?.maxFreezeDurationSec;
+  const freezeRatio = options.probeSignals?.freezeRatio;
+  const hasFreezeWarning =
+    (typeof maxFreezeDurationSec === "number" &&
+      Number.isFinite(maxFreezeDurationSec) &&
+      maxFreezeDurationSec >= VIDEO_LIMITS.freezeWarningMinSec) ||
+    (typeof freezeRatio === "number" &&
+      Number.isFinite(freezeRatio) &&
+      freezeRatio >= VIDEO_LIMITS.freezeWarningRatio);
+  if (hasFreezeWarning) {
+    warnings.push(
+      "Video appears to freeze at times. Please keep your camera steady, improve lighting, and record again.",
+    );
+  }
+
+  const hasAudio = options.probeSignals?.hasAudio;
+  if (hasAudio === false) {
+    warnings.push(
+      "No audio track detected. Please record again and clearly say the required phrase.",
+    );
+  } else {
+    const nonSilenceSec = options.probeSignals?.nonSilenceSec;
+    if (
+      typeof nonSilenceSec === "number" &&
+      Number.isFinite(nonSilenceSec) &&
+      nonSilenceSec < VIDEO_LIMITS.minAudioDurationWarning
+    ) {
+      warnings.push(
+        "Audio appears mostly silent. Please speak clearly throughout the recording.",
+      );
+    }
+  }
+
+  // Warning: low bitrate (prefer probed bitrate when available, otherwise estimate).
   const { duration, width, height, sizeBytes } = meta;
   const averageBitrateKbps = duration > 0 ? Math.floor((sizeBytes * 8) / duration / 1000) : 0;
   const measuredBitrate = options.measuredBitrateKbps;
@@ -222,7 +278,7 @@ export function validateVideoQuality(
     );
   }
 
-  return { warnings, error: null };
+  return { warnings, error };
 }
 
 // ─── Photo Validation ───────────────────────────────────────────

@@ -37,8 +37,8 @@
   },
   "dependencies": {
     "@cyntler/react-doc-viewer": "^1.16.3",
-    "@ffmpeg/core": "0.10.0",
-    "@ffmpeg/ffmpeg": "^0.10.1",
+    "@ffmpeg/core-mt": "0.12.10",
+    "@ffmpeg/ffmpeg": "^0.12.15",
     "@kleros/kleros-app": "^2.1.0",
     "@legendapp/state": "^1.11.1",
     "@reown/appkit": "^1.6.9",

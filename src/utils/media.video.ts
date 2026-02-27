@@ -1,28 +1,51 @@
-import { FFmpeg, createFFmpeg } from "@ffmpeg/ffmpeg";
+import { FFmpeg, type LogEventCallback } from "@ffmpeg/ffmpeg";
 import { MEDIA_MESSAGES } from "./media.messages";
 import { randomString } from "./misc";
 
-let ffmpeg: FFmpeg;
+let ffmpeg: FFmpeg | null = null;
+let ffmpegLoadPromise: Promise<void> | null = null;
 
 const UNRECOGNIZED_FORMAT_ERROR = MEDIA_MESSAGES.invalidVideoFile;
+const FFMPEG_ASSET_VERSION = "20260227";
+const getFFmpegAssetURL = (assetPath: string): string => {
+  const base = typeof window === "undefined" ? "http://localhost" : window.location.origin;
+  const url = new URL(assetPath, base);
+  url.searchParams.set("v", FFMPEG_ASSET_VERSION);
+  return url.toString();
+};
 
-const loadFFMPEG = async () => {
+const loadFFMPEG = async (): Promise<FFmpeg> => {
   if (typeof SharedArrayBuffer === "undefined") {
     throw new Error(
       "Video processing is not available. Please refresh the page (Cmd+R or Ctrl+R) and try again.",
     );
   }
 
-  if (ffmpeg && ffmpeg.isLoaded()) {
-    return;
+  if (!ffmpeg) {
+    ffmpeg = new FFmpeg();
   }
 
-  ffmpeg = createFFmpeg({
-    log: false,
-    corePath: "/ffmpeg/ffmpeg-core.js",
-  });
+  if (ffmpeg.loaded) {
+    return ffmpeg;
+  }
 
-  await ffmpeg.load();
+  if (!ffmpegLoadPromise) {
+    ffmpegLoadPromise = ffmpeg
+      .load({
+        coreURL: getFFmpegAssetURL("/ffmpeg/ffmpeg-core.js"),
+        wasmURL: getFFmpegAssetURL("/ffmpeg/ffmpeg-core.wasm"),
+        workerURL: getFFmpegAssetURL("/ffmpeg/ffmpeg-core.worker.js"),
+        classWorkerURL: getFFmpegAssetURL("/ffmpeg/ffmpeg-worker.js"),
+      })
+      .then(() => undefined)
+      .catch((error) => {
+        ffmpegLoadPromise = null;
+        throw error;
+      });
+  }
+
+  await ffmpegLoadPromise;
+  return ffmpeg;
 };
 
 const readAscii = (buffer: Uint8Array, start: number, length: number) =>
@@ -87,7 +110,6 @@ const getVideoCodecForFormat = (
 export interface VideoFrameTimingMetrics {
   frameCount: number;
   effectiveFps: number | null;
-  maxFrameGapMs: number | null;
 }
 
 export interface VideoProbeMetrics {
@@ -97,6 +119,12 @@ export interface VideoProbeMetrics {
   width: number | null;
   height: number | null;
   frameTiming: VideoFrameTimingMetrics | null;
+  blurMean: number | null;
+  averageLuma: number | null;
+  hasAudio: boolean | null;
+  nonSilenceSec: number | null;
+  maxFreezeDurationSec: number | null;
+  freezeRatio: number | null;
 }
 
 const parseDurationToSeconds = (message: string): number | null => {
@@ -157,23 +185,7 @@ const buildFrameTimingMetrics = (
   frameTimes: number[],
 ): VideoFrameTimingMetrics | null => {
   if (frameTimes.length < 2) {
-    return frameTimes.length === 1
-      ? { frameCount: 1, effectiveFps: null, maxFrameGapMs: null }
-      : null;
-  }
-
-  const frameGaps: number[] = [];
-  for (let i = 1; i < frameTimes.length; i += 1) {
-    const gap = frameTimes[i] - frameTimes[i - 1];
-    if (gap > 0) frameGaps.push(gap);
-  }
-
-  if (frameGaps.length === 0) {
-    return {
-      frameCount: frameTimes.length,
-      effectiveFps: null,
-      maxFrameGapMs: null,
-    };
+    return frameTimes.length === 1 ? { frameCount: 1, effectiveFps: null } : null;
   }
 
   const start = frameTimes[0];
@@ -183,7 +195,6 @@ const buildFrameTimingMetrics = (
   return {
     frameCount: frameTimes.length,
     effectiveFps: span > 0 ? (frameTimes.length - 1) / span : null,
-    maxFrameGapMs: Math.max(...frameGaps) * 1000,
   };
 };
 
@@ -191,16 +202,18 @@ export const probeVideoMetrics = async (
   inputBuffer: ArrayBufferLike,
 ): Promise<VideoProbeMetrics> => {
   let inputName: string | null = null;
+  let ffmpegInstance: FFmpeg | null = null;
+  let logger: LogEventCallback | null = null;
 
   try {
-    await loadFFMPEG();
+    ffmpegInstance = await loadFFMPEG();
 
     const inputArray = new Uint8Array(inputBuffer);
     const inputFormat = detectVideoFormat(inputArray);
     if (!inputFormat) throw new Error(UNRECOGNIZED_FORMAT_ERROR);
 
     inputName = `${randomString(16)}.${inputFormat}`;
-    ffmpeg.FS("writeFile", inputName, inputArray);
+    await ffmpegInstance.writeFile(inputName, new Uint8Array(inputArray));
 
     let durationSec: number | null = null;
     let width: number | null = null;
@@ -209,8 +222,31 @@ export const probeVideoMetrics = async (
     let videoBitrateKbps: number | null = null;
     let containerBitrateKbps: number | null = null;
     const frameTimes: number[] = [];
+    let blurMean: number | null = null;
+    let lumaMeanSum = 0;
+    let lumaMeanSamples = 0;
+    let hasAudio: boolean | null = null;
+    let sawInputVideoStream = false;
+    let sawInputAudioStream = false;
+    let pendingSilenceStartSec: number | null = null;
+    let pendingFreezeStartSec: number | null = null;
+    let totalSilenceSec = 0;
+    let totalFreezeSec = 0;
+    let maxFreezeDurationSec = 0;
 
-    ffmpeg.setLogger(({ message }) => {
+    logger = ({ message }) => {
+      if (!sawInputVideoStream && /Stream #\d+:\d+.*Video:/.test(message)) {
+        sawInputVideoStream = true;
+      }
+
+      if (!sawInputAudioStream && /Stream #\d+:\d+.*Audio:/.test(message)) {
+        sawInputAudioStream = true;
+      }
+
+      if (hasAudio !== true && message.includes("Audio:")) {
+        hasAudio = true;
+      }
+
       if (!videoCodec) {
         const codecMatch = message.match(/Video:\s*([a-zA-Z0-9_]+)/);
         if (codecMatch) videoCodec = codecMatch[1].toLowerCase();
@@ -239,7 +275,65 @@ export const probeVideoMetrics = async (
         }
       }
 
+      const blurMatch = message.match(/blur mean:\s*([a-zA-Z0-9.+-]+)/i);
+      if (blurMatch) {
+        const rawBlur = blurMatch[1].toLowerCase();
+        if (rawBlur === "nan") {
+          blurMean = null;
+        } else {
+          const parsedBlur = Number.parseFloat(blurMatch[1]);
+          if (Number.isFinite(parsedBlur)) blurMean = parsedBlur;
+        }
+      }
+
+      const silenceStartMatch = message.match(/silence_start:\s*([-\d.]+)/);
+      if (silenceStartMatch) {
+        const parsedStart = Number.parseFloat(silenceStartMatch[1]);
+        if (Number.isFinite(parsedStart)) pendingSilenceStartSec = parsedStart;
+      }
+
+      const silenceEndMatch = message.match(
+        /silence_end:\s*([-\d.]+)\s*\|\s*silence_duration:\s*([-\d.]+)/,
+      );
+      if (silenceEndMatch) {
+        const parsedSilenceDuration = Number.parseFloat(silenceEndMatch[2]);
+        if (Number.isFinite(parsedSilenceDuration) && parsedSilenceDuration > 0) {
+          totalSilenceSec += parsedSilenceDuration;
+        }
+        pendingSilenceStartSec = null;
+      }
+
+      const freezeStartMatch = message.match(/freeze_start:\s*([-\d.]+)/);
+      if (freezeStartMatch) {
+        const parsedFreezeStart = Number.parseFloat(freezeStartMatch[1]);
+        if (Number.isFinite(parsedFreezeStart)) pendingFreezeStartSec = parsedFreezeStart;
+      }
+
+      const freezeEndMatch = message.match(/freeze_end:\s*([-\d.]+)/);
+      if (freezeEndMatch) {
+        const parsedFreezeEnd = Number.parseFloat(freezeEndMatch[1]);
+        if (
+          Number.isFinite(parsedFreezeEnd) &&
+          pendingFreezeStartSec !== null &&
+          parsedFreezeEnd > pendingFreezeStartSec
+        ) {
+          const freezeDuration = parsedFreezeEnd - pendingFreezeStartSec;
+          totalFreezeSec += freezeDuration;
+          maxFreezeDurationSec = Math.max(maxFreezeDurationSec, freezeDuration);
+        }
+        pendingFreezeStartSec = null;
+      }
+
       if (!message.includes("showinfo")) return;
+
+      const lumaMatch = message.match(/mean:\[\s*([-\d.]+)/);
+      if (lumaMatch) {
+        const luma = Number.parseFloat(lumaMatch[1]);
+        if (Number.isFinite(luma)) {
+          lumaMeanSum += luma;
+          lumaMeanSamples += 1;
+        }
+      }
 
       const ptsMatch = message.match(/pts_time:([-\d.]+)/);
       if (!ptsMatch) return;
@@ -248,24 +342,72 @@ export const probeVideoMetrics = async (
       if (!Number.isFinite(ptsTime)) return;
 
       frameTimes.push(ptsTime);
-    });
+    };
+    ffmpegInstance.on("log", logger);
 
     try {
-      await ffmpeg.run(
+      await ffmpegInstance.exec([
         "-i",
         inputName,
         "-map",
         "0:v:0",
         "-vf",
-        "showinfo",
-        "-an",
+        "freezedetect=n=0.0008:d=0.8,showinfo,fps=1,blurdetect",
+        "-map",
+        "0:a:0?",
+        "-af",
+        "silencedetect=n=-38dB:d=0.8",
         "-f",
         "null",
         "-",
-      );
+      ]);
     } catch {
       // Null sink can still throw, but metadata logs are usually produced.
+    } finally {
+      if (logger) {
+        ffmpegInstance.off("log", logger);
+      }
     }
+
+    if (
+      pendingSilenceStartSec !== null &&
+      typeof durationSec === "number" &&
+      Number.isFinite(durationSec) &&
+      durationSec > pendingSilenceStartSec
+    ) {
+      totalSilenceSec += durationSec - pendingSilenceStartSec;
+    }
+
+    if (
+      pendingFreezeStartSec !== null &&
+      typeof durationSec === "number" &&
+      Number.isFinite(durationSec) &&
+      durationSec > pendingFreezeStartSec
+    ) {
+      const freezeDuration = durationSec - pendingFreezeStartSec;
+      totalFreezeSec += freezeDuration;
+      maxFreezeDurationSec = Math.max(maxFreezeDurationSec, freezeDuration);
+    }
+
+    if (hasAudio === null && sawInputVideoStream) {
+      hasAudio = sawInputAudioStream ? true : false;
+    }
+
+    const averageLuma =
+      lumaMeanSamples > 0 ? lumaMeanSum / lumaMeanSamples : null;
+    const nonSilenceSec =
+      hasAudio === true &&
+        typeof durationSec === "number" &&
+        Number.isFinite(durationSec) &&
+        durationSec > 0
+        ? Math.max(0, durationSec - totalSilenceSec)
+        : null;
+    const freezeRatio =
+      typeof durationSec === "number" &&
+        Number.isFinite(durationSec) &&
+        durationSec > 0
+        ? Math.min(1, totalFreezeSec / durationSec)
+        : null;
 
     const result = {
       videoCodec,
@@ -274,6 +416,12 @@ export const probeVideoMetrics = async (
       width,
       height,
       frameTiming: buildFrameTimingMetrics(frameTimes),
+      blurMean,
+      averageLuma,
+      hasAudio,
+      nonSilenceSec,
+      maxFreezeDurationSec: maxFreezeDurationSec > 0 ? maxFreezeDurationSec : null,
+      freezeRatio,
     };
 
     return result;
@@ -282,7 +430,7 @@ export const probeVideoMetrics = async (
     throw err instanceof Error ? err : new Error("Video probe failed.");
   } finally {
     try {
-      if (inputName) ffmpeg.FS("unlink", inputName);
+      if (inputName && ffmpegInstance) await ffmpegInstance.deleteFile(inputName);
     } catch {
       // ignore cleanup failures
     }
@@ -324,9 +472,10 @@ export const videoSanitizer = async (
 ): Promise<Uint8Array> => {
   let inputName: string | null = null;
   let outputFilename: string | null = null;
+  let ffmpegInstance: FFmpeg | null = null;
 
   try {
-    await loadFFMPEG();
+    ffmpegInstance = await loadFFMPEG();
 
     const inputArray = new Uint8Array(inputBuffer);
     const inputFormat = detectVideoFormat(inputArray);
@@ -334,7 +483,7 @@ export const videoSanitizer = async (
 
     inputName = `${randomString(16)}.${inputFormat}`;
     outputFilename = `${randomString(16)}.${inputFormat}`;
-    ffmpeg.FS("writeFile", inputName, inputArray);
+    await ffmpegInstance.writeFile(inputName, new Uint8Array(inputArray));
 
     const sizeLimitBytes = maxSizeBytes ?? 0;
     const shouldCompress = sizeLimitBytes > 0 && inputBuffer.byteLength > sizeLimitBytes;
@@ -402,22 +551,25 @@ export const videoSanitizer = async (
     }
 
     ffmpegArgs.push(outputFilename);
-    await ffmpeg.run(...ffmpegArgs);
+    await ffmpegInstance.exec(ffmpegArgs);
 
-    const output = ffmpeg.FS("readFile", outputFilename);
+    const output = await ffmpegInstance.readFile(outputFilename);
+    if (!(output instanceof Uint8Array)) {
+      throw new Error("FFmpeg output is not binary data.");
+    }
     return output;
   } catch (err) {
     console.error("❌ [Video Sanitizer] Error during processing:", err);
     throw err instanceof Error ? err : new Error("Video sanitization failed.");
   } finally {
     try {
-      if (inputName) ffmpeg.FS("unlink", inputName);
+      if (inputName && ffmpegInstance) await ffmpegInstance.deleteFile(inputName);
     } catch {
       // ignore cleanup failures
     }
 
     try {
-      if (outputFilename) ffmpeg.FS("unlink", outputFilename);
+      if (outputFilename && ffmpegInstance) await ffmpegInstance.deleteFile(outputFilename);
     } catch {
       // ignore cleanup failures
     }

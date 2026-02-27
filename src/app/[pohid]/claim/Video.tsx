@@ -27,6 +27,10 @@ interface PhotoProps {
 }
 
 function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
+  const WARNING_TOAST_BASE_MS = 5000;
+  const WARNING_TOAST_PER_MESSAGE_MS = 1500;
+  const WARNING_TOAST_MAX_MS = 20000;
+
   const video = video$.use();
 
   const { address } = useAccount();
@@ -64,6 +68,23 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
     setValidationError(MEDIA_MESSAGES.genericVideoProcessingError);
   };
 
+  const showWarningToasts = (messages: string[]) => {
+    const warningMessages = [...new Set(messages.filter(Boolean))];
+    if (warningMessages.length === 0) return;
+
+    const autoCloseMs = Math.min(
+      WARNING_TOAST_MAX_MS,
+      WARNING_TOAST_BASE_MS + (warningMessages.length - 1) * WARNING_TOAST_PER_MESSAGE_MS,
+    );
+
+    warningMessages.forEach((warningMessage) =>
+      toast.warn(warningMessage, {
+        autoClose: autoCloseMs,
+        pauseOnHover: true,
+      }),
+    );
+  };
+
   const processVideoBlob = async (blob: Blob) => {
     // Show a raw preview immediately so user sees their video while processing
     const previewUrl = URL.createObjectURL(blob);
@@ -84,7 +105,19 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
     }
 
     if (result.error) {
-      setValidationError(result.error.userMessage);
+      const errorMessages = result.error.messages ?? [result.error.userMessage];
+      const warningMessages = result.error.warnings ?? [];
+      const combinedErrorMessage = errorMessages.join(" ");
+
+      setVideoValidationError(combinedErrorMessage);
+      videoError(combinedErrorMessage);
+
+      if (warningMessages.length > 0) {
+        setVideoQualityWarning(warningMessages.join(" "));
+        showWarningToasts(warningMessages);
+      } else {
+        setVideoQualityWarning(null);
+      }
       return;
     }
 
@@ -92,9 +125,9 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
 
     setVideoQualityWarning(null);
     if (processed.warnings.length > 0) {
-      const warning = processed.warnings[0];
+      const warning = processed.warnings.join(" ");
       setVideoQualityWarning(warning);
-      toast.warn(warning);
+      showWarningToasts(processed.warnings);
     }
 
     setVideoValidationError(null);
@@ -422,6 +455,11 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
           <span className="mt-3 text-center text-sm text-red-500">
             {videoValidationError}
           </span>
+          {videoQualityWarning && (
+            <span className="mt-2 text-center text-sm text-amber-500">
+              {videoQualityWarning}
+            </span>
+          )}
         </div>
       )}
 
