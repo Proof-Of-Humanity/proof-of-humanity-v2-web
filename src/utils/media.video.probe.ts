@@ -14,7 +14,7 @@ const getFFmpegAssetURL = (assetPath: string): string => {
   return url.toString();
 };
 
-const loadFFMPEG = async (): Promise<FFmpeg> => {
+export const loadFFMPEG = async (): Promise<FFmpeg> => {
   if (typeof SharedArrayBuffer === "undefined") {
     throw new Error(
       "Video processing is not available. Please refresh the page (Cmd+R or Ctrl+R) and try again.",
@@ -92,7 +92,7 @@ export const getVideoMimeType = (format: VideoFormat): string => {
   }
 };
 
-const getVideoCodecForFormat = (
+export const getVideoCodecForFormat = (
   format: VideoFormat,
 ): { videoCodec: string; audioCodec: string } => {
   switch (format) {
@@ -110,6 +110,7 @@ const getVideoCodecForFormat = (
 export interface VideoFrameTimingMetrics {
   frameCount: number;
   effectiveFps: number | null;
+  maxFrameGapMs: number | null;
 }
 
 export interface VideoProbeMetrics {
@@ -185,7 +186,23 @@ const buildFrameTimingMetrics = (
   frameTimes: number[],
 ): VideoFrameTimingMetrics | null => {
   if (frameTimes.length < 2) {
-    return frameTimes.length === 1 ? { frameCount: 1, effectiveFps: null } : null;
+    return frameTimes.length === 1
+      ? { frameCount: 1, effectiveFps: null, maxFrameGapMs: null }
+      : null;
+  }
+
+  const frameGaps: number[] = [];
+  for (let i = 1; i < frameTimes.length; i += 1) {
+    const gap = frameTimes[i] - frameTimes[i - 1];
+    if (gap > 0) frameGaps.push(gap);
+  }
+
+  if (frameGaps.length === 0) {
+    return {
+      frameCount: frameTimes.length,
+      effectiveFps: null,
+      maxFrameGapMs: null,
+    };
   }
 
   const start = frameTimes[0];
@@ -195,6 +212,7 @@ const buildFrameTimingMetrics = (
   return {
     frameCount: frameTimes.length,
     effectiveFps: span > 0 ? (frameTimes.length - 1) / span : null,
+    maxFrameGapMs: Math.max(...frameGaps) * 1000,
   };
 };
 
@@ -397,15 +415,15 @@ export const probeVideoMetrics = async (
       lumaMeanSamples > 0 ? lumaMeanSum / lumaMeanSamples : null;
     const nonSilenceSec =
       hasAudio === true &&
-        typeof durationSec === "number" &&
-        Number.isFinite(durationSec) &&
-        durationSec > 0
+      typeof durationSec === "number" &&
+      Number.isFinite(durationSec) &&
+      durationSec > 0
         ? Math.max(0, durationSec - totalSilenceSec)
         : null;
     const freezeRatio =
       typeof durationSec === "number" &&
-        Number.isFinite(durationSec) &&
-        durationSec > 0
+      Number.isFinite(durationSec) &&
+      durationSec > 0
         ? Math.min(1, totalFreezeSec / durationSec)
         : null;
 
@@ -464,114 +482,3 @@ export const readVideoMetadata = (
     };
     video.src = objectUrl;
   });
-
-export const videoSanitizer = async (
-  inputBuffer: ArrayBufferLike,
-  maxSizeBytes?: number,
-  inputDurationSec?: number,
-): Promise<Uint8Array> => {
-  let inputName: string | null = null;
-  let outputFilename: string | null = null;
-  let ffmpegInstance: FFmpeg | null = null;
-
-  try {
-    ffmpegInstance = await loadFFMPEG();
-
-    const inputArray = new Uint8Array(inputBuffer);
-    const inputFormat = detectVideoFormat(inputArray);
-    if (!inputFormat) throw new Error(UNRECOGNIZED_FORMAT_ERROR);
-
-    inputName = `${randomString(16)}.${inputFormat}`;
-    outputFilename = `${randomString(16)}.${inputFormat}`;
-    await ffmpegInstance.writeFile(inputName, new Uint8Array(inputArray));
-
-    const sizeLimitBytes = maxSizeBytes ?? 0;
-    const shouldCompress = sizeLimitBytes > 0 && inputBuffer.byteLength > sizeLimitBytes;
-
-    let ffmpegArgs: string[];
-
-    if (shouldCompress) {
-      const { videoCodec, audioCodec } = getVideoCodecForFormat(inputFormat);
-      const duration =
-        typeof inputDurationSec === "number" && Number.isFinite(inputDurationSec)
-          ? inputDurationSec
-          : 0;
-
-      if (duration > 0) {
-        const originalSizeBytes = inputBuffer.byteLength;
-        const originalBitrate = (originalSizeBytes * 8) / duration;
-        const targetBitrate = Math.floor(originalBitrate * 0.7);
-
-        ffmpegArgs = [
-          "-i",
-          inputName,
-          "-map_metadata",
-          "-1",
-          "-c:v",
-          videoCodec,
-          "-b:v",
-          `${targetBitrate}`,
-          "-maxrate",
-          `${targetBitrate}`,
-          "-bufsize",
-          `${targetBitrate * 2}`,
-          "-c:a",
-          audioCodec,
-        ];
-
-        ffmpegArgs.push("-preset", "fast");
-      } else {
-        ffmpegArgs = [
-          "-i",
-          inputName,
-          "-map_metadata",
-          "-1",
-          "-c:v",
-          videoCodec,
-          "-c:a",
-          audioCodec,
-          "-crf",
-          "24",
-          "-preset",
-          "fast",
-        ];
-      }
-
-      if (inputFormat === "webm") {
-        ffmpegArgs.push("-cpu-used", "8");
-        ffmpegArgs.push("-deadline", "realtime");
-        ffmpegArgs.push("-threads", "4");
-      }
-    } else {
-      ffmpegArgs = ["-i", inputName, "-map_metadata", "-1", "-c", "copy"];
-    }
-
-    if (inputFormat === "mp4" || inputFormat === "mov") {
-      ffmpegArgs.push("-movflags", "+faststart");
-    }
-
-    ffmpegArgs.push(outputFilename);
-    await ffmpegInstance.exec(ffmpegArgs);
-
-    const output = await ffmpegInstance.readFile(outputFilename);
-    if (!(output instanceof Uint8Array)) {
-      throw new Error("FFmpeg output is not binary data.");
-    }
-    return output;
-  } catch (err) {
-    console.error("❌ [Video Sanitizer] Error during processing:", err);
-    throw err instanceof Error ? err : new Error("Video sanitization failed.");
-  } finally {
-    try {
-      if (inputName && ffmpegInstance) await ffmpegInstance.deleteFile(inputName);
-    } catch {
-      // ignore cleanup failures
-    }
-
-    try {
-      if (outputFilename && ffmpegInstance) await ffmpegInstance.deleteFile(outputFilename);
-    } catch {
-      // ignore cleanup failures
-    }
-  }
-};

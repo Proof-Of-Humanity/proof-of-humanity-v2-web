@@ -1,4 +1,11 @@
-import type { VideoFrameTimingMetrics } from "./media.video";
+import {
+  MEDIA_ERROR_CODES,
+  MEDIA_MESSAGES,
+  type VideoValidationReason,
+} from "./media.messages";
+import type { VideoFrameTimingMetrics } from "./media.video.probe";
+
+export type { VideoValidationReason } from "./media.messages";
 
 export const VIDEO_ALLOWED_MIME_TYPES = [
   "video/webm",
@@ -40,6 +47,7 @@ export const VIDEO_LIMITS = {
   maxSizeBytes: 10 * 1024 * 1024, // 10 MB
   minDimensionPx: 352,
   minCaptureFps: 20,
+  maxFrameGapMs: 220,
   freezeWarningMinSec: 1.2,
   freezeWarningRatio: 0.25,
   blurWarningThreshold: 9,
@@ -65,13 +73,6 @@ export const PHOTO_LIMITS = {
   uploadMaxSizeBytes: 20 * 1024 * 1024,
   uploadMaxSizeMb: 20,
 } as const;
-
-export type VideoValidationReason =
-  | "INVALID_FORMAT"
-  | "DURATION_EXCEEDED"
-  | "RESOLUTION_TOO_SMALL"
-  | "SIZE_EXCEEDED"
-  | "LOW_FPS";
 
 export interface VideoValidationError {
   code: VideoValidationReason;
@@ -109,8 +110,11 @@ export function validateVideoType(mimeType: string): VideoValidationError | null
 
   const label = getUploadedTypeLabel(mimeType);
   return {
-    code: "INVALID_FORMAT",
-    userMessage: `Uploaded file type: ${label}. Unsupported video format. Please use ${VIDEO_LIMITS.allowedFormatsLabel}.`,
+    code: MEDIA_ERROR_CODES.INVALID_FORMAT,
+    userMessage: MEDIA_MESSAGES.unsupportedVideoFormat(
+      label,
+      VIDEO_LIMITS.allowedFormatsLabel,
+    ),
   };
 }
 
@@ -143,8 +147,8 @@ export interface VideoMetadata {
 export function validateVideoDuration(duration: number): VideoValidationError | null {
   if (duration > VIDEO_LIMITS.maxDurationSec) {
     return {
-      code: "DURATION_EXCEEDED",
-      userMessage: `Video is too long. Maximum allowed duration is ${VIDEO_LIMITS.maxDurationSec} seconds`,
+      code: MEDIA_ERROR_CODES.DURATION_EXCEEDED,
+      userMessage: MEDIA_MESSAGES.videoDurationExceeded(VIDEO_LIMITS.maxDurationSec),
     };
   }
   return null;
@@ -158,8 +162,8 @@ export function validateVideoResolution(
   const shortEdge = Math.min(width, height);
   if (shortEdge < VIDEO_LIMITS.minDimensionPx) {
     return {
-      code: "RESOLUTION_TOO_SMALL",
-      userMessage: `Video dimensions are too small. Minimum dimensions are ${VIDEO_LIMITS.minDimensionPx}px by ${VIDEO_LIMITS.minDimensionPx}px`,
+      code: MEDIA_ERROR_CODES.RESOLUTION_TOO_SMALL,
+      userMessage: MEDIA_MESSAGES.videoResolutionTooSmall(VIDEO_LIMITS.minDimensionPx),
     };
   }
   return null;
@@ -169,8 +173,8 @@ export function validateVideoResolution(
 export function validateVideoSize(sizeBytes: number): VideoValidationError | null {
   if (sizeBytes > VIDEO_LIMITS.maxSizeBytes) {
     return {
-      code: "SIZE_EXCEEDED",
-      userMessage: `Video is oversized. Maximum allowed size is ${VIDEO_LIMITS.maxSizeMb}mb`,
+      code: MEDIA_ERROR_CODES.SIZE_EXCEEDED,
+      userMessage: MEDIA_MESSAGES.videoSizeExceeded(VIDEO_LIMITS.maxSizeMb),
     };
   }
   return null;
@@ -199,13 +203,19 @@ export function validateVideoQuality(
     frameTiming.effectiveFps < VIDEO_LIMITS.minCaptureFps
   ) {
     error = {
-      code: "LOW_FPS",
-      userMessage:
-        "Video looks choppy to verify clearly. Please improve lighting, close background apps, and record again.",
+      code: MEDIA_ERROR_CODES.LOW_FPS,
+      userMessage: MEDIA_MESSAGES.videoLowFps,
     };
   }
 
   const warnings: string[] = [];
+
+  if (
+    typeof frameTiming?.maxFrameGapMs === "number" &&
+    frameTiming.maxFrameGapMs > VIDEO_LIMITS.maxFrameGapMs
+  ) {
+    warnings.push(MEDIA_MESSAGES.videoFrameGapWarning);
+  }
 
   const blurMean = options.probeSignals?.blurMean;
   const hasBlurWarning =
@@ -213,9 +223,7 @@ export function validateVideoQuality(
     Number.isFinite(blurMean) &&
     blurMean >= VIDEO_LIMITS.blurWarningThreshold;
   if (hasBlurWarning) {
-    warnings.push(
-      "Video appears blurry. Please keep your camera steady and ensure your face and wallet text are in focus.",
-    );
+    warnings.push(MEDIA_MESSAGES.videoBlurWarning);
   }
 
   const averageLuma = options.probeSignals?.averageLuma;
@@ -224,9 +232,7 @@ export function validateVideoQuality(
     Number.isFinite(averageLuma) &&
     averageLuma < VIDEO_LIMITS.minLumaWarning;
   if (hasLowLightWarning) {
-    warnings.push(
-      "Video appears too dark. Please improve lighting so your face and wallet text are clearly visible.",
-    );
+    warnings.push(MEDIA_MESSAGES.videoLowLightWarning);
   }
 
   const maxFreezeDurationSec = options.probeSignals?.maxFreezeDurationSec;
@@ -239,16 +245,12 @@ export function validateVideoQuality(
       Number.isFinite(freezeRatio) &&
       freezeRatio >= VIDEO_LIMITS.freezeWarningRatio);
   if (hasFreezeWarning) {
-    warnings.push(
-      "Video appears to freeze at times. Please keep your camera steady, improve lighting, and record again.",
-    );
+    warnings.push(MEDIA_MESSAGES.videoFreezeWarning);
   }
 
   const hasAudio = options.probeSignals?.hasAudio;
   if (hasAudio === false) {
-    warnings.push(
-      "No audio track detected. Please record again and clearly say the required phrase.",
-    );
+    warnings.push(MEDIA_MESSAGES.videoNoAudioWarning);
   } else {
     const nonSilenceSec = options.probeSignals?.nonSilenceSec;
     if (
@@ -256,9 +258,7 @@ export function validateVideoQuality(
       Number.isFinite(nonSilenceSec) &&
       nonSilenceSec < VIDEO_LIMITS.minAudioDurationWarning
     ) {
-      warnings.push(
-        "Audio appears mostly silent. Please speak clearly throughout the recording.",
-      );
+      warnings.push(MEDIA_MESSAGES.videoMostlySilentWarning);
     }
   }
 
@@ -273,9 +273,7 @@ export function validateVideoQuality(
   const minBitrate = getMinBitrateKbps(width, height);
 
   if (bitrateForCheck > 0 && bitrateForCheck < minBitrate) {
-    warnings.push(
-      "Video bitrate is lower than recommended. For better clarity, use good lighting and your camera's higher quality mode.",
-    );
+    warnings.push(MEDIA_MESSAGES.videoLowBitrateWarning);
   }
 
   return { warnings, error };
@@ -290,11 +288,11 @@ export function validatePhotoUpload(file: File): PhotoValidationError {
       file.type as (typeof IMAGE_ALLOWED_MIME_TYPES)[number],
     )
   ) {
-    return `Unsupported image format "${file.type || "unknown"}". Please use JPG, PNG, or WEBP.`;
+    return MEDIA_MESSAGES.photoUnsupportedFormat(file.type);
   }
 
   if (file.size > PHOTO_LIMITS.uploadMaxSizeBytes) {
-    return `Photo is too large (${Math.round(file.size / 1024 / 1024)}MB). Maximum upload size is ${PHOTO_LIMITS.uploadMaxSizeMb}MB.`;
+    return MEDIA_MESSAGES.photoUploadTooLarge(file.size, PHOTO_LIMITS.uploadMaxSizeMb);
   }
 
   return null;
@@ -306,7 +304,7 @@ export function validatePhotoDimensions(
   height: number,
 ): PhotoValidationError {
   if (width < PHOTO_LIMITS.minWidth || height < PHOTO_LIMITS.minHeight) {
-    return `Photo dimensions are too small. Minimum dimensions are ${PHOTO_LIMITS.minWidth}px by ${PHOTO_LIMITS.minHeight}px`;
+    return MEDIA_MESSAGES.photoDimensionsTooSmall(PHOTO_LIMITS.minWidth, PHOTO_LIMITS.minHeight);
   }
   return null;
 }
@@ -314,7 +312,7 @@ export function validatePhotoDimensions(
 /** Validate final photo size after processing. */
 export function validatePhotoSize(sizeBytes: number): PhotoValidationError {
   if (sizeBytes > PHOTO_LIMITS.maxSizeBytes) {
-    return `Photo is oversized. Maximum allowed size is ${PHOTO_LIMITS.maxSizeMb}mb`;
+    return MEDIA_MESSAGES.photoSizeExceeded(PHOTO_LIMITS.maxSizeMb);
   }
   return null;
 }

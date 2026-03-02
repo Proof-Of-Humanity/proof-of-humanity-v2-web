@@ -3,9 +3,9 @@ import {
   getVideoMimeType,
   probeVideoMetrics,
   readVideoMetadata,
-  videoSanitizer,
-} from "./media.video";
-import { MEDIA_MESSAGES } from "./media.messages";
+} from "./media.video.probe";
+import { videoSanitizer } from "./media.video.sanitize";
+import { MEDIA_ERROR_CODES, MEDIA_MESSAGES } from "./media.messages";
 import {
   normalizeVideoMimeType,
   VIDEO_LIMITS,
@@ -15,18 +15,19 @@ import {
   validateVideoResolution,
   validateVideoSize,
   validateVideoType,
-} from "./media.validation";
+} from "./media.video.validate";
 
 const DISABLE_FFMPEG = process.env.NEXT_PUBLIC_DISABLE_FFMPEG === "true";
 
-export type VideoPipelineErrorCode = VideoValidationReason | "PROCESSING_FAILED";
+export type VideoPipelineErrorCode =
+  | VideoValidationReason
+  | typeof MEDIA_ERROR_CODES.PROCESSING_FAILED;
 
 export interface VideoPipelineError {
   code: VideoPipelineErrorCode;
   userMessage: string;
   messages?: string[];
   warnings?: string[];
-  technical?: string;
 }
 
 export interface VideoPipelineSuccess {
@@ -44,9 +45,6 @@ export interface VideoPipelineSuccess {
 export type VideoPipelineResult =
   | { data: VideoPipelineSuccess; error: null }
   | { data: null; error: VideoPipelineError };
-
-const toTechnicalError = (err: unknown): string | undefined =>
-  err instanceof Error ? err.message : undefined;
 
 type BrowserVideoMetadata = { duration: number; width: number; height: number };
 
@@ -70,56 +68,12 @@ const buildAggregatedValidationError = (
     messageParts.push(`Warnings: ${warningMessages.join(" ")}`);
   }
 
-  const technical = uniqueMessages(errors.map((error) => error.technical)).join(" | ");
-
   return {
-    code: errors[0]?.code ?? "PROCESSING_FAILED",
+    code: errors[0]?.code ?? MEDIA_ERROR_CODES.PROCESSING_FAILED,
     userMessage: messageParts.join(" "),
     messages: errorMessages,
     warnings: warningMessages,
-    technical: technical || undefined,
   };
-};
-
-const collectDurationAndResolutionErrors = (
-  meta: BrowserVideoMetadata,
-): VideoPipelineError[] => {
-  const errors: VideoPipelineError[] = [];
-
-  const durationError = validateVideoDuration(meta.duration);
-  if (durationError) {
-    errors.push(durationError);
-  }
-
-  const resolutionError = validateVideoResolution(meta.width, meta.height);
-  if (resolutionError) {
-    errors.push(resolutionError);
-  }
-
-  return errors;
-};
-
-const readAndValidateBrowserMetadata = async (
-  blob: Blob,
-): Promise<{ meta: BrowserVideoMetadata | null; errors: VideoPipelineError[] }> => {
-  let meta: BrowserVideoMetadata;
-  try {
-    meta = await readVideoMetadata(blob);
-  } catch (err) {
-    return {
-      meta: null,
-      errors: [
-        {
-          code: "INVALID_FORMAT",
-          userMessage: MEDIA_MESSAGES.invalidVideoFile,
-          technical: toTechnicalError(err),
-        },
-      ],
-    };
-  }
-
-  const validationErrors = collectDurationAndResolutionErrors(meta);
-  return { meta, errors: validationErrors };
 };
 
 export const processVideoInput = async (input: Blob): Promise<VideoPipelineResult> => {
@@ -138,7 +92,7 @@ export const processVideoInput = async (input: Blob): Promise<VideoPipelineResul
     const rawFormat = detectVideoFormat(rawArray);
     if (!rawFormat) {
       validationErrors.push({
-        code: "INVALID_FORMAT",
+        code: MEDIA_ERROR_CODES.INVALID_FORMAT,
         userMessage: MEDIA_MESSAGES.invalidVideoFile,
       });
     }
@@ -149,9 +103,27 @@ export const processVideoInput = async (input: Blob): Promise<VideoPipelineResul
     const canUseFFmpeg = !DISABLE_FFMPEG && typeof SharedArrayBuffer !== "undefined";
 
     if (!canUseFFmpeg) {
-      const rawMetaResult = await readAndValidateBrowserMetadata(normalizedBlob);
-      validationErrors.push(...rawMetaResult.errors);
-      const rawMeta = rawMetaResult.meta;
+      let rawMeta: BrowserVideoMetadata | null = null;
+      try {
+        rawMeta = await readVideoMetadata(normalizedBlob);
+      } catch {
+        validationErrors.push({
+          code: MEDIA_ERROR_CODES.INVALID_FORMAT,
+          userMessage: MEDIA_MESSAGES.invalidVideoFile,
+        });
+      }
+
+      if (rawMeta !== null) {
+        const durationError = validateVideoDuration(rawMeta.duration);
+        if (durationError) {
+          validationErrors.push(durationError);
+        }
+
+        const resolutionError = validateVideoResolution(rawMeta.width, rawMeta.height);
+        if (resolutionError) {
+          validationErrors.push(resolutionError);
+        }
+      }
 
       const sizeError = validateVideoSize(normalizedBlob.size);
       if (sizeError) {
@@ -186,7 +158,7 @@ export const processVideoInput = async (input: Blob): Promise<VideoPipelineResul
         return {
           data: null,
           error: {
-            code: "PROCESSING_FAILED",
+            code: MEDIA_ERROR_CODES.PROCESSING_FAILED,
             userMessage: MEDIA_MESSAGES.genericVideoProcessingError,
           },
         };
@@ -218,11 +190,10 @@ export const processVideoInput = async (input: Blob): Promise<VideoPipelineResul
     let probe: Awaited<ReturnType<typeof probeVideoMetrics>>;
     try {
       probe = await probeVideoMetrics(rawBuffer);
-    } catch (err) {
+    } catch {
       validationErrors.push({
-        code: "PROCESSING_FAILED",
+        code: MEDIA_ERROR_CODES.PROCESSING_FAILED,
         userMessage: MEDIA_MESSAGES.genericVideoProcessingError,
-        technical: toTechnicalError(err),
       });
       return {
         data: null,
@@ -245,7 +216,7 @@ export const processVideoInput = async (input: Blob): Promise<VideoPipelineResul
 
     if (!hasProbeMetadata) {
       validationErrors.push({
-        code: "PROCESSING_FAILED",
+        code: MEDIA_ERROR_CODES.PROCESSING_FAILED,
         userMessage: MEDIA_MESSAGES.genericVideoProcessingError,
       });
     }
@@ -254,7 +225,7 @@ export const processVideoInput = async (input: Blob): Promise<VideoPipelineResul
       const webmCodec = probe.videoCodec?.toLowerCase();
       if (webmCodec !== "vp8" && webmCodec !== "vp9") {
         validationErrors.push({
-          code: "INVALID_FORMAT",
+          code: MEDIA_ERROR_CODES.INVALID_FORMAT,
           userMessage: MEDIA_MESSAGES.invalidWebmCodec,
         });
       }
@@ -318,15 +289,14 @@ export const processVideoInput = async (input: Blob): Promise<VideoPipelineResul
         VIDEO_LIMITS.maxSizeBytes,
         finalProbeDuration,
       );
-    } catch (err) {
+    } catch {
       return {
         data: null,
         error: buildAggregatedValidationError(
           [
             {
-              code: "PROCESSING_FAILED",
+              code: MEDIA_ERROR_CODES.PROCESSING_FAILED,
               userMessage: MEDIA_MESSAGES.genericVideoProcessingError,
-              technical: toTechnicalError(err),
             },
           ],
           collectedWarnings,
@@ -337,7 +307,7 @@ export const processVideoInput = async (input: Blob): Promise<VideoPipelineResul
     const sanitizedFormat = detectVideoFormat(sanitizedArray);
     if (!sanitizedFormat) {
       validationErrors.push({
-        code: "INVALID_FORMAT",
+        code: MEDIA_ERROR_CODES.INVALID_FORMAT,
         userMessage: MEDIA_MESSAGES.invalidVideoFile,
       });
       return {
@@ -369,11 +339,10 @@ export const processVideoInput = async (input: Blob): Promise<VideoPipelineResul
       try {
         const postBuffer = await processedBlob.arrayBuffer();
         postProbe = await probeVideoMetrics(postBuffer);
-      } catch (err) {
+      } catch {
         postValidationErrors.push({
-          code: "PROCESSING_FAILED",
+          code: MEDIA_ERROR_CODES.PROCESSING_FAILED,
           userMessage: MEDIA_MESSAGES.genericVideoProcessingError,
-          technical: toTechnicalError(err),
         });
       }
 
@@ -395,7 +364,7 @@ export const processVideoInput = async (input: Blob): Promise<VideoPipelineResul
           const webmCodec = postProbe.videoCodec?.toLowerCase();
           if (webmCodec !== "vp8" && webmCodec !== "vp9") {
             postValidationErrors.push({
-              code: "INVALID_FORMAT",
+              code: MEDIA_ERROR_CODES.INVALID_FORMAT,
               userMessage: MEDIA_MESSAGES.invalidWebmCodec,
             });
           }
@@ -403,7 +372,7 @@ export const processVideoInput = async (input: Blob): Promise<VideoPipelineResul
 
         if (!hasPostMetadata) {
           postValidationErrors.push({
-            code: "PROCESSING_FAILED",
+            code: MEDIA_ERROR_CODES.PROCESSING_FAILED,
             userMessage: MEDIA_MESSAGES.genericVideoProcessingError,
           });
         } else {
@@ -441,13 +410,12 @@ export const processVideoInput = async (input: Blob): Promise<VideoPipelineResul
       },
       error: null,
     };
-  } catch (err) {
+  } catch {
     return {
       data: null,
       error: {
-        code: "PROCESSING_FAILED",
+        code: MEDIA_ERROR_CODES.PROCESSING_FAILED,
         userMessage: MEDIA_MESSAGES.genericVideoProcessingError,
-        technical: toTechnicalError(err),
       },
     };
   }

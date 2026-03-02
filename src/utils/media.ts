@@ -5,17 +5,17 @@ export {
   detectVideoFormat,
   getVideoMimeType,
   readVideoMetadata,
-  videoSanitizer,
-} from "./media.video";
-export type { VideoFrameTimingMetrics, VideoProbeMetrics } from "./media.video";
-export { MEDIA_MESSAGES } from "./media.messages";
-export { processVideoInput } from "./video.pipeline";
+} from "./media.video.probe";
+export { videoSanitizer } from "./media.video.sanitize";
+export type { VideoFrameTimingMetrics, VideoProbeMetrics } from "./media.video.probe";
+export { MEDIA_ERROR_CODES, MEDIA_MESSAGES } from "./media.messages";
+export { processVideoInput } from "./media.video.pipeline";
 export type {
   VideoPipelineError,
   VideoPipelineErrorCode,
   VideoPipelineResult,
   VideoPipelineSuccess,
-} from "./video.pipeline";
+} from "./media.video.pipeline";
 export {
   getUploadedTypeLabel,
   IMAGE_ALLOWED_MIME_TYPES,
@@ -34,11 +34,11 @@ export {
   validateVideoResolution,
   validateVideoSize,
   validateVideoType,
-} from "./media.validation";
+} from "./media.video.validate";
 export type {
   PhotoValidationError,
   VideoMetadata,
   VideoQualityValidationResult,
   VideoValidationError,
   VideoValidationReason,
-} from "./media.validation";
+} from "./media.video.validate";
