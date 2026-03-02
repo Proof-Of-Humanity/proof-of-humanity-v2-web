@@ -15,40 +15,10 @@ import { toast } from "react-toastify";
 import {
   detectVideoFormat,
   getVideoMimeType,
-  IS_IOS,
-  IS_MOBILE,
   videoSanitizer,
 } from "utils/media";
 import { useAccount } from "wagmi";
 import { MediaState } from "./Form";
-
-// Extract first frame from a video blob URL as a data URL for use as poster
-function generateVideoThumbnail(blobUrl: string): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const video = document.createElement("video");
-    video.crossOrigin = "anonymous";
-    video.muted = true;
-    video.playsInline = true;
-    video.preload = "auto";
-    video.src = blobUrl;
-
-    video.onloadeddata = () => {
-      video.currentTime = 0.001;
-    };
-
-    video.onseeked = () => {
-      const canvas = document.createElement("canvas");
-      canvas.width = video.videoWidth;
-      canvas.height = video.videoHeight;
-      const ctx = canvas.getContext("2d");
-      if (!ctx) { reject(new Error("No canvas context")); return; }
-      ctx.drawImage(video, 0, 0);
-      resolve(canvas.toDataURL("image/jpeg", 0.8));
-    };
-
-    video.onerror = () => reject(new Error("Video load error"));
-  });
-}
 
 const ALLOWED_VIDEO_TYPES = [
   "video/webm",
@@ -127,9 +97,32 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
 
     if (timerRef.current) clearTimeout(timerRef.current);
 
-    const mediaRecorder = new MediaRecorder(camera.stream, {
-      mimeType: IS_IOS ? 'video/mp4;codecs="h264"' : 'video/webm; codecs="vp8"',
-    });
+    // Try mimeTypes in order of preference
+    const mimeTypes = [
+      'video/webm;codecs=vp9,opus',
+      'video/webm;codecs=vp8,opus',
+      'video/webm',
+      'video/mp4',
+    ];
+
+    let options: MediaRecorderOptions | undefined;
+    for (const mimeType of mimeTypes) {
+      if (typeof MediaRecorder !== 'undefined' && MediaRecorder.isTypeSupported(mimeType)) {
+        options = { mimeType };
+        break;
+      }
+    }
+
+    let mediaRecorder: MediaRecorder;
+    try {
+      mediaRecorder = options
+        ? new MediaRecorder(camera.stream, options)
+        : new MediaRecorder(camera.stream);
+    } catch (err) {
+      toast.error("Recording is not supported on this browser.");
+      console.error("MediaRecorder init failed:", err);
+      return;
+    }
 
     mediaRecorder.ondataavailable = async ({ data }) => {
       loading.start("Processing video");
@@ -160,12 +153,7 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
         }
 
         const uri = URL.createObjectURL(sanitizedBlob);
-        let poster: string | undefined;
-        if (IS_MOBILE) {
-          loading.start("Generating preview");
-          poster = await generateVideoThumbnail(uri).catch(() => undefined);
-        }
-        video$.set({ content: sanitizedBlob, uri, poster });
+        video$.set({ content: sanitizedBlob, uri });
         setShowCamera(false);
 
         if (needsCompression) {
@@ -318,14 +306,8 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
                     return;
                   }
 
-                  let poster: string | undefined;
-                  if (IS_MOBILE) {
-                    loading.start("Generating preview");
-                    poster = await generateVideoThumbnail(uri).catch(() => undefined);
-                    loading.stop();
-                  }
                   setRecording(false);
-                  video$.set({ uri, content: blob, poster });
+                  video$.set({ uri, content: blob });
                 });
               } catch (error: any) {
                 videoError(ERROR_MSG.unexpected);
@@ -404,8 +386,7 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
             trigger={
               <video
                 className="w-full max-w-xl cursor-pointer rounded"
-                src={video.uri}
-                poster={IS_MOBILE ? video.poster : undefined}
+                src={`${video.uri}#t=0.001`}
                 preload="metadata"
                 playsInline
               />

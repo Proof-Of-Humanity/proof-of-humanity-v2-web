@@ -110,7 +110,10 @@ const Webcam: React.FC<WebcamProps> = ({
   return (
     <div className="relative min-h-[300px] sm:min-h-[400px] overflow-hidden bg-black flex items-center justify-center">
       <ReactWebcam
-        className="h-full w-full aspect-video object-contain"
+        className={cn(
+          "h-full w-full object-contain",
+          !IS_MOBILE && "aspect-video"
+        )}
         ref={loadCamera}
         mirrored={mirrored}
         screenshotFormat={"image/jpeg"}
@@ -120,10 +123,10 @@ const Webcam: React.FC<WebcamProps> = ({
         forceScreenshotSourceSize
         videoConstraints={{
           width: IS_MOBILE
-            ? { min: 640, exact: 1280 }
+            ? { ideal: 1280 }
             : { min: 640, ideal: 1920 },
           height: IS_MOBILE
-            ? { min: 480, exact: 720 }
+            ? { ideal: 720 }
             : { min: 480, ideal: 1080 },
           frameRate: { min: 24, ideal: 60 },
           deviceId: IS_MOBILE ? undefined : currentCamera,

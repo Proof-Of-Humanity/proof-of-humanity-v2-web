@@ -419,16 +419,21 @@ export default async function Request({ params }: PageProps) {
             </div>
 
             {registrationFile && (
-              <Previewed
-                isVideo
-                uri={ipfs(registrationFile.video)}
-                trigger={
-                  <VideoThumbnail
-                    className="w-full cursor-pointer rounded"
-                    src={ipfs(registrationFile.video)}
-                  />
-                }
-              />
+              <>
+                <Previewed
+                  isVideo
+                  uri={ipfs(registrationFile.video)}
+                  trigger={
+                    <VideoThumbnail
+                      className="w-full cursor-pointer rounded"
+                      src={ipfs(registrationFile.video)}
+                    />
+                  }
+                />
+                <span className="text-secondaryText mt-1 text-sm">
+                  Tap video to preview fullscreen
+                </span>
+              </>
             )}
 
             <div className="flex w-full flex-wrap justify-between gap-2 md:flex-row md:items-center">
