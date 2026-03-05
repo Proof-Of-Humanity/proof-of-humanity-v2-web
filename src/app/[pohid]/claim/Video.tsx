@@ -61,6 +61,7 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
   const [showCamera, setShowCamera] = useState(false);
   const [camera, setCamera] = useState<ReactWebcam | null>(null);
   const [recording, setRecording] = useState(false);
+  const recordedChunksRef = useRef<Blob[]>([]);
 
   const [recorder, setRecorder] = useState<MediaRecorder | null>(null);
 
@@ -87,11 +88,12 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
   };
 
   const startRecording = () => {
+    if (pending) return;
     if (!camera || !camera.stream) return;
 
     const videoTrack = camera.stream.getVideoTracks()[0];
     if (!videoTrack || videoTrack.readyState !== 'live') {
-      toast.error("Camera not ready. Please wait a moment and try again.");
+      videoError("Camera not ready. Please wait a moment and try again.");
       return;
     }
 
@@ -119,21 +121,56 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
         ? new MediaRecorder(camera.stream, options)
         : new MediaRecorder(camera.stream);
     } catch (err) {
-      toast.error("Recording is not supported on this browser.");
+      videoError("Recording is not supported on this browser.");
       console.error("MediaRecorder init failed:", err);
       return;
     }
 
-    mediaRecorder.ondataavailable = async ({ data }) => {
+    recordedChunksRef.current = [];
+    let discardRecording = false;
+    let handledStop = false;
+
+    mediaRecorder.ondataavailable = ({ data }) => {
+      if (discardRecording) return;
+      if (!data || data.size === 0) return;
+      recordedChunksRef.current.push(data);
+    };
+
+    mediaRecorder.onstop = async () => {
+      if (handledStop) return;
+      handledStop = true;
+
+      if (timerRef.current) clearTimeout(timerRef.current);
+      setFullscreen(false);
+      setRecording(false);
+
+      if (discardRecording) {
+        recordedChunksRef.current = [];
+        return;
+      }
+
+      if (!recordedChunksRef.current.length) {
+        const noDataError = "Video not captured. Please retake the video.";
+        videoError(noDataError);
+        return;
+      }
+
       loading.start("Processing video");
 
       try {
-        const newlyRecorded = ([] as BlobPart[]).concat(data);
-        const blob = new Blob(newlyRecorded, {
-          type: mediaRecorder.mimeType || 'video/webm',
+        const blob = new Blob(recordedChunksRef.current, {
+          type:
+            mediaRecorder.mimeType ||
+            recordedChunksRef.current[0].type ||
+            "video/webm",
         });
 
-        const needsCompression = MAX_SIZE_BYTES && blob.size > MAX_SIZE_BYTES;
+        if (blob.size === 0) {
+          throw new Error("Video not captured. Please retake the video.");
+        }
+
+        const needsCompression = Boolean(MAX_SIZE_BYTES && blob.size > MAX_SIZE_BYTES);
+
         if (needsCompression) {
           loading.start("Compressing video");
         }
@@ -141,6 +178,10 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
         const buffer = await blob.arrayBuffer();
         const sanitized = await videoSanitizer(buffer, MAX_SIZE_BYTES);
         const sanitizedArray = new Uint8Array(sanitized as ArrayBuffer);
+
+        if (sanitizedArray.byteLength === 0) {
+          throw new Error("Video processing failed. Please retake the video.");
+        }
 
         const detectedFormat = detectVideoFormat(sanitizedArray);
         const outputType = getVideoMimeType(detectedFormat);
@@ -160,17 +201,12 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
           toast.success("Video compressed successfully");
         }
       } catch (err: any) {
-        toast.error(err.message || "Failed to process video");
         console.error("Video sanitization error:", err);
+        videoError("Failed to process video");
       } finally {
+        recordedChunksRef.current = [];
         loading.stop();
       }
-    };
-
-    mediaRecorder.onstop = async () => {
-      if (timerRef.current) clearTimeout(timerRef.current);
-      setFullscreen(false);
-      setRecording(false);
     };
 
     mediaRecorder.start();
@@ -181,11 +217,12 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
     // Auto-stop recording at MAX_DURATION
     timerRef.current = setTimeout(() => {
       if (mediaRecorder.state === "recording") {
-        mediaRecorder.ondataavailable = null; // Discard the recorded data
+        discardRecording = true;
+        recordedChunksRef.current = [];
         mediaRecorder.stop();
         setRecording(false);
         setFullscreen(false);
-        toast.error("Upload duration of 20 seconds exceeded. Please record a shorter version.");
+        videoError("Upload duration of 20 seconds exceeded. Please record a shorter version.");
       }
     }, MAX_DURATION * 1000);
   };
@@ -271,6 +308,7 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
             className="mt-1 text-base font-semibold text-primary underline underline-offset-2 hover:text-orange focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-300"
             type="video"
             onDrop={async (received) => {
+              if (pending) return;
               try {
                 const file = received[0];
                 if (!file) return;

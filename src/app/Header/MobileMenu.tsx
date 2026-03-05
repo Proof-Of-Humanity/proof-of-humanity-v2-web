@@ -21,7 +21,17 @@ interface MobileMenuProps {
 
 const MobileMenu = forwardRef(
   (
-    { policy, me, pathname, address, web3Loaded, isConnected, chain, pendingRegisterIntent, setPendingRegisterIntent }: MobileMenuProps,
+    {
+      policy,
+      me,
+      pathname,
+      address,
+      web3Loaded,
+      isConnected,
+      chain,
+      pendingRegisterIntent,
+      setPendingRegisterIntent,
+    }: MobileMenuProps,
     ref: Ref<HTMLDivElement>,
   ) => {
     const searchParams = useSearchParams();

@@ -3,7 +3,7 @@
 import { useAppKit } from "@reown/appkit/react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useCallback, useEffect } from "react";
 import { useAccount } from "wagmi";
 import { prettifyId } from "utils/identifier";
 
@@ -27,6 +27,17 @@ const RegisterLink = ({
   const modal = useAppKit();
   const { isConnected } = useAccount();
   const router = useRouter();
+  const navigateToRegister = useCallback(
+    (url: string) => {
+      // Claim flow must open as a full document in a new tab for cross-origin isolation.
+      if (url.includes("/claim")) {
+        window.open(url, "_blank", "noopener,noreferrer");
+        return;
+      }
+      router.push(url);
+    },
+    [router],
+  );
 
   useEffect(() => {
     if (pendingRegisterIntent && isConnected && address) {
@@ -35,10 +46,10 @@ const RegisterLink = ({
       const registerUrl = me?.currentRequest
         ? `/${prettifyId(me.currentRequest.humanity.id)}/${me.currentRequest.chain.name}/${me.currentRequest.index}`
         : `/${prettifyId(address)}/claim`;
-      
-      router.push(registerUrl);
+
+      navigateToRegister(registerUrl);
     }
-  }, [pendingRegisterIntent, isConnected, address, me, router, setPendingRegisterIntent]);
+  }, [pendingRegisterIntent, isConnected, address, me, navigateToRegister, setPendingRegisterIntent]);
 
   const handleClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
     if (!isConnected) {
@@ -64,12 +75,15 @@ const RegisterLink = ({
         ? `/${prettifyId(me.currentRequest.humanity.id)}/${me.currentRequest.chain.name}/${me.currentRequest.index}`
         : `/${prettifyId(address)}/claim`)
     : "#"; // Use # as placeholder when not connected
+  const shouldOpenInNewTab = registerUrl.includes("/claim");
 
   return (
     <Link
       href={registerUrl}
       onClick={handleClick}
       className={className}
+      target={shouldOpenInNewTab ? "_blank" : undefined}
+      rel={shouldOpenInNewTab ? "noopener noreferrer" : undefined}
     >
       Register
     </Link>
@@ -77,4 +91,3 @@ const RegisterLink = ({
 };
 
 export default RegisterLink;
-
