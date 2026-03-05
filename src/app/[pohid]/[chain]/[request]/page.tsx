@@ -63,7 +63,7 @@ export default async function Request({ params }: PageProps) {
     contractData.arbitrationInfo.extraData,
   );
   const requestStatus = getStatus(request, contractData);
-  
+
   let onChainVouches: Array<Address> = [];
 
   const offChainVouches: {
@@ -100,12 +100,12 @@ export default async function Request({ params }: PageProps) {
       !!request.registrationEvidenceRevokedReq
         ? ipfsFetch<EvidenceFile>(request.registrationEvidenceRevokedReq)
         : request.humanity.winnerClaim.length > 0 &&
-            request.humanity.winnerClaim.at(0)!.evidenceGroup.evidence.length >
-              0
+          request.humanity.winnerClaim.at(0)!.evidenceGroup.evidence.length >
+          0
           ? ipfsFetch<EvidenceFile>(
-              request.humanity.winnerClaim.at(0)!.evidenceGroup.evidence.at(-1)!
-                .uri,
-            )
+            request.humanity.winnerClaim.at(0)!.evidenceGroup.evidence.at(-1)!
+              .uri,
+          )
           : null,
       ipfsFetch<EvidenceFile>(request.evidenceGroup.evidence.at(-1)!.uri),
     ]);
@@ -119,8 +119,8 @@ export default async function Request({ params }: PageProps) {
     const registrationEvidence =
       request.evidenceGroup.evidence.length > 0
         ? await ipfsFetch<EvidenceFile>(
-            request.evidenceGroup.evidence.at(-1)!.uri,
-          )
+          request.evidenceGroup.evidence.at(-1)!.uri,
+        )
         : null;
 
     registrationFile =
@@ -236,7 +236,7 @@ export default async function Request({ params }: PageProps) {
 
   // Extract used reasons from existing challenges
 
-  const usedReasons = request.challenges 
+  const usedReasons = request.challenges
     ? request.challenges.map(challenge => challenge.reason.id)
     : [];
 
@@ -289,15 +289,17 @@ export default async function Request({ params }: PageProps) {
         {request.revocation && revocationFile && (
           <div className="bg-primaryBackground p-4">
             <div className="relative">
-              <div className="text-primaryText flex justify-between">
+              <div className="text-primaryText flex flex-col items-center gap-2 text-center md:flex-row md:justify-between md:text-left">
                 Revocation requested - {revocationFile.name}
                 {revocationFile.fileURI && (
                   <Attachment uri={revocationFile.fileURI} />
                 )}
               </div>
-              <p className="text-primaryText">{revocationFile.description}</p>
+              <p className="text-primaryText text-center md:text-left">
+                {revocationFile.description}
+              </p>
             </div>
-            <div className="flex flex-wrap text-sm font-normal">
+            <div className="flex flex-wrap items-center justify-center text-center text-sm font-normal md:justify-start md:text-left">
               <span className="text-secondaryText mr-2">Requested by</span>
               <Identicon diameter={16} address={request.requester} />
               <ExternalLink
@@ -345,11 +347,11 @@ export default async function Request({ params }: PageProps) {
           </div>
 
           <div className="flex w-full flex-col p-[24px] lg:p-[32px]">
-            <div className="mb-8 flex flex-col-reverse items-center md:items-stretch justify-between md:flex-row">
-              <div className="flex items-center justify-center md:justify-start">
+            <div className="mb-8 flex flex-col-reverse items-center justify-between md:items-stretch md:flex-row">
+              <div className="flex w-full flex-col items-center md:w-auto md:flex-row md:items-center md:justify-start">
                 <Identicon diameter={24} address={request.claimer.id} />
                 <ExternalLink
-                  className="ml-2 font-semibold text-slate-400 hover:text-slate-600"
+                  className="mt-1 text-center font-semibold text-slate-400 hover:text-slate-600 md:ml-2 md:mt-0 md:text-left"
                   href={explorerLink(request.claimer.id, chain)}
                 >
                   {request.claimer.id.slice(0, 20)}
@@ -366,7 +368,7 @@ export default async function Request({ params }: PageProps) {
               </span>
             </div>
             <div className="mb-4 h-1 w-full border-b"></div>
-            <div className="mb-2 flex flex-col-reverse items-center md:items-stretch justify-between md:flex-row">
+            <div className="mb-2 flex flex-col-reverse items-center justify-center md:items-stretch md:justify-between md:flex-row">
               <Info
                 label="POH ID"
                 nbRequests={
@@ -377,7 +379,7 @@ export default async function Request({ params }: PageProps) {
             </div>
             <div className="text-orange mb-8 flex flex-wrap gap-x-[8px] gap-y-[8px] font-medium justify-center md:justify-start">
               <Link
-                className="text-orange flex flex-row flex-wrap gap-x-[8px] font-semibold hover:text-orange-500"
+                className="text-orange flex flex-row flex-wrap text-center justify-center gap-x-[8px] font-semibold hover:text-orange-500 md:justify-start"
                 href={`/${prettifyId(pohId)}`}
               >
                 <Image
@@ -430,20 +432,20 @@ export default async function Request({ params }: PageProps) {
                     />
                   }
                 />
-                <span className="text-secondaryText mt-1 text-sm">
+                <span className="text-secondaryText mt-1 text-center text-sm md:text-left">
                   Tap video to preview fullscreen
                 </span>
               </>
             )}
 
-            <div className="flex w-full flex-wrap justify-between gap-2 md:flex-row md:items-center">
+            <div className="flex w-full flex-wrap justify-center gap-2 md:justify-between md:flex-row md:items-center">
               {policyLink && (
                 <div className="flex w-full flex-col items-center md:flex-row md:items-end md:justify-end font-normal">
                   <Link
                     href={`/attachment?url=${ipfs(policyLink)}`}
                     className="flex justify-center items-center text-primaryText ml-0 md:ml-2"
                   >
-                    <DocumentIcon className="fill-orange h-6 w-6"/>
+                    <DocumentIcon className="fill-orange h-6 w-6" />
                     <div className="text-primaryText group relative flex py-[8px]">
                       Relevant Policy
                     </div>
@@ -451,9 +453,9 @@ export default async function Request({ params }: PageProps) {
                 </div>
               )}
               {vourchesForData.find((v) => v) && (
-                <div className="text-secondaryText mt-8 flex flex-col">
+                <div className="text-secondaryText mt-8 flex flex-col items-center text-center md:items-start md:text-left">
                   This PoHID vouched for
-                  <div className="flex flex-wrap gap-2">
+                  <div className="flex flex-wrap justify-center gap-2 md:justify-start">
                     {vourchesForData.map(async (vouch, idx) => {
                       const vouchLocal = await Promise.resolve(vouch);
                       return (
@@ -475,19 +477,19 @@ export default async function Request({ params }: PageProps) {
                 </div>
               )}
             </div>
-            <div className="w-full flex-wrap justify-between gap-2 md:flex-row md:items-center">
+            <div className="flex w-full flex-wrap justify-center gap-2 md:justify-between md:flex-row md:items-center">
               {vouchersData.find((v) => v) && (
-                <div className="text-secondaryText mt-8 flex flex-col">
+                <div className="text-secondaryText mt-8 flex flex-col items-center text-center md:items-start md:text-left">
                   {request.status.id === "vouching"
                     ? "Available vouches for this PoHID"
                     : "Vouched for this request"}
-                  <div className="flex flex-wrap gap-2">
+                  <div className="flex flex-wrap justify-center gap-2 md:justify-start">
                     {vouchersData.map(async (vouch, idx) => {
                       const vouchLocal = await Promise.resolve(vouch);
                       return (
                         <Vouch
-                          isActive={ request.status.id === "vouching" ?
-                             vouchLocal.vouchStatus?.isValid : true }
+                          isActive={request.status.id === "vouching" ?
+                            vouchLocal.vouchStatus?.isValid : true}
                           reason={
                             request.status.id === "vouching"
                               ? vouchLocal.vouchStatus?.reason
@@ -508,7 +510,7 @@ export default async function Request({ params }: PageProps) {
                 </div>
               )}
             </div>
-            <Label className="text-orange mb-8 md:hidden">
+            <Label className="text-orange mb-8 text-center md:hidden">
               Last update: <TimeAgo time={request.lastStatusChange} />
             </Label>
           </div>
