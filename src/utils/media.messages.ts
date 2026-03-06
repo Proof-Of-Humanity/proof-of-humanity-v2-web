@@ -31,7 +31,8 @@ export const MEDIA_MESSAGES = {
     `Video is oversized. Maximum allowed size is ${maxSizeMb}mb`,
   videoLowFps:
     "Video looks choppy to verify clearly. Please improve lighting, close background apps, and record again.",
-  videoFrameGapWarning: "Video may look choppy. Please verify before submitting.",
+  videoFrameGapWarning:
+    "Video playback may appear stuttery. Please review to ensure your face and wallet address remain clearly visible before submitting.",
   videoBlurWarning:
     "Video appears blurry. Please keep your camera steady and ensure your face and wallet text are in focus.",
   videoLowLightWarning:

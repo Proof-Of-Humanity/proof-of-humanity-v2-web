@@ -5,6 +5,7 @@ import Webcam from "components/Webcam";
 import useFullscreen from "hooks/useFullscreen";
 import { useLoading } from "hooks/useLoading";
 import CameraIcon from "icons/CameraMajor.svg";
+import InfoIcon from "icons/info.svg";
 import ResetIcon from "icons/ResetMinor.svg";
 import Image from "next/image";
 import React, { useEffect, useRef, useState } from "react";
@@ -45,22 +46,22 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
   const [showCamera, setShowCamera] = useState(false);
   const [camera, setCamera] = useState<ReactWebcam | null>(null);
   const [recording, setRecording] = useState(false);
-  const [videoValidationError, setVideoValidationError] = useState<
-    string | null
-  >(null);
-  const [videoQualityWarning, setVideoQualityWarning] = useState<string | null>(
-    null,
+  const [videoValidationErrors, setVideoValidationErrors] = useState<string[]>(
+    [],
   );
+  const [videoQualityWarnings, setVideoQualityWarnings] = useState<string[]>([]);
   const [rawPreviewUri, setRawPreviewUri] = useState<string | null>(null);
 
   const [recorder, setRecorder] = useState<MediaRecorder | null>(null);
 
   const loading = useLoading();
   const [pending, loadingMessage] = loading.use();
+  const dedupeMessages = (messages: string[]): string[] =>
+    [...new Set(messages.filter(Boolean))];
 
   const setValidationError = (message: string) => {
-    setVideoValidationError(message);
-    setVideoQualityWarning(null);
+    setVideoValidationErrors([message]);
+    setVideoQualityWarnings([]);
     videoError(message);
   };
 
@@ -105,32 +106,34 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
     }
 
     if (result.error) {
-      const errorMessages = result.error.messages ?? [result.error.userMessage];
-      const warningMessages = result.error.warnings ?? [];
+      const errorMessages = dedupeMessages(
+        result.error.messages ?? [result.error.userMessage],
+      );
+      const warningMessages = dedupeMessages(result.error.warnings ?? []);
       const combinedErrorMessage = errorMessages.join(" ");
 
-      setVideoValidationError(combinedErrorMessage);
+      setVideoValidationErrors(errorMessages);
       videoError(combinedErrorMessage);
 
       if (warningMessages.length > 0) {
-        setVideoQualityWarning(warningMessages.join(" "));
+        setVideoQualityWarnings(warningMessages);
         showWarningToasts(warningMessages);
       } else {
-        setVideoQualityWarning(null);
+        setVideoQualityWarnings([]);
       }
       return;
     }
 
     const processed = result.data;
 
-    setVideoQualityWarning(null);
+    setVideoQualityWarnings([]);
     if (processed.warnings.length > 0) {
-      const warning = processed.warnings.join(" ");
-      setVideoQualityWarning(warning);
-      showWarningToasts(processed.warnings);
+      const warningMessages = dedupeMessages(processed.warnings);
+      setVideoQualityWarnings(warningMessages);
+      showWarningToasts(warningMessages);
     }
 
-    setVideoValidationError(null);
+    setVideoValidationErrors([]);
     URL.revokeObjectURL(previewUrl);
     setRawPreviewUri(null);
 
@@ -151,8 +154,8 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
     const file = received[0];
     if (!file) return;
 
-    setVideoValidationError(null);
-    setVideoQualityWarning(null);
+    setVideoValidationErrors([]);
+    setVideoQualityWarnings([]);
     cancelledRef.current = false;
     loading.start("Processing video");
 
@@ -213,8 +216,8 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
         return;
       }
 
-      setVideoValidationError(null);
-      setVideoQualityWarning(null);
+      setVideoValidationErrors([]);
+      setVideoQualityWarnings([]);
       cancelledRef.current = false;
       loading.start("Processing video");
 
@@ -263,8 +266,8 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
 
     setShowCamera(false);
     setRecording(false);
-    setVideoValidationError(null);
-    setVideoQualityWarning(null);
+    setVideoValidationErrors([]);
+    setVideoQualityWarnings([]);
     loading.stop();
     if (rawPreviewUri) URL.revokeObjectURL(rawPreviewUri);
     setRawPreviewUri(null);
@@ -286,9 +289,12 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
   // ─── Derived visual state ────────────────────────────────────────
   const isPreparing = pending && !rawPreviewUri;
   const isProcessing = pending && !!rawPreviewUri;
-  const hasError = !pending && !!rawPreviewUri && !!videoValidationError;
+  const hasError =
+    !pending && !!rawPreviewUri && videoValidationErrors.length > 0;
   const isAccepted = !!video && !pending;
   const isSourceSelection = !showCamera && !video && !pending && !rawPreviewUri;
+  const hasIssues =
+    videoValidationErrors.length > 0 || videoQualityWarnings.length > 0;
 
   const checklistItems = [
     {
@@ -434,10 +440,20 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
       {isAccepted && (
         <div className="flex flex-col items-center">
           <video src={video.uri} controls className="w-full max-w-xl rounded-lg" />
-          {videoQualityWarning && (
-            <span className="mt-3 text-center text-sm text-amber-500">
-              {videoQualityWarning}
-            </span>
+          {hasIssues && (
+            <div className="mt-3 w-full max-w-xl">
+              <div className="mb-2 flex text-base items-center justify-center gap-2 font-semibold text-primaryText">
+                <InfoIcon className="h-4 w-4 stroke-current stroke-2 text-primaryText" />
+                <span>Issues Found</span>
+              </div>
+              {videoQualityWarnings.length > 0 && (
+                <div className="flex flex-col gap-1 text-sm text-amber-500">
+                  {videoQualityWarnings.map((warningMessage, idx) => (
+                    <span key={`accepted-warning-${idx}`}>{warningMessage}</span>
+                  ))}
+                </div>
+              )}
+            </div>
           )}
           <button
             className="btn-main mt-4"
@@ -452,28 +468,45 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
       {hasError && (
         <div className="flex flex-col items-center">
           <video src={rawPreviewUri!} controls className="w-full max-w-xl rounded-lg" />
-          <span className="mt-3 text-center text-sm text-red-500">
-            {videoValidationError}
-          </span>
-          {videoQualityWarning && (
-            <span className="mt-2 text-center text-sm text-amber-500">
-              {videoQualityWarning}
-            </span>
-          )}
-        </div>
-      )}
+          <div className="mt-3 w-full max-w-xl">
+            <div className="mb-2 flex items-center gap-2 text-sm font-semibold text-black">
+              <InfoIcon className="h-4 w-4 stroke-current stroke-2 text-primaryText" />
+              <span className="text-primaryText">Issues Found</span>
+            </div>
+            <div className="flex flex-col gap-1 text-sm text-red-500">
+              {videoValidationErrors.map((errorMessage, idx) => (
+                <span key={`error-${idx}`}>{errorMessage}</span>
+              ))}
+            </div>
+            {videoQualityWarnings.length > 0 && (
+              <div className="mt-2 flex flex-col gap-1 text-sm text-amber-500">
+                {videoQualityWarnings.map((warningMessage, idx) => (
+                  <span key={`warning-${idx}`}>{warningMessage}</span>
+                ))}
+              </div>
+            )}
+          </div>
+        </div >
+      )
+      }
 
       {/* ── Bottom action button ── */}
-      {((showCamera && !pending) || isAccepted || isProcessing || isPreparing || hasError) && (
-        <button
-          className="centered text-orange mt-4 text-lg font-semibold uppercase disabled:opacity-50"
-          onClick={() => retakeVideo()}
-          disabled={recording}
-        >
-          <ResetIcon className="fill-orange mr-2 h-6 w-6" />
-          {(isProcessing || isPreparing) ? "Cancel" : showCamera ? "Return" : "Retake"}
-        </button>
-      )}
+      {
+        ((showCamera && !pending) || isAccepted || isProcessing || isPreparing || hasError) && (
+          <button
+            className="centered text-orange mt-4 text-lg font-semibold uppercase disabled:opacity-50"
+            onClick={() => retakeVideo()}
+            disabled={recording}
+          >
+            <ResetIcon className="fill-orange mr-2 h-6 w-6" />
+            {(isProcessing || isPreparing)
+              ? "Cancel"
+              : showCamera
+                ? "Return"
+                : "Try Again"}
+          </button>
+        )
+      }
     </>
   );
 }
