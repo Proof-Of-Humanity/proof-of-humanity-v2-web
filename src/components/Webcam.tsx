@@ -123,12 +123,12 @@ const Webcam: React.FC<WebcamProps> = ({
         forceScreenshotSourceSize
         videoConstraints={{
           width: IS_MOBILE
-            ? { ideal: 1280 }
+            ? { ideal: 1280, max: 1280 }
             : { min: 640, ideal: 1920 },
           height: IS_MOBILE
-            ? { ideal: 720 }
+            ? { ideal: 720, max: 720 }
             : { min: 480, ideal: 1080 },
-          frameRate: { min: 24, ideal: 60 },
+          frameRate: IS_MOBILE ? { min: 24, ideal: 30, max: 30 } : { min: 24, ideal: 60 },
           deviceId: IS_MOBILE ? undefined : currentCamera,
           facingMode,
         }}
