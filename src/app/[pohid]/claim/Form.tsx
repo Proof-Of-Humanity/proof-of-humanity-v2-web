@@ -87,6 +87,7 @@ export default function Form({ contractData, totalCosts, renewal }: FormProps) {
   const events = useMemo<Effects>(
     () => ({
       onError() {
+        state$.uri.set("");
         loading.stop();
         toast.error("Transaction rejected");
       },
@@ -98,6 +99,7 @@ export default function Form({ contractData, totalCosts, renewal }: FormProps) {
         toast.success("Request created");
       },
       onFail() {
+        state$.uri.set("");
         loading.stop();
         toast.error("Transaction preparation failed. You may have insufficient funds or are on the wrong network.");
       },
@@ -106,7 +108,7 @@ export default function Form({ contractData, totalCosts, renewal }: FormProps) {
         toast.info("Transaction pending");
       },
     }),
-    [step$, loading],
+    [step$, loading, state$],
   );
 
   const [prepareClaimHumanity] = usePoHWrite("claimHumanity", events);
@@ -115,6 +117,7 @@ export default function Form({ contractData, totalCosts, renewal }: FormProps) {
   const submit = async () => {
     if (!media.photo || !media.video) return;
 
+    state$.uri.set("");
     loading.start("Uploading media");
   try{
     const photoFile = media.photo.content as File;

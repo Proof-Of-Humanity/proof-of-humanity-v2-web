@@ -16,27 +16,30 @@ export default function Previewed({
   return (
     <Popup trigger={trigger} modal nested>
       {(close) => (
-        <>
-          <div className="backdrop" onClick={close}>
-            {!isVideo && (
-              <div
-                className="relative min-h-screen w-full bg-auto bg-center bg-no-repeat"
-                style={{ backgroundImage: `url(${uri})` }}
-              />
-            )}
-          </div>
-          {isVideo && (
+        <div
+          className="backdrop fixed inset-0 z-30 flex items-center justify-center p-4"
+          onClick={close}
+        >
+          {isVideo ? (
             <video
-              className="absolute-centered fixed z-30 max-h-screen max-w-[100vw] rounded p-2 sm:p-0"
+              className="max-h-[90vh] max-w-[90vw] rounded bg-black"
               src={uri}
               controls
               playsInline
               // @ts-expect-error webkit-playsinline is a non-standard attribute for older iOS Safari
               webkit-playsinline=""
+              onClick={(event) => event.stopPropagation()}
               onEnded={close}
             />
+          ) : (
+            <img
+              alt="Preview"
+              className="max-h-[90vh] max-w-[90vw] object-contain"
+              src={uri}
+              onClick={(event) => event.stopPropagation()}
+            />
           )}
-        </>
+        </div>
       )}
     </Popup>
   );

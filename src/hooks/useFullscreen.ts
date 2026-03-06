@@ -44,10 +44,54 @@ const useFullscreen = (ref: RefObject<Element>) => {
     };
   }, [isFullscreen, ref]);
 
+  const toggleFullscreen = () => {
+    const target = ref.current as
+      | (Element & {
+          webkitRequestFullscreen?: () => Promise<void> | void;
+          querySelector?: (selectors: string) => Element | null;
+        })
+      | null;
+
+    if (!target) return;
+
+    if (screenfull.isEnabled) {
+      setIsFullscreen((open) => !open);
+      return;
+    }
+
+    const video = target.querySelector?.("video") as
+      | (HTMLVideoElement & {
+          webkitEnterFullscreen?: () => void;
+          webkitRequestFullscreen?: () => Promise<void> | void;
+        })
+      | null;
+
+    const requestFullscreen =
+      target.requestFullscreen?.bind(target) ??
+      target.webkitRequestFullscreen?.bind(target) ??
+      video?.requestFullscreen?.bind(video) ??
+      video?.webkitRequestFullscreen?.bind(video);
+
+    if (requestFullscreen) {
+      Promise.resolve(requestFullscreen()).catch(() => {
+        setIsFullscreen(false);
+      });
+      return;
+    }
+
+    if (video?.webkitEnterFullscreen) {
+      try {
+        video.webkitEnterFullscreen();
+      } catch {
+        setIsFullscreen(false);
+      }
+    }
+  };
+
   return {
     isFullscreen,
     setFullscreen: setIsFullscreen,
-    toggleFullscreen: () => setIsFullscreen((o) => !o),
+    toggleFullscreen,
   };
 };
 

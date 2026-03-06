@@ -207,7 +207,7 @@ function Review({
         </div>
       </div>
       {loadingMessage ? (
-        <button className="btn-main">
+        <button className="btn-main gap-2" disabled>
           <Image
             alt="loading"
             src="/logo/poh-white.svg"

@@ -1,5 +1,6 @@
 import React from "react";
 import DocViewer, { DocViewerRenderers } from "@cyntler/react-doc-viewer";
+import { IS_MOBILE } from "utils/media";
 
 import "@cyntler/react-doc-viewer/dist/index.css";
 
@@ -24,7 +25,7 @@ const FileViewer: React.FC<{ url: string }> = ({ url }) => {
             disableFileName: true,
           },
           pdfZoom: {
-            defaultZoom: 0.8,
+            defaultZoom: IS_MOBILE ? 1.4 : 0.8,
             zoomJump: 0.1,
           },
           pdfVerticalScrollByDefault: true,

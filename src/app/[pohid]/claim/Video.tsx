@@ -9,7 +9,7 @@ import { useLoading } from "hooks/useLoading";
 import CameraIcon from "icons/CameraMajor.svg";
 import ResetIcon from "icons/ResetMinor.svg";
 import Image from "next/image";
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import ReactWebcam from "react-webcam";
 import { toast } from "react-toastify";
 import {
@@ -53,6 +53,10 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
   const { address } = useAccount();
 
   const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const sourceActionsRef = useRef<HTMLDivElement | null>(null);
+  const cameraSectionRef = useRef<HTMLDivElement | null>(null);
+  const pendingSectionRef = useRef<HTMLDivElement | null>(null);
+  const previewSectionRef = useRef<HTMLDivElement | null>(null);
 
   const fullscreenRef = useRef(null);
   const { isFullscreen, setFullscreen, toggleFullscreen } =
@@ -239,6 +243,38 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
     video$.delete();
   };
 
+  useEffect(() => {
+    if (showCamera || pending || !!video) return;
+    sourceActionsRef.current?.scrollIntoView({
+      behavior: "smooth",
+      block: "center",
+    });
+  }, [showCamera, pending, video]);
+
+  useEffect(() => {
+    if (!showCamera || pending || !!video) return;
+    cameraSectionRef.current?.scrollIntoView({
+      behavior: "smooth",
+      block: "center",
+    });
+  }, [showCamera, pending, video]);
+
+  useEffect(() => {
+    if (!pending) return;
+    pendingSectionRef.current?.scrollIntoView({
+      behavior: "smooth",
+      block: "center",
+    });
+  }, [pending]);
+
+  useEffect(() => {
+    if (!video || pending) return;
+    previewSectionRef.current?.scrollIntoView({
+      behavior: "smooth",
+      block: "center",
+    });
+  }, [video, pending]);
+
   const phrase = isRenewal
     ? "I certify I am a real human and I reapply to keep being part of this registry"
     : "I certify that I am a real human and that I am not already registered in this registry";
@@ -250,20 +286,22 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
         <div className="divider mt-4 w-2/3" />
       </span>
 
-      <span className="mx-4 sm:mx-12 my-8 flex flex-col text-center">
-        <span>
-          Record a short video: hold your phone showing this wallet address (readable, no glare)
+      {!pending && (
+        <span className="mx-4 sm:mx-12 my-8 flex flex-col text-center">
+          <span>
+            Record a short video: hold your phone showing this wallet address (readable, no glare)
+          </span>
+          <strong className="my-2 break-all text-sm sm:text-base font-mono">{address}</strong>
+          <span>and say the phrase</span>
+          <span className="my-2">
+            <code className="text-orange">"</code>
+            <strong>{phrase}</strong>
+            <code className="text-orange">"</code>
+          </span>
         </span>
-        <strong className="my-2 break-all text-sm sm:text-base font-mono">{address}</strong>
-        <span>and say the phrase</span>
-        <span className="my-2">
-          <code className="text-orange">"</code>
-          <strong>{phrase}</strong>
-          <code className="text-orange">"</code>
-        </span>
-      </span>
+      )}
 
-      {!showCamera && !video && (
+      {!showCamera && !video && !pending && (
         <Checklist
           title="Video Checklist"
           warning="Not following these guidelines will result in a loss of funds."
@@ -292,8 +330,8 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
         />
       )}
 
-      {!showCamera && !video && (
-        <div className="mt-6 flex w-full flex-col items-center">
+      {!showCamera && !video && !pending && (
+        <div ref={sourceActionsRef} className="mt-6 flex w-full flex-col items-center">
           <button
             className="gradient flex w-full max-w-xl items-center justify-center gap-3 rounded-full px-6 py-4 text-lg font-semibold text-white shadow-lg transition hover:opacity-90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
             onClick={() => setShowCamera(true)}
@@ -358,19 +396,21 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
         </div>
       )}
 
-      {showCamera && (
+      {showCamera && !pending && (
         <>
           <div tabIndex={0} ref={fullscreenRef}>
-            <Webcam
-              isVideo
-              overlay
-              recording={recording}
-              action={recording ? stopRecording : startRecording}
-              fullscreen={isFullscreen}
-              toggleFullscreen={toggleFullscreen}
-              loadCamera={setCamera}
-              phrase={phrase}
-            />
+            <div ref={cameraSectionRef}>
+              <Webcam
+                isVideo
+                overlay
+                recording={recording}
+                action={recording ? stopRecording : startRecording}
+                fullscreen={isFullscreen}
+                toggleFullscreen={toggleFullscreen}
+                loadCamera={setCamera}
+                phrase={phrase}
+              />
+            </div>
           </div>
           <Checklist
             title="Video Checklist"
@@ -402,7 +442,7 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
       )}
 
       {pending && (
-        <div className="flex flex-col items-center mt-4">
+        <div ref={pendingSectionRef} className="flex flex-col items-center mt-4">
           <button className="btn-main" disabled>
             <Image
               alt="loading"
@@ -417,7 +457,7 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
       )}
 
       {!!video && !pending && (
-        <div className="flex flex-col items-center">
+        <div ref={previewSectionRef} className="flex flex-col items-center">
           <Previewed
             isVideo
             uri={video.uri}
