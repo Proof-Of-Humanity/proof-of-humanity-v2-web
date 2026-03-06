@@ -265,7 +265,7 @@ async function Profile({ params: { pohid } }: PageProps) {
                   pohId={pohId}
                 />
               ) : (
-                <span className="text-secondaryText">
+                <span className="text-secondaryText mb-4">
                   Renewal available{" "}
                   <TimeAgo
                     time={
@@ -319,7 +319,7 @@ async function Profile({ params: { pohid } }: PageProps) {
               <span className="text-orange mb-6">Not claimed</span>
               {!pendingRequests.length?
               <Link 
-                className="btn-main mb-6 w-48" 
+                className="btn-main mb-6"
                 href={`/${pohId}/claim`}
                 target="_blank"
                 rel="noopener noreferrer"

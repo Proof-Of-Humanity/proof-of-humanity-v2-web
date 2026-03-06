@@ -12,6 +12,7 @@ import useWeb3Loaded from "hooks/useWeb3Loaded";
 import DesktopNavigation from "./DesktopNavigation";
 import MobileMenu from "./MobileMenu";
 import Options from "./Options";
+import RegisterLink from "./RegisterLink";
 import WalletSection from "./WalletSection";
 
 interface IHeader {
@@ -33,6 +34,8 @@ export default function Header({ policy }: IHeader) {
   const chain = chains.find(chain => chain.id === chainId)
   const web3Loaded = useWeb3Loaded();
   const { data: me } = useSWR(address, getMyData);
+  const showRewardsCta = Boolean(isConnected && me?.pohId);
+  const showRegisterCta = !me?.pohId;
 
   const detectTheme = () => {
     const theme = localStorage.getItem("theme");
@@ -96,29 +99,64 @@ export default function Header({ policy }: IHeader) {
         />
       </Link>
 
-      <button
-        className="ml-auto block text-white md:hidden"
-        onClick={() => setMenuOpen(!menuOpen)}
-      >
-        <Hamburger />
-      </button>
-
-      <div className="lg:absolute lg:left-1/2 lg:-translate-x-1/2 lg:transform">
-        <DesktopNavigation
-          {...{ address, me, policy, pathname, chain: chain!, web3Loaded, pendingRegisterIntent, setPendingRegisterIntent }}
-        />
+      <div className="ml-auto flex items-center gap-2 md:hidden">
+        {showRewardsCta ? (
+          <Link
+            href="/app"
+            className={`rounded-full border border-white/50 px-3 py-1 text-sm font-semibold text-white transition hover:bg-white/15 ${
+              pathname.startsWith("/app") ? "bg-white/20" : ""
+            }`}
+          >
+            Rewards
+          </Link>
+        ) : showRegisterCta ? (
+          <RegisterLink
+            me={me}
+            address={address}
+            pathname={pathname}
+            pendingRegisterIntent={pendingRegisterIntent}
+            setPendingRegisterIntent={setPendingRegisterIntent}
+            className={`rounded-full border border-white/50 px-3 py-1 text-sm font-semibold text-white transition hover:bg-white/15 ${
+              pathname.includes("/claim") ? "bg-white/20" : ""
+            }`}
+          />
+        ) : null}
+        <button
+          className="block text-white"
+          onClick={() => setMenuOpen(!menuOpen)}
+        >
+          <Hamburger />
+        </button>
       </div>
 
-      {menuOpen && (
+      {chain && (
+        <div className="lg:absolute lg:left-1/2 lg:-translate-x-1/2 lg:transform">
+          <DesktopNavigation
+            {...{ address, me, policy, pathname, chain, web3Loaded, pendingRegisterIntent, setPendingRegisterIntent }}
+          />
+        </div>
+      )}
+
+      {menuOpen && chain && (
         <MobileMenu
           ref={menuRef}
-          {...{ isConnected, web3Loaded, address, pathname, me, policy, pendingRegisterIntent, setPendingRegisterIntent }}
+          {...{
+            isConnected,
+            web3Loaded,
+            address,
+            pathname,
+            me,
+            policy,
+            chain,
+            pendingRegisterIntent,
+            setPendingRegisterIntent,
+          }}
         />
       )}
 
       <div className="flex flex-row items-center">
         <div className="hidden md:block">
-          <WalletSection {...{ chain: chain!, address, isConnected, web3Loaded }} />
+          {chain && <WalletSection {...{ chain, address, isConnected, web3Loaded }} />}
         </div>
         <div className="hidden md:block">
           <Options />

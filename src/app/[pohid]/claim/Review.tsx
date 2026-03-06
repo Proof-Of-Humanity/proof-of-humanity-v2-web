@@ -2,8 +2,8 @@ import { ObservableObject, ObservablePrimitiveBaseFns } from "@legendapp/state";
 import ExternalLink from "components/ExternalLink";
 import Field from "components/Field";
 import Label from "components/Label";
-import Previewed from "components/Previewed";
 import AuthGuard from "components/AuthGuard";
+import Previewed from "components/Previewed";
 import TimeAgo from "components/TimeAgo";
 import { SupportedChainId, idToChain, getForeignChain } from "config/chains";
 import { ContractData } from "data/contract";
@@ -112,15 +112,12 @@ function Review({
             />
           }
         />
-        <Previewed
-          isVideo
-          uri={video!.uri}
-          trigger={
-            <video
-              className="mt-4 h-48 cursor-pointer sm:ml-8 sm:mt-0"
-              src={video!.uri}
-            />
-          }
+        <video
+          className="mt-4 h-72 w-auto max-w-full rounded sm:ml-8 sm:mt-0 sm:h-64"
+          src={`${video!.uri}#t=0.001`}
+          controls
+          playsInline
+          preload="metadata"
         />
       </div>
 
@@ -205,24 +202,26 @@ function Review({
           ) : null}
         </div>
       </div>
-      {loadingMessage ? (
-        <button className="btn-main">
-          <Image
-            alt="loading"
-            src="/logo/poh-white.svg"
-            className="animate-flip fill-white"
-            width={14}
-            height={14}
-          />
-          {loadingMessage}...
-        </button>
-      ) : (
-        <AuthGuard>
-          <button className="btn-main" onClick={submit}>
-            Submit
+      <div className="w-full">
+        {loadingMessage ? (
+          <button className="btn-main gap-2 md:w-full" disabled>
+            <Image
+              alt="loading"
+              src="/logo/poh-white.svg"
+              className="animate-flip fill-white"
+              width={14}
+              height={14}
+            />
+            {loadingMessage}...
           </button>
-        </AuthGuard>
-      )}
+        ) : (
+          <AuthGuard>
+            <button className="btn-main md:w-full" onClick={submit}>
+              Submit
+            </button>
+          </AuthGuard>
+        )}
+      </div>
     </>
   );
 }

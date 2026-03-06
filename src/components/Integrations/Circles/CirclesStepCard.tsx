@@ -30,9 +30,9 @@ const CirclesStepCard: React.FC<ProcessStepCardProps> = ({
           alt={step.title}
           width={900}
           height={521}
-          className="h-auto object-contain max-h-[200px] sm:max-h-[300px] my-4 sm:my-6 md:h-auto md:max-h-[521px] md:mt-8 md:mb-2 rounded-md border-stroke border shadow"
+          className="h-auto object-contain max-h-[200px] sm:max-h-[300px] my-4 sm:my-6 md:h-auto md:max-h-[521px] md:mt-8 md:mb-2 rounded-md border-stroke border shadow mx-4 sm:mx-0"
         />
-        <p className="text-secondaryText text-base mb-4">
+        <p className="text-secondaryText text-sm sm:text-base mb-4 px-4 md:px-6">
           If you're on desktop, 
             <a href="https://app.gnosis.io/transfer/0x9a450CF5AAFa348A3d4857CbDD49e23819F08A0e/crc?data=0xf3f5858942140fd2894eeb8b74cd0ed72d24fc6675d352a2884b1be2f32256fe" className="text-orange font-medium hover:text-orange/80 hover:cursor-pointer" target="_blank" rel="noopener noreferrer"> click here </a>
             to mint our group $CRC
@@ -40,7 +40,7 @@ const CirclesStepCard: React.FC<ProcessStepCardProps> = ({
       </div>
       <div className="p-4 md:p-6 flex flex-col flex-1 bg-primaryBackground rounded-[30px]">
         <p className="text-primaryText text-xl md:text-2xl font-semibold">{step.title}</p>
-        <p className="text-primaryText mt-4 flex-1 text-sm md:text-base">{addLinkToText(step.description)}</p>
+        <p className="text-primaryText mt-4 flex-1 text-sm md:text-base leading-relaxed">{addLinkToText(step.description)}</p>
         <br/>
         <p className="text-orange text-base mb-4">We have benefits incoming for the largest holders of our group $CRC, soon!</p>
         {(previousStep || nextStep) && (

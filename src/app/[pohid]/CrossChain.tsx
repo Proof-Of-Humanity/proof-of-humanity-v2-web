@@ -555,8 +555,8 @@ export default function CrossChain({
   }, [checkPendingUpdate, winningStatus]);
 
   return (
-    <div className="flex w-full flex-col border-t p-4 sm:flex-row sm:items-center sm:justify-between">
-      <div className="flex flex-col">
+    <div className="flex w-full flex-col items-center border-t p-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col items-center sm:items-start">
         <span className="text-secondaryText">Home chain</span>
         <span className="flex items-center font-semibold">
           <ChainLogo

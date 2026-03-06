@@ -147,14 +147,14 @@ export const loadFFMPEG = async () => {
       "Video processing is not available. Please refresh the page (Cmd+R or Ctrl+R) and try again."
     );
   }
-  
+
   if (ffmpeg && ffmpeg.isLoaded()) return;
-  
-  ffmpeg = createFFmpeg({ 
+
+  ffmpeg = createFFmpeg({
     log: true,
-    corePath: "/ffmpeg/ffmpeg-core.js" 
+    corePath: "/ffmpeg/ffmpeg-core.js"
   });
-  
+
   try {
     await ffmpeg.load();
   } catch (err) {
@@ -196,7 +196,7 @@ export const detectVideoFormat = (buffer: Uint8Array): "mp4" | "mov" | "webm" | 
   const ftypCheck = readAscii(buffer, 4, 4);
   if (ftypCheck === "ftyp") {
     const majorBrand = readAscii(buffer, 8, 4);
-    
+
     // QuickTime brand indicates .mov container
     if (majorBrand === "qt  ") {
       return "mov";
@@ -225,7 +225,7 @@ export const getVideoMimeType = (format: string): string => {
 const getVideoCodecForFormat = (format: string): { videoCodec: string; audioCodec: string } => {
   switch (format) {
     case "webm":
-      return { videoCodec: "libvpx", audioCodec: "libvorbis" };
+      return { videoCodec: "libvpx", audioCodec: "libopus" };
     case "avi":
       return { videoCodec: "mpeg4", audioCodec: "mp3" };
     case "mov":
@@ -233,6 +233,12 @@ const getVideoCodecForFormat = (format: string): { videoCodec: string; audioCode
     default:
       return { videoCodec: "libx264", audioCodec: "aac" };
   }
+};
+
+const normalizeRotation = (rotation: number): number => {
+  const snapped = Math.round(rotation / 90) * 90;
+  const normalized = ((snapped % 360) + 360) % 360;
+  return [0, 90, 180, 270].includes(normalized) ? normalized : 0;
 };
 
 export const videoSanitizer = async (
@@ -250,10 +256,11 @@ export const videoSanitizer = async (
     ffmpeg.FS("writeFile", inputName, inputArray);
 
     const shouldCompress = maxSizeBytes && inputBuffer.byteLength > maxSizeBytes;
-    
+
     let ffmpegArgs: string[];
 
     let duration = 0;
+    let rotation = 0;
     ffmpeg.setLogger(({ type, message }) => {
       const match = message.match(/Duration: (\d+):(\d+):(\d+.\d+)/);
       if (match) {
@@ -261,6 +268,11 @@ export const videoSanitizer = async (
           parseInt(match[1]) * 3600 +
           parseInt(match[2]) * 60 +
           parseFloat(match[3]);
+      }
+
+      const rotationMatch = message.match(/rotation of (-?\d+(?:\.\d+)?) degrees/i);
+      if (rotationMatch) {
+        rotation = normalizeRotation(parseFloat(rotationMatch[1]));
       }
     });
 
@@ -288,42 +300,40 @@ export const videoSanitizer = async (
           videoCodec,
           "-b:v",
           `${targetBitrate}`,
-          "-maxrate",
-          `${targetBitrate}`,
-          "-bufsize",
-          `${targetBitrate * 2}`,
           "-c:a",
           audioCodec === "copy" ? "aac" : audioCodec,
         ];
 
-        if (inputFormat === "mp4" || inputFormat === "mov") {
-           ffmpegArgs.push("-b:a", "96k");
-        }
-        
-        ffmpegArgs.push("-preset", "fast");
-
       } else {
-        ffmpegArgs = [
-          "-i",
-          inputName,
-          "-map_metadata",
-          "-1",
-          "-c:v",
-          videoCodec,
-          "-c:a",
-          audioCodec,
-          "-crf",
-          "24",
-          "-preset",
-          "fast",
-        ];
-      }
-      
-      // WebM-specific speed optimizations
-      if (inputFormat === "webm") {
-        ffmpegArgs.push("-cpu-used", "8");  // Max speed (0=slow/best, 8=fast/worst)
-        ffmpegArgs.push("-deadline", "realtime");  // Realtime encoding (fastest)
-        ffmpegArgs.push("-threads", "4");  // Use multiple threads
+        if (inputFormat === "webm") {
+          ffmpegArgs = [
+            "-i",
+            inputName,
+            "-map_metadata",
+            "-1",
+            "-c:v",
+            "libvpx",
+            "-b:v",
+            "2500k", // some browsers like safari don't provide duration, which can lead to ffmpeg using default low bitrate
+            "-c:a",
+            "libopus",
+          ];
+        } else {
+          ffmpegArgs = [
+            "-i",
+            inputName,
+            "-map_metadata",
+            "-1",
+            "-c:v",
+            videoCodec,
+            "-c:a",
+            audioCodec,
+            "-crf",
+            "24",
+            "-preset",
+            "fast",
+          ];
+        }
       }
     } else {
       ffmpegArgs = [
@@ -337,6 +347,10 @@ export const videoSanitizer = async (
     }
 
     if (inputFormat === "mp4" || inputFormat === "mov") {
+      if (rotation !== 0) {
+        // We strip metadata by design; preserve orientation for portrait videos.
+        ffmpegArgs.push("-metadata:s:v:0", `rotate=${rotation}`);
+      }
       ffmpegArgs.push("-movflags", "+faststart");
     }
 
@@ -350,7 +364,7 @@ export const videoSanitizer = async (
     }
 
     const outputData = ffmpeg.FS("readFile", outputFilename);
-    
+
     console.log(`[Video Sanitizer] Size: ${inputBuffer.byteLength} -> ${outputData.byteLength}`);
 
     try {
@@ -365,23 +379,4 @@ export const videoSanitizer = async (
     console.error("❌ [Video Sanitizer] Error during processing:", err);
     return inputBuffer;
   }
-};
-
-export const compressVideoIfNeeded = async (
-  file: File | Blob,
-  maxSizeBytes: number,
-): Promise<Blob> => {
-  if (file.size <= maxSizeBytes) {
-    return file;
-  }
-
-  const buffer = await file.arrayBuffer();
-  const compressed = await videoSanitizer(buffer, maxSizeBytes);
-  const compressedArray = new Uint8Array(compressed as ArrayBuffer);
-  const format = detectVideoFormat(compressedArray);
-  const mimeType = getVideoMimeType(format);
-
-  const blob = new Blob([compressedArray], { type: mimeType });
-  
-  return blob;
 };

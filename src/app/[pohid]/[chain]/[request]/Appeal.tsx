@@ -292,21 +292,8 @@ const Appeal: React.FC<AppealProps> = ({
     <Modal
       header={`Appeal case #${disputeId}`}
       trigger={
-        <button className="
-          btn-sec 
-          py-2
-          rounded
-          w-[150px]
-          md:w-auto
-        ">
-          <span className="
-            flex 
-            items-center
-            flex-wrap
-            md:flex-nowrap
-            flex-inline
-            whitespace-nowrap
-          ">
+        <button className="btn-sec py-2 rounded">
+          <span className="flex items-center justify-center flex-wrap">
             Appeal (ends&nbsp;
             <TimeAgo time={parseInt(String(period[1]))} />
             )

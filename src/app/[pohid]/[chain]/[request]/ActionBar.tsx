@@ -91,7 +91,7 @@ export default function ActionBar({
   const { data: me } = useSWR(address, getMyData);
   const router = useRouter();
 
-  const {didIVouchFor, isVouchOnchain} = useMemo(() => {
+  const { didIVouchFor, isVouchOnchain } = useMemo(() => {
     const lowerAddr = address?.toLowerCase();
     const onChainMatch = onChainVouches.some(
       (voucherAddress) => voucherAddress.toLowerCase() === lowerAddr,
@@ -200,26 +200,26 @@ export default function ActionBar({
   const isExecutePrepareError = executeStatus.prepare === "error";
   const isWithdrawPrepareError = withdrawStatus.prepare === "error";
   useEffect(() => {
-    if(!address || userChainId !== chain.id) return;
+    if (!address || userChainId !== chain.id) return;
     if (action === ActionType.ADVANCE && !revocation) {
-        prepareAdvance({
-          args: [
-            requester,
-            onChainVouches,
-            offChainVouches.map((v) => {
-              const sig = hexToSignature(v.signature);
-              return {
-                expirationTime: v.expiration,
-                v: Number(sig.v),
-                r: sig.r,
-                s: sig.s,
-              };
-            }),
-          ],
-        });
-        setCanAdvance(true);
+      prepareAdvance({
+        args: [
+          requester,
+          onChainVouches,
+          offChainVouches.map((v) => {
+            const sig = hexToSignature(v.signature);
+            return {
+              expirationTime: v.expiration,
+              v: Number(sig.v),
+              r: sig.r,
+              s: sig.s,
+            };
+          }),
+        ],
+      });
+      setCanAdvance(true);
     }
-    if (action === ActionType.EXECUTE){
+    if (action === ActionType.EXECUTE) {
       prepareExecute({ args: [pohId, BigInt(index)] });
     }
   }, [
@@ -254,11 +254,11 @@ export default function ActionBar({
   ]);
 
   const totalCost = BigInt(contractData.baseDeposit) + arbitrationCost;
-  
+
   const statusColor = getStatusColor(requestStatus);
 
   return (
-    <div className="paper border-stroke bg-whiteBackground text-primaryText flex flex-col items-center justify-between gap-[12px] px-[24px] py-[24px] md:flex-row lg:gap-[20px]">
+    <div className="paper border-stroke bg-whiteBackground text-primaryText flex flex-col items-center justify-between gap-3 px-4 py-4 sm:px-6 sm:py-6 md:flex-row lg:gap-5">
       <div className="flex items-center">
         <span className="mr-4">Status</span>
         <span
@@ -267,14 +267,14 @@ export default function ActionBar({
           {getStatusLabel(requestStatus, 'actionBar')}
         </span>
       </div>
-      <div className="flex w-full flex-col justify-between gap-[12px] font-normal md:flex-row md:items-center">
+      <div className="flex w-full flex-col items-center justify-between gap-[12px] font-normal md:flex-row md:items-center">
         {web3Loaded &&
           (action === ActionType.REMOVE_VOUCH ||
             action === ActionType.VOUCH ||
             action === ActionType.FUND) && (
             <>
-              <div className="flex gap-6">
-                <span className="text-slate-400">
+              <div className="flex gap-6 text-center md:text-left">
+                <span className="text-slate-400 md:whitespace-nowrap">
                   {validVouches < contractData.requiredNumberOfVouches && (
                     <>
                       It needs{" "}
@@ -302,10 +302,10 @@ export default function ActionBar({
                 </span>
               </div>
 
-              <div className="flex gap-4">
-              {requester.toLocaleLowerCase() === address?.toLowerCase() ? (
-                  <div className="flex flex-col">
-                    <div className="flex flex-row gap-2">
+              <div className="flex w-full flex-col md:flex-row md:flex-wrap justify-center md:justify-end gap-3 md:gap-4">
+                {requester.toLocaleLowerCase() === address?.toLowerCase() ? (
+                  <div className="flex w-full md:w-auto flex-col gap-2">
+                    <div className="flex w-full flex-col md:flex-row gap-2">
                       {action === ActionType.FUND && (
                         <FundButton
                           pohId={pohId}
@@ -325,9 +325,9 @@ export default function ActionBar({
                         tooltip={
                           isWithdrawPrepareError
                             ? "Withdraw not possible, please try again"
-                            : userChainId !== chain.id 
-                            ? `Switch your chain above to ${idToChain(chain.id)?.name || 'the correct chain'}`
-                            : undefined
+                            : userChainId !== chain.id
+                              ? `Switch your chain above to ${idToChain(chain.id)?.name || 'the correct chain'}`
+                              : undefined
                         }
                         className="mb-2"
                       />
@@ -335,7 +335,7 @@ export default function ActionBar({
                     {validVouches < contractData.requiredNumberOfVouches && (
                       <ExternalLink
                         href="https://t.me/proofhumanity"
-                        className="text-purple hover:opacity-80 underline underline-offset-4 text-sm font-medium inline-flex items-center gap-1 group transition-colors justify-end"
+                        className="text-purple hover:opacity-80 underline underline-offset-4 text-sm font-medium inline-flex items-center gap-1 group transition-colors justify-center md:justify-end"
                       >
                         Get a vouch
                         <svg
@@ -413,17 +413,17 @@ export default function ActionBar({
           <>
             <span className="text-slate-400">Ready to advance</span>
 
-            <div className="flex gap-4">
+            <div className="flex w-full flex-col items-center gap-3 md:flex-row md:gap-4">
               {requester.toLocaleLowerCase() === address?.toLowerCase() ? (
-              <ActionButton
-               disabled={isWithdrawPrepareError || userChainId !== chain.id}
-               isLoading={isWithdrawLoading}
-               onClick={withdraw}
-               variant = "secondary"
-               label={"Withdraw"}
-               tooltip={isWithdrawPrepareError ? "Withdraw not possible, please try again" : userChainId !== chain.id ? `Switch your chain above to ${idToChain(chain.id)?.name || 'the correct chain'}` : undefined}
-               className="mb-2"
-             />
+                <ActionButton
+                  disabled={isWithdrawPrepareError || userChainId !== chain.id}
+                  isLoading={isWithdrawLoading}
+                  onClick={withdraw}
+                  variant="secondary"
+                  label={"Withdraw"}
+                  tooltip={isWithdrawPrepareError ? "Withdraw not possible, please try again" : userChainId !== chain.id ? `Switch your chain above to ${idToChain(chain.id)?.name || 'the correct chain'}` : undefined}
+                  className="mb-2"
+                />
               ) : !didIVouchFor ? (
                 <Vouch
                   pohId={pohId}
@@ -456,7 +456,7 @@ export default function ActionBar({
         {action === ActionType.EXECUTE && (
           <>
             <span className="text-slate-400">Ready to finalize.</span>
-            <div className="flex flex-col justify-between gap-4 font-normal md:flex-row md:items-center">
+            <div className="flex w-full flex-col items-center justify-between gap-4 font-normal md:flex-row md:items-center">
               <ActionButton
                 disabled={isExecutePrepareError || userChainId !== chain.id}
                 isLoading={isExecuteLoading}
@@ -505,7 +505,7 @@ export default function ActionBar({
               .
             </span>
 
-            <div className="flex gap-4 flex-wrap lg:flex-nowrap ">
+            <div className="flex w-full flex-col flex-wrap items-center gap-3 md:flex-row md:gap-4 lg:flex-nowrap">
               <Appeal
                 pohId={pohId}
                 requestIndex={index}
@@ -523,12 +523,7 @@ export default function ActionBar({
 
               <ExternalLink
                 href={`https://klerosboard.com/${chain.id}/cases/${currentChallenge.disputeId}`}
-                className="btn-main gradient h-[48px] rounded
-                items-center
-                justify-center
-                p-2
-                whitespace-nowrap
-                "
+                className="btn-main gradient h-[48px] rounded w-full md:w-auto items-center justify-center p-2 whitespace-nowrap text-center"
               >
                 View case #{currentChallenge.disputeId}
               </ExternalLink>
@@ -538,17 +533,17 @@ export default function ActionBar({
 
         {status === "resolved" && (
           <span>
-          {requestStatus === RequestStatus.EXPIRED ? 
-          "Request has expired" : 
-          requestStatus === RequestStatus.REJECTED ?
-          "Request was rejected" : "Request was accepted"}
-          <TimeAgo
+            {requestStatus === RequestStatus.EXPIRED ?
+              "Request has expired" :
+              requestStatus === RequestStatus.REJECTED ?
+                "Request was rejected" : "Request was accepted"}
+            <TimeAgo
               className={`ml-1 text-status-${statusColor}`}
-              time={requestStatus === RequestStatus.EXPIRED 
+              time={requestStatus === RequestStatus.EXPIRED
                 ? humanityExpirationTime!
                 : lastStatusChange}
             />
-          .
+            .
           </span>
         )}
 
