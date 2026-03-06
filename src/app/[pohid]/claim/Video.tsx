@@ -286,20 +286,18 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
         <div className="divider mt-4 w-2/3" />
       </span>
 
-      {!pending && (
-        <span className="mx-4 sm:mx-12 my-8 flex flex-col text-center">
-          <span>
-            Record a short video: hold your phone showing this wallet address (readable, no glare)
-          </span>
-          <strong className="my-2 break-all text-sm sm:text-base font-mono">{address}</strong>
-          <span>and say the phrase</span>
-          <span className="my-2">
-            <code className="text-orange">"</code>
-            <strong>{phrase}</strong>
-            <code className="text-orange">"</code>
-          </span>
+      <span className="mx-4 sm:mx-12 my-8 flex flex-col text-center">
+        <span>
+          Record a short video: hold your phone showing this wallet address (readable, no glare)
         </span>
-      )}
+        <strong className="my-2 break-all text-sm sm:text-base font-mono">{address}</strong>
+        <span>and say the phrase</span>
+        <span className="my-2">
+          <code className="text-orange">"</code>
+          <strong>{phrase}</strong>
+          <code className="text-orange">"</code>
+        </span>
+      </span>
 
       {!showCamera && !video && !pending && (
         <Checklist
@@ -330,7 +328,7 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
         />
       )}
 
-      {!showCamera && !video && !pending && (
+      {!showCamera && !video && (
         <div ref={sourceActionsRef} className="mt-6 flex w-full flex-col items-center">
           <button
             className="gradient flex w-full max-w-xl items-center justify-center gap-3 rounded-full px-6 py-4 text-lg font-semibold text-white shadow-lg transition hover:opacity-90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
@@ -396,7 +394,7 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
         </div>
       )}
 
-      {showCamera && !pending && (
+      {showCamera && (
         <>
           <div tabIndex={0} ref={fullscreenRef}>
             <div ref={cameraSectionRef}>
@@ -412,32 +410,34 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
               />
             </div>
           </div>
-          <Checklist
-            title="Video Checklist"
-            warning="Not following these guidelines will result in a loss of funds."
-            items={[
-              {
-                text: "Show your wallet address & your face in the same frame. Face forward, centered, well lit.",
-                isValid: true,
-              },
-              {
-                text: "Address must read left→right (not mirrored) and match the connected wallet.",
-                isValid: true,
-              },
-              {
-                text: `Say exactly: "${phrase}"`,
-                isValid: true,
-              },
-              {
-                text: "Show wallet address on a phone screen—clear, no shine. If on paper, confirm every character matches.",
-                isValid: true,
-              },
-              {
-                text: "Eyes, nose, mouth clearly visible (eyeglasses allowed, given no glare/reflection covering eyes).",
-                isValid: true,
-              },
-            ]}
-          />
+          {!pending && (
+            <Checklist
+              title="Video Checklist"
+              warning="Not following these guidelines will result in a loss of funds."
+              items={[
+                {
+                  text: "Show your wallet address & your face in the same frame. Face forward, centered, well lit.",
+                  isValid: true,
+                },
+                {
+                  text: "Address must read left→right (not mirrored) and match the connected wallet.",
+                  isValid: true,
+                },
+                {
+                  text: `Say exactly: "${phrase}"`,
+                  isValid: true,
+                },
+                {
+                  text: "Show wallet address on a phone screen—clear, no shine. If on paper, confirm every character matches.",
+                  isValid: true,
+                },
+                {
+                  text: "Eyes, nose, mouth clearly visible (eyeglasses allowed, given no glare/reflection covering eyes).",
+                  isValid: true,
+                },
+              ]}
+            />
+          )}
         </>
       )}
 
