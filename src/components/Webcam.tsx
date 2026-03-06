@@ -162,13 +162,15 @@ const Webcam: React.FC<WebcamProps> = ({
               <FlipCameraIcon className="h-8 w-8 fill-white" />
             </CameraButton>
           )}
-          <CameraButton
-            secondary
-            className="right-4 top-4"
-            onClick={toggleFullscreen}
-          >
-            <FullscreenIcon className="h-8 w-8 fill-white" />
-          </CameraButton>
+          {!IS_MOBILE && (
+            <CameraButton
+              secondary
+              className="right-4 top-4"
+              onClick={toggleFullscreen}
+            >
+              <FullscreenIcon className="h-8 w-8 fill-white" />
+            </CameraButton>
+          )}
         </>
       )}
 

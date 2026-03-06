@@ -314,7 +314,7 @@ function Photo({ advance, photo$ }: PhotoProps) {
               />
             }
           />
-          <button className="btn-main mt-4" onClick={advance}>
+          <button className="btn-main mt-4 md:w-auto" onClick={advance}>
             Next
           </button>
         </div>

@@ -22,6 +22,7 @@ import { toast } from "react-toastify";
 import { machinifyId } from "utils/identifier";
 import { Hash, parseEther } from "viem";
 import { useAccount, useChainId } from "wagmi";
+import ActionButton from "components/ActionButton";
 import Connect from "./Connect";
 import Finalized from "./Finalized";
 import InfoStep from "./Info";
@@ -71,6 +72,7 @@ export default function Form({ contractData, totalCosts, renewal }: FormProps) {
   const { uploadFile: uploadToIPFS} = useAtlasProvider();
 
   const step$ = useObservable(Step.info);
+  const step = step$.use();
   const media$ = useObservable<MediaState>({ photo: null, video: null });
   const media = media$.use();
   const state$ = useObservable<SubmissionState>({
@@ -80,9 +82,17 @@ export default function Form({ contractData, totalCosts, renewal }: FormProps) {
   });
   const state = state$.use();
   const selfFunded$ = useObservable(formatEth(totalCosts[chainId]));
-  const selfFunded = selfFunded$.use();
   const loading = useLoading();
   const [, loadingMessage] = loading.use();
+  const stepHistoryReady = useRef(false);
+  const previousStepRef = useRef(Step.info);
+  const canGoBack =
+    step > Step.info && step < Step.finalized && !loadingMessage;
+
+  const goBack = () => {
+    if (!canGoBack) return;
+    step$.set(step - 1);
+  };
 
   const events = useMemo<Effects>(
     () => ({
@@ -222,6 +232,43 @@ export default function Form({ contractData, totalCosts, renewal }: FormProps) {
   });
 
   useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    if (!stepHistoryReady.current) {
+      window.history.replaceState(
+        { ...(window.history.state ?? {}), claimStep: step },
+        "",
+      );
+      stepHistoryReady.current = true;
+      previousStepRef.current = step;
+      return;
+    }
+
+    if (step !== previousStepRef.current) {
+      window.history.pushState(
+        { ...(window.history.state ?? {}), claimStep: step },
+        "",
+      );
+      previousStepRef.current = step;
+    }
+  }, [step]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const onPopState = (event: PopStateEvent) => {
+      const previousStep = event.state?.claimStep;
+      if (typeof previousStep === "number") {
+        previousStepRef.current = previousStep;
+        step$.set(previousStep);
+      }
+    };
+
+    window.addEventListener("popstate", onPopState);
+    return () => window.removeEventListener("popstate", onPopState);
+  }, [step$]);
+
+  useEffect(() => {
     if (initiatingAddress.current) {
       if (
         !renewal &&
@@ -250,7 +297,7 @@ export default function Form({ contractData, totalCosts, renewal }: FormProps) {
 
   return (
     <>
-      <Show if={() => step$.get() !== Step.finalized}>
+      <Show if={() => step !== Step.finalized}>
         {() => (
           <div className="flex w-full cursor-default select-none items-center">
             {steps.map((item, i) => (
@@ -261,23 +308,23 @@ export default function Form({ contractData, totalCosts, renewal }: FormProps) {
                       "centered h-6 whitespace-nowrap rounded-full text-sm",
                       {
                         "w-6 border border-slate-200 font-bold text-slate-400":
-                          step$.get() < i,
+                          step < i,
                         "gradient px-2 font-bold uppercase text-white":
-                          step$.get() === i,
+                          step === i,
                         "gradient w-6 cursor-pointer font-bold text-white":
-                          step$.get() > i,
+                          step > i,
                       },
                     )}
-                    onClick={() => step$.get() > i && step$.set(i)}
+                    onClick={() => step > i && step$.set(i)}
                   >
-                    {`${i + 1}${step$.get() === i ? `. ${item}` : ""}`}
+                    {`${i + 1}${step === i ? `. ${item}` : ""}`}
                   </div>
                 </div>
                 {i !== steps.length - 1 && (
                   <div
                     className={cn(
                       "h-px w-full",
-                      step$.get() > i ? "gradient" : "bg-slate-200",
+                      step > i ? "gradient" : "bg-slate-200",
                     )}
                   />
                 )}
@@ -327,6 +374,17 @@ export default function Form({ contractData, totalCosts, renewal }: FormProps) {
           ),
         }}
       </Switch>
+
+      {canGoBack && (
+        <div className="mt-6 flex justify-center">
+          <ActionButton
+            onClick={goBack}
+            label="Back"
+            variant="secondary"
+            className="w-full max-w-xs"
+          />
+        </div>
+      )}
     </>
   );
 }

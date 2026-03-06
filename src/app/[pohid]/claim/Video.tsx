@@ -473,7 +473,7 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
           <span className="text-secondaryText mt-1 text-sm">
             Tap video to preview fullscreen
           </span>
-          <button className="btn-main mt-4" onClick={advance}>
+          <button className="btn-main mt-4 md:w-auto" onClick={advance}>
             Next
           </button>
         </div>
