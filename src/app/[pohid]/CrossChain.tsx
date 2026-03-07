@@ -47,6 +47,35 @@ type AMBMessageInfo = {
   type: 'UserRequestForSignature' | 'UserRequestForAffirmation';
 } | null;
 
+function findClosestLog(
+  logs: Log[],
+  targetLogIndex: number,
+  matcher: (log: Log) => boolean,
+  preferBefore = false,
+): Log | undefined {
+  const matchingLogs = logs.filter(matcher);
+
+  if (!matchingLogs.length) {
+    return undefined;
+  }
+
+  if (preferBefore) {
+    const closestBefore = matchingLogs
+      .filter((log) => Number(log.logIndex) < targetLogIndex)
+      .sort((logA, logB) => Number(logB.logIndex) - Number(logA.logIndex))[0];
+
+    if (closestBefore) {
+      return closestBefore;
+    }
+  }
+
+  return matchingLogs.sort(
+    (logA, logB) =>
+      Math.abs(Number(logA.logIndex) - targetLogIndex) -
+      Math.abs(Number(logB.logIndex) - targetLogIndex),
+  )[0];
+}
+
 function getUpdateExpiration(txReceipt: TransactionReceipt, chainId: SupportedChainId): bigint | undefined {
   let expirationTime: bigint | undefined;
   txReceipt.logs.find((log: Log) => {
@@ -69,22 +98,44 @@ function getUpdateExpiration(txReceipt: TransactionReceipt, chainId: SupportedCh
   return expirationTime;
 }
 
-function getAMBMessageInfo(txReceipt: TransactionReceipt, chainId: SupportedChainId): AMBMessageInfo {
+function getAMBMessageInfo(
+  txReceipt: TransactionReceipt,
+  chainId: SupportedChainId,
+  updateLogIndex?: number,
+): AMBMessageInfo {
     const isGnosisChain = chainId === 100 || chainId === 10200; // Gnosis or Chiado
     
     if (isGnosisChain) {
-      const ambEvent = txReceipt.logs.find((log: Log) => {
-        try {
-          const decoded = decodeEventLog({
-            abi: USER_REQUEST_FOR_SIGNATURE_ABI,
-            data: log.data,
-            topics: log.topics,
+      const ambEvent = typeof updateLogIndex === "number"
+        ? findClosestLog(
+            txReceipt.logs,
+            updateLogIndex,
+            (log: Log) => {
+              try {
+                const decoded = decodeEventLog({
+                  abi: USER_REQUEST_FOR_SIGNATURE_ABI,
+                  data: log.data,
+                  topics: log.topics,
+                });
+                return decoded.eventName === "UserRequestForSignature";
+              } catch {
+                return false;
+              }
+            },
+            true,
+          )
+        : txReceipt.logs.find((log: Log) => {
+            try {
+              const decoded = decodeEventLog({
+                abi: USER_REQUEST_FOR_SIGNATURE_ABI,
+                data: log.data,
+                topics: log.topics,
+              });
+              return decoded.eventName === "UserRequestForSignature";
+            } catch {
+              return false;
+            }
           });
-          return decoded.eventName === "UserRequestForSignature";
-        } catch {
-          return false;
-        }
-      });
 
       if (ambEvent) {
          const decoded = decodeEventLog({
@@ -103,18 +154,36 @@ function getAMBMessageInfo(txReceipt: TransactionReceipt, chainId: SupportedChai
         return null;
       }
 
-      const ambEvent = txReceipt.logs.find((log: Log) => {
-        try {
-          const decoded = decodeEventLog({
-            abi: ambAbi,
-            data: log.data,
-            topics: log.topics,
+      const ambEvent = typeof updateLogIndex === "number"
+        ? findClosestLog(
+            txReceipt.logs,
+            updateLogIndex,
+            (log: Log) => {
+              try {
+                const decoded = decodeEventLog({
+                  abi: ambAbi,
+                  data: log.data,
+                  topics: log.topics,
+                });
+                return decoded.eventName === "UserRequestForAffirmation";
+              } catch {
+                return false;
+              }
+            },
+            true,
+          )
+        : txReceipt.logs.find((log: Log) => {
+            try {
+              const decoded = decodeEventLog({
+                abi: ambAbi,
+                data: log.data,
+                topics: log.topics,
+              });
+              return decoded.eventName === "UserRequestForAffirmation";
+            } catch {
+              return false;
+            }
           });
-          return decoded.eventName === "UserRequestForAffirmation";
-        } catch {
-          return false;
-        }
-      });
       
       if (ambEvent) {
         const decoded = decodeEventLog({
@@ -133,23 +202,40 @@ function getAMBMessageInfo(txReceipt: TransactionReceipt, chainId: SupportedChai
     return null;
 }
 
-function getRelayedMessageId(txReceipt: TransactionReceipt, chainId: SupportedChainId): Hash | null {
+function getRelayedMessageId(
+  txReceipt: TransactionReceipt,
+  chainId: SupportedChainId,
+  updateLogIndex?: number,
+): Hash | null {
     const ambAbi = getContractInfo("EthereumAMBBridge", chainId)?.abi;
     
     // 1. Try robust ABI decoding first
     if (ambAbi) {
-      const relayedEvent = txReceipt.logs.find((log: Log) => {
-          try {
+      const relayedEvent = typeof updateLogIndex === "number"
+        ? findClosestLog(txReceipt.logs, updateLogIndex, (log: Log) => {
+            try {
               const decoded = decodeEventLog({
-              abi: ambAbi,
-              data: log.data,
-              topics: log.topics,
+                abi: ambAbi,
+                data: log.data,
+                topics: log.topics,
               });
               return decoded.eventName === "RelayedMessage";
-          } catch {
+            } catch {
               return false;
-          }
-      });
+            }
+          })
+        : txReceipt.logs.find((log: Log) => {
+            try {
+              const decoded = decodeEventLog({
+                abi: ambAbi,
+                data: log.data,
+                topics: log.topics,
+              });
+              return decoded.eventName === "RelayedMessage";
+            } catch {
+              return false;
+            }
+          });
       
       if (relayedEvent) {
           const decoded = decodeEventLog({
@@ -164,12 +250,21 @@ function getRelayedMessageId(txReceipt: TransactionReceipt, chainId: SupportedCh
 
     // 2. Fallback to hardcoded index logic (legacy/testnets strategy)
     try {
-        // On mainnet and sepolia we look into the first event (index 1), on gnosis side its the second one (index 2)
-        // Note: logs.at(0) is usually the transaction execution event itself? Or UpdateReceived?
-        // The testnets branch used: const eventIndex = (chainId === 1 || chainId === 11155111)? 1 : 2;
+        if (typeof updateLogIndex === "number") {
+          const nearbyLog = findClosestLog(
+            txReceipt.logs,
+            updateLogIndex + 1,
+            (log: Log) => log.topics.length >= 4,
+          );
+
+          if (nearbyLog?.topics?.[3]) {
+            return nearbyLog.topics[3] as Hash;
+          }
+        }
+
         const eventIndex = (chainId === 1 || chainId === 11155111) ? 1 : 2;
         const log = txReceipt.logs.at(eventIndex);
-        if (log && log.topics && log.topics.length >= 4) {
+        if (log?.topics?.[3]) {
             return log.topics[3] as Hash;
         }
     } catch (e) {
@@ -358,7 +453,11 @@ export default function CrossChain({
     }
     
     // Get AMB message info
-    const ambInfo = getAMBMessageInfo(txSending, sendingChainId);
+    const ambInfo = getAMBMessageInfo(
+      txSending,
+      sendingChainId,
+      Number(latestOutUpdate.logIndex),
+    );
     
     if (!ambInfo || !ambInfo.encodedData || !ambInfo.messageId) {
          setPendingRelayUpdate({} as RelayUpdateParams);
@@ -378,7 +477,11 @@ export default function CrossChain({
         hash: latestInUpdate.txHash as Hash,
       });
 
-      messageIdReceiving = getRelayedMessageId(txReceiving, receivingChainId);
+      messageIdReceiving = getRelayedMessageId(
+        txReceiving,
+        receivingChainId,
+        Number(latestInUpdate.logIndex),
+      );
     }
 
     // Check if there's a pending update that needs to be relayed
@@ -555,8 +658,8 @@ export default function CrossChain({
   }, [checkPendingUpdate, winningStatus]);
 
   return (
-    <div className="flex w-full flex-col border-t p-4 sm:flex-row sm:items-center sm:justify-between">
-      <div className="flex flex-col">
+    <div className="flex w-full flex-col items-center border-t p-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col items-center sm:items-start">
         <span className="text-secondaryText">Home chain</span>
         <span className="flex items-center font-semibold">
           <ChainLogo
