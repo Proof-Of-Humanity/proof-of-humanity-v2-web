@@ -53,7 +53,6 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
   const { address } = useAccount();
 
   const timerRef = useRef<NodeJS.Timeout | null>(null);
-  const sourceActionsRef = useRef<HTMLDivElement | null>(null);
   const cameraSectionRef = useRef<HTMLDivElement | null>(null);
   const pendingSectionRef = useRef<HTMLDivElement | null>(null);
   const previewSectionRef = useRef<HTMLDivElement | null>(null);
@@ -244,14 +243,6 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
   };
 
   useEffect(() => {
-    if (showCamera || pending || !!video) return;
-    sourceActionsRef.current?.scrollIntoView({
-      behavior: "smooth",
-      block: "center",
-    });
-  }, [showCamera, pending, video]);
-
-  useEffect(() => {
     if (!showCamera || pending || !!video) return;
     cameraSectionRef.current?.scrollIntoView({
       behavior: "smooth",
@@ -329,7 +320,7 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
       )}
 
       {!showCamera && !video && (
-        <div ref={sourceActionsRef} className="mt-6 flex w-full flex-col items-center">
+        <div className="mt-6 flex w-full flex-col items-center">
           <button
             className="gradient flex w-full max-w-xl items-center justify-center gap-3 rounded-full px-6 py-4 text-lg font-semibold text-white shadow-lg transition hover:opacity-90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
             onClick={() => setShowCamera(true)}
