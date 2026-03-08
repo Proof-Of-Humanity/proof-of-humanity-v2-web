@@ -14,15 +14,15 @@ import { Abi, ParseAbiParameter, toBytes, zeroAddress } from "viem";
 const defaultForInputs = (inputs: readonly ParseAbiParameter<string>[]) =>
   inputs.length
     ? inputs.map((inp) => {
-        if (inp.type.endsWith("[]")) return [];
-        if (inp.type === "address") return zeroAddress;
-        if (inp.type === "bool") return false;
-        if (inp.type === "string") return "";
-        if (inp.type.startsWith("uint")) return 0n;
-        if (inp.type.startsWith("bytes")) return toBytes(0);
-        if (inp.type.startsWith("int")) return 0n;
-        throw new Error("Abi error");
-      })
+      if (inp.type.endsWith("[]")) return [];
+      if (inp.type === "address") return zeroAddress;
+      if (inp.type === "bool") return false;
+      if (inp.type === "string") return "";
+      if (inp.type.startsWith("uint")) return 0n;
+      if (inp.type.startsWith("bytes")) return toBytes(0);
+      if (inp.type.startsWith("int")) return 0n;
+      throw new Error("Abi error");
+    })
     : undefined;
 
 export default function useWagmiWrite<
@@ -39,22 +39,22 @@ export default function useWagmiWrite<
   const [args, setArgs] = useState(
     defaultForInputs((abiFragment as any).inputs) as WriteArgs<C, F>,
   );
-  
+
   const [enabled, setEnabled] = useState(false);
 
-  const { data: prepared, status: prepareStatus} = useSimulateContract({
-   address: contractInfo.address as `0x${string}`,
+  const { data: prepared, status: prepareStatus } = useSimulateContract({
+    address: contractInfo.address as `0x${string}`,
     abi: contractInfo.abi as Abi,
     functionName,
     chainId: chain?.id || defaultChainId,
     value,
-   args,
-    query : {
+    args,
+    query: {
       enabled
     }
   } as any);
 
-  const { writeContract, data, status, error: writeError} = useWriteContract();
+  const { writeContract, data, status, error: writeError } = useWriteContract();
   const { status: transactionStatus } = useWaitForTransactionReceipt({
     hash: data,
   });
@@ -68,7 +68,7 @@ export default function useWagmiWrite<
         }
         break;
       case "error":
-        if(enabled){
+        if (enabled) {
           effects?.onFail?.();
           setEnabled(false);
         }
@@ -85,7 +85,7 @@ export default function useWagmiWrite<
   }, [status, effects]);
 
   useEffect(() => {
-    if(data) {
+    if (data) {
       switch (transactionStatus) {
         case "pending":
           effects?.onLoading?.();
@@ -100,13 +100,13 @@ export default function useWagmiWrite<
     () =>
       [
         (params: { value?: bigint; args?: WriteArgs<C, F> } = {}) => {
-          if (params.value) setValue(params.value);
+          if (params.value !== undefined) setValue(params.value);
           if (params.args) setArgs(params.args);
           setEnabled(true);
         },
         () => {
-          if(prepared?.request)
-          writeContract(prepared.request);
+          if (prepared?.request)
+            writeContract(prepared.request);
           setEnabled(false);
         },
         {

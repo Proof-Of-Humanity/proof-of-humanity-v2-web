@@ -99,26 +99,28 @@ function Review({
         </ul>
       </span>
 
-      <div className="mx-auto flex w-full flex-col items-center justify-center sm:flex-row">
+      <div className="mx-auto flex w-full min-w-0 flex-col items-center justify-center gap-4 overflow-hidden sm:flex-row sm:items-start">
         <Previewed
           uri={photo!.uri}
           trigger={
             <Image
               alt="preview"
-              className="h-48 w-48 rounded-full"
+              className="h-48 w-48 max-w-full shrink-0 rounded-full"
               src={photo!.uri}
               width={256}
               height={256}
             />
           }
         />
-        <video
-          className="mt-4 h-72 w-auto max-w-full rounded sm:ml-8 sm:mt-0 sm:h-64"
-          src={`${video!.uri}#t=0.001`}
-          controls
-          playsInline
-          preload="metadata"
-        />
+        <div className="w-full min-w-0 sm:flex-1">
+          <video
+            className="max-h-72 w-full max-w-full rounded object-contain sm:max-h-64"
+            src={`${video!.uri}#t=0.001`}
+            controls
+            playsInline
+            preload="metadata"
+          />
+        </div>
       </div>
 
       <div className="flex w-full flex-col">
@@ -215,7 +217,7 @@ function Review({
             {loadingMessage}...
           </button>
         ) : (
-          <AuthGuard>
+          <AuthGuard signInButtonProps={{ className: "md:w-full" }}>
             <button className="btn-main md:w-full" onClick={submit}>
               Submit
             </button>
