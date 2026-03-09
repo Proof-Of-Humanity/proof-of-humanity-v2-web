@@ -3,7 +3,6 @@
 import { ObservableObject } from "@legendapp/state";
 import Checklist from "components/Checklist";
 import Previewed from "components/Previewed";
-import Uploader from "components/Uploader";
 import Webcam from "components/Webcam";
 import useFullscreen from "hooks/useFullscreen";
 import { useLoading } from "hooks/useLoading";
@@ -22,7 +21,6 @@ import ReactWebcam from "react-webcam";
 import {
   getCroppedPhoto,
   sanitizeImage,
-  validatePhotoUpload,
   validatePhotoDimensions,
   validatePhotoSize,
   PHOTO_LIMITS,
@@ -204,35 +202,8 @@ function Photo({ advance, photo$ }: PhotoProps) {
               onClick={() => setShowCamera(true)}
             >
               <CameraIcon className="h-6 w-6 fill-white" />
-              <span>Take with Camera (Recommended)</span>
+              <span>Take with Camera</span>
             </button>
-
-            <span className="mt-2 text-sm font-semibold text-primaryText">
-              OR
-            </span>
-
-            <Uploader
-              className="mt-1 text-base font-semibold text-primary underline underline-offset-2 hover:text-orange focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-300"
-              type="image"
-              onDrop={(received) => {
-                const file = received[0];
-                if (!file) return;
-                const uploadError = validatePhotoUpload(file);
-                if (uploadError) {
-                  toast.error(uploadError);
-                  return;
-                }
-                setOriginalPhoto((prev) => {
-                  if (prev?.uri) URL.revokeObjectURL(prev.uri);
-                  return {
-                    uri: URL.createObjectURL(file),
-                  };
-                });
-              }}
-              disabled={!!originalPhoto}
-            >
-              <span>Upload photo</span>
-            </Uploader>
           </div>
         </div>
       )}
