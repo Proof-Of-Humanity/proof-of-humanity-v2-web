@@ -30,6 +30,7 @@ export const CameraButton: React.FC<CameraButtonInterface> = ({
         : "outline-theme h-16 w-16 outline outline-2 outline-offset-2",
       className,
     )}
+    style={{ touchAction: "manipulation" }}
     onClick={onClick}
   >
     {children}
@@ -107,9 +108,12 @@ const Webcam: React.FC<WebcamProps> = ({
   const ActionIcon = isVideo ? (recording ? PauseIcon : PlayIcon) : SmileyIcon;
 
   return (
-    <div className="relative">
+    <div className="relative min-h-[300px] sm:min-h-[400px] overflow-hidden bg-black flex items-center justify-center">
       <ReactWebcam
-        className="h-full w-full bg-red-500/50"
+        className={cn(
+          "h-full w-full object-contain",
+          !IS_MOBILE && "aspect-video"
+        )}
         ref={loadCamera}
         mirrored={mirrored}
         screenshotFormat={"image/jpeg"}
@@ -119,17 +123,16 @@ const Webcam: React.FC<WebcamProps> = ({
         forceScreenshotSourceSize
         videoConstraints={{
           width: IS_MOBILE
-            ? { min: 640, exact: 1280 }
+            ? { ideal: 1280, max: 1280 }
             : { min: 640, ideal: 1920 },
           height: IS_MOBILE
-            ? { min: 480, exact: 720 }
+            ? { ideal: 720, max: 720 }
             : { min: 480, ideal: 1080 },
-          frameRate: { min: 24, ideal: 60 },
+          frameRate: IS_MOBILE ? { min: 24, ideal: 30, max: 30 } : { min: 24, ideal: 60 },
           deviceId: IS_MOBILE ? undefined : currentCamera,
           facingMode,
         }}
         onCanPlayThrough={() => false}
-        onClick={(e) => e.preventDefault()}
         onUserMedia={onUserMedia}
         onUserMediaError={onUserMediaError}
         audioConstraints={{
@@ -159,18 +162,20 @@ const Webcam: React.FC<WebcamProps> = ({
               <FlipCameraIcon className="h-8 w-8 fill-white" />
             </CameraButton>
           )}
-          <CameraButton
-            secondary
-            className="right-4 top-4"
-            onClick={toggleFullscreen}
-          >
-            <FullscreenIcon className="h-8 w-8 fill-white" />
-          </CameraButton>
+          {!IS_MOBILE && (
+            <CameraButton
+              secondary
+              className="right-4 top-4"
+              onClick={toggleFullscreen}
+            >
+              <FullscreenIcon className="h-8 w-8 fill-white" />
+            </CameraButton>
+          )}
         </>
       )}
 
       <CameraButton
-        className="bottom-8 left-1/2 -translate-x-1/2 opacity-90"
+        className="z-10 bottom-8 left-1/2 -translate-x-1/2 opacity-90"
         onClick={action}
       >
         <ActionIcon className="h-12 w-12 fill-white" />
