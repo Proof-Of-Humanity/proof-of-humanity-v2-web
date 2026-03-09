@@ -13,6 +13,7 @@ import DesktopNavigation from "./DesktopNavigation";
 import MobileMenu from "./MobileMenu";
 import Options from "./Options";
 import WalletSection from "./WalletSection";
+import RegisterLink from "./RegisterLink";
 
 interface IHeader {
   policy: string;
@@ -21,6 +22,7 @@ interface IHeader {
 export default function Header({ policy }: IHeader) {
   const [menuOpen, setMenuOpen] = useState<boolean>(false);
   const [isDarkMode, setIsDarkMode] = useState<boolean>(false);
+  const [pendingRegisterIntent, setPendingRegisterIntent] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const pathname = usePathname();
   const { isConnected, address } = useAccount();
@@ -28,10 +30,12 @@ export default function Header({ policy }: IHeader) {
 
   const config = useConfig()
   const chains = config.chains
-  
+
   const chain = chains.find(chain => chain.id === chainId)
   const web3Loaded = useWeb3Loaded();
   const { data: me } = useSWR(address, getMyData);
+  const showRewardsCta = Boolean(isConnected && me?.pohId);
+  const showRegisterCta = !me?.pohId;
 
   const detectTheme = () => {
     const theme = localStorage.getItem("theme");
@@ -95,23 +99,64 @@ export default function Header({ policy }: IHeader) {
         />
       </Link>
 
-      <button
-        className="ml-auto block text-white md:hidden"
-        onClick={() => setMenuOpen(!menuOpen)}
-      >
-        <Hamburger />
-      </button>
-
-      <div className="lg:absolute lg:left-1/2 lg:-translate-x-1/2 lg:transform">
-        <DesktopNavigation
-          {...{ address, me, policy, pathname, chain: chain!, web3Loaded }}
-        />
+      <div className="ml-auto flex items-center gap-2 md:hidden">
+        {showRewardsCta ? (
+          <Link
+            href="/app"
+            className={`rounded-full border border-white/50 px-3 py-1 text-sm font-semibold text-white transition hover:bg-white/15 ${pathname.startsWith("/app") ? "bg-white/20" : ""
+              }`}
+          >
+            Rewards
+          </Link>
+        ) : showRegisterCta ? (
+          <RegisterLink
+            me={me}
+            address={address}
+            pendingRegisterIntent={pendingRegisterIntent}
+            setPendingRegisterIntent={setPendingRegisterIntent}
+            className={`rounded-full border border-white/50 px-3 py-1 text-sm font-semibold text-white transition hover:bg-white/15 ${pathname.includes("/claim") ? "bg-white/20" : ""
+              }`}
+          />
+        ) : null}
+        <button
+          className="block text-white"
+          onClick={() => setMenuOpen(!menuOpen)}
+        >
+          <Hamburger />
+        </button>
       </div>
 
-      {menuOpen && (
+      {chain && (
+        <div className="lg:absolute lg:left-1/2 lg:-translate-x-1/2 lg:transform">
+          <DesktopNavigation
+            {...{
+              address,
+              me,
+              policy,
+              pathname,
+              chain,
+              web3Loaded,
+              pendingRegisterIntent,
+              setPendingRegisterIntent,
+            }}
+          />
+        </div>
+      )}
+
+      {menuOpen && chain && (
         <MobileMenu
           ref={menuRef}
-          {...{ isConnected, web3Loaded, address, pathname, me, policy }}
+          {...{
+            isConnected,
+            web3Loaded,
+            address,
+            pathname,
+            me,
+            policy,
+            chain,
+            pendingRegisterIntent,
+            setPendingRegisterIntent,
+          }}
         />
       )}
 

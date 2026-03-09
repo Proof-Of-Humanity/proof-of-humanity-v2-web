@@ -2,6 +2,8 @@
 
 import { useAppKit } from "@reown/appkit/react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 import { useAccount } from "wagmi";
 import { prettifyId } from "utils/identifier";
 
@@ -9,19 +11,41 @@ interface RegisterLinkProps {
   me: any;
   address?: `0x${string}`;
   className?: string;
+  pendingRegisterIntent?: boolean;
+  setPendingRegisterIntent?: (value: boolean) => void;
 }
 
-const RegisterLink = ({ 
-  me, 
-  address, 
-  className
+const RegisterLink = ({
+  me,
+  address,
+  className,
+  pendingRegisterIntent = false,
+  setPendingRegisterIntent,
 }: RegisterLinkProps) => {
   const modal = useAppKit();
+  const router = useRouter();
   const { isConnected } = useAccount();
+
+  useEffect(() => {
+    if (!pendingRegisterIntent || !isConnected || !address) return;
+
+    setPendingRegisterIntent?.(false);
+    const registerUrl = me?.currentRequest
+      ? `/${prettifyId(me.currentRequest.humanity.id)}/${me.currentRequest.chain.name}/${me.currentRequest.index}`
+      : `/${prettifyId(address)}/claim`;
+
+    if (registerUrl.includes("/claim")) {
+      window.open(registerUrl, "_blank", "noopener,noreferrer");
+      return;
+    }
+
+    router.push(registerUrl);
+  }, [address, isConnected, me, pendingRegisterIntent, router, setPendingRegisterIntent]);
 
   const handleClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
     if (!isConnected) {
       e.preventDefault();
+      setPendingRegisterIntent?.(true);
       modal.open({ view: "Connect" });
     }
   };
@@ -37,11 +61,11 @@ const RegisterLink = ({
     );
   }
 
-  const registerUrl = isConnected && address
+const registerUrl = isConnected && address
     ? (me?.currentRequest
         ? `/${prettifyId(me.currentRequest.humanity.id)}/${me.currentRequest.chain.name}/${me.currentRequest.index}`
         : `/${prettifyId(address)}/claim`)
-    : "#"; // Use # as placeholder when not connected
+    : "#";
   const shouldOpenInNewTab = registerUrl.includes("/claim");
 
   return (

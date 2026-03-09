@@ -1,5 +1,6 @@
 import { ObservableObject } from "@legendapp/state";
 import Checklist from "components/Checklist";
+import Previewed from "components/Previewed";
 import Uploader from "components/Uploader";
 import Webcam from "components/Webcam";
 import useFullscreen from "hooks/useFullscreen";
@@ -170,11 +171,17 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
   };
 
   const startRecording = () => {
+    if (pending) return;
     if (!camera || !camera.stream) return;
 
     if (timerRef.current) clearTimeout(timerRef.current);
 
     const [videoTrack] = camera.stream.getVideoTracks();
+    if (!videoTrack || videoTrack.readyState !== "live") {
+      setValidationError("Camera not ready. Please wait a moment and try again.");
+      return;
+    }
+
     const captureFrameRate = videoTrack?.getSettings().frameRate;
 
     if (
@@ -187,14 +194,30 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
       return;
     }
 
-    const mediaRecorder = new MediaRecorder(camera.stream, {
-      mimeType: IS_IOS ? 'video/mp4;codecs="h264"' : 'video/webm; codecs="vp8"',
-      videoBitsPerSecond: VIDEO_LIMITS.recorderVideoBps,
-      audioBitsPerSecond: VIDEO_LIMITS.recorderAudioBps,
-    });
+    const preferredMimeTypes = IS_IOS
+      ? ['video/mp4;codecs="h264"', "video/mp4"]
+      : ["video/webm;codecs=vp8,opus", "video/webm;codecs=vp8", "video/webm"];
+    const supportedMimeType = preferredMimeTypes.find(
+      (mimeType) =>
+        typeof MediaRecorder !== "undefined" && MediaRecorder.isTypeSupported(mimeType),
+    );
+
+    let mediaRecorder: MediaRecorder;
+    try {
+      mediaRecorder = new MediaRecorder(camera.stream, {
+        ...(supportedMimeType ? { mimeType: supportedMimeType } : {}),
+        videoBitsPerSecond: VIDEO_LIMITS.recorderVideoBps,
+        audioBitsPerSecond: VIDEO_LIMITS.recorderAudioBps,
+      });
+    } catch (error) {
+      console.error("MediaRecorder init failed:", error);
+      setValidationError("Recording is not supported on this browser.");
+      return;
+    }
 
     const recordedChunks: BlobPart[] = [];
     let discardRecording = false;
+    let handledStop = false;
 
     mediaRecorder.ondataavailable = ({ data }) => {
       if (discardRecording) return;
@@ -204,6 +227,9 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
     };
 
     mediaRecorder.onstop = async () => {
+      if (handledStop) return;
+      handledStop = true;
+
       if (timerRef.current) clearTimeout(timerRef.current);
       setFullscreen(false);
       setRecording(false);
@@ -223,7 +249,10 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
 
       try {
         const blob = new Blob(recordedChunks, {
-          type: IS_IOS ? "video/mp4" : "video/webm",
+          type:
+            mediaRecorder.mimeType ||
+            (recordedChunks[0] instanceof Blob ? recordedChunks[0].type : "") ||
+            (IS_IOS ? "video/mp4" : "video/webm"),
         });
         await processVideoBlob(blob);
       } catch (err: unknown) {
@@ -439,7 +468,21 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
       {/* ── S4/S5: Accepted (± warning) ── */}
       {isAccepted && (
         <div className="flex flex-col items-center">
-          <video src={video.uri} controls className="w-full max-w-xl rounded-lg" />
+          <Previewed
+            isVideo
+            uri={video.uri}
+            trigger={
+              <video
+                className="w-full max-w-xl cursor-pointer rounded-lg"
+                src={`${video.uri}#t=0.001`}
+                preload="metadata"
+                playsInline
+              />
+            }
+          />
+          <span className="text-secondaryText mt-1 text-sm">
+            Tap video to preview fullscreen
+          </span>
           {hasIssues && (
             <div className="mt-3 w-full max-w-xl">
               <div className="mb-2 flex text-base items-center justify-center gap-2 font-semibold text-primaryText">
