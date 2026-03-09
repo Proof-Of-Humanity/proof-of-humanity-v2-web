@@ -51,8 +51,8 @@ const completeCrossChains = async (
       [chain.id]:
         chain.id === legacyChain.id
           ? res[i].requests.filter(
-              (r) => !(r.status.id === "vouching" && Number(r.index) <= -1)
-            )
+            (r) => !(r.status.id === "vouching" && Number(r.index) <= -1)
+          )
           : res[i].requests,
     }),
     {} as Record<SupportedChainId, RequestsQuery["requests"]>,
@@ -74,8 +74,8 @@ const _getPagedRequests = async () => {
       [chain.id]:
         chain.id === legacyChain.id
           ? res[i].requests.filter(
-              (r) => !(r.status.id === "vouching" && Number(r.index) <= -1)
-            )
+            (r) => !(r.status.id === "vouching" && Number(r.index) <= -1)
+          )
           : res[i].requests,
     }),
     {} as Record<SupportedChainId, RequestsQuery["requests"]>,
@@ -129,13 +129,13 @@ export const genRequestId = (pohId: Hash, index: number) => {
         ? toHex(index, { size: 32 })
         : index <= -100
           ? concat([
-              toHex(Math.abs(index), { size: 32 }),
-              toHex("bridged", { size: 7 }),
-            ])
+            toHex(Math.abs(index), { size: 32 }),
+            toHex("bridged", { size: 7 }),
+          ])
           : concat([
-              toHex(Math.abs(index + 1), { size: 32 }),
-              toHex("legacy", { size: 6 }),
-            ]),
+            toHex(Math.abs(index + 1), { size: 32 }),
+            toHex("legacy", { size: 6 }),
+          ]),
     ]),
   );
 };
@@ -160,9 +160,10 @@ export const getOffChainVouches = async (
   pohId: Hash,
 ) => {
   try {
+    //Prod endpoint not work need to debug it, using testnet endpoint for now, they both point to same DB in the backend
     return (
       await axios.get(
-        `${process.env.DEPLOYED_APP}/api/vouch/${chainId}/for-request/${claimer}/${pohId}`,
+        `https://testnets--proof-of-humanity-v2.netlify.app/api/vouch/${chainId}/for-request/${claimer}/${pohId}`,
       )
     ).data as { voucher: Address; expiration: number; signature: Hash }[];
   } catch (err: any) {
