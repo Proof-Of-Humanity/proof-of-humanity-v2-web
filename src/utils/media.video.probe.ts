@@ -415,15 +415,15 @@ export const probeVideoMetrics = async (
       lumaMeanSamples > 0 ? lumaMeanSum / lumaMeanSamples : null;
     const nonSilenceSec =
       hasAudio === true &&
-      typeof durationSec === "number" &&
-      Number.isFinite(durationSec) &&
-      durationSec > 0
+        typeof durationSec === "number" &&
+        Number.isFinite(durationSec) &&
+        durationSec > 0
         ? Math.max(0, durationSec - totalSilenceSec)
         : null;
     const freezeRatio =
       typeof durationSec === "number" &&
-      Number.isFinite(durationSec) &&
-      durationSec > 0
+        Number.isFinite(durationSec) &&
+        durationSec > 0
         ? Math.min(1, totalFreezeSec / durationSec)
         : null;
 

@@ -7,17 +7,19 @@ export function middleware(request: NextRequest) {
 
   const isClaimPage = pathname.includes('/claim');
   const isFFmpegResource = pathname.startsWith('/ffmpeg/');
-  const requiresCrossOriginIsolation = isClaimPage || isFFmpegResource;
-
-  if (requiresCrossOriginIsolation) {
-    // SharedArrayBuffer for ffmpeg.wasm requires cross-origin isolation.
+  
+  if (isClaimPage || isFFmpegResource) {
+    response.headers.set('Cross-Origin-Embedder-Policy', 'require-corp');
     response.headers.set('Cross-Origin-Opener-Policy', 'same-origin');
-    response.headers.set('Cross-Origin-Embedder-Policy', 'credentialless');
-
+    
     if (isFFmpegResource) {
       response.headers.set('Cross-Origin-Resource-Policy', 'same-origin');
       response.headers.set('Cache-Control', 'public, max-age=31536000, immutable');
+    } else {
+      response.headers.set('Cross-Origin-Resource-Policy', 'cross-origin');
     }
+  } else {
+    response.headers.set('Cross-Origin-Opener-Policy', 'same-origin');
   }
 
   return response;

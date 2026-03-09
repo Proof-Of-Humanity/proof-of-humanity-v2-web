@@ -9,7 +9,7 @@ import CameraIcon from "icons/CameraMajor.svg";
 import InfoIcon from "icons/info.svg";
 import ResetIcon from "icons/ResetMinor.svg";
 import Image from "next/image";
-import React, { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import ReactWebcam from "react-webcam";
 import { toast } from "react-toastify";
 import {
@@ -39,7 +39,6 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
 
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const cancelledRef = useRef(false);
-
   const fullscreenRef = useRef(null);
   const { isFullscreen, setFullscreen, toggleFullscreen } =
     useFullscreen(fullscreenRef);
@@ -164,7 +163,6 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
       await processVideoBlob(file);
     } catch (err: unknown) {
       setGenericProcessingError();
-      console.error("Video upload processing error:", err);
     } finally {
       loading.stop();
     }
@@ -194,9 +192,12 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
       return;
     }
 
-    const preferredMimeTypes = IS_IOS
-      ? ['video/mp4;codecs="h264"', "video/mp4"]
-      : ["video/webm;codecs=vp8,opus", "video/webm;codecs=vp8", "video/webm"];
+    const preferredMimeTypes = [
+      "video/webm;codecs=vp9,opus",
+      "video/webm;codecs=vp8,opus",
+      "video/webm",
+      "video/mp4",
+    ];
     const supportedMimeType = preferredMimeTypes.find(
       (mimeType) =>
         typeof MediaRecorder !== "undefined" && MediaRecorder.isTypeSupported(mimeType),
@@ -204,13 +205,10 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
 
     let mediaRecorder: MediaRecorder;
     try {
-      mediaRecorder = new MediaRecorder(camera.stream, {
-        ...(supportedMimeType ? { mimeType: supportedMimeType } : {}),
-        videoBitsPerSecond: VIDEO_LIMITS.recorderVideoBps,
-        audioBitsPerSecond: VIDEO_LIMITS.recorderAudioBps,
-      });
+      mediaRecorder = supportedMimeType
+        ? new MediaRecorder(camera.stream, { mimeType: supportedMimeType })
+        : new MediaRecorder(camera.stream);
     } catch (error) {
-      console.error("MediaRecorder init failed:", error);
       setValidationError("Recording is not supported on this browser.");
       return;
     }
@@ -257,7 +255,6 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
         await processVideoBlob(blob);
       } catch (err: unknown) {
         setGenericProcessingError();
-        console.error("Video sanitization error:", err);
       } finally {
         loading.stop();
       }
@@ -444,10 +441,12 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
       {/* ── S3: Processing with raw preview ── */}
       {isProcessing && (
         <div className="mt-4 flex flex-col items-center">
-          <div className="relative w-full max-w-xl">
+          <div
+            className="relative inline-block max-w-full overflow-hidden rounded-lg bg-black"
+          >
             <video
               src={rawPreviewUri!}
-              className="w-full rounded-lg opacity-60"
+              className="mx-auto max-h-72 w-auto max-w-full object-contain opacity-60 sm:max-h-64"
               muted
               playsInline
             />
@@ -474,12 +473,16 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
             isVideo
             uri={video.uri}
             trigger={
-              <video
-                className="w-full max-w-xl cursor-pointer rounded-lg"
-                src={`${video.uri}#t=0.001`}
-                preload="metadata"
-                playsInline
-              />
+              <div
+                className="inline-block max-w-full overflow-hidden rounded-lg bg-black"
+              >
+                <video
+                  className="mx-auto max-h-72 w-auto max-w-full cursor-pointer object-contain sm:max-h-64"
+                  src={`${video.uri}#t=0.001`}
+                  preload="metadata"
+                  playsInline
+                />
+              </div>
             }
           />
           <span className="text-secondaryText mt-1 text-sm">
@@ -512,7 +515,15 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
       {/* ── S6: Error with preview ── */}
       {hasError && (
         <div className="flex flex-col items-center">
-          <video src={rawPreviewUri!} controls className="w-full max-w-xl rounded-lg" />
+          <div
+            className="inline-block max-w-full overflow-hidden rounded-lg bg-black"
+          >
+            <video
+              src={rawPreviewUri!}
+              controls
+              className="mx-auto max-h-72 w-auto max-w-full object-contain sm:max-h-64"
+            />
+          </div>
           <div className="mt-3 w-full max-w-xl">
             <div className="mb-2 flex items-center gap-2 text-sm font-semibold text-black">
               <InfoIcon className="h-4 w-4 stroke-current stroke-2 text-primaryText" />

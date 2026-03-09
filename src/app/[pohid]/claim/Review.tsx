@@ -37,7 +37,6 @@ function Review({
   loadingMessage,
   submit,
 }: ReviewProps) {
-
   const selfFunded = selfFunded$.use();
   const { pohId, name } = state$.use();
   const { photo, video } = media$.use();
@@ -99,22 +98,24 @@ function Review({
         </ul>
       </span>
 
-      <div className="mx-auto flex w-full min-w-0 flex-col items-center justify-center gap-4 overflow-hidden sm:flex-row sm:items-start">
-        <Previewed
-          uri={photo!.uri}
-          trigger={
-            <Image
-              alt="preview"
-              className="h-48 w-48 max-w-full shrink-0 rounded-full"
-              src={photo!.uri}
-              width={256}
-              height={256}
-            />
-          }
-        />
-        <div className="w-full min-w-0 sm:flex-1">
+      <div className="mx-auto flex w-full min-w-0 flex-col items-center justify-center gap-4 overflow-hidden sm:grid sm:grid-cols-[1fr_auto_1fr_auto_1fr] sm:items-center sm:gap-0">
+        <div className="flex w-48 shrink-0 items-center justify-center sm:col-start-2">
+          <Previewed
+            uri={photo!.uri}
+            trigger={
+              <Image
+                alt="preview"
+                className="h-48 w-48 max-w-full shrink-0 rounded-full"
+                src={photo!.uri}
+                width={256}
+                height={256}
+              />
+            }
+          />
+        </div>
+        <div className="flex w-full min-w-0 justify-center sm:col-start-4 sm:w-auto sm:min-w-0 sm:justify-center">
           <video
-            className="max-h-72 w-full max-w-full rounded object-contain sm:max-h-64"
+            className="mx-auto max-h-72 w-auto max-w-full rounded bg-black object-contain sm:max-h-64"
             src={`${video!.uri}#t=0.001`}
             controls
             playsInline
