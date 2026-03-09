@@ -2,8 +2,8 @@ import { ObservableObject, ObservablePrimitiveBaseFns } from "@legendapp/state";
 import ExternalLink from "components/ExternalLink";
 import Field from "components/Field";
 import Label from "components/Label";
-import Previewed from "components/Previewed";
 import AuthGuard from "components/AuthGuard";
+import Previewed from "components/Previewed";
 import TimeAgo from "components/TimeAgo";
 import { SupportedChainId, idToChain, getForeignChain } from "config/chains";
 import { ContractData } from "data/contract";
@@ -99,29 +99,28 @@ function Review({
         </ul>
       </span>
 
-      <div className="mx-auto flex w-full flex-col items-center justify-center sm:flex-row">
+      <div className="mx-auto flex w-full min-w-0 flex-col items-center justify-center gap-4 overflow-hidden sm:flex-row sm:items-start">
         <Previewed
           uri={photo!.uri}
           trigger={
             <Image
               alt="preview"
-              className="h-48 w-48 rounded-full"
+              className="h-48 w-48 max-w-full shrink-0 rounded-full"
               src={photo!.uri}
               width={256}
               height={256}
             />
           }
         />
-        <Previewed
-          isVideo
-          uri={video!.uri}
-          trigger={
-            <video
-              className="mt-4 h-48 cursor-pointer sm:ml-8 sm:mt-0"
-              src={video!.uri}
-            />
-          }
-        />
+        <div className="w-full min-w-0 sm:flex-1">
+          <video
+            className="max-h-72 w-full max-w-full rounded object-contain sm:max-h-64"
+            src={`${video!.uri}#t=0.001`}
+            controls
+            playsInline
+            preload="metadata"
+          />
+        </div>
       </div>
 
       <div className="flex w-full flex-col">
@@ -205,24 +204,26 @@ function Review({
           ) : null}
         </div>
       </div>
-      {loadingMessage ? (
-        <button className="btn-main">
-          <Image
-            alt="loading"
-            src="/logo/poh-white.svg"
-            className="animate-flip fill-white"
-            width={14}
-            height={14}
-          />
-          {loadingMessage}...
-        </button>
-      ) : (
-        <AuthGuard>
-          <button className="btn-main" onClick={submit}>
-            Submit
+      <div className="w-full">
+        {loadingMessage ? (
+          <button className="btn-main gap-2 md:w-full" disabled>
+            <Image
+              alt="loading"
+              src="/logo/poh-white.svg"
+              className="animate-flip fill-white"
+              width={14}
+              height={14}
+            />
+            {loadingMessage}...
           </button>
-        </AuthGuard>
-      )}
+        ) : (
+          <AuthGuard signInButtonProps={{ className: "md:w-full" }}>
+            <button className="btn-main md:w-full" onClick={submit}>
+              Submit
+            </button>
+          </AuthGuard>
+        )}
+      </div>
     </>
   );
 }

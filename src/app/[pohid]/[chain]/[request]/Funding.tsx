@@ -106,7 +106,7 @@ const FundButton: React.FC<FundButtonProps> = ({
       <ActionButton
         onClick={() => setIsModalOpen(true)}
         label="Fund"
-        className="mb-2"
+        className="mb-2 w-auto"
         disabled={userChainId !== chain.id}
         tooltip={userChainId !== chain.id ? `Switch your chain above to ${idToChain(chain.id)?.name || 'the correct chain'}` : undefined}
       />
