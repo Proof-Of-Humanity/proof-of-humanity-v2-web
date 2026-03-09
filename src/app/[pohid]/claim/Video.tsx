@@ -1,5 +1,6 @@
 import { ObservableObject } from "@legendapp/state";
 import Checklist from "components/Checklist";
+import Previewed from "components/Previewed";
 import Uploader from "components/Uploader";
 import Webcam from "components/Webcam";
 import getBlobDuration from "get-blob-duration";
@@ -8,13 +9,12 @@ import { useLoading } from "hooks/useLoading";
 import CameraIcon from "icons/CameraMajor.svg";
 import ResetIcon from "icons/ResetMinor.svg";
 import Image from "next/image";
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import ReactWebcam from "react-webcam";
 import { toast } from "react-toastify";
 import {
   detectVideoFormat,
   getVideoMimeType,
-  IS_IOS,
   videoSanitizer,
 } from "utils/media";
 import { useAccount } from "wagmi";
@@ -53,6 +53,9 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
   const { address } = useAccount();
 
   const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const cameraSectionRef = useRef<HTMLDivElement | null>(null);
+  const pendingSectionRef = useRef<HTMLDivElement | null>(null);
+  const previewSectionRef = useRef<HTMLDivElement | null>(null);
 
   const fullscreenRef = useRef(null);
   const { isFullscreen, setFullscreen, toggleFullscreen } =
@@ -61,6 +64,7 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
   const [showCamera, setShowCamera] = useState(false);
   const [camera, setCamera] = useState<ReactWebcam | null>(null);
   const [recording, setRecording] = useState(false);
+  const recordedChunksRef = useRef<Blob[]>([]);
 
   const [recorder, setRecorder] = useState<MediaRecorder | null>(null);
 
@@ -87,24 +91,89 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
   };
 
   const startRecording = () => {
+    if (pending) return;
     if (!camera || !camera.stream) return;
+
+    const videoTrack = camera.stream.getVideoTracks()[0];
+    if (!videoTrack || videoTrack.readyState !== 'live') {
+      videoError("Camera not ready. Please wait a moment and try again.");
+      return;
+    }
 
     if (timerRef.current) clearTimeout(timerRef.current);
 
-    const mediaRecorder = new MediaRecorder(camera.stream, {
-      mimeType: IS_IOS ? 'video/mp4;codecs="h264"' : 'video/webm; codecs="vp8"',
-    });
+    // Try mimeTypes in order of preference
+    const mimeTypes = [
+      'video/webm;codecs=vp9,opus',
+      'video/webm;codecs=vp8,opus',
+      'video/webm',
+      'video/mp4',
+    ];
 
-    mediaRecorder.ondataavailable = async ({ data }) => {
+    let options: MediaRecorderOptions | undefined;
+    for (const mimeType of mimeTypes) {
+      if (typeof MediaRecorder !== 'undefined' && MediaRecorder.isTypeSupported(mimeType)) {
+        options = { mimeType };
+        break;
+      }
+    }
+
+    let mediaRecorder: MediaRecorder;
+    try {
+      mediaRecorder = options
+        ? new MediaRecorder(camera.stream, options)
+        : new MediaRecorder(camera.stream);
+    } catch (err) {
+      videoError("Recording is not supported on this browser.");
+      console.error("MediaRecorder init failed:", err);
+      return;
+    }
+
+    recordedChunksRef.current = [];
+    let discardRecording = false;
+    let handledStop = false;
+
+    mediaRecorder.ondataavailable = ({ data }) => {
+      if (discardRecording) return;
+      if (!data || data.size === 0) return;
+      recordedChunksRef.current.push(data);
+    };
+
+    mediaRecorder.onstop = async () => {
+      if (handledStop) return;
+      handledStop = true;
+
+      if (timerRef.current) clearTimeout(timerRef.current);
+      setFullscreen(false);
+      setRecording(false);
+
+      if (discardRecording) {
+        recordedChunksRef.current = [];
+        return;
+      }
+
+      if (!recordedChunksRef.current.length) {
+        const noDataError = "Video not captured. Please retake the video.";
+        videoError(noDataError);
+        return;
+      }
+
       loading.start("Processing video");
 
       try {
-        const newlyRecorded = ([] as BlobPart[]).concat(data);
-        const blob = new Blob(newlyRecorded, {
-          type: IS_IOS ? 'video/mp4' : 'video/webm',
+        const blob = new Blob(recordedChunksRef.current, {
+          type:
+            mediaRecorder.mimeType ||
+            recordedChunksRef.current[0].type ||
+            "video/webm",
         });
 
-        const needsCompression = MAX_SIZE_BYTES && blob.size > MAX_SIZE_BYTES;
+        if (blob.size === 0) {
+          throw new Error("Video not captured. Please retake the video.");
+        }
+
+        const needsCompression = Boolean(MAX_SIZE_BYTES && blob.size > MAX_SIZE_BYTES);
+
         if (needsCompression) {
           loading.start("Compressing video");
         }
@@ -112,6 +181,10 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
         const buffer = await blob.arrayBuffer();
         const sanitized = await videoSanitizer(buffer, MAX_SIZE_BYTES);
         const sanitizedArray = new Uint8Array(sanitized as ArrayBuffer);
+
+        if (sanitizedArray.byteLength === 0) {
+          throw new Error("Video processing failed. Please retake the video.");
+        }
 
         const detectedFormat = detectVideoFormat(sanitizedArray);
         const outputType = getVideoMimeType(detectedFormat);
@@ -123,24 +196,20 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
           return;
         }
 
-        video$.set({ content: sanitizedBlob, uri: URL.createObjectURL(sanitizedBlob) });
+        const uri = URL.createObjectURL(sanitizedBlob);
+        video$.set({ content: sanitizedBlob, uri });
         setShowCamera(false);
 
         if (needsCompression) {
           toast.success("Video compressed successfully");
         }
       } catch (err: any) {
-        toast.error(err.message || "Failed to process video");
         console.error("Video sanitization error:", err);
+        videoError("Failed to process video");
       } finally {
+        recordedChunksRef.current = [];
         loading.stop();
       }
-    };
-
-    mediaRecorder.onstop = async () => {
-      if (timerRef.current) clearTimeout(timerRef.current);
-      setFullscreen(false);
-      setRecording(false);
     };
 
     mediaRecorder.start();
@@ -151,11 +220,12 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
     // Auto-stop recording at MAX_DURATION
     timerRef.current = setTimeout(() => {
       if (mediaRecorder.state === "recording") {
-        mediaRecorder.ondataavailable = null; // Discard the recorded data
+        discardRecording = true;
+        recordedChunksRef.current = [];
         mediaRecorder.stop();
         setRecording(false);
         setFullscreen(false);
-        toast.error("Upload duration of 20 seconds exceeded. Please record a shorter version.");
+        videoError("Upload duration of 20 seconds exceeded. Please record a shorter version.");
       }
     }, MAX_DURATION * 1000);
   };
@@ -172,6 +242,30 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
     video$.delete();
   };
 
+  useEffect(() => {
+    if (!showCamera || pending || !!video) return;
+    cameraSectionRef.current?.scrollIntoView({
+      behavior: "smooth",
+      block: "center",
+    });
+  }, [showCamera, pending, video]);
+
+  useEffect(() => {
+    if (!pending) return;
+    pendingSectionRef.current?.scrollIntoView({
+      behavior: "smooth",
+      block: "center",
+    });
+  }, [pending]);
+
+  useEffect(() => {
+    if (!video || pending) return;
+    previewSectionRef.current?.scrollIntoView({
+      behavior: "smooth",
+      block: "center",
+    });
+  }, [video, pending]);
+
   const phrase = isRenewal
     ? "I certify I am a real human and I reapply to keep being part of this registry"
     : "I certify that I am a real human and that I am not already registered in this registry";
@@ -183,11 +277,11 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
         <div className="divider mt-4 w-2/3" />
       </span>
 
-      <span className="mx-12 my-8 flex flex-col text-center">
+      <span className="mx-4 sm:mx-12 my-8 flex flex-col text-center">
         <span>
           Record a short video: hold your phone showing this wallet address (readable, no glare)
         </span>
-        <strong className="my-2">{address}</strong>
+        <strong className="my-2 break-all text-sm sm:text-base font-mono">{address}</strong>
         <span>and say the phrase</span>
         <span className="my-2">
           <code className="text-orange">"</code>
@@ -196,7 +290,7 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
         </span>
       </span>
 
-      {!showCamera && !video && (
+      {!showCamera && !video && !pending && (
         <Checklist
           title="Video Checklist"
           warning="Not following these guidelines will result in a loss of funds."
@@ -241,6 +335,7 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
             className="mt-1 text-base font-semibold text-primary underline underline-offset-2 hover:text-orange focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-300"
             type="video"
             onDrop={async (received) => {
+              if (pending) return;
               try {
                 const file = received[0];
                 if (!file) return;
@@ -266,7 +361,7 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
                 vid.src = uri;
                 vid.preload = "auto";
 
-                vid.addEventListener("loadeddata", () => {
+                vid.addEventListener("loadeddata", async () => {
                   if (
                     vid.videoWidth < MIN_DIMS.width ||
                     vid.videoHeight < MIN_DIMS.height
@@ -293,48 +388,52 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
       {showCamera && (
         <>
           <div tabIndex={0} ref={fullscreenRef}>
-            <Webcam
-              isVideo
-              overlay
-              recording={recording}
-              action={recording ? stopRecording : startRecording}
-              fullscreen={isFullscreen}
-              toggleFullscreen={toggleFullscreen}
-              loadCamera={setCamera}
-              phrase={phrase}
-            />
+            <div ref={cameraSectionRef}>
+              <Webcam
+                isVideo
+                overlay
+                recording={recording}
+                action={recording ? stopRecording : startRecording}
+                fullscreen={isFullscreen}
+                toggleFullscreen={toggleFullscreen}
+                loadCamera={setCamera}
+                phrase={phrase}
+              />
+            </div>
           </div>
-          <Checklist
-            title="Video Checklist"
-            warning="Not following these guidelines will result in a loss of funds."
-            items={[
-              {
-                text: "Show your wallet address & your face in the same frame. Face forward, centered, well lit.",
-                isValid: true,
-              },
-              {
-                text: "Address must read left→right (not mirrored) and match the connected wallet.",
-                isValid: true,
-              },
-              {
-                text: `Say exactly: "${phrase}"`,
-                isValid: true,
-              },
-              {
-                text: "Show wallet address on a phone screen—clear, no shine. If on paper, confirm every character matches.",
-                isValid: true,
-              },
-              {
-                text: "Eyes, nose, mouth clearly visible (eyeglasses allowed, given no glare/reflection covering eyes).",
-                isValid: true,
-              },
-            ]}
-          />
+          {!pending && (
+            <Checklist
+              title="Video Checklist"
+              warning="Not following these guidelines will result in a loss of funds."
+              items={[
+                {
+                  text: "Show your wallet address & your face in the same frame. Face forward, centered, well lit.",
+                  isValid: true,
+                },
+                {
+                  text: "Address must read left→right (not mirrored) and match the connected wallet.",
+                  isValid: true,
+                },
+                {
+                  text: `Say exactly: "${phrase}"`,
+                  isValid: true,
+                },
+                {
+                  text: "Show wallet address on a phone screen—clear, no shine. If on paper, confirm every character matches.",
+                  isValid: true,
+                },
+                {
+                  text: "Eyes, nose, mouth clearly visible (eyeglasses allowed, given no glare/reflection covering eyes).",
+                  isValid: true,
+                },
+              ]}
+            />
+          )}
         </>
       )}
 
       {pending && (
-        <div className="flex flex-col items-center mt-4">
+        <div ref={pendingSectionRef} className="flex flex-col items-center mt-4">
           <button className="btn-main" disabled>
             <Image
               alt="loading"
@@ -349,9 +448,23 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
       )}
 
       {!!video && !pending && (
-        <div className="flex flex-col items-center">
-          <video src={video.uri} controls />
-          <button className="btn-main mt-4" onClick={advance}>
+        <div ref={previewSectionRef} className="flex flex-col items-center">
+          <Previewed
+            isVideo
+            uri={video.uri}
+            trigger={
+              <video
+                className="w-full max-w-xl cursor-pointer rounded"
+                src={`${video.uri}#t=0.001`}
+                preload="metadata"
+                playsInline
+              />
+            }
+          />
+          <span className="text-secondaryText mt-1 text-sm">
+            Tap video to preview fullscreen
+          </span>
+          <button className="btn-main mt-4 md:w-auto" onClick={advance}>
             Next
           </button>
         </div>

@@ -62,7 +62,7 @@ export default function RemoveVouch({
         <ActionButton
           onClick={removeOnchainVouch}
           label="Remove Vouch"
-          className="mb-2"
+          className="mb-2 w-auto"
           isLoading={status.write === "pending"}
           disabled={status.write === "pending" || disabled || userChainId !== chain.id}
           tooltip={tooltip || (userChainId !== chain.id ? `Switch your chain above to ${idToChain(chain.id)?.name || 'the correct chain'}` : undefined)}

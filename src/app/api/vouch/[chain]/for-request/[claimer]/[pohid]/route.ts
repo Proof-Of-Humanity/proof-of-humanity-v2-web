@@ -25,23 +25,27 @@ export async function GET(
     }
     console.log("API Route resolved chain ID:", chain.id);
 
+    const claimerLower = params.claimer.toLowerCase();
+    const pohidLower = params.pohid.toLowerCase();
 
     const { data, error } = await datalake
       .from("poh-vouchdb")
       .select("*")
       .eq("chainId", chain.id)
-      .eq("pohId", params.pohid.toLowerCase())
-      .eq("claimer", params.claimer.toLowerCase());
+      .eq("pohId", pohidLower)
+      .eq("claimer", claimerLower);
 
     console.log("API Route DB Query Params:", {
       chainId: chain.id,
-      pohId: params.pohid.toLowerCase(),
-      claimer: params.claimer.toLowerCase()
+      pohId: pohidLower,
+      claimer: claimerLower,
     });
 
-
     console.log("vouches for request:", data);
-    if (error) throw new Error(error.message);
+    if (error) {
+      console.error("Supabase query error:", error);
+      throw new Error(error.message);
+    }
 
     return NextResponse.json(data, { status: HttpStatusCode.Ok });
   } catch (err: any) {

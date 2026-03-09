@@ -91,7 +91,7 @@ export default function ActionBar({
   const { data: me } = useSWR(address, getMyData);
   const router = useRouter();
 
-  const {didIVouchFor, isVouchOnchain} = useMemo(() => {
+  const { didIVouchFor, isVouchOnchain } = useMemo(() => {
     const lowerAddr = address?.toLowerCase();
     const onChainMatch = onChainVouches.some(
       (voucherAddress) => voucherAddress.toLowerCase() === lowerAddr,
@@ -200,26 +200,26 @@ export default function ActionBar({
   const isExecutePrepareError = executeStatus.prepare === "error";
   const isWithdrawPrepareError = withdrawStatus.prepare === "error";
   useEffect(() => {
-    if(!address || userChainId !== chain.id) return;
+    if (!address || userChainId !== chain.id) return;
     if (action === ActionType.ADVANCE && !revocation) {
-        prepareAdvance({
-          args: [
-            requester,
-            onChainVouches,
-            offChainVouches.map((v) => {
-              const sig = hexToSignature(v.signature);
-              return {
-                expirationTime: v.expiration,
-                v: Number(sig.v),
-                r: sig.r,
-                s: sig.s,
-              };
-            }),
-          ],
-        });
-        setCanAdvance(true);
+      prepareAdvance({
+        args: [
+          requester,
+          onChainVouches,
+          offChainVouches.map((v) => {
+            const sig = hexToSignature(v.signature);
+            return {
+              expirationTime: v.expiration,
+              v: Number(sig.v),
+              r: sig.r,
+              s: sig.s,
+            };
+          }),
+        ],
+      });
+      setCanAdvance(true);
     }
-    if (action === ActionType.EXECUTE){
+    if (action === ActionType.EXECUTE) {
       prepareExecute({ args: [pohId, BigInt(index)] });
     }
   }, [
@@ -254,7 +254,7 @@ export default function ActionBar({
   ]);
 
   const totalCost = BigInt(contractData.baseDeposit) + arbitrationCost;
-  
+
   const statusColor = getStatusColor(requestStatus);
 
   return (
@@ -273,8 +273,8 @@ export default function ActionBar({
             action === ActionType.VOUCH ||
             action === ActionType.FUND) && (
             <>
-              <div className="flex gap-6">
-                <span className="text-slate-400">
+              <div className="flex justify-center gap-6 md:justify-start">
+                <span className="text-center text-slate-400 md:text-left">
                   {validVouches < contractData.requiredNumberOfVouches && (
                     <>
                       It needs{" "}
@@ -302,10 +302,10 @@ export default function ActionBar({
                 </span>
               </div>
 
-              <div className="flex gap-4">
-              {requester.toLocaleLowerCase() === address?.toLowerCase() ? (
-                  <div className="flex flex-col">
-                    <div className="flex flex-row gap-2">
+              <div className="flex justify-center gap-4 md:justify-start">
+                {requester.toLocaleLowerCase() === address?.toLowerCase() ? (
+                  <div className="flex flex-col items-center md:items-start">
+                    <div className="flex flex-row justify-center gap-2 md:justify-start">
                       {action === ActionType.FUND && (
                         <FundButton
                           pohId={pohId}
@@ -325,17 +325,17 @@ export default function ActionBar({
                         tooltip={
                           isWithdrawPrepareError
                             ? "Withdraw not possible, please try again"
-                            : userChainId !== chain.id 
-                            ? `Switch your chain above to ${idToChain(chain.id)?.name || 'the correct chain'}`
-                            : undefined
+                            : userChainId !== chain.id
+                              ? `Switch your chain above to ${idToChain(chain.id)?.name || 'the correct chain'}`
+                              : undefined
                         }
-                        className="mb-2"
+                        className="mb-2 w-auto"
                       />
                     </div>
                     {validVouches < contractData.requiredNumberOfVouches && (
                       <ExternalLink
                         href="https://t.me/proofhumanity"
-                        className="text-purple hover:opacity-80 underline underline-offset-4 text-sm font-medium inline-flex items-center gap-1 group transition-colors justify-end"
+                        className="text-purple hover:opacity-80 underline underline-offset-4 text-sm font-medium inline-flex items-center gap-1 group transition-colors justify-center md:justify-end"
                       >
                         Get a vouch
                         <svg
@@ -411,19 +411,21 @@ export default function ActionBar({
 
         {web3Loaded && action === ActionType.ADVANCE && (
           <>
-            <span className="text-slate-400">Ready to advance</span>
+            <span className="text-center text-slate-400 md:text-left">
+              Ready to advance
+            </span>
 
-            <div className="flex gap-4">
+            <div className="flex justify-center gap-4 md:justify-start">
               {requester.toLocaleLowerCase() === address?.toLowerCase() ? (
-              <ActionButton
-               disabled={isWithdrawPrepareError || userChainId !== chain.id}
-               isLoading={isWithdrawLoading}
-               onClick={withdraw}
-               variant = "secondary"
-               label={"Withdraw"}
-               tooltip={isWithdrawPrepareError ? "Withdraw not possible, please try again" : userChainId !== chain.id ? `Switch your chain above to ${idToChain(chain.id)?.name || 'the correct chain'}` : undefined}
-               className="mb-2"
-             />
+                <ActionButton
+                  disabled={isWithdrawPrepareError || userChainId !== chain.id}
+                  isLoading={isWithdrawLoading}
+                  onClick={withdraw}
+                  variant="secondary"
+                  label={"Withdraw"}
+                  tooltip={isWithdrawPrepareError ? "Withdraw not possible, please try again" : userChainId !== chain.id ? `Switch your chain above to ${idToChain(chain.id)?.name || 'the correct chain'}` : undefined}
+                  className="mb-2 w-auto"
+                />
               ) : !didIVouchFor ? (
                 <Vouch
                   pohId={pohId}
@@ -448,22 +450,24 @@ export default function ActionBar({
                 onClick={advanceFire}
                 label={isAdvanceLoading ? "Advancing" : "Advance"}
                 tooltip={isAdvancePrepareError ? "Advance not possible, please try again" : userChainId !== chain.id ? `Switch your chain above to ${idToChain(chain.id)?.name || 'the correct chain'}` : undefined}
-                className="mb-2"
+                className="mb-2 w-auto"
               />
             </div>
           </>
         )}
         {action === ActionType.EXECUTE && (
           <>
-            <span className="text-slate-400">Ready to finalize.</span>
-            <div className="flex flex-col justify-between gap-4 font-normal md:flex-row md:items-center">
+            <span className="text-center text-slate-400 md:text-left">
+              Ready to finalize.
+            </span>
+            <div className="flex flex-col items-center justify-between gap-4 font-normal md:flex-row md:items-center">
               <ActionButton
                 disabled={isExecutePrepareError || userChainId !== chain.id}
                 isLoading={isExecuteLoading}
                 onClick={execute}
                 label={isExecuteLoading ? "Executing" : "Execute"}
                 tooltip={isExecutePrepareError ? "Execute not possible, please try again" : userChainId !== chain.id ? `Switch your chain above to ${idToChain(chain.id)?.name || 'the correct chain'}` : undefined}
-                className="mb-2"
+                className="mb-2 w-auto"
               />
             </div>
           </>
@@ -471,7 +475,7 @@ export default function ActionBar({
 
         {action === ActionType.CHALLENGE && (
           <>
-            <div className="text-slate-400">
+            <div className="text-center text-slate-400 md:text-left">
               Challenge period end:{" "}
               <TimeAgo
                 time={lastStatusChange + +contractData.challengePeriodDuration}
@@ -491,7 +495,7 @@ export default function ActionBar({
 
         {action === ActionType.DISPUTED && !!currentChallenge && (
           <>
-            <span className="text-slate-400">
+            <span className="text-center text-slate-400 md:text-left">
               The request was challenged
               {!revocation && (
                 <>
@@ -505,7 +509,7 @@ export default function ActionBar({
               .
             </span>
 
-            <div className="flex gap-4 flex-wrap lg:flex-nowrap ">
+            <div className="flex flex-wrap justify-center gap-4 lg:flex-nowrap lg:justify-start">
               <Appeal
                 pohId={pohId}
                 requestIndex={index}
@@ -523,12 +527,7 @@ export default function ActionBar({
 
               <ExternalLink
                 href={`https://klerosboard.com/${chain.id}/cases/${currentChallenge.disputeId}`}
-                className="btn-main gradient h-[48px] rounded
-                items-center
-                justify-center
-                p-2
-                whitespace-nowrap
-                "
+                className="btn-main gradient h-[48px] rounded w-auto items-center justify-center p-2 whitespace-nowrap"
               >
                 View case #{currentChallenge.disputeId}
               </ExternalLink>
@@ -537,23 +536,23 @@ export default function ActionBar({
         )}
 
         {status === "resolved" && (
-          <span>
-          {requestStatus === RequestStatus.EXPIRED ? 
-          "Request has expired" : 
-          requestStatus === RequestStatus.REJECTED ?
-          "Request was rejected" : "Request was accepted"}
-          <TimeAgo
+          <span className="text-center md:text-left">
+            {requestStatus === RequestStatus.EXPIRED ?
+              "Request has expired" :
+              requestStatus === RequestStatus.REJECTED ?
+                "Request was rejected" : "Request was accepted"}
+            <TimeAgo
               className={`ml-1 text-status-${statusColor}`}
-              time={requestStatus === RequestStatus.EXPIRED 
+              time={requestStatus === RequestStatus.EXPIRED
                 ? humanityExpirationTime!
                 : lastStatusChange}
             />
-          .
+            .
           </span>
         )}
 
         {index < 0 && index > -100 && (
-          <span>
+          <span className="text-center md:text-left">
             Check submission on
             <ExternalLink
               className={`ml-1 text-status-${statusColor} ml-2 underline underline-offset-2`}
