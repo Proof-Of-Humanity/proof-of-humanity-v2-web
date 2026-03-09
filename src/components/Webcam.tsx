@@ -30,6 +30,7 @@ export const CameraButton: React.FC<CameraButtonInterface> = ({
         : "outline-theme h-16 w-16 outline outline-2 outline-offset-2",
       className,
     )}
+    style={{ touchAction: "manipulation" }}
     onClick={onClick}
   >
     {children}
@@ -134,9 +135,9 @@ const Webcam: React.FC<WebcamProps> = ({
       };
 
   return (
-    <div className="relative">
+    <div className="relative flex min-h-[300px] items-center justify-center overflow-hidden bg-black sm:min-h-[400px]">
       <ReactWebcam
-        className="h-full w-full bg-red-500/50"
+        className={cn("h-full w-full object-contain", !IS_MOBILE && "aspect-video")}
         ref={loadCamera}
         mirrored={mirrored}
         screenshotFormat={"image/jpeg"}
@@ -176,13 +177,15 @@ const Webcam: React.FC<WebcamProps> = ({
               <FlipCameraIcon className="h-8 w-8 fill-white" />
             </CameraButton>
           )}
-          <CameraButton
-            secondary
-            className="right-4 top-4"
-            onClick={toggleFullscreen}
-          >
-            <FullscreenIcon className="h-8 w-8 fill-white" />
-          </CameraButton>
+          {!IS_MOBILE && (
+            <CameraButton
+              secondary
+              className="right-4 top-4"
+              onClick={toggleFullscreen}
+            >
+              <FullscreenIcon className="h-8 w-8 fill-white" />
+            </CameraButton>
+          )}
         </>
       )}
 

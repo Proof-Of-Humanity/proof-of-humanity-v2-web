@@ -1,3 +1,4 @@
+import type { LogEventCallback } from "@ffmpeg/ffmpeg";
 import { MEDIA_MESSAGES } from "./media.messages";
 import {
   detectVideoFormat,
@@ -7,6 +8,47 @@ import {
 import { randomString } from "./misc";
 
 const UNRECOGNIZED_FORMAT_ERROR = MEDIA_MESSAGES.invalidVideoFile;
+
+const normalizeRotation = (rotation: number): number => {
+  const snapped = Math.round(rotation / 90) * 90;
+  const normalized = ((snapped % 360) + 360) % 360;
+  return [0, 90, 180, 270].includes(normalized) ? normalized : 0;
+};
+
+const probeDurationAndRotation = async (
+  ffmpegInstance: Awaited<ReturnType<typeof loadFFMPEG>>,
+  inputName: string,
+): Promise<{ durationSec: number; rotation: number }> => {
+  let durationSec = 0;
+  let rotation = 0;
+
+  const logger: LogEventCallback = ({ message }) => {
+    const durationMatch = message.match(/Duration:\s*(\d+):(\d+):(\d+(?:\.\d+)?)/);
+    if (durationMatch) {
+      durationSec =
+        parseInt(durationMatch[1], 10) * 3600 +
+        parseInt(durationMatch[2], 10) * 60 +
+        parseFloat(durationMatch[3]);
+    }
+
+    const rotationMatch = message.match(/rotation of (-?\d+(?:\.\d+)?) degrees/i);
+    if (rotationMatch) {
+      rotation = normalizeRotation(parseFloat(rotationMatch[1]));
+    }
+  };
+
+  ffmpegInstance.on("log", logger);
+
+  try {
+    await ffmpegInstance.exec(["-i", inputName]);
+  } catch {
+    // Expected: ffmpeg errors without an output target, but input metadata is logged first.
+  } finally {
+    ffmpegInstance.off("log", logger);
+  }
+
+  return { durationSec, rotation };
+};
 
 export const videoSanitizer = async (
   inputBuffer: ArrayBufferLike,
@@ -30,6 +72,10 @@ export const videoSanitizer = async (
 
     const sizeLimitBytes = maxSizeBytes ?? 0;
     const shouldCompress = sizeLimitBytes > 0 && inputBuffer.byteLength > sizeLimitBytes;
+    const shouldProbeInput = shouldCompress || inputFormat === "mp4" || inputFormat === "mov";
+    const { durationSec: probedDurationSec, rotation } = shouldProbeInput
+      ? await probeDurationAndRotation(ffmpegInstance, inputName)
+      : { durationSec: 0, rotation: 0 };
 
     let ffmpegArgs: string[];
 
@@ -38,7 +84,7 @@ export const videoSanitizer = async (
       const duration =
         typeof inputDurationSec === "number" && Number.isFinite(inputDurationSec)
           ? inputDurationSec
-          : 0;
+          : probedDurationSec;
 
       if (duration > 0) {
         const originalSizeBytes = inputBuffer.byteLength;
@@ -64,20 +110,35 @@ export const videoSanitizer = async (
 
         ffmpegArgs.push("-preset", "fast");
       } else {
-        ffmpegArgs = [
-          "-i",
-          inputName,
-          "-map_metadata",
-          "-1",
-          "-c:v",
-          videoCodec,
-          "-c:a",
-          audioCodec,
-          "-crf",
-          "24",
-          "-preset",
-          "fast",
-        ];
+        if (inputFormat === "webm") {
+          ffmpegArgs = [
+            "-i",
+            inputName,
+            "-map_metadata",
+            "-1",
+            "-c:v",
+            "libvpx",
+            "-b:v",
+            "2500k",
+            "-c:a",
+            "libopus",
+          ];
+        } else {
+          ffmpegArgs = [
+            "-i",
+            inputName,
+            "-map_metadata",
+            "-1",
+            "-c:v",
+            videoCodec,
+            "-c:a",
+            audioCodec,
+            "-crf",
+            "24",
+            "-preset",
+            "fast",
+          ];
+        }
       }
 
       if (inputFormat === "webm") {
@@ -90,6 +151,9 @@ export const videoSanitizer = async (
     }
 
     if (inputFormat === "mp4" || inputFormat === "mov") {
+      if (rotation !== 0) {
+        ffmpegArgs.push("-metadata:s:v:0", `rotate=${rotation}`);
+      }
       ffmpegArgs.push("-movflags", "+faststart");
     }
 

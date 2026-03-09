@@ -97,7 +97,7 @@ export const getVideoCodecForFormat = (
 ): { videoCodec: string; audioCodec: string } => {
   switch (format) {
     case "webm":
-      return { videoCodec: "libvpx", audioCodec: "libvorbis" };
+      return { videoCodec: "libvpx", audioCodec: "libopus" };
     case "avi":
       return { videoCodec: "mpeg4", audioCodec: "mp3" };
     case "mov":

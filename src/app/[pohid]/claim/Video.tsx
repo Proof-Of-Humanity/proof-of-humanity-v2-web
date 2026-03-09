@@ -355,12 +355,14 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
         <div className="divider mt-4 w-2/3" />
       </span>
 
-      <span className="mx-12 my-8 flex flex-col text-center">
+      <span className="mx-4 my-8 flex flex-col text-center sm:mx-12">
         <span>
           Record a short video: hold your phone showing this wallet address
           (readable, no glare)
         </span>
-        <strong className="my-2">{address}</strong>
+        <strong className="my-2 break-all font-mono text-sm sm:text-base">
+          {address}
+        </strong>
         <span>and say the phrase</span>
         <span className="my-2">
           <code className="text-orange">&quot;</code>
