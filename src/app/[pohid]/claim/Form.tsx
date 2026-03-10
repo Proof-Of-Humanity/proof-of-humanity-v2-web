@@ -57,12 +57,17 @@ export interface SubmissionState {
 
 interface FormProps {
   contractData: Record<SupportedChainId, ContractData>;
+  fallbackTotalCosts: Record<SupportedChainId, string>;
   renewal?: RegistrationQuery["registration"] & {
     chain: SupportedChain;
   };
 }
 
-export default function Form({ contractData, renewal }: FormProps) {
+export default function Form({
+  contractData,
+  fallbackTotalCosts,
+  renewal,
+}: FormProps) {
   const params = useParams();
   const { address, isConnected } = useAccount();
   const initiatingAddress: MutableRefObject<typeof address> =
@@ -95,7 +100,9 @@ export default function Form({ contractData, renewal }: FormProps) {
   const currentTotalCost =
     typeof currentArbitrationCost === "bigint"
       ? currentBaseDeposit + currentArbitrationCost
-      : null;
+      : fallbackTotalCosts[chainId]
+        ? BigInt(fallbackTotalCosts[chainId])
+        : null;
   const selfFunded$ = useObservable(0);
   const loading = useLoading();
   const [, loadingMessage] = loading.use();
