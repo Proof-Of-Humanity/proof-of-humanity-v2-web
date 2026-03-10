@@ -155,6 +155,10 @@ export const videoSanitizer = async (
           ];
         }
       }
+
+      if (inputFormat === "webm") {
+        ffmpegArgs.push("-speed", "8", "-deadline", "realtime", "-threads", "4");
+      }
     } else {
       ffmpegArgs = ["-i", inputName, "-map_metadata", "-1", "-c", "copy"];
     }

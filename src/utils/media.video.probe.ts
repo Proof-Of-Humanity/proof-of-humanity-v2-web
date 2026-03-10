@@ -365,6 +365,10 @@ export const probeVideoMetrics = async (
 
     try {
       await ffmpegInstance.exec([
+        "-threads",
+        "0",
+        "-filter_threads",
+        "0",
         "-i",
         inputName,
         "-map",
