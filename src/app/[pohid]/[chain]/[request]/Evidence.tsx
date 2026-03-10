@@ -22,6 +22,8 @@ import DocumentIcon from "icons/NoteMajor.svg";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "react-toastify";
 import useSWR from "swr";
+import { useRouter } from "next/navigation";
+import ActionButton from "components/ActionButton";
 import { EvidenceFile, MetaEvidenceFile } from "types/docs";
 import { shortenAddress } from "utils/address";
 import { ipfsFetch, ipfs } from "utils/ipfs";
@@ -30,7 +32,6 @@ import { Address, Hash } from "viem";
 import { useChainId } from "wagmi";
 import { useAtlasProvider, Roles } from "@kleros/kleros-app";
 import AuthGuard from "components/AuthGuard";
-import ActionButton from "components/ActionButton";
 
 enableReactUse();
 
@@ -104,6 +105,7 @@ export default function Evidence({
   const [modalOpen, setModalOpen] = useState(false);
   const loading = useLoading();
   const [pending] = loading.use();
+  const router = useRouter();
 
   const { uploadFile } = useAtlasProvider();
   const [prepare] = usePoHWrite(
@@ -120,7 +122,9 @@ export default function Evidence({
         },
         onSuccess() {
           loading.stop();
-          toast.success("Request created");
+          toast.success("Evidence submitted successfully");
+          setModalOpen(false);
+          router.refresh();
         },
       }),
       [loading],
@@ -254,13 +258,13 @@ export default function Evidence({
               </Uploader>
             </div>
             <AuthGuard signInButtonProps={{ className: "mt-12" }}>
-              <button
+              <ActionButton
                 disabled={pending}
-                className="btn-main mt-12"
+                isLoading={pending}
+                className="mt-12"
                 onClick={submit}
-              >
-                Submit
-              </button>
+                label="Submit"
+              />
             </AuthGuard>
           </div>
         </Modal>

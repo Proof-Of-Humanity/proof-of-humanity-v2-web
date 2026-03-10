@@ -3,58 +3,49 @@
 import { useAppKit } from "@reown/appkit/react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect } from "react";
+import { useEffect } from "react";
 import { useAccount } from "wagmi";
 import { prettifyId } from "utils/identifier";
 
 interface RegisterLinkProps {
   me: any;
   address?: `0x${string}`;
-  pathname: string;
   className?: string;
-  pendingRegisterIntent: boolean;
-  setPendingRegisterIntent: (value: boolean) => void;
+  pendingRegisterIntent?: boolean;
+  setPendingRegisterIntent?: (value: boolean) => void;
 }
 
-const RegisterLink = ({ 
-  me, 
-  address, 
-  pathname, 
-  className, 
-  pendingRegisterIntent, 
-  setPendingRegisterIntent 
+const RegisterLink = ({
+  me,
+  address,
+  className,
+  pendingRegisterIntent = false,
+  setPendingRegisterIntent,
 }: RegisterLinkProps) => {
   const modal = useAppKit();
-  const { isConnected } = useAccount();
   const router = useRouter();
-  const navigateToRegister = useCallback(
-    (url: string) => {
-      // Claim flow must open as a full document in a new tab for cross-origin isolation.
-      if (url.includes("/claim")) {
-        window.open(url, "_blank", "noopener,noreferrer");
-        return;
-      }
-      router.push(url);
-    },
-    [router],
-  );
+  const { isConnected } = useAccount();
 
   useEffect(() => {
-    if (pendingRegisterIntent && isConnected && address) {
-      setPendingRegisterIntent(false);
+    if (!pendingRegisterIntent || !isConnected || !address) return;
 
-      const registerUrl = me?.currentRequest
-        ? `/${prettifyId(me.currentRequest.humanity.id)}/${me.currentRequest.chain.name}/${me.currentRequest.index}`
-        : `/${prettifyId(address)}/claim`;
+    setPendingRegisterIntent?.(false);
+    const registerUrl = me?.currentRequest
+      ? `/${prettifyId(me.currentRequest.humanity.id)}/${me.currentRequest.chain.name}/${me.currentRequest.index}`
+      : `/${prettifyId(address)}/claim`;
 
-      navigateToRegister(registerUrl);
+    if (registerUrl.includes("/claim")) {
+      window.open(registerUrl, "_blank", "noopener,noreferrer");
+      return;
     }
-  }, [pendingRegisterIntent, isConnected, address, me, navigateToRegister, setPendingRegisterIntent]);
+
+    router.push(registerUrl);
+  }, [address, isConnected, me, pendingRegisterIntent, router, setPendingRegisterIntent]);
 
   const handleClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
     if (!isConnected) {
       e.preventDefault();
-      setPendingRegisterIntent(true);
+      setPendingRegisterIntent?.(true);
       modal.open({ view: "Connect" });
     }
   };
@@ -70,11 +61,11 @@ const RegisterLink = ({
     );
   }
 
-  const registerUrl = isConnected && address
+const registerUrl = isConnected && address
     ? (me?.currentRequest
         ? `/${prettifyId(me.currentRequest.humanity.id)}/${me.currentRequest.chain.name}/${me.currentRequest.index}`
         : `/${prettifyId(address)}/claim`)
-    : "#"; // Use # as placeholder when not connected
+    : "#";
   const shouldOpenInNewTab = registerUrl.includes("/claim");
 
   return (

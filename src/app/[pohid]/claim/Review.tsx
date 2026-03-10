@@ -5,21 +5,24 @@ import Label from "components/Label";
 import AuthGuard from "components/AuthGuard";
 import Previewed from "components/Previewed";
 import TimeAgo from "components/TimeAgo";
+import DocumentIcon from "components/DocumentIcon";
+import { getContractInfo } from "contracts";
 import { SupportedChainId, idToChain, getForeignChain } from "config/chains";
 import { ContractData } from "data/contract";
-import DocumentIcon from "icons/NoteMajor.svg";
+import InfoIcon from "icons/info.svg";
+import NewTabIcon from "icons/NewTab.svg";
 import Image from "next/image";
 import { prettifyId } from "utils/identifier";
 import { ipfs } from "utils/ipfs";
 import { formatEth } from "utils/misc";
-import { formatEther } from "viem";
-import { useAccount, useBalance, useChainId, useSwitchChain } from "wagmi";
+import { Abi, Hash, formatEther } from "viem";
+import { useAccount, useBalance, useChainId, useReadContract, useSwitchChain } from "wagmi";
 import { MediaState, SubmissionState } from "./Form";
 
 interface ReviewProps {
   arbitrationInfo: ContractData["arbitrationInfo"];
-  totalCost: bigint;
-  totalCosts: Record<SupportedChainId, bigint>;
+  contractData: Record<SupportedChainId, ContractData>;
+  totalCost: bigint | null;
   selfFunded$: ObservablePrimitiveBaseFns<number>;
   state$: ObservableObject<SubmissionState>;
   media$: ObservableObject<MediaState>;
@@ -29,15 +32,14 @@ interface ReviewProps {
 
 function Review({
   arbitrationInfo,
+  contractData,
   totalCost,
-  totalCosts,
   selfFunded$,
   state$,
   media$,
   loadingMessage,
   submit,
 }: ReviewProps) {
-
   const selfFunded = selfFunded$.use();
   const { pohId, name } = state$.use();
   const { photo, video } = media$.use();
@@ -52,69 +54,121 @@ function Review({
 
   const foreignChainId = getForeignChain(chainId);
   const foreignChain = idToChain(foreignChainId)!;
-  const foreignCost = totalCosts[foreignChainId];
+  const foreignContractData = contractData[foreignChainId];
+  const foreignBaseDeposit = BigInt(foreignContractData.baseDeposit);
+  const { data: foreignArbitrationCost } = useReadContract({
+    address: foreignContractData.arbitrationInfo.arbitrator as `0x${string}`,
+    abi: getContractInfo("KlerosLiquid", foreignChainId).abi as Abi,
+    functionName: "arbitrationCost",
+    args: [foreignContractData.arbitrationInfo.extraData as Hash],
+    chainId: foreignChainId,
+  });
+  const foreignCost =
+    typeof foreignArbitrationCost === "bigint"
+      ? foreignBaseDeposit + foreignArbitrationCost
+      : null;
+  const totalCostLabel = totalCost ? formatEther(totalCost) : "Loading...";
 
   const jumperUrl = `https://jumper.exchange/?toChain=${currentChain.id}&toToken=0x0000000000000000000000000000000000000000`;
-  
+
   // Assume Gnosis is always cheaper (1 xDAI = 1 USD) until we have ETH/USD price feeds
   const isCurrentChainCheaper = chainId === 100;
 
   return (
     <>
-      <span className="my-4 flex w-full flex-col text-2xl font-semibold">
+      <span className="my-4 flex w-full flex-col text-2xl font-bold text-primaryText">
         Finalize your registration
         <div className="divider mt-4 w-2/3" />
       </span>
 
-      <div className="centered mb-4 flex-col">
-        <ExternalLink
-          className="text-orange mr-1 flex font-semibold"
-          href={ipfs(arbitrationInfo.policy)}
-        >
-          <DocumentIcon className="fill-orange h-6 w-6" />
-          Registration Policy
-        </ExternalLink>
-        <span className="text-secondaryText text-sm">
-          Updated: <TimeAgo time={arbitrationInfo.updateTime} />
-        </span>
+      {/* Warning callout */}
+      <div className="mb-6 flex justify-center rounded-lg border border-orange bg-lightOrange px-4 py-4 text-center transition-colors duration-200 hover:bg-[#fbe9e9]">
+        <div className="flex max-w-2xl flex-col items-center">
+          <InfoIcon className="h-7 w-7 stroke-current stroke-2 text-status-rejected" />
+          <div className="mt-2">
+            <p className="font-bold text-primaryText">Required before you continue</p>
+            <p className="mt-1 text-sm text-secondaryText">
+              Review this carefully — incorrect submissions can be challenged and{" "}
+              <span className="font-semibold text-red-500">may lose deposit</span>.
+            </p>
+          </div>
+        </div>
       </div>
 
-      <span className="txt pb-8">
-        Before proceeding, check that your submission complies with the above
-        Registration Policy. If not, you might lose your deposit. Specifically,
-        make sure:
-        <ul className="ml-8 list-disc">
-          <li>
-            Non-mirrored photo and video (if you display any text in the camera
-            and it appears backwards, your image is mirrored).
+      {/* Registration Policy card */}
+      <div className="group mb-6 flex flex-col items-center gap-4 rounded-lg border border-stroke bg-whiteBackground px-4 py-4 text-center transition-colors duration-200 hover:bg-primaryBackground sm:flex-row sm:justify-between sm:py-3 sm:text-left">
+        <div className="group/policy-icon flex items-center gap-3">
+          <DocumentIcon className="h-6 w-6 fill-orange text-orange transition-transform duration-200 group-hover/policy-icon:scale-105" />
+          <div>
+            <p className="font-semibold text-primaryText">Registration Policy</p>
+            <p className="text-xs text-secondaryText">
+              Updated <TimeAgo time={arbitrationInfo.updateTime} />
+            </p>
+          </div>
+        </div>
+        <ExternalLink
+          className="group/policy-link flex items-center gap-1 text-sm font-medium text-orange transition-colors duration-200 hover:text-orange/80"
+          href={ipfs(arbitrationInfo.policy)}
+        >
+          <span>Open the full policy</span>
+          <NewTabIcon className="h-4 w-4 fill-current transition-transform duration-200 group-hover/policy-link:-translate-y-0.5 group-hover/policy-link:translate-x-0.5" />
+        </ExternalLink>
+      </div>
+
+      {/* Checklist */}
+      <div className="mb-6 flex flex-col items-center text-center text-sm text-secondaryText">
+        <p className="max-w-2xl">
+          Before proceeding, make sure your submission follows the Registration
+          Policy.
+        </p>
+        <p className="mt-3 font-bold text-primaryText">Check these 3 things:</p>
+        <ul className="mt-3 flex w-full max-w-2xl flex-col items-start gap-3 px-2 text-left sm:px-0">
+          <li className="flex items-start gap-2">
+            <svg className="mt-0.5 h-5 w-5 shrink-0 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <span className="text-primaryText">
+              Photo and video are <strong>not mirrored</strong>, or blurred.
+            </span>
           </li>
-          <li>
-            Photo is facing forward, without any covering that might hide
-            internal facial features (no filters, heavy makeup, or masks).
+          <li className="flex items-start gap-2">
+            <svg className="mt-0.5 h-5 w-5 shrink-0 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <span className="text-primaryText">
+              Your face is <strong>clearly visible</strong> and facing forward
+            </span>
           </li>
-          <li>
-            Video has good lighting and sound, your internal facial features are
-            visible, and the displayed address is correct.
+          <li className="flex items-start gap-2">
+            <svg className="mt-0.5 h-5 w-5 shrink-0 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <span className="text-primaryText">
+              Your video has good lighting, clear audio, and shows the{" "}
+              <strong>correct wallet address</strong>
+            </span>
           </li>
         </ul>
-      </span>
+      </div>
 
-      <div className="mx-auto flex w-full min-w-0 flex-col items-center justify-center gap-4 overflow-hidden sm:flex-row sm:items-start">
-        <Previewed
-          uri={photo!.uri}
-          trigger={
-            <Image
-              alt="preview"
-              className="h-48 w-48 max-w-full shrink-0 rounded-full"
-              src={photo!.uri}
-              width={256}
-              height={256}
-            />
-          }
-        />
-        <div className="w-full min-w-0 sm:flex-1">
+      <div className="mx-auto flex w-full min-w-0 flex-col items-center justify-center gap-4 overflow-hidden sm:grid sm:grid-cols-[1fr_auto_1fr_auto_1fr] sm:items-center sm:gap-0">
+        <div className="flex w-48 shrink-0 items-center justify-center sm:col-start-2">
+          <Previewed
+            uri={photo!.uri}
+            trigger={
+              <Image
+                alt="preview"
+                className="h-48 w-48 max-w-full shrink-0 rounded-full"
+                src={photo!.uri}
+                width={256}
+                height={256}
+              />
+            }
+          />
+        </div>
+        <div className="flex w-full min-w-0 justify-center sm:col-start-4 sm:w-auto sm:min-w-0 sm:justify-center">
           <video
-            className="max-h-72 w-full max-w-full rounded object-contain sm:max-h-64"
+            className="mx-auto max-h-72 w-auto max-w-full rounded bg-black object-contain sm:max-h-64"
             src={`${video!.uri}#t=0.001`}
             controls
             playsInline
@@ -143,12 +197,12 @@ function Review({
                 </strong>
               </span>
             )}
-              <ExternalLink
-                href={jumperUrl}
-                className="text-purple-600 cursor-pointer font-semibold text-sm normal-case hover:underline hover:text-purple-500 py-1 rounded transition-all sm:ml-auto"
-              >
-                Need {currentChain.nativeCurrency.symbol}? bridge to {currentChain.name} →
-              </ExternalLink>
+            <ExternalLink
+              href={jumperUrl}
+              className="text-purple-600 cursor-pointer font-semibold text-sm normal-case hover:underline hover:text-purple-500 py-1 rounded transition-all sm:ml-auto"
+            >
+              Need {currentChain.nativeCurrency.symbol}? bridge to {currentChain.name} →
+            </ExternalLink>
           </div>
 
         </Label>
@@ -160,24 +214,25 @@ function Review({
                 className="no-spinner text-right"
                 step="any"
                 min={0}
-                max={formatEther(totalCost)}
+                max={totalCost ? formatEther(totalCost) : undefined}
                 value={selfFunded}
+                disabled={!totalCost}
                 onChange={(event) => selfFunded$.set(+event.target.value)}
               />
             </div>
             <span>of</span>
             <span
-              onClick={() => selfFunded$.set(formatEth(totalCost))}
+              onClick={() => totalCost && selfFunded$.set(formatEth(totalCost))}
               className="text-orange cursor-pointer font-semibold underline underline-offset-2"
             >
-              {formatEther(totalCost)}
+              {totalCostLabel}
             </span>
             <span>{nativeCurrency.symbol}</span>
-            {!isCurrentChainCheaper && (
+            {!isCurrentChainCheaper && foreignCost && (
               <>
                 <span className="hidden xl:block">•</span>
                 <span className="text-purple-600 cursor-pointer font-semibold text-sm hover:underline hover:text-purple-500 py-1 rounded transition-all inline-flex items-center"
-                onClick={() => switchChain?.({ chainId: foreignChainId })}>
+                  onClick={() => switchChain?.({ chainId: foreignChainId })}>
                   Switch to {foreignChain.name} for a smaller deposit ({formatEther(foreignCost)} {foreignChain.nativeCurrency.symbol})
                 </span>
               </>
@@ -215,6 +270,10 @@ function Review({
               height={14}
             />
             {loadingMessage}...
+          </button>
+        ) : !totalCost ? (
+          <button className="btn-main md:w-full" disabled>
+            Loading deposit...
           </button>
         ) : (
           <AuthGuard signInButtonProps={{ className: "md:w-full" }}>

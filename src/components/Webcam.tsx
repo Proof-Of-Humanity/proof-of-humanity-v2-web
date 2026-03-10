@@ -106,14 +106,38 @@ const Webcam: React.FC<WebcamProps> = ({
 
   const FullscreenIcon = fullscreen ? MinimizeIcon : MaximizeIcon;
   const ActionIcon = isVideo ? (recording ? PauseIcon : PlayIcon) : SmileyIcon;
+  const selectedDeviceId =
+    !IS_MOBILE && currentCamera ? currentCamera : undefined;
+  const videoConstraints = isVideo
+    ? {
+        width: IS_MOBILE
+          ? { ideal: 1280, max: 1280 }
+          : { min: 640, ideal: 1280 },
+        height: IS_MOBILE
+          ? { ideal: 720, max: 720 }
+          : { min: 480, ideal: 720 },
+        frameRate: IS_MOBILE
+          ? { min: 24, ideal: 30, max: 30 }
+          : { min: 24, ideal: 30 },
+        deviceId: selectedDeviceId,
+        facingMode,
+      }
+    : {
+        width: IS_MOBILE
+          ? { min: 640, exact: 1280 }
+          : { min: 640, ideal: 1920 },
+        height: IS_MOBILE
+          ? { min: 480, exact: 720 }
+          : { min: 480, ideal: 1080 },
+        frameRate: { min: 24, ideal: 60 },
+        deviceId: selectedDeviceId,
+        facingMode,
+      };
 
   return (
-    <div className="relative min-h-[300px] sm:min-h-[400px] overflow-hidden bg-black flex items-center justify-center">
+    <div className="relative flex min-h-[300px] items-center justify-center overflow-hidden bg-black sm:min-h-[400px]">
       <ReactWebcam
-        className={cn(
-          "h-full w-full object-contain",
-          !IS_MOBILE && "aspect-video"
-        )}
+        className={cn("h-full w-full object-contain", !IS_MOBILE && "aspect-video")}
         ref={loadCamera}
         mirrored={mirrored}
         screenshotFormat={"image/jpeg"}
@@ -121,18 +145,9 @@ const Webcam: React.FC<WebcamProps> = ({
         muted={true}
         screenshotQuality={1}
         forceScreenshotSourceSize
-        videoConstraints={{
-          width: IS_MOBILE
-            ? { ideal: 1280, max: 1280 }
-            : { min: 640, ideal: 1920 },
-          height: IS_MOBILE
-            ? { ideal: 720, max: 720 }
-            : { min: 480, ideal: 1080 },
-          frameRate: IS_MOBILE ? { min: 24, ideal: 30, max: 30 } : { min: 24, ideal: 60 },
-          deviceId: IS_MOBILE ? undefined : currentCamera,
-          facingMode,
-        }}
+        videoConstraints={videoConstraints}
         onCanPlayThrough={() => false}
+        onClick={(e) => e.preventDefault()}
         onUserMedia={onUserMedia}
         onUserMediaError={onUserMediaError}
         audioConstraints={{
@@ -175,7 +190,7 @@ const Webcam: React.FC<WebcamProps> = ({
       )}
 
       <CameraButton
-        className="z-10 bottom-8 left-1/2 -translate-x-1/2 opacity-90"
+        className="bottom-8 left-1/2 -translate-x-1/2 opacity-90"
         onClick={action}
       >
         <ActionIcon className="h-12 w-12 fill-white" />

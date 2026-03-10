@@ -13,22 +13,20 @@ import ResetIcon from "icons/ResetMinor.svg";
 import ZoomIcon from "icons/SearchMajor.svg";
 import CameraIcon from "icons/CameraMajor.svg";
 import Image, { StaticImageData } from "next/image";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Cropper from "react-easy-crop";
 import type { Area, Point } from "react-easy-crop/types";
 import { toast } from "react-toastify";
 import ReactWebcam from "react-webcam";
-import { getCroppedPhoto, sanitizeImage } from "utils/media";
+import {
+  getCroppedPhoto,
+  sanitizeImage,
+  validatePhotoDimensions,
+  validatePhotoSize,
+  PHOTO_LIMITS,
+} from "utils/media";
 import { base64ToUint8Array } from "utils/misc";
 import { MediaState } from "./Form";
-
-const MIN_DIMS = { width: 256, height: 256 }; // PXs
-const MAX_SIZE = 3; // Megabytes
-const MAX_SIZE_BYTES = 1024 * 1024 * MAX_SIZE; // Bytes
-const ERROR_MSG = {
-  dimensions: `Photo dimensions are too small. Minimum dimensions are ${MIN_DIMS.width}px by ${MIN_DIMS.height}px`,
-  size: `Photo is oversized. Maximum allowed size is ${MAX_SIZE}mb`,
-};
 
 interface PhotoProps {
   advance: () => void;
@@ -62,7 +60,6 @@ function Photo({ advance, photo$ }: PhotoProps) {
 
   const [originalPhoto, setOriginalPhoto] = useState<{
     uri: string;
-    buffer: Buffer;
   } | null>(null);
 
   const [showCamera, setShowCamera] = useState(false);
@@ -71,40 +68,42 @@ function Photo({ advance, photo$ }: PhotoProps) {
   const [crop, setCrop] = useState<Point>({ x: 0, y: 0 });
   const [maxZoom, setMaxZoom] = useState(3);
   const [zoom, setZoom] = useState(1);
+  const cropTooSmallRef = useRef(false);
 
   const loading = useLoading();
   const [pending, loadingMessage] = loading.use();
 
   const onCrop = async () => {
     if (!cropPixels || !originalPhoto) return;
-    if (
-      cropPixels.width < MIN_DIMS.width ||
-      cropPixels.height < MIN_DIMS.height
-    ) {
-      toast.error(ERROR_MSG.dimensions);
-      return console.error("Dimensions error");
+
+    const dimensionError = validatePhotoDimensions(cropPixels.width, cropPixels.height);
+    if (dimensionError) {
+      toast.error(dimensionError);
+      return;
     }
 
     loading.start("Cropping photo");
-
-    const cropped = await getCroppedPhoto(originalPhoto.uri, cropPixels);
-    if (!cropped) return;
-
     try {
+      const cropped = await getCroppedPhoto(originalPhoto.uri, cropPixels);
+      if (!cropped) return;
+
       const sanitized = await sanitizeImage(
         Buffer.from(base64ToUint8Array(cropped.split(",")[1])),
       );
-      if (sanitized.size > MAX_SIZE_BYTES) {
-        toast.error(ERROR_MSG.size);
-        //return console.error("Size error");
+
+      const sizeError = validatePhotoSize(sanitized.size);
+      if (sizeError) {
+        toast.error(sizeError);
+        return;
       }
 
+      if (photo?.uri) URL.revokeObjectURL(photo.uri);
       photo$.set({ content: sanitized, uri: URL.createObjectURL(sanitized) });
     } catch (err: any) {
       toast.error(err.message);
+    } finally {
+      loading.stop();
     }
-
-    loading.stop();
   };
 
   const takePhoto = async () => {
@@ -115,9 +114,9 @@ function Photo({ advance, photo$ }: PhotoProps) {
     if (!screenshot) return;
 
     const buffer = Buffer.from(base64ToUint8Array(screenshot.split(",")[1]));
+    if (originalPhoto?.uri) URL.revokeObjectURL(originalPhoto.uri);
     setOriginalPhoto({
-      uri: URL.createObjectURL(new Blob([buffer], { type: "buffer" })),
-      buffer,
+      uri: URL.createObjectURL(new Blob([buffer], { type: "image/jpeg" })),
     });
 
     setShowCamera(false);
@@ -125,13 +124,23 @@ function Photo({ advance, photo$ }: PhotoProps) {
 
   const retakePhoto = () => {
     setShowCamera(false);
+    if (photo?.uri) URL.revokeObjectURL(photo.uri);
+    if (originalPhoto?.uri) URL.revokeObjectURL(originalPhoto.uri);
     photo$.delete();
     setOriginalPhoto(null);
     setZoom(1);
     setCrop({ x: 0, y: 0 });
     setCropPixels(null);
+    cropTooSmallRef.current = false;
     loading.stop();
   };
+
+  useEffect(
+    () => () => {
+      if (originalPhoto?.uri) URL.revokeObjectURL(originalPhoto.uri);
+    },
+    [originalPhoto?.uri],
+  );
 
   return (
     <>
@@ -168,8 +177,6 @@ function Photo({ advance, photo$ }: PhotoProps) {
             </div>
           </div>
 
-          {!showCamera && !originalPhoto && !photo && (
-        <>
           <Checklist
             title="Photo Checklist"
             warning="Not following these guidelines will result in a loss of funds."
@@ -188,8 +195,6 @@ function Photo({ advance, photo$ }: PhotoProps) {
               },
             ]}
           />
-        </>
-      )}
 
           <div className="mt-6 flex w-full flex-col items-center">
             <button
@@ -203,7 +208,7 @@ function Photo({ advance, photo$ }: PhotoProps) {
         </div>
       )}
 
-      {showCamera && (  
+      {showCamera && (
         <div tabIndex={0} ref={fullscreenRef}>
           <Webcam
             fullscreen={isFullscreen}
@@ -240,19 +245,24 @@ function Photo({ advance, photo$ }: PhotoProps) {
               onCropChange={setCrop}
               onCropComplete={(_area, croppedPixels) => {
                 setCropPixels(croppedPixels);
-                if (
-                  croppedPixels.width < MIN_DIMS.width ||
-                  croppedPixels.height < MIN_DIMS.height
-                ) {
-                  toast.error(ERROR_MSG.dimensions);
-                  console.error("Size error");
+                const dimensionError = validatePhotoDimensions(
+                  croppedPixels.width,
+                  croppedPixels.height,
+                );
+                const tooSmall = !!dimensionError;
+                if (tooSmall && !cropTooSmallRef.current) {
+                  cropTooSmallRef.current = true;
+                  toast.error(dimensionError);
+                } else if (!tooSmall) {
+                  cropTooSmallRef.current = false;
                 }
               }}
               onZoomChange={setZoom}
               onMediaLoaded={(media) => {
                 setMaxZoom(
                   Math.floor(
-                    Math.min(media.naturalWidth, media.naturalHeight) / 256,
+                    Math.min(media.naturalWidth, media.naturalHeight) /
+                      Math.min(PHOTO_LIMITS.minWidth, PHOTO_LIMITS.minHeight),
                   ),
                 );
               }}
@@ -293,7 +303,7 @@ function Photo({ advance, photo$ }: PhotoProps) {
               />
             }
           />
-          <button className="btn-main mt-4 md:w-auto" onClick={advance}>
+          <button className="btn-main mt-4" onClick={advance}>
             Next
           </button>
         </div>
