@@ -51,7 +51,7 @@ export const VIDEO_LIMITS = {
   freezeWarningMinSec: 1.2,
   freezeWarningRatio: 0.25,
   blurWarningThreshold: 9,
-  minLumaWarning: 55,
+  minLumaWarning: 80,
   minAudioDurationWarning: 3.0,
   recorderVideoBps: 2_500_000,
   recorderAudioBps: 96_000,

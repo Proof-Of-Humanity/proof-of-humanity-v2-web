@@ -499,18 +499,18 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
               {videoQualityWarnings.length > 0 && (
                 <div className="mx-auto w-full max-w-lg">
                   <div className="mb-2 flex justify-center">
-                    <span className="rounded-full bg-status-challenged/15 px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-status-challenged">
+                    <span className="rounded-full bg-status-challenged/15 px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-[#D98A1F]">
                       Warnings
                     </span>
                   </div>
-                  <ul className="flex flex-col items-center gap-2 text-center text-sm text-status-challenged">
+                  <ul className="flex flex-col items-center gap-2 text-center text-sm text-[#D98A1F]">
                   {videoQualityWarnings.map((warningMessage, idx) => (
                     <li
                       key={`accepted-warning-${idx}`}
                       className="flex items-start justify-center gap-2"
                     >
                       <span className="mt-[7px] h-1.5 w-1.5 shrink-0 rounded-full bg-black" />
-                      <span className="text-status-challenged">{warningMessage}</span>
+                      <span className="text-[#D98A1F]">{warningMessage}</span>
                     </li>
                   ))}
                   </ul>
@@ -567,18 +567,18 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
             {videoQualityWarnings.length > 0 && (
               <div className="border-stroke mt-4 border-t pt-4">
                 <div className="mb-2 flex justify-center">
-                  <span className="rounded-full bg-status-challenged/15 px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-status-challenged">
+                  <span className="rounded-full bg-status-challenged/15 px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-[#D98A1F]">
                     Warnings
                   </span>
                 </div>
-                <ul className="mx-auto flex w-full max-w-lg flex-col items-center gap-2 text-center text-sm text-status-challenged">
+                <ul className="mx-auto flex w-full max-w-lg flex-col items-center gap-2 text-center text-sm text-[#D98A1F]">
                   {videoQualityWarnings.map((warningMessage, idx) => (
                     <li
                       key={`warning-${idx}`}
                       className="flex items-start justify-center gap-2"
                     >
                       <span className="mt-[7px] h-1.5 w-1.5 shrink-0 rounded-full bg-black" />
-                      <span className="text-status-challenged">{warningMessage}</span>
+                      <span className="text-[#D98A1F]">{warningMessage}</span>
                     </li>
                   ))}
                 </ul>
