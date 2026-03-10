@@ -11,7 +11,7 @@ import Label from "components/Label";
 import Modal from "components/Modal";
 import TimeAgo from "components/TimeAgo";
 import Uploader from "components/Uploader";
-import { explorerLink } from "config/chains";
+import { explorerLink, idToChain } from "config/chains";
 import { Effects } from "contracts/hooks/types";
 import usePoHWrite from "contracts/hooks/usePoHWrite";
 import { RequestQuery } from "generated/graphql";
@@ -202,13 +202,17 @@ export default function Evidence({
           open={modalOpen}
           header="Evidence"
           trigger={
-            <button
+            <ActionButton
               disabled={isEvidenceDisabled}
               onClick={() => setModalOpen(true)}
-              className="btn-main mx-2 mt-2 w-48 self-end"
-            >
-              Add evidence
-            </button>
+              label="Add Evidence"
+              className="mx-2 mt-4 self-end"
+              tooltip={
+                isEvidenceDisabled
+                  ? `Switch your chain above to ${idToChain(chainReq.id)?.name || "the correct chain"}`
+                  : undefined
+              }
+            />
           }
         >
           <div className="bg-whiteBackground flex flex-col flex-wrap p-4">
