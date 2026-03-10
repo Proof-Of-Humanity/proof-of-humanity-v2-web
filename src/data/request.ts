@@ -2,6 +2,7 @@ import axios from "axios";
 import {
   SupportedChainId,
   getForeignChain,
+  idToChain,
   supportedChains,
   legacyChain,
 } from "config/chains";
@@ -159,6 +160,15 @@ export const getOffChainVouches = async (
   claimer: Address,
   pohId: Hash,
 ) => {
+  if (!idToChain(chainId)) {
+    console.warn("[request/getOffChainVouches] Skipping unsupported chain", {
+      chainId,
+      claimer,
+      pohId,
+    });
+    return [];
+  }
+
   try {
     return (
       await axios.get(
