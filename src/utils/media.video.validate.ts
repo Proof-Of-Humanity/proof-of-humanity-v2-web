@@ -250,7 +250,10 @@ export function validateVideoQuality(
 
   const hasAudio = options.probeSignals?.hasAudio;
   if (hasAudio === false) {
-    warnings.push(MEDIA_MESSAGES.videoNoAudioWarning);
+    error = {
+      code: MEDIA_ERROR_CODES.NO_AUDIO,
+      userMessage: MEDIA_MESSAGES.videoNoAudioWarning,
+    };
   } else {
     const nonSilenceSec = options.probeSignals?.nonSilenceSec;
     if (

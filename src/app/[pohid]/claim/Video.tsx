@@ -489,16 +489,31 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
             Tap video to preview fullscreen
           </span>
           {hasIssues && (
-            <div className="mt-3 w-full max-w-xl">
-              <div className="mb-2 flex text-base items-center justify-center gap-2 font-semibold text-primaryText">
-                <InfoIcon className="h-4 w-4 stroke-current stroke-2 text-primaryText" />
+            <div className="border-stroke bg-primaryBackground mt-4 w-full max-w-2xl rounded-xl border px-5 py-4 shadow-sm">
+              <div className="mb-3 flex items-center justify-center gap-2 text-lg font-semibold text-primaryText">
+                <span className="border-stroke bg-whiteBackground flex h-7 w-7 items-center justify-center rounded-full border">
+                  <InfoIcon className="h-4 w-4 stroke-current stroke-2 text-primaryText" />
+                </span>
                 <span>Issues Found</span>
               </div>
               {videoQualityWarnings.length > 0 && (
-                <div className="flex flex-col gap-1 text-sm text-amber-500">
+                <div className="mx-auto w-full max-w-lg">
+                  <div className="mb-2 flex justify-center">
+                    <span className="rounded-full bg-status-challenged/15 px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-status-challenged">
+                      Warnings
+                    </span>
+                  </div>
+                  <ul className="flex flex-col items-center gap-2 text-center text-sm text-status-challenged">
                   {videoQualityWarnings.map((warningMessage, idx) => (
-                    <span key={`accepted-warning-${idx}`}>{warningMessage}</span>
+                    <li
+                      key={`accepted-warning-${idx}`}
+                      className="flex items-start justify-center gap-2"
+                    >
+                      <span className="mt-[7px] h-1.5 w-1.5 shrink-0 rounded-full bg-black" />
+                      <span className="text-status-challenged">{warningMessage}</span>
+                    </li>
                   ))}
+                  </ul>
                 </div>
               )}
             </div>
@@ -524,21 +539,49 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
               className="mx-auto max-h-72 w-auto max-w-full object-contain sm:max-h-64"
             />
           </div>
-          <div className="mt-3 w-full max-w-xl">
-            <div className="mb-2 flex items-center gap-2 text-sm font-semibold text-black">
-              <InfoIcon className="h-4 w-4 stroke-current stroke-2 text-primaryText" />
+          <div className="border-stroke bg-primaryBackground mt-4 w-full max-w-2xl rounded-xl border px-5 py-4 shadow-sm">
+            <div className="mb-3 flex items-center justify-center gap-2 text-lg font-semibold text-primaryText">
+              <span className="border-stroke bg-whiteBackground flex h-7 w-7 items-center justify-center rounded-full border">
+                <InfoIcon className="h-4 w-4 stroke-current stroke-2 text-primaryText" />
+              </span>
               <span className="text-primaryText">Issues Found</span>
             </div>
-            <div className="flex flex-col gap-1 text-sm text-red-500">
-              {videoValidationErrors.map((errorMessage, idx) => (
-                <span key={`error-${idx}`}>{errorMessage}</span>
-              ))}
+            <div className="mx-auto w-full max-w-lg">
+              <div className="mb-2 flex justify-center">
+                  <span className="rounded-full bg-status-rejected/15 px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-status-rejected">
+                    Major Issues
+                  </span>
+              </div>
+              <ul className="flex flex-col items-center gap-2 text-center text-sm text-primaryText">
+                {videoValidationErrors.map((errorMessage, idx) => (
+                  <li
+                    key={`error-${idx}`}
+                    className="flex items-start justify-center gap-2"
+                  >
+                    <span className="mt-[7px] h-1.5 w-1.5 shrink-0 rounded-full bg-black" />
+                    <span className="text-status-rejected">{errorMessage}</span>
+                  </li>
+                ))}
+              </ul>
             </div>
             {videoQualityWarnings.length > 0 && (
-              <div className="mt-2 flex flex-col gap-1 text-sm text-amber-500">
-                {videoQualityWarnings.map((warningMessage, idx) => (
-                  <span key={`warning-${idx}`}>{warningMessage}</span>
-                ))}
+              <div className="border-stroke mt-4 border-t pt-4">
+                <div className="mb-2 flex justify-center">
+                  <span className="rounded-full bg-status-challenged/15 px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-status-challenged">
+                    Warnings
+                  </span>
+                </div>
+                <ul className="mx-auto flex w-full max-w-lg flex-col items-center gap-2 text-center text-sm text-status-challenged">
+                  {videoQualityWarnings.map((warningMessage, idx) => (
+                    <li
+                      key={`warning-${idx}`}
+                      className="flex items-start justify-center gap-2"
+                    >
+                      <span className="mt-[7px] h-1.5 w-1.5 shrink-0 rounded-full bg-black" />
+                      <span className="text-status-challenged">{warningMessage}</span>
+                    </li>
+                  ))}
+                </ul>
               </div>
             )}
           </div>
