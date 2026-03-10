@@ -6,6 +6,7 @@ import { getCurrentStake } from "data/airdrop";
 import type { ProcessedAirdropData } from "data/airdrop";
 import { Address } from "viem";
 import { extractErrorMessage } from "utils/errors";
+import { prettifyId } from "utils/identifier";
 import CheckCircleIcon from "icons/CheckCircle.svg";
 import CheckCircleMinorIcon from "icons/CheckCircleMinor.svg";
 import WarningCircle16Icon from "icons/WarningCircle16.svg";
@@ -211,7 +212,13 @@ export default function ClaimSection({ amountPerClaim, airdropChainId, eligibili
         default:
           return {
             onClick: () => {
-              router.push(`/${address}/claim`);
+              if (!address) return;
+              const opened = window.open(
+                `/${prettifyId(address)}/claim`,
+                "_blank",
+                "noopener,noreferrer",
+              );
+              if (!opened) window.location.assign(`/${prettifyId(address)}/claim`);
             },
             label: "Register",
           };
@@ -324,5 +331,4 @@ export default function ClaimSection({ amountPerClaim, airdropChainId, eligibili
     </div>
   );
 }
-
 

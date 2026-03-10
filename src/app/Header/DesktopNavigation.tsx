@@ -43,7 +43,6 @@ const DesktopNavigation = ({
       <RegisterLink
         me={me}
         address={address}
-        pathname={pathname}
         pendingRegisterIntent={pendingRegisterIntent}
         setPendingRegisterIntent={setPendingRegisterIntent}
         className={`${pathname.includes("/claim") ? "font-bold" : ""}`}

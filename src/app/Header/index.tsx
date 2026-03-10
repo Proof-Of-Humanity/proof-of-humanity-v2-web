@@ -12,8 +12,8 @@ import useWeb3Loaded from "hooks/useWeb3Loaded";
 import DesktopNavigation from "./DesktopNavigation";
 import MobileMenu from "./MobileMenu";
 import Options from "./Options";
-import RegisterLink from "./RegisterLink";
 import WalletSection from "./WalletSection";
+import RegisterLink from "./RegisterLink";
 
 interface IHeader {
   policy: string;
@@ -22,7 +22,7 @@ interface IHeader {
 export default function Header({ policy }: IHeader) {
   const [menuOpen, setMenuOpen] = useState<boolean>(false);
   const [isDarkMode, setIsDarkMode] = useState<boolean>(false);
-  const [pendingRegisterIntent, setPendingRegisterIntent] = useState<boolean>(false);
+  const [pendingRegisterIntent, setPendingRegisterIntent] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const pathname = usePathname();
   const { isConnected, address } = useAccount();
@@ -30,7 +30,7 @@ export default function Header({ policy }: IHeader) {
 
   const config = useConfig()
   const chains = config.chains
-  
+
   const chain = chains.find(chain => chain.id === chainId)
   const web3Loaded = useWeb3Loaded();
   const { data: me } = useSWR(address, getMyData);
@@ -103,9 +103,8 @@ export default function Header({ policy }: IHeader) {
         {showRewardsCta ? (
           <Link
             href="/app"
-            className={`rounded-full border border-white/50 px-3 py-1 text-sm font-semibold text-white transition hover:bg-white/15 ${
-              pathname.startsWith("/app") ? "bg-white/20" : ""
-            }`}
+            className={`rounded-full border border-white/50 px-3 py-1 text-sm font-semibold text-white transition hover:bg-white/15 ${pathname.startsWith("/app") ? "bg-white/20" : ""
+              }`}
           >
             Rewards
           </Link>
@@ -113,12 +112,10 @@ export default function Header({ policy }: IHeader) {
           <RegisterLink
             me={me}
             address={address}
-            pathname={pathname}
             pendingRegisterIntent={pendingRegisterIntent}
             setPendingRegisterIntent={setPendingRegisterIntent}
-            className={`rounded-full border border-white/50 px-3 py-1 text-sm font-semibold text-white transition hover:bg-white/15 ${
-              pathname.includes("/claim") ? "bg-white/20" : ""
-            }`}
+            className={`rounded-full border border-white/50 px-3 py-1 text-sm font-semibold text-white transition hover:bg-white/15 ${pathname.includes("/claim") ? "bg-white/20" : ""
+              }`}
           />
         ) : null}
         <button
@@ -132,7 +129,16 @@ export default function Header({ policy }: IHeader) {
       {chain && (
         <div className="lg:absolute lg:left-1/2 lg:-translate-x-1/2 lg:transform">
           <DesktopNavigation
-            {...{ address, me, policy, pathname, chain, web3Loaded, pendingRegisterIntent, setPendingRegisterIntent }}
+            {...{
+              address,
+              me,
+              policy,
+              pathname,
+              chain,
+              web3Loaded,
+              pendingRegisterIntent,
+              setPendingRegisterIntent,
+            }}
           />
         </div>
       )}
@@ -156,7 +162,7 @@ export default function Header({ policy }: IHeader) {
 
       <div className="flex flex-row items-center">
         <div className="hidden md:block">
-          {chain && <WalletSection {...{ chain, address, isConnected, web3Loaded }} />}
+          <WalletSection {...{ chain: chain!, address, isConnected, web3Loaded }} />
         </div>
         <div className="hidden md:block">
           <Options />

@@ -49,7 +49,6 @@ const MobileMenu = forwardRef(
           <RegisterLink
             me={me}
             address={address}
-            pathname={pathname}
             pendingRegisterIntent={pendingRegisterIntent}
             setPendingRegisterIntent={setPendingRegisterIntent}
             className={`text-lg ${pathname.includes("/claim") ? "font-bold" : ""}`}
@@ -60,8 +59,8 @@ const MobileMenu = forwardRef(
           >
             Policy
           </Link>
-          <Link
-            href="/app"
+          <Link 
+            href="/app" 
             className={`text-lg ${pathname.startsWith("/app") ? "font-bold" : ""}`}
           >
             Rewards
