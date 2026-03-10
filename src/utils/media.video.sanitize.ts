@@ -108,7 +108,9 @@ export const videoSanitizer = async (
           audioCodec,
         ];
 
-        ffmpegArgs.push("-preset", "fast");
+        if (videoCodec === "libx264") {
+          ffmpegArgs.push("-preset", "fast");
+        }
       } else {
         if (inputFormat === "webm") {
           ffmpegArgs = [
@@ -122,6 +124,19 @@ export const videoSanitizer = async (
             "2500k",
             "-c:a",
             "libopus",
+          ];
+        } else if (inputFormat === "avi") {
+          ffmpegArgs = [
+            "-i",
+            inputName,
+            "-map_metadata",
+            "-1",
+            "-c:v",
+            "mpeg4",
+            "-b:v",
+            "2500k",
+            "-c:a",
+            "mp3",
           ];
         } else {
           ffmpegArgs = [
