@@ -6,6 +6,7 @@ import AuthGuard from "components/AuthGuard";
 import Previewed from "components/Previewed";
 import TimeAgo from "components/TimeAgo";
 import DocumentIcon from "components/DocumentIcon";
+import { getContractInfo } from "contracts";
 import { SupportedChainId, idToChain, getForeignChain } from "config/chains";
 import { ContractData } from "data/contract";
 import InfoIcon from "icons/info.svg";
@@ -14,14 +15,14 @@ import Image from "next/image";
 import { prettifyId } from "utils/identifier";
 import { ipfs } from "utils/ipfs";
 import { formatEth } from "utils/misc";
-import { formatEther } from "viem";
-import { useAccount, useBalance, useChainId, useSwitchChain } from "wagmi";
+import { Abi, Hash, formatEther } from "viem";
+import { useAccount, useBalance, useChainId, useReadContract, useSwitchChain } from "wagmi";
 import { MediaState, SubmissionState } from "./Form";
 
 interface ReviewProps {
   arbitrationInfo: ContractData["arbitrationInfo"];
-  totalCost: bigint;
-  totalCosts: Record<SupportedChainId, bigint>;
+  contractData: Record<SupportedChainId, ContractData>;
+  totalCost: bigint | null;
   selfFunded$: ObservablePrimitiveBaseFns<number>;
   state$: ObservableObject<SubmissionState>;
   media$: ObservableObject<MediaState>;
@@ -31,8 +32,8 @@ interface ReviewProps {
 
 function Review({
   arbitrationInfo,
+  contractData,
   totalCost,
-  totalCosts,
   selfFunded$,
   state$,
   media$,
@@ -53,7 +54,20 @@ function Review({
 
   const foreignChainId = getForeignChain(chainId);
   const foreignChain = idToChain(foreignChainId)!;
-  const foreignCost = totalCosts[foreignChainId];
+  const foreignContractData = contractData[foreignChainId];
+  const foreignBaseDeposit = BigInt(foreignContractData.baseDeposit);
+  const { data: foreignArbitrationCost } = useReadContract({
+    address: foreignContractData.arbitrationInfo.arbitrator as `0x${string}`,
+    abi: getContractInfo("KlerosLiquid", foreignChainId).abi as Abi,
+    functionName: "arbitrationCost",
+    args: [foreignContractData.arbitrationInfo.extraData as Hash],
+    chainId: foreignChainId,
+  });
+  const foreignCost =
+    typeof foreignArbitrationCost === "bigint"
+      ? foreignBaseDeposit + foreignArbitrationCost
+      : null;
+  const totalCostLabel = totalCost ? formatEther(totalCost) : "Loading...";
 
   const jumperUrl = `https://jumper.exchange/?toChain=${currentChain.id}&toToken=0x0000000000000000000000000000000000000000`;
 
@@ -200,20 +214,21 @@ function Review({
                 className="no-spinner text-right"
                 step="any"
                 min={0}
-                max={formatEther(totalCost)}
+                max={totalCost ? formatEther(totalCost) : undefined}
                 value={selfFunded}
+                disabled={!totalCost}
                 onChange={(event) => selfFunded$.set(+event.target.value)}
               />
             </div>
             <span>of</span>
             <span
-              onClick={() => selfFunded$.set(formatEth(totalCost))}
+              onClick={() => totalCost && selfFunded$.set(formatEth(totalCost))}
               className="text-orange cursor-pointer font-semibold underline underline-offset-2"
             >
-              {formatEther(totalCost)}
+              {totalCostLabel}
             </span>
             <span>{nativeCurrency.symbol}</span>
-            {!isCurrentChainCheaper && (
+            {!isCurrentChainCheaper && foreignCost && (
               <>
                 <span className="hidden xl:block">•</span>
                 <span className="text-purple-600 cursor-pointer font-semibold text-sm hover:underline hover:text-purple-500 py-1 rounded transition-all inline-flex items-center"
@@ -255,6 +270,10 @@ function Review({
               height={14}
             />
             {loadingMessage}...
+          </button>
+        ) : !totalCost ? (
+          <button className="btn-main md:w-full" disabled>
+            Loading deposit...
           </button>
         ) : (
           <AuthGuard signInButtonProps={{ className: "md:w-full" }}>

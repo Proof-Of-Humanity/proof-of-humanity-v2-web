@@ -10,6 +10,7 @@ import {
 } from "@legendapp/state/react";
 import cn from "classnames";
 import { SupportedChain, SupportedChainId } from "config/chains";
+import { getContractInfo } from "contracts";
 import { Effects } from "contracts/hooks/types";
 import usePoHWrite from "contracts/hooks/usePoHWrite";
 import { ContractData } from "data/contract";
@@ -20,8 +21,8 @@ import { redirect, useParams } from "next/navigation";
 import { Fragment, MutableRefObject, useEffect, useMemo, useRef } from "react";
 import { toast } from "react-toastify";
 import { machinifyId } from "utils/identifier";
-import { Hash, parseEther } from "viem";
-import { useAccount, useChainId } from "wagmi";
+import { Abi, Hash, parseEther } from "viem";
+import { useAccount, useChainId, useReadContract } from "wagmi";
 import ActionButton from "components/ActionButton";
 import Connect from "./Connect";
 import Finalized from "./Finalized";
@@ -56,13 +57,12 @@ export interface SubmissionState {
 
 interface FormProps {
   contractData: Record<SupportedChainId, ContractData>;
-  totalCosts: Record<SupportedChainId, bigint>;
   renewal?: RegistrationQuery["registration"] & {
     chain: SupportedChain;
   };
 }
 
-export default function Form({ contractData, totalCosts, renewal }: FormProps) {
+export default function Form({ contractData, renewal }: FormProps) {
   const params = useParams();
   const { address, isConnected } = useAccount();
   const initiatingAddress: MutableRefObject<typeof address> =
@@ -70,6 +70,17 @@ export default function Form({ contractData, totalCosts, renewal }: FormProps) {
   const chainId = useChainId() as SupportedChainId;
 
   const { uploadFile: uploadToIPFS} = useAtlasProvider();
+  const currentContractData = contractData[chainId];
+  const currentBaseDeposit = BigInt(currentContractData.baseDeposit);
+  const syncedFundingChainId = useRef<SupportedChainId | null>(null);
+
+  const { data: currentArbitrationCost } = useReadContract({
+    address: currentContractData.arbitrationInfo.arbitrator as `0x${string}`,
+    abi: getContractInfo("KlerosLiquid", chainId).abi as Abi,
+    functionName: "arbitrationCost",
+    args: [currentContractData.arbitrationInfo.extraData as Hash],
+    chainId,
+  });
 
   const step$ = useObservable(Step.info);
   const step = step$.use();
@@ -81,7 +92,11 @@ export default function Form({ contractData, totalCosts, renewal }: FormProps) {
     uri: "",
   });
   const state = state$.use();
-  const selfFunded$ = useObservable(formatEth(totalCosts[chainId]));
+  const currentTotalCost =
+    typeof currentArbitrationCost === "bigint"
+      ? currentBaseDeposit + currentArbitrationCost
+      : null;
+  const selfFunded$ = useObservable(0);
   const loading = useLoading();
   const [, loadingMessage] = loading.use();
   const stepHistoryReady = useRef(false);
@@ -124,8 +139,20 @@ export default function Form({ contractData, totalCosts, renewal }: FormProps) {
   const [prepareClaimHumanity] = usePoHWrite("claimHumanity", events);
   const [prepareRenewHumanity] = usePoHWrite("renewHumanity", events);
 
+  useEffect(() => {
+    if (!currentTotalCost) return;
+    if (syncedFundingChainId.current === chainId) return;
+
+    selfFunded$.set(formatEth(currentTotalCost));
+    syncedFundingChainId.current = chainId;
+  }, [chainId, currentTotalCost, selfFunded$]);
+
   const submit = async () => {
     if (!media.photo || !media.video) return;
+    if (!currentTotalCost) {
+      toast.error("Unable to load the deposit amount. Please try again.");
+      return;
+    }
 
     state$.uri.set("");
     loading.start("Uploading media");
@@ -201,10 +228,11 @@ export default function Form({ contractData, totalCosts, renewal }: FormProps) {
 
   state$.onChange(({ value }) => {
     if (!value.uri) return;
+    if (!currentTotalCost) return;
     const selfFundedWei = BigInt(parseEther(selfFunded$.get().toString()));
     const funded =
-      selfFundedWei > totalCosts[chainId]
-        ? totalCosts[chainId]
+      selfFundedWei > currentTotalCost
+        ? currentTotalCost
         : selfFundedWei;
     loading.start("Submitting...");
     if (renewal)
@@ -355,8 +383,8 @@ export default function Form({ contractData, totalCosts, renewal }: FormProps) {
           ),
           [Step.review]: () => (
             <ReviewStep
-              totalCost={totalCosts[chainId]}
-              totalCosts={totalCosts}
+              totalCost={currentTotalCost}
+              contractData={contractData}
               state$={state$}
               arbitrationInfo={contractData[chainId].arbitrationInfo}
               media$={media$}
