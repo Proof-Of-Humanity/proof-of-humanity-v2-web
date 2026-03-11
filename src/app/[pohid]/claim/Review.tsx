@@ -118,8 +118,7 @@ function Review({
       {/* Checklist */}
       <div className="mb-6 flex flex-col items-center text-center text-sm text-secondaryText">
         <p className="max-w-2xl">
-          Before proceeding, make sure your submission follows the Registration
-          Policy.
+          Before proceeding, make sure your submission follows the Registration Policy.
         </p>
         <p className="mt-3 font-bold text-primaryText">Check these 3 things:</p>
         <ul className="mt-3 flex w-full max-w-2xl flex-col items-start gap-3 px-2 text-left sm:px-0">
@@ -128,7 +127,8 @@ function Review({
               <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
             <span className="text-primaryText">
-              Photo and video are <strong>not mirrored</strong>, or blurred.
+              Photo and video are <strong>clear, well-lit, forward-facing</strong>, and
+              not mirrored or blurred.
             </span>
           </li>
           <li className="flex items-start gap-2">
@@ -136,7 +136,8 @@ function Review({
               <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
             <span className="text-primaryText">
-              Your face is <strong>clearly visible</strong> and facing forward
+              Your facial features are <strong>fully visible</strong> — no coverings or
+              glare
             </span>
           </li>
           <li className="flex items-start gap-2">
@@ -144,8 +145,8 @@ function Review({
               <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
             <span className="text-primaryText">
-              Your video has good lighting, clear audio, and shows the{" "}
-              <strong>correct wallet address</strong>
+              Your video shows the <strong>correct wallet address</strong> clearly, and
+              you say the <strong>exact required phrase</strong>
             </span>
           </li>
         </ul>
