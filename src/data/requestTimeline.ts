@@ -296,7 +296,16 @@ const createEventTimelineItems = async (
 const createOffChainVouchTimelineItems = async (
   currentRequest: CurrentRequestWithChain,
   offChainVouches: OffChainVouch[],
+  eventTimelineItems: TimelineItem[],
 ): Promise<TimelineItem[]> => {
+  const hasEventBackedVouchMilestones = eventTimelineItems.some(
+    (item) =>
+      (item.kind === "vouchReceived" || item.kind === "vouchRemoved") &&
+      item.requestIndex === Number(currentRequest.index),
+  );
+
+  if (hasEventBackedVouchMilestones) return [];
+
   return offChainVouches.flatMap((vouch) => {
     const timestamp = Math.floor(new Date(vouch.create_at).getTime() / 1000);
     if (!Number.isFinite(timestamp) || timestamp <= 0) return [];
@@ -326,8 +335,13 @@ export const getRequestTimelineData = async (
   const [humanity, eventTimelineItems, offChainVouchTimelineItems] = await Promise.all([
     getHumanityData(pohId),
     createEventTimelineItems(pohId, currentRequest, humanityLifespan),
-    createOffChainVouchTimelineItems(currentRequest, offChainVouches),
+    Promise.resolve([] as TimelineItem[]),
   ]);
+  const resolvedOffChainVouchTimelineItems = await createOffChainVouchTimelineItems(
+    currentRequest,
+    offChainVouches,
+    eventTimelineItems,
+  );
   const requestCounts = supportedChains.reduce(
     (acc, chain) => ({
       ...acc,
@@ -339,7 +353,7 @@ export const getRequestTimelineData = async (
   );
 
   return {
-    timelineItems: [...eventTimelineItems, ...offChainVouchTimelineItems].sort(
+    timelineItems: [...eventTimelineItems, ...resolvedOffChainVouchTimelineItems].sort(
       (itemA, itemB) => itemB.timestamp - itemA.timestamp,
     ),
     requestCounts,
