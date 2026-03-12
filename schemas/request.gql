@@ -1,5 +1,6 @@
 query Request($id: ID!) {
   request(id: $id) {
+    id
     status {
       id
     }
@@ -13,6 +14,7 @@ query Request($id: ID!) {
     requester
     creationTime
     lastStatusChange
+    inTransferHash
     vouches {
       voucher {
         id
@@ -64,6 +66,7 @@ query Request($id: ID!) {
     }
     challenges(orderBy: creationTime) {
       id
+      creationTime
       reason {
         id
       }

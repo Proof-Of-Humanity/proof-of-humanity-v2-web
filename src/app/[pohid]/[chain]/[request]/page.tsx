@@ -19,17 +19,25 @@ import { getClaimerData } from "data/claimer";
 import { getContractData } from "data/contract";
 import { getArbitrationCost } from "data/costs";
 import { getOffChainVouches, getRequestData } from "data/request";
+import { getRequestTimelineData } from "data/requestTimeline";
 import { ValidVouch, isValidOnChainVouch, isValidVouch } from "data/vouch";
 import { ClaimerQuery, Vouch as VouchQuery } from "generated/graphql";
 import Image from "next/image";
 import Link from "next/link";
+import { redirect } from "next/navigation";
+import { Suspense } from "react";
 import { EvidenceFile, MetaEvidenceFile, RegistrationFile } from "types/docs";
 import { machinifyId, prettifyId } from "utils/identifier";
 import { ipfs, ipfsFetch } from "utils/ipfs";
 import type { Address } from "viem";
 import ActionBar from "./ActionBar";
 import Evidence from "./Evidence";
-import Info from "./Info";
+import {
+  RequestInfoSection,
+  RequestInfoSectionSkeleton,
+  TimelineHistorySection,
+  TimelineHistorySectionSkeleton,
+} from "./TimelineSection";
 import DocumentIcon from "components/DocumentIcon";
 import VideoThumbnail from "components/VideoThumbnail";
 import { getStatus } from "utils/status";
@@ -50,6 +58,7 @@ export default async function Request({ params }: PageProps) {
     getContractData(chain.id),
   ]);
   if (!request) return <span>Error occured</span>;
+  if (request.status.id === "transferring") redirect(`/${prettifyId(pohId)}`);
   if (
     chain.id === legacyChain.id &&
     request.status.id === "vouching" &&
@@ -254,6 +263,13 @@ export default async function Request({ params }: PageProps) {
     }
   })();
 
+  const timelineDataPromise = getRequestTimelineData(
+    pohId,
+    chain.id,
+    request,
+    contractData.humanityLifespan,
+  );
+
   //const policyUpdate = request.arbitratorHistory.updateTime;
 
   return (
@@ -369,13 +385,12 @@ export default async function Request({ params }: PageProps) {
             </div>
             <div className="mb-4 h-1 w-full border-b"></div>
             <div className="mb-2 flex flex-col-reverse items-center justify-center md:items-stretch md:justify-between md:flex-row">
-              <Info
-                label="POH ID"
-                nbRequests={
-                  +request.humanity.nbRequests +
-                  +request.humanity.nbLegacyRequests
-                }
-              />
+              <Suspense fallback={<RequestInfoSectionSkeleton />}>
+                <RequestInfoSection
+                  chainId={chain.id}
+                  timelineDataPromise={timelineDataPromise}
+                />
+              </Suspense>
             </div>
             <div className="text-orange mb-8 flex flex-wrap gap-x-[8px] gap-y-[8px] font-medium justify-center md:justify-start">
               <Link
@@ -510,6 +525,11 @@ export default async function Request({ params }: PageProps) {
                 </div>
               )}
             </div>
+            <Suspense fallback={<TimelineHistorySectionSkeleton />}>
+              <TimelineHistorySection
+                timelineDataPromise={timelineDataPromise}
+              />
+            </Suspense>
             <Label className="text-orange mb-8 text-center md:hidden">
               Last update: <TimeAgo time={request.lastStatusChange} />
             </Label>

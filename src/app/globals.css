@@ -1,4 +1,5 @@
 @tailwind base;
+
 @layer base {
   html {
     @apply text-black;
@@ -10,6 +11,7 @@
 }
 
 @tailwind components;
+
 @layer components {
   .slider-thumb::-webkit-slider-thumb {
     @apply bg-theme h-4 w-4 cursor-pointer appearance-none rounded-full;
@@ -75,7 +77,8 @@
   }
 
   .dark .box-success {
-    background-color: rgba(20, 83, 45, 0.2); /* green-900 at 20% opacity */
+    background-color: rgba(20, 83, 45, 0.2);
+    /* green-900 at 20% opacity */
     @apply border-green-800;
   }
 
@@ -87,9 +90,46 @@
     background-color: rgba(20, 83, 45, 0.2);
     @apply text-green-400;
   }
+
+  .timeline-dot-shell {
+    @apply flex h-4 w-4 items-center justify-center rounded-full border-2 shadow-sm;
+    opacity: 0;
+    transform: scale(0.7);
+  }
+
+  .timeline-dot-core {
+    @apply h-1.5 w-1.5 rounded-full;
+  }
+
+  .timeline-connector-track {
+    @apply relative h-10 w-px overflow-hidden;
+  }
+
+  .timeline-connector-fill {
+    @apply absolute inset-x-0 top-0 h-full origin-top;
+    transform: scaleY(0);
+  }
+
+  .timeline-milestone {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  .timeline-visible .timeline-dot-shell {
+    animation: timeline-dot-pop 0.45s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+
+  .timeline-visible .timeline-connector-fill {
+    animation: timeline-line-grow 0.55s ease-out forwards;
+  }
+
+  .timeline-visible .timeline-milestone {
+    animation: timeline-item-reveal 0.45s ease-out forwards;
+  }
 }
 
 @tailwind utilities;
+
 @layer utilities {
   .header-background {
     @apply gradient;
@@ -438,16 +478,14 @@
   }
 
   .gradient {
-    background: linear-gradient(
-      150deg,
-      #ff9966 33%,
-      #ff9571,
-      #ff917c,
-      #ff8e87,
-      #ff8d93,
-      #ff8c9e,
-      #ff8ca9 95%
-    );
+    background: linear-gradient(150deg,
+        #ff9966 33%,
+        #ff9571,
+        #ff917c,
+        #ff8e87,
+        #ff8d93,
+        #ff8c9e,
+        #ff8ca9 95%);
   }
 
   .scrollbar::-webkit-scrollbar {
@@ -472,5 +510,46 @@
 
   .dark .scrollbar::-webkit-scrollbar-thumb {
     @apply rounded-full bg-slate-500;
+  }
+}
+
+@keyframes timeline-dot-pop {
+  0% {
+    opacity: 0;
+    transform: scale(0.35);
+  }
+
+  70% {
+    opacity: 1;
+    transform: scale(1.08);
+  }
+
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes timeline-line-grow {
+  0% {
+    transform: scaleY(0);
+    opacity: 0.35;
+  }
+
+  100% {
+    transform: scaleY(1);
+    opacity: 1;
+  }
+}
+
+@keyframes timeline-item-reveal {
+  0% {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
