@@ -322,6 +322,7 @@ export enum Challenge_OrderBy {
   RequestCreationTime = 'request__creationTime',
   RequestExpirationTime = 'request__expirationTime',
   RequestId = 'request__id',
+  RequestInTransferHash = 'request__inTransferHash',
   RequestIndex = 'request__index',
   RequestLastStatusChange = 'request__lastStatusChange',
   RequestNbChallenges = 'request__nbChallenges',
@@ -607,6 +608,7 @@ export enum Claimer_OrderBy {
   CurrentRequestCreationTime = 'currentRequest__creationTime',
   CurrentRequestExpirationTime = 'currentRequest__expirationTime',
   CurrentRequestId = 'currentRequest__id',
+  CurrentRequestInTransferHash = 'currentRequest__inTransferHash',
   CurrentRequestIndex = 'currentRequest__index',
   CurrentRequestLastStatusChange = 'currentRequest__lastStatusChange',
   CurrentRequestNbChallenges = 'currentRequest__nbChallenges',
@@ -976,6 +978,7 @@ export enum EvidenceGroup_OrderBy {
   RequestCreationTime = 'request__creationTime',
   RequestExpirationTime = 'request__expirationTime',
   RequestId = 'request__id',
+  RequestInTransferHash = 'request__inTransferHash',
   RequestIndex = 'request__index',
   RequestLastStatusChange = 'request__lastStatusChange',
   RequestNbChallenges = 'request__nbChallenges',
@@ -1185,6 +1188,108 @@ export type HumanityRequestsArgs = {
   skip?: InputMaybe<Scalars['Int']>;
   where?: InputMaybe<Request_Filter>;
 };
+
+export type HumanityEvent = {
+  __typename?: 'HumanityEvent';
+  appealRound?: Maybe<Scalars['BigInt']>;
+  humanityId: Scalars['Bytes'];
+  id: Scalars['ID'];
+  requestIndex?: Maybe<Scalars['BigInt']>;
+  revocation?: Maybe<Scalars['Boolean']>;
+  timestamp: Scalars['BigInt'];
+  transferHash?: Maybe<Scalars['Bytes']>;
+  type: HumanityEventType;
+};
+
+export enum HumanityEventType {
+  RequestAppealCreated = 'REQUEST_APPEAL_CREATED',
+  RequestChallenged = 'REQUEST_CHALLENGED',
+  RequestCreated = 'REQUEST_CREATED',
+  RequestEnteredReview = 'REQUEST_ENTERED_REVIEW',
+  RequestResolvedAccepted = 'REQUEST_RESOLVED_ACCEPTED',
+  RequestResolvedRejected = 'REQUEST_RESOLVED_REJECTED',
+  RequestWithdrawn = 'REQUEST_WITHDRAWN',
+  TransferInitiated = 'TRANSFER_INITIATED',
+  TransferReceived = 'TRANSFER_RECEIVED'
+}
+
+export type HumanityEvent_Filter = {
+  /** Filter for the block changed event. */
+  _change_block?: InputMaybe<BlockChangedFilter>;
+  and?: InputMaybe<Array<InputMaybe<HumanityEvent_Filter>>>;
+  appealRound?: InputMaybe<Scalars['BigInt']>;
+  appealRound_gt?: InputMaybe<Scalars['BigInt']>;
+  appealRound_gte?: InputMaybe<Scalars['BigInt']>;
+  appealRound_in?: InputMaybe<Array<Scalars['BigInt']>>;
+  appealRound_lt?: InputMaybe<Scalars['BigInt']>;
+  appealRound_lte?: InputMaybe<Scalars['BigInt']>;
+  appealRound_not?: InputMaybe<Scalars['BigInt']>;
+  appealRound_not_in?: InputMaybe<Array<Scalars['BigInt']>>;
+  humanityId?: InputMaybe<Scalars['Bytes']>;
+  humanityId_contains?: InputMaybe<Scalars['Bytes']>;
+  humanityId_gt?: InputMaybe<Scalars['Bytes']>;
+  humanityId_gte?: InputMaybe<Scalars['Bytes']>;
+  humanityId_in?: InputMaybe<Array<Scalars['Bytes']>>;
+  humanityId_lt?: InputMaybe<Scalars['Bytes']>;
+  humanityId_lte?: InputMaybe<Scalars['Bytes']>;
+  humanityId_not?: InputMaybe<Scalars['Bytes']>;
+  humanityId_not_contains?: InputMaybe<Scalars['Bytes']>;
+  humanityId_not_in?: InputMaybe<Array<Scalars['Bytes']>>;
+  id?: InputMaybe<Scalars['ID']>;
+  id_gt?: InputMaybe<Scalars['ID']>;
+  id_gte?: InputMaybe<Scalars['ID']>;
+  id_in?: InputMaybe<Array<Scalars['ID']>>;
+  id_lt?: InputMaybe<Scalars['ID']>;
+  id_lte?: InputMaybe<Scalars['ID']>;
+  id_not?: InputMaybe<Scalars['ID']>;
+  id_not_in?: InputMaybe<Array<Scalars['ID']>>;
+  or?: InputMaybe<Array<InputMaybe<HumanityEvent_Filter>>>;
+  requestIndex?: InputMaybe<Scalars['BigInt']>;
+  requestIndex_gt?: InputMaybe<Scalars['BigInt']>;
+  requestIndex_gte?: InputMaybe<Scalars['BigInt']>;
+  requestIndex_in?: InputMaybe<Array<Scalars['BigInt']>>;
+  requestIndex_lt?: InputMaybe<Scalars['BigInt']>;
+  requestIndex_lte?: InputMaybe<Scalars['BigInt']>;
+  requestIndex_not?: InputMaybe<Scalars['BigInt']>;
+  requestIndex_not_in?: InputMaybe<Array<Scalars['BigInt']>>;
+  revocation?: InputMaybe<Scalars['Boolean']>;
+  revocation_in?: InputMaybe<Array<Scalars['Boolean']>>;
+  revocation_not?: InputMaybe<Scalars['Boolean']>;
+  revocation_not_in?: InputMaybe<Array<Scalars['Boolean']>>;
+  timestamp?: InputMaybe<Scalars['BigInt']>;
+  timestamp_gt?: InputMaybe<Scalars['BigInt']>;
+  timestamp_gte?: InputMaybe<Scalars['BigInt']>;
+  timestamp_in?: InputMaybe<Array<Scalars['BigInt']>>;
+  timestamp_lt?: InputMaybe<Scalars['BigInt']>;
+  timestamp_lte?: InputMaybe<Scalars['BigInt']>;
+  timestamp_not?: InputMaybe<Scalars['BigInt']>;
+  timestamp_not_in?: InputMaybe<Array<Scalars['BigInt']>>;
+  transferHash?: InputMaybe<Scalars['Bytes']>;
+  transferHash_contains?: InputMaybe<Scalars['Bytes']>;
+  transferHash_gt?: InputMaybe<Scalars['Bytes']>;
+  transferHash_gte?: InputMaybe<Scalars['Bytes']>;
+  transferHash_in?: InputMaybe<Array<Scalars['Bytes']>>;
+  transferHash_lt?: InputMaybe<Scalars['Bytes']>;
+  transferHash_lte?: InputMaybe<Scalars['Bytes']>;
+  transferHash_not?: InputMaybe<Scalars['Bytes']>;
+  transferHash_not_contains?: InputMaybe<Scalars['Bytes']>;
+  transferHash_not_in?: InputMaybe<Array<Scalars['Bytes']>>;
+  type?: InputMaybe<HumanityEventType>;
+  type_in?: InputMaybe<Array<HumanityEventType>>;
+  type_not?: InputMaybe<HumanityEventType>;
+  type_not_in?: InputMaybe<Array<HumanityEventType>>;
+};
+
+export enum HumanityEvent_OrderBy {
+  AppealRound = 'appealRound',
+  HumanityId = 'humanityId',
+  Id = 'id',
+  RequestIndex = 'requestIndex',
+  Revocation = 'revocation',
+  Timestamp = 'timestamp',
+  TransferHash = 'transferHash',
+  Type = 'type'
+}
 
 export type Humanity_Filter = {
   /** Filter for the block changed event. */
@@ -1631,6 +1736,8 @@ export type Query = {
   funds: Array<Fund>;
   humanities: Array<Humanity>;
   humanity?: Maybe<Humanity>;
+  humanityEvent?: Maybe<HumanityEvent>;
+  humanityEvents: Array<HumanityEvent>;
   inTransfer?: Maybe<InTransfer>;
   inTransfers: Array<InTransfer>;
   inUpdate?: Maybe<InUpdate>;
@@ -1917,6 +2024,24 @@ export type QueryHumanityArgs = {
   block?: InputMaybe<Block_Height>;
   id: Scalars['ID'];
   subgraphError?: _SubgraphErrorPolicy_;
+};
+
+
+export type QueryHumanityEventArgs = {
+  block?: InputMaybe<Block_Height>;
+  id: Scalars['ID'];
+  subgraphError?: _SubgraphErrorPolicy_;
+};
+
+
+export type QueryHumanityEventsArgs = {
+  block?: InputMaybe<Block_Height>;
+  first?: InputMaybe<Scalars['Int']>;
+  orderBy?: InputMaybe<HumanityEvent_OrderBy>;
+  orderDirection?: InputMaybe<OrderDirection>;
+  skip?: InputMaybe<Scalars['Int']>;
+  subgraphError?: _SubgraphErrorPolicy_;
+  where?: InputMaybe<HumanityEvent_Filter>;
 };
 
 
@@ -2333,6 +2458,7 @@ export type Request = {
   expirationTime?: Maybe<Scalars['BigInt']>;
   humanity: Humanity;
   id: Scalars['Bytes'];
+  inTransferHash?: Maybe<Scalars['Bytes']>;
   index: Scalars['BigInt'];
   lastStatusChange: Scalars['BigInt'];
   nbChallenges: Scalars['BigInt'];
@@ -2493,6 +2619,16 @@ export type Request_Filter = {
   id_not?: InputMaybe<Scalars['Bytes']>;
   id_not_contains?: InputMaybe<Scalars['Bytes']>;
   id_not_in?: InputMaybe<Array<Scalars['Bytes']>>;
+  inTransferHash?: InputMaybe<Scalars['Bytes']>;
+  inTransferHash_contains?: InputMaybe<Scalars['Bytes']>;
+  inTransferHash_gt?: InputMaybe<Scalars['Bytes']>;
+  inTransferHash_gte?: InputMaybe<Scalars['Bytes']>;
+  inTransferHash_in?: InputMaybe<Array<Scalars['Bytes']>>;
+  inTransferHash_lt?: InputMaybe<Scalars['Bytes']>;
+  inTransferHash_lte?: InputMaybe<Scalars['Bytes']>;
+  inTransferHash_not?: InputMaybe<Scalars['Bytes']>;
+  inTransferHash_not_contains?: InputMaybe<Scalars['Bytes']>;
+  inTransferHash_not_in?: InputMaybe<Array<Scalars['Bytes']>>;
   index?: InputMaybe<Scalars['BigInt']>;
   index_gt?: InputMaybe<Scalars['BigInt']>;
   index_gte?: InputMaybe<Scalars['BigInt']>;
@@ -2657,6 +2793,7 @@ export enum Request_OrderBy {
   HumanityPendingRevocation = 'humanity__pendingRevocation',
   HumanityVouching = 'humanity__vouching',
   Id = 'id',
+  InTransferHash = 'inTransferHash',
   Index = 'index',
   LastStatusChange = 'lastStatusChange',
   NbChallenges = 'nbChallenges',
@@ -3100,6 +3237,7 @@ export enum VouchInProcess_OrderBy {
   RequestCreationTime = 'request__creationTime',
   RequestExpirationTime = 'request__expirationTime',
   RequestId = 'request__id',
+  RequestInTransferHash = 'request__inTransferHash',
   RequestIndex = 'request__index',
   RequestLastStatusChange = 'request__lastStatusChange',
   RequestNbChallenges = 'request__nbChallenges',
@@ -3312,6 +3450,13 @@ export type HumanityQueryVariables = Exact<{
 
 export type HumanityQuery = { __typename?: 'Query', humanity?: { __typename?: 'Humanity', nbRequests: any, nbLegacyRequests: any, registration?: { __typename?: 'Registration', expirationTime: any, claimer: { __typename?: 'Claimer', id: any, name?: string | null } } | null, requests: Array<{ __typename?: 'Request', id: any, creationTime: any, lastStatusChange: any, index: any, revocation: boolean, expirationTime?: any | null, registrationEvidenceRevokedReq: string, requester: any, status: { __typename?: 'Status', id: string }, claimer: { __typename?: 'Claimer', id: any, name?: string | null }, winnerParty?: { __typename?: 'Party', id: string } | null, evidenceGroup: { __typename?: 'EvidenceGroup', evidence: Array<{ __typename?: 'Evidence', id: any, uri: string, creationTime: any, submitter: any }> } }>, winnerClaim: Array<{ __typename?: 'Request', index: any, resolutionTime: any, evidenceGroup: { __typename?: 'EvidenceGroup', evidence: Array<{ __typename?: 'Evidence', uri: string }> } }> } | null, crossChainRegistration?: { __typename?: 'CrossChainRegistration', expirationTime: any, lastReceivedTransferTimestamp: any, claimer: { __typename?: 'Claimer', id: any } } | null, outTransfer?: { __typename?: 'OutTransfer', foreignProxy: any, transferHash: any, transferTimestamp: any } | null };
 
+export type HumanityEventsQueryVariables = Exact<{
+  humanityId: Scalars['Bytes'];
+}>;
+
+
+export type HumanityEventsQuery = { __typename?: 'Query', humanityEvents: Array<{ __typename?: 'HumanityEvent', id: string, timestamp: any, type: HumanityEventType, requestIndex?: any | null, transferHash?: any | null, disputeId?: any | null, appealRound?: any | null, revocation?: boolean | null }> };
+
 export type MeQueryVariables = Exact<{
   id: Scalars['ID'];
 }>;
@@ -3331,7 +3476,14 @@ export type RequestQueryVariables = Exact<{
 }>;
 
 
-export type RequestQuery = { __typename?: 'Query', request?: { __typename?: 'Request', index: any, expirationTime?: any | null, revocation: boolean, registrationEvidenceRevokedReq: string, requester: any, creationTime: any, lastStatusChange: any, status: { __typename?: 'Status', id: string }, winnerParty?: { __typename?: 'Party', id: string } | null, vouches: Array<{ __typename?: 'VouchInProcess', voucher: { __typename?: 'Humanity', id: any } }>, humanity: { __typename?: 'Humanity', id: any, nbRequests: any, nbLegacyRequests: any, registration?: { __typename?: 'Registration', expirationTime: any, claimer: { __typename?: 'Claimer', id: any } } | null, winnerClaim: Array<{ __typename?: 'Request', index: any, resolutionTime: any, evidenceGroup: { __typename?: 'EvidenceGroup', evidence: Array<{ __typename?: 'Evidence', uri: string }> } }> }, claimer: { __typename?: 'Claimer', id: any, name?: string | null, vouchesReceived: Array<{ __typename?: 'Vouch', from: { __typename?: 'Claimer', id: any, registration?: { __typename?: 'Registration', expirationTime: any, humanity: { __typename?: 'Humanity', vouching: boolean } } | null }, humanity: { __typename?: 'Humanity', id: any } }>, vouches: Array<{ __typename?: 'Vouch', for: { __typename?: 'Claimer', id: any, name?: string | null } }> }, evidenceGroup: { __typename?: 'EvidenceGroup', evidence: Array<{ __typename?: 'Evidence', id: any, uri: string, creationTime: any, submitter: any }> }, challenges: Array<{ __typename?: 'Challenge', id: any, disputeId: any, nbRounds: any, reason: { __typename?: 'Reason', id: string }, challenger?: { __typename?: 'Challenger', id: any } | null, rounds: Array<{ __typename?: 'Round', creationTime: any, index: any, requesterFund: { __typename?: 'RequesterFund', amount: any }, challengerFund?: { __typename?: 'ChallengerFund', amount: any } | null }> }>, arbitratorHistory: { __typename?: 'ArbitratorHistory', updateTime: any, registrationMeta: string, id: string, arbitrator: any, extraData: any } } | null };
+export type RequestQuery = { __typename?: 'Query', request?: { __typename?: 'Request', id: any, index: any, expirationTime?: any | null, revocation: boolean, registrationEvidenceRevokedReq: string, requester: any, creationTime: any, lastStatusChange: any, inTransferHash?: any | null, status: { __typename?: 'Status', id: string }, winnerParty?: { __typename?: 'Party', id: string } | null, vouches: Array<{ __typename?: 'VouchInProcess', voucher: { __typename?: 'Humanity', id: any } }>, humanity: { __typename?: 'Humanity', id: any, nbRequests: any, nbLegacyRequests: any, registration?: { __typename?: 'Registration', expirationTime: any, claimer: { __typename?: 'Claimer', id: any } } | null, winnerClaim: Array<{ __typename?: 'Request', index: any, resolutionTime: any, evidenceGroup: { __typename?: 'EvidenceGroup', evidence: Array<{ __typename?: 'Evidence', uri: string }> } }> }, claimer: { __typename?: 'Claimer', id: any, name?: string | null, vouchesReceived: Array<{ __typename?: 'Vouch', from: { __typename?: 'Claimer', id: any, registration?: { __typename?: 'Registration', expirationTime: any, humanity: { __typename?: 'Humanity', vouching: boolean } } | null }, humanity: { __typename?: 'Humanity', id: any } }>, vouches: Array<{ __typename?: 'Vouch', for: { __typename?: 'Claimer', id: any, name?: string | null } }> }, evidenceGroup: { __typename?: 'EvidenceGroup', evidence: Array<{ __typename?: 'Evidence', id: any, uri: string, creationTime: any, submitter: any }> }, challenges: Array<{ __typename?: 'Challenge', id: any, creationTime: any, disputeId: any, nbRounds: any, reason: { __typename?: 'Reason', id: string }, challenger?: { __typename?: 'Challenger', id: any } | null, rounds: Array<{ __typename?: 'Round', creationTime: any, index: any, requesterFund: { __typename?: 'RequesterFund', amount: any }, challengerFund?: { __typename?: 'ChallengerFund', amount: any } | null }> }>, arbitratorHistory: { __typename?: 'ArbitratorHistory', updateTime: any, registrationMeta: string, id: string, arbitrator: any, extraData: any } } | null };
+
+export type RequestTimelineNodeQueryVariables = Exact<{
+  id: Scalars['ID'];
+}>;
+
+
+export type RequestTimelineNodeQuery = { __typename?: 'Query', request?: { __typename?: 'Request', index: any, inTransferHash?: any | null } | null };
 
 export type RequestsQueryVariables = Exact<{
   skip?: InputMaybe<Scalars['Int']>;
@@ -3588,6 +3740,24 @@ export const HumanityDocument = gql`
   }
 }
     ${WinnerClaimFragmentDoc}`;
+export const HumanityEventsDocument = gql`
+    query HumanityEvents($humanityId: Bytes!) {
+  humanityEvents(
+    where: {humanityId: $humanityId}
+    orderBy: timestamp
+    orderDirection: asc
+  ) {
+    id
+    timestamp
+    type
+    requestIndex
+    transferHash
+    disputeId
+    appealRound
+    revocation
+  }
+}
+    `;
 export const MeDocument = gql`
     query Me($id: ID!) {
   claimer(id: $id) {
@@ -3620,6 +3790,7 @@ export const RegistrationDocument = gql`
 export const RequestDocument = gql`
     query Request($id: ID!) {
   request(id: $id) {
+    id
     status {
       id
     }
@@ -3633,6 +3804,7 @@ export const RequestDocument = gql`
     requester
     creationTime
     lastStatusChange
+    inTransferHash
     vouches {
       voucher {
         id
@@ -3684,6 +3856,7 @@ export const RequestDocument = gql`
     }
     challenges(orderBy: creationTime) {
       id
+      creationTime
       reason {
         id
       }
@@ -3713,6 +3886,14 @@ export const RequestDocument = gql`
   }
 }
     ${WinnerClaimFragmentDoc}`;
+export const RequestTimelineNodeDocument = gql`
+    query RequestTimelineNode($id: ID!) {
+  request(id: $id) {
+    index
+    inTransferHash
+  }
+}
+    `;
 export const RequestsDocument = gql`
     query Requests($skip: Int, $first: Int, $where: Request_filter) {
   requests(
@@ -3829,6 +4010,9 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     Humanity(variables: HumanityQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<HumanityQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<HumanityQuery>({ document: HumanityDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'Humanity', 'query', variables);
     },
+    HumanityEvents(variables: HumanityEventsQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<HumanityEventsQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<HumanityEventsQuery>({ document: HumanityEventsDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'HumanityEvents', 'query', variables);
+    },
     Me(variables: MeQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<MeQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<MeQuery>({ document: MeDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'Me', 'query', variables);
     },
@@ -3837,6 +4021,9 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     },
     Request(variables: RequestQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<RequestQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<RequestQuery>({ document: RequestDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'Request', 'query', variables);
+    },
+    RequestTimelineNode(variables: RequestTimelineNodeQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<RequestTimelineNodeQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<RequestTimelineNodeQuery>({ document: RequestTimelineNodeDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'RequestTimelineNode', 'query', variables);
     },
     Requests(variables?: RequestsQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<RequestsQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<RequestsQuery>({ document: RequestsDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'Requests', 'query', variables);

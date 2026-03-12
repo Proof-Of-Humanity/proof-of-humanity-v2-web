@@ -126,13 +126,12 @@ export default function Timeline({ items }: TimelineProps) {
             <div className="flex w-full items-start gap-4">
               <div className="flex w-6 shrink-0 flex-col items-center">
                 <div
-                  className={`timeline-dot-shell bg-whiteBackground ${
-                    item.kind === "transferred" ||
+                  className={`timeline-dot-shell bg-whiteBackground ${item.kind === "transferred" ||
                     item.kind === "verified" ||
                     item.kind === "rejected"
-                      ? "border-transparent -mt-0.5"
-                      : styles.dot
-                  }`}
+                    ? "h-5 w-5 border-transparent -mt-0.5"
+                    : styles.dot
+                    }`}
                   style={{ animationDelay: itemDelay }}
                 >
                   {item.kind === "transferred" ? (
