@@ -73,15 +73,17 @@ export default async function Request({ params }: PageProps) {
   const requestStatus = getStatus(request, contractData);
 
   let onChainVouches: Array<Address> = [];
-
-  const offChainVouches: OffChainVouch[] = [];
+  const timelineOffChainVouches: OffChainVouch[] = await getOffChainVouches(
+    chain.id,
+    request.claimer.id,
+    pohId,
+  );
+  const offChainVouches: OffChainVouch[] =
+    request.status.id === "vouching" ? [...timelineOffChainVouches] : [];
 
   if (request.status.id === "vouching") {
     onChainVouches = request.claimer.vouchesReceived.map(
       (v) => v.from.id as Address,
-    );
-    offChainVouches.push(
-      ...(await getOffChainVouches(chain.id, request.claimer.id, pohId)),
     );
 
     // If offChain voucher has been registered before, it will appear at subgraph,
@@ -262,7 +264,7 @@ export default async function Request({ params }: PageProps) {
     pohId,
     chain.id,
     request,
-    offChainVouches,
+    timelineOffChainVouches,
     contractData.humanityLifespan,
   );
 

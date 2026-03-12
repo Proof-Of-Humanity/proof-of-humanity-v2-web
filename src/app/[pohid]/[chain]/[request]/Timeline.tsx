@@ -7,6 +7,7 @@ import CheckCircleOutlineIcon from "icons/CheckCircleOutline16.svg";
 import CrossCircleIcon from "icons/CrossCircle16.svg";
 import NewTabIcon from "icons/NewTab.svg";
 import TimelineTransferIcon from "icons/TimelineTransfer.svg";
+import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 
 interface TimelineProps {
@@ -31,6 +32,11 @@ const TIMELINE_STYLES: Record<
     dot: "border-amber-400",
     text: "text-primaryText",
     accent: "bg-amber-400",
+  },
+  vouchRemoved: {
+    dot: "border-rose-400",
+    text: "text-primaryText",
+    accent: "bg-rose-400",
   },
   appeal: {
     dot: "border-fuchsia-400",
@@ -123,9 +129,9 @@ export default function Timeline({ items }: TimelineProps) {
         {items.map((item, index) => {
           const styles = TIMELINE_STYLES[item.kind];
           const isLast = index === items.length - 1;
+          const isClickable = !!item.externalHref || !!item.href;
           const lineDelay = `${index * ITEM_STEP_MS}ms`;
           const itemDelay = `${index * ITEM_STEP_MS + ITEM_REVEAL_OFFSET_MS}ms`;
-          const isClickable = Boolean(item.externalHref);
 
           const content = (
             <div className="flex w-full items-start gap-4">
@@ -143,7 +149,7 @@ export default function Timeline({ items }: TimelineProps) {
                     <TimelineTransferIcon />
                   ) : item.kind === "verified" ? (
                     <CheckCircleOutlineIcon />
-                  ) : item.kind === "rejected" ? (
+                  ) : item.kind === "rejected" || item.kind === "vouchRemoved" ? (
                     <CrossCircleIcon />
                   ) : (
                     <div className={`timeline-dot-core ${styles.accent}`} />
@@ -199,6 +205,10 @@ export default function Timeline({ items }: TimelineProps) {
                 >
                   {content}
                 </a>
+              ) : item.href ? (
+                <Link href={item.href} className="group/timeline-link block hover:opacity-90">
+                  {content}
+                </Link>
               ) : (
                 content
               )}

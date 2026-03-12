@@ -16,6 +16,7 @@ export interface HumanityEventRecord {
   type: HumanityEventType;
   requestIndex?: number | null;
   transferHash?: Hash | null;
+  voucher?: Hash | null;
   disputeId?: number | null;
   appealRound?: number | null;
   revocation?: boolean | null;
@@ -40,6 +41,7 @@ const toHumanityEventRecord = (
   type: event.type,
   requestIndex: toOptionalNumber(event.requestIndex),
   transferHash: event.transferHash,
+  voucher: event.voucher,
   disputeId: toOptionalNumber(event.disputeId),
   appealRound: toOptionalNumber(event.appealRound),
   revocation: event.revocation,

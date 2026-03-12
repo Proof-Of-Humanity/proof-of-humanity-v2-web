@@ -12,6 +12,7 @@ import { getHumanityData } from "data/humanity";
 import { OffChainVouch } from "data/request";
 import { RequestQuery } from "generated/graphql";
 import { Hash } from "viem";
+import { prettifyId } from "utils/identifier";
 import { getStatus } from "utils/status";
 
 type CurrentRequest = NonNullable<RequestQuery["request"]>;
@@ -29,6 +30,7 @@ const isTransferArtifactRequest = (request: {
 type TimelineItemKind =
   | "submitted"
   | "inReview"
+  | "vouchRemoved"
   | "challenged"
   | "appeal"
   | "verified"
@@ -46,6 +48,7 @@ export interface TimelineItem {
   title: string;
   timestamp: number;
   chainId?: SupportedChainId;
+  href?: string;
   externalHref?: string;
   requestIndex?: number;
 }
@@ -59,6 +62,11 @@ interface LineageRequestNode {
   index: number;
   inTransferHash?: Hash | null;
 }
+
+const truncatePohId = (id: Hash) => {
+  const formattedId = prettifyId(id);
+  return `0x${formattedId.slice(0, 2)}...${formattedId.slice(-4)}`;
+};
 
 const createEventTimelineItems = async (
   pohId: Hash,
@@ -176,6 +184,20 @@ const createEventTimelineItems = async (
           kind: "inReview",
           title: "In review",
         })];
+      case "REQUEST_VOUCH_ADDED":
+        if (!isRelevantRequestEvent || !event.voucher) return [];
+        return [toTimelineItem({
+          kind: "vouchReceived",
+          title: `Received vouch from ${truncatePohId(event.voucher)}`,
+          href: `/${prettifyId(event.voucher)}`,
+        })];
+      case "REQUEST_VOUCH_REMOVED":
+        if (!isRelevantRequestEvent || !event.voucher) return [];
+        return [toTimelineItem({
+          kind: "vouchRemoved",
+          title: `Removed vouch from ${truncatePohId(event.voucher)}`,
+          href: `/${prettifyId(event.voucher)}`,
+        })];
       case "REQUEST_CHALLENGED":
         if (!isRelevantRequestEvent) return [];
         return [toTimelineItem({
@@ -275,18 +297,16 @@ const createOffChainVouchTimelineItems = async (
   currentRequest: CurrentRequestWithChain,
   offChainVouches: OffChainVouch[],
 ): Promise<TimelineItem[]> => {
-  if (currentRequest.status.id !== "vouching") return [];
-  console.log({ offChainVouches });
   return offChainVouches.flatMap((vouch) => {
-    const timestamp = Math.floor(new Date(vouch.createdAt).getTime() / 1000);
+    const timestamp = Math.floor(new Date(vouch.create_at).getTime() / 1000);
     if (!Number.isFinite(timestamp) || timestamp <= 0) return [];
-    console.log({ timestamp });
     return [{
       id: `offchain-vouch:${currentRequest.chainId}:${currentRequest.index}:${vouch.signature}`,
       kind: "vouchReceived" as const,
-      title: "Received vouch",
+      title: `Received vouch from ${truncatePohId(vouch.voucher as Hash)}`,
       timestamp,
       chainId: currentRequest.chainId,
+      href: `/${prettifyId(vouch.voucher as Hash)}`,
       requestIndex: Number(currentRequest.index),
     }];
   });
@@ -308,8 +328,6 @@ export const getRequestTimelineData = async (
     createEventTimelineItems(pohId, currentRequest, humanityLifespan),
     createOffChainVouchTimelineItems(currentRequest, offChainVouches),
   ]);
-
-  console.log({ offChainVouchTimelineItems });
   const requestCounts = supportedChains.reduce(
     (acc, chain) => ({
       ...acc,

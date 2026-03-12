@@ -20,6 +20,14 @@ export type Scalars = {
   Timestamp: any;
 };
 
+/** Indicates whether the current, partially filled bucket should be included in the response. Defaults to `exclude` */
+export enum Aggregation_Current {
+  /** Exclude the current, partially filled bucket from the response */
+  Exclude = 'exclude',
+  /** Include the current, partially filled bucket in the response */
+  Include = 'include'
+}
+
 export enum Aggregation_Interval {
   Day = 'day',
   Hour = 'hour'
@@ -1192,6 +1200,7 @@ export type HumanityRequestsArgs = {
 export type HumanityEvent = {
   __typename?: 'HumanityEvent';
   appealRound?: Maybe<Scalars['BigInt']>;
+  disputeId?: Maybe<Scalars['BigInt']>;
   humanityId: Scalars['Bytes'];
   id: Scalars['ID'];
   requestIndex?: Maybe<Scalars['BigInt']>;
@@ -1199,6 +1208,7 @@ export type HumanityEvent = {
   timestamp: Scalars['BigInt'];
   transferHash?: Maybe<Scalars['Bytes']>;
   type: HumanityEventType;
+  voucher?: Maybe<Scalars['Bytes']>;
 };
 
 export enum HumanityEventType {
@@ -1208,6 +1218,8 @@ export enum HumanityEventType {
   RequestEnteredReview = 'REQUEST_ENTERED_REVIEW',
   RequestResolvedAccepted = 'REQUEST_RESOLVED_ACCEPTED',
   RequestResolvedRejected = 'REQUEST_RESOLVED_REJECTED',
+  RequestVouchAdded = 'REQUEST_VOUCH_ADDED',
+  RequestVouchRemoved = 'REQUEST_VOUCH_REMOVED',
   RequestWithdrawn = 'REQUEST_WITHDRAWN',
   TransferInitiated = 'TRANSFER_INITIATED',
   TransferReceived = 'TRANSFER_RECEIVED'
@@ -1225,6 +1237,14 @@ export type HumanityEvent_Filter = {
   appealRound_lte?: InputMaybe<Scalars['BigInt']>;
   appealRound_not?: InputMaybe<Scalars['BigInt']>;
   appealRound_not_in?: InputMaybe<Array<Scalars['BigInt']>>;
+  disputeId?: InputMaybe<Scalars['BigInt']>;
+  disputeId_gt?: InputMaybe<Scalars['BigInt']>;
+  disputeId_gte?: InputMaybe<Scalars['BigInt']>;
+  disputeId_in?: InputMaybe<Array<Scalars['BigInt']>>;
+  disputeId_lt?: InputMaybe<Scalars['BigInt']>;
+  disputeId_lte?: InputMaybe<Scalars['BigInt']>;
+  disputeId_not?: InputMaybe<Scalars['BigInt']>;
+  disputeId_not_in?: InputMaybe<Array<Scalars['BigInt']>>;
   humanityId?: InputMaybe<Scalars['Bytes']>;
   humanityId_contains?: InputMaybe<Scalars['Bytes']>;
   humanityId_gt?: InputMaybe<Scalars['Bytes']>;
@@ -1278,17 +1298,29 @@ export type HumanityEvent_Filter = {
   type_in?: InputMaybe<Array<HumanityEventType>>;
   type_not?: InputMaybe<HumanityEventType>;
   type_not_in?: InputMaybe<Array<HumanityEventType>>;
+  voucher?: InputMaybe<Scalars['Bytes']>;
+  voucher_contains?: InputMaybe<Scalars['Bytes']>;
+  voucher_gt?: InputMaybe<Scalars['Bytes']>;
+  voucher_gte?: InputMaybe<Scalars['Bytes']>;
+  voucher_in?: InputMaybe<Array<Scalars['Bytes']>>;
+  voucher_lt?: InputMaybe<Scalars['Bytes']>;
+  voucher_lte?: InputMaybe<Scalars['Bytes']>;
+  voucher_not?: InputMaybe<Scalars['Bytes']>;
+  voucher_not_contains?: InputMaybe<Scalars['Bytes']>;
+  voucher_not_in?: InputMaybe<Array<Scalars['Bytes']>>;
 };
 
 export enum HumanityEvent_OrderBy {
   AppealRound = 'appealRound',
+  DisputeId = 'disputeId',
   HumanityId = 'humanityId',
   Id = 'id',
   RequestIndex = 'requestIndex',
   Revocation = 'revocation',
   Timestamp = 'timestamp',
   TransferHash = 'transferHash',
-  Type = 'type'
+  Type = 'type',
+  Voucher = 'voucher'
 }
 
 export type Humanity_Filter = {
@@ -2547,10 +2579,8 @@ export type Request_Filter = {
   claimer_starts_with_nocase?: InputMaybe<Scalars['String']>;
   contributors?: InputMaybe<Array<Scalars['Bytes']>>;
   contributors_contains?: InputMaybe<Array<Scalars['Bytes']>>;
-  contributors_contains_nocase?: InputMaybe<Array<Scalars['Bytes']>>;
   contributors_not?: InputMaybe<Array<Scalars['Bytes']>>;
   contributors_not_contains?: InputMaybe<Array<Scalars['Bytes']>>;
-  contributors_not_contains_nocase?: InputMaybe<Array<Scalars['Bytes']>>;
   creationTime?: InputMaybe<Scalars['BigInt']>;
   creationTime_gt?: InputMaybe<Scalars['BigInt']>;
   creationTime_gte?: InputMaybe<Scalars['BigInt']>;
@@ -3455,7 +3485,7 @@ export type HumanityEventsQueryVariables = Exact<{
 }>;
 
 
-export type HumanityEventsQuery = { __typename?: 'Query', humanityEvents: Array<{ __typename?: 'HumanityEvent', id: string, timestamp: any, type: HumanityEventType, requestIndex?: any | null, transferHash?: any | null, disputeId?: any | null, appealRound?: any | null, revocation?: boolean | null }> };
+export type HumanityEventsQuery = { __typename?: 'Query', humanityEvents: Array<{ __typename?: 'HumanityEvent', id: string, timestamp: any, type: HumanityEventType, requestIndex?: any | null, transferHash?: any | null, voucher?: any | null, disputeId?: any | null, appealRound?: any | null, revocation?: boolean | null }> };
 
 export type MeQueryVariables = Exact<{
   id: Scalars['ID'];
@@ -3752,6 +3782,7 @@ export const HumanityEventsDocument = gql`
     type
     requestIndex
     transferHash
+    voucher
     disputeId
     appealRound
     revocation

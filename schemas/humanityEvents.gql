@@ -9,6 +9,7 @@ query HumanityEvents($humanityId: Bytes!) {
     type
     requestIndex
     transferHash
+    voucher
     disputeId
     appealRound
     revocation

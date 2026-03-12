@@ -1,4 +1,3 @@
-import axios from "axios";
 import {
   SupportedChainId,
   getForeignChain,
@@ -145,7 +144,7 @@ export interface OffChainVouch {
   voucher: Address;
   expiration: number;
   signature: Hash;
-  createdAt: string;
+  create_at: string;
 }
 
 export const getRequestData = cache(
@@ -168,24 +167,18 @@ export const getOffChainVouches = async (
   pohId: Hash,
 ) => {
   if (!idToChain(chainId)) {
-    console.warn("[request/getOffChainVouches] Skipping unsupported chain", {
-      chainId,
-      claimer,
-      pohId,
-    });
     return [];
   }
 
-  try {
-    //Prod endpoint not work need to debug it, using testnet endpoint for now, they both point to same DB in the backend
-    return (
-      await axios.get(
-        `https://testnets--proof-of-humanity-v2.netlify.app/api/vouch/${chainId}/for-request/${claimer}/${pohId}`,
-      )
-    ).data as OffChainVouch[];
-  } catch (err: any) {
-    console.log(err);
+  const baseUrl = process.env.DEPLOYED_APP ?? "http://localhost:3000";
+  const response = await fetch(
+    `${baseUrl}/api/vouch/${chainId}/for-request/${claimer}/${pohId}`,
+    { cache: "no-store" },
+  );
 
-    return [];
+  if (!response.ok) {
+    throw new Error(`Failed to fetch off-chain vouches: ${response.status}`);
   }
+
+  return (await response.json()) as OffChainVouch[];
 };
