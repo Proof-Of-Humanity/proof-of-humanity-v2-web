@@ -141,6 +141,13 @@ export const genRequestId = (pohId: Hash, index: number) => {
   );
 };
 
+export interface OffChainVouch {
+  voucher: Address;
+  expiration: number;
+  signature: Hash;
+  createdAt: string;
+}
+
 export const getRequestData = cache(
   async (chainId: SupportedChainId, pohId: Hash, index: number) => {
     const out = (
@@ -175,7 +182,7 @@ export const getOffChainVouches = async (
       await axios.get(
         `https://testnets--proof-of-humanity-v2.netlify.app/api/vouch/${chainId}/for-request/${claimer}/${pohId}`,
       )
-    ).data as { voucher: Address; expiration: number; signature: Hash }[];
+    ).data as OffChainVouch[];
   } catch (err: any) {
     console.log(err);
 

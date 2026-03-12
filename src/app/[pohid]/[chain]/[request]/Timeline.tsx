@@ -72,6 +72,11 @@ const TIMELINE_STYLES: Record<
     text: "text-primaryText",
     accent: "bg-teal-500",
   },
+  vouchReceived: {
+    dot: "border-violet-400",
+    text: "text-primaryText",
+    accent: "bg-violet-400",
+  },
 };
 
 const formatter = new Intl.DateTimeFormat("en-US", {

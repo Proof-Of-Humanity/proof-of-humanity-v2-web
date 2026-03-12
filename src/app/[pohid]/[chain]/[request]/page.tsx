@@ -1,4 +1,3 @@
-import type { Hash } from "viem";
 import Arrow from "components/Arrow";
 import Attachment from "components/Attachment";
 import ChainLogo from "components/ChainLogo";
@@ -18,7 +17,7 @@ import {
 import { getClaimerData } from "data/claimer";
 import { getContractData } from "data/contract";
 import { getArbitrationCost } from "data/costs";
-import { getOffChainVouches, getRequestData } from "data/request";
+import { OffChainVouch, getOffChainVouches, getRequestData } from "data/request";
 import { getRequestTimelineData } from "data/requestTimeline";
 import { ValidVouch, isValidOnChainVouch, isValidVouch } from "data/vouch";
 import { ClaimerQuery, Vouch as VouchQuery } from "generated/graphql";
@@ -75,11 +74,7 @@ export default async function Request({ params }: PageProps) {
 
   let onChainVouches: Array<Address> = [];
 
-  const offChainVouches: {
-    voucher: Address;
-    expiration: number;
-    signature: Hash;
-  }[] = [];
+  const offChainVouches: OffChainVouch[] = [];
 
   if (request.status.id === "vouching") {
     onChainVouches = request.claimer.vouchesReceived.map(
@@ -267,6 +262,7 @@ export default async function Request({ params }: PageProps) {
     pohId,
     chain.id,
     request,
+    offChainVouches,
     contractData.humanityLifespan,
   );
 

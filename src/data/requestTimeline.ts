@@ -9,6 +9,7 @@ import {
   getTimelineRequestNode,
 } from "data/humanityEvents";
 import { getHumanityData } from "data/humanity";
+import { OffChainVouch } from "data/request";
 import { RequestQuery } from "generated/graphql";
 import { Hash } from "viem";
 import { getStatus } from "utils/status";
@@ -36,7 +37,8 @@ type TimelineItemKind =
   | "expired"
   | "withdrawn"
   | "transferred"
-  | "received";
+  | "received"
+  | "vouchReceived";
 
 export interface TimelineItem {
   id: string;
@@ -268,21 +270,46 @@ const createEventTimelineItems = async (
 
   return timelineItems.sort((itemA, itemB) => itemB.timestamp - itemA.timestamp);
 };
+
+const createOffChainVouchTimelineItems = async (
+  currentRequest: CurrentRequestWithChain,
+  offChainVouches: OffChainVouch[],
+): Promise<TimelineItem[]> => {
+  if (currentRequest.status.id !== "vouching") return [];
+  console.log({ offChainVouches });
+  return offChainVouches.flatMap((vouch) => {
+    const timestamp = Math.floor(new Date(vouch.createdAt).getTime() / 1000);
+    if (!Number.isFinite(timestamp) || timestamp <= 0) return [];
+    console.log({ timestamp });
+    return [{
+      id: `offchain-vouch:${currentRequest.chainId}:${currentRequest.index}:${vouch.signature}`,
+      kind: "vouchReceived" as const,
+      title: "Received vouch",
+      timestamp,
+      chainId: currentRequest.chainId,
+      requestIndex: Number(currentRequest.index),
+    }];
+  });
+};
+
 export const getRequestTimelineData = async (
   pohId: Hash,
   chainId: SupportedChainId,
   request: CurrentRequest,
+  offChainVouches: OffChainVouch[],
   humanityLifespan?: string,
 ) => {
   const currentRequest: CurrentRequestWithChain = {
     ...request,
     chainId,
   };
-  const [humanity, timelineItems] = await Promise.all([
+  const [humanity, eventTimelineItems, offChainVouchTimelineItems] = await Promise.all([
     getHumanityData(pohId),
     createEventTimelineItems(pohId, currentRequest, humanityLifespan),
+    createOffChainVouchTimelineItems(currentRequest, offChainVouches),
   ]);
 
+  console.log({ offChainVouchTimelineItems });
   const requestCounts = supportedChains.reduce(
     (acc, chain) => ({
       ...acc,
@@ -294,7 +321,9 @@ export const getRequestTimelineData = async (
   );
 
   return {
-    timelineItems,
+    timelineItems: [...eventTimelineItems, ...offChainVouchTimelineItems].sort(
+      (itemA, itemB) => itemB.timestamp - itemA.timestamp,
+    ),
     requestCounts,
   };
 };
