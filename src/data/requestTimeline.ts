@@ -142,146 +142,100 @@ const createEventTimelineItems = async (
       requestRef !== null
         ? `${requestRef.chainId}:${requestRef.index}`
         : null;
+    const isRelevantRequestEvent =
+      !!requestKey && relevantRequestKeys.has(requestKey);
     const challengeHref =
       event.disputeId && event.disputeId > 0
         ? `https://klerosboard.com/${event.chainId}/cases/${event.disputeId}`
         : undefined;
+    const toTimelineItem = (
+      item: Omit<TimelineItem, "id" | "timestamp" | "chainId" | "requestIndex">,
+    ): TimelineItem => ({
+      id: event.id,
+      timestamp: event.timestamp,
+      chainId: event.chainId,
+      requestIndex: requestRef?.index,
+      ...item,
+    });
 
     switch (event.type) {
       case "REQUEST_CREATED":
-        if (!requestKey || !relevantRequestKeys.has(requestKey)) return [];
-        return [{
-          id: event.id,
-          kind: "submitted" as const,
+        if (!isRelevantRequestEvent) return [];
+        return [toTimelineItem({
+          kind: "submitted",
           title:
             event.revocation
               ? "Removal requested"
               : "Profile submitted",
-          timestamp: event.timestamp,
-          chainId: event.chainId,
-          requestIndex: requestRef?.index,
-        }];
+        })];
       case "REQUEST_ENTERED_REVIEW":
-        if (!requestKey || !relevantRequestKeys.has(requestKey)) return [];
-        return [{
-          id: event.id,
-          kind: "inReview" as const,
+        if (!isRelevantRequestEvent) return [];
+        return [toTimelineItem({
+          kind: "inReview",
           title: "In review",
-          timestamp: event.timestamp,
-          chainId: event.chainId,
-          requestIndex: requestRef?.index,
-        }];
+        })];
       case "REQUEST_CHALLENGED":
-        if (!requestKey || !relevantRequestKeys.has(requestKey)) return [];
-        return [{
-          id: event.id,
-          kind: "challenged" as const,
+        if (!isRelevantRequestEvent) return [];
+        return [toTimelineItem({
+          kind: "challenged",
           title: "Challenged",
-          timestamp: event.timestamp,
-          chainId: event.chainId,
           externalHref: challengeHref,
-          requestIndex: requestRef?.index,
-        }];
+        })];
       case "REQUEST_APPEAL_CREATED":
-        if (!requestKey || !relevantRequestKeys.has(requestKey)) return [];
-        return [{
-          id: event.id,
-          kind: "appeal" as const,
+        if (!isRelevantRequestEvent) return [];
+        return [toTimelineItem({
+          kind: "appeal",
           title: `Appeal round ${event.appealRound ?? ""}`.trim(),
-          timestamp: event.timestamp,
-          chainId: event.chainId,
           externalHref: challengeHref,
-          requestIndex: requestRef?.index,
-        }];
+        })];
       case "REQUEST_RESOLVED_ACCEPTED":
-        if (!requestKey || !relevantRequestKeys.has(requestKey)) return [];
-        return [{
-          id: event.id,
+        if (!isRelevantRequestEvent) return [];
+        return [toTimelineItem({
           kind: event.revocation ? "removed" : "verified",
           title: event.revocation ? "Removed" : "Verified human",
-          timestamp: event.timestamp,
-          chainId: event.chainId,
-          requestIndex: requestRef?.index,
-        }];
+        })];
       case "REQUEST_RESOLVED_REJECTED":
-        if (!requestKey || !relevantRequestKeys.has(requestKey)) return [];
-        return [{
-          id: event.id,
-          kind: "rejected" as const,
+        if (!isRelevantRequestEvent) return [];
+        return [toTimelineItem({
+          kind: "rejected",
           title: "Rejected",
-          timestamp: event.timestamp,
-          chainId: event.chainId,
-          requestIndex: requestRef?.index,
-        }];
+        })];
       case "REQUEST_WITHDRAWN":
-        if (!requestKey || !relevantRequestKeys.has(requestKey)) return [];
-        return [{
-          id: event.id,
-          kind: "withdrawn" as const,
+        if (!isRelevantRequestEvent) return [];
+        return [toTimelineItem({
+          kind: "withdrawn",
           title: "Withdrawn",
-          timestamp: event.timestamp,
-          chainId: event.chainId,
-          requestIndex: requestRef?.index,
-        }];
+        })];
       case "TRANSFER_INITIATED":
-        if (
-          !event.transferHash ||
-          !requestKey ||
-          !relevantRequestKeys.has(requestKey)
-        ) {
+        if (!event.transferHash) {
           return [];
         }
+        if (!isRelevantRequestEvent) return [];
         const receiveEvent = transferReceiveByHash[event.transferHash.toLowerCase()];
         const destinationChainId =
           receiveEvent?.chainId ??
           supportedChains.find((chain) => chain.id !== event.chainId)?.id;
-        return [{
-          id: event.id,
-          kind: "transferred" as const,
+        return [toTimelineItem({
+          kind: "transferred",
           title: `${receiveEvent ? "Transferred" : "Transferring"
             } profile from ${idToChain(event.chainId)?.name} to ${idToChain(destinationChainId || event.chainId)?.name}`,
-          timestamp: event.timestamp,
-          chainId: event.chainId,
-          requestIndex: requestRef?.index,
-        }];
+        })];
       case "TRANSFER_RECEIVED":
         if (
           !event.transferHash ||
-          (!requestRef ||
-            !requestKey ||
-            !relevantRequestKeys.has(requestKey)) &&
           !initiatedTransferHashes.has(event.transferHash.toLowerCase())
         ) {
           return [];
         }
-        return [{
-          id: event.id,
-          kind: "received" as const,
+        return [toTimelineItem({
+          kind: "received",
           title: `Received on ${idToChain(event.chainId)?.name}`,
-          timestamp: event.timestamp,
-          chainId: event.chainId,
-          requestIndex: requestRef?.index,
-        }];
+        })];
       default:
         return [];
     }
   });
 
-  const dedupedTimelineItems = Array.from(
-    timelineItems.reduce((acc, item) => {
-      const dedupeKey =
-        item.chainId !== undefined &&
-          item.requestIndex !== undefined &&
-          (item.kind === "verified" || item.kind === "removed")
-          ? `${item.kind}:${item.chainId}:${item.requestIndex}`
-          : item.id;
-      const existing = acc.get(dedupeKey);
-      if (!existing || item.timestamp > existing.timestamp) {
-        acc.set(dedupeKey, item);
-      }
-      return acc;
-    }, new Map<string, TimelineItem>()).values(),
-  );
   const currentRequestIndex = Number(currentRequest.index);
   const currentRequestStatus = getStatus(
     {
@@ -300,9 +254,9 @@ const createEventTimelineItems = async (
     currentRequestStatus === "EXPIRED" &&
     Number.isFinite(expiredTimestamp) &&
     expiredTimestamp > 0 &&
-    !dedupedTimelineItems.some((item) => item.kind === "expired")
+    !timelineItems.some((item) => item.kind === "expired")
   ) {
-    dedupedTimelineItems.push({
+    timelineItems.push({
       id: `${currentRequest.id}-expired`,
       kind: "expired",
       title: "Expired",
@@ -312,7 +266,7 @@ const createEventTimelineItems = async (
     });
   }
 
-  return dedupedTimelineItems.sort((itemA, itemB) => itemB.timestamp - itemA.timestamp);
+  return timelineItems.sort((itemA, itemB) => itemB.timestamp - itemA.timestamp);
 };
 export const getRequestTimelineData = async (
   pohId: Hash,
