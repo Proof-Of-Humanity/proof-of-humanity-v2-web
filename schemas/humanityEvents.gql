@@ -1,0 +1,17 @@
+query HumanityEvents($humanityId: Bytes!) {
+  humanityEvents(
+    where: { humanityId: $humanityId }
+    orderBy: timestamp
+    orderDirection: asc
+  ) {
+    id
+    timestamp
+    type
+    requestIndex
+    transferHash
+    voucher
+    disputeId
+    appealRound
+    revocation
+  }
+}

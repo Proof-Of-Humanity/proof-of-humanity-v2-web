@@ -28,6 +28,9 @@ interface PhotoProps {
   videoError: (error: string) => void;
 }
 
+const SAMPLE_VIDEO_URL =
+  "/api/media/sample-registration-video";
+
 function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
   const WARNING_TOAST_BASE_MS = 5000;
   const WARNING_TOAST_PER_MESSAGE_MS = 1500;
@@ -368,6 +371,34 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
         </span>
       </span>
 
+      {isSourceSelection && (
+        <div className="mx-auto mb-8 w-full max-w-3xl rounded-2xl border border-orange bg-whiteBackground p-4 shadow-sm sm:p-5">
+          <div className="flex flex-col items-center gap-3 text-center sm:flex-row sm:items-center sm:text-left">
+            <div className="bg-lightOrange flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-orange">
+              <CameraIcon className="h-5 w-5 fill-orange" />
+            </div>
+            <div>
+              <h3 className="text-primaryText text-lg font-semibold">
+                Example Submission
+              </h3>
+              <p className="text-secondaryText text-sm">
+                Watch this example to see how a correct submission looks.
+              </p>
+            </div>
+          </div>
+
+          <div className="mt-4 overflow-hidden rounded-2xl border border-stroke bg-black shadow-sm">
+            <video
+              className="aspect-video w-full bg-black object-cover"
+              src={SAMPLE_VIDEO_URL}
+              controls
+              playsInline
+              preload="metadata"
+            />
+          </div>
+        </div>
+      )}
+
       {/* ── S1: Source Selection ── */}
       {isSourceSelection && (
         <>
@@ -504,15 +535,15 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
                     </span>
                   </div>
                   <ul className="flex flex-col items-center gap-2 text-center text-sm text-[#D98A1F]">
-                  {videoQualityWarnings.map((warningMessage, idx) => (
-                    <li
-                      key={`accepted-warning-${idx}`}
-                      className="flex items-start justify-center gap-2"
-                    >
-                      <span className="mt-[7px] h-1.5 w-1.5 shrink-0 rounded-full bg-black" />
-                      <span className="text-[#D98A1F]">{warningMessage}</span>
-                    </li>
-                  ))}
+                    {videoQualityWarnings.map((warningMessage, idx) => (
+                      <li
+                        key={`accepted-warning-${idx}`}
+                        className="flex items-start justify-center gap-2"
+                      >
+                        <span className="mt-[7px] h-1.5 w-1.5 shrink-0 rounded-full bg-black" />
+                        <span className="text-[#D98A1F]">{warningMessage}</span>
+                      </li>
+                    ))}
                   </ul>
                 </div>
               )}
@@ -548,9 +579,9 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
             </div>
             <div className="mx-auto w-full max-w-lg">
               <div className="mb-2 flex justify-center">
-                  <span className="rounded-full bg-status-rejected/15 px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-status-rejected">
-                    Major Issues
-                  </span>
+                <span className="rounded-full bg-status-rejected/15 px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-status-rejected">
+                  Major Issues
+                </span>
               </div>
               <ul className="flex flex-col items-center gap-2 text-center text-sm text-primaryText">
                 {videoValidationErrors.map((errorMessage, idx) => (

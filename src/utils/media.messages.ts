@@ -36,7 +36,7 @@ export const MEDIA_MESSAGES = {
   videoFrameGapWarning:
     "Video playback may appear stuttery. Please review to ensure your face and wallet address remain clearly visible before submitting.",
   videoBlurWarning:
-    "Video appears blurry. Please keep your camera steady and ensure your face and wallet text are in focus.",
+    "Video appears blurry. Use better lighting, disable background blur, and keep your camera steady so your face and wallet text are clearly visible.",
   videoLowLightWarning:
     "Video appears too dark. Please improve lighting so your face and wallet text are clearly visible.",
   videoFreezeWarning:

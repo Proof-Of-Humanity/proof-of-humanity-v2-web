@@ -19,10 +19,7 @@ interface PageProps {
 }
 
 export default async function Claim({ params: { pohid } }: PageProps) {
-  console.log("[claim/page] Request started", { pohid });
-
   if (!machinifyId(pohid)) {
-    console.warn("[claim/page] Invalid PoH ID", { pohid });
     return (
       <div className="m-auto flex flex-col text-center">
         <span className="font-semibold">Invalid Proof of Humanity ID:</span>
@@ -34,13 +31,7 @@ export default async function Claim({ params: { pohid } }: PageProps) {
   const [contractData, registrationData] = await Promise.all([
     getContractDataAllChains(),
     getRegistrationData(pohid as Hash),
-  ]).catch((error) => {
-    console.error("[claim/page] Failed to load server data", {
-      pohid,
-      error,
-    });
-    throw error;
-  });
+  ]);
 
   const registrationChain = supportedChains.find(
     (chain) => registrationData[chain.id],
@@ -51,36 +42,11 @@ export default async function Claim({ params: { pohid } }: PageProps) {
       Date.now() / 1000 <
       +contractData[registrationChain.id].renewalPeriodDuration;
 
-  console.log("[claim/page] Registration state resolved", {
-    pohid,
-    registrationChainId: registrationChain?.id ?? null,
-    activeRegistrationChainIds: supportedChains
-      .filter((chain) => Boolean(registrationData[chain.id]))
-      .map((chain) => chain.id),
-    isRenewal: Boolean(isRenewal),
-  });
-
   if (registrationChain && !isRenewal) {
-    console.log("[claim/page] Redirecting to profile", {
-      pohid,
-      registrationChainId: registrationChain.id,
-    });
     redirect(`/${pohid}`, RedirectType.replace);
   }
 
-  const totalCosts = await getTotalCosts(contractData).catch((error) => {
-    console.error("[claim/page] Failed to calculate total costs", {
-      pohid,
-      error,
-    });
-    throw error;
-  });
-
-  console.log("[claim/page] Rendering claim form", {
-    pohid,
-    renewalChainId: registrationChain?.id ?? null,
-    totalCostChainIds: Object.keys(totalCosts),
-  });
+  const totalCosts = await getTotalCosts(contractData);
 
   return (
     <div className="content paper flex flex-col px-4 py-4 sm:px-8 sm:py-6 lg:px-10 lg:py-6">
