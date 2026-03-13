@@ -171,14 +171,19 @@ export const getOffChainVouches = async (
   }
 
   const baseUrl = process.env.DEPLOYED_APP ?? "http://localhost:3000";
-  const response = await fetch(
-    `${baseUrl}/api/vouch/${chainId}/for-request/${claimer}/${pohId}`,
-    { cache: "no-store" },
-  );
+  try {
+    const response = await fetch(
+      `${baseUrl}/api/vouch/${chainId}/for-request/${claimer}/${pohId}`,
+      { cache: "no-store" },
+    );
 
-  if (!response.ok) {
-    throw new Error(`Failed to fetch off-chain vouches: ${response.status}`);
+    if (!response.ok) {
+      return [];
+    }
+
+    const payload = await response.json();
+    return Array.isArray(payload) ? (payload as OffChainVouch[]) : [];
+  } catch {
+    return [];
   }
-
-  return (await response.json()) as OffChainVouch[];
 };
