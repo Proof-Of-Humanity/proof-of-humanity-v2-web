@@ -170,9 +170,8 @@ export const getOffChainVouches = async (
     return [];
   }
 
-  const baseUrl = process.env.DEPLOYED_APP ?? "http://localhost:3000";
   const response = await fetch(
-    `${baseUrl}/api/vouch/${chainId}/for-request/${claimer}/${pohId}`,
+    `https://testnets--proof-of-humanity-v2.netlify.app/api/vouch/${chainId}/for-request/${claimer}/${pohId}`,
     { cache: "no-store" },
   );
 

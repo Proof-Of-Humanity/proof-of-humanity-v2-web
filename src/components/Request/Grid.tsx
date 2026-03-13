@@ -157,8 +157,17 @@ function RequestsGrid() {
   );
 
   const requests = useSelector(() =>
-    normalize(chainStacks$.get())
-      .filter((request) => !isTransferArtifactRequest(request))
+    normalize(
+      supportedChains.reduce(
+        (acc, chain) => ({
+          ...acc,
+          [chain.id]: chainStacks$
+            .get()[chain.id]
+            .filter((request) => !isTransferArtifactRequest(request)),
+        }),
+        {} as Record<SupportedChainId, RequestsQuery["requests"]>,
+      ),
+    )
       .slice(0, REQUESTS_BATCH_SIZE * filter.cursor),
   );
 

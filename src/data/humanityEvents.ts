@@ -60,15 +60,11 @@ const getHumanityEventsForChain = async (
   chainId: SupportedChainId,
   humanityId: Hash,
 ) => {
-  try {
-    const response = await sdk[chainId].HumanityEvents({ humanityId });
+  const response = await sdk[chainId].HumanityEvents({ humanityId });
 
-    return response.humanityEvents.map((event) =>
-      toHumanityEventRecord(chainId, event),
-    );
-  } catch {
-    return [] as HumanityEventRecord[];
-  }
+  return response.humanityEvents.map((event) =>
+    toHumanityEventRecord(chainId, event),
+  );
 };
 
 export const getHumanityEvents = cache(async (humanityId: Hash) => {
@@ -86,15 +82,11 @@ export const getTimelineRequestNode = cache(async (
   humanityId: Hash,
   index: number,
 ) => {
-  try {
-    const response = await sdk[chainId].RequestTimelineNode({
-      id: genRequestId(humanityId, index),
-    });
+  const response = await sdk[chainId].RequestTimelineNode({
+    id: genRequestId(humanityId, index),
+  });
 
-    if (!response.request) return null;
+  if (!response.request) return null;
 
-    return toTimelineRequestNode(chainId, response.request);
-  } catch {
-    return null;
-  }
+  return toTimelineRequestNode(chainId, response.request);
 });

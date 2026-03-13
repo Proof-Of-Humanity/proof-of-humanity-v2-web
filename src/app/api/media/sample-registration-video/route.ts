@@ -17,9 +17,19 @@ const buildHeaders = (response: Response) => {
 
 export async function HEAD(request: NextRequest) {
   const range = request.headers.get("range");
-  const response = await fetch(SAMPLE_VIDEO_URL, {
-    headers: range ? { Range: range } : undefined,
-  });
+  let response: Response;
+  try {
+    response = await fetch(SAMPLE_VIDEO_URL, {
+      headers: range ? { Range: range } : undefined,
+      signal: request.signal,
+    });
+  } catch (error) {
+    if (error instanceof Error && error.name === "AbortError") {
+      return new Response(null, { status: 499 });
+    }
+
+    return new Response("Upstream fetch failed", { status: 502 });
+  }
 
   if (!response.ok && response.status !== 206) {
     return new Response(null, { status: response.status });
@@ -33,9 +43,19 @@ export async function HEAD(request: NextRequest) {
 
 export async function GET(request: NextRequest) {
   const range = request.headers.get("range");
-  const response = await fetch(SAMPLE_VIDEO_URL, {
-    headers: range ? { Range: range } : undefined,
-  });
+  let response: Response;
+  try {
+    response = await fetch(SAMPLE_VIDEO_URL, {
+      headers: range ? { Range: range } : undefined,
+      signal: request.signal,
+    });
+  } catch (error) {
+    if (error instanceof Error && error.name === "AbortError") {
+      return new Response("Request aborted", { status: 499 });
+    }
+
+    return new Response("Upstream fetch failed", { status: 502 });
+  }
 
   if (!response.ok && response.status !== 206) {
     return new Response("Failed to load sample video", { status: response.status });
