@@ -30,6 +30,7 @@ interface PhotoProps {
 
 const SAMPLE_VIDEO_URL =
   "/api/media/sample-registration-video";
+const isSampleSubmissionEnabled = false;
 
 function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
   const WARNING_TOAST_BASE_MS = 5000;
@@ -371,7 +372,7 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
         </span>
       </span>
 
-      {isSourceSelection && (
+      {isSourceSelection && isSampleSubmissionEnabled && (
         <div className="mx-auto mb-8 w-full max-w-3xl rounded-2xl border border-orange bg-whiteBackground p-4 shadow-sm sm:p-5">
           <div className="flex flex-col items-center gap-3 text-center sm:flex-row sm:items-center sm:text-left">
             <div className="bg-lightOrange flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-orange">
