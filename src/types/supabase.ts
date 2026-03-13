@@ -13,6 +13,7 @@ export interface Database {
         Row: {
           chainId: number;
           claimer: string;
+          create_at: string;
           expiration: number;
           pohId: string;
           signature: string;
@@ -21,6 +22,7 @@ export interface Database {
         Insert: {
           chainId: number;
           claimer: string;
+          create_at?: string;
           expiration: number;
           pohId: string;
           signature: string;
@@ -29,6 +31,7 @@ export interface Database {
         Update: {
           chainId?: number;
           claimer?: string;
+          create_at?: string;
           expiration?: number;
           pohId?: string;
           signature?: string;

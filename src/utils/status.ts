@@ -162,7 +162,7 @@ export const getRequestStatusFilter = (status: RequestStatus): Request_Filter =>
  * List of all status filter options for UI dropdowns.
  */
 export const STATUS_FILTER_OPTIONS = Object.values(RequestStatus).filter(
-  status => ![RequestStatus.TRANSFERRING].includes(status)
+  status => ![RequestStatus.TRANSFERRING, RequestStatus.TRANSFERRED].includes(status)
 );
 
 const isRejectedRequest = (request: RawRequestData): boolean => {

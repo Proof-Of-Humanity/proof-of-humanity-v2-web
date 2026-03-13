@@ -27,8 +27,8 @@ import DropdownItem from "components/Dropdown/Item";
 import Dropdown from "components/Dropdown/Menu";
 import { RequestsQuery } from "generated/graphql";
 import { useLoading } from "hooks/useLoading";
-import { 
-  getStatus, 
+import {
+  getStatus,
   RequestStatus,
   getRequestStatusFilter,
   STATUS_FILTER_OPTIONS,
@@ -47,6 +47,16 @@ const REQUESTS_BATCH_SIZE = 12;
 var humanityLifespanAllChains: Record<SupportedChainId, string>;
 
 export type RequestsQueryItem = ArrayElement<RequestsQuery["requests"]>;
+
+const isTransferArtifactRequest = (request: {
+  index: number | string;
+  status?: {
+    id: string;
+  } | null;
+}) =>
+  request.status?.id === "transferred" ||
+  request.status?.id === "transferring" ||
+  Number(request.index) <= -100;
 
 interface RequestInterface extends RequestsQueryItem {
   chainId: SupportedChainId;
@@ -96,7 +106,7 @@ const normalize = (
             },
             { humanityLifespan: humanityLifespanAllChains[Number(chainId) as SupportedChainId] }
           );
-          
+
           return {
             ...request,
             old: Number(chainId) === legacyChain.id,
@@ -147,7 +157,18 @@ function RequestsGrid() {
   );
 
   const requests = useSelector(() =>
-    normalize(chainStacks$.get()).slice(0, REQUESTS_BATCH_SIZE * filter.cursor),
+    normalize(
+      supportedChains.reduce(
+        (acc, chain) => ({
+          ...acc,
+          [chain.id]: chainStacks$
+            .get()[chain.id]
+            .filter((request) => !isTransferArtifactRequest(request)),
+        }),
+        {} as Record<SupportedChainId, RequestsQuery["requests"]>,
+      ),
+    )
+      .slice(0, REQUESTS_BATCH_SIZE * filter.cursor),
   );
 
   const loading = useLoading(true, "init");
@@ -206,7 +227,7 @@ function RequestsGrid() {
           if (
             !loadContinued ||
             displayedForChain + REQUESTS_BATCH_SIZE >=
-              chainStacks[chain.id].length
+            chainStacks[chain.id].length
           ) {
             const where: any = {
               ...getRequestStatusFilter(status),
@@ -275,7 +296,7 @@ function RequestsGrid() {
                   className={cn(
                     "dot mr-2",
                     status === RequestStatus.ALL ?
-                     "bg-white" : `bg-status-${getStatusColor(status)}`
+                      "bg-white" : `bg-status-${getStatusColor(status)}`
                   )}
                 />
               }

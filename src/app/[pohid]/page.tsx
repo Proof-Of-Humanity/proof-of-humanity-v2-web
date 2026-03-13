@@ -8,7 +8,6 @@ import {
   getForeignChain,
   idToChain,
   supportedChains,
-  legacyChain,
 } from "config/chains";
 import { getContractDataAllChains } from "data/contract";
 import { getArbitrationCost } from "data/costs";
@@ -42,6 +41,16 @@ type WinnerClaimData = {
   exists: boolean;
   requestStatus: RequestStatus;
 };
+
+const isTransferArtifactRequest = (request: {
+  index: number | string;
+  status?: {
+    id: string;
+  } | null;
+}) =>
+  request.status?.id === "transferred" ||
+  request.status?.id === "transferring" ||
+  Number(request.index) <= -100;
 
 interface PageProps {
   params: { pohid: string };
@@ -130,8 +139,7 @@ async function Profile({ params: { pohid } }: PageProps) {
             return (
               req.status.id !== "withdrawn" &&
               req.status.id !== "resolved" &&
-              req.status.id !== "transferred" &&
-              req.status.id !== "transferring" &&
+              !isTransferArtifactRequest(req) &&
               !(
                 req.index === winnerClaimData.request?.index &&
                 chain.id === winnerClaimData.chainId
@@ -162,6 +170,7 @@ async function Profile({ params: { pohid } }: PageProps) {
           ...(humanity[chain.id]?.humanity?.requests
           ? humanity[chain.id]!.humanity!.requests.filter(
               (req) =>
+                !isTransferArtifactRequest(req) &&
                 !pendingRequests.some(
                   (pending) =>
                     req.id === pending.id && pending.chainId === chain.id,

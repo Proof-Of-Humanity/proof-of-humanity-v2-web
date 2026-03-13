@@ -17,6 +17,7 @@ export interface VDBRequestsResult {
 }
 
 export interface VDBVouch {
+  create_at: string;
   voucher: string;
   expiration: number;
   signature: string;

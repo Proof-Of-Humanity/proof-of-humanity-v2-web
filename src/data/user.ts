@@ -2,11 +2,22 @@ import { supportedChains, legacyChain } from "config/chains";
 import { sdk } from "config/subgraph";
 import { MeQuery } from "generated/graphql";
 
+const isTransferStatus = (statusId?: string | null) =>
+  statusId === "transferred" || statusId === "transferring";
+
 // This fixes an error in the legacy subgraph were registration has not
 // been removed as expected. Once solved the issue at subgraph level this
 // function should be removed
 const sanitize = (res: MeQuery[]) => {
   res.map((claimer) => {
+    if (
+      claimer.claimer?.currentRequest &&
+      isTransferStatus(claimer.claimer.currentRequest.status.id)
+    ) {
+      claimer.claimer.currentRequest = null;
+      return;
+    }
+
     if (claimer.claimer?.currentRequest && claimer.claimer?.registration) {
       if (claimer.claimer?.currentRequest.index <= -100) {
         claimer.claimer.currentRequest = null;
@@ -31,6 +42,7 @@ export const getMyData = async (account: string) => {
   const requestChain = supportedChains.find(
     (chain, i) =>
       res[i].claimer?.currentRequest &&
+      !isTransferStatus(res[i].claimer!.currentRequest!.status.id) &&
       !(
         chain.id === legacyChain.id &&
         res[i].claimer!.currentRequest!.status.id === "vouching" &&
