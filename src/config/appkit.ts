@@ -2,7 +2,7 @@ import { cookieStorage, createStorage, http } from 'wagmi'
 import { WagmiAdapter } from '@reown/appkit-adapter-wagmi'
 import { supportedChains, getChainRpc } from './chains'
 
-export const projectId = process.env.WALLET_CONNECT_PROJECT_ID
+export const projectId = process.env.NEXT_PUBLIC_WALLET_CONNECT_PROJECT_ID || process.env.WALLET_CONNECT_PROJECT_ID
 
 if (!projectId) {
   throw new Error('Project ID is not defined')
