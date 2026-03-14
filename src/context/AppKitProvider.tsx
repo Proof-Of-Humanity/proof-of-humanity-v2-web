@@ -28,16 +28,18 @@ const metadata = {
   icons: ['https://v2.proofofhumanity.id/logo.svg']
 };
 
-createAppKit({
-  adapters: [wagmiAdapter],
-  networks: supportedChains as any,
-  defaultNetwork: gnosis,
-  projectId,
-  metadata,
-  features: {
-    analytics: true,
-  }
-});
+if (typeof window !== 'undefined') {
+  createAppKit({
+    adapters: [wagmiAdapter],
+    networks: supportedChains as any,
+    defaultNetwork: gnosis,
+    projectId,
+    metadata,
+    features: {
+      analytics: true,
+    }
+  });
+}
 
 interface AppKitProviderProps {
   children: ReactNode
