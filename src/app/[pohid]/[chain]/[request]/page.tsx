@@ -56,6 +56,8 @@ export default async function Request({ params }: PageProps) {
     getRequestData(chain.id, pohId, +params.request),
     getContractData(chain.id),
   ]);
+
+  const isTimelineDisabled = true;
   if (!request) return <span>Error occured</span>;
   if (request.status.id === "transferring") redirect(`/${prettifyId(pohId)}`);
   if (
@@ -73,13 +75,12 @@ export default async function Request({ params }: PageProps) {
   const requestStatus = getStatus(request, contractData);
 
   let onChainVouches: Array<Address> = [];
-  const timelineOffChainVouches: OffChainVouch[] = await getOffChainVouches(
-    chain.id,
-    request.claimer.id,
-    pohId,
-  );
+  const fetchedOffChainVouches: OffChainVouch[] =
+    request.status.id === "vouching" || !isTimelineDisabled
+      ? await getOffChainVouches(chain.id, request.claimer.id, pohId)
+      : [];
   const offChainVouches: OffChainVouch[] =
-    request.status.id === "vouching" ? [...timelineOffChainVouches] : [];
+    request.status.id === "vouching" ? [...fetchedOffChainVouches] : [];
 
   if (request.status.id === "vouching") {
     onChainVouches = request.claimer.vouchesReceived.map(
@@ -260,13 +261,15 @@ export default async function Request({ params }: PageProps) {
     }
   })();
 
-  const timelineDataPromise = getRequestTimelineData(
-    pohId,
-    chain.id,
-    request,
-    timelineOffChainVouches,
-    contractData.humanityLifespan,
-  );
+  const timelineDataPromise = !isTimelineDisabled
+    ? getRequestTimelineData(
+        pohId,
+        chain.id,
+        request,
+        fetchedOffChainVouches,
+        contractData.humanityLifespan,
+      )
+    : null;
 
   //const policyUpdate = request.arbitratorHistory.updateTime;
 
@@ -382,14 +385,16 @@ export default async function Request({ params }: PageProps) {
               </span>
             </div>
             <div className="mb-4 h-1 w-full border-b"></div>
-            <div className="mb-2 flex flex-col-reverse items-center justify-center md:items-stretch md:justify-between md:flex-row">
-              <Suspense fallback={<RequestInfoSectionSkeleton />}>
-                <RequestInfoSection
-                  chainId={chain.id}
-                  timelineDataPromise={timelineDataPromise}
-                />
-              </Suspense>
-            </div>
+            {!isTimelineDisabled && timelineDataPromise ? (
+              <div className="mb-2 flex flex-col-reverse items-center justify-center md:items-stretch md:justify-between md:flex-row">
+                <Suspense fallback={<RequestInfoSectionSkeleton />}>
+                  <RequestInfoSection
+                    chainId={chain.id}
+                    timelineDataPromise={timelineDataPromise}
+                  />
+                </Suspense>
+              </div>
+            ) : null}
             <div className="text-orange mb-8 flex flex-wrap gap-x-[8px] gap-y-[8px] font-medium justify-center md:justify-start">
               <Link
                 className="text-orange flex flex-row flex-wrap text-center justify-center gap-x-[8px] font-semibold hover:text-orange-500 md:justify-start"
@@ -523,11 +528,13 @@ export default async function Request({ params }: PageProps) {
                 </div>
               )}
             </div>
-            <Suspense fallback={<TimelineHistorySectionSkeleton />}>
-              <TimelineHistorySection
-                timelineDataPromise={timelineDataPromise}
-              />
-            </Suspense>
+            {!isTimelineDisabled && timelineDataPromise ? (
+              <Suspense fallback={<TimelineHistorySectionSkeleton />}>
+                <TimelineHistorySection
+                  timelineDataPromise={timelineDataPromise}
+                />
+              </Suspense>
+            ) : null}
             <Label className="text-orange mb-8 text-center md:hidden">
               Last update: <TimeAgo time={request.lastStatusChange} />
             </Label>
