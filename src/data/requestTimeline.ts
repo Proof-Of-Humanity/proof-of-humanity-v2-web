@@ -10,12 +10,19 @@ import {
 } from "data/humanityEvents";
 import { getHumanityData } from "data/humanity";
 import { OffChainVouch } from "data/request";
-import { RequestQuery } from "generated/graphql";
+import { HumanityQuery, RequestQuery } from "generated/graphql";
 import { Hash } from "viem";
 import { prettifyId } from "utils/identifier";
-import { getStatus } from "utils/status";
+import { getStatus, RequestStatus } from "utils/status";
 
 type CurrentRequest = NonNullable<RequestQuery["request"]>;
+type ProfileRequest = ArrayElement<
+  NonNullable<HumanityQuery["humanity"]>["requests"]
+>;
+type RequestWithChain = ProfileRequest & {
+  chainId: SupportedChainId;
+  requestStatus?: RequestStatus;
+};
 
 const isTransferArtifactRequest = (request: {
   index: number | string;
@@ -66,6 +73,124 @@ interface LineageRequestNode {
 const truncatePohId = (id: Hash) => {
   const formattedId = prettifyId(id);
   return `0x${formattedId.slice(0, 2)}...${formattedId.slice(-4)}`;
+};
+
+const getProfileRequestTimelineItem = (
+  pohId: Hash,
+  request: RequestWithChain,
+): TimelineItem | null => {
+  const requestHref = `/${prettifyId(pohId)}/${idToChain(
+    request.chainId,
+  )?.name.toLowerCase()}/${Number(request.index)}`;
+  const requestStatus =
+    request.requestStatus ??
+    getStatus({
+      status: request.status,
+      revocation: request.revocation,
+      winnerParty: request.winnerParty,
+      index: Number(request.index),
+      creationTime: request.creationTime,
+      expirationTime: request.expirationTime,
+    });
+
+  switch (requestStatus) {
+    case RequestStatus.VOUCHING:
+      return {
+        id: request.id,
+        kind: "submitted",
+        title: request.revocation ? "Removal requested" : "Profile submitted",
+        timestamp: Number(request.creationTime),
+        chainId: request.chainId,
+        href: requestHref,
+        requestIndex: Number(request.index),
+      };
+    case RequestStatus.PENDING_CLAIM:
+      return {
+        id: request.id,
+        kind: "inReview",
+        title: "In review",
+        timestamp: Number(request.lastStatusChange) || Number(request.creationTime),
+        chainId: request.chainId,
+        href: requestHref,
+        requestIndex: Number(request.index),
+      };
+    case RequestStatus.PENDING_REVOCATION:
+      return {
+        id: request.id,
+        kind: "submitted",
+        title: "Removal requested",
+        timestamp: Number(request.creationTime),
+        chainId: request.chainId,
+        href: requestHref,
+        requestIndex: Number(request.index),
+      };
+    case RequestStatus.DISPUTED_CLAIM:
+    case RequestStatus.DISPUTED_REVOCATION:
+      return {
+        id: request.id,
+        kind: "challenged",
+        title: "Challenged",
+        timestamp: Number(request.lastStatusChange) || Number(request.creationTime),
+        chainId: request.chainId,
+        href: requestHref,
+        requestIndex: Number(request.index),
+      };
+    case RequestStatus.RESOLVED_CLAIM:
+      return {
+        id: request.id,
+        kind: "verified",
+        title: "Verified human",
+        timestamp: Number(request.lastStatusChange) || Number(request.creationTime),
+        chainId: request.chainId,
+        href: requestHref,
+        requestIndex: Number(request.index),
+      };
+    case RequestStatus.RESOLVED_REVOCATION:
+      return {
+        id: request.id,
+        kind: "removed",
+        title: "Removed",
+        timestamp: Number(request.lastStatusChange) || Number(request.creationTime),
+        chainId: request.chainId,
+        href: requestHref,
+        requestIndex: Number(request.index),
+      };
+    case RequestStatus.REJECTED:
+      return {
+        id: request.id,
+        kind: "rejected",
+        title: "Rejected",
+        timestamp: Number(request.lastStatusChange) || Number(request.creationTime),
+        chainId: request.chainId,
+        href: requestHref,
+        requestIndex: Number(request.index),
+      };
+    case RequestStatus.WITHDRAWN:
+      return {
+        id: request.id,
+        kind: "withdrawn",
+        title: "Withdrawn",
+        timestamp: Number(request.lastStatusChange) || Number(request.creationTime),
+        chainId: request.chainId,
+        href: requestHref,
+        requestIndex: Number(request.index),
+      };
+    case RequestStatus.EXPIRED: {
+      const timestamp = Number(request.expirationTime);
+      if (!Number.isFinite(timestamp) || timestamp <= 0) return null;
+      return {
+        id: `${request.id}-expired`,
+        kind: "expired",
+        title: "Expired",
+        timestamp,
+        chainId: request.chainId,
+        href: requestHref,
+        requestIndex: Number(request.index),
+      };
+    }
+    default:
+      return null;
+  }
 };
 
 const createEventTimelineItems = async (
@@ -332,10 +457,9 @@ export const getRequestTimelineData = async (
     ...request,
     chainId,
   };
-  const [humanity, eventTimelineItems, offChainVouchTimelineItems] = await Promise.all([
+  const [humanity, eventTimelineItems] = await Promise.all([
     getHumanityData(pohId),
     createEventTimelineItems(pohId, currentRequest, humanityLifespan),
-    Promise.resolve([] as TimelineItem[]),
   ]);
   const resolvedOffChainVouchTimelineItems = await createOffChainVouchTimelineItems(
     currentRequest,
@@ -357,5 +481,21 @@ export const getRequestTimelineData = async (
       (itemA, itemB) => itemB.timestamp - itemA.timestamp,
     ),
     requestCounts,
+  };
+};
+
+export const getProfileTimelineData = async (
+  pohId: Hash,
+  requests: RequestWithChain[],
+) => {
+  const requestTimelineItems = requests
+    .filter((request) => !isTransferArtifactRequest(request))
+    .map((request) => getProfileRequestTimelineItem(pohId, request))
+    .filter((item): item is TimelineItem => !!item);
+
+  return {
+    timelineItems: requestTimelineItems.sort(
+      (itemA, itemB) => itemB.timestamp - itemA.timestamp,
+    ),
   };
 };
