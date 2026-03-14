@@ -37,6 +37,8 @@ if (typeof window !== 'undefined') {
     metadata,
     features: {
       analytics: true,
+      email: false,
+      socials: [],
     }
   });
 }
