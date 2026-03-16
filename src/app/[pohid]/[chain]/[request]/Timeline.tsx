@@ -124,7 +124,9 @@ export default function Timeline({ items }: TimelineProps) {
       ref={rootRef}
       className={`timeline-root mt-10 border-t pt-8 ${isVisible ? "timeline-visible" : "timeline-hidden"}`}
     >
-      <h2 className="text-primaryText text-xl font-semibold">Timeline History</h2>
+      <h2 className="text-primaryText text-xl font-semibold">
+        Timeline History
+      </h2>
       <div className="mt-6">
         {items.map((item, index) => {
           const styles = TIMELINE_STYLES[item.kind];
@@ -137,26 +139,28 @@ export default function Timeline({ items }: TimelineProps) {
             <div className="flex w-full items-start gap-4">
               <div className="flex w-6 shrink-0 flex-col items-center">
                 <div
-                  className={`timeline-dot-shell bg-whiteBackground ${item.kind === "transferred" ||
+                  className={`timeline-dot-shell bg-whiteBackground ${
+                    item.kind === "transferred" ||
                     item.kind === "verified" ||
                     item.kind === "rejected"
-                    ? "h-5 w-5 border-transparent -mt-0.5"
-                    : styles.dot
-                    }`}
+                      ? "-mt-0.5 h-5 w-5 border-transparent"
+                      : styles.dot
+                  }`}
                   style={{ animationDelay: itemDelay }}
                 >
                   {item.kind === "transferred" ? (
                     <TimelineTransferIcon />
                   ) : item.kind === "verified" ? (
                     <CheckCircleOutlineIcon />
-                  ) : item.kind === "rejected" || item.kind === "vouchRemoved" ? (
+                  ) : item.kind === "rejected" ||
+                    item.kind === "vouchRemoved" ? (
                     <CrossCircleIcon />
                   ) : (
                     <div className={`timeline-dot-core ${styles.accent}`} />
                   )}
                 </div>
                 {!isLast && (
-                  <div className="timeline-connector-track mt-0.5 self-center translate-x-[0.5px]">
+                  <div className="timeline-connector-track mt-0.5 translate-x-[0.5px] self-center">
                     <div
                       className={`timeline-connector-fill ${styles.accent}`}
                       style={{ animationDelay: lineDelay }}
@@ -169,7 +173,9 @@ export default function Timeline({ items }: TimelineProps) {
                 style={{ animationDelay: itemDelay }}
               >
                 <div className="flex flex-wrap items-center gap-x-2 gap-y-1 leading-tight">
-                  <span className={`inline-flex items-center gap-1 font-semibold ${styles.text}`}>
+                  <span
+                    className={`inline-flex items-center gap-1 font-semibold ${styles.text}`}
+                  >
                     {item.title}
                     {isClickable && (
                       <span className="text-secondaryText inline-flex">
@@ -206,7 +212,10 @@ export default function Timeline({ items }: TimelineProps) {
                   {content}
                 </a>
               ) : item.href ? (
-                <Link href={item.href} className="group/timeline-link block hover:opacity-90">
+                <Link
+                  href={item.href}
+                  className="group/timeline-link block hover:opacity-90"
+                >
                   {content}
                 </Link>
               ) : (
