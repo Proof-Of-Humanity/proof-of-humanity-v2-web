@@ -30,7 +30,7 @@ interface PhotoProps {
 
 const SAMPLE_VIDEO_URL =
   "/api/media/sample-registration-video";
-const isSampleSubmissionEnabled = false;
+const isSampleSubmissionEnabled = true;
 
 function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
   const WARNING_TOAST_BASE_MS = 5000;

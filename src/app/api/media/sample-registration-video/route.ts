@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server";
 
 const SAMPLE_VIDEO_URL =
-  "https://cdn.kleros.link/ipfs/QmXhHdV6rW6MT97E5pP8KXntf7h1ueA628SpKJZ4FD6Heu";
+  "https://cdn.kleros.link/ipfs/QmUzdGku3BMdQXdNgWWjycqGBBPC3fvqNfKVr6LEt8wJwB#t=0.001";
 
 const buildHeaders = (response: Response) => {
   const headers = new Headers();
