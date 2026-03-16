@@ -21,11 +21,19 @@ if (!projectId) {
   throw new Error('Project ID is not defined')
 }
 
+const metadata = {
+  name: 'Proof of Humanity',
+  description: 'Proof of Humanity - Network of Human',
+  url: typeof window !== 'undefined' ? window.location.origin : 'https://v2.proofofhumanity.id',
+  icons: ['https://v2.proofofhumanity.id/logo.svg']
+};
+
 createAppKit({
   adapters: [wagmiAdapter],
   networks: supportedChains as any,
   defaultNetwork: gnosis,
   projectId,
+  metadata,
   features: {
     analytics: true,
   }
@@ -36,24 +44,24 @@ interface AppKitProviderProps {
 }
 
 export default function AppKitProvider({ children }: AppKitProviderProps) {
-    // Add state to handle client-side rendering
-    const [mounted, setMounted] = useState(false)
+  // Add state to handle client-side rendering
+  const [mounted, setMounted] = useState(false)
 
-    useEffect(() => {
-      setMounted(true)
-    }, [])
-  
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
   return (
     <WagmiProvider config={wagmiAdapter.wagmiConfig}>
       <QueryClientProvider client={queryClient}>
         <AutoSwitchNetwork />
         <DynamicAtlasProvider
-            config={{
-              uri: process.env.ATLAS_URI,
-              product: Products.ProofOfHumanity,
-              wagmiConfig: wagmiAdapter.wagmiConfig,
-            }}
-          >{mounted && children}
+          config={{
+            uri: process.env.ATLAS_URI,
+            product: Products.ProofOfHumanity,
+            wagmiConfig: wagmiAdapter.wagmiConfig,
+          }}
+        >{mounted && children}
         </DynamicAtlasProvider>
       </QueryClientProvider>
     </WagmiProvider>

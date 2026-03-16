@@ -14,7 +14,6 @@ query Request($id: ID!) {
     requester
     creationTime
     lastStatusChange
-    inTransferHash
     vouches {
       voucher {
         id
