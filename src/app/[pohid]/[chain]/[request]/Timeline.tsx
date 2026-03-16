@@ -9,9 +9,13 @@ import NewTabIcon from "icons/NewTab.svg";
 import TimelineTransferIcon from "icons/TimelineTransfer.svg";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
+import ProfileTimelineHeader, {
+  type ProfileTimelineHeaderProps,
+} from "../../ProfileTimelineHeader";
 
 interface TimelineProps {
   items: TimelineItem[];
+  profileHeader?: ProfileTimelineHeaderProps;
 }
 
 const TIMELINE_STYLES: Record<
@@ -94,7 +98,7 @@ const formatter = new Intl.DateTimeFormat("en-US", {
 const ITEM_STEP_MS = 340;
 const ITEM_REVEAL_OFFSET_MS = 150;
 
-export default function Timeline({ items }: TimelineProps) {
+export default function Timeline({ items, profileHeader }: TimelineProps) {
   const rootRef = useRef<HTMLDivElement | null>(null);
   const [isVisible, setIsVisible] = useState(false);
 
@@ -127,6 +131,7 @@ export default function Timeline({ items }: TimelineProps) {
       <h2 className="text-primaryText text-xl font-semibold">
         Timeline History
       </h2>
+      {profileHeader ? <ProfileTimelineHeader {...profileHeader} /> : null}
       <div className="mt-6">
         {items.map((item, index) => {
           const styles = TIMELINE_STYLES[item.kind];
@@ -139,13 +144,12 @@ export default function Timeline({ items }: TimelineProps) {
             <div className="flex w-full items-start gap-4">
               <div className="flex w-6 shrink-0 flex-col items-center">
                 <div
-                  className={`timeline-dot-shell bg-whiteBackground ${
-                    item.kind === "transferred" ||
-                    item.kind === "verified" ||
-                    item.kind === "rejected"
+                  className={`timeline-dot-shell bg-whiteBackground ${item.kind === "transferred" ||
+                      item.kind === "verified" ||
+                      item.kind === "rejected"
                       ? "-mt-0.5 h-5 w-5 border-transparent"
                       : styles.dot
-                  }`}
+                    }`}
                   style={{ animationDelay: itemDelay }}
                 >
                   {item.kind === "transferred" ? (

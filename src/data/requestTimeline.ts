@@ -26,9 +26,7 @@ const isTransferArtifactRequest = (request: {
     id: string;
   } | null;
 }) =>
-  request.status?.id === "transferred" ||
-  request.status?.id === "transferring" ||
-  Number(request.index) <= -100;
+  request.status?.id === "transferred" || request.status?.id === "transferring";
 
 type TimelineItemKind =
   | "submitted"

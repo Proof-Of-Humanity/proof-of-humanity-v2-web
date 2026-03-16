@@ -15,9 +15,11 @@ import { HumanityQuery } from "generated/graphql";
 import Image from "next/image";
 import Link from "next/link";
 import React from "react";
+import { Suspense } from "react";
 import { shortenAddress } from "utils/address";
 import { machinifyId, prettifyId } from "utils/identifier";
 import { getProfileTimelineData } from "data/requestTimeline";
+import { TimelineHistorySectionSkeleton } from "./[chain]/[request]/TimelineSection";
 import CrossChain from "./CrossChain";
 import Renew from "./Renew";
 import Revoke from "./Revoke";
@@ -48,9 +50,7 @@ const isTransferArtifactRequest = (request: {
     id: string;
   } | null;
 }) =>
-  request.status?.id === "transferred" ||
-  request.status?.id === "transferring" ||
-  Number(request.index) <= -100;
+  request.status?.id === "transferred" || request.status?.id === "transferring";
 
 interface PageProps {
   params: { pohid: string };
@@ -186,6 +186,13 @@ async function Profile({ params: { pohid } }: PageProps) {
     ) as PoHRequest[];
 
   const hasActiveRequests = activeRequests.length > 0;
+  const latestRequest = allRequests
+    .filter((request) => !isTransferArtifactRequest(request))
+    .sort(
+      (requestA, requestB) =>
+        Number(requestB.lastStatusChange || requestB.creationTime) -
+        Number(requestA.lastStatusChange || requestA.creationTime),
+    )[0];
 
   const latestTransferArtifact = allRequests
     .filter((request) => isTransferArtifactRequest(request))
@@ -214,6 +221,18 @@ async function Profile({ params: { pohid } }: PageProps) {
     pohId,
     profileRequests,
   );
+  const profileHeader = latestRequest
+    ? {
+        claimer: latestRequest.claimer,
+        evidence: latestRequest.evidenceGroup.evidence,
+        humanityWinnerClaim:
+          humanity[latestRequest.chainId]?.humanity?.winnerClaim ?? [],
+        registrationEvidenceRevokedReq:
+          latestRequest.registrationEvidenceRevokedReq,
+        requester: latestRequest.requester,
+        revocation: latestRequest.revocation,
+      }
+    : undefined;
 
   return (
     <div className="content">
@@ -266,7 +285,30 @@ async function Profile({ params: { pohid } }: PageProps) {
                 }
               />
             </span>
-
+            {winnerClaimData.request && homeChain ? (
+              <div className="mt-4 flex items-center justify-center">
+                <Card
+                  chainId={winnerClaimData.chainId as SupportedChainId}
+                  claimer={
+                    humanity[homeChain.id]!.humanity!.registration!.claimer.id
+                  }
+                  evidence={winnerClaimData.request.evidenceGroup.evidence}
+                  humanity={{
+                    id: pohId,
+                    winnerClaim:
+                      humanity[winnerClaimData.chainId as SupportedChainId]!
+                        .humanity!.winnerClaim,
+                  }}
+                  index={winnerClaimData.request.index}
+                  requester={
+                    humanity[homeChain.id]!.humanity!.registration!.claimer.id
+                  }
+                  revocation={false}
+                  registrationEvidenceRevokedReq={""}
+                  requestStatus={winnerClaimData.requestStatus as RequestStatus}
+                />
+              </div>
+            ) : null}
             {canRenew ? (
               <Renew
                 claimer={
@@ -275,7 +317,7 @@ async function Profile({ params: { pohid } }: PageProps) {
                 pohId={pohId}
               />
             ) : (
-              <span className="text-secondaryText mb-4">
+              <span className="text-secondaryText mb-4 mt-2">
                 Renewal available{" "}
                 <TimeAgo
                   time={
@@ -338,71 +380,12 @@ async function Profile({ params: { pohid } }: PageProps) {
         )}
       </div>
 
-      {winnerClaimData.request && homeChain ? (
-        <div className="mt-4">
-          <div className="text-primaryText mb-1 p-4">
-            {winnerClaimData.status !== "transferring"
-              ? "Current request"
-              : "Crossing chain (update)"}
-          </div>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4">
-            <Card
-              chainId={winnerClaimData.chainId as SupportedChainId}
-              claimer={
-                humanity[homeChain.id]!.humanity!.registration!.claimer.id
-              }
-              evidence={winnerClaimData.request.evidenceGroup.evidence}
-              humanity={{
-                id: pohId,
-                winnerClaim:
-                  humanity[winnerClaimData.chainId as SupportedChainId]!
-                    .humanity!.winnerClaim,
-              }}
-              index={winnerClaimData.request.index}
-              requester={
-                humanity[homeChain.id]!.humanity!.registration!.claimer.id
-              }
-              revocation={false}
-              registrationEvidenceRevokedReq={""}
-              requestStatus={winnerClaimData.requestStatus as RequestStatus}
-            />
-          </div>
-        </div>
-      ) : null}
-
-      {activeRequests.length ? (
-        <div className="mt-4">
-          <div className="text-primaryText mb-1 p-4">
-            {activeRequests.length} pending request
-            {activeRequests.length !== 1 && "s"}
-          </div>
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-            {activeRequests.map((req) => (
-              <Card
-                key={req.id}
-                chainId={req.chainId}
-                claimer={req.claimer.id}
-                evidence={req.evidenceGroup.evidence}
-                humanity={{
-                  id: pohId,
-                  winnerClaim: humanity[req.chainId]!.humanity!.winnerClaim,
-                }}
-                index={req.index}
-                requester={req.requester}
-                revocation={req.revocation}
-                registrationEvidenceRevokedReq={
-                  req.registrationEvidenceRevokedReq
-                }
-                requestStatus={req.requestStatus}
-              />
-            ))}
-          </div>
-        </div>
-      ) : null}
-
-      <ProfileTimelineSection
-        timelineDataPromise={profileTimelineDataPromise}
-      />
+      <Suspense fallback={<TimelineHistorySectionSkeleton />}>
+        <ProfileTimelineSection
+          profileHeader={profileHeader}
+          timelineDataPromise={profileTimelineDataPromise}
+        />
+      </Suspense>
     </div>
   );
 }
