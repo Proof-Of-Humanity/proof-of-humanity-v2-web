@@ -136,7 +136,6 @@ export default function Timeline({ items, profileHeader }: TimelineProps) {
         {items.map((item, index) => {
           const styles = TIMELINE_STYLES[item.kind];
           const isLast = index === items.length - 1;
-          const isClickable = !!item.externalHref || !!item.href;
           const lineDelay = `${index * ITEM_STEP_MS}ms`;
           const itemDelay = `${index * ITEM_STEP_MS + ITEM_REVEAL_OFFSET_MS}ms`;
 
@@ -177,16 +176,35 @@ export default function Timeline({ items, profileHeader }: TimelineProps) {
                 style={{ animationDelay: itemDelay }}
               >
                 <div className="flex flex-wrap items-center gap-x-2 gap-y-1 leading-tight">
-                  <span
-                    className={`inline-flex items-center gap-1 font-semibold ${styles.text}`}
-                  >
-                    {item.title}
-                    {isClickable && (
+                  {item.externalHref ? (
+                    <a
+                      href={item.externalHref}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="group/timeline-link inline-flex items-center gap-1 font-semibold hover:opacity-80"
+                    >
+                      <span className={styles.text}>{item.title}</span>
                       <span className="text-secondaryText inline-flex">
                         <NewTabIcon className="h-4 w-4 fill-current transition-transform duration-200 group-hover/timeline-link:-translate-y-0.5 group-hover/timeline-link:translate-x-0.5" />
                       </span>
-                    )}
-                  </span>
+                    </a>
+                  ) : item.href ? (
+                    <Link
+                      href={item.href}
+                      className="group/timeline-link inline-flex items-center gap-1 font-semibold hover:opacity-80"
+                    >
+                      <span className={styles.text}>{item.title}</span>
+                      <span className="text-secondaryText inline-flex">
+                        <NewTabIcon className="h-4 w-4 fill-current transition-transform duration-200 group-hover/timeline-link:-translate-y-0.5 group-hover/timeline-link:translate-x-0.5" />
+                      </span>
+                    </Link>
+                  ) : (
+                    <span
+                      className={`inline-flex items-center gap-1 font-semibold ${styles.text}`}
+                    >
+                      {item.title}
+                    </span>
+                  )}
                   {item.chainId && item.kind !== "transferred" && (
                     <span className="text-secondaryText inline-flex items-center gap-1 text-sm font-normal">
                       <ChainLogo
@@ -206,25 +224,7 @@ export default function Timeline({ items, profileHeader }: TimelineProps) {
 
           return (
             <div key={item.id}>
-              {item.externalHref ? (
-                <a
-                  href={item.externalHref}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="group/timeline-link block hover:opacity-90"
-                >
-                  {content}
-                </a>
-              ) : item.href ? (
-                <Link
-                  href={item.href}
-                  className="group/timeline-link block hover:opacity-90"
-                >
-                  {content}
-                </Link>
-              ) : (
-                content
-              )}
+              {content}
             </div>
           );
         })}
