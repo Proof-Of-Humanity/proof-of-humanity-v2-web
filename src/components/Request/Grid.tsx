@@ -33,9 +33,8 @@ import {
   getRequestStatusFilter,
   STATUS_FILTER_OPTIONS,
   getStatusLabel,
-  getStatusColor
+  getStatusColor,
 } from "utils/status";
-
 
 import Card from "./Card";
 import SubgraphsStatus from "./SubgraphsStatus";
@@ -54,9 +53,7 @@ const isTransferArtifactRequest = (request: {
     id: string;
   } | null;
 }) =>
-  request.status?.id === "transferred" ||
-  request.status?.id === "transferring" ||
-  Number(request.index) <= -100;
+  request.status?.id === "transferred" || request.status?.id === "transferring";
 
 interface RequestInterface extends RequestsQueryItem {
   chainId: SupportedChainId;
@@ -86,7 +83,6 @@ const sortRequests = (request: RequestInterface[]): RequestInterface[] => {
   return requestsOut;
 };
 
-
 const normalize = (
   requestsData: Record<SupportedChainId, RequestsQueryItem[]>,
 ) => {
@@ -104,14 +100,17 @@ const normalize = (
               expirationTime: request.expirationTime,
               winnerParty: request.winnerParty,
             },
-            { humanityLifespan: humanityLifespanAllChains[Number(chainId) as SupportedChainId] }
+            {
+              humanityLifespan:
+                humanityLifespanAllChains[Number(chainId) as SupportedChainId],
+            },
           );
 
           return {
             ...request,
             old: Number(chainId) === legacyChain.id,
             chainId: Number(chainId) as SupportedChainId,
-            requestStatus
+            requestStatus,
           };
         }),
       ],
@@ -162,13 +161,12 @@ function RequestsGrid() {
         (acc, chain) => ({
           ...acc,
           [chain.id]: chainStacks$
-            .get()[chain.id]
-            .filter((request) => !isTransferArtifactRequest(request)),
+            .get()
+            [chain.id].filter((request) => !isTransferArtifactRequest(request)),
         }),
         {} as Record<SupportedChainId, RequestsQuery["requests"]>,
       ),
-    )
-      .slice(0, REQUESTS_BATCH_SIZE * filter.cursor),
+    ).slice(0, REQUESTS_BATCH_SIZE * filter.cursor),
   );
 
   const loading = useLoading(true, "init");
@@ -227,7 +225,7 @@ function RequestsGrid() {
           if (
             !loadContinued ||
             displayedForChain + REQUESTS_BATCH_SIZE >=
-            chainStacks[chain.id].length
+              chainStacks[chain.id].length
           ) {
             const where: any = {
               ...getRequestStatusFilter(status),
@@ -285,7 +283,9 @@ function RequestsGrid() {
         />
         <Dropdown
           title={
-            filter.status === RequestStatus.ALL ? "Status" : getStatusLabel(filter.status)
+            filter.status === RequestStatus.ALL
+              ? "Status"
+              : getStatusLabel(filter.status)
           }
         >
           {STATUS_FILTER_OPTIONS.map((status) => (
@@ -295,8 +295,9 @@ function RequestsGrid() {
                 <div
                   className={cn(
                     "dot mr-2",
-                    status === RequestStatus.ALL ?
-                      "bg-white" : `bg-status-${getStatusColor(status)}`
+                    status === RequestStatus.ALL
+                      ? "bg-white"
+                      : `bg-status-${getStatusColor(status)}`,
                   )}
                 />
               }
