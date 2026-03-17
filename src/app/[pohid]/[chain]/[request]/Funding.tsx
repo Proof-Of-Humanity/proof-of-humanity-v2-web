@@ -75,19 +75,29 @@ const FundButton: React.FC<FundButtonProps> = ({
       args: [pohId, BigInt(index)],
     });
   };
-  const inputAmount = parseEther(addedFundInput);
+  const inputAmount = useMemo(() => {
+    if (!addedFundInput) return 0n;
+
+    try {
+      return parseEther(addedFundInput);
+    } catch {
+      return null;
+    }
+  }, [addedFundInput]);
   const insufficientFunds = useMemo(() => {
+    if (inputAmount === null) return false;
     const available = balanceData?.value ?? 0n;
     return inputAmount > available;
-  }, [inputAmount, balanceData, addedFundInput]);
+  }, [inputAmount, balanceData]);
 
-  const exceedsRemaining = inputAmount != null && inputAmount > remainingAmount;
+  const exceedsRemaining = inputAmount !== null && inputAmount > remainingAmount;
   
   const isDisabled =
     !isConnected ||
     !addedFundInput ||
     isLoading ||
     userChainId !== chain.id ||
+    inputAmount === null ||
     exceedsRemaining ||
     insufficientFunds;
 
@@ -95,6 +105,7 @@ const FundButton: React.FC<FundButtonProps> = ({
     if (!isConnected) return "Please connect your wallet";
     if (userChainId !== chain.id) return `Switch your chain above to ${idToChain(chain.id)?.name || 'the correct chain'}`;
     if (!addedFundInput) return "Please enter an amount to fund";
+    if (inputAmount === null) return "Please enter a valid amount";
     if (exceedsRemaining) return `Amount exceeds remaining needed (${formatEth(remainingAmount)} ${chain.nativeCurrency.symbol})`;
     if (insufficientFunds) return `Insufficient balance. You have ${formatEth(balanceData?.value ?? 0n)} ${chain.nativeCurrency.symbol}`;
     if (isLoading) return "Transaction in progress";

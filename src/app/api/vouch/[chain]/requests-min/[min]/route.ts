@@ -10,8 +10,9 @@ interface RequestParams {
 
 export async function GET(
   _request: NextRequest,
-  { params }: { params: RequestParams },
+  props: { params: Promise<RequestParams> },
 ) {
+  const params = await props.params;
   try {
     const chain = paramToChain(params.chain);
 
@@ -26,7 +27,7 @@ export async function GET(
     if (error) throw new Error(error.message);
 
     return NextResponse.json(data, { status: HttpStatusCode.Ok });
-  } catch (err: any) {
+  } catch (err: unknown) {
     return NextResponse.json(
       { error: "Something went wrong" },
       { status: HttpStatusCode.InternalServerError },

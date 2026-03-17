@@ -1,5 +1,4 @@
 import { type DocRenderer } from "@cyntler/react-doc-viewer";
-import React from "react";
 import ReactMarkdown from "react-markdown";
 
 /**

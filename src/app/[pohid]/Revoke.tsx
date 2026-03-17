@@ -12,7 +12,7 @@ import { ContractData } from "data/contract";
 import { useLoading } from "hooks/useLoading";
 import useWeb3Loaded from "hooks/useWeb3Loaded";
 import DocumentIcon from "icons/NoteMajor.svg";
-import React, { useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { toast } from "react-toastify";
 import { ipfs } from "utils/ipfs";
 import { formatEth } from "utils/misc";
@@ -45,7 +45,7 @@ export default function Revoke({
   const connectedChainId = useChainId() as SupportedChainId;
   const web3Loaded = useWeb3Loaded();
   const { switchChain } = useSwitchChain();
-  
+
   const { uploadFile } = useAtlasProvider();
 
   const [prepare] = usePoHWrite(
@@ -98,7 +98,7 @@ export default function Revoke({
         "evidence",
         {
           type: "text/plain",
-        }
+        },
       );
 
       const evidenceUri = await uploadFile(evidenceTextFile, Roles.Evidence);
@@ -111,7 +111,9 @@ export default function Revoke({
 
       prepare({ args: [pohId, evidenceUri], value: cost });
     } catch (error) {
-      toast.error(`Failed to upload evidence : ${error instanceof Error ? error.message : "Unknown error"}`);
+      toast.error(
+        `Failed to upload evidence : ${error instanceof Error ? error.message : "Unknown error"}`,
+      );
       loading.stop();
     }
   };
@@ -119,7 +121,7 @@ export default function Revoke({
   if (web3Loaded && homeChain.id !== connectedChainId)
     return (
       <button
-        onClick={() => switchChain?.({chainId : homeChain.id})}
+        onClick={() => switchChain?.({ chainId: homeChain.id })}
         className="btn-sec mb-4"
       >
         Connect to {homeChain.name} to revoke

@@ -2,23 +2,20 @@ import { supportedChains } from "config/chains";
 import { getContractDataAllChains } from "data/contract";
 import { getTotalCosts } from "data/costs";
 import { getRegistrationData } from "data/registration";
-import { RedirectType } from "next/dist/client/components/redirect";
-import dynamic from "next/dynamic";
-import { redirect } from "next/navigation";
+import { RedirectType, redirect } from "next/navigation";
 import { machinifyId } from "utils/identifier";
 import { Hash } from "viem";
-import Loading from "../loading";
-
-const Form = dynamic(() => import("./Form"), {
-  ssr: false,
-  loading: () => <Loading />,
-});
+import Form from "./Form";
 
 interface PageProps {
-  params: { pohid: string };
+  params: Promise<{ pohid: string }>;
 }
 
-export default async function Claim({ params: { pohid } }: PageProps) {
+export default async function Claim(props: PageProps) {
+  const params = await props.params;
+
+  const { pohid } = params;
+
   if (!machinifyId(pohid)) {
     return (
       <div className="m-auto flex flex-col text-center">

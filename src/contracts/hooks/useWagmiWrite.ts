@@ -82,7 +82,7 @@ export default function useWagmiWrite<
         effects?.onError?.();
         setEnabled(false);
     }
-  }, [status, effects]);
+  }, [status, effects, writeError]);
 
   useEffect(() => {
     if (data) {
@@ -94,7 +94,7 @@ export default function useWagmiWrite<
           effects?.onSuccess?.();
       }
     }
-  }, [transactionStatus, effects]);
+  }, [transactionStatus, effects, data]);
 
   return useMemo(
     () =>

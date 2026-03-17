@@ -127,7 +127,7 @@ export default function Evidence({
           router.refresh();
         },
       }),
-      [loading],
+      [loading, router],
     ),
   );
 
@@ -192,7 +192,7 @@ export default function Evidence({
 
   useEffect(() => {
     setIsEvidenceDisabled(chainReq.id !== chainId);
-  }, [chainId]);
+  }, [chainId, chainReq.id]);
 
   return (
     <Accordion title="Evidence">

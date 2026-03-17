@@ -10,7 +10,7 @@ interface VouchingTooltipProps {
   photo: string | undefined;
   idx: number;
   href: string;
-  pohId: any;
+  pohId: string | null | undefined;
   address: `0x${string}` | undefined;
   isOnChain: boolean;
   reducedTooltip: boolean;
@@ -40,45 +40,44 @@ const Vouch: React.FC<VouchingTooltipProps> = ({
         left-1/2 -translate-x-1/2 translate-y-full m-4 mx-auto p-[8px] z-10 \
         not-italic font-normal leading-[normal] outline-black outline-color: #E5E5E5 \
         ${reducedTooltip ? "" : "w-[219px] h-[72px]"}`;
+  const content = (
+    <div className="group relative flex">
+      {photo ? (
+        <Image
+          className={avatarClassName}
+          alt="image"
+          src={ipfs(photo)}
+          width={64}
+          height={64}
+          unoptimized={true} //Skips cache
+        />
+      ) : (
+        <Identicon key={key} address={address} diameter={32} />
+      )}
+      <div className={tooltipClassName}>
+        {reducedTooltip ? null : (
+          <>
+            <span>{!isOnChain ? "(off-chain) " : ""}</span>
+            <span>{isActive ? "Vouch confirmed" : "Vouch in queue"}</span>
 
-  return (
-    <Link key={key} href={pohId && href}>
-      <div className="group relative flex">
-        {photo ? (
-          <Image
-            className={avatarClassName}
-            alt="image"
-            src={ipfs(photo)}
-            width={64}
-            height={64}
-            unoptimized={true} //Skips cache
-          />
-        ) : (
-          <Identicon key={key} address={address} diameter={32} />
+            <br />
+
+            {!!reason ? (
+              <>
+                <span className="italic">({reason})</span>
+
+                <br />
+              </>
+            ) : null}
+          </>
         )}
-        <div className={tooltipClassName}>
-          {reducedTooltip ? null : (
-            <>
-              <span>{!isOnChain ? "(off-chain) " : ""}</span>
-              <span>{isActive ? "Vouch confirmed" : "Vouch in queue"}</span>
 
-              <br />
-
-              {!!reason ? (
-                <>
-                  <span className="italic">({reason})</span>
-
-                  <br />
-                </>
-              ) : null}
-            </>
-          )}
-
-          <span className="text-base font-bold">{name}</span>
-        </div>
+        <span className="text-base font-bold">{name}</span>
       </div>
-    </Link>
+    </div>
   );
+
+  return pohId ? <Link key={key} href={href}>{content}</Link> : content;
 };
 
 export default Vouch;

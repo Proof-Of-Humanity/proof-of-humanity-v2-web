@@ -3,7 +3,7 @@ import { Component } from "react";
 interface ErrorBoundaryInterface {
   fallback: React.ReactNode;
   children: React.ReactNode;
-  resetSwitch?: any;
+  resetSwitch?: unknown;
 }
 
 interface ErrorBoundaryState {

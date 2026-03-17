@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { sepolia } from "viem/chains";
 import ExternalLink from "components/ExternalLink";
+import { MeData } from "data/user";
 import RegisterLink from "./RegisterLink";
 
 interface DesktopNavigationProps {
@@ -11,7 +12,7 @@ interface DesktopNavigationProps {
   chain: { id: number; name: string };
   pathname: string;
   policy: string;
-  me: any;
+  me: MeData | undefined;
   address?: `0x${string}`;
   pendingRegisterIntent: boolean;
   setPendingRegisterIntent: (value: boolean) => void;

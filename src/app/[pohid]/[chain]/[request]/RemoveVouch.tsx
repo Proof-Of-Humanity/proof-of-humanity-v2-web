@@ -13,7 +13,7 @@ enableReactUse();
 interface RemoveVouchProps {
   pohId: Hash;
   requester: Address;
-  web3Loaded: any;
+  web3Loaded: boolean;
   chain: SupportedChain;
   userChainId: number;
   disabled?: boolean;
@@ -30,7 +30,7 @@ export default function RemoveVouch({
   tooltip,
 }: RemoveVouchProps) {
   const loading = useLoading();
-  const [pending] = loading.use();
+  loading.use();
 
   const [prepareRemoveVouch, removeOnchainVouch, status] = usePoHWrite(
     "removeVouch",
@@ -64,8 +64,15 @@ export default function RemoveVouch({
           label="Remove Vouch"
           className="mb-2 w-auto"
           isLoading={status.write === "pending"}
-          disabled={status.write === "pending" || disabled || userChainId !== chain.id}
-          tooltip={tooltip || (userChainId !== chain.id ? `Switch your chain above to ${idToChain(chain.id)?.name || 'the correct chain'}` : undefined)}
+          disabled={
+            status.write === "pending" || disabled || userChainId !== chain.id
+          }
+          tooltip={
+            tooltip ||
+            (userChainId !== chain.id
+              ? `Switch your chain above to ${idToChain(chain.id)?.name || "the correct chain"}`
+              : undefined)
+          }
         />
       </div>
     )

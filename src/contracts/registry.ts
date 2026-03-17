@@ -6,7 +6,6 @@ import { CirclesIntegration } from "./deployments/CirclesIntegration";
 import { CirclesHub } from "./deployments/CirclesHub";
 import { KlerosLiquid } from "./deployments/KlerosLiquid";
 import { PnkRewardDistributer } from "./deployments/PnkRewardDistributer";
-import { isAddress } from "viem";
 
 export const contractRegistry = {
   ProofOfHumanity,
@@ -22,21 +21,20 @@ export const contractRegistry = {
 export type ContractName = keyof typeof contractRegistry;
 
 export type ContractInfo<T extends ContractName> = {
-  abi: (typeof contractRegistry)[T]['abi'];
+  abi: (typeof contractRegistry)[T]["abi"];
   address: `0x${string}` | undefined;
 };
 
 // Helper function to get contract info
 export function getContractInfo<T extends ContractName>(
   contractName: T,
-  chainId: number
+  chainId: number,
 ): ContractInfo<T> {
   const contract = contractRegistry[contractName];
-  
-  const address = contract.addresses[
-    chainId as keyof typeof contract.addresses
-  ];
-  
+
+  const address =
+    contract.addresses[chainId as keyof typeof contract.addresses];
+
   return {
     abi: contract.abi,
     address,

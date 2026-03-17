@@ -144,7 +144,6 @@ export default function useCirclesIntegration() {
     loading,
     currentHumanityId,
     writeLink,
-    circlesChain.id,
   ]);
 
   const handleRenewTrust = useCallback(async () => {
@@ -197,7 +196,17 @@ export default function useCirclesIntegration() {
     }
 
     return { onClick: action, label: defaultLabel, disabled };
-  }, [pending, isConnected, connectedChainId, circlesChain, disableButton, isWalletAddressValid, humanityStatus]);
+  }, [
+    pending,
+    isConnected,
+    connect,
+    connectedChainId,
+    circlesChain,
+    disableButton,
+    isWalletAddressValid,
+    humanityStatus,
+    switchChain,
+  ]);
 
   useEffect(() => {
     setWalletAddress(""); 

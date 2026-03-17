@@ -6,9 +6,10 @@ import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { useAccount } from "wagmi";
 import { prettifyId } from "utils/identifier";
+import { MeData } from "data/user";
 
 interface RegisterLinkProps {
-  me: any;
+  me: MeData | undefined;
   address?: `0x${string}`;
   className?: string;
   pendingRegisterIntent?: boolean;
@@ -50,10 +51,10 @@ const RegisterLink = ({
     }
   };
 
-  if (me?.pohId) {
+  if (me?.pohId && typeof me.pohId === "string") {
     return (
       <Link
-        href={`/${prettifyId(me.pohId)}`}
+        href={`/${prettifyId(me.pohId as `0x${string}`)}`}
         className={className}
       >
         PoH ID

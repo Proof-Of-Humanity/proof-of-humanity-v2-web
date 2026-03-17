@@ -1,5 +1,5 @@
 import { SupportedChainId, getChainRpc, supportedChains } from "config/chains";
-import { Address, createPublicClient, http } from "viem";
+import { Address, Hash, createPublicClient, http } from "viem";
 import Error from "next/error";
 import { KlerosLiquid } from "../deployments/KlerosLiquid";
 
@@ -70,7 +70,7 @@ export class APIArbitrator {
     chainId: SupportedChainId,
     _arbitrator: Address,
     disputeId: bigint,
-    extraData: bigint,
+    extraData: Hash,
   ): Promise<ArbitratorsData> {
     const apiReader = APIArbitrator.getApiReader(chainId, _arbitrator);
     const out: ArbitratorsData = {

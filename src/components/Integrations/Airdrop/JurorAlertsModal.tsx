@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useCallback, useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "react-toastify";
 import { useAtlasProvider } from "@kleros/kleros-app";
 
@@ -20,18 +20,19 @@ interface JurorAlertsModalProps {
   onClose: () => void;
 }
 
-export default function JurorAlertsModal({ open, onClose }: JurorAlertsModalProps) {
+export default function JurorAlertsModal({
+  open,
+  onClose,
+}: JurorAlertsModalProps) {
   const [step, setStep] = useState<ModalStep>("warning");
   const [acknowledged, setAcknowledged] = useState(false);
   const [email, setEmail] = useState("");
   const wasOpen = useRef(false);
-  const {
-    isAddingUser,
-    isUpdatingUser,
-  } = useAtlasProvider();
+  const { isAddingUser, isUpdatingUser } = useAtlasProvider();
 
   const trimmedEmail = email.trim();
-  const isEmailValid = trimmedEmail.length === 0 ? true : isValidEmailAddress(trimmedEmail);
+  const isEmailValid =
+    trimmedEmail.length === 0 ? true : isValidEmailAddress(trimmedEmail);
 
   useEffect(() => {
     if (open && !wasOpen.current) {
@@ -66,20 +67,30 @@ export default function JurorAlertsModal({ open, onClose }: JurorAlertsModalProp
   const isBusy = isSubmitting || isAddingUser || isUpdatingUser;
 
   return (
-    <Modal open={open} onClose={handleModalClose} formal header="Action required">
+    <Modal
+      open={open}
+      onClose={handleModalClose}
+      formal
+      header="Action required"
+    >
       {step === "warning" ? (
         <div className="p-6">
-          <ul className="space-y-3 mb-6">
+          <ul className="mb-6 space-y-3">
             <li className="flex items-start gap-2">
-              <div className="mt-2 h-1.5 w-1.5 rounded-full bg-primaryText flex-shrink-0" />
+              <div className="bg-primaryText mt-2 h-1.5 w-1.5 flex-shrink-0 rounded-full" />
               <span className="text-primaryText text-sm">
                 You&apos;re now staked and may be drawn as a juror.
               </span>
             </li>
             <li className="flex items-start gap-2">
-              <WarningCircle16Icon width={16} height={16} className="fill-orange flex-shrink-0 mt-0.5" />
+              <WarningCircle16Icon
+                width={16}
+                height={16}
+                className="fill-orange mt-0.5 flex-shrink-0"
+              />
               <span className="text-orange text-sm">
-                If you&apos;re drawn and miss the vote deadline, you can lose locked stake.
+                If you&apos;re drawn and miss the vote deadline, you can lose
+                locked stake.
               </span>
             </li>
           </ul>
@@ -88,16 +99,16 @@ export default function JurorAlertsModal({ open, onClose }: JurorAlertsModalProp
             onClick={() => setStep("email")}
             label="Enable Juror Alerts (important)"
             variant="primary"
-            className="w-full py-3 mb-4"
+            className="mb-4 w-full py-3"
           />
 
-          <div className="flex items-center gap-3 mb-4">
-            <div className="flex-1 h-px border-t border-stroke" />
+          <div className="mb-4 flex items-center gap-3">
+            <div className="border-stroke h-px flex-1 border-t" />
             <span className="text-secondaryText text-xs uppercase">or</span>
-            <div className="flex-1 h-px border-t border-stroke" />
+            <div className="border-stroke h-px flex-1 border-t" />
           </div>
 
-          <label className="flex items-start gap-2 mb-4 cursor-pointer">
+          <label className="mb-4 flex cursor-pointer items-start gap-2">
             <input
               type="checkbox"
               checked={acknowledged}
@@ -108,7 +119,7 @@ export default function JurorAlertsModal({ open, onClose }: JurorAlertsModalProp
               I understand I may be selected as a juror and can{" "}
               <ExternalLink
                 href="https://docs.kleros.io/products/court/kleros-juror-tutorial#staking-and-cases"
-                className="text-orange hover:underline font-medium"
+                className="text-orange font-medium hover:underline"
               >
                 lose my stake
               </ExternalLink>{" "}
@@ -126,23 +137,28 @@ export default function JurorAlertsModal({ open, onClose }: JurorAlertsModalProp
         </div>
       ) : (
         <div className="p-6">
-          <ul className="space-y-3 mb-6">
+          <ul className="mb-6 space-y-3">
             <li className="flex items-start gap-2">
-              <div className="mt-2 h-1.5 w-1.5 rounded-full bg-primaryText flex-shrink-0" />
+              <div className="bg-primaryText mt-2 h-1.5 w-1.5 flex-shrink-0 rounded-full" />
               <span className="text-primaryText text-sm">
                 You&apos;re now staked and may be drawn as a juror.
               </span>
             </li>
             <li className="flex items-start gap-2">
-              <WarningCircle16Icon width={16} height={16} className="fill-orange flex-shrink-0 mt-0.5" />
+              <WarningCircle16Icon
+                width={16}
+                height={16}
+                className="fill-orange mt-0.5 flex-shrink-0"
+              />
               <span className="text-orange text-sm">
-                If you&apos;re drawn and miss the vote deadline, you can lose locked stake.
+                If you&apos;re drawn and miss the vote deadline, you can lose
+                locked stake.
               </span>
             </li>
           </ul>
 
           <div className="mb-2">
-            <label className="text-primaryText text-sm font-semibold block mb-2">
+            <label className="text-primaryText mb-2 block text-sm font-semibold">
               Email address
             </label>
             <Field
@@ -154,7 +170,9 @@ export default function JurorAlertsModal({ open, onClose }: JurorAlertsModalProp
               className={!isEmailValid ? "!border-red-500" : ""}
             />
             {!isEmailValid && (
-              <p className="mt-1 text-xs text-red-500">Please enter a valid email</p>
+              <p className="mt-1 text-xs text-red-500">
+                Please enter a valid email
+              </p>
             )}
           </div>
 
@@ -165,13 +183,13 @@ export default function JurorAlertsModal({ open, onClose }: JurorAlertsModalProp
               disabled={!trimmedEmail || !isEmailValid || isBusy}
               isLoading={isBusy}
               variant="primary"
-              className="w-full py-3 mt-4"
+              className="mt-4 w-full py-3"
             />
           </AuthGuard>
 
           <button
             onClick={() => setStep("warning")}
-            className="mt-4 w-full text-center text-secondaryText text-sm hover:text-primaryText transition"
+            className="text-secondaryText hover:text-primaryText mt-4 w-full text-center text-sm transition"
           >
             &larr; Go back
           </button>

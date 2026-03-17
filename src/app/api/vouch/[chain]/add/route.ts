@@ -4,13 +4,7 @@ import datalake from "config/supabase";
 
 import { getContractInfo } from "contracts";
 import { NextRequest, NextResponse } from "next/server";
-import {
-  Address,
-  Hash,
-  createPublicClient,
-  http,
-  verifyTypedData,
-} from "viem";
+import { Address, Hash, createPublicClient, http, verifyTypedData } from "viem";
 
 interface AddVouchBody {
   pohId: Hash;
@@ -26,8 +20,9 @@ interface AddVouchParams {
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: AddVouchParams },
+  props: { params: Promise<AddVouchParams> },
 ) {
+  const params = await props.params;
   try {
     const chain = paramToChain(params.chain);
 
@@ -52,8 +47,9 @@ export async function POST(
 
     const isVoucherHuman = await publicClient.readContract({
       abi: getContractInfo("ProofOfHumanity", chain.id).abi,
-      address: getContractInfo("ProofOfHumanity", chain.id).address as `0x${string}`,
-      functionName: 'isHuman',
+      address: getContractInfo("ProofOfHumanity", chain.id)
+        .address as `0x${string}`,
+      functionName: "isHuman",
       args: [voucher],
     });
 
@@ -64,7 +60,8 @@ export async function POST(
       domain: {
         name: "Proof of Humanity",
         chainId: chain.id,
-        verifyingContract: getContractInfo("ProofOfHumanity", chain.id).address as `0x${string}`,
+        verifyingContract: getContractInfo("ProofOfHumanity", chain.id)
+          .address as `0x${string}`,
       },
       types: {
         IsHumanVoucher: [
@@ -93,12 +90,12 @@ export async function POST(
       expiration,
       signature: signature.toLowerCase(),
     };
-    
+
     console.log(`[vouch/add] Upserting vouch to DB:`, vouchData);
 
     const { data, error } = await datalake
       .from("poh-vouchdb")
-      .upsert(vouchData)
+      .upsert(vouchData as never)
       .select();
 
     if (error) {
@@ -119,14 +116,15 @@ export async function POST(
       { message: "Vouch added" },
       { status: HttpStatusCode.Accepted },
     );
-  } catch (err: any) {
-    console.error(`[vouch/add] ERROR:`, err.message || err);
-    
+  } catch (err: unknown) {
+    const errMsg = err instanceof Error ? err.message : String(err);
+    console.error(`[vouch/add] ERROR:`, errMsg);
+
     // Return specific error messages
-    const message = err.message?.startsWith("Database error") 
-      ? "Failed to save vouch" 
-      : err.message || "Something went wrong";
-    
+    const message = errMsg.startsWith("Database error")
+      ? "Failed to save vouch"
+      : errMsg || "Something went wrong";
+
     return NextResponse.json(
       { message },
       { status: HttpStatusCode.InternalServerError },

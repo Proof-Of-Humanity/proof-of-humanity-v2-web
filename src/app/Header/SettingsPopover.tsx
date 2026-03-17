@@ -1,8 +1,6 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React from "react";
 import Image from "next/image";
 import Popover from "components/Popover";
-import { useAtlasProvider } from "@kleros/kleros-app";
-import { toast } from "react-toastify";
 import ActionButton from "components/ActionButton";
 import AuthGuard from "components/AuthGuard";
 // import InfoIcon from "icons/info.svg";
@@ -24,16 +22,9 @@ const SettingsPopover: React.FC = () => {
   // const [transientStatus, setTransientStatus] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null);
 
   // const isEmailValid = useMemo(() => EMAIL_REGEX.test(email), [email]);
-  const { isOpen, closeSettingsPopover, toggleSettingsPopover } = useSettingsPopover();
+  const { isOpen, closeSettingsPopover, toggleSettingsPopover } =
+    useSettingsPopover();
   const { disconnect } = useDisconnect();
-
-  const {
-    // isUpdatingUser,
-    // isAddingUser,
-    // user,
-    // addUser,
-    // updateEmail: updateUserEmail,
-  } = useAtlasProvider();
 
   // useEffect(() => {
   //   if (user) {
@@ -58,7 +49,6 @@ const SettingsPopover: React.FC = () => {
   //   }
   //   return null;
   // }, [user?.email, user?.emailUpdateableAt]);
-
 
   // const handleCancelEdit = () => {
   //   setEmail(user?.email || "");
@@ -123,7 +113,7 @@ const SettingsPopover: React.FC = () => {
   //     const isDisabled =
   //       !email.trim() ||
   //       !isEmailValid ||
-  //       isUpdatingUser || 
+  //       isUpdatingUser ||
   //       isAddingUser ||
   //       user?.email === email;
   //     return { label, isDisabled };
@@ -144,7 +134,7 @@ const SettingsPopover: React.FC = () => {
 
   // const handleResendVerification = async () => {
   //   if (!user?.email) return;
-    
+
   //   try {
   //     const success = await updateUserEmail({ newEmail: user.email });
   //     if (success) {
@@ -182,13 +172,13 @@ const SettingsPopover: React.FC = () => {
         }
         open={isOpen}
         onClose={onPopoverClose}
-        className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[calc(100vw-2rem)] max-w-[26rem] sm:relative sm:left-auto sm:top-auto sm:transform-none sm:w-[26rem] sm:max-w-none"
+        className="fixed left-1/2 top-1/2 w-[calc(100vw-2rem)] max-w-[26rem] -translate-x-1/2 -translate-y-1/2 sm:relative sm:left-auto sm:top-auto sm:w-[26rem] sm:max-w-none sm:transform-none"
       >
         <div className="p-4 sm:p-6">
-          <div className="text-center mb-6">
-            <h2 className="text-xl font-semibold text-primaryText">Settings</h2>
+          <div className="mb-6 text-center">
+            <h2 className="text-primaryText text-xl font-semibold">Settings</h2>
           </div>
-          <div className="mb-6 flex justify-center w-full">
+          <div className="mb-6 flex w-full justify-center">
             <AuthGuard>
               <ActionButton
                 onClick={handleDisconnect}

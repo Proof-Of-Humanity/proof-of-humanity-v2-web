@@ -2,19 +2,19 @@ import { HttpStatusCode } from "axios";
 import { paramToChain } from "config/chains";
 import datalake from "config/supabase";
 import { NextRequest, NextResponse } from "next/server";
-import { Address, Hash } from "viem";
 
 interface RequestParams {
   chain: string;
-  claimer: Address;
-  pohid: Hash;
+  claimer: string;
+  pohid: string;
 }
 
 export const dynamic = "force-dynamic";
 export async function GET(
   _request: NextRequest,
-  { params }: { params: RequestParams },
+  props: { params: Promise<RequestParams> },
 ) {
+  const params = await props.params;
   try {
     const chain = paramToChain(params.chain);
     console.log("API Route GET called with params:", params);
@@ -48,7 +48,7 @@ export async function GET(
     }
 
     return NextResponse.json(data, { status: HttpStatusCode.Ok });
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("API Route Execution Error:", err);
     return NextResponse.json(
       { message: "Something went wrong" },

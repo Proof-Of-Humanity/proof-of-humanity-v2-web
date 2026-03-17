@@ -3,13 +3,14 @@
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Ref, forwardRef } from "react";
+import { MeData } from "data/user";
 import Options from "./Options";
 import RegisterLink from "./RegisterLink";
 import WalletSection from "./WalletSection";
 
 interface MobileMenuProps {
   policy: string;
-  me: any;
+  me: MeData | undefined;
   pathname: string;
   address?: `0x${string}`;
   web3Loaded: boolean;
