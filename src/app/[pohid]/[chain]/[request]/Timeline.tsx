@@ -9,9 +9,13 @@ import NewTabIcon from "icons/NewTab.svg";
 import TimelineTransferIcon from "icons/TimelineTransfer.svg";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
+import ProfileTimelineHeader, {
+  type ProfileTimelineHeaderProps,
+} from "../../ProfileTimelineHeader";
 
 interface TimelineProps {
   items: TimelineItem[];
+  profileHeader?: ProfileTimelineHeaderProps;
 }
 
 const TIMELINE_STYLES: Record<
@@ -94,7 +98,7 @@ const formatter = new Intl.DateTimeFormat("en-US", {
 const ITEM_STEP_MS = 340;
 const ITEM_REVEAL_OFFSET_MS = 150;
 
-export default function Timeline({ items }: TimelineProps) {
+export default function Timeline({ items, profileHeader }: TimelineProps) {
   const rootRef = useRef<HTMLDivElement | null>(null);
   const [isVisible, setIsVisible] = useState(false);
 
@@ -124,12 +128,14 @@ export default function Timeline({ items }: TimelineProps) {
       ref={rootRef}
       className={`timeline-root mt-10 border-t pt-8 ${isVisible ? "timeline-visible" : "timeline-hidden"}`}
     >
-      <h2 className="text-primaryText text-xl font-semibold">Timeline History</h2>
+      <h2 className="text-primaryText text-xl font-semibold">
+        Timeline History
+      </h2>
+      {profileHeader ? <ProfileTimelineHeader {...profileHeader} /> : null}
       <div className="mt-6">
         {items.map((item, index) => {
           const styles = TIMELINE_STYLES[item.kind];
           const isLast = index === items.length - 1;
-          const isClickable = !!item.externalHref || !!item.href;
           const lineDelay = `${index * ITEM_STEP_MS}ms`;
           const itemDelay = `${index * ITEM_STEP_MS + ITEM_REVEAL_OFFSET_MS}ms`;
 
@@ -138,10 +144,10 @@ export default function Timeline({ items }: TimelineProps) {
               <div className="flex w-6 shrink-0 flex-col items-center">
                 <div
                   className={`timeline-dot-shell bg-whiteBackground ${item.kind === "transferred" ||
-                    item.kind === "verified" ||
-                    item.kind === "rejected"
-                    ? "h-5 w-5 border-transparent -mt-0.5"
-                    : styles.dot
+                      item.kind === "verified" ||
+                      item.kind === "rejected"
+                      ? "-mt-0.5 h-5 w-5 border-transparent"
+                      : styles.dot
                     }`}
                   style={{ animationDelay: itemDelay }}
                 >
@@ -149,14 +155,15 @@ export default function Timeline({ items }: TimelineProps) {
                     <TimelineTransferIcon />
                   ) : item.kind === "verified" ? (
                     <CheckCircleOutlineIcon />
-                  ) : item.kind === "rejected" || item.kind === "vouchRemoved" ? (
+                  ) : item.kind === "rejected" ||
+                    item.kind === "vouchRemoved" ? (
                     <CrossCircleIcon />
                   ) : (
                     <div className={`timeline-dot-core ${styles.accent}`} />
                   )}
                 </div>
                 {!isLast && (
-                  <div className="timeline-connector-track mt-0.5 self-center translate-x-[0.5px]">
+                  <div className="timeline-connector-track mt-0.5 translate-x-[0.5px] self-center">
                     <div
                       className={`timeline-connector-fill ${styles.accent}`}
                       style={{ animationDelay: lineDelay }}
@@ -169,14 +176,35 @@ export default function Timeline({ items }: TimelineProps) {
                 style={{ animationDelay: itemDelay }}
               >
                 <div className="flex flex-wrap items-center gap-x-2 gap-y-1 leading-tight">
-                  <span className={`inline-flex items-center gap-1 font-semibold ${styles.text}`}>
-                    {item.title}
-                    {isClickable && (
+                  {item.externalHref ? (
+                    <a
+                      href={item.externalHref}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="group/timeline-link inline-flex items-center gap-1 font-semibold hover:opacity-80"
+                    >
+                      <span className={styles.text}>{item.title}</span>
                       <span className="text-secondaryText inline-flex">
                         <NewTabIcon className="h-4 w-4 fill-current transition-transform duration-200 group-hover/timeline-link:-translate-y-0.5 group-hover/timeline-link:translate-x-0.5" />
                       </span>
-                    )}
-                  </span>
+                    </a>
+                  ) : item.href ? (
+                    <Link
+                      href={item.href}
+                      className="group/timeline-link inline-flex items-center gap-1 font-semibold hover:opacity-80"
+                    >
+                      <span className={styles.text}>{item.title}</span>
+                      <span className="text-secondaryText inline-flex">
+                        <NewTabIcon className="h-4 w-4 fill-current transition-transform duration-200 group-hover/timeline-link:-translate-y-0.5 group-hover/timeline-link:translate-x-0.5" />
+                      </span>
+                    </Link>
+                  ) : (
+                    <span
+                      className={`inline-flex items-center gap-1 font-semibold ${styles.text}`}
+                    >
+                      {item.title}
+                    </span>
+                  )}
                   {item.chainId && item.kind !== "transferred" && (
                     <span className="text-secondaryText inline-flex items-center gap-1 text-sm font-normal">
                       <ChainLogo
@@ -196,22 +224,7 @@ export default function Timeline({ items }: TimelineProps) {
 
           return (
             <div key={item.id}>
-              {item.externalHref ? (
-                <a
-                  href={item.externalHref}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="group/timeline-link block hover:opacity-90"
-                >
-                  {content}
-                </a>
-              ) : item.href ? (
-                <Link href={item.href} className="group/timeline-link block hover:opacity-90">
-                  {content}
-                </Link>
-              ) : (
-                content
-              )}
+              {content}
             </div>
           );
         })}

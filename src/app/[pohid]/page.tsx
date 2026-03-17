@@ -1,4 +1,3 @@
-import cn from "classnames";
 import ExternalLink from "components/ExternalLink";
 import Card from "components/Request/Card";
 import TimeAgo from "components/TimeAgo";
@@ -16,12 +15,16 @@ import { HumanityQuery } from "generated/graphql";
 import Image from "next/image";
 import Link from "next/link";
 import React from "react";
+import { Suspense } from "react";
 import { shortenAddress } from "utils/address";
 import { machinifyId, prettifyId } from "utils/identifier";
+import { getProfileTimelineData } from "data/requestTimeline";
+import { TimelineHistorySectionSkeleton } from "./[chain]/[request]/TimelineSection";
 import CrossChain from "./CrossChain";
 import Renew from "./Renew";
 import Revoke from "./Revoke";
-import { getStatus,RequestStatus } from "utils/status";
+import { getStatus, RequestStatus } from "utils/status";
+import { ProfileTimelineSection } from "./TimelineSection";
 
 type PoHRequest = ArrayElement<
   NonNullable<HumanityQuery["humanity"]>["requests"]
@@ -35,11 +38,10 @@ type WinnerClaimRequest = NonNullable<
 >["winnerClaim"][0];
 
 type WinnerClaimData = {
-  chainId: SupportedChainId | boolean;
-  status: string;
-  request: WinnerClaimRequest | undefined;
-  exists: boolean;
-  requestStatus: RequestStatus;
+  chainId?: SupportedChainId;
+  request?: WinnerClaimRequest;
+  status?: string;
+  requestStatus?: RequestStatus;
 };
 
 const isTransferArtifactRequest = (request: {
@@ -48,9 +50,7 @@ const isTransferArtifactRequest = (request: {
     id: string;
   } | null;
 }) =>
-  request.status?.id === "transferred" ||
-  request.status?.id === "transferring" ||
-  Number(request.index) <= -100;
+  request.status?.id === "transferred" || request.status?.id === "transferring";
 
 interface PageProps {
   params: { pohid: string };
@@ -96,105 +96,111 @@ async function Profile({ params: { pohid } }: PageProps) {
     : null;
 
   const retrieveWinnerClaimData = (): WinnerClaimData => {
-    let chainId: SupportedChainId | boolean = false;
+    let chainId;
     let status;
-    let request: WinnerClaimRequest | undefined = undefined;
-    let exists: boolean = false;
+    let currentRequest;
     let requestQuery;
     let requestStatus;
     if (homeChain && lastEvidenceChain) {
-      request = humanity[lastEvidenceChain.id].humanity!.winnerClaim[0];
+      const request = humanity[lastEvidenceChain.id].humanity!.winnerClaim[0];
       if (request) {
         requestQuery = humanity[lastEvidenceChain.id]!.humanity!.requests.find(
           (req) => req.index === request!.index,
         );
-        requestStatus = getStatus({
-          status: { id: requestQuery?.status.id || "resolved" },
-          creationTime: requestQuery?.creationTime || 0,
-          expirationTime: requestQuery?.expirationTime,
-          index: request.index,
-          revocation: requestQuery!.revocation,
-          winnerParty: requestQuery?.winnerParty,
-        }, { humanityLifespan: contractData[lastEvidenceChain.id].humanityLifespan });
-        if (requestStatus === RequestStatus.EXPIRED) {
-          request = undefined;
-        } else {
-          exists = true;
+        requestStatus = getStatus(
+          {
+            status: { id: requestQuery?.status.id || "resolved" },
+            creationTime: requestQuery?.creationTime || 0,
+            expirationTime: requestQuery?.expirationTime,
+            index: request.index,
+            revocation: requestQuery!.revocation,
+            winnerParty: requestQuery?.winnerParty,
+          },
+          {
+            humanityLifespan:
+              contractData[lastEvidenceChain.id].humanityLifespan,
+          },
+        );
+        if (requestStatus !== RequestStatus.EXPIRED) {
           chainId = lastEvidenceChain.id;
+          currentRequest = request;
           status = requestQuery?.status.id as string;
         }
       }
     }
 
-    return { chainId, status, request, exists, requestStatus } as WinnerClaimData;
+    return { chainId, request: currentRequest, status, requestStatus };
   };
 
-  let winnerClaimData: WinnerClaimData = retrieveWinnerClaimData();
+  const winnerClaimData = retrieveWinnerClaimData();
 
-  const pendingRequests = supportedChains.reduce(
-    (acc, chain) => [
-      ...acc,
-          ...(humanity[chain.id].humanity
-        ? humanity[chain.id]!.humanity!.requests.filter((req) => {
-            return (
-              req.status.id !== "withdrawn" &&
-              req.status.id !== "resolved" &&
-              !isTransferArtifactRequest(req) &&
-              !(
-                req.index === winnerClaimData.request?.index &&
-                chain.id === winnerClaimData.chainId
-              )
-            ); // No winner claim
-          }).map((req) => ({
-            ...req,
-            chainId: chain.id,
-            requestStatus: getStatus(req, { humanityLifespan: contractData[chain.id]?.humanityLifespan }),
-          }))
-        : []),
-    ],
-    [] as PoHRequest[],
+  const allRequests = supportedChains.flatMap((chain) =>
+    (humanity[chain.id]?.humanity?.requests ?? []).map((request) => ({
+      ...request,
+      chainId: chain.id,
+      requestStatus: getStatus(request, {
+        humanityLifespan: contractData[chain.id]?.humanityLifespan,
+      }),
+    })),
   );
 
-  const sortRequests = (requests: PoHRequest[]): PoHRequest[] => {
-    requests.sort(
-      (req1, req2) => req2.lastStatusChange - req1.lastStatusChange,
-    );
-    return requests;
-  };
+  const profileRequests = allRequests
+    .filter((request) => {
+      const isCurrentWinningRequest =
+        !!winnerClaimData.request &&
+        request.chainId === winnerClaimData.chainId &&
+        request.index === winnerClaimData.request.index;
 
-  // pastRequests must not contain pendingRequests nor winningClaimRequest if it did not expired
-  const pastRequests = sortRequests(
-    supportedChains.reduce<PoHRequest[]>(
-      (acc, chain) => [
-        ...acc,
-          ...(humanity[chain.id]?.humanity?.requests
-          ? humanity[chain.id]!.humanity!.requests.filter(
-              (req) =>
-                !isTransferArtifactRequest(req) &&
-                !pendingRequests.some(
-                  (pending) =>
-                    req.id === pending.id && pending.chainId === chain.id,
-                ) && // No pending requests
-                (!(
-                  winnerClaimData.request &&
-                  req.index === winnerClaimData.request.index &&
-                  chain.id === winnerClaimData.chainId
-                ) || // No winnerClaimRequest if it did not expired
-                  !winnerClaimData.request), // if winnerClaimRequest has expired it is left as pastRequest
-            ).map((req) => {
-              const requestStatus = getStatus(req, { humanityLifespan: contractData[chain.id]?.humanityLifespan });
-              
-              return {
-                ...req,
-                chainId: chain.id,
-                requestStatus: requestStatus,
-              };
-            })
-          : []),
-      ],
-      [] as PoHRequest[],
-    ),
-  );
+      return !isCurrentWinningRequest;
+    })
+    .filter((request) => !isTransferArtifactRequest(request))
+    .sort(
+      (requestA, requestB) =>
+        Number(requestB.lastStatusChange || requestB.creationTime) -
+        Number(requestA.lastStatusChange || requestA.creationTime),
+    ) as PoHRequest[];
+
+  const activeRequests = allRequests
+    .filter((request) => !isTransferArtifactRequest(request))
+    .filter((request) => {
+      const isCurrentWinningRequest =
+        !!winnerClaimData.request &&
+        request.chainId === winnerClaimData.chainId &&
+        request.index === winnerClaimData.request.index;
+
+      return !isCurrentWinningRequest;
+    })
+    .filter((request) =>
+      [
+        RequestStatus.VOUCHING,
+        RequestStatus.PENDING_CLAIM,
+        RequestStatus.PENDING_REVOCATION,
+        RequestStatus.DISPUTED_CLAIM,
+        RequestStatus.DISPUTED_REVOCATION,
+      ].includes(request.requestStatus),
+    )
+    .sort(
+      (requestA, requestB) =>
+        Number(requestB.lastStatusChange || requestB.creationTime) -
+        Number(requestA.lastStatusChange || requestA.creationTime),
+    ) as PoHRequest[];
+
+  const hasActiveRequests = activeRequests.length > 0;
+  const latestRequest = allRequests
+    .filter((request) => !isTransferArtifactRequest(request))
+    .sort(
+      (requestA, requestB) =>
+        Number(requestB.lastStatusChange || requestB.creationTime) -
+        Number(requestA.lastStatusChange || requestA.creationTime),
+    )[0];
+
+  const latestTransferArtifact = allRequests
+    .filter((request) => isTransferArtifactRequest(request))
+    .sort(
+      (requestA, requestB) =>
+        Number(requestB.lastStatusChange || requestB.creationTime) -
+        Number(requestA.lastStatusChange || requestA.creationTime),
+    )[0];
 
   const lastTransferChain = supportedChains.sort((chain1, chain2) => {
     const out1 = humanity[chain1.id]?.outTransfer;
@@ -211,6 +217,22 @@ async function Profile({ params: { pohid } }: PageProps) {
     +humanity[homeChain.id]!.humanity!.registration!.expirationTime -
       Date.now() / 1000 <
       +contractData[homeChain.id].renewalPeriodDuration;
+  const profileTimelineDataPromise = getProfileTimelineData(
+    pohId,
+    profileRequests,
+  );
+  const profileHeader = latestRequest
+    ? {
+        claimer: latestRequest.claimer,
+        evidence: latestRequest.evidenceGroup.evidence,
+        humanityWinnerClaim:
+          humanity[latestRequest.chainId]?.humanity?.winnerClaim ?? [],
+        registrationEvidenceRevokedReq:
+          latestRequest.registrationEvidenceRevokedReq,
+        requester: latestRequest.requester,
+        revocation: latestRequest.revocation,
+      }
+    : undefined;
 
   return (
     <div className="content">
@@ -234,220 +256,136 @@ async function Profile({ params: { pohid } }: PageProps) {
           </span>
         </div>
 
-        {
-          /* lastEvidenceChain &&  */ homeChain && winnerClaimData.requestStatus !== RequestStatus.EXPIRED ? (
-            <>
-              <div className="mb-2 flex text-emerald-500">
-                Claimed by
-                <ExternalLink
-                  className="ml-2 underline underline-offset-2"
-                  href={explorerLink(
-                    humanity[homeChain.id]!.humanity!.registration!.claimer.id,
-                    homeChain,
-                  )}
-                >
-                  {shortenAddress(
-                    humanity[homeChain.id]!.humanity!.registration!.claimer.id,
-                  )}
-                </ExternalLink>
-              </div>
-
-              <span className="text-secondaryText mb-2">
-                {humanity[homeChain.id]!.humanity!.registration!
-                  .expirationTime <
-                Date.now() / 1000
-                  ? "Expired "
-                  : "Expires "}
-                <TimeAgo
-                  time={
-                    humanity[homeChain.id]!.humanity!.registration!
-                      .expirationTime
-                  }
-                />
-              </span>
-
-              {canRenew ? (
-                <Renew
-                  claimer={
-                    humanity[homeChain.id]!.humanity!.registration!.claimer.id
-                  }
-                  pohId={pohId}
-                />
-              ) : (
-                <span className="text-secondaryText mb-4">
-                  Renewal available{" "}
-                  <TimeAgo
-                    time={
-                      +humanity[homeChain.id]!.humanity!.registration!
-                        .expirationTime -
-                      +contractData[homeChain.id].renewalPeriodDuration
-                    }
-                  />
-                </span>
-              )}
-
-              <Revoke
-                pohId={pohId}
-                arbitrationInfo={contractData[homeChain.id].arbitrationInfo!}
-                homeChain={homeChain}
-                cost={
-                  arbitrationCost +
-                  BigInt(contractData[homeChain.id].baseDeposit)
-                }
-              />
-              <CrossChain
-                claimer={
-                  humanity[homeChain.id]!.humanity!.registration!.claimer.id
-                }
-                contractData={contractData}
-                homeChain={homeChain}
-                pohId={pohId}
-                humanity={humanity}
-                lastTransfer={humanity[lastTransferChain.id].outTransfer}
-                lastTransferChain={lastTransferChain}
-                winningStatus={winnerClaimData.status}
-              />
-            </>
-          ) : pastRequests.length > 0 &&
-            pastRequests[0].status.id === "transferred" ? (
-            <CrossChain
-              claimer={
-                humanity[lastTransferChain.id]?.humanity!.registration?.claimer
-                  .id
-              }
-              contractData={contractData}
-              homeChain={idToChain(getForeignChain(lastTransferChain.id))!}
-              pohId={pohId}
-              humanity={humanity}
-              lastTransfer={humanity[lastTransferChain.id].outTransfer}
-              lastTransferChain={lastTransferChain}
-              winningStatus={"transferred"}
-            />
-          ) : (
-            <>
-              <span className="text-orange mb-6">Not claimed</span>
-              {!pendingRequests.length?
-              <Link 
-                className="btn-main mb-6"
-                href={`/${pohId}/claim`}
-                target="_blank"
-                rel="noopener noreferrer"
+        {homeChain &&
+        winnerClaimData.requestStatus !== RequestStatus.EXPIRED ? (
+          <>
+            <div className="mb-2 flex text-emerald-500">
+              Claimed by
+              <ExternalLink
+                className="ml-2 underline underline-offset-2"
+                href={explorerLink(
+                  humanity[homeChain.id]!.humanity!.registration!.claimer.id,
+                  homeChain,
+                )}
               >
-                Claim humanity
-              </Link> : null}
-             
-            </>
-          )
-        }
-      </div>
-
-      <div className={"flex flex-col sm:flex-row sm:gap-4"}>
-        {winnerClaimData.exists && (
-          <div>
-            <div className="text-primaryText mb-1 mt-4 p-4">
-              {winnerClaimData.status !== "transferring"
-                ? "Winning claim"
-                : "Crossing chain (update)"}
+                {shortenAddress(
+                  humanity[homeChain.id]!.humanity!.registration!.claimer.id,
+                )}
+              </ExternalLink>
             </div>
-            <div
-              className={cn("grid", {
-                "grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4":
-                  !pendingRequests.length,
-              })}
-            >
-              {homeChain ? (
+
+            <span className="text-secondaryText mb-2">
+              {humanity[homeChain.id]!.humanity!.registration!.expirationTime <
+              Date.now() / 1000
+                ? "Expired "
+                : "Expires "}
+              <TimeAgo
+                time={
+                  humanity[homeChain.id]!.humanity!.registration!.expirationTime
+                }
+              />
+            </span>
+            {winnerClaimData.request && homeChain ? (
+              <div className="mt-4 flex items-center justify-center">
                 <Card
                   chainId={winnerClaimData.chainId as SupportedChainId}
                   claimer={
                     humanity[homeChain.id]!.humanity!.registration!.claimer.id
                   }
-                  evidence={winnerClaimData.request!.evidenceGroup.evidence}
+                  evidence={winnerClaimData.request.evidenceGroup.evidence}
                   humanity={{
                     id: pohId,
                     winnerClaim:
                       humanity[winnerClaimData.chainId as SupportedChainId]!
                         .humanity!.winnerClaim,
                   }}
-                  index={winnerClaimData.request!.index}
+                  index={winnerClaimData.request.index}
                   requester={
                     humanity[homeChain.id]!.humanity!.registration!.claimer.id
                   }
                   revocation={false}
                   registrationEvidenceRevokedReq={""}
-                  requestStatus={winnerClaimData.requestStatus}
-
+                  requestStatus={winnerClaimData.requestStatus as RequestStatus}
                 />
-              ) : null}
-            </div>
-          </div>
-        )}
-
-        {pendingRequests.length > 0 && (
-          <div>
-            <div className="text-primaryText mb-1 mt-4 p-4">
-              {pendingRequests.length} pending request
-              {pendingRequests.length !== 1 && "s"}
-            </div>
-            <div
-              className={cn(
-                "grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3",
-                homeChain && winnerClaimData.request!
-                  ? "md:grid-cols-2 xl:grid-cols-3"
-                  : "sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4",
-              )}
-            >
-              {pendingRequests.map((req) => (
-                <Card
-                  key={req.id}
-                  chainId={req.chainId}
-                  claimer={req.claimer.id}
-                  evidence={req.evidenceGroup.evidence}
-                  humanity={{
-                    id: pohId,
-                    winnerClaim: humanity![req.chainId]!.humanity!.winnerClaim,
-                  }}
-                  index={req.index}
-                  requester={req.requester}
-                  revocation={req.revocation}
-                  registrationEvidenceRevokedReq={
-                    req.registrationEvidenceRevokedReq
+              </div>
+            ) : null}
+            {canRenew ? (
+              <Renew
+                claimer={
+                  humanity[homeChain.id]!.humanity!.registration!.claimer.id
+                }
+                pohId={pohId}
+              />
+            ) : (
+              <span className="text-secondaryText mb-4 mt-2">
+                Renewal available{" "}
+                <TimeAgo
+                  time={
+                    +humanity[homeChain.id]!.humanity!.registration!
+                      .expirationTime -
+                    +contractData[homeChain.id].renewalPeriodDuration
                   }
-                  requestStatus={req.requestStatus}
                 />
-              ))}
-            </div>
-          </div>
+              </span>
+            )}
+
+            <Revoke
+              pohId={pohId}
+              arbitrationInfo={contractData[homeChain.id].arbitrationInfo!}
+              homeChain={homeChain}
+              cost={
+                arbitrationCost + BigInt(contractData[homeChain.id].baseDeposit)
+              }
+            />
+            <CrossChain
+              claimer={
+                humanity[homeChain.id]!.humanity!.registration!.claimer.id
+              }
+              contractData={contractData}
+              homeChain={homeChain}
+              pohId={pohId}
+              humanity={humanity}
+              lastTransfer={humanity[lastTransferChain.id].outTransfer}
+              lastTransferChain={lastTransferChain}
+              winningStatus={winnerClaimData.status}
+            />
+          </>
+        ) : latestTransferArtifact?.status.id === "transferred" ? (
+          <CrossChain
+            claimer={
+              humanity[lastTransferChain.id]?.humanity!.registration?.claimer.id
+            }
+            contractData={contractData}
+            homeChain={idToChain(getForeignChain(lastTransferChain.id))!}
+            pohId={pohId}
+            humanity={humanity}
+            lastTransfer={humanity[lastTransferChain.id].outTransfer}
+            lastTransferChain={lastTransferChain}
+            winningStatus={"transferred"}
+          />
+        ) : (
+          <>
+            <span className="text-orange mb-6">Not claimed</span>
+            {!hasActiveRequests ? (
+              <Link
+                className="btn-main mb-6"
+                href={`/${pohId}/claim`}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Claim humanity
+              </Link>
+            ) : null}
+          </>
         )}
       </div>
-      {pastRequests.length > 0 && (
-        <>
-          <div className="text-primaryText mb-1 mt-8 p-4">
-            {pastRequests.length} past request
-            {pastRequests.length !== 1 && "s"}
-          </div>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4">
-            {pastRequests.map((req) => (
-              <Card
-                key={req.chainId + "/" + req.id}
-                chainId={req.chainId}
-                claimer={req.claimer.id}
-                evidence={req.evidenceGroup.evidence}
-                humanity={{
-                  id: pohId,
-                  winnerClaim: humanity![req.chainId]!.humanity!.winnerClaim,
-                }}
-                index={req.index}
-                requester={req.requester}
-                revocation={req.revocation}
-                registrationEvidenceRevokedReq={
-                  req.registrationEvidenceRevokedReq
-                }
-                requestStatus={req.requestStatus}
-              />
-            ))}
-          </div>
-        </>
-      )}
+
+      <Suspense fallback={<TimelineHistorySectionSkeleton />}>
+        <ProfileTimelineSection
+          profileHeader={profileHeader}
+          timelineDataPromise={profileTimelineDataPromise}
+        />
+      </Suspense>
     </div>
   );
 }
