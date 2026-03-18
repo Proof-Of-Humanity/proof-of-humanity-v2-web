@@ -68,11 +68,20 @@ export const legacyChain =
 
 export type SupportedChain = ArrayElement<typeof supportedChains>;
 export type SupportedChainId = SupportedChain["id"];
+export type AnySupportedChain =
+  | ArrayElement<typeof supportedChainsMain>
+  | ArrayElement<typeof supportedChainsTest>;
+export type AnySupportedChainId = AnySupportedChain["id"];
 
 export function nameToChain(name: string): SupportedChain | null {
   return configSetSelection.chainSet === ChainSet.MAINNETS
     ? nameToChainMain(name)
     : nameToChainTest(name);
+}
+
+export function nameToChainAny(name: string): AnySupportedChain | null {
+  const normalized = decodeURIComponent(name);
+  return nameToChainMain(normalized) ?? nameToChainTest(normalized);
 }
 
 export function idToChain(id: number): SupportedChain | null {
@@ -81,9 +90,17 @@ export function idToChain(id: number): SupportedChain | null {
     : idToChainTest(id);
 }
 
+export function idToChainAny(id: number): AnySupportedChain | null {
+  return idToChainMain(id) ?? idToChainTest(id);
+}
+
 export function paramToChain(param: string): SupportedChain | null {
   if (nameToChain(param)) return nameToChain(param);
   else return idToChain(+param);
+}
+
+export function paramToChainAny(param: string): AnySupportedChain | null {
+  return nameToChainAny(param) ?? idToChainAny(+param);
 }
 
 export function getChainRpc(id: number): string {

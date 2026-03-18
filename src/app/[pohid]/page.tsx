@@ -77,22 +77,22 @@ async function Profile({ params: { pohid } }: PageProps) {
 
   const arbitrationCost = homeChain
     ? await getArbitrationCost(
-        homeChain,
-        contractData[homeChain.id].arbitrationInfo.arbitrator,
-        contractData[homeChain.id].arbitrationInfo.extraData,
-      )
+      homeChain,
+      contractData[homeChain.id].arbitrationInfo.arbitrator,
+      contractData[homeChain.id].arbitrationInfo.extraData,
+    )
     : 0n;
 
   const lastEvidenceChain = homeChain
     ? supportedChains.sort((chain1, chain2) => {
-        const req1 = humanity[chain1.id]?.humanity?.winnerClaim[0];
-        const req2 = humanity[chain2.id]?.humanity?.winnerClaim[0];
-        return req2
-          ? req1
-            ? Number(req2.resolutionTime) - Number(req1.resolutionTime)
-            : 1
-          : -1;
-      })[0]
+      const req1 = humanity[chain1.id]?.humanity?.winnerClaim[0];
+      const req2 = humanity[chain2.id]?.humanity?.winnerClaim[0];
+      return req2
+        ? req1
+          ? Number(req2.resolutionTime) - Number(req1.resolutionTime)
+          : 1
+        : -1;
+    })[0]
     : null;
 
   const retrieveWinnerClaimData = (): WinnerClaimData => {
@@ -215,23 +215,23 @@ async function Profile({ params: { pohid } }: PageProps) {
   const canRenew =
     homeChain &&
     +humanity[homeChain.id]!.humanity!.registration!.expirationTime -
-      Date.now() / 1000 <
-      +contractData[homeChain.id].renewalPeriodDuration;
+    Date.now() / 1000 <
+    +contractData[homeChain.id].renewalPeriodDuration;
   const profileTimelineDataPromise = getProfileTimelineData(
     pohId,
     profileRequests,
   );
   const profileHeader = latestRequest
     ? {
-        claimer: latestRequest.claimer,
-        evidence: latestRequest.evidenceGroup.evidence,
-        humanityWinnerClaim:
-          humanity[latestRequest.chainId]?.humanity?.winnerClaim ?? [],
-        registrationEvidenceRevokedReq:
-          latestRequest.registrationEvidenceRevokedReq,
-        requester: latestRequest.requester,
-        revocation: latestRequest.revocation,
-      }
+      claimer: latestRequest.claimer,
+      evidence: latestRequest.evidenceGroup.evidence,
+      humanityWinnerClaim:
+        humanity[latestRequest.chainId]?.humanity?.winnerClaim ?? [],
+      registrationEvidenceRevokedReq:
+        latestRequest.registrationEvidenceRevokedReq,
+      requester: latestRequest.requester,
+      revocation: latestRequest.revocation,
+    }
     : undefined;
 
   return (
@@ -257,7 +257,7 @@ async function Profile({ params: { pohid } }: PageProps) {
         </div>
 
         {homeChain &&
-        winnerClaimData.requestStatus !== RequestStatus.EXPIRED ? (
+          winnerClaimData.requestStatus !== RequestStatus.EXPIRED ? (
           <>
             <div className="mb-2 flex text-emerald-500">
               Claimed by
@@ -276,7 +276,7 @@ async function Profile({ params: { pohid } }: PageProps) {
 
             <span className="text-secondaryText mb-2">
               {humanity[homeChain.id]!.humanity!.registration!.expirationTime <
-              Date.now() / 1000
+                Date.now() / 1000
                 ? "Expired "
                 : "Expires "}
               <TimeAgo
@@ -286,7 +286,7 @@ async function Profile({ params: { pohid } }: PageProps) {
               />
             </span>
             {winnerClaimData.request && homeChain ? (
-              <div className="mt-4 flex items-center justify-center">
+              <div className="mt-4 flex items-center justify-center mb-3">
                 <Card
                   chainId={winnerClaimData.chainId as SupportedChainId}
                   claimer={
@@ -317,7 +317,7 @@ async function Profile({ params: { pohid } }: PageProps) {
                 pohId={pohId}
               />
             ) : (
-              <span className="text-secondaryText mb-4 mt-2">
+              <span className="text-secondaryText mb-4">
                 Renewal available{" "}
                 <TimeAgo
                   time={
