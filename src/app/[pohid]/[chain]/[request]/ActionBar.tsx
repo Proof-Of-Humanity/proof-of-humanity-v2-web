@@ -11,7 +11,7 @@ import { RequestQuery } from "generated/graphql";
 import useChainParam from "hooks/useChainParam";
 import useWeb3Loaded from "hooks/useWeb3Loaded";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "react-toastify";
 import useSWR from "swr";
 import { getStatusLabel, getStatusColor, RequestStatus } from "utils/status";
@@ -139,6 +139,25 @@ export default function ActionBar({
   ]);
 
   const [canAdvance, setCanAdvance] = useState(true);
+  const actionRef = useRef(action);
+
+  useEffect(() => {
+    actionRef.current = action;
+  }, [action]);
+
+  const refreshAfterWrite = () => {
+    window.setTimeout(() => router.refresh(), 1000);
+    [2000, 4000].forEach((delay) => {
+      window.setTimeout(() => {
+        if (
+          actionRef.current === ActionType.ADVANCE ||
+          actionRef.current === ActionType.EXECUTE
+        ) {
+          router.refresh();
+        }
+      }, delay);
+    });
+  };
 
   const [prepareExecute, execute, executeStatus] = usePoHWrite(
     "executeRequest",
@@ -149,7 +168,7 @@ export default function ActionBar({
         },
         onSuccess() {
           toast.success("Request executed successfully");
-          setTimeout(() => router.refresh(), 1000);
+          refreshAfterWrite();
         },
       }),
       [router],
@@ -164,7 +183,7 @@ export default function ActionBar({
         },
         onSuccess() {
           toast.success("Request advanced to resolving state");
-          setTimeout(() => router.refresh(), 1000);
+          refreshAfterWrite();
         },
       }),
       [router],
