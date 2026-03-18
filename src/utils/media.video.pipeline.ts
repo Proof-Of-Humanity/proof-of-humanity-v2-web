@@ -1,5 +1,6 @@
 import {
   detectVideoFormat,
+  loadFFMPEG,
   isFFmpegLoadError,
   getVideoMimeType,
   probeVideoMetrics,
@@ -83,6 +84,14 @@ const buildAggregatedValidationError = (
   };
 };
 
+export const warmVideoPipeline = (): void => {
+  if (DISABLE_FFMPEG) return;
+  if (typeof window === "undefined") return;
+  if (typeof SharedArrayBuffer === "undefined") return;
+
+  loadFFMPEG().catch(() => undefined);
+};
+
 export const processVideoInput = async (input: Blob): Promise<VideoPipelineResult> => {
   try {
     const validationErrors: VideoPipelineError[] = [];
@@ -113,7 +122,7 @@ export const processVideoInput = async (input: Blob): Promise<VideoPipelineResul
       let rawMeta: BrowserVideoMetadata | null = null;
       try {
         rawMeta = await readVideoMetadata(normalizedBlob);
-      } catch {}
+      } catch { }
 
       if (rawMeta !== null) {
         if (isFiniteNumber(rawMeta.duration)) {
@@ -215,7 +224,7 @@ export const processVideoInput = async (input: Blob): Promise<VideoPipelineResul
     ) {
       try {
         fallbackMeta = await readVideoMetadata(normalizedBlob);
-      } catch {}
+      } catch { }
     }
 
     const durationForChecks = isFiniteNumber(probeDuration)
@@ -361,7 +370,7 @@ export const processVideoInput = async (input: Blob): Promise<VideoPipelineResul
       try {
         const postBuffer = await processedBlob.arrayBuffer();
         postProbe = await probeVideoMetrics(postBuffer);
-      } catch {}
+      } catch { }
 
       if (postProbe) {
         const postDuration = postProbe.durationSec;

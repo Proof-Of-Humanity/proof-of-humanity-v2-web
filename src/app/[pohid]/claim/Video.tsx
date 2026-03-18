@@ -16,6 +16,7 @@ import {
   IS_IOS,
   MEDIA_MESSAGES,
   processVideoInput,
+  warmVideoPipeline,
   VIDEO_LIMITS,
 } from "utils/media";
 import { useAccount } from "wagmi";
@@ -62,6 +63,10 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
   const [pending, loadingMessage] = loading.use();
   const dedupeMessages = (messages: string[]): string[] =>
     [...new Set(messages.filter(Boolean))];
+
+  useEffect(() => {
+    warmVideoPipeline();
+  }, []);
 
   const setValidationError = (message: string) => {
     setVideoValidationErrors([message]);
