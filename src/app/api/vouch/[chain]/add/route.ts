@@ -1,5 +1,5 @@
 import { HttpStatusCode } from "axios";
-import { getChainRpc, paramToChain } from "config/chains";
+import { getChainRpc, paramToChainAny } from "config/chains";
 import datalake from "config/supabase";
 
 import { getContractInfo } from "contracts";
@@ -29,7 +29,7 @@ export async function POST(
   { params }: { params: AddVouchParams },
 ) {
   try {
-    const chain = paramToChain(params.chain);
+    const chain = paramToChainAny(params.chain);
 
     if (!chain) throw new Error("unsupported chain");
 
