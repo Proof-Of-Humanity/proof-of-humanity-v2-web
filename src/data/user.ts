@@ -66,3 +66,5 @@ export const getMyData = async (account: string) => {
     },
   };
 };
+
+export type MeData = Awaited<ReturnType<typeof getMyData>>;

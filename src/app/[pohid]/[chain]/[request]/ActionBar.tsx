@@ -11,7 +11,7 @@ import { RequestQuery } from "generated/graphql";
 import useChainParam from "hooks/useChainParam";
 import useWeb3Loaded from "hooks/useWeb3Loaded";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo } from "react";
 import { toast } from "react-toastify";
 import useSWR from "swr";
 import { getStatusLabel, getStatusColor, RequestStatus } from "utils/status";
@@ -52,11 +52,11 @@ interface ActionBarProps {
   offChainVouches: { voucher: Address; expiration: number; signature: Hash }[];
   arbitrationHistory: {
     __typename?: "ArbitratorHistory" | undefined;
-    updateTime: any;
+    updateTime: string;
     registrationMeta: string;
     id: string;
-    arbitrator: any;
-    extraData: any;
+    arbitrator: Address;
+    extraData: Hash;
   };
   requestStatus: RequestStatus;
   humanityExpirationTime?: number;
@@ -138,8 +138,6 @@ export default function ActionBar({
     contractData.challengePeriodDuration,
   ]);
 
-  const [canAdvance, setCanAdvance] = useState(true);
-
   const [prepareExecute, execute, executeStatus] = usePoHWrite(
     "executeRequest",
     useMemo(
@@ -217,20 +215,23 @@ export default function ActionBar({
           }),
         ],
       });
-      setCanAdvance(true);
     }
     if (action === ActionType.EXECUTE) {
       prepareExecute({ args: [pohId, BigInt(index)] });
     }
   }, [
     address,
-    prepareExecute,
     action,
+    chain.id,
+    index,
+    offChainVouches,
+    onChainVouches,
+    pohId,
+    prepareAdvance,
+    prepareExecute,
     requester,
     revocation,
-    chain,
     userChainId,
-    canAdvance,
   ]);
 
   useEffect(() => {
@@ -445,7 +446,7 @@ export default function ActionBar({
                 />
               ) : null}
               <ActionButton
-                disabled={isAdvancePrepareError || userChainId !== chain.id || !canAdvance}
+                disabled={isAdvancePrepareError || userChainId !== chain.id}
                 isLoading={isAdvanceLoading}
                 onClick={advanceFire}
                 label={isAdvanceLoading ? "Advancing" : "Advance"}
@@ -518,7 +519,7 @@ export default function ActionBar({
                 extraData={arbitrationHistory.extraData}
                 contributor={address!}
                 claimer={requester}
-                challenger={currentChallenge.challenger?.id}
+                challenger={currentChallenge.challenger?.id as Address}
                 currentChallenge={currentChallenge}
                 chainId={chain.id}
                 revocation={revocation}

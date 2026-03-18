@@ -26,7 +26,6 @@ export default function Previewed({
               src={uri}
               controls
               playsInline
-              // @ts-expect-error webkit-playsinline is a non-standard attribute for older iOS Safari
               webkit-playsinline=""
               onClick={(event) => event.stopPropagation()}
               onEnded={close}

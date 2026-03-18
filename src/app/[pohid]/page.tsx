@@ -14,7 +14,6 @@ import { getHumanityData } from "data/humanity";
 import { HumanityQuery } from "generated/graphql";
 import Image from "next/image";
 import Link from "next/link";
-import React from "react";
 import { Suspense } from "react";
 import { shortenAddress } from "utils/address";
 import { machinifyId, prettifyId } from "utils/identifier";
@@ -52,11 +51,11 @@ const isTransferArtifactRequest = (request: {
 }) =>
   request.status?.id === "transferred" || request.status?.id === "transferring";
 
-interface PageProps {
-  params: { pohid: string };
-}
+async function Profile(props: PageProps<"/[pohid]">) {
+  const params = await props.params;
 
-async function Profile({ params: { pohid } }: PageProps) {
+  const { pohid } = params;
+
   const pohId = machinifyId(pohid);
 
   if (!pohId) return <>Not found</>;

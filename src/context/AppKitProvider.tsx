@@ -1,31 +1,37 @@
-'use client'
+"use client";
 
-import { wagmiAdapter, projectId } from '../config/appkit'
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { createAppKit } from '@reown/appkit/react'
-import { gnosis, mainnet } from '@reown/appkit/networks'
-import React, { useEffect, useState, type ReactNode } from 'react'
-import { WagmiProvider } from 'wagmi'
-import { supportedChains } from '../config/chains'
-import AutoSwitchNetwork from 'components/AutoSwitchNetwork'
-import { Products } from '@kleros/kleros-app'
-import dynamic from 'next/dynamic'
+import { wagmiAdapter, projectId } from "../config/appkit";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { createAppKit } from "@reown/appkit/react";
+import { gnosis } from "@reown/appkit/networks";
+import { useEffect, useState, type ReactNode } from "react";
+import { WagmiProvider } from "wagmi";
+import { supportedChains } from "../config/chains";
+import AutoSwitchNetwork from "components/AutoSwitchNetwork";
+import { Products } from "@kleros/kleros-app";
+import dynamic from "next/dynamic";
 
-const DynamicAtlasProvider = dynamic(() => import('@kleros/kleros-app').then(mod => mod.AtlasProvider), {
-  ssr: false,
-});
+const DynamicAtlasProvider = dynamic(
+  () => import("@kleros/kleros-app").then((mod) => mod.AtlasProvider),
+  {
+    ssr: false,
+  },
+);
 
-const queryClient = new QueryClient()
+const queryClient = new QueryClient();
 
 if (!projectId) {
-  throw new Error('Project ID is not defined')
+  throw new Error("Project ID is not defined");
 }
 
 const metadata = {
-  name: 'Proof of Humanity',
-  description: 'Proof of Humanity - Network of Human',
-  url: typeof window !== 'undefined' ? window.location.origin : 'https://v2.proofofhumanity.id',
-  icons: ['https://v2.proofofhumanity.id/logo.svg']
+  name: "Proof of Humanity",
+  description: "Proof of Humanity - Network of Human",
+  url:
+    typeof window !== "undefined"
+      ? window.location.origin
+      : "https://v2.proofofhumanity.id",
+  icons: ["https://v2.proofofhumanity.id/logo.svg"],
 };
 
 createAppKit({
@@ -36,20 +42,20 @@ createAppKit({
   metadata,
   features: {
     analytics: true,
-  }
+  },
 });
 
 interface AppKitProviderProps {
-  children: ReactNode
+  children: ReactNode;
 }
 
 export default function AppKitProvider({ children }: AppKitProviderProps) {
   // Add state to handle client-side rendering
-  const [mounted, setMounted] = useState(false)
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    setMounted(true)
-  }, [])
+    setMounted(true);
+  }, []);
 
   return (
     <WagmiProvider config={wagmiAdapter.wagmiConfig}>
@@ -61,9 +67,10 @@ export default function AppKitProvider({ children }: AppKitProviderProps) {
             product: Products.ProofOfHumanity,
             wagmiConfig: wagmiAdapter.wagmiConfig,
           }}
-        >{mounted && children}
+        >
+          {mounted && children}
         </DynamicAtlasProvider>
       </QueryClientProvider>
     </WagmiProvider>
-  )
-} 
+  );
+}

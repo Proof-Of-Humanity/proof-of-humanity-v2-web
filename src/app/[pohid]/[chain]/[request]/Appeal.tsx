@@ -26,7 +26,7 @@ import { useMemo, useRef, useState } from "react";
 import { toast } from "react-toastify";
 import { RequestStatus } from "utils/status";
 import { eth2Wei, formatEth } from "utils/misc";
-import { Address } from "viem";
+import { Address, Hash } from "viem";
 import { useChainId } from "wagmi";
 import { useRouter } from "next/navigation";
 
@@ -92,7 +92,7 @@ const SideFunding: React.FC<SideFundingProps> = ({
           errorRef.current = true;
         },
       }),
-      [loading],
+      [loading, onSuccess],
     ),
   );
 
@@ -135,7 +135,7 @@ interface AppealProps {
   pohId: Address;
   requestIndex: number;
   arbitrator: Address;
-  extraData: any;
+  extraData: Hash;
   contributor: Address;
   claimer: Address;
   challenger: Address;

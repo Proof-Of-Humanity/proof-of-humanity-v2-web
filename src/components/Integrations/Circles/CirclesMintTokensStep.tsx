@@ -1,7 +1,6 @@
-import React from 'react';
-import Accordion from 'components/Accordion';
-import CirclesStepCard from 'components/Integrations/Circles/CirclesStepCard';
-import { InfoSlide } from 'types/integrations';
+import Accordion from "components/Accordion";
+import CirclesStepCard from "components/Integrations/Circles/CirclesStepCard";
+import { InfoSlide } from "types/integrations";
 
 interface CirclesMintTokensStepProps {
   steps: InfoSlide[];
@@ -16,20 +15,20 @@ export default function CirclesMintTokensStep({
   currentStep,
   setCurrentStep,
   isOpen,
-  onToggle
+  onToggle,
 }: CirclesMintTokensStepProps) {
   if (!steps || steps.length === 0) return null;
-  
+
   return (
-    <Accordion 
-      title="Step 3 - Join Our Group On the Gnosis App And Earn $CRC" 
+    <Accordion
+      title="Step 3 - Join Our Group On the Gnosis App And Earn $CRC"
       className="w-full"
       isOpen={isOpen}
       onToggle={onToggle}
     >
-      <div className="p-4 md:p-6 flex flex-col w-full">
-        <CirclesStepCard 
-          step={steps[currentStep]} 
+      <div className="flex w-full flex-col p-4 md:p-6">
+        <CirclesStepCard
+          step={steps[currentStep]}
           onPrevious={() => setCurrentStep(currentStep - 1)}
           onNext={() => setCurrentStep(currentStep + 1)}
           previousStep={currentStep > 0}
@@ -38,4 +37,4 @@ export default function CirclesMintTokensStep({
       </div>
     </Accordion>
   );
-} 
+}

@@ -10,12 +10,13 @@ import { getContractInfo } from "contracts";
 import { toast } from "react-toastify";
 import { SupportedChain, idToChain } from "config/chains";
 import ActionButton from "components/ActionButton";
+import { MeData } from "data/user";
 
 interface VouchButtonProps {
   pohId: Hash;
   claimer: Address;
-  web3Loaded: any;
-  me: any;
+  web3Loaded: boolean;
+  me: MeData | undefined;
   chain: SupportedChain;
   address: Address | undefined;
 }
@@ -47,7 +48,7 @@ export default function Vouch({
           setTimeout(() => router.refresh(), 1000);
         },
       }),
-      [],
+      [router],
     ),
   );
 

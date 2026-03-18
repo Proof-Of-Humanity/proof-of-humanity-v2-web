@@ -99,8 +99,8 @@ function Photo({ advance, photo$ }: PhotoProps) {
 
       if (photo?.uri) URL.revokeObjectURL(photo.uri);
       photo$.set({ content: sanitized, uri: URL.createObjectURL(sanitized) });
-    } catch (err: any) {
-      toast.error(err.message);
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : "Failed to crop photo");
     } finally {
       loading.stop();
     }
@@ -262,7 +262,7 @@ function Photo({ advance, photo$ }: PhotoProps) {
                 setMaxZoom(
                   Math.floor(
                     Math.min(media.naturalWidth, media.naturalHeight) /
-                      Math.min(PHOTO_LIMITS.minWidth, PHOTO_LIMITS.minHeight),
+                    Math.min(PHOTO_LIMITS.minWidth, PHOTO_LIMITS.minHeight),
                   ),
                 );
               }}

@@ -3,15 +3,11 @@ import { paramToChain } from "config/chains";
 import datalake from "config/supabase";
 import { NextRequest, NextResponse } from "next/server";
 
-interface RequestParams {
-  chain: string;
-  min: string;
-}
-
 export async function GET(
   _request: NextRequest,
-  { params }: { params: RequestParams },
+  context: RouteContext<"/api/vouch/[chain]/requests-min/[min]">,
 ) {
+  const params = await context.params;
   try {
     const chain = paramToChain(params.chain);
 
@@ -26,7 +22,7 @@ export async function GET(
     if (error) throw new Error(error.message);
 
     return NextResponse.json(data, { status: HttpStatusCode.Ok });
-  } catch (err: any) {
+  } catch (err: unknown) {
     return NextResponse.json(
       { error: "Something went wrong" },
       { status: HttpStatusCode.InternalServerError },

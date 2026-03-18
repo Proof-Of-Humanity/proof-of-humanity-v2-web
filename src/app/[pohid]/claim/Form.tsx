@@ -16,8 +16,7 @@ import usePoHWrite from "contracts/hooks/usePoHWrite";
 import { ContractData } from "data/contract";
 import { RegistrationQuery } from "generated/graphql";
 import { useLoading } from "hooks/useLoading";
-import { RedirectType } from "next/dist/client/components/redirect";
-import { redirect, useParams } from "next/navigation";
+import { RedirectType, redirect, useParams } from "next/navigation";
 import { Fragment, MutableRefObject, useEffect, useMemo, useRef } from "react";
 import { toast } from "react-toastify";
 import { machinifyId } from "utils/identifier";
@@ -70,11 +69,10 @@ export default function Form({
 }: FormProps) {
   const params = useParams();
   const { address, isConnected } = useAccount();
-  const initiatingAddress: MutableRefObject<typeof address> =
-    useRef(undefined);
+  const initiatingAddress: MutableRefObject<typeof address> = useRef(undefined);
   const chainId = useChainId() as SupportedChainId;
 
-  const { uploadFile: uploadToIPFS} = useAtlasProvider();
+  const { uploadFile: uploadToIPFS } = useAtlasProvider();
   const currentContractData = contractData[chainId];
   const currentBaseDeposit = BigInt(currentContractData.baseDeposit);
   const syncedFundingChainId = useRef<SupportedChainId | null>(null);
@@ -133,7 +131,9 @@ export default function Form({
       onFail() {
         state$.uri.set("");
         loading.stop();
-        toast.error("Transaction preparation failed. You may have insufficient funds or are on the wrong network.");
+        toast.error(
+          "Transaction preparation failed. You may have insufficient funds or are on the wrong network.",
+        );
       },
       onReady(fire) {
         fire();
@@ -163,71 +163,71 @@ export default function Form({
 
     state$.uri.set("");
     loading.start("Uploading media");
-  try{
-    const photoFile = media.photo.content as File;
-    const videoFile = media.video.content as File;
-    
-    const [photoUri, videoUri] = await Promise.all([
+    try {
+      const photoFile = media.photo.content as File;
+      const videoFile = media.video.content as File;
+
+      const [photoUri, videoUri] = await Promise.all([
         uploadToIPFS(photoFile, Roles.Photo),
         uploadToIPFS(videoFile, Roles.IdentificationVideo),
       ]);
 
+      if (!photoUri || !videoUri) {
+        toast.error("Failed to upload media.");
+        loading.stop();
+        return;
+      }
 
-    if (!photoUri || !videoUri) {
-      toast.error("Failed to upload media.");
-      loading.stop();
-      return;
-    }
-    
-    const fileJson = {
-      name: state.name,
-      photo: photoUri,
-      video: videoUri,
-    };
-    
-    const fileTextFile = new File([JSON.stringify(fileJson)], "file", {
-      type: "text/plain",
-    });
+      const fileJson = {
+        name: state.name,
+        photo: photoUri,
+        video: videoUri,
+      };
 
-    let fileURI: string | null;
+      const fileTextFile = new File([JSON.stringify(fileJson)], "file", {
+        type: "text/plain",
+      });
+
+      let fileURI: string | null;
       fileURI = await uploadToIPFS(fileTextFile, Roles.Evidence);
 
-    if (!fileURI) {
-      toast.error("Failed to upload media metadata.");
-      loading.stop();
-      return;
-    }
+      if (!fileURI) {
+        toast.error("Failed to upload media metadata.");
+        loading.stop();
+        return;
+      }
 
-    loading.start("Uploading evidence files");
+      loading.start("Uploading evidence files");
 
-    const registrationJson = {
-      name: "Registration",
-      fileURI: fileURI,
-    };
+      const registrationJson = {
+        name: "Registration",
+        fileURI: fileURI,
+      };
 
-    const registrationTextFile = new File(
-      [JSON.stringify(registrationJson)],
-      "registration",
-      {
-        type: "text/plain",
-      },
-    );
+      const registrationTextFile = new File(
+        [JSON.stringify(registrationJson)],
+        "registration",
+        {
+          type: "text/plain",
+        },
+      );
 
-    let registrationUri: string | null;
+      let registrationUri: string | null;
       registrationUri = await uploadToIPFS(
         registrationTextFile,
-        Roles.Evidence
+        Roles.Evidence,
       );
-    if (!registrationUri) {
-      toast.error("Failed to upload registration.");
-      loading.stop();
-      return;
-    }
+      if (!registrationUri) {
+        toast.error("Failed to upload registration.");
+        loading.stop();
+        return;
+      }
 
-    state$.uri.set(registrationUri);
-
-   } catch (error) {
-      toast.error(`Failed to upload registration : ${error instanceof Error ? error.message : "Unknown error"}`);
+      state$.uri.set(registrationUri);
+    } catch (error) {
+      toast.error(
+        `Failed to upload registration : ${error instanceof Error ? error.message : "Unknown error"}`,
+      );
       loading.stop();
       return;
     }
@@ -238,9 +238,7 @@ export default function Form({
     if (!currentTotalCost) return;
     const selfFundedWei = BigInt(parseEther(selfFunded$.get().toString()));
     const funded =
-      selfFundedWei > currentTotalCost
-        ? currentTotalCost
-        : selfFundedWei;
+      selfFundedWei > currentTotalCost ? currentTotalCost : selfFundedWei;
     loading.start("Submitting...");
     if (renewal)
       prepareRenewHumanity({
@@ -312,7 +310,7 @@ export default function Form({
       ) {
         redirect(`/${address}`, RedirectType.replace);
       } else if (!address) {
-        redirect('/', RedirectType.replace);
+        redirect("/", RedirectType.replace);
       }
     }
   }, [address, initiatingAddress, renewal]);
@@ -403,7 +401,9 @@ export default function Form({
           [Step.finalized]: () => (
             <Finalized
               requiredVouches={contractData[chainId].requiredNumberOfVouches}
-              challengePeriodDuration={Number(contractData[chainId].challengePeriodDuration)}
+              challengePeriodDuration={Number(
+                contractData[chainId].challengePeriodDuration,
+              )}
               pohId={params.pohid as string}
             />
           ),

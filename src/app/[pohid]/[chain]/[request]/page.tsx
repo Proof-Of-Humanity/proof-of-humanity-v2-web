@@ -41,11 +41,10 @@ import DocumentIcon from "components/DocumentIcon";
 import VideoThumbnail from "components/VideoThumbnail";
 import { getStatus } from "utils/status";
 
-interface PageProps {
-  params: { pohid: string; chain: string; request: string };
-}
-
-export default async function Request({ params }: PageProps) {
+export default async function Request(
+  props: PageProps<"/[pohid]/[chain]/[request]">,
+) {
+  const params = await props.params;
   const chain = paramToChain(params.chain);
 
   if (!chain) throw new Error("unsupported chain");
@@ -473,6 +472,7 @@ export default async function Request({ params }: PageProps) {
                       const vouchLocal = await Promise.resolve(vouch);
                       return (
                         <Vouch
+                          key={vouchLocal.pohId ?? `${idx}`}
                           isActive={true}
                           reason={undefined}
                           name={vouchLocal.name}
@@ -501,6 +501,7 @@ export default async function Request({ params }: PageProps) {
                       const vouchLocal = await Promise.resolve(vouch);
                       return (
                         <Vouch
+                          key={vouchLocal.voucher ?? `${idx}`}
                           isActive={request.status.id === "vouching" ?
                             vouchLocal.vouchStatus?.isValid : true}
                           reason={

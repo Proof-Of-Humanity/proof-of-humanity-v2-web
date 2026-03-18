@@ -22,29 +22,39 @@ import { HumanityQuery } from "generated/graphql";
 import { sdk } from "config/subgraph";
 import { useLoading } from "hooks/useLoading";
 import useWeb3Loaded from "hooks/useWeb3Loaded";
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "react-toastify";
 import { timeAgo } from "utils/time";
-import { Address, Hash, createPublicClient, http, decodeEventLog, TransactionReceipt, Log } from "viem";
+import {
+  Address,
+  Hash,
+  createPublicClient,
+  http,
+  decodeEventLog,
+  TransactionReceipt,
+  Log,
+} from "viem";
 import { mainnet, sepolia, gnosisChiado } from "viem/chains";
 import { useAccount, useChainId, useSwitchChain } from "wagmi";
 import { useRouter } from "next/navigation";
 
 // Define minimal ABI for UserRequestForSignature (Home -> Foreign)
-const USER_REQUEST_FOR_SIGNATURE_ABI = [{
-  anonymous: false,
-  inputs: [
-    { indexed: true, name: "messageId", type: "bytes32" },
-    { indexed: false, name: "encodedData", type: "bytes" },
-  ],
-  name: "UserRequestForSignature",
-  type: "event",
-}] as const;
+const USER_REQUEST_FOR_SIGNATURE_ABI = [
+  {
+    anonymous: false,
+    inputs: [
+      { indexed: true, name: "messageId", type: "bytes32" },
+      { indexed: false, name: "encodedData", type: "bytes" },
+    ],
+    name: "UserRequestForSignature",
+    type: "event",
+  },
+] as const;
 
 type AMBMessageInfo = {
   messageId: Hash;
   encodedData: `0x${string}`;
-  type: 'UserRequestForSignature' | 'UserRequestForAffirmation';
+  type: "UserRequestForSignature" | "UserRequestForAffirmation";
 } | null;
 
 function findClosestLog(
@@ -76,7 +86,10 @@ function findClosestLog(
   )[0];
 }
 
-function getUpdateExpiration(txReceipt: TransactionReceipt, chainId: SupportedChainId): bigint | undefined {
+function getUpdateExpiration(
+  txReceipt: TransactionReceipt,
+  chainId: SupportedChainId,
+): bigint | undefined {
   let expirationTime: bigint | undefined;
   txReceipt.logs.find((log: Log) => {
     try {
@@ -86,9 +99,9 @@ function getUpdateExpiration(txReceipt: TransactionReceipt, chainId: SupportedCh
         topics: log.topics,
       });
       if (decoded.eventName === "UpdateInitiated") {
-          // @ts-ignore
-          expirationTime = decoded.args.expirationTime as bigint;
-          return true;
+        // @ts-ignore
+        expirationTime = decoded.args.expirationTime as bigint;
+        return true;
       }
       return false;
     } catch {
@@ -103,10 +116,11 @@ function getAMBMessageInfo(
   chainId: SupportedChainId,
   updateLogIndex?: number,
 ): AMBMessageInfo {
-    const isGnosisChain = chainId === 100 || chainId === 10200; // Gnosis or Chiado
-    
-    if (isGnosisChain) {
-      const ambEvent = typeof updateLogIndex === "number"
+  const isGnosisChain = chainId === 100 || chainId === 10200; // Gnosis or Chiado
+
+  if (isGnosisChain) {
+    const ambEvent =
+      typeof updateLogIndex === "number"
         ? findClosestLog(
             txReceipt.logs,
             updateLogIndex,
@@ -137,24 +151,25 @@ function getAMBMessageInfo(
             }
           });
 
-      if (ambEvent) {
-         const decoded = decodeEventLog({
-            abi: USER_REQUEST_FOR_SIGNATURE_ABI,
-            data: ambEvent.data,
-            topics: ambEvent.topics,
-          });
-          const messageId = decoded.args.messageId as Hash;
-          const encodedData = decoded.args.encodedData as `0x${string}`;
-          return { messageId, encodedData, type: 'UserRequestForSignature' };
-      }
-    } else {
-      // Ethereum -> Gnosis: Look for UserRequestForAffirmation (Foreign AMB)
-      const ambAbi = getContractInfo("EthereumAMBBridge", chainId)?.abi;
-      if (!ambAbi) {
-        return null;
-      }
+    if (ambEvent) {
+      const decoded = decodeEventLog({
+        abi: USER_REQUEST_FOR_SIGNATURE_ABI,
+        data: ambEvent.data,
+        topics: ambEvent.topics,
+      });
+      const messageId = decoded.args.messageId as Hash;
+      const encodedData = decoded.args.encodedData as `0x${string}`;
+      return { messageId, encodedData, type: "UserRequestForSignature" };
+    }
+  } else {
+    // Ethereum -> Gnosis: Look for UserRequestForAffirmation (Foreign AMB)
+    const ambAbi = getContractInfo("EthereumAMBBridge", chainId)?.abi;
+    if (!ambAbi) {
+      return null;
+    }
 
-      const ambEvent = typeof updateLogIndex === "number"
+    const ambEvent =
+      typeof updateLogIndex === "number"
         ? findClosestLog(
             txReceipt.logs,
             updateLogIndex,
@@ -184,22 +199,22 @@ function getAMBMessageInfo(
               return false;
             }
           });
-      
-      if (ambEvent) {
-        const decoded = decodeEventLog({
-          abi: ambAbi,
-          data: ambEvent.data,
-          topics: ambEvent.topics,
-        });
-        // @ts-ignore 
-        const messageId = decoded.args.messageId as Hash;
-        // @ts-ignore
-        const encodedData = decoded.args.encodedData as `0x${string}`;
-        return { messageId, encodedData, type: 'UserRequestForAffirmation' };
-      }
+
+    if (ambEvent) {
+      const decoded = decodeEventLog({
+        abi: ambAbi,
+        data: ambEvent.data,
+        topics: ambEvent.topics,
+      });
+      // @ts-ignore
+      const messageId = decoded.args.messageId as Hash;
+      // @ts-ignore
+      const encodedData = decoded.args.encodedData as `0x${string}`;
+      return { messageId, encodedData, type: "UserRequestForAffirmation" };
     }
-    
-    return null;
+  }
+
+  return null;
 }
 
 function getRelayedMessageId(
@@ -207,11 +222,12 @@ function getRelayedMessageId(
   chainId: SupportedChainId,
   updateLogIndex?: number,
 ): Hash | null {
-    const ambAbi = getContractInfo("EthereumAMBBridge", chainId)?.abi;
-    
-    // 1. Try robust ABI decoding first
-    if (ambAbi) {
-      const relayedEvent = typeof updateLogIndex === "number"
+  const ambAbi = getContractInfo("EthereumAMBBridge", chainId)?.abi;
+
+  // 1. Try robust ABI decoding first
+  if (ambAbi) {
+    const relayedEvent =
+      typeof updateLogIndex === "number"
         ? findClosestLog(txReceipt.logs, updateLogIndex, (log: Log) => {
             try {
               const decoded = decodeEventLog({
@@ -236,42 +252,42 @@ function getRelayedMessageId(
               return false;
             }
           });
-      
-      if (relayedEvent) {
-          const decoded = decodeEventLog({
-              abi: ambAbi,
-              data: relayedEvent.data,
-              topics: relayedEvent.topics,
-          });
-          // @ts-ignore
-          return decoded.args.messageId as Hash;
+
+    if (relayedEvent) {
+      const decoded = decodeEventLog({
+        abi: ambAbi,
+        data: relayedEvent.data,
+        topics: relayedEvent.topics,
+      });
+      // @ts-ignore
+      return decoded.args.messageId as Hash;
+    }
+  }
+
+  // 2. Fallback to hardcoded index logic (legacy/testnets strategy)
+  try {
+    if (typeof updateLogIndex === "number") {
+      const nearbyLog = findClosestLog(
+        txReceipt.logs,
+        updateLogIndex + 1,
+        (log: Log) => log.topics.length >= 4,
+      );
+
+      if (nearbyLog?.topics?.[3]) {
+        return nearbyLog.topics[3] as Hash;
       }
     }
 
-    // 2. Fallback to hardcoded index logic (legacy/testnets strategy)
-    try {
-        if (typeof updateLogIndex === "number") {
-          const nearbyLog = findClosestLog(
-            txReceipt.logs,
-            updateLogIndex + 1,
-            (log: Log) => log.topics.length >= 4,
-          );
-
-          if (nearbyLog?.topics?.[3]) {
-            return nearbyLog.topics[3] as Hash;
-          }
-        }
-
-        const eventIndex = (chainId === 1 || chainId === 11155111) ? 1 : 2;
-        const log = txReceipt.logs.at(eventIndex);
-        if (log?.topics?.[3]) {
-            return log.topics[3] as Hash;
-        }
-    } catch (e) {
-        console.warn('Fallback RelayedMessage extraction failed', e);
+    const eventIndex = chainId === 1 || chainId === 11155111 ? 1 : 2;
+    const log = txReceipt.logs.at(eventIndex);
+    if (log?.topics?.[3]) {
+      return log.topics[3] as Hash;
     }
+  } catch (e) {
+    console.warn("Fallback RelayedMessage extraction failed", e);
+  }
 
-    return null;
+  return null;
 }
 
 interface CrossChainProps {
@@ -327,7 +343,7 @@ export default function CrossChain({
       [loading, router],
     ),
   );
-  
+
   const [prepareUpdate] = useCCPoHWrite(
     "updateHumanity",
     useMemo(
@@ -342,9 +358,9 @@ export default function CrossChain({
           toast.success("Update transaction sent!");
           loading.stop();
           setTimeout(() => {
-          setIsRelayModalOpen(false);
-          setIsLastTransferModalOpen(false);
-          router.refresh();
+            setIsRelayModalOpen(false);
+            setIsLastTransferModalOpen(false);
+            router.refresh();
           }, 1000);
         },
         onError() {
@@ -374,9 +390,9 @@ export default function CrossChain({
           toast.success("Relay transaction sent!");
           loading.stop();
           setTimeout(() => {
-          setIsRelayModalOpen(false);
-          setIsLastTransferModalOpen(false);
-          router.refresh();
+            setIsRelayModalOpen(false);
+            setIsLastTransferModalOpen(false);
+            router.refresh();
           }, 1000);
         },
         onError() {
@@ -411,21 +427,19 @@ export default function CrossChain({
     });
 
   const checkPendingUpdate = useCallback(async () => {
-    if (
-      !web3Loaded
-    ) {
+    if (!web3Loaded) {
       setPendingRelayUpdate({} as RelayUpdateParams);
       return;
     }
 
     const sendingChainId = homeChain.id as SupportedChainId;
     const receivingChainId = getForeignChain(homeChain.id) as SupportedChainId;
-    
+
     const [sendingUpdates, receivingUpdates] = await Promise.all([
       sdk[sendingChainId].CrossChainUpdates({ humanityId: pohId }),
       sdk[receivingChainId].CrossChainUpdates({ humanityId: pohId }),
     ]);
-    
+
     const latestOutUpdate = sendingUpdates?.outUpdates?.[0];
     const latestInUpdate = receivingUpdates?.inUpdates?.[0];
 
@@ -445,23 +459,25 @@ export default function CrossChain({
 
     // Check expiration
     const expirationTime = getUpdateExpiration(txSending, sendingChainId);
-    const expired = expirationTime ? Number(expirationTime) < Date.now() / 1000 : true;
-    
+    const expired = expirationTime
+      ? Number(expirationTime) < Date.now() / 1000
+      : true;
+
     if (expired) {
       setPendingRelayUpdate({} as RelayUpdateParams);
       return;
     }
-    
+
     // Get AMB message info
     const ambInfo = getAMBMessageInfo(
       txSending,
       sendingChainId,
       Number(latestOutUpdate.logIndex),
     );
-    
+
     if (!ambInfo || !ambInfo.encodedData || !ambInfo.messageId) {
-         setPendingRelayUpdate({} as RelayUpdateParams);
-         return;
+      setPendingRelayUpdate({} as RelayUpdateParams);
+      return;
     }
 
     const { messageId: messageIdSending, encodedData } = ambInfo;
@@ -486,7 +502,6 @@ export default function CrossChain({
 
     // Check if there's a pending update that needs to be relayed
     if (!latestInUpdate || messageIdSending !== messageIdReceiving) {
-      
       // Show pending relay button on both chains
       setPendingRelayUpdate({
         sideChainId: sendingChainId,
@@ -504,13 +519,20 @@ export default function CrossChain({
   const handleExecuteRelay = async () => {
     loading.start("Fetching signatures...");
     try {
-      const signatures = await pendingRelayUpdate.publicClientSide.readContract({
-        address: getContractInfo("GnosisAMBHelper", pendingRelayUpdate.sideChainId).address as `0x${string}`,
-        abi: getContractInfo("GnosisAMBHelper", pendingRelayUpdate.sideChainId).abi,
-        functionName: "getSignatures",
-        args: [pendingRelayUpdate.encodedData],
-      }) as `0x${string}`;
-      
+      const signatures =
+        (await pendingRelayUpdate.publicClientSide.readContract({
+          address: getContractInfo(
+            "GnosisAMBHelper",
+            pendingRelayUpdate.sideChainId,
+          ).address as `0x${string}`,
+          abi: getContractInfo(
+            "GnosisAMBHelper",
+            pendingRelayUpdate.sideChainId,
+          ).abi,
+          functionName: "getSignatures",
+          args: [pendingRelayUpdate.encodedData],
+        })) as `0x${string}`;
+
       prepareRelayWrite({
         args: [pendingRelayUpdate.encodedData, signatures],
       });
@@ -522,17 +544,23 @@ export default function CrossChain({
 
   const handleRelayTransfer = async () => {
     loading.start("Fetching signatures...");
-    const address = getContractInfo("CrossChainProofOfHumanity", lastTransferChain!.id).address as Address;
-    
+    const address = getContractInfo(
+      "CrossChainProofOfHumanity",
+      lastTransferChain!.id,
+    ).address as Address;
+
     const allTxs = await publicClient!.getContractEvents({
       address: address,
-      abi: getContractInfo("CrossChainProofOfHumanity", lastTransferChain!.id).abi,
+      abi: getContractInfo("CrossChainProofOfHumanity", lastTransferChain!.id)
+        .abi,
       eventName: "TransferInitiated",
-      fromBlock: CreationBlockNumber.CrossChainProofOfHumanity[lastTransferChain!.id] as bigint,
+      fromBlock: CreationBlockNumber.CrossChainProofOfHumanity[
+        lastTransferChain!.id
+      ] as bigint,
       strict: true,
       args: { humanityId: pohId },
     });
-    
+
     const matchingEvent = allTxs.find(
       (tx: any) => tx.args.transferHash === lastTransfer?.transferHash,
     );
@@ -545,19 +573,20 @@ export default function CrossChain({
     const tx = await publicClient!.getTransactionReceipt({
       hash: matchingEvent.transactionHash,
     });
-    
+
     const data = tx.logs.at(1)?.data;
     const subEnd = lastTransferChain!.id === gnosisChiado.id ? 754 : 748;
     const encodedData = `0x${data?.substring(130, subEnd)}` as `0x${string}`;
 
     try {
-      const signatures = await publicClient!.readContract({
-        address: getContractInfo("GnosisAMBHelper", lastTransferChain!.id).address as `0x${string}`,
+      const signatures = (await publicClient!.readContract({
+        address: getContractInfo("GnosisAMBHelper", lastTransferChain!.id)
+          .address as `0x${string}`,
         abi: getContractInfo("GnosisAMBHelper", lastTransferChain!.id).abi,
         functionName: "getSignatures",
         args: [encodedData],
-      }) as `0x${string}`;
-      
+      })) as `0x${string}`;
+
       prepareRelayWrite({
         args: [encodedData, signatures],
       });
@@ -570,7 +599,10 @@ export default function CrossChain({
   const handleUpdateStateForChain = async (targetChain: SupportedChain) => {
     loading.start("Preparing update...");
 
-    const gatewayForChain = contractData[homeChain.id].gateways[contractData[homeChain.id].gateways.length - 1];
+    const gatewayForChain =
+      contractData[homeChain.id].gateways[
+        contractData[homeChain.id].gateways.length - 1
+      ];
 
     if (!gatewayForChain) {
       loading.stop();
@@ -584,15 +616,17 @@ export default function CrossChain({
 
   const showPendingUpdate = () => {
     const sendingChainName = idToChain(pendingRelayUpdate.sideChainId)?.name;
-    const receivingChainName = idToChain(pendingRelayUpdate.receivingChainId)?.name;
+    const receivingChainName = idToChain(
+      pendingRelayUpdate.receivingChainId,
+    )?.name;
     const isOnCorrectChain = chainId === pendingRelayUpdate.receivingChainId;
-    
+
     return (
       <Modal
         open={isRelayModalOpen}
         onClose={() => setIsRelayModalOpen(false)}
         trigger={
-          <button 
+          <button
             className="m-4 border-2 border-blue-500 p-2 font-bold text-blue-500"
             onClick={() => setIsRelayModalOpen(true)}
           >
@@ -609,17 +643,20 @@ export default function CrossChain({
             There is a pending state update that needs to be relayed on{" "}
             {receivingChainName}.
           </span>
-          
+
           {!isOnCorrectChain ? (
             <div className="mt-4 flex flex-col gap-3">
               <div className="paper border-orange p-3">
                 <span className="txt text-orange">
-                  ⚠️ Please switch to <strong>{receivingChainName}</strong> to execute the relay
+                  ⚠️ Please switch to <strong>{receivingChainName}</strong> to
+                  execute the relay
                 </span>
               </div>
               <button
                 className="btn-main"
-                onClick={() => switchChain({chainId: pendingRelayUpdate.receivingChainId})}
+                onClick={() =>
+                  switchChain({ chainId: pendingRelayUpdate.receivingChainId })
+                }
               >
                 Switch to {receivingChainName}
               </button>
@@ -638,8 +675,9 @@ export default function CrossChain({
               ) : (
                 <div className="paper mt-4 p-4">
                   <span className="txt text-secondaryText">
-                    Relaying a state update from this chain can take around 30 minutes.
-                    The relay will be processed automatically by the bridge oracles.
+                    Relaying a state update from this chain can take around 30
+                    minutes. The relay will be processed automatically by the
+                    bridge oracles.
                   </span>
                 </div>
               )}
@@ -674,16 +712,15 @@ export default function CrossChain({
         address?.toLowerCase() === claimer &&
         homeChain.id === chainId &&
         winningStatus !== "transferring" &&
-        winningStatus !== "transferred" &&
-        (
+        winningStatus !== "transferred" && (
           <Modal
             formal
             open={isTransferModalOpen}
             onClose={() => setIsTransferModalOpen(false)}
             header="Transfer"
             trigger={
-              <button 
-                className="text-sky-500" 
+              <button
+                className="text-sky-500"
                 onClick={() => {
                   setIsTransferModalOpen(true);
                   doTransfer();
@@ -702,7 +739,11 @@ export default function CrossChain({
                 className="btn-main mt-4"
                 onClick={() =>
                   prepareTransfer({
-                    args: [contractData[homeChain.id].gateways[contractData[homeChain.id].gateways.length - 1].id],
+                    args: [
+                      contractData[homeChain.id].gateways[
+                        contractData[homeChain.id].gateways.length - 1
+                      ].id,
+                    ],
                   })
                 }
               >
@@ -723,7 +764,7 @@ export default function CrossChain({
             onClose={() => setIsUpdateModalOpen(false)}
             header="Update"
             trigger={
-              <button 
+              <button
                 className="text-sky-500"
                 onClick={() => setIsUpdateModalOpen(true)}
               >
@@ -731,7 +772,7 @@ export default function CrossChain({
               </button>
             }
           >
-            <div className="p-4"> 
+            <div className="p-4">
               <span className="txt text-primaryText m-2">
                 Update humanity state on another chain. If you use wallet
                 contract make sure it has same address on both chains.
@@ -739,12 +780,14 @@ export default function CrossChain({
 
               <div>
                 {supportedChains.map((chain) => {
-                  const crossChainReg = humanity[chain.id].crossChainRegistration;
-                  const isExpired = crossChainReg 
+                  const crossChainReg =
+                    humanity[chain.id].crossChainRegistration;
+                  const isExpired = crossChainReg
                     ? Number(crossChainReg.expirationTime) < Date.now() / 1000
                     : true;
-                  const isValid = chain.id === homeChain.id || (crossChainReg && !isExpired);
-                  
+                  const isValid =
+                    chain.id === homeChain.id || (crossChainReg && !isExpired);
+
                   return (
                     <div
                       key={chain.id}
@@ -755,8 +798,7 @@ export default function CrossChain({
                           chainId={chain.id}
                           className="fill-primaryText mr-1 h-4 w-4"
                         />
-                        {chain.name}{" "}
-                        {isValid ? "✔" : "❌"}
+                        {chain.name} {isValid ? "✔" : "❌"}
                       </div>
 
                       {chain.id === homeChain.id ? (
@@ -770,7 +812,7 @@ export default function CrossChain({
                             </div>
                           )}
                           <button
-                            className="text-blue-500 underline underline-offset-2 disabled:no-underline disabled:cursor-not-allowed disabled:text-secondaryText"
+                            className="disabled:text-secondaryText text-blue-500 underline underline-offset-2 disabled:cursor-not-allowed disabled:no-underline"
                             disabled={isLoading}
                             onClick={() => handleUpdateStateForChain(chain)}
                           >
@@ -795,7 +837,7 @@ export default function CrossChain({
             open={isLastTransferModalOpen}
             onClose={() => setIsLastTransferModalOpen(false)}
             trigger={
-              <button 
+              <button
                 className="m-4 border-2 border-blue-500 p-2 font-bold text-blue-500"
                 onClick={() => setIsLastTransferModalOpen(true)}
               >
@@ -812,7 +854,7 @@ export default function CrossChain({
               {homeChain?.id === chainId &&
               (chainId === mainnet.id || chainId === sepolia.id) ? (
                 <button
-                  className="text-blue-500 underline underline-offset-2 disabled:cursor-not-allowed disabled:text-secondaryText"
+                  className="disabled:text-secondaryText text-blue-500 underline underline-offset-2 disabled:cursor-not-allowed"
                   disabled={isLoading}
                   onClick={handleRelayTransfer}
                 >

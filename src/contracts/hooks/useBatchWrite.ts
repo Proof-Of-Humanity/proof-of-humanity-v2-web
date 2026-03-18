@@ -95,7 +95,7 @@ export default function useBatchWrite(effects?: Effects) {
         effects?.onError?.(callReceiptsError || sendError);
         break;
     }
-  }, [supportsBatchingTransaction, effects, writeStatus ]);
+  }, [supportsBatchingTransaction, effects, writeStatus, callReceiptsError, sendError]);
 
   // Public API
   const prepare = ({ calls: newCalls }: BatchWriteParams) => {
