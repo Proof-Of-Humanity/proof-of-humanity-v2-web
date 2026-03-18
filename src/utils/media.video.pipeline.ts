@@ -1,5 +1,6 @@
 import {
   detectVideoFormat,
+  isFFmpegLoadError,
   getVideoMimeType,
   probeVideoMetrics,
   readVideoMetadata,
@@ -185,14 +186,21 @@ export const processVideoInput = async (input: Blob): Promise<VideoPipelineResul
     let probe: Awaited<ReturnType<typeof probeVideoMetrics>>;
     try {
       probe = await probeVideoMetrics(rawBuffer);
-    } catch {
+    } catch (error) {
       validationErrors.push({
         code: MEDIA_ERROR_CODES.PROCESSING_FAILED,
         userMessage: MEDIA_MESSAGES.genericVideoProcessingError,
       });
       return {
         data: null,
-        error: buildAggregatedValidationError(validationErrors, collectedWarnings),
+        error: buildAggregatedValidationError(
+          validationErrors,
+          isFFmpegLoadError(error)
+            ? collectedWarnings.concat(
+              MEDIA_MESSAGES.videoProcessingHardRefreshWarning,
+            )
+            : collectedWarnings,
+        ),
       };
     }
 
@@ -296,7 +304,7 @@ export const processVideoInput = async (input: Blob): Promise<VideoPipelineResul
         VIDEO_LIMITS.maxSizeBytes,
         finalProbeDuration > 0 ? finalProbeDuration : undefined,
       );
-    } catch {
+    } catch (error) {
       return {
         data: null,
         error: buildAggregatedValidationError(
@@ -306,7 +314,11 @@ export const processVideoInput = async (input: Blob): Promise<VideoPipelineResul
               userMessage: MEDIA_MESSAGES.genericVideoProcessingError,
             },
           ],
-          collectedWarnings,
+          isFFmpegLoadError(error)
+            ? collectedWarnings.concat(
+              MEDIA_MESSAGES.videoProcessingHardRefreshWarning,
+            )
+            : collectedWarnings,
         ),
       };
     }
@@ -403,13 +415,20 @@ export const processVideoInput = async (input: Blob): Promise<VideoPipelineResul
       },
       error: null,
     };
-  } catch {
+  } catch (error) {
     return {
       data: null,
-      error: {
-        code: MEDIA_ERROR_CODES.PROCESSING_FAILED,
-        userMessage: MEDIA_MESSAGES.genericVideoProcessingError,
-      },
+      error: buildAggregatedValidationError(
+        [
+          {
+            code: MEDIA_ERROR_CODES.PROCESSING_FAILED,
+            userMessage: MEDIA_MESSAGES.genericVideoProcessingError,
+          },
+        ],
+        isFFmpegLoadError(error)
+          ? [MEDIA_MESSAGES.videoProcessingHardRefreshWarning]
+          : [],
+      ),
     };
   }
 };
