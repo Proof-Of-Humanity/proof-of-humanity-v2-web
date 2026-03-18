@@ -211,15 +211,15 @@ function Review({
 
         </Label>
         <div className="txt mb-16 flex flex-col">
-          <div className="flex flex-wrap items-center gap-2">
+          <div
+            className={`flex flex-wrap items-center gap-2 transition-opacity ${
+              submitForFree ? "opacity-50" : ""
+            }`}
+          >
             <div className="w-48">
               <Field
                 type="number"
-                className={`no-spinner text-right ${
-                  submitForFree
-                    ? "bg-slate-100 text-slate-400"
-                    : ""
-                }`}
+                className="no-spinner text-right"
                 step="any"
                 min={0}
                 max={totalCost ? formatEther(totalCost) : undefined}
