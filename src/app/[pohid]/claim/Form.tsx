@@ -104,6 +104,8 @@ export default function Form({
         ? BigInt(fallbackTotalCosts[chainId])
         : null;
   const selfFunded$ = useObservable(0);
+  const submitForFree$ = useObservable(false);
+  const submitForFree = submitForFree$.use();
   const loading = useLoading();
   const [, loadingMessage] = loading.use();
   const stepHistoryReady = useRef(false);
@@ -150,9 +152,9 @@ export default function Form({
     if (!currentTotalCost) return;
     if (syncedFundingChainId.current === chainId) return;
 
-    selfFunded$.set(formatEth(currentTotalCost));
+    selfFunded$.set(submitForFree ? 0 : formatEth(currentTotalCost));
     syncedFundingChainId.current = chainId;
-  }, [chainId, currentTotalCost, selfFunded$]);
+  }, [chainId, currentTotalCost, selfFunded$, submitForFree]);
 
   const submit = async () => {
     if (!media.photo || !media.video) return;
@@ -396,6 +398,7 @@ export default function Form({
               arbitrationInfo={contractData[chainId].arbitrationInfo}
               media$={media$}
               selfFunded$={selfFunded$}
+              submitForFree$={submitForFree$}
               loadingMessage={loadingMessage}
               submit={submit}
             />
