@@ -74,7 +74,7 @@ export default function Form({
     useRef(undefined);
   const chainId = useChainId() as SupportedChainId;
 
-  const { uploadFile: uploadToIPFS} = useAtlasProvider();
+  const { uploadFile: uploadToIPFS } = useAtlasProvider();
   const currentContractData = contractData[chainId];
   const currentBaseDeposit = BigInt(currentContractData.baseDeposit);
   const syncedFundingChainId = useRef<SupportedChainId | null>(null);
@@ -165,70 +165,70 @@ export default function Form({
 
     state$.uri.set("");
     loading.start("Uploading media");
-  try{
-    const photoFile = media.photo.content as File;
-    const videoFile = media.video.content as File;
-    
-    const [photoUri, videoUri] = await Promise.all([
+    try {
+      const photoFile = media.photo.content as File;
+      const videoFile = media.video.content as File;
+
+      const [photoUri, videoUri] = await Promise.all([
         uploadToIPFS(photoFile, Roles.Photo),
         uploadToIPFS(videoFile, Roles.IdentificationVideo),
       ]);
 
 
-    if (!photoUri || !videoUri) {
-      toast.error("Failed to upload media.");
-      loading.stop();
-      return;
-    }
-    
-    const fileJson = {
-      name: state.name,
-      photo: photoUri,
-      video: videoUri,
-    };
-    
-    const fileTextFile = new File([JSON.stringify(fileJson)], "file", {
-      type: "text/plain",
-    });
+      if (!photoUri || !videoUri) {
+        toast.error("Failed to upload media.");
+        loading.stop();
+        return;
+      }
 
-    let fileURI: string | null;
+      const fileJson = {
+        name: state.name,
+        photo: photoUri,
+        video: videoUri,
+      };
+
+      const fileTextFile = new File([JSON.stringify(fileJson)], "file", {
+        type: "text/plain",
+      });
+
+      let fileURI: string | null;
       fileURI = await uploadToIPFS(fileTextFile, Roles.Evidence);
 
-    if (!fileURI) {
-      toast.error("Failed to upload media metadata.");
-      loading.stop();
-      return;
-    }
+      if (!fileURI) {
+        toast.error("Failed to upload media metadata.");
+        loading.stop();
+        return;
+      }
 
-    loading.start("Uploading evidence files");
+      loading.start("Uploading evidence files");
 
-    const registrationJson = {
-      name: "Registration",
-      fileURI: fileURI,
-    };
+      const registrationJson = {
+        name: "Registration",
+        fileURI: fileURI,
+      };
 
-    const registrationTextFile = new File(
-      [JSON.stringify(registrationJson)],
-      "registration",
-      {
-        type: "text/plain",
-      },
-    );
+      const registrationTextFile = new File(
+        [JSON.stringify(registrationJson)],
+        "registration",
+        {
+          type: "text/plain",
+        },
+      );
 
-    let registrationUri: string | null;
+      let registrationUri: string | null;
       registrationUri = await uploadToIPFS(
         registrationTextFile,
         Roles.Evidence
       );
-    if (!registrationUri) {
-      toast.error("Failed to upload registration.");
-      loading.stop();
-      return;
-    }
+      if (!registrationUri) {
+        toast.error("Failed to upload registration.");
+        loading.stop();
+        return;
+      }
 
-    state$.uri.set(registrationUri);
+      state$.uri.set(registrationUri);
 
-   } catch (error) {
+    } catch (error) {
       toast.error(`Failed to upload registration : ${error instanceof Error ? error.message : "Unknown error"}`);
       loading.stop();
       return;
