@@ -1,5 +1,5 @@
 import { HttpStatusCode } from "axios";
-import { paramToChain } from "config/chains";
+import { paramToChainAny } from "config/chains";
 import datalake from "config/supabase";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -13,7 +13,7 @@ export async function GET(
   { params }: { params: RequestParams },
 ) {
   try {
-    const chain = paramToChain(params.chain);
+    const chain = paramToChainAny(params.chain);
 
     if (!chain) throw new Error("unsupported chain");
 
