@@ -24,6 +24,7 @@ interface ReviewProps {
   contractData: Record<SupportedChainId, ContractData>;
   totalCost: bigint | null;
   selfFunded$: ObservablePrimitiveBaseFns<number>;
+  submitForFree$: ObservablePrimitiveBaseFns<boolean>;
   state$: ObservableObject<SubmissionState>;
   media$: ObservableObject<MediaState>;
   loadingMessage?: string;
@@ -35,12 +36,14 @@ function Review({
   contractData,
   totalCost,
   selfFunded$,
+  submitForFree$,
   state$,
   media$,
   loadingMessage,
   submit,
 }: ReviewProps) {
   const selfFunded = selfFunded$.use();
+  const submitForFree = submitForFree$.use();
   const { pohId, name } = state$.use();
   const { photo, video } = media$.use();
   const { address } = useAccount();
@@ -212,19 +215,29 @@ function Review({
             <div className="w-48">
               <Field
                 type="number"
-                className="no-spinner text-right"
+                className={`no-spinner text-right ${
+                  submitForFree
+                    ? "bg-slate-100 text-slate-400"
+                    : ""
+                }`}
                 step="any"
                 min={0}
                 max={totalCost ? formatEther(totalCost) : undefined}
                 value={selfFunded}
-                disabled={!totalCost}
+                disabled={!totalCost || submitForFree}
                 onChange={(event) => selfFunded$.set(+event.target.value)}
               />
             </div>
             <span>of</span>
             <span
-              onClick={() => totalCost && selfFunded$.set(formatEth(totalCost))}
-              className="text-orange cursor-pointer font-semibold underline underline-offset-2"
+              onClick={() =>
+                !submitForFree && totalCost && selfFunded$.set(formatEth(totalCost))
+              }
+              className={`font-semibold underline underline-offset-2 ${
+                submitForFree
+                  ? "cursor-not-allowed text-slate-400"
+                  : "text-orange cursor-pointer"
+              }`}
             >
               {totalCostLabel}
             </span>
@@ -240,10 +253,37 @@ function Review({
             )}
           </div>
 
-          <span className="mt-2 text-blue-500">
-            The deposit is reimbursed after successful registration, and lost
-            after failure. Any amount not contributed now can be put up by
-            crowdfunders later.
+          <label className="mt-4 flex cursor-pointer items-center gap-3 text-primaryText">
+            <input
+              type="checkbox"
+              checked={submitForFree}
+              onChange={(event) => {
+                const enabled = event.target.checked;
+                submitForFree$.set(enabled);
+                selfFunded$.set(enabled ? 0 : (totalCost ? formatEth(totalCost) : 0));
+              }}
+              className="sr-only"
+            />
+            <span
+              className={`relative h-7 w-12 rounded-full transition-colors ${
+                submitForFree ? "bg-orange" : "bg-slate-200"
+              }`}
+            >
+              <span
+                className={`absolute left-1 top-1 h-5 w-5 rounded-full bg-white transition-transform ${
+                  submitForFree ? "translate-x-5" : ""
+                }`}
+              />
+            </span>
+            <span className="font-medium">
+              Submit for free — let PoH supporters cover my deposit
+            </span>
+          </label>
+
+          <span className="mt-3 text-blue-500">
+            If you don&apos;t fund the deposit now, PoH supporters can cover it
+            for you. The deposit is reimbursed after successful registration and
+            lost only if the profile is rejected.
           </span>
           {pohId.toLowerCase() !== address?.toLowerCase() ? (
             <span className="text-orange mt-2">
