@@ -191,10 +191,10 @@ function Review({
         <Field label="Account" value={address} disabled />
 
         <Label>
-          <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
             <span>Initial deposit</span>
             {balance && (
-              <span className="text-primaryText normal-case">
+              <span className="text-primaryText normal-case text-sm sm:text-base">
                 Your balance:{" "}
                 <strong>
                   {formatEth(balance.value)} {nativeCurrency.symbol}
@@ -203,7 +203,7 @@ function Review({
             )}
             <ExternalLink
               href={jumperUrl}
-              className="text-purple-600 cursor-pointer font-semibold text-sm normal-case hover:underline hover:text-purple-500 py-1 rounded transition-all sm:ml-auto"
+              className="text-purple-600 cursor-pointer py-1 text-sm font-semibold normal-case transition-all hover:text-purple-500 hover:underline sm:ml-auto"
             >
               Need {currentChain.nativeCurrency.symbol}? bridge to {currentChain.name} →
             </ExternalLink>
@@ -212,48 +212,54 @@ function Review({
         </Label>
         <div className="txt mb-16 flex flex-col">
           <div
-            className={`flex flex-wrap items-center gap-2 transition-opacity ${
+            className={`flex flex-col gap-3 transition-opacity sm:flex-row sm:flex-wrap sm:items-center sm:gap-2 ${
               submitForFree ? "opacity-50" : ""
             }`}
           >
-            <div className="w-48">
-              <Field
-                type="number"
-                className="no-spinner text-right"
-                step="any"
-                min={0}
-                max={totalCost ? formatEther(totalCost) : undefined}
-                value={selfFunded}
-                disabled={!totalCost || submitForFree}
-                onChange={(event) => selfFunded$.set(+event.target.value)}
-              />
+            <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
+              <div className="w-full sm:w-48">
+                <Field
+                  type="number"
+                  className="no-spinner text-right"
+                  step="any"
+                  min={0}
+                  max={totalCost ? formatEther(totalCost) : undefined}
+                  value={selfFunded}
+                  disabled={!totalCost || submitForFree}
+                  onChange={(event) => selfFunded$.set(+event.target.value)}
+                />
+              </div>
+              <div className="flex flex-wrap items-center gap-2 text-sm sm:text-base">
+                <span>of</span>
+                <span
+                  onClick={() =>
+                    !submitForFree && totalCost && selfFunded$.set(formatEth(totalCost))
+                  }
+                  className={`font-semibold underline underline-offset-2 ${
+                    submitForFree
+                      ? "cursor-not-allowed text-slate-400"
+                      : "text-orange cursor-pointer"
+                  }`}
+                >
+                  {totalCostLabel}
+                </span>
+                <span>{nativeCurrency.symbol}</span>
+              </div>
             </div>
-            <span>of</span>
-            <span
-              onClick={() =>
-                !submitForFree && totalCost && selfFunded$.set(formatEth(totalCost))
-              }
-              className={`font-semibold underline underline-offset-2 ${
-                submitForFree
-                  ? "cursor-not-allowed text-slate-400"
-                  : "text-orange cursor-pointer"
-              }`}
-            >
-              {totalCostLabel}
-            </span>
-            <span>{nativeCurrency.symbol}</span>
             {!isCurrentChainCheaper && foreignCost && (
               <>
                 <span className="hidden xl:block">•</span>
-                <span className="text-purple-600 cursor-pointer font-semibold text-sm hover:underline hover:text-purple-500 py-1 rounded transition-all inline-flex items-center"
-                  onClick={() => switchChain?.({ chainId: foreignChainId })}>
+                <span
+                  className="inline-flex cursor-pointer items-center py-1 text-sm font-semibold text-purple-600 transition-all hover:text-purple-500 hover:underline"
+                  onClick={() => switchChain?.({ chainId: foreignChainId })}
+                >
                   Switch to {foreignChain.name} for a smaller deposit ({formatEther(foreignCost)} {foreignChain.nativeCurrency.symbol})
                 </span>
               </>
             )}
           </div>
 
-          <label className="mt-4 flex cursor-pointer items-center gap-3 text-primaryText">
+          <label className="mt-4 flex cursor-pointer items-start gap-3 text-primaryText sm:items-center">
             <input
               type="checkbox"
               checked={submitForFree}
@@ -265,7 +271,7 @@ function Review({
               className="sr-only"
             />
             <span
-              className={`relative h-7 w-12 rounded-full transition-colors ${
+              className={`relative mt-0.5 h-7 w-12 shrink-0 rounded-full transition-colors sm:mt-0 ${
                 submitForFree ? "bg-orange" : "bg-slate-200"
               }`}
             >
@@ -275,7 +281,7 @@ function Review({
                 }`}
               />
             </span>
-            <span className="font-medium">
+            <span className="min-w-0 flex-1 pt-0.5 text-sm font-medium leading-snug sm:flex-none sm:pt-0 sm:text-base sm:leading-normal">
               Submit for free — let PoH supporters cover my deposit
             </span>
           </label>
