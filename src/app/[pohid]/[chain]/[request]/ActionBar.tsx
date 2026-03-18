@@ -139,31 +139,11 @@ export default function ActionBar({
   ]);
 
   const [canAdvance, setCanAdvance] = useState(true);
-  const [pendingActionRefresh, setPendingActionRefresh] = useState<
-    ActionType.ADVANCE | ActionType.EXECUTE | null
-  >(null);
-
-  useEffect(() => {
-    if (!pendingActionRefresh) return;
-    if (action !== pendingActionRefresh) {
-      setPendingActionRefresh(null);
-      return;
-    }
-
-    router.refresh();
-
-    const refreshInterval = window.setInterval(() => {
-      router.refresh();
-    }, 3000);
-    const refreshTimeout = window.setTimeout(() => {
-      setPendingActionRefresh(null);
-    }, 30000);
-
-    return () => {
-      window.clearInterval(refreshInterval);
-      window.clearTimeout(refreshTimeout);
-    };
-  }, [action, pendingActionRefresh, router]);
+  const refreshAfterWrite = () => {
+    [1000, 2000, 4000].forEach((delay) => {
+      window.setTimeout(() => router.refresh(), delay);
+    });
+  };
 
   const [prepareExecute, execute, executeStatus] = usePoHWrite(
     "executeRequest",
@@ -174,10 +154,10 @@ export default function ActionBar({
         },
         onSuccess() {
           toast.success("Request executed successfully");
-          setPendingActionRefresh(ActionType.EXECUTE);
+          refreshAfterWrite();
         },
       }),
-      [],
+      [router],
     ),
   );
   const [prepareAdvance, advanceFire, advanceStatus] = usePoHWrite(
@@ -189,10 +169,10 @@ export default function ActionBar({
         },
         onSuccess() {
           toast.success("Request advanced to resolving state");
-          setPendingActionRefresh(ActionType.ADVANCE);
+          refreshAfterWrite();
         },
       }),
-      [],
+      [router],
     ),
   );
   const [prepareWithdraw, withdraw, withdrawStatus] = usePoHWrite(
@@ -213,12 +193,10 @@ export default function ActionBar({
 
   const isAdvanceLoading =
     advanceStatus.write === "pending" ||
-    (advanceStatus.write === "success" && advanceStatus.transaction === "pending") ||
-    pendingActionRefresh === ActionType.ADVANCE;
+    (advanceStatus.write === "success" && advanceStatus.transaction === "pending");
   const isExecuteLoading =
     executeStatus.write === "pending" ||
-    (executeStatus.write === "success" && executeStatus.transaction === "pending") ||
-    pendingActionRefresh === ActionType.EXECUTE;
+    (executeStatus.write === "success" && executeStatus.transaction === "pending");
   const isWithdrawLoading =
     withdrawStatus.write === "pending" ||
     (withdrawStatus.write === "success" && withdrawStatus.transaction === "pending");

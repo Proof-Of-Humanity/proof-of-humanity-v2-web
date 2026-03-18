@@ -10,6 +10,7 @@ import { RequestsQuery } from "generated/graphql";
 import { cache } from "react";
 import { Address, Hash, concat, keccak256, toHex } from "viem";
 import { sanitizeHeadRequests, sanitizeRequest } from "./sanitizer";
+import { request } from "node:http";
 
 const PROFILES_DISPLAY_REQUIRED_REQS = 12 * 4;
 
@@ -173,7 +174,7 @@ export const getOffChainVouches = async (
   const baseUrl = process.env.DEPLOYED_APP ?? "http://localhost:3000";
   try {
     const response = await fetch(
-      `${baseUrl}/api/vouch/${chainId}/for-request/${claimer}/${pohId}`,
+      `https://testnets--proof-of-humanity-v2.netlify.app/api/vouch/${chainId}/for-request/${claimer}/${pohId}`,
       { cache: "no-store" },
     );
 
