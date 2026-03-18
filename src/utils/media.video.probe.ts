@@ -65,11 +65,18 @@ export const loadFFMPEG = async (): Promise<FFmpeg> => {
           window.clearTimeout(timeoutId);
           reject(error);
         });
-    })
-      .catch((error) => {
-        ffmpegLoadPromise = null;
-        throw isFFmpegLoadError(error) ? error : createFFmpegLoadError();
-      });
+    }).catch((error) => {
+      ffmpegLoadPromise = null;
+      if (ffmpeg === ffmpegInstance) {
+        ffmpeg = null;
+        try {
+          ffmpegInstance.terminate();
+        } catch {
+          // Ignore cleanup errors
+        }
+      }
+      throw isFFmpegLoadError(error) ? error : createFFmpegLoadError();
+    });
   }
 
   await ffmpegLoadPromise;
