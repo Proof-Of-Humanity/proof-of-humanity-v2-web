@@ -3,7 +3,6 @@ import { defaultChain } from "config/chains";
 import { getContractData } from "data/contract";
 import { Metadata } from "next";
 import { Inter } from "next/font/google";
-import "react-toastify/dist/ReactToastify.css";
 import { ipfs } from "utils/ipfs";
 import Footer from "./Footer";
 import Header from "./Header/index";
@@ -20,12 +19,7 @@ export const metadata: Metadata = {
 };
 
 const inter = Inter({ subsets: ["latin"] });
-
-interface RootLayoutProps {
-  children: React.ReactNode;
-}
-
-export default async function RootLayout({ children }: RootLayoutProps) {
+export default async function RootLayout({ children }: LayoutProps<"/">) {
   const policy = (await getContractData(defaultChain.id)).arbitrationInfo
     .policy;
 

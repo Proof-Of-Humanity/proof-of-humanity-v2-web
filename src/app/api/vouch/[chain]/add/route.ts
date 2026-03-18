@@ -14,15 +14,11 @@ interface AddVouchBody {
   signature: Hash;
 }
 
-interface AddVouchParams {
-  chain: string;
-}
-
 export async function POST(
   request: NextRequest,
-  props: { params: Promise<AddVouchParams> },
+  context: RouteContext<"/api/vouch/[chain]/add">,
 ) {
-  const params = await props.params;
+  const params = await context.params;
   try {
     const chain = paramToChain(params.chain);
 

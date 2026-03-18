@@ -6,14 +6,8 @@ import { redirect } from "next/navigation";
 import PnkAirdrop from "./PnkAirdrop";
 import SeerCredits from "components/Integrations/Seer/SeerCredits";
 
-interface IntegrationPageProps {
-  params: Promise<{
-    integrationId: string;
-  }>;
-}
-
 export async function generateMetadata(
-  props: IntegrationPageProps,
+  props: PageProps<"/app/[integrationId]">,
 ): Promise<Metadata> {
   const params = await props.params;
   const integration = await getIntegration(params.integrationId);
@@ -29,7 +23,9 @@ export async function generateMetadata(
   };
 }
 
-export default async function IntegrationPage(props: IntegrationPageProps) {
+export default async function IntegrationPage(
+  props: PageProps<"/app/[integrationId]">,
+) {
   const params = await props.params;
   const integration = await getIntegration(params.integrationId);
 

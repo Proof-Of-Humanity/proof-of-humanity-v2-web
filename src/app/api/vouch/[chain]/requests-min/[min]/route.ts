@@ -3,16 +3,11 @@ import { paramToChain } from "config/chains";
 import datalake from "config/supabase";
 import { NextRequest, NextResponse } from "next/server";
 
-interface RequestParams {
-  chain: string;
-  min: string;
-}
-
 export async function GET(
   _request: NextRequest,
-  props: { params: Promise<RequestParams> },
+  context: RouteContext<"/api/vouch/[chain]/requests-min/[min]">,
 ) {
-  const params = await props.params;
+  const params = await context.params;
   try {
     const chain = paramToChain(params.chain);
 

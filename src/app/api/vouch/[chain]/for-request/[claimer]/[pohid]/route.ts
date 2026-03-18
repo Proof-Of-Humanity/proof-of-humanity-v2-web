@@ -3,18 +3,12 @@ import { paramToChain } from "config/chains";
 import datalake from "config/supabase";
 import { NextRequest, NextResponse } from "next/server";
 
-interface RequestParams {
-  chain: string;
-  claimer: string;
-  pohid: string;
-}
-
 export const dynamic = "force-dynamic";
 export async function GET(
   _request: NextRequest,
-  props: { params: Promise<RequestParams> },
+  context: RouteContext<"/api/vouch/[chain]/for-request/[claimer]/[pohid]">,
 ) {
-  const params = await props.params;
+  const params = await context.params;
   try {
     const chain = paramToChain(params.chain);
     console.log("API Route GET called with params:", params);

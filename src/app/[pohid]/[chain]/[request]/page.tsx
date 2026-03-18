@@ -41,11 +41,9 @@ import DocumentIcon from "components/DocumentIcon";
 import VideoThumbnail from "components/VideoThumbnail";
 import { getStatus } from "utils/status";
 
-interface PageProps {
-  params: Promise<{ pohid: string; chain: string; request: string }>;
-}
-
-export default async function Request(props: PageProps) {
+export default async function Request(
+  props: PageProps<"/[pohid]/[chain]/[request]">,
+) {
   const params = await props.params;
   const chain = paramToChain(params.chain);
 

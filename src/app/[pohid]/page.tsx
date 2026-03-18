@@ -51,11 +51,7 @@ const isTransferArtifactRequest = (request: {
 }) =>
   request.status?.id === "transferred" || request.status?.id === "transferring";
 
-interface PageProps {
-  params: Promise<{ pohid: string }>;
-}
-
-async function Profile(props: PageProps) {
+async function Profile(props: PageProps<"/[pohid]">) {
   const params = await props.params;
 
   const { pohid } = params;

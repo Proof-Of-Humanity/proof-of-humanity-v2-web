@@ -7,11 +7,7 @@ import { machinifyId } from "utils/identifier";
 import { Hash } from "viem";
 import Form from "./Form";
 
-interface PageProps {
-  params: Promise<{ pohid: string }>;
-}
-
-export default async function Claim(props: PageProps) {
+export default async function Claim(props: PageProps<"/[pohid]/claim">) {
   const params = await props.params;
 
   const { pohid } = params;

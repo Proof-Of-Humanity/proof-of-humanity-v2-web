@@ -139,7 +139,6 @@ const Webcam: React.FC<WebcamProps> = ({
           !IS_MOBILE && "aspect-video",
         )}
         ref={loadCamera}
-        mirrored={facingMode === "user"}
         screenshotFormat={"image/jpeg"}
         audio={isVideo}
         muted={true}
