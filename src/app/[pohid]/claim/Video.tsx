@@ -61,8 +61,6 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
 
   const loading = useLoading();
   const [pending, loadingMessage] = loading.use();
-  const dedupeMessages = (messages: string[]): string[] =>
-    [...new Set(messages.filter(Boolean))];
 
   useEffect(() => {
     warmVideoPipeline();
@@ -79,15 +77,14 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
   };
 
   const showWarningToasts = (messages: string[]) => {
-    const warningMessages = [...new Set(messages.filter(Boolean))];
-    if (warningMessages.length === 0) return;
+    if (messages.length === 0) return;
 
     const autoCloseMs = Math.min(
       WARNING_TOAST_MAX_MS,
-      WARNING_TOAST_BASE_MS + (warningMessages.length - 1) * WARNING_TOAST_PER_MESSAGE_MS,
+      WARNING_TOAST_BASE_MS + (messages.length - 1) * WARNING_TOAST_PER_MESSAGE_MS,
     );
 
-    warningMessages.forEach((warningMessage) =>
+    messages.forEach((warningMessage) =>
       toast.warn(warningMessage, {
         autoClose: autoCloseMs,
         pauseOnHover: true,
@@ -115,34 +112,27 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
     }
 
     if (result.error) {
-      const errorMessages = dedupeMessages(
-        result.error.messages ?? [result.error.userMessage],
-      );
-      const warningMessages = dedupeMessages(result.error.warnings ?? []);
-      const combinedErrorMessage = errorMessages.join(" ");
+      const errorMessages = result.error.messages;
+      const warningMessages = result.error.warnings;
 
       setShowCamera(false);
       setVideoValidationErrors(errorMessages);
-      if (combinedErrorMessage) {
-        videoError(combinedErrorMessage);
+      if (errorMessages[0]) {
+        videoError(errorMessages[0]);
       }
 
+      setVideoQualityWarnings(warningMessages);
       if (warningMessages.length > 0) {
-        setVideoQualityWarnings(warningMessages);
         showWarningToasts(warningMessages);
-      } else {
-        setVideoQualityWarnings([]);
       }
       return;
     }
 
     const processed = result.data;
 
-    setVideoQualityWarnings([]);
+    setVideoQualityWarnings(processed.warnings);
     if (processed.warnings.length > 0) {
-      const warningMessages = dedupeMessages(processed.warnings);
-      setVideoQualityWarnings(warningMessages);
-      showWarningToasts(warningMessages);
+      showWarningToasts(processed.warnings);
     }
 
     setVideoValidationErrors([]);

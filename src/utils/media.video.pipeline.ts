@@ -26,10 +26,9 @@ export type VideoPipelineErrorCode =
   | typeof MEDIA_ERROR_CODES.PROCESSING_FAILED;
 
 export interface VideoPipelineError {
-  code: VideoPipelineErrorCode;
-  userMessage: string;
-  messages?: string[];
-  warnings?: string[];
+  code?: VideoPipelineErrorCode;
+  messages: string[];
+  warnings: string[];
 }
 
 export interface VideoPipelineSuccess {
@@ -49,6 +48,15 @@ export type VideoPipelineResult =
   | { data: null; error: VideoPipelineError };
 
 type BrowserVideoMetadata = { duration: number; width: number; height: number };
+type BlockingVideoError = {
+  code: VideoPipelineErrorCode;
+  userMessage: string;
+};
+
+const GENERIC_PROCESSING_ERROR: BlockingVideoError = {
+  code: MEDIA_ERROR_CODES.PROCESSING_FAILED,
+  userMessage: MEDIA_MESSAGES.genericVideoProcessingError,
+};
 
 const isFiniteNumber = (value: unknown): value is number =>
   typeof value === "number" && Number.isFinite(value);
@@ -62,25 +70,13 @@ const uniqueMessages = (messages: (string | undefined)[]): string[] => {
 };
 
 const buildAggregatedValidationError = (
-  errors: VideoPipelineError[],
+  errors: BlockingVideoError[],
   warnings: string[] = [],
 ): VideoPipelineError => {
-  const errorMessages = uniqueMessages(errors.map((error) => error.userMessage));
-  const warningMessages = uniqueMessages(warnings);
-  const messageParts: string[] = [];
-
-  if (errorMessages.length > 0) {
-    messageParts.push(errorMessages.join(" "));
-  }
-  if (warningMessages.length > 0) {
-    messageParts.push(`Warnings: ${warningMessages.join(" ")}`);
-  }
-
   return {
-    code: errors[0]?.code ?? MEDIA_ERROR_CODES.PROCESSING_FAILED,
-    userMessage: messageParts.join(" "),
-    messages: errorMessages,
-    warnings: warningMessages,
+    code: errors[0]?.code,
+    messages: uniqueMessages(errors.map((error) => error.userMessage)),
+    warnings: uniqueMessages(warnings),
   };
 };
 
@@ -94,7 +90,7 @@ export const warmVideoPipeline = (): void => {
 
 export const processVideoInput = async (input: Blob): Promise<VideoPipelineResult> => {
   try {
-    const validationErrors: VideoPipelineError[] = [];
+    const validationErrors: BlockingVideoError[] = [];
     let collectedWarnings: string[] = [];
 
     const typeError = validateVideoType(input.type);
@@ -209,12 +205,7 @@ export const processVideoInput = async (input: Blob): Promise<VideoPipelineResul
       return {
         data: null,
         error: buildAggregatedValidationError(
-          [
-            {
-              code: MEDIA_ERROR_CODES.PROCESSING_FAILED,
-              userMessage: MEDIA_MESSAGES.genericVideoProcessingError,
-            },
-          ],
+          [GENERIC_PROCESSING_ERROR],
           collectedWarnings,
         ),
       };
@@ -334,12 +325,7 @@ export const processVideoInput = async (input: Blob): Promise<VideoPipelineResul
       return {
         data: null,
         error: buildAggregatedValidationError(
-          [
-            {
-              code: MEDIA_ERROR_CODES.PROCESSING_FAILED,
-              userMessage: MEDIA_MESSAGES.genericVideoProcessingError,
-            },
-          ],
+          [GENERIC_PROCESSING_ERROR],
           collectedWarnings,
         ),
       };
@@ -361,7 +347,7 @@ export const processVideoInput = async (input: Blob): Promise<VideoPipelineResul
       type: getVideoMimeType(sanitizedFormat),
     });
 
-    const postValidationErrors: VideoPipelineError[] = [];
+    const postValidationErrors: BlockingVideoError[] = [];
     const postSizeError = validateVideoSize(processedBlob.size);
     if (postSizeError) {
       postValidationErrors.push(postSizeError);
@@ -451,12 +437,7 @@ export const processVideoInput = async (input: Blob): Promise<VideoPipelineResul
     return {
       data: null,
       error: buildAggregatedValidationError(
-        [
-          {
-            code: MEDIA_ERROR_CODES.PROCESSING_FAILED,
-            userMessage: MEDIA_MESSAGES.genericVideoProcessingError,
-          },
-        ],
+        [GENERIC_PROCESSING_ERROR],
         [],
       ),
     };
