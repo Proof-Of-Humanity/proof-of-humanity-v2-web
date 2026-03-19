@@ -97,7 +97,11 @@ const STATUS_CONFIG: Record<RequestStatus, StatusConfig> = {
     baseLabel: "Removed",
     tooltip: "Profile removed after due process.",
     color: STATUS_COLORS.removed,
-    filter: { status: "resolved", revocation: true }
+    filter: {
+      status: "resolved",
+      revocation: true,
+      winnerParty_: { id: "requester" }
+    }
   },
   [RequestStatus.REJECTED]: {
     baseLabel: "Rejected",
@@ -178,7 +182,8 @@ const getRequestStatus = (
   status: string,
   revocation: boolean = false,
   expired: boolean = false,
-  rejected: boolean = false
+  rejected: boolean = false,
+  winnerPartyId?: string | null,
 ): RequestStatus => {
   switch (status) {
     case "vouching":
@@ -192,7 +197,11 @@ const getRequestStatus = (
     
     case "resolved":
       if (revocation) {
-        return RequestStatus.RESOLVED_REVOCATION;
+        return winnerPartyId === "requester"
+          ? RequestStatus.RESOLVED_REVOCATION
+          : expired
+            ? RequestStatus.EXPIRED
+            : RequestStatus.RESOLVED_CLAIM;
       }
       if (expired) {
         return RequestStatus.EXPIRED;
@@ -253,6 +262,7 @@ export const getStatus = (
     request.revocation,
     expired,
     rejected,
+    request.winnerParty?.id,
   );
 };
 
