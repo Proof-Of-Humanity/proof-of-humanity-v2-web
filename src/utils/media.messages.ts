@@ -47,6 +47,8 @@ export const MEDIA_MESSAGES = {
     "Audio appears mostly silent. Please speak clearly throughout the recording.",
   videoLowBitrateWarning:
     "Video bitrate is lower than recommended. For better clarity, use good lighting and your camera's higher quality mode.",
+  videoProcessingHardRefreshWarning:
+    "Video processing could not start. Please do a hard refresh (Cmd+Shift+R or Ctrl+Shift+R) and try again.",
   photoUnsupportedFormat: (fileType: string) =>
     `Unsupported image format "${fileType || "unknown"}". Please use JPG, PNG, or WEBP.`,
   photoUploadTooLarge: (sizeBytes: number, uploadMaxSizeMb: number) =>

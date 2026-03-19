@@ -7,6 +7,21 @@ let ffmpegLoadPromise: Promise<void> | null = null;
 
 const UNRECOGNIZED_FORMAT_ERROR = MEDIA_MESSAGES.invalidVideoFile;
 const FFMPEG_ASSET_VERSION = "20260227";
+const FFMPEG_LOAD_TIMEOUT_MS = 15000;
+const FFMPEG_LOAD_ERROR_CODE = "FFMPEG_LOAD_ERROR";
+
+export const isFFmpegLoadError = (
+  error: unknown,
+): error is Error & { code: string } =>
+  error instanceof Error &&
+  "code" in error &&
+  error.code === FFMPEG_LOAD_ERROR_CODE;
+
+const createFFmpegLoadError = () =>
+  Object.assign(new Error(FFMPEG_LOAD_ERROR_CODE), {
+    name: "FFmpegLoadError",
+    code: FFMPEG_LOAD_ERROR_CODE,
+  });
 const getFFmpegAssetURL = (assetPath: string): string => {
   const base = typeof window === "undefined" ? "http://localhost" : window.location.origin;
   const url = new URL(assetPath, base);
@@ -16,36 +31,56 @@ const getFFmpegAssetURL = (assetPath: string): string => {
 
 export const loadFFMPEG = async (): Promise<FFmpeg> => {
   if (typeof SharedArrayBuffer === "undefined") {
-    throw new Error(
-      "Video processing is not available. Please refresh the page (Cmd+R or Ctrl+R) and try again.",
-    );
+    throw createFFmpegLoadError();
   }
 
   if (!ffmpeg) {
     ffmpeg = new FFmpeg();
   }
 
-  if (ffmpeg.loaded) {
-    return ffmpeg;
+  const ffmpegInstance = ffmpeg;
+
+  if (ffmpegInstance.loaded) {
+    return ffmpegInstance;
   }
 
   if (!ffmpegLoadPromise) {
-    ffmpegLoadPromise = ffmpeg
-      .load({
-        coreURL: getFFmpegAssetURL("/ffmpeg/ffmpeg-core.js"),
-        wasmURL: getFFmpegAssetURL("/ffmpeg/ffmpeg-core.wasm"),
-        workerURL: getFFmpegAssetURL("/ffmpeg/ffmpeg-core.worker.js"),
-        classWorkerURL: getFFmpegAssetURL("/ffmpeg/ffmpeg-worker.js"),
-      })
-      .then(() => undefined)
-      .catch((error) => {
-        ffmpegLoadPromise = null;
-        throw error;
-      });
+    ffmpegLoadPromise = new Promise<void>((resolve, reject) => {
+      const timeoutId = window.setTimeout(() => {
+        reject(createFFmpegLoadError());
+      }, FFMPEG_LOAD_TIMEOUT_MS);
+
+      ffmpegInstance
+        .load({
+          coreURL: getFFmpegAssetURL("/ffmpeg/ffmpeg-core.js"),
+          wasmURL: getFFmpegAssetURL("/ffmpeg/ffmpeg-core.wasm"),
+          workerURL: getFFmpegAssetURL("/ffmpeg/ffmpeg-core.worker.js"),
+          classWorkerURL: getFFmpegAssetURL("/ffmpeg/ffmpeg-worker.js"),
+        })
+        .then(() => {
+          window.clearTimeout(timeoutId);
+          resolve();
+        })
+        .catch((error) => {
+          window.clearTimeout(timeoutId);
+          reject(error);
+        });
+    }).catch((error) => {
+      ffmpegLoadPromise = null;
+      if (ffmpeg === ffmpegInstance) {
+        ffmpeg = null;
+        try {
+          ffmpegInstance.terminate();
+        } catch {
+          // Ignore cleanup errors
+        }
+      }
+      throw isFFmpegLoadError(error) ? error : createFFmpegLoadError();
+    });
   }
 
   await ffmpegLoadPromise;
-  return ffmpeg;
+  return ffmpegInstance;
 };
 
 const readAscii = (buffer: Uint8Array, start: number, length: number) =>
