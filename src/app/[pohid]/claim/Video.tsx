@@ -122,7 +122,9 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
       const combinedErrorMessage = errorMessages.join(" ");
 
       setVideoValidationErrors(errorMessages);
-      videoError(combinedErrorMessage);
+      if (combinedErrorMessage) {
+        videoError(combinedErrorMessage);
+      }
 
       if (warningMessages.length > 0) {
         setVideoQualityWarnings(warningMessages);
@@ -324,12 +326,12 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
   // ─── Derived visual state ────────────────────────────────────────
   const isPreparing = pending && !rawPreviewUri;
   const isProcessing = pending && !!rawPreviewUri;
-  const hasError =
-    !pending && !!rawPreviewUri && videoValidationErrors.length > 0;
-  const isAccepted = !!video && !pending;
-  const isSourceSelection = !showCamera && !video && !pending && !rawPreviewUri;
   const hasIssues =
     videoValidationErrors.length > 0 || videoQualityWarnings.length > 0;
+  const hasError =
+    !pending && !!rawPreviewUri && !video && hasIssues;
+  const isAccepted = !!video && !pending;
+  const isSourceSelection = !showCamera && !video && !pending && !rawPreviewUri;
 
   const checklistItems = [
     {
@@ -437,7 +439,7 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
       )}
 
       {/* ── S2: Camera Live ── */}
-      {showCamera && !pending && (
+      {showCamera && !pending && !rawPreviewUri && (
         <>
           <div tabIndex={0} ref={fullscreenRef}>
             <Webcam
@@ -583,26 +585,30 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
               </span>
               <span className="text-primaryText">Issues Found</span>
             </div>
-            <div className="mx-auto w-full max-w-lg">
-              <div className="mb-2 flex justify-center">
-                <span className="rounded-full bg-status-rejected/15 px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-status-rejected">
-                  Major Issues
-                </span>
+            {videoValidationErrors.length > 0 && (
+              <div className="mx-auto w-full max-w-lg">
+                <div className="mb-2 flex justify-center">
+                  <span className="rounded-full bg-status-rejected/15 px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-status-rejected">
+                    Major Issues
+                  </span>
+                </div>
+                <ul className="flex flex-col items-center gap-2 text-center text-sm text-primaryText">
+                  {videoValidationErrors.map((errorMessage, idx) => (
+                    <li
+                      key={`error-${idx}`}
+                      className="flex items-start justify-center gap-2"
+                    >
+                      <span className="mt-[7px] h-1.5 w-1.5 shrink-0 rounded-full bg-black" />
+                      <span className="text-status-rejected">{errorMessage}</span>
+                    </li>
+                  ))}
+                </ul>
               </div>
-              <ul className="flex flex-col items-center gap-2 text-center text-sm text-primaryText">
-                {videoValidationErrors.map((errorMessage, idx) => (
-                  <li
-                    key={`error-${idx}`}
-                    className="flex items-start justify-center gap-2"
-                  >
-                    <span className="mt-[7px] h-1.5 w-1.5 shrink-0 rounded-full bg-black" />
-                    <span className="text-status-rejected">{errorMessage}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
+            )}
             {videoQualityWarnings.length > 0 && (
-              <div className="border-stroke mt-4 border-t pt-4">
+              <div
+                className={videoValidationErrors.length > 0 ? "border-stroke mt-4 border-t pt-4" : ""}
+              >
                 <div className="mb-2 flex justify-center">
                   <span className="rounded-full bg-status-challenged/15 px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-[#D98A1F]">
                     Warnings

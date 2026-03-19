@@ -196,19 +196,26 @@ export const processVideoInput = async (input: Blob): Promise<VideoPipelineResul
     try {
       probe = await probeVideoMetrics(rawBuffer);
     } catch (error) {
-      validationErrors.push({
-        code: MEDIA_ERROR_CODES.PROCESSING_FAILED,
-        userMessage: MEDIA_MESSAGES.genericVideoProcessingError,
-      });
+      if (isFFmpegLoadError(error)) {
+        return {
+          data: null,
+          error: buildAggregatedValidationError(
+            [],
+            collectedWarnings.concat(MEDIA_MESSAGES.videoProcessingHardRefreshWarning),
+          ),
+        };
+      }
+
       return {
         data: null,
         error: buildAggregatedValidationError(
-          validationErrors,
-          isFFmpegLoadError(error)
-            ? collectedWarnings.concat(
-              MEDIA_MESSAGES.videoProcessingHardRefreshWarning,
-            )
-            : collectedWarnings,
+          [
+            {
+              code: MEDIA_ERROR_CODES.PROCESSING_FAILED,
+              userMessage: MEDIA_MESSAGES.genericVideoProcessingError,
+            },
+          ],
+          collectedWarnings,
         ),
       };
     }
@@ -314,6 +321,16 @@ export const processVideoInput = async (input: Blob): Promise<VideoPipelineResul
         finalProbeDuration > 0 ? finalProbeDuration : undefined,
       );
     } catch (error) {
+      if (isFFmpegLoadError(error)) {
+        return {
+          data: null,
+          error: buildAggregatedValidationError(
+            [],
+            collectedWarnings.concat(MEDIA_MESSAGES.videoProcessingHardRefreshWarning),
+          ),
+        };
+      }
+
       return {
         data: null,
         error: buildAggregatedValidationError(
@@ -323,11 +340,7 @@ export const processVideoInput = async (input: Blob): Promise<VideoPipelineResul
               userMessage: MEDIA_MESSAGES.genericVideoProcessingError,
             },
           ],
-          isFFmpegLoadError(error)
-            ? collectedWarnings.concat(
-              MEDIA_MESSAGES.videoProcessingHardRefreshWarning,
-            )
-            : collectedWarnings,
+          collectedWarnings,
         ),
       };
     }
@@ -425,6 +438,16 @@ export const processVideoInput = async (input: Blob): Promise<VideoPipelineResul
       error: null,
     };
   } catch (error) {
+    if (isFFmpegLoadError(error)) {
+      return {
+        data: null,
+        error: buildAggregatedValidationError(
+          [],
+          [MEDIA_MESSAGES.videoProcessingHardRefreshWarning],
+        ),
+      };
+    }
+
     return {
       data: null,
       error: buildAggregatedValidationError(
@@ -434,9 +457,7 @@ export const processVideoInput = async (input: Blob): Promise<VideoPipelineResul
             userMessage: MEDIA_MESSAGES.genericVideoProcessingError,
           },
         ],
-        isFFmpegLoadError(error)
-          ? [MEDIA_MESSAGES.videoProcessingHardRefreshWarning]
-          : [],
+        [],
       ),
     };
   }
