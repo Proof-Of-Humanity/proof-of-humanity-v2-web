@@ -22,6 +22,9 @@ import AuthGuard from "components/AuthGuard";
 import ActionButton from "components/ActionButton";
 import { useChainId } from "wagmi";
 import { idToChain } from "config/chains";
+import { applyOptimisticWriteSuccess } from "optimistic/applyOptimisticWriteSuccess";
+import { useRequestOptimistic } from "optimistic/request";
+import { useRouter } from "next/navigation";
 
 type Reason =
   | "none"
@@ -119,6 +122,8 @@ export default function Challenge({
   const { uploadFile } = useAtlasProvider();
   const chain = useChainParam()!;
   const userChainId = useChainId();
+  const router = useRouter();
+  const requestOptimistic = useRequestOptimistic();
   
   const loading = useLoading();
   const [isLoading, loadingMessage] = loading.use();
@@ -141,12 +146,19 @@ export default function Challenge({
           loading.stop();
           toast.error("Transaction rejected");
         },
-        onSuccess() {
+        onSuccess(ctx) {
+          applyOptimisticWriteSuccess(ctx, {
+            request: {
+              state: requestOptimistic.effective,
+              applyPatch: requestOptimistic.applyPatch,
+            },
+          });
           loading.stop();
           toast.success("Challenge submitted successfully");
+          setTimeout(() => router.refresh(), 1000);
         },
       }),
-      [loading],
+      [loading, requestOptimistic, router],
     ),
   );
 

@@ -11,6 +11,8 @@ import { useRouter } from "next/navigation";
 import { useAccount, useBalance, useChainId } from "wagmi";
 import { formatEth } from "utils/misc";
 import { idToChain } from "config/chains";
+import { applyOptimisticWriteSuccess } from "optimistic/applyOptimisticWriteSuccess";
+import { useRequestOptimistic } from "optimistic/request";
 
 interface FundButtonProps {
   pohId: Hash;
@@ -34,6 +36,7 @@ const FundButton: React.FC<FundButtonProps> = ({
   const { data: balanceData } = useBalance({ address, chainId: userChainId });
   const loading = useLoading();
   const [isLoading, loadingMessage] = loading.use();
+  const requestOptimistic = useRequestOptimistic();
 
   const [prepareFund] = usePoHWrite(
     "fundRequest",
@@ -51,7 +54,14 @@ const FundButton: React.FC<FundButtonProps> = ({
           loading.stop();
           toast.error("Transaction rejected");
         },
-        onSuccess() {
+        onSuccess(ctx) {
+          applyOptimisticWriteSuccess(ctx, {
+            request: {
+              state: requestOptimistic.effective,
+              applyPatch: requestOptimistic.applyPatch,
+              address,
+            },
+          });
           loading.stop();
           setIsModalOpen(false);
           setAddedFundInput("");
@@ -59,7 +69,7 @@ const FundButton: React.FC<FundButtonProps> = ({
           setTimeout(() => router.refresh(), 1000);
         },
       }),
-      [loading, router],
+      [loading, router, requestOptimistic, address],
     ),
   );
 

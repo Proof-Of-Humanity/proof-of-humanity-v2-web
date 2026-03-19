@@ -25,6 +25,7 @@ import Renew from "./Renew";
 import Revoke from "./Revoke";
 import { getStatus, RequestStatus } from "utils/status";
 import { ProfileTimelineSection } from "./TimelineSection";
+import { ProfileOptimisticProvider } from "optimistic/profile";
 
 type PoHRequest = ArrayElement<
   NonNullable<HumanityQuery["humanity"]>["requests"]
@@ -233,6 +234,7 @@ async function Profile({ params: { pohid } }: PageProps) {
         revocation: latestRequest.revocation,
       }
     : undefined;
+  const hasPendingRevocation = activeRequests.some((request) => request.revocation);
 
   return (
     <div className="content">
@@ -329,40 +331,54 @@ async function Profile({ params: { pohid } }: PageProps) {
               </span>
             )}
 
-            <Revoke
-              pohId={pohId}
-              arbitrationInfo={contractData[homeChain.id].arbitrationInfo!}
-              homeChain={homeChain}
-              cost={
-                arbitrationCost + BigInt(contractData[homeChain.id].baseDeposit)
-              }
-            />
+            <ProfileOptimisticProvider
+              base={{
+                winningStatus: winnerClaimData.status,
+                hasPendingRevocation,
+              }}
+            >
+              <Revoke
+                pohId={pohId}
+                arbitrationInfo={contractData[homeChain.id].arbitrationInfo!}
+                homeChain={homeChain}
+                cost={
+                  arbitrationCost + BigInt(contractData[homeChain.id].baseDeposit)
+                }
+              />
+              <CrossChain
+                claimer={
+                  humanity[homeChain.id]!.humanity!.registration!.claimer.id
+                }
+                contractData={contractData}
+                homeChain={homeChain}
+                pohId={pohId}
+                humanity={humanity}
+                lastTransfer={humanity[lastTransferChain.id].outTransfer}
+                lastTransferChain={lastTransferChain}
+                winningStatus={winnerClaimData.status}
+              />
+            </ProfileOptimisticProvider>
+          </>
+        ) : latestTransferArtifact?.status.id === "transferred" ? (
+          <ProfileOptimisticProvider
+            base={{
+              winningStatus: "transferred",
+              hasPendingRevocation: false,
+            }}
+          >
             <CrossChain
               claimer={
-                humanity[homeChain.id]!.humanity!.registration!.claimer.id
+                humanity[lastTransferChain.id]?.humanity!.registration?.claimer.id
               }
               contractData={contractData}
-              homeChain={homeChain}
+              homeChain={idToChain(getForeignChain(lastTransferChain.id))!}
               pohId={pohId}
               humanity={humanity}
               lastTransfer={humanity[lastTransferChain.id].outTransfer}
               lastTransferChain={lastTransferChain}
-              winningStatus={winnerClaimData.status}
+              winningStatus={"transferred"}
             />
-          </>
-        ) : latestTransferArtifact?.status.id === "transferred" ? (
-          <CrossChain
-            claimer={
-              humanity[lastTransferChain.id]?.humanity!.registration?.claimer.id
-            }
-            contractData={contractData}
-            homeChain={idToChain(getForeignChain(lastTransferChain.id))!}
-            pohId={pohId}
-            humanity={humanity}
-            lastTransfer={humanity[lastTransferChain.id].outTransfer}
-            lastTransferChain={lastTransferChain}
-            winningStatus={"transferred"}
-          />
+          </ProfileOptimisticProvider>
         ) : (
           <>
             <span className="text-orange mb-6">Not claimed</span>

@@ -20,6 +20,9 @@ import { Hash } from "viem";
 import { useChainId, useSwitchChain } from "wagmi";
 import { useAtlasProvider, Roles } from "@kleros/kleros-app";
 import AuthGuard from "components/AuthGuard";
+import { applyOptimisticWriteSuccess } from "optimistic/applyOptimisticWriteSuccess";
+import { useProfileOptimistic } from "optimistic/profile";
+import { useRouter } from "next/navigation";
 
 enableReactUse();
 
@@ -45,6 +48,11 @@ export default function Revoke({
   const connectedChainId = useChainId() as SupportedChainId;
   const web3Loaded = useWeb3Loaded();
   const { switchChain } = useSwitchChain();
+  const router = useRouter();
+  const profileOptimistic = useProfileOptimistic();
+  const hasPendingRevocation =
+    profileOptimistic.base.hasPendingRevocation ||
+    profileOptimistic.effective.pendingRevocation;
   
   const { uploadFile } = useAtlasProvider();
 
@@ -64,12 +72,19 @@ export default function Revoke({
           loading.stop();
           toast.error("Transaction rejected");
         },
-        onSuccess() {
+        onSuccess(ctx) {
+          applyOptimisticWriteSuccess(ctx, {
+            profile: {
+              state: profileOptimistic.effective,
+              applyPatch: profileOptimistic.applyPatch,
+            },
+          });
           setModalOpen(false);
           toast.success("Request created");
+          setTimeout(() => router.refresh(), 1000);
         },
       }),
-      [loading],
+      [loading, profileOptimistic, router],
     ),
   );
 
@@ -132,7 +147,11 @@ export default function Revoke({
       open={modalOpen}
       header="Revoke"
       trigger={
-        <button onClick={() => setModalOpen(true)} className="btn-main mb-4">
+        <button
+          onClick={() => setModalOpen(true)}
+          className="btn-main mb-4"
+          disabled={hasPendingRevocation}
+        >
           Revoke
         </button>
       }
@@ -182,13 +201,18 @@ export default function Revoke({
 
         <AuthGuard signInButtonProps={{ className: "mt-12 px-5 py-2" }}>
           <button
-            disabled={pending}
+            disabled={pending || hasPendingRevocation}
             className="btn-main mt-12"
             onClick={submit}
           >
-            Revoke
+            {hasPendingRevocation ? "Pending" : "Revoke"}
           </button>
         </AuthGuard>
+        {hasPendingRevocation && (
+          <span className="text-secondaryText mt-3 text-sm">
+            Revocation request submitted. Waiting for the profile page to refresh.
+          </span>
+        )}
       </div>
     </Modal>
   );

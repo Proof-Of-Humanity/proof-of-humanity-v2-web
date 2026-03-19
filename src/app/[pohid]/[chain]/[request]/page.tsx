@@ -39,6 +39,7 @@ import {
 } from "./TimelineSection";
 import DocumentIcon from "components/DocumentIcon";
 import VideoThumbnail from "components/VideoThumbnail";
+import { RequestOptimisticProvider } from "optimistic/request";
 import { getStatus } from "utils/status";
 
 interface PageProps {
@@ -272,37 +273,61 @@ export default async function Request({ params }: PageProps) {
     : null;
 
   //const policyUpdate = request.arbitratorHistory.updateTime;
+  const currentChallenge =
+    request.challenges && request.challenges.length > 0
+      ? request.challenges.at(-1)
+      : undefined;
+  const funded =
+    request.index >= 0
+      ? BigInt(request.challenges[0].rounds[0].requesterFund.amount)
+      : 0n;
+  const evidenceList = request.evidenceGroup.evidence
+    .sort((a, b) => Number(a.creationTime) - Number(b.creationTime))
+    .map((item) => ({
+      id: item.id,
+      uri: item.uri,
+      creationTime: Number(item.creationTime),
+      submitter: item.submitter as Address,
+    }));
 
   return (
-    <div className="content mx-auto flex w-[92vw] sm:w-[84vw] max-w-[1500px] flex-col justify-center font-semibold md:w-[76vw]">
-      <ActionBar
-        arbitrationCost={arbitrationCost}
-        index={request.index}
-        status={request.status.id}
-        requester={request.requester}
-        contractData={contractData}
-        pohId={pohId}
-        lastStatusChange={+request.lastStatusChange}
-        revocation={request.revocation}
-        currentChallenge={
-          request.challenges && request.challenges.length > 0
-            ? request.challenges.at(-1)
-            : undefined
-        }
-        funded={
-          request.index >= 0
-            ? BigInt(request.challenges[0].rounds[0].requesterFund.amount)
-            : 0n
-        }
-        onChainVouches={onChainVouches}
-        offChainVouches={offChainVouches}
-        validVouches={validVouches}
-        arbitrationHistory={request.arbitratorHistory}
-        requestStatus={requestStatus}
-        humanityExpirationTime={request.expirationTime}
-        usedReasons={usedReasons}
-      />
-      <div className="border-stroke bg-whiteBackground mb-6 rounded border shadow">
+    <RequestOptimisticProvider
+      base={{
+        status: request.status.id,
+        requestStatus,
+        funded,
+        totalCost: BigInt(contractData.baseDeposit) + arbitrationCost,
+        validVouches,
+        onChainVouches,
+        offChainVouches,
+        evidenceList,
+        revocation: request.revocation,
+        currentChallengeDisputeId: currentChallenge?.disputeId
+          ? String(currentChallenge.disputeId)
+          : undefined,
+      }}
+    >
+      <div className="content mx-auto flex w-[92vw] sm:w-[84vw] max-w-[1500px] flex-col justify-center font-semibold md:w-[76vw]">
+        <ActionBar
+          arbitrationCost={arbitrationCost}
+          index={request.index}
+          status={request.status.id}
+          requester={request.requester}
+          contractData={contractData}
+          pohId={pohId}
+          lastStatusChange={+request.lastStatusChange}
+          revocation={request.revocation}
+          currentChallenge={currentChallenge}
+          funded={funded}
+          onChainVouches={onChainVouches}
+          offChainVouches={offChainVouches}
+          validVouches={validVouches}
+          arbitrationHistory={request.arbitratorHistory}
+          requestStatus={requestStatus}
+          humanityExpirationTime={request.expirationTime}
+          usedReasons={usedReasons}
+        />
+        <div className="border-stroke bg-whiteBackground mb-6 rounded border shadow">
         {request.revocation && revocationFile && (
           <div className="bg-primaryBackground p-4">
             <div className="relative">
@@ -540,16 +565,17 @@ export default async function Request({ params }: PageProps) {
             </Label>
           </div>
         </div>
-      </div>
+        </div>
 
-      <Evidence
-        list={request.evidenceGroup.evidence.sort(
-          (a, b) => Number(a.creationTime) - Number(b.creationTime),
-        )}
-        pohId={pohId}
-        requestIndex={request.index}
-        arbitrationInfo={request.arbitratorHistory}
-      />
-    </div>
+        <Evidence
+          list={request.evidenceGroup.evidence.sort(
+            (a, b) => Number(a.creationTime) - Number(b.creationTime),
+          )}
+          pohId={pohId}
+          requestIndex={request.index}
+          arbitrationInfo={request.arbitratorHistory}
+        />
+      </div>
+    </RequestOptimisticProvider>
   );
 }

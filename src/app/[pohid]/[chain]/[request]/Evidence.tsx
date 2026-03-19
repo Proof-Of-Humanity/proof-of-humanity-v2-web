@@ -29,9 +29,11 @@ import { shortenAddress } from "utils/address";
 import { ipfsFetch, ipfs } from "utils/ipfs";
 import { romanize } from "utils/misc";
 import { Address, Hash } from "viem";
-import { useChainId } from "wagmi";
+import { useAccount, useChainId } from "wagmi";
 import { useAtlasProvider, Roles } from "@kleros/kleros-app";
 import AuthGuard from "components/AuthGuard";
+import { applyOptimisticWriteSuccess } from "optimistic/applyOptimisticWriteSuccess";
+import { useRequestOptimistic } from "optimistic/request";
 
 enableReactUse();
 
@@ -97,6 +99,7 @@ export default function Evidence({
 }: EvidenceProps) {
   const chainReq = useChainParam()!;
   const chainId = useChainId();
+  const { address } = useAccount();
   const { data: policy } = useSWR(
     arbitrationInfo.registrationMeta,
     async (metaEvidenceLink) =>
@@ -106,6 +109,7 @@ export default function Evidence({
   const loading = useLoading();
   const [pending] = loading.use();
   const router = useRouter();
+  const requestOptimistic = useRequestOptimistic();
 
   const { uploadFile } = useAtlasProvider();
   const [prepare] = usePoHWrite(
@@ -120,14 +124,21 @@ export default function Evidence({
           loading.stop();
           toast.error("Transaction rejected");
         },
-        onSuccess() {
+        onSuccess(ctx) {
+          applyOptimisticWriteSuccess(ctx, {
+            request: {
+              state: requestOptimistic.effective,
+              applyPatch: requestOptimistic.applyPatch,
+              address,
+            },
+          });
           loading.stop();
           toast.success("Evidence submitted successfully");
           setModalOpen(false);
           router.refresh();
         },
       }),
-      [loading],
+      [loading, router, requestOptimistic, address],
     ),
   );
 
@@ -270,7 +281,7 @@ export default function Evidence({
         </Modal>
       )}
 
-      {list.map((item, i) => (
+      {requestOptimistic.effective.evidenceList.map((item, i) => (
         <Item
           key={item.id}
           index={i}

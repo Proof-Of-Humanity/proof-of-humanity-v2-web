@@ -24,6 +24,8 @@ import Challenge from "./Challenge";
 import FundButton from "./Funding";
 import RemoveVouch from "./RemoveVouch";
 import Vouch from "./Vouch";
+import { applyOptimisticWriteSuccess } from "optimistic/applyOptimisticWriteSuccess";
+import { useRequestOptimistic } from "optimistic/request";
 
 enableReactUse();
 
@@ -69,19 +71,14 @@ export default function ActionBar({
   requester,
   index,
   revocation,
-  status,
   requestStatus,
-  funded,
   lastStatusChange,
   arbitrationCost,
   contractData,
   currentChallenge,
-  onChainVouches,
-  offChainVouches,
   // advanceRequestsOnChainVouches,
   arbitrationHistory,
   humanityExpirationTime,
-  validVouches,
   usedReasons = [],
 }: ActionBarProps) {
   const chain = useChainParam()!;
@@ -90,48 +87,59 @@ export default function ActionBar({
   const userChainId = useChainId();
   const { data: me } = useSWR(address, getMyData);
   const router = useRouter();
+  const requestOptimistic = useRequestOptimistic();
+  const effectiveStatus = requestOptimistic.effective.status;
+  const effectiveRequestStatus = requestOptimistic.effective.requestStatus;
+  const effectiveFunded = requestOptimistic.effective.funded;
+  const effectiveValidVouches = requestOptimistic.effective.validVouches;
+  const effectiveOnChainVouches = requestOptimistic.effective.onChainVouches;
+  const effectiveOffChainVouches = requestOptimistic.effective.offChainVouches;
+  const pendingChallenge = requestOptimistic.effective.pendingChallenge;
 
   const { didIVouchFor, isVouchOnchain } = useMemo(() => {
     const lowerAddr = address?.toLowerCase();
-    const onChainMatch = onChainVouches.some(
+    const onChainMatch = effectiveOnChainVouches.some(
       (voucherAddress) => voucherAddress.toLowerCase() === lowerAddr,
     );
-    const offChainMatch = offChainVouches.some(
+    const offChainMatch = effectiveOffChainVouches.some(
       (voucher) => voucher.voucher.toLowerCase() === lowerAddr,
     );
     return { didIVouchFor: onChainMatch || offChainMatch, isVouchOnchain: onChainMatch };
-  }, [onChainVouches, offChainVouches, address]);
+  }, [effectiveOnChainVouches, effectiveOffChainVouches, address]);
 
   const action = useMemo(() => {
-    if (status === "resolved" || status === "withdrawn") return ActionType.NONE;
+    if (effectiveStatus === "resolved" || effectiveStatus === "withdrawn")
+      return ActionType.NONE;
     if (index < 0 && index > -100) return ActionType.OLD_ACTIVE;
-    if (status === "disputed") return ActionType.DISPUTED;
-    if (status === "vouching") {
-      if (funded < arbitrationCost + BigInt(contractData.baseDeposit)) return ActionType.FUND;
-      if (validVouches >= contractData.requiredNumberOfVouches) return ActionType.ADVANCE;
+    if (effectiveStatus === "disputed") return ActionType.DISPUTED;
+    if (effectiveStatus === "vouching") {
+      if (effectiveFunded < arbitrationCost + BigInt(contractData.baseDeposit))
+        return ActionType.FUND;
+      if (effectiveValidVouches >= contractData.requiredNumberOfVouches)
+        return ActionType.ADVANCE;
       if (
-        onChainVouches.length + offChainVouches.length >= 0 &&
+        effectiveOnChainVouches.length + effectiveOffChainVouches.length >= 0 &&
         didIVouchFor &&
         isVouchOnchain
       )
         return ActionType.REMOVE_VOUCH;
       return ActionType.VOUCH;
     }
-    if (status == "resolving")
+    if (effectiveStatus == "resolving")
       return +lastStatusChange + +contractData.challengePeriodDuration < Date.now() / 1000
         ? ActionType.EXECUTE
         : ActionType.CHALLENGE;
     return ActionType.NONE;
   }, [
-    status,
+    effectiveStatus,
     index,
-    funded,
+    effectiveFunded,
     arbitrationCost,
     contractData.baseDeposit,
-    validVouches,
+    effectiveValidVouches,
     contractData.requiredNumberOfVouches,
-    onChainVouches,
-    offChainVouches,
+    effectiveOnChainVouches,
+    effectiveOffChainVouches,
     didIVouchFor,
     isVouchOnchain,
     lastStatusChange,
@@ -147,12 +155,19 @@ export default function ActionBar({
         onError() {
           toast.error("Transaction rejected");
         },
-        onSuccess() {
+        onSuccess(ctx) {
+          applyOptimisticWriteSuccess(ctx, {
+            request: {
+              state: requestOptimistic.effective,
+              applyPatch: requestOptimistic.applyPatch,
+              address,
+            },
+          });
           toast.success("Request executed successfully");
           setTimeout(() => router.refresh(), 1000);
         },
       }),
-      [router],
+      [router, requestOptimistic, address],
     ),
   );
   const [prepareAdvance, advanceFire, advanceStatus] = usePoHWrite(
@@ -162,12 +177,19 @@ export default function ActionBar({
         onError() {
           toast.error("Transaction rejected");
         },
-        onSuccess() {
+        onSuccess(ctx) {
+          applyOptimisticWriteSuccess(ctx, {
+            request: {
+              state: requestOptimistic.effective,
+              applyPatch: requestOptimistic.applyPatch,
+              address,
+            },
+          });
           toast.success("Request advanced to resolving state");
           setTimeout(() => router.refresh(), 1000);
         },
       }),
-      [router],
+      [router, requestOptimistic, address],
     ),
   );
   const [prepareWithdraw, withdraw, withdrawStatus] = usePoHWrite(
@@ -177,12 +199,19 @@ export default function ActionBar({
         onError() {
           toast.error("Transaction rejected");
         },
-        onSuccess() {
+        onSuccess(ctx) {
+          applyOptimisticWriteSuccess(ctx, {
+            request: {
+              state: requestOptimistic.effective,
+              applyPatch: requestOptimistic.applyPatch,
+              address,
+            },
+          });
           toast.success("Request withdrawn successfully");
           setTimeout(() => router.refresh(), 1000);
         },
       }),
-      [router],
+      [router, requestOptimistic, address],
     ),
   );
 
@@ -205,8 +234,8 @@ export default function ActionBar({
       prepareAdvance({
         args: [
           requester,
-          onChainVouches,
-          offChainVouches.map((v) => {
+          effectiveOnChainVouches,
+          effectiveOffChainVouches.map((v) => {
             const sig = hexToSignature(v.signature);
             return {
               expirationTime: v.expiration,
@@ -231,6 +260,8 @@ export default function ActionBar({
     chain,
     userChainId,
     canAdvance,
+    effectiveOnChainVouches,
+    effectiveOffChainVouches,
   ]);
 
   useEffect(() => {
@@ -255,7 +286,7 @@ export default function ActionBar({
 
   const totalCost = BigInt(contractData.baseDeposit) + arbitrationCost;
 
-  const statusColor = getStatusColor(requestStatus);
+  const statusColor = getStatusColor(effectiveRequestStatus);
 
   return (
     <div className="paper border-stroke bg-whiteBackground text-primaryText flex flex-col items-center justify-between gap-[12px] px-[24px] py-[24px] md:flex-row lg:gap-[20px]">
@@ -264,7 +295,7 @@ export default function ActionBar({
         <span
           className={`rounded-full px-3 py-1 text-white bg-status-${statusColor} whitespace-nowrap`}
         >
-          {getStatusLabel(requestStatus, 'actionBar')}
+          {getStatusLabel(effectiveRequestStatus, 'actionBar')}
         </span>
       </div>
       <div className="flex w-full flex-col justify-between gap-[12px] font-normal md:flex-row md:items-center">
@@ -275,7 +306,7 @@ export default function ActionBar({
             <>
               <div className="flex justify-center gap-6 md:justify-start">
                 <span className="text-center text-slate-400 md:text-left">
-                  {validVouches < contractData.requiredNumberOfVouches && (
+                  {effectiveValidVouches < contractData.requiredNumberOfVouches && (
                     <>
                       It needs{" "}
                       <strong className={`text-status-${statusColor}`}>
@@ -287,13 +318,13 @@ export default function ActionBar({
                       to proceed
                     </>
                   )}
-                  {!!(totalCost - funded) && (
+                  {!!(totalCost - effectiveFunded) && (
                     <>
-                      {validVouches < contractData.requiredNumberOfVouches
+                      {effectiveValidVouches < contractData.requiredNumberOfVouches
                         ? " + "
                         : "It needs "}
                       <strong className={`text-status-${statusColor}`}>
-                        {formatEther(totalCost - funded)}{" "}
+                        {formatEther(totalCost - effectiveFunded)}{" "}
                         {chain.nativeCurrency.symbol}
                       </strong>{" "}
                       to complete the initial deposit
@@ -313,7 +344,7 @@ export default function ActionBar({
                             BigInt(contractData.baseDeposit) + arbitrationCost
                           }
                           index={index}
-                          funded={funded}
+                          funded={effectiveFunded}
                         />
                       )}
                       <ActionButton
@@ -332,7 +363,7 @@ export default function ActionBar({
                         className="mb-2 w-auto"
                       />
                     </div>
-                    {validVouches < contractData.requiredNumberOfVouches && (
+                    {effectiveValidVouches < contractData.requiredNumberOfVouches && (
                       <ExternalLink
                         href="https://t.me/proofhumanity"
                         className="text-purple hover:opacity-80 underline underline-offset-4 text-sm font-medium inline-flex items-center gap-1 group transition-colors justify-center md:justify-end"
@@ -366,7 +397,7 @@ export default function ActionBar({
                           BigInt(contractData.baseDeposit) + arbitrationCost
                         }
                         index={index}
-                        funded={funded}
+                        funded={effectiveFunded}
                       />
                     )}
                     <Vouch
@@ -387,7 +418,7 @@ export default function ActionBar({
                           BigInt(contractData.baseDeposit) + arbitrationCost
                         }
                         index={index}
-                        funded={funded}
+                        funded={effectiveFunded}
                       />
                     )}
                     <RemoveVouch
@@ -522,7 +553,7 @@ export default function ActionBar({
                 currentChallenge={currentChallenge}
                 chainId={chain.id}
                 revocation={revocation}
-                requestStatus={requestStatus}
+                requestStatus={effectiveRequestStatus}
               />
 
               <ExternalLink
@@ -534,16 +565,21 @@ export default function ActionBar({
             </div>
           </>
         )}
+        {action === ActionType.DISPUTED && !currentChallenge && pendingChallenge && (
+          <span className="text-center text-slate-400 md:text-left">
+            Challenge submitted. Waiting for dispute details to sync.
+          </span>
+        )}
 
-        {status === "resolved" && (
+        {effectiveStatus === "resolved" && (
           <span className="text-center md:text-left">
-            {requestStatus === RequestStatus.EXPIRED ?
+            {effectiveRequestStatus === RequestStatus.EXPIRED ?
               "Request has expired" :
-              requestStatus === RequestStatus.REJECTED ?
+              effectiveRequestStatus === RequestStatus.REJECTED ?
                 "Request was rejected" : "Request was accepted"}
             <TimeAgo
               className={`ml-1 text-status-${statusColor}`}
-              time={requestStatus === RequestStatus.EXPIRED
+              time={effectiveRequestStatus === RequestStatus.EXPIRED
                 ? humanityExpirationTime!
                 : lastStatusChange}
             />

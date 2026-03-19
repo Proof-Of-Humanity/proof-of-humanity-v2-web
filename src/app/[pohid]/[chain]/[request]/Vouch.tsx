@@ -10,6 +10,8 @@ import { getContractInfo } from "contracts";
 import { toast } from "react-toastify";
 import { SupportedChain, idToChain } from "config/chains";
 import ActionButton from "components/ActionButton";
+import { applyOptimisticWriteSuccess } from "optimistic/applyOptimisticWriteSuccess";
+import { useRequestOptimistic } from "optimistic/request";
 
 interface VouchButtonProps {
   pohId: Hash;
@@ -30,6 +32,7 @@ export default function Vouch({
 }: VouchButtonProps) {
   const router = useRouter();
   const userChainId = useChainId();
+  const requestOptimistic = useRequestOptimistic();
   const [isOpen, setIsOpen] = useState(false);
   const [prepare, addVouch , status] = usePoHWrite(
     "addVouch",
@@ -41,13 +44,20 @@ export default function Vouch({
         onLoading() {
           toast.info("Transaction pending");
         },
-        onSuccess() {
+        onSuccess(ctx) {
+          applyOptimisticWriteSuccess(ctx, {
+            request: {
+              state: requestOptimistic.effective,
+              applyPatch: requestOptimistic.applyPatch,
+              address,
+            },
+          });
           toast.success("Vouched successfully");
           setIsOpen(false);
           setTimeout(() => router.refresh(), 1000);
         },
       }),
-      [],
+      [router, requestOptimistic, address],
     ),
   );
 
@@ -74,6 +84,24 @@ export default function Vouch({
             voucher: address!,
             expiration,
             signature,
+          });
+          const alreadyPresent = requestOptimistic.effective.offChainVouches.some(
+            (item) => item.voucher.toLowerCase() === address?.toLowerCase(),
+          );
+          requestOptimistic.applyPatch({
+            offChainVouches: alreadyPresent
+              ? requestOptimistic.effective.offChainVouches
+              : [
+                  ...requestOptimistic.effective.offChainVouches,
+                  {
+                    voucher: address!,
+                    expiration,
+                    signature,
+                  },
+                ],
+            validVouches: alreadyPresent
+              ? requestOptimistic.effective.validVouches
+              : requestOptimistic.effective.validVouches + 1,
           });
           toast.success("Vouched successfully");
           setIsOpen(false);

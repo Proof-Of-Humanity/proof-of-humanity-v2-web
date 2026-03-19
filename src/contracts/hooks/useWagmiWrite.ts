@@ -1,5 +1,10 @@
-import { useEffect, useMemo, useState } from "react";
-import { WriteArgs, WriteFunctionName, Effects } from "./types";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  WriteArgs,
+  WriteFunctionName,
+  Effects,
+  WriteSuccessContext,
+} from "./types";
 import { SupportedChainId } from "config/chains";
 import {
   useChainId,
@@ -55,15 +60,32 @@ export default function useWagmiWrite<
   } as any);
 
   const { writeContract, data, status, error: writeError } = useWriteContract();
-  const { status: transactionStatus } = useWaitForTransactionReceipt({
+  const { data: receipt, status: transactionStatus } = useWaitForTransactionReceipt({
     hash: data,
   });
+  const lastWriteRef = useRef<{
+    args?: readonly unknown[];
+    value?: bigint;
+    chainId: number;
+  } | null>(null);
+
+  const fireWrite = useCallback(
+    (request: any) => {
+      lastWriteRef.current = {
+        args: args as readonly unknown[] | undefined,
+        value,
+        chainId: chain?.id || defaultChainId,
+      };
+      writeContract(request);
+    },
+    [args, value, chain?.id, defaultChainId, writeContract],
+  );
 
   useEffect(() => {
     switch (prepareStatus) {
       case "success":
         if (prepared.request && enabled) {
-          effects?.onReady?.(() => writeContract(prepared.request));
+          effects?.onReady?.(() => fireWrite(prepared.request));
           setEnabled(false);
         }
         break;
@@ -73,16 +95,16 @@ export default function useWagmiWrite<
           setEnabled(false);
         }
     }
-  }, [prepareStatus, effects, enabled, prepared?.request, writeContract]);
+  }, [prepareStatus, effects, enabled, prepared?.request, fireWrite]);
 
   useEffect(() => {
     switch (status) {
       case "error":
         console.log(writeError);
-        effects?.onError?.();
+        effects?.onError?.(writeError);
         setEnabled(false);
     }
-  }, [status, effects]);
+  }, [status, effects, writeError]);
 
   useEffect(() => {
     if (data) {
@@ -90,11 +112,31 @@ export default function useWagmiWrite<
         case "pending":
           effects?.onLoading?.();
           break;
-        case "success":
-          effects?.onSuccess?.();
+        case "success": {
+          const ctx: WriteSuccessContext = {
+            contract,
+            functionName: String(functionName),
+            args: lastWriteRef.current?.args,
+            value: lastWriteRef.current?.value,
+            chainId: lastWriteRef.current?.chainId ?? (chain?.id || defaultChainId),
+            txHash: data,
+            receipt,
+          };
+          effects?.onSuccess?.(ctx);
+          break;
+        }
       }
     }
-  }, [transactionStatus, effects]);
+  }, [
+    transactionStatus,
+    effects,
+    data,
+    receipt,
+    contract,
+    functionName,
+    chain?.id,
+    defaultChainId,
+  ]);
 
   return useMemo(
     () =>
@@ -106,7 +148,7 @@ export default function useWagmiWrite<
         },
         () => {
           if (prepared?.request)
-            writeContract(prepared.request);
+            fireWrite(prepared.request);
           setEnabled(false);
         },
         {
@@ -115,6 +157,6 @@ export default function useWagmiWrite<
           transaction: transactionStatus,
         },
       ] as const,
-    [prepareStatus, status, transactionStatus, prepared?.request, writeContract],
+    [prepareStatus, status, transactionStatus, prepared?.request, fireWrite],
   );
 }

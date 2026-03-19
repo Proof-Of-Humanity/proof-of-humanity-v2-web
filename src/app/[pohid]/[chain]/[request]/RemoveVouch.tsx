@@ -7,6 +7,10 @@ import { toast } from "react-toastify";
 import { useEffectOnce } from "@legendapp/state/react";
 import { SupportedChain, idToChain } from "config/chains";
 import ActionButton from "components/ActionButton";
+import { applyOptimisticWriteSuccess } from "optimistic/applyOptimisticWriteSuccess";
+import { useRequestOptimistic } from "optimistic/request";
+import { useRouter } from "next/navigation";
+import { useAccount } from "wagmi";
 
 enableReactUse();
 
@@ -30,7 +34,9 @@ export default function RemoveVouch({
   tooltip,
 }: RemoveVouchProps) {
   const loading = useLoading();
-  const [pending] = loading.use();
+  const router = useRouter();
+  const { address } = useAccount();
+  const requestOptimistic = useRequestOptimistic();
 
   const [prepareRemoveVouch, removeOnchainVouch, status] = usePoHWrite(
     "removeVouch",
@@ -43,11 +49,19 @@ export default function RemoveVouch({
           loading.start();
           toast.info("Transaction pending");
         },
-        onSuccess() {
+        onSuccess(ctx) {
+          applyOptimisticWriteSuccess(ctx, {
+            request: {
+              state: requestOptimistic.effective,
+              applyPatch: requestOptimistic.applyPatch,
+              address,
+            },
+          });
           toast.success("Request remove vouch successful");
+          setTimeout(() => router.refresh(), 1000);
         },
       }),
-      [loading],
+      [loading, requestOptimistic, address, router],
     ),
   );
 

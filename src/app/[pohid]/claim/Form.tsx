@@ -31,6 +31,7 @@ import PhotoStep from "./Photo";
 import ReviewStep from "./Review";
 import VideoStep from "./Video";
 import { formatEth } from "utils/misc";
+import { applyOptimisticWriteSuccess } from "optimistic/applyOptimisticWriteSuccess";
 
 enableReactUse();
 
@@ -126,7 +127,8 @@ export default function Form({
       onLoading() {
         toast.info("Transaction pending");
       },
-      onSuccess() {
+      onSuccess(ctx) {
+        applyOptimisticWriteSuccess(ctx, {});
         step$.set(Step.finalized);
         toast.success("Request created");
       },
