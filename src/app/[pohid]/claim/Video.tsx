@@ -16,6 +16,7 @@ import {
   IS_IOS,
   MEDIA_MESSAGES,
   processVideoInput,
+  warmVideoPipeline,
   VIDEO_LIMITS,
 } from "utils/media";
 import { useAccount } from "wagmi";
@@ -60,8 +61,10 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
 
   const loading = useLoading();
   const [pending, loadingMessage] = loading.use();
-  const dedupeMessages = (messages: string[]): string[] =>
-    [...new Set(messages.filter(Boolean))];
+
+  useEffect(() => {
+    warmVideoPipeline();
+  }, []);
 
   const setValidationError = (message: string) => {
     setVideoValidationErrors([message]);
@@ -74,15 +77,14 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
   };
 
   const showWarningToasts = (messages: string[]) => {
-    const warningMessages = [...new Set(messages.filter(Boolean))];
-    if (warningMessages.length === 0) return;
+    if (messages.length === 0) return;
 
     const autoCloseMs = Math.min(
       WARNING_TOAST_MAX_MS,
-      WARNING_TOAST_BASE_MS + (warningMessages.length - 1) * WARNING_TOAST_PER_MESSAGE_MS,
+      WARNING_TOAST_BASE_MS + (messages.length - 1) * WARNING_TOAST_PER_MESSAGE_MS,
     );
 
-    warningMessages.forEach((warningMessage) =>
+    messages.forEach((warningMessage) =>
       toast.warn(warningMessage, {
         autoClose: autoCloseMs,
         pauseOnHover: true,
@@ -110,31 +112,27 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
     }
 
     if (result.error) {
-      const errorMessages = dedupeMessages(
-        result.error.messages ?? [result.error.userMessage],
-      );
-      const warningMessages = dedupeMessages(result.error.warnings ?? []);
-      const combinedErrorMessage = errorMessages.join(" ");
+      const errorMessages = result.error.messages;
+      const warningMessages = result.error.warnings;
 
+      setShowCamera(false);
       setVideoValidationErrors(errorMessages);
-      videoError(combinedErrorMessage);
+      if (errorMessages[0]) {
+        videoError(errorMessages[0]);
+      }
 
+      setVideoQualityWarnings(warningMessages);
       if (warningMessages.length > 0) {
-        setVideoQualityWarnings(warningMessages);
         showWarningToasts(warningMessages);
-      } else {
-        setVideoQualityWarnings([]);
       }
       return;
     }
 
     const processed = result.data;
 
-    setVideoQualityWarnings([]);
+    setVideoQualityWarnings(processed.warnings);
     if (processed.warnings.length > 0) {
-      const warningMessages = dedupeMessages(processed.warnings);
-      setVideoQualityWarnings(warningMessages);
-      showWarningToasts(warningMessages);
+      showWarningToasts(processed.warnings);
     }
 
     setVideoValidationErrors([]);
@@ -319,12 +317,12 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
   // ─── Derived visual state ────────────────────────────────────────
   const isPreparing = pending && !rawPreviewUri;
   const isProcessing = pending && !!rawPreviewUri;
-  const hasError =
-    !pending && !!rawPreviewUri && videoValidationErrors.length > 0;
-  const isAccepted = !!video && !pending;
-  const isSourceSelection = !showCamera && !video && !pending && !rawPreviewUri;
   const hasIssues =
     videoValidationErrors.length > 0 || videoQualityWarnings.length > 0;
+  const hasError =
+    !pending && !!rawPreviewUri && !video && hasIssues;
+  const isAccepted = !!video && !pending;
+  const isSourceSelection = !showCamera && !video && !pending && !rawPreviewUri;
 
   const checklistItems = [
     {
@@ -432,7 +430,7 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
       )}
 
       {/* ── S2: Camera Live ── */}
-      {showCamera && !pending && (
+      {showCamera && !pending && !rawPreviewUri && (
         <>
           <div tabIndex={0} ref={fullscreenRef}>
             <Webcam
@@ -578,26 +576,30 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
               </span>
               <span className="text-primaryText">Issues Found</span>
             </div>
-            <div className="mx-auto w-full max-w-lg">
-              <div className="mb-2 flex justify-center">
-                <span className="rounded-full bg-status-rejected/15 px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-status-rejected">
-                  Major Issues
-                </span>
+            {videoValidationErrors.length > 0 && (
+              <div className="mx-auto w-full max-w-lg">
+                <div className="mb-2 flex justify-center">
+                  <span className="rounded-full bg-status-rejected/15 px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-status-rejected">
+                    Major Issues
+                  </span>
+                </div>
+                <ul className="flex flex-col items-center gap-2 text-center text-sm text-primaryText">
+                  {videoValidationErrors.map((errorMessage, idx) => (
+                    <li
+                      key={`error-${idx}`}
+                      className="flex items-start justify-center gap-2"
+                    >
+                      <span className="mt-[7px] h-1.5 w-1.5 shrink-0 rounded-full bg-black" />
+                      <span className="text-status-rejected">{errorMessage}</span>
+                    </li>
+                  ))}
+                </ul>
               </div>
-              <ul className="flex flex-col items-center gap-2 text-center text-sm text-primaryText">
-                {videoValidationErrors.map((errorMessage, idx) => (
-                  <li
-                    key={`error-${idx}`}
-                    className="flex items-start justify-center gap-2"
-                  >
-                    <span className="mt-[7px] h-1.5 w-1.5 shrink-0 rounded-full bg-black" />
-                    <span className="text-status-rejected">{errorMessage}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
+            )}
             {videoQualityWarnings.length > 0 && (
-              <div className="border-stroke mt-4 border-t pt-4">
+              <div
+                className={videoValidationErrors.length > 0 ? "border-stroke mt-4 border-t pt-4" : ""}
+              >
                 <div className="mb-2 flex justify-center">
                   <span className="rounded-full bg-status-challenged/15 px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-[#D98A1F]">
                     Warnings
