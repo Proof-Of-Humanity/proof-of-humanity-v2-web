@@ -121,6 +121,7 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
       const warningMessages = dedupeMessages(result.error.warnings ?? []);
       const combinedErrorMessage = errorMessages.join(" ");
 
+      setShowCamera(false);
       setVideoValidationErrors(errorMessages);
       if (combinedErrorMessage) {
         videoError(combinedErrorMessage);
