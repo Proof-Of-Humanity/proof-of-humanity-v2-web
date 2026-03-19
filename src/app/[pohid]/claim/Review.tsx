@@ -212,9 +212,8 @@ function Review({
         </Label>
         <div className="txt mb-16 flex flex-col">
           <div
-            className={`flex flex-col gap-3 transition-opacity sm:flex-row sm:flex-wrap sm:items-center sm:gap-2 ${
-              submitForFree ? "opacity-50" : ""
-            }`}
+            className={`flex flex-col gap-3 transition-opacity sm:flex-row sm:flex-wrap sm:items-center sm:gap-2 ${submitForFree ? "opacity-50" : ""
+              }`}
           >
             <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
               <div className="w-full sm:w-48">
@@ -235,11 +234,10 @@ function Review({
                   onClick={() =>
                     !submitForFree && totalCost && selfFunded$.set(formatEth(totalCost))
                   }
-                  className={`font-semibold underline underline-offset-2 ${
-                    submitForFree
+                  className={`font-semibold underline underline-offset-2 ${submitForFree
                       ? "cursor-not-allowed text-slate-400"
                       : "text-orange cursor-pointer"
-                  }`}
+                    }`}
                 >
                   {totalCostLabel}
                 </span>
@@ -271,18 +269,16 @@ function Review({
               className="sr-only"
             />
             <span
-              className={`relative mt-0.5 h-7 w-12 shrink-0 rounded-full transition-colors sm:mt-0 ${
-                submitForFree ? "bg-orange" : "bg-slate-200"
-              }`}
+              className={`relative mt-0.5 h-7 w-12 shrink-0 rounded-full transition-colors sm:mt-0 ${submitForFree ? "bg-orange" : "bg-slate-200"
+                }`}
             >
               <span
-                className={`absolute left-1 top-1 h-5 w-5 rounded-full bg-white transition-transform ${
-                  submitForFree ? "translate-x-5" : ""
-                }`}
+                className={`absolute left-1 top-1 h-5 w-5 rounded-full bg-white transition-transform ${submitForFree ? "translate-x-5" : ""
+                  }`}
               />
             </span>
             <span className="min-w-0 flex-1 pt-0.5 text-sm font-medium leading-snug sm:flex-none sm:pt-0 sm:text-base sm:leading-normal">
-              Submit for free — let PoH supporters cover my deposit
+              Submit for free — let PoH supporters cover your deposit (you only pay gas)
             </span>
           </label>
 
