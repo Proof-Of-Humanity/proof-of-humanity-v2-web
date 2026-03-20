@@ -10,15 +10,22 @@ import { getMyData } from "data/user";
 import { RequestQuery } from "generated/graphql";
 import useChainParam from "hooks/useChainParam";
 import useWeb3Loaded from "hooks/useWeb3Loaded";
-import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useRef, useState } from "react";
+import type { RequestOptimisticBase, RequestOptimisticOverlay } from "optimistic/types";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "react-toastify";
 import useSWR from "swr";
-import { getStatusLabel, getStatusColor, RequestStatus } from "utils/status";
+import {
+  getResolvedRequestStatus,
+  getResolvingRequestStatus,
+  getStatusColor,
+  getStatusLabel,
+  RequestStatus,
+} from "utils/status";
 import { ActionType } from "utils/enums";
 import { Address, Hash, formatEther, hexToSignature } from "viem";
 import { useAccount, useChainId } from "wagmi";
 import { idToChain } from "config/chains";
+import { useRequestOptimistic } from "optimistic/request";
 import Appeal from "./Appeal";
 import Challenge from "./Challenge";
 import FundButton from "./Funding";
@@ -34,13 +41,33 @@ enableReactUse();
 //     args: [claimer, vouchers, []],
 //   });
 
+export const buildAdvanceSuccessPatch = (
+  state: RequestOptimisticBase & { revocation: false },
+): RequestOptimisticOverlay => ({
+  status: "resolving",
+  requestStatus: getResolvingRequestStatus(state.revocation),
+});
+
+export const buildExecuteSuccessPatch = (
+  state: RequestOptimisticBase,
+): RequestOptimisticOverlay => ({
+  status: "resolved",
+  requestStatus: getResolvedRequestStatus({
+    revocation: state.revocation,
+    winnerPartyId: "requester",
+  }),
+});
+
+export const buildWithdrawSuccessPatch = (): RequestOptimisticOverlay => ({
+  status: "withdrawn",
+  requestStatus: RequestStatus.WITHDRAWN,
+});
+
 interface ActionBarProps {
   pohId: Hash;
   arbitrationCost: bigint;
   requester: Address;
   revocation: boolean;
-  status: string;
-  funded: bigint;
   index: number;
   lastStatusChange: number;
   contractData: ContractData;
@@ -48,8 +75,6 @@ interface ActionBarProps {
     NonNullable<NonNullable<RequestQuery>["request"]>["challenges"]
   >;
   advanceRequestsOnChainVouches?: { claimer: Address; vouchers: Address[] }[];
-  onChainVouches: Address[];
-  offChainVouches: { voucher: Address; expiration: number; signature: Hash }[];
   arbitrationHistory: {
     __typename?: "ArbitratorHistory" | undefined;
     updateTime: any;
@@ -58,9 +83,7 @@ interface ActionBarProps {
     arbitrator: any;
     extraData: any;
   };
-  requestStatus: RequestStatus;
   humanityExpirationTime?: number;
-  validVouches: number;
   usedReasons?: string[];
 }
 
@@ -69,69 +92,66 @@ export default function ActionBar({
   requester,
   index,
   revocation,
-  status,
-  requestStatus,
-  funded,
   lastStatusChange,
   arbitrationCost,
   contractData,
   currentChallenge,
-  onChainVouches,
-  offChainVouches,
   // advanceRequestsOnChainVouches,
   arbitrationHistory,
   humanityExpirationTime,
-  validVouches,
   usedReasons = [],
 }: ActionBarProps) {
   const chain = useChainParam()!;
   const { address } = useAccount();
+  const requestOptimistic = useRequestOptimistic();
   const web3Loaded = useWeb3Loaded();
   const userChainId = useChainId();
   const { data: me } = useSWR(address, getMyData);
-  const router = useRouter();
+  const effectiveStatus = requestOptimistic.effective.status;
+  const effectiveRequestStatus = requestOptimistic.effective.requestStatus;
+  const effectiveFunded = requestOptimistic.effective.funded;
+  const effectiveValidVouches = requestOptimistic.effective.validVouches;
+  const effectiveOnChainVouches = requestOptimistic.effective.onChainVouches;
+  const effectiveOffChainVouches = requestOptimistic.effective.offChainVouches;
+  const pendingChallenge = requestOptimistic.effective.pendingChallenge;
 
   const { didIVouchFor, isVouchOnchain } = useMemo(() => {
     const lowerAddr = address?.toLowerCase();
-    const onChainMatch = onChainVouches.some(
+    const onChainMatch = effectiveOnChainVouches.some(
       (voucherAddress) => voucherAddress.toLowerCase() === lowerAddr,
     );
-    const offChainMatch = offChainVouches.some(
+    const offChainMatch = effectiveOffChainVouches.some(
       (voucher) => voucher.voucher.toLowerCase() === lowerAddr,
     );
     return { didIVouchFor: onChainMatch || offChainMatch, isVouchOnchain: onChainMatch };
-  }, [onChainVouches, offChainVouches, address]);
+  }, [effectiveOnChainVouches, effectiveOffChainVouches, address]);
 
   const action = useMemo(() => {
-    if (status === "resolved" || status === "withdrawn") return ActionType.NONE;
+    if (effectiveStatus === "resolved" || effectiveStatus === "withdrawn") return ActionType.NONE;
     if (index < 0 && index > -100) return ActionType.OLD_ACTIVE;
-    if (status === "disputed") return ActionType.DISPUTED;
-    if (status === "vouching") {
-      if (funded < arbitrationCost + BigInt(contractData.baseDeposit)) return ActionType.FUND;
-      if (validVouches >= contractData.requiredNumberOfVouches) return ActionType.ADVANCE;
-      if (
-        onChainVouches.length + offChainVouches.length >= 0 &&
-        didIVouchFor &&
-        isVouchOnchain
-      )
+    if (effectiveStatus === "disputed") return ActionType.DISPUTED;
+    if (effectiveStatus === "vouching") {
+      if (effectiveFunded < arbitrationCost + BigInt(contractData.baseDeposit))
+        return ActionType.FUND;
+      if (effectiveValidVouches >= contractData.requiredNumberOfVouches)
+        return ActionType.ADVANCE;
+      if (didIVouchFor && isVouchOnchain)
         return ActionType.REMOVE_VOUCH;
       return ActionType.VOUCH;
     }
-    if (status == "resolving")
+    if (effectiveStatus === "resolving")
       return +lastStatusChange + +contractData.challengePeriodDuration < Date.now() / 1000
         ? ActionType.EXECUTE
         : ActionType.CHALLENGE;
     return ActionType.NONE;
   }, [
-    status,
+    effectiveStatus,
     index,
-    funded,
+    effectiveFunded,
     arbitrationCost,
     contractData.baseDeposit,
-    validVouches,
+    effectiveValidVouches,
     contractData.requiredNumberOfVouches,
-    onChainVouches,
-    offChainVouches,
     didIVouchFor,
     isVouchOnchain,
     lastStatusChange,
@@ -139,25 +159,6 @@ export default function ActionBar({
   ]);
 
   const [canAdvance, setCanAdvance] = useState(true);
-  const actionRef = useRef(action);
-
-  useEffect(() => {
-    actionRef.current = action;
-  }, [action]);
-
-  const refreshAfterWrite = () => {
-    window.setTimeout(() => router.refresh(), 1000);
-    [2000, 4000].forEach((delay) => {
-      window.setTimeout(() => {
-        if (
-          actionRef.current === ActionType.ADVANCE ||
-          actionRef.current === ActionType.EXECUTE
-        ) {
-          router.refresh();
-        }
-      }, delay);
-    });
-  };
 
   const [prepareExecute, execute, executeStatus] = usePoHWrite(
     "executeRequest",
@@ -167,11 +168,13 @@ export default function ActionBar({
           toast.error("Transaction rejected");
         },
         onSuccess() {
+          requestOptimistic.applyPatch(
+            buildExecuteSuccessPatch(requestOptimistic.effective),
+          );
           toast.success("Request executed successfully");
-          refreshAfterWrite();
         },
       }),
-      [router],
+      [requestOptimistic],
     ),
   );
   const [prepareAdvance, advanceFire, advanceStatus] = usePoHWrite(
@@ -182,11 +185,18 @@ export default function ActionBar({
           toast.error("Transaction rejected");
         },
         onSuccess() {
+          if (requestOptimistic.effective.revocation) return;
+          requestOptimistic.applyPatch(
+            buildAdvanceSuccessPatch(
+              requestOptimistic.effective as RequestOptimisticBase & {
+                revocation: false;
+              },
+            ),
+          );
           toast.success("Request advanced to resolving state");
-          refreshAfterWrite();
         },
       }),
-      [router],
+      [requestOptimistic],
     ),
   );
   const [prepareWithdraw, withdraw, withdrawStatus] = usePoHWrite(
@@ -197,11 +207,11 @@ export default function ActionBar({
           toast.error("Transaction rejected");
         },
         onSuccess() {
+          requestOptimistic.applyPatch(buildWithdrawSuccessPatch());
           toast.success("Request withdrawn successfully");
-          setTimeout(() => router.refresh(), 1000);
         },
       }),
-      [router],
+      [requestOptimistic],
     ),
   );
 
@@ -224,8 +234,8 @@ export default function ActionBar({
       prepareAdvance({
         args: [
           requester,
-          onChainVouches,
-          offChainVouches.map((v) => {
+          effectiveOnChainVouches,
+          effectiveOffChainVouches.map((v) => {
             const sig = hexToSignature(v.signature);
             return {
               expirationTime: v.expiration,
@@ -243,6 +253,7 @@ export default function ActionBar({
     }
   }, [
     address,
+    prepareAdvance,
     prepareExecute,
     action,
     requester,
@@ -250,6 +261,10 @@ export default function ActionBar({
     chain,
     userChainId,
     canAdvance,
+    effectiveOnChainVouches,
+    effectiveOffChainVouches,
+    pohId,
+    index,
   ]);
 
   useEffect(() => {
@@ -274,7 +289,7 @@ export default function ActionBar({
 
   const totalCost = BigInt(contractData.baseDeposit) + arbitrationCost;
 
-  const statusColor = getStatusColor(requestStatus);
+  const statusColor = getStatusColor(effectiveRequestStatus);
 
   return (
     <div className="paper border-stroke bg-whiteBackground text-primaryText flex flex-col items-center justify-between gap-[12px] px-[24px] py-[24px] md:flex-row lg:gap-[20px]">
@@ -283,7 +298,7 @@ export default function ActionBar({
         <span
           className={`rounded-full px-3 py-1 text-white bg-status-${statusColor} whitespace-nowrap`}
         >
-          {getStatusLabel(requestStatus, 'actionBar')}
+          {getStatusLabel(effectiveRequestStatus, "actionBar")}
         </span>
       </div>
       <div className="flex w-full flex-col justify-between gap-[12px] font-normal md:flex-row md:items-center">
@@ -294,7 +309,7 @@ export default function ActionBar({
             <>
               <div className="flex justify-center gap-6 md:justify-start">
                 <span className="text-center text-slate-400 md:text-left">
-                  {validVouches < contractData.requiredNumberOfVouches && (
+                  {effectiveValidVouches < contractData.requiredNumberOfVouches && (
                     <>
                       It needs{" "}
                       <strong className={`text-status-${statusColor}`}>
@@ -306,13 +321,13 @@ export default function ActionBar({
                       to proceed
                     </>
                   )}
-                  {!!(totalCost - funded) && (
+                  {!!(totalCost - effectiveFunded) && (
                     <>
-                      {validVouches < contractData.requiredNumberOfVouches
+                      {effectiveValidVouches < contractData.requiredNumberOfVouches
                         ? " + "
                         : "It needs "}
                       <strong className={`text-status-${statusColor}`}>
-                        {formatEther(totalCost - funded)}{" "}
+                        {formatEther(totalCost - effectiveFunded)}{" "}
                         {chain.nativeCurrency.symbol}
                       </strong>{" "}
                       to complete the initial deposit
@@ -332,7 +347,7 @@ export default function ActionBar({
                             BigInt(contractData.baseDeposit) + arbitrationCost
                           }
                           index={index}
-                          funded={funded}
+                          funded={effectiveFunded}
                         />
                       )}
                       <ActionButton
@@ -351,7 +366,7 @@ export default function ActionBar({
                         className="mb-2 w-auto"
                       />
                     </div>
-                    {validVouches < contractData.requiredNumberOfVouches && (
+                    {effectiveValidVouches < contractData.requiredNumberOfVouches && (
                       <ExternalLink
                         href="https://t.me/proofhumanity"
                         className="text-purple hover:opacity-80 underline underline-offset-4 text-sm font-medium inline-flex items-center gap-1 group transition-colors justify-center md:justify-end"
@@ -385,7 +400,7 @@ export default function ActionBar({
                           BigInt(contractData.baseDeposit) + arbitrationCost
                         }
                         index={index}
-                        funded={funded}
+                        funded={effectiveFunded}
                       />
                     )}
                     <Vouch
@@ -406,7 +421,7 @@ export default function ActionBar({
                           BigInt(contractData.baseDeposit) + arbitrationCost
                         }
                         index={index}
-                        funded={funded}
+                        funded={effectiveFunded}
                       />
                     )}
                     <RemoveVouch
@@ -512,11 +527,13 @@ export default function ActionBar({
           </>
         )}
 
-        {action === ActionType.DISPUTED && !!currentChallenge && (
+        {action === ActionType.DISPUTED && (currentChallenge || pendingChallenge) && (
           <>
             <span className="text-center text-slate-400 md:text-left">
-              The request was challenged
-              {!revocation && (
+              {currentChallenge
+                ? "The request was challenged"
+                : "Challenge confirmed onchain. Waiting for indexed dispute details"}
+              {currentChallenge && !revocation && (
                 <>
                   {" "}
                   for{" "}
@@ -528,41 +545,43 @@ export default function ActionBar({
               .
             </span>
 
-            <div className="flex flex-wrap justify-center gap-4 lg:flex-nowrap lg:justify-start">
-              <Appeal
-                pohId={pohId}
-                requestIndex={index}
-                disputeId={currentChallenge.disputeId}
-                arbitrator={arbitrationHistory.arbitrator}
-                extraData={arbitrationHistory.extraData}
-                contributor={address!}
-                claimer={requester}
-                challenger={currentChallenge.challenger?.id}
-                currentChallenge={currentChallenge}
-                chainId={chain.id}
-                revocation={revocation}
-                requestStatus={requestStatus}
-              />
+            {currentChallenge && (
+              <div className="flex flex-wrap justify-center gap-4 lg:flex-nowrap lg:justify-start">
+                <Appeal
+                  pohId={pohId}
+                  requestIndex={index}
+                  disputeId={currentChallenge.disputeId}
+                  arbitrator={arbitrationHistory.arbitrator}
+                  extraData={arbitrationHistory.extraData}
+                  contributor={address!}
+                  claimer={requester}
+                  challenger={currentChallenge.challenger?.id}
+                  currentChallenge={currentChallenge}
+                  chainId={chain.id}
+                  revocation={revocation}
+                  requestStatus={effectiveRequestStatus}
+                />
 
-              <ExternalLink
-                href={`https://klerosboard.com/${chain.id}/cases/${currentChallenge.disputeId}`}
-                className="btn-main gradient h-[48px] rounded w-auto items-center justify-center p-2 whitespace-nowrap"
-              >
-                View case #{currentChallenge.disputeId}
-              </ExternalLink>
-            </div>
+                <ExternalLink
+                  href={`https://klerosboard.com/${chain.id}/cases/${currentChallenge.disputeId}`}
+                  className="btn-main gradient h-[48px] rounded w-auto items-center justify-center p-2 whitespace-nowrap"
+                >
+                  View case #{currentChallenge.disputeId}
+                </ExternalLink>
+              </div>
+            )}
           </>
         )}
 
-        {status === "resolved" && (
+        {effectiveStatus === "resolved" && (
           <span className="text-center md:text-left">
-            {requestStatus === RequestStatus.EXPIRED ?
+            {effectiveRequestStatus === RequestStatus.EXPIRED ?
               "Request has expired" :
-              requestStatus === RequestStatus.REJECTED ?
+              effectiveRequestStatus === RequestStatus.REJECTED ?
                 "Request was rejected" : "Request was accepted"}
             <TimeAgo
               className={`ml-1 text-status-${statusColor}`}
-              time={requestStatus === RequestStatus.EXPIRED
+              time={effectiveRequestStatus === RequestStatus.EXPIRED
                 ? humanityExpirationTime!
                 : lastStatusChange}
             />

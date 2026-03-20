@@ -7,8 +7,30 @@ import { toast } from "react-toastify";
 import { useEffectOnce } from "@legendapp/state/react";
 import { SupportedChain, idToChain } from "config/chains";
 import ActionButton from "components/ActionButton";
+import { useRequestOptimistic } from "optimistic/request";
+import type { RequestOptimisticBase, RequestOptimisticOverlay } from "optimistic/types";
+import { useAccount } from "wagmi";
 
 enableReactUse();
+
+const normalizeAddress = (value: Address) => value.toLowerCase();
+
+export const buildRemoveVouchSuccessPatch = (
+  state: RequestOptimisticBase,
+  voucher: Address,
+): RequestOptimisticOverlay | undefined => {
+  const normalized = normalizeAddress(voucher);
+  const nextOnChainVouches = state.onChainVouches.filter(
+    (value) => normalizeAddress(value) !== normalized,
+  );
+
+  if (nextOnChainVouches.length === state.onChainVouches.length) return undefined;
+
+  return {
+    onChainVouches: nextOnChainVouches,
+    validVouches: Math.max(0, state.validVouches - 1),
+  };
+};
 
 interface RemoveVouchProps {
   pohId: Hash;
@@ -30,7 +52,8 @@ export default function RemoveVouch({
   tooltip,
 }: RemoveVouchProps) {
   const loading = useLoading();
-  const [pending] = loading.use();
+  const requestOptimistic = useRequestOptimistic();
+  const { address } = useAccount();
 
   const [prepareRemoveVouch, removeOnchainVouch, status] = usePoHWrite(
     "removeVouch",
@@ -44,10 +67,15 @@ export default function RemoveVouch({
           toast.info("Transaction pending");
         },
         onSuccess() {
+          if (!address) return;
+          const patch = buildRemoveVouchSuccessPatch(requestOptimistic.effective, address);
+          if (patch) {
+            requestOptimistic.applyPatch(patch);
+          }
           toast.success("Request remove vouch successful");
         },
       }),
-      [loading],
+      [address, loading, requestOptimistic],
     ),
   );
 

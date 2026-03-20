@@ -19,21 +19,42 @@ import useChainParam from "hooks/useChainParam";
 import useIPFS from "hooks/useIPFS";
 import { useLoading } from "hooks/useLoading";
 import DocumentIcon from "icons/NoteMajor.svg";
+import type { OptimisticEvidenceItem, RequestOptimisticOverlay } from "optimistic/types";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "react-toastify";
 import useSWR from "swr";
-import { useRouter } from "next/navigation";
 import ActionButton from "components/ActionButton";
 import { EvidenceFile, MetaEvidenceFile } from "types/docs";
 import { shortenAddress } from "utils/address";
 import { ipfsFetch, ipfs } from "utils/ipfs";
 import { romanize } from "utils/misc";
 import { Address, Hash } from "viem";
-import { useChainId } from "wagmi";
+import { useAccount, useChainId } from "wagmi";
 import { useAtlasProvider, Roles } from "@kleros/kleros-app";
 import AuthGuard from "components/AuthGuard";
+import { useRequestOptimistic } from "optimistic/request";
 
 enableReactUse();
+
+export const buildEvidenceSuccessItem = (
+  uri: string,
+  submitter: Address,
+  txHash?: string,
+): OptimisticEvidenceItem => ({
+  id: `optimistic-evidence-${txHash ?? Date.now()}`,
+  uri,
+  creationTime: Math.floor(Date.now() / 1000),
+  submitter,
+  pending: true,
+});
+
+export const buildEvidenceSuccessPatch = (
+  uri: string,
+  submitter: Address,
+  txHash?: string,
+): RequestOptimisticOverlay => ({
+  appendedEvidence: [buildEvidenceSuccessItem(uri, submitter, txHash)],
+});
 
 interface ItemInterface {
   index: number;
@@ -95,8 +116,10 @@ export default function Evidence({
   list,
   arbitrationInfo,
 }: EvidenceProps) {
+  const requestOptimistic = useRequestOptimistic();
   const chainReq = useChainParam()!;
   const chainId = useChainId();
+  const { address } = useAccount();
   const { data: policy } = useSWR(
     arbitrationInfo.registrationMeta,
     async (metaEvidenceLink) =>
@@ -105,7 +128,6 @@ export default function Evidence({
   const [modalOpen, setModalOpen] = useState(false);
   const loading = useLoading();
   const [pending] = loading.use();
-  const router = useRouter();
 
   const { uploadFile } = useAtlasProvider();
   const [prepare] = usePoHWrite(
@@ -120,14 +142,19 @@ export default function Evidence({
           loading.stop();
           toast.error("Transaction rejected");
         },
-        onSuccess() {
+        onSuccess(ctx) {
+          const uri = typeof ctx.args?.[2] === "string" ? ctx.args[2] : undefined;
+          if (address && uri) {
+            requestOptimistic.applyPatch(
+              buildEvidenceSuccessPatch(uri, address, ctx.txHash),
+            );
+          }
           loading.stop();
           toast.success("Evidence submitted successfully");
           setModalOpen(false);
-          router.refresh();
         },
       }),
-      [loading],
+      [address, loading, requestOptimistic],
     ),
   );
 
@@ -270,7 +297,7 @@ export default function Evidence({
         </Modal>
       )}
 
-      {list.map((item, i) => (
+      {requestOptimistic.effective.evidenceList.map((item, i) => (
         <Item
           key={item.id}
           index={i}

@@ -1,8 +1,10 @@
 import { ContractName, contractRegistry } from "contracts";
 import {
   ContractFunctionArgs,
+  Hash,
   ReadContractParameters,
   ReadContractReturnType,
+  TransactionReceipt,
   WriteContractParameters,
 } from "viem";
 
@@ -28,11 +30,21 @@ export type WriteArgs<
   F extends WriteFunctionName<C>,
 > = ContractFunctionArgs<ContractAbi<C>, "nonpayable" | "payable", F>;
 
+export interface WriteSuccessContext {
+  contract: ContractName;
+  functionName: string;
+  args?: readonly unknown[];
+  value?: bigint;
+  chainId: number;
+  txHash?: Hash;
+  receipt?: TransactionReceipt;
+}
+
 export interface Effects {
   onLoading?: () => void;
   onError?: (error?: unknown) => void;
   onFail?: (error?: unknown) => void;
-  onSuccess?: () => void;
+  onSuccess?: (ctx: WriteSuccessContext) => void;
   onReady?: (fire: () => void) => void;
 }
 

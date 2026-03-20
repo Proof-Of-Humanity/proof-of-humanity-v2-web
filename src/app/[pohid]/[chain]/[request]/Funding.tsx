@@ -5,12 +5,20 @@ import Modal from "components/Modal";
 import ActionButton from "components/ActionButton";
 import usePoHWrite from "contracts/hooks/usePoHWrite";
 import { useLoading } from "hooks/useLoading";
+import type { RequestOptimisticBase, RequestOptimisticOverlay } from "optimistic/types";
 import { Hash, formatEther, parseEther } from "viem";
 import useChainParam from "hooks/useChainParam";
-import { useRouter } from "next/navigation";
 import { useAccount, useBalance, useChainId } from "wagmi";
 import { formatEth } from "utils/misc";
 import { idToChain } from "config/chains";
+import { useRequestOptimistic } from "optimistic/request";
+
+export const buildFundSuccessPatch = (
+  state: RequestOptimisticBase,
+  value: bigint,
+): RequestOptimisticOverlay => ({
+  funded: state.funded + value > state.totalCost ? state.totalCost : state.funded + value,
+});
 
 interface FundButtonProps {
   pohId: Hash;
@@ -25,7 +33,7 @@ const FundButton: React.FC<FundButtonProps> = ({
   totalCost,
   funded,
 }) => {
-  const router = useRouter();
+  const requestOptimistic = useRequestOptimistic();
   const chain = useChainParam()!;
   const userChainId = useChainId();
   const [addedFundInput, setAddedFundInput] = useState("");
@@ -51,15 +59,17 @@ const FundButton: React.FC<FundButtonProps> = ({
           loading.stop();
           toast.error("Transaction rejected");
         },
-        onSuccess() {
+        onSuccess(ctx) {
+          requestOptimistic.applyPatch(
+            buildFundSuccessPatch(requestOptimistic.effective, ctx.value ?? 0n),
+          );
           loading.stop();
           setIsModalOpen(false);
           setAddedFundInput("");
           toast.success("Request funded successfully");
-          setTimeout(() => router.refresh(), 1000);
         },
       }),
-      [loading, router],
+      [address, loading, requestOptimistic],
     ),
   );
 

@@ -29,6 +29,7 @@ import { EvidenceFile, MetaEvidenceFile, RegistrationFile } from "types/docs";
 import { machinifyId, prettifyId } from "utils/identifier";
 import { ipfs, ipfsFetch } from "utils/ipfs";
 import type { Address } from "viem";
+import { RequestOptimisticProvider } from "optimistic/request";
 import ActionBar from "./ActionBar";
 import Evidence from "./Evidence";
 import {
@@ -267,35 +268,47 @@ export default async function Request({ params }: PageProps) {
     fetchedOffChainVouches,
     contractData.humanityLifespan,
   );
+  const funded =
+    request.index >= 0
+      ? BigInt(request.challenges[0].rounds[0].requesterFund.amount)
+      : 0n;
+  const currentChallenge =
+    request.challenges && request.challenges.length > 0
+      ? request.challenges.at(-1)
+      : undefined;
+  const optimisticBase = {
+    status: request.status.id,
+    requestStatus,
+    funded,
+    totalCost: BigInt(contractData.baseDeposit) + arbitrationCost,
+    validVouches,
+    onChainVouches,
+    offChainVouches,
+    evidenceList: request.evidenceGroup.evidence.map((item) => ({
+      id: item.id,
+      uri: item.uri,
+      creationTime: Number(item.creationTime),
+      submitter: item.submitter as Address,
+    })),
+    revocation: request.revocation,
+    currentChallengeDisputeId: currentChallenge?.disputeId,
+  };
 
   //const policyUpdate = request.arbitratorHistory.updateTime;
 
   return (
-    <div className="content mx-auto flex w-[92vw] sm:w-[84vw] max-w-[1500px] flex-col justify-center font-semibold md:w-[76vw]">
+    <RequestOptimisticProvider base={optimisticBase}>
+      <div className="content mx-auto flex w-[92vw] sm:w-[84vw] max-w-[1500px] flex-col justify-center font-semibold md:w-[76vw]">
       <ActionBar
         arbitrationCost={arbitrationCost}
         index={request.index}
-        status={request.status.id}
         requester={request.requester}
         contractData={contractData}
         pohId={pohId}
         lastStatusChange={+request.lastStatusChange}
         revocation={request.revocation}
-        currentChallenge={
-          request.challenges && request.challenges.length > 0
-            ? request.challenges.at(-1)
-            : undefined
-        }
-        funded={
-          request.index >= 0
-            ? BigInt(request.challenges[0].rounds[0].requesterFund.amount)
-            : 0n
-        }
-        onChainVouches={onChainVouches}
-        offChainVouches={offChainVouches}
-        validVouches={validVouches}
+        currentChallenge={currentChallenge}
         arbitrationHistory={request.arbitratorHistory}
-        requestStatus={requestStatus}
         humanityExpirationTime={request.expirationTime}
         usedReasons={usedReasons}
       />
@@ -543,6 +556,7 @@ export default async function Request({ params }: PageProps) {
         requestIndex={request.index}
         arbitrationInfo={request.arbitratorHistory}
       />
-    </div>
+      </div>
+    </RequestOptimisticProvider>
   );
 }

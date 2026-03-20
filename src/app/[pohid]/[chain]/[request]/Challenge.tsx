@@ -11,8 +11,11 @@ import { formatEth } from "utils/misc";
 import cn from "classnames";
 import Image from "next/image";
 import { useObservable } from "@legendapp/state/react";
+import { getContractInfo } from "contracts";
+import type { WriteSuccessContext } from "contracts/hooks/types";
 import usePoHWrite from "contracts/hooks/usePoHWrite";
-import { Hash } from "viem";
+import type { RequestOptimisticBase, RequestOptimisticOverlay } from "optimistic/types";
+import { Hash, decodeEventLog } from "viem";
 import DocumentIcon from "icons/NoteMajor.svg";
 import { ObservablePrimitiveBaseFns } from "@legendapp/state";
 import { ContractData } from "data/contract";
@@ -22,6 +25,8 @@ import AuthGuard from "components/AuthGuard";
 import ActionButton from "components/ActionButton";
 import { useChainId } from "wagmi";
 import { idToChain } from "config/chains";
+import { getDisputedRequestStatus } from "utils/status";
+import { useRequestOptimistic } from "optimistic/request";
 
 type Reason =
   | "none"
@@ -54,6 +59,41 @@ function reasonToIdx(reason: Reason) {
       return 0;
   }
 }
+
+export const getChallengeDisputeId = (ctx: WriteSuccessContext) => {
+  if (!ctx.receipt || ctx.contract !== "ProofOfHumanity") return undefined;
+
+  const abi = getContractInfo("ProofOfHumanity", ctx.chainId).abi;
+
+  for (const log of ctx.receipt.logs) {
+    try {
+      const decoded = decodeEventLog({
+        abi,
+        data: log.data,
+        topics: log.topics,
+      });
+      if (decoded.eventName === "RequestChallenged") {
+        return String((decoded.args as { disputeId?: bigint }).disputeId ?? "");
+      }
+    } catch {
+      continue;
+    }
+  }
+
+  return undefined;
+};
+
+export const buildChallengeSuccessPatch = (
+  state: RequestOptimisticBase,
+  disputeId?: string,
+): RequestOptimisticOverlay => ({
+  status: "disputed",
+  requestStatus: getDisputedRequestStatus(state.revocation),
+  pendingChallenge: {
+    disputeId,
+    createdAt: Date.now(),
+  },
+});
 
 interface ReasonCardInterface {
   text: string;
@@ -117,6 +157,7 @@ export default function Challenge({
   usedReasons = [],
 }: ChallengeInterface) {
   const { uploadFile } = useAtlasProvider();
+  const requestOptimistic = useRequestOptimistic();
   const chain = useChainParam()!;
   const userChainId = useChainId();
   
@@ -141,12 +182,18 @@ export default function Challenge({
           loading.stop();
           toast.error("Transaction rejected");
         },
-        onSuccess() {
+        onSuccess(ctx) {
+          requestOptimistic.applyPatch(
+            buildChallengeSuccessPatch(
+              requestOptimistic.effective,
+              getChallengeDisputeId(ctx),
+            ),
+          );
           loading.stop();
           toast.success("Challenge submitted successfully");
         },
       }),
-      [loading],
+      [loading, requestOptimistic],
     ),
   );
 

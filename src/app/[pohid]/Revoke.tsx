@@ -20,8 +20,14 @@ import { Hash } from "viem";
 import { useChainId, useSwitchChain } from "wagmi";
 import { useAtlasProvider, Roles } from "@kleros/kleros-app";
 import AuthGuard from "components/AuthGuard";
+import { useProfileOptimistic } from "optimistic/profile";
+import type { ProfileOptimisticOverlay } from "optimistic/types";
 
 enableReactUse();
+
+export const buildRevokeSuccessPatch = (): ProfileOptimisticOverlay => ({
+  pendingRevocation: true,
+});
 
 interface RevokeProps {
   cost: bigint;
@@ -36,6 +42,7 @@ export default function Revoke({
   homeChain,
   arbitrationInfo,
 }: RevokeProps) {
+  const profileOptimistic = useProfileOptimistic();
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [file, setFile] = useState<File | null>(null);
@@ -65,11 +72,12 @@ export default function Revoke({
           toast.error("Transaction rejected");
         },
         onSuccess() {
+          profileOptimistic.applyPatch(buildRevokeSuccessPatch());
           setModalOpen(false);
           toast.success("Request created");
         },
       }),
-      [loading],
+      [loading, profileOptimistic],
     ),
   );
 
@@ -127,17 +135,27 @@ export default function Revoke({
     );
 
   return (
-    <Modal
-      formal
-      open={modalOpen}
-      header="Revoke"
-      trigger={
-        <button onClick={() => setModalOpen(true)} className="btn-main mb-4">
-          Revoke
-        </button>
-      }
-    >
-      <div className="flex flex-col items-center p-4">
+    <div className="flex w-full flex-col items-center">
+      {profileOptimistic.effective.pendingRevocation && (
+        <span className="text-secondaryText mb-4 text-center">
+          Revocation request submitted. Waiting for indexed state.
+        </span>
+      )}
+      <Modal
+        formal
+        open={modalOpen}
+        header="Revoke"
+        trigger={
+          <button
+            onClick={() => setModalOpen(true)}
+            className="btn-main mb-4"
+            disabled={profileOptimistic.effective.pendingRevocation}
+          >
+            Revoke
+          </button>
+        }
+      >
+        <div className="flex flex-col items-center p-4">
         <ALink className="flex" href={ipfs(arbitrationInfo.policy)}>
           <DocumentIcon className="fill-orange h-6 w-6" />
           <strong className="text-orange mr-1 font-semibold">Policy</strong>
@@ -180,16 +198,17 @@ export default function Revoke({
           </Uploader>
         </div>
 
-        <AuthGuard signInButtonProps={{ className: "mt-12 px-5 py-2" }}>
-          <button
-            disabled={pending}
-            className="btn-main mt-12"
-            onClick={submit}
-          >
-            Revoke
-          </button>
-        </AuthGuard>
-      </div>
-    </Modal>
+          <AuthGuard signInButtonProps={{ className: "mt-12 px-5 py-2" }}>
+            <button
+              disabled={pending}
+              className="btn-main mt-12"
+              onClick={submit}
+            >
+              Revoke
+            </button>
+          </AuthGuard>
+        </div>
+      </Modal>
+    </div>
   );
 }

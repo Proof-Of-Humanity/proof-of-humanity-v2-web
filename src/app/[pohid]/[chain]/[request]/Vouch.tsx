@@ -1,4 +1,3 @@
-import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import Modal from "components/Modal";
 import usePoHWrite from "contracts/hooks/usePoHWrite";
@@ -10,6 +9,50 @@ import { getContractInfo } from "contracts";
 import { toast } from "react-toastify";
 import { SupportedChain, idToChain } from "config/chains";
 import ActionButton from "components/ActionButton";
+import { useRequestOptimistic } from "optimistic/request";
+import type { RequestOptimisticBase, RequestOptimisticOverlay } from "optimistic/types";
+
+const normalizeAddress = (value: Address) => value.toLowerCase();
+
+export const buildAddVouchSuccessPatch = (
+  state: RequestOptimisticBase,
+  voucher: Address,
+): RequestOptimisticOverlay | undefined => {
+  const normalized = normalizeAddress(voucher);
+  const hasOnChain = state.onChainVouches.some(
+    (value) => normalizeAddress(value) === normalized,
+  );
+  const hasOffChain = state.offChainVouches.some(
+    (value) => normalizeAddress(value.voucher) === normalized,
+  );
+
+  if (hasOnChain || hasOffChain) return undefined;
+
+  return {
+    onChainVouches: [...state.onChainVouches, voucher],
+    validVouches: state.validVouches + 1,
+  };
+};
+
+export const buildGaslessVouchSuccessPatch = (
+  state: RequestOptimisticBase,
+  voucher: { voucher: Address; expiration: number; signature: `0x${string}` },
+): RequestOptimisticOverlay | undefined => {
+  const normalized = normalizeAddress(voucher.voucher);
+  const hasOnChain = state.onChainVouches.some(
+    (value) => normalizeAddress(value) === normalized,
+  );
+  const hasOffChain = state.offChainVouches.some(
+    (value) => normalizeAddress(value.voucher) === normalized,
+  );
+
+  if (hasOnChain || hasOffChain) return undefined;
+
+  return {
+    offChainVouches: [...state.offChainVouches, voucher],
+    validVouches: state.validVouches + 1,
+  };
+};
 
 interface VouchButtonProps {
   pohId: Hash;
@@ -28,7 +71,7 @@ export default function Vouch({
   chain,
   address,
 }: VouchButtonProps) {
-  const router = useRouter();
+  const requestOptimistic = useRequestOptimistic();
   const userChainId = useChainId();
   const [isOpen, setIsOpen] = useState(false);
   const [prepare, addVouch , status] = usePoHWrite(
@@ -42,12 +85,16 @@ export default function Vouch({
           toast.info("Transaction pending");
         },
         onSuccess() {
+          if (!address) return;
+          const patch = buildAddVouchSuccessPatch(requestOptimistic.effective, address);
+          if (patch) {
+            requestOptimistic.applyPatch(patch);
+          }
           toast.success("Vouched successfully");
           setIsOpen(false);
-          setTimeout(() => router.refresh(), 1000);
         },
       }),
-      [],
+      [address, requestOptimistic],
     ),
   );
 
@@ -75,9 +122,16 @@ export default function Vouch({
             expiration,
             signature,
           });
+          const patch = buildGaslessVouchSuccessPatch(requestOptimistic.effective, {
+            voucher: address!,
+            expiration,
+            signature,
+          });
+          if (patch) {
+            requestOptimistic.applyPatch(patch);
+          }
           toast.success("Vouched successfully");
           setIsOpen(false);
-          router.refresh();
         } catch (err) {
           console.error(err);
           toast.error("Error vouching. Please try again.");

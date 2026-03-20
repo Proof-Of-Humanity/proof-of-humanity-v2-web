@@ -28,7 +28,8 @@ import { timeAgo } from "utils/time";
 import { Address, Hash, createPublicClient, http, decodeEventLog, TransactionReceipt, Log } from "viem";
 import { mainnet, sepolia, gnosisChiado } from "viem/chains";
 import { useAccount, useChainId, useSwitchChain } from "wagmi";
-import { useRouter } from "next/navigation";
+import { useProfileOptimistic } from "optimistic/profile";
+import type { ProfileOptimisticOverlay } from "optimistic/types";
 
 // Define minimal ABI for UserRequestForSignature (Home -> Foreign)
 const USER_REQUEST_FOR_SIGNATURE_ABI = [{
@@ -46,6 +47,14 @@ type AMBMessageInfo = {
   encodedData: `0x${string}`;
   type: 'UserRequestForSignature' | 'UserRequestForAffirmation';
 } | null;
+
+export const buildTransferSuccessPatch = (): ProfileOptimisticOverlay => ({
+  pendingTransfer: true,
+});
+
+export const buildUpdateSuccessPatch = (): ProfileOptimisticOverlay => ({
+  pendingUpdate: true,
+});
 
 function findClosestLog(
   logs: Log[],
@@ -296,16 +305,17 @@ export default function CrossChain({
   winningStatus,
 }: CrossChainProps) {
   const { address } = useAccount();
+  const profileOptimistic = useProfileOptimistic();
   const loading = useLoading();
   const web3Loaded = useWeb3Loaded();
   const chainId = useChainId() as SupportedChainId;
-  const router = useRouter();
   const { switchChain } = useSwitchChain();
   const [isLoading, loadingMessage] = loading.use();
   const [isTransferModalOpen, setIsTransferModalOpen] = useState(false);
   const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
   const [isRelayModalOpen, setIsRelayModalOpen] = useState(false);
   const [isLastTransferModalOpen, setIsLastTransferModalOpen] = useState(false);
+  const effectiveWinningStatus = profileOptimistic.effective.winningStatus;
 
   const [prepareTransfer, doTransfer] = useCCPoHWrite(
     "transferHumanity",
@@ -318,13 +328,13 @@ export default function CrossChain({
           fire();
         },
         onSuccess() {
+          profileOptimistic.applyPatch(buildTransferSuccessPatch());
           toast.success("Transfer initiated!");
           loading.stop();
           setIsTransferModalOpen(false);
-          router.refresh();
         },
       }),
-      [loading, router],
+      [loading, profileOptimistic],
     ),
   );
   
@@ -339,12 +349,12 @@ export default function CrossChain({
           fire();
         },
         onSuccess() {
+          profileOptimistic.applyPatch(buildUpdateSuccessPatch());
           toast.success("Update transaction sent!");
           loading.stop();
           setTimeout(() => {
           setIsRelayModalOpen(false);
           setIsLastTransferModalOpen(false);
-          router.refresh();
           }, 1000);
         },
         onError() {
@@ -356,7 +366,7 @@ export default function CrossChain({
           loading.stop();
         },
       }),
-      [loading, router],
+      [loading, profileOptimistic],
     ),
   );
 
@@ -371,12 +381,12 @@ export default function CrossChain({
           fire();
         },
         onSuccess() {
+          profileOptimistic.applyPatch(buildUpdateSuccessPatch());
           toast.success("Relay transaction sent!");
           loading.stop();
           setTimeout(() => {
           setIsRelayModalOpen(false);
           setIsLastTransferModalOpen(false);
-          router.refresh();
           }, 1000);
         },
         onError() {
@@ -388,7 +398,7 @@ export default function CrossChain({
           loading.stop();
         },
       }),
-      [loading, router],
+      [loading, profileOptimistic],
     ),
   );
 
@@ -652,10 +662,10 @@ export default function CrossChain({
 
   useEffect(() => {
     // Only check for pending updates if profile is not in transfer state
-    if (winningStatus !== "transferring" && winningStatus !== "transferred") {
+    if (effectiveWinningStatus !== "transferring" && effectiveWinningStatus !== "transferred") {
       checkPendingUpdate();
     }
-  }, [checkPendingUpdate, winningStatus]);
+  }, [checkPendingUpdate, effectiveWinningStatus]);
 
   return (
     <div className="flex w-full flex-col items-center border-t p-4 sm:flex-row sm:items-center sm:justify-between">
@@ -668,13 +678,20 @@ export default function CrossChain({
           />
           {homeChain.name}
         </span>
+        {(profileOptimistic.effective.pendingTransfer ||
+          profileOptimistic.effective.pendingUpdate) && (
+          <span className="text-secondaryText mt-2 text-center sm:text-left">
+            Waiting for indexed cross-chain state.
+          </span>
+        )}
       </div>
 
       {web3Loaded &&
         address?.toLowerCase() === claimer &&
         homeChain.id === chainId &&
-        winningStatus !== "transferring" &&
-        winningStatus !== "transferred" &&
+        effectiveWinningStatus !== "transferring" &&
+        effectiveWinningStatus !== "transferred" &&
+        !profileOptimistic.effective.pendingTransfer &&
         (
           <Modal
             formal
@@ -714,8 +731,9 @@ export default function CrossChain({
 
       {web3Loaded &&
         homeChain.id === chainId &&
-        winningStatus !== "transferring" &&
-        winningStatus !== "transferred" &&
+        effectiveWinningStatus !== "transferring" &&
+        effectiveWinningStatus !== "transferred" &&
+        !profileOptimistic.effective.pendingUpdate &&
         (!pendingRelayUpdate || !pendingRelayUpdate.encodedData) && (
           <Modal
             formal
@@ -789,7 +807,7 @@ export default function CrossChain({
         //address?.toLowerCase() === claimer &&
         //homeChain?.id === chainId &&
         homeChain &&
-        winningStatus === "transferred" &&
+        effectiveWinningStatus === "transferred" &&
         publicClient && (
           <Modal
             open={isLastTransferModalOpen}
