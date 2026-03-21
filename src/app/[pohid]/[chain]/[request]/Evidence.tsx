@@ -20,7 +20,7 @@ import useIPFS from "hooks/useIPFS";
 import { useLoading } from "hooks/useLoading";
 import DocumentIcon from "icons/NoteMajor.svg";
 import type { OptimisticEvidenceItem, RequestOptimisticOverlay } from "optimistic/types";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { toast } from "react-toastify";
 import useSWR from "swr";
 import ActionButton from "components/ActionButton";
@@ -221,11 +221,7 @@ export default function Evidence({
     prepare({ args: [pohId, BigInt(requestIndex), value.uri] });
   });
 
-  const [isEvidenceDisabled, setIsEvidenceDisabled] = useState(false);
-
-  useEffect(() => {
-    setIsEvidenceDisabled(chainReq.id !== chainId);
-  }, [chainId]);
+  const isEvidenceDisabled = chainReq.id !== chainId;
 
   return (
     <Accordion title="Evidence">

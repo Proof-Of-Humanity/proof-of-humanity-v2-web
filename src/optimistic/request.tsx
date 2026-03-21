@@ -1,14 +1,9 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import {
   createContext,
-  useCallback,
   useContext,
-  useEffect,
   useMemo,
-  useRef,
-  useState,
   type ReactNode,
 } from "react";
 import type {
@@ -16,6 +11,7 @@ import type {
   RequestOptimisticBase,
   RequestOptimisticOverlay,
 } from "./types";
+import useOptimisticOverlay from "./useOptimisticOverlay";
 
 const OVERLAY_TTL_MS = 2 * 60 * 1000;
 const REFRESH_INTERVAL_MS = 2000;
@@ -131,7 +127,24 @@ const reconcileOverlay = (
 
   if (isOverlayEmpty(next)) return null;
 
+  //reconcile is only called when base changes, but still we return same overlat if nothing changes to prevent re renders
   return changed ? next : overlay;
+};
+
+const mergePatch = (
+  current: RequestOptimisticOverlay | null,
+  patch: RequestOptimisticOverlay,
+) => {
+  const next = {
+    ...current,
+    ...patch,
+    appendedEvidence:
+      patch.appendedEvidence || current?.appendedEvidence
+        ? mergeEvidence(current?.appendedEvidence ?? [], patch.appendedEvidence)
+        : undefined,
+  };
+
+  return isOverlayEmpty(next) ? null : next;
 };
 
 export function RequestOptimisticProvider({
@@ -143,66 +156,15 @@ export function RequestOptimisticProvider({
   enablePolling?: boolean;
   children: ReactNode;
 }) {
-  const router = useRouter();
-  const [overlay, setOverlay] = useState<RequestOptimisticOverlay | null>(null);
-  const hasOverlay = !isOverlayEmpty(overlay);
-  const wasOverlayActiveRef = useRef(false);
-
-  useEffect(() => {
-    setOverlay((current) => reconcileOverlay(base, current));
-  }, [base]);
-
-  useEffect(() => {
-    if (!enablePolling) {
-      wasOverlayActiveRef.current = hasOverlay;
-      return;
-    }
-
-    if (wasOverlayActiveRef.current && !hasOverlay) {
-      wasOverlayActiveRef.current = false;
-    } else {
-      wasOverlayActiveRef.current = hasOverlay;
-    }
-    return;
-  }, [enablePolling, hasOverlay, router]);
-
-  // clear overlay after TTL (only starts once when overlay becomes active)
-  useEffect(() => {
-    if (!hasOverlay) return;
-    const timeoutId = window.setTimeout(() => {
-      setOverlay(null);
-    }, OVERLAY_TTL_MS);
-    return () => window.clearTimeout(timeoutId);
-  }, [hasOverlay]);
-
-  // refresh in background every 2 seconds until the overlay clears or TTL expires
-  useEffect(() => {
-    if (!enablePolling || !hasOverlay) return;
-
-    const intervalId = window.setInterval(() => {
-      router.refresh();
-    }, REFRESH_INTERVAL_MS);
-
-    return () => window.clearInterval(intervalId);
-  }, [enablePolling, hasOverlay, router]);
-
-  const applyPatch = useCallback((patch: RequestOptimisticOverlay) => {
-    setOverlay((current) => {
-      const next = {
-        ...current,
-        ...patch,
-        appendedEvidence:
-          patch.appendedEvidence || current?.appendedEvidence
-            ? mergeEvidence(current?.appendedEvidence ?? [], patch.appendedEvidence)
-            : undefined,
-      };
-      return isOverlayEmpty(next) ? null : next;
-    });
-  }, []);
-
-  const clearOverlay = useCallback(() => {
-    setOverlay(null);
-  }, []);
+  const { overlay, applyPatch, clearOverlay } = useOptimisticOverlay({
+    base,
+    enablePolling,
+    ttlMs: OVERLAY_TTL_MS,
+    refreshIntervalMs: REFRESH_INTERVAL_MS,
+    isOverlayEmpty,
+    reconcileOverlay,
+    mergePatch,
+  });
 
   const effective = useMemo(
     () => ({

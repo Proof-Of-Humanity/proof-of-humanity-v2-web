@@ -1,17 +1,13 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import {
   createContext,
-  useCallback,
   useContext,
-  useEffect,
   useMemo,
-  useRef,
-  useState,
   type ReactNode,
 } from "react";
 import type { ProfileOptimisticBase, ProfileOptimisticOverlay } from "./types";
+import useOptimisticOverlay from "./useOptimisticOverlay";
 
 const OVERLAY_TTL_MS = 5 * 60 * 1000;
 const REFRESH_INTERVAL_MS = 2000;
@@ -62,6 +58,18 @@ const reconcileOverlay = (
   return changed ? next : overlay;
 };
 
+const mergePatch = (
+  current: ProfileOptimisticOverlay | null,
+  patch: ProfileOptimisticOverlay,
+) => {
+  const next = {
+    ...current,
+    ...patch,
+  };
+
+  return isOverlayEmpty(next) ? null : next;
+};
+
 export function ProfileOptimisticProvider({
   base,
   enablePolling = true,
@@ -71,64 +79,16 @@ export function ProfileOptimisticProvider({
   enablePolling?: boolean;
   children: ReactNode;
 }) {
-  const router = useRouter();
-  const [overlay, setOverlay] = useState<ProfileOptimisticOverlay | null>(null);
-  const hasOverlay = !isOverlayEmpty(overlay);
-  const wasOverlayActiveRef = useRef(false);
-
-  useEffect(() => {
-    setOverlay((current) => reconcileOverlay(base, current));
-  }, [base]);
-
-  useEffect(() => {
-    if (!enablePolling) {
-      wasOverlayActiveRef.current = hasOverlay;
-      return;
-    }
-
-    if (wasOverlayActiveRef.current && !hasOverlay) {
-      wasOverlayActiveRef.current = false;
-      const timeoutId = window.setTimeout(() => {
-        router.refresh();
-      }, REFRESH_INTERVAL_MS);
-      return () => window.clearTimeout(timeoutId);
-    }
-
-    wasOverlayActiveRef.current = hasOverlay;
-    return;
-  }, [enablePolling, hasOverlay, router]);
-
-  useEffect(() => {
-    if (!hasOverlay) return;
-    const timeoutId = window.setTimeout(() => {
-      setOverlay(null);
-    }, OVERLAY_TTL_MS);
-    return () => window.clearTimeout(timeoutId);
-  }, [hasOverlay]);
-
-  useEffect(() => {
-    if (!enablePolling || !hasOverlay) return;
-
-    const intervalId = window.setInterval(() => {
-      router.refresh();
-    }, REFRESH_INTERVAL_MS);
-
-    return () => window.clearInterval(intervalId);
-  }, [enablePolling, hasOverlay, router]);
-
-  const applyPatch = useCallback((patch: ProfileOptimisticOverlay) => {
-    setOverlay((current) => {
-      const next = {
-        ...current,
-        ...patch,
-      };
-      return isOverlayEmpty(next) ? null : next;
-    });
-  }, []);
-
-  const clearOverlay = useCallback(() => {
-    setOverlay(null);
-  }, []);
+  const { overlay, applyPatch, clearOverlay } = useOptimisticOverlay({
+    base,
+    enablePolling,
+    ttlMs: OVERLAY_TTL_MS,
+    refreshIntervalMs: REFRESH_INTERVAL_MS,
+    refreshOnClear: true,
+    isOverlayEmpty,
+    reconcileOverlay,
+    mergePatch,
+  });
 
   const effective = useMemo(
     () => ({
