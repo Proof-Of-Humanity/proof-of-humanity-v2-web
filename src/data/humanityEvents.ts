@@ -7,6 +7,7 @@ import {
 } from "generated/graphql";
 import { cache } from "react";
 import { Hash } from "viem";
+import { gnosisChiado } from "viem/chains";
 import { genRequestId } from "./request";
 
 export interface HumanityEventRecord {
@@ -27,6 +28,9 @@ export interface TimelineRequestNode {
   index: number;
   inTransferHash?: Hash | null;
 }
+
+const isTimelineQueryDisabled = (chainId: SupportedChainId) =>
+  chainId === gnosisChiado.id;
 
 const toOptionalNumber = (value?: string | null) =>
   value !== null && value !== undefined ? Number(value) : null;
@@ -60,6 +64,8 @@ const getHumanityEventsForChain = async (
   chainId: SupportedChainId,
   humanityId: Hash,
 ) => {
+  if (isTimelineQueryDisabled(chainId)) return [];
+
   const response = await sdk[chainId].HumanityEvents({ humanityId });
 
   return response.humanityEvents.map((event) =>
@@ -82,6 +88,8 @@ export const getTimelineRequestNode = cache(async (
   humanityId: Hash,
   index: number,
 ) => {
+  if (isTimelineQueryDisabled(chainId)) return null;
+
   const response = await sdk[chainId].RequestTimelineNode({
     id: genRequestId(humanityId, index),
   });

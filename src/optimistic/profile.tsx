@@ -7,6 +7,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from "react";
@@ -14,7 +15,6 @@ import type { ProfileOptimisticBase, ProfileOptimisticOverlay } from "./types";
 
 const OVERLAY_TTL_MS = 5 * 60 * 1000;
 const REFRESH_INTERVAL_MS = 2000;
-const MAX_REFRESH_ATTEMPTS = 8;
 
 interface ProfileOptimisticContextValue {
   base: ProfileOptimisticBase;
@@ -30,6 +30,12 @@ interface ProfileOptimisticContextValue {
 const ProfileOptimisticContext =
   createContext<ProfileOptimisticContextValue | null>(null);
 
+const isOverlayEmpty = (overlay: ProfileOptimisticOverlay | null) =>
+  !overlay ||
+  (overlay.pendingRevocation === undefined &&
+    overlay.pendingTransfer === undefined &&
+    overlay.pendingUpdate === undefined);
+
 const reconcileOverlay = (
   base: ProfileOptimisticBase,
   overlay: ProfileOptimisticOverlay | null,
@@ -37,20 +43,23 @@ const reconcileOverlay = (
   if (!overlay) return null;
 
   const next = { ...overlay };
+  let changed = false;
 
-  if (base.hasPendingRevocation) delete next.pendingRevocation;
-  if (base.winningStatus === "transferring" || base.winningStatus === "transferred")
-    delete next.pendingTransfer;
-
+  if (base.hasPendingRevocation && next.pendingRevocation !== undefined) {
+    delete next.pendingRevocation;
+    changed = true;
+  }
   if (
-    next.pendingRevocation === undefined &&
-    next.pendingTransfer === undefined &&
-    next.pendingUpdate === undefined
+    (base.winningStatus === "transferring" || base.winningStatus === "transferred") &&
+    next.pendingTransfer !== undefined
   ) {
-    return null;
+    delete next.pendingTransfer;
+    changed = true;
   }
 
-  return next;
+  if (isOverlayEmpty(next)) return null;
+
+  return changed ? next : overlay;
 };
 
 export function ProfileOptimisticProvider({
@@ -64,40 +73,57 @@ export function ProfileOptimisticProvider({
 }) {
   const router = useRouter();
   const [overlay, setOverlay] = useState<ProfileOptimisticOverlay | null>(null);
+  const hasOverlay = !isOverlayEmpty(overlay);
+  const wasOverlayActiveRef = useRef(false);
 
   useEffect(() => {
     setOverlay((current) => reconcileOverlay(base, current));
   }, [base]);
 
   useEffect(() => {
-    if (!overlay) return;
+    if (!enablePolling) {
+      wasOverlayActiveRef.current = hasOverlay;
+      return;
+    }
+
+    if (wasOverlayActiveRef.current && !hasOverlay) {
+      wasOverlayActiveRef.current = false;
+      const timeoutId = window.setTimeout(() => {
+        router.refresh();
+      }, REFRESH_INTERVAL_MS);
+      return () => window.clearTimeout(timeoutId);
+    }
+
+    wasOverlayActiveRef.current = hasOverlay;
+    return;
+  }, [enablePolling, hasOverlay, router]);
+
+  useEffect(() => {
+    if (!hasOverlay) return;
     const timeoutId = window.setTimeout(() => {
       setOverlay(null);
     }, OVERLAY_TTL_MS);
     return () => window.clearTimeout(timeoutId);
-  }, [overlay]);
+  }, [hasOverlay]);
 
   useEffect(() => {
-    if (!enablePolling || !overlay) return;
+    if (!enablePolling || !hasOverlay) return;
 
-    let attempts = 0;
     const intervalId = window.setInterval(() => {
-      attempts += 1;
       router.refresh();
-
-      if (attempts >= MAX_REFRESH_ATTEMPTS) {
-        window.clearInterval(intervalId);
-      }
     }, REFRESH_INTERVAL_MS);
 
     return () => window.clearInterval(intervalId);
-  }, [enablePolling, overlay, router]);
+  }, [enablePolling, hasOverlay, router]);
 
   const applyPatch = useCallback((patch: ProfileOptimisticOverlay) => {
-    setOverlay((current) => ({
-      ...current,
-      ...patch,
-    }));
+    setOverlay((current) => {
+      const next = {
+        ...current,
+        ...patch,
+      };
+      return isOverlayEmpty(next) ? null : next;
+    });
   }, []);
 
   const clearOverlay = useCallback(() => {

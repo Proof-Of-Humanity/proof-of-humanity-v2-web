@@ -61,9 +61,10 @@ interface ItemInterface {
   uri: string;
   creationTime: number;
   sender: Address;
+  pending?: boolean;
 }
 
-function Item({ index, uri, creationTime, sender }: ItemInterface) {
+function Item({ index, uri, creationTime, sender, pending }: ItemInterface) {
   const chain = useChainParam()!;
   const [evidence] = useIPFS<EvidenceFile>(uri);
   const ipfsUri = evidence?.fileURI
@@ -73,11 +74,16 @@ function Item({ index, uri, creationTime, sender }: ItemInterface) {
       : undefined;
 
   return (
-    <div className="mt-4 flex flex-col">
+    <div className={`mt-4 flex flex-col${pending ? " opacity-70" : ""}`}>
       <div className="paper relative px-8 py-4">
         <span className="absolute left-3 text-sm text-slate-500">
           {romanize(index + 1)}
         </span>
+        {pending && (
+          <span className="absolute right-3 top-2 text-xs text-orange-400 animate-pulse font-medium">
+            Pending
+          </span>
+        )}
         <div className="flex justify-between text-xl font-bold">
           {evidence?.name}
           {ipfsUri && <Attachment uri={ipfsUri} />}
@@ -116,7 +122,7 @@ export default function Evidence({
   list,
   arbitrationInfo,
 }: EvidenceProps) {
-  const requestOptimistic = useRequestOptimistic();
+  const { effective, applyPatch } = useRequestOptimistic();
   const chainReq = useChainParam()!;
   const chainId = useChainId();
   const { address } = useAccount();
@@ -145,7 +151,7 @@ export default function Evidence({
         onSuccess(ctx) {
           const uri = typeof ctx.args?.[2] === "string" ? ctx.args[2] : undefined;
           if (address && uri) {
-            requestOptimistic.applyPatch(
+            applyPatch(
               buildEvidenceSuccessPatch(uri, address, ctx.txHash),
             );
           }
@@ -154,7 +160,7 @@ export default function Evidence({
           setModalOpen(false);
         },
       }),
-      [address, loading, requestOptimistic],
+      [address, applyPatch, loading],
     ),
   );
 
@@ -297,13 +303,14 @@ export default function Evidence({
         </Modal>
       )}
 
-      {requestOptimistic.effective.evidenceList.map((item, i) => (
+      {effective.evidenceList.map((item, i) => (
         <Item
           key={item.id}
           index={i}
           creationTime={item.creationTime}
           sender={item.submitter}
           uri={item.uri}
+          pending={item.pending}
         />
       ))}
     </Accordion>

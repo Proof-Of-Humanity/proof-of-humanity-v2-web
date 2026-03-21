@@ -14,7 +14,7 @@ import { useObservable } from "@legendapp/state/react";
 import { getContractInfo } from "contracts";
 import type { WriteSuccessContext } from "contracts/hooks/types";
 import usePoHWrite from "contracts/hooks/usePoHWrite";
-import type { RequestOptimisticBase, RequestOptimisticOverlay } from "optimistic/types";
+import type { RequestOptimisticOverlay } from "optimistic/types";
 import { Hash, decodeEventLog } from "viem";
 import DocumentIcon from "icons/NoteMajor.svg";
 import { ObservablePrimitiveBaseFns } from "@legendapp/state";
@@ -84,11 +84,12 @@ export const getChallengeDisputeId = (ctx: WriteSuccessContext) => {
 };
 
 export const buildChallengeSuccessPatch = (
-  state: RequestOptimisticBase,
+  revocation: boolean,
   disputeId?: string,
 ): RequestOptimisticOverlay => ({
   status: "disputed",
-  requestStatus: getDisputedRequestStatus(state.revocation),
+  requestStatus: getDisputedRequestStatus(revocation),
+  lastStatusChange: Math.floor(Date.now() / 1000),
   pendingChallenge: {
     disputeId,
     createdAt: Date.now(),
@@ -157,9 +158,10 @@ export default function Challenge({
   usedReasons = [],
 }: ChallengeInterface) {
   const { uploadFile } = useAtlasProvider();
-  const requestOptimistic = useRequestOptimistic();
+  const { applyPatch } = useRequestOptimistic();
   const chain = useChainParam()!;
   const userChainId = useChainId();
+  const [isOpen, setIsOpen] = useState(false);
   
   const loading = useLoading();
   const [isLoading, loadingMessage] = loading.use();
@@ -183,17 +185,18 @@ export default function Challenge({
           toast.error("Transaction rejected");
         },
         onSuccess(ctx) {
-          requestOptimistic.applyPatch(
+          applyPatch(
             buildChallengeSuccessPatch(
-              requestOptimistic.effective,
+              revocation,
               getChallengeDisputeId(ctx),
             ),
           );
           loading.stop();
+          setIsOpen(false);
           toast.success("Challenge submitted successfully");
         },
       }),
-      [loading, requestOptimistic],
+      [applyPatch, loading, revocation],
     ),
   );
 
@@ -259,10 +262,12 @@ export default function Challenge({
   return (
     <Modal
       formal
+      open={isOpen}
+      onClose={() => setIsOpen(false)}
       header="Challenge"
       trigger={
         <ActionButton
-          onClick={() => {}}
+          onClick={() => setIsOpen(true)}
           label="Challenge"
           disabled={userChainId !== chain.id}
           tooltip={userChainId !== chain.id ? `Switch your chain above to ${idToChain(chain.id)?.name || 'the correct chain'}` : undefined}

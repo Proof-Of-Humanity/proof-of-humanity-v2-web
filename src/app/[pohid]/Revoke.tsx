@@ -42,7 +42,7 @@ export default function Revoke({
   homeChain,
   arbitrationInfo,
 }: RevokeProps) {
-  const profileOptimistic = useProfileOptimistic();
+  const { effective, applyPatch } = useProfileOptimistic();
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [file, setFile] = useState<File | null>(null);
@@ -72,12 +72,12 @@ export default function Revoke({
           toast.error("Transaction rejected");
         },
         onSuccess() {
-          profileOptimistic.applyPatch(buildRevokeSuccessPatch());
+          applyPatch(buildRevokeSuccessPatch());
           setModalOpen(false);
           toast.success("Request created");
         },
       }),
-      [loading, profileOptimistic],
+      [applyPatch, loading],
     ),
   );
 
@@ -136,10 +136,16 @@ export default function Revoke({
 
   return (
     <div className="flex w-full flex-col items-center">
-      {profileOptimistic.effective.pendingRevocation && (
-        <span className="text-secondaryText mb-4 text-center">
-          Revocation request submitted. Waiting for indexed state.
-        </span>
+      {effective.pendingRevocation && (
+        <div className="mb-4 flex w-full max-w-md items-center gap-3 rounded-lg border border-orange-300 bg-orange-50 px-4 py-3 dark:border-orange-600 dark:bg-orange-900/20">
+          <svg className="h-5 w-5 shrink-0 animate-spin text-orange-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+          </svg>
+          <span className="text-sm text-orange-700 dark:text-orange-300">
+            Revocation request submitted. Waiting for on-chain confirmation&hellip;
+          </span>
+        </div>
       )}
       <Modal
         formal
@@ -149,7 +155,7 @@ export default function Revoke({
           <button
             onClick={() => setModalOpen(true)}
             className="btn-main mb-4"
-            disabled={profileOptimistic.effective.pendingRevocation}
+            disabled={effective.pendingRevocation}
           >
             Revoke
           </button>

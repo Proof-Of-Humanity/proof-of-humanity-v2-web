@@ -12,6 +12,7 @@ export interface OptimisticEvidenceItem {
 export interface RequestOptimisticBase {
   status: string;
   requestStatus: RequestStatus;
+  lastStatusChange: number;
   funded: bigint;
   totalCost: bigint;
   validVouches: number;
@@ -25,6 +26,7 @@ export interface RequestOptimisticBase {
 export interface RequestOptimisticOverlay {
   status?: string;
   requestStatus?: RequestStatus;
+  lastStatusChange?: number;
   funded?: bigint;
   validVouches?: number;
   onChainVouches?: Address[];

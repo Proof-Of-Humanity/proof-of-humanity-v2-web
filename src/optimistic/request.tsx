@@ -7,6 +7,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from "react";
@@ -18,7 +19,6 @@ import type {
 
 const OVERLAY_TTL_MS = 2 * 60 * 1000;
 const REFRESH_INTERVAL_MS = 2000;
-const MAX_REFRESH_ATTEMPTS = 8;
 
 interface RequestOptimisticContextValue {
   base: RequestOptimisticBase; // the current potentially stale data from the subgraph
@@ -31,6 +31,18 @@ interface RequestOptimisticContextValue {
 
 const RequestOptimisticContext =
   createContext<RequestOptimisticContextValue | null>(null);
+
+const isOverlayEmpty = (overlay: RequestOptimisticOverlay | null) =>
+  !overlay ||
+  (overlay.status === undefined &&
+    overlay.requestStatus === undefined &&
+    overlay.lastStatusChange === undefined &&
+    overlay.funded === undefined &&
+    overlay.validVouches === undefined &&
+    overlay.onChainVouches === undefined &&
+    overlay.offChainVouches === undefined &&
+    overlay.appendedEvidence === undefined &&
+    overlay.pendingChallenge === undefined);
 
 const dedupeEvidence = (items: OptimisticEvidenceItem[]) => {
   const seen = new Set<string>();
@@ -56,18 +68,40 @@ const reconcileOverlay = (
   if (!overlay) return null;
 
   const next: RequestOptimisticOverlay = { ...overlay };
+  let changed = false;
 
   // remove fields that are now present in the base
-  if (next.status === base.status) delete next.status;
-  if (next.requestStatus === base.requestStatus) delete next.requestStatus;
-  if (typeof next.funded === "bigint" && base.funded >= next.funded) delete next.funded;
-  if (typeof next.validVouches === "number" && base.validVouches === next.validVouches)
+  if (next.status === base.status) {
+    delete next.status;
+    changed = true;
+  }
+  if (next.requestStatus === base.requestStatus) {
+    delete next.requestStatus;
+    changed = true;
+  }
+  if (
+    typeof next.lastStatusChange === "number" &&
+    base.lastStatusChange >= next.lastStatusChange
+  ) {
+    delete next.lastStatusChange;
+    changed = true;
+  }
+  if (typeof next.funded === "bigint" && base.funded >= next.funded) {
+    delete next.funded;
+    changed = true;
+  }
+  if (typeof next.validVouches === "number" && base.validVouches === next.validVouches) {
     delete next.validVouches;
+    changed = true;
+  }
 
   if (next.onChainVouches) {
     const baseSet = new Set(base.onChainVouches.map((item) => item.toLowerCase()));
     const matches = next.onChainVouches.every((item) => baseSet.has(item.toLowerCase()));
-    if (matches) delete next.onChainVouches;
+    if (matches) {
+      delete next.onChainVouches;
+      changed = true;
+    }
   }
 
   if (next.offChainVouches) {
@@ -75,32 +109,29 @@ const reconcileOverlay = (
     const matches = next.offChainVouches.every((item) =>
       baseSet.has(item.voucher.toLowerCase()),
     );
-    if (matches) delete next.offChainVouches;
+    if (matches) {
+      delete next.offChainVouches;
+      changed = true;
+    }
   }
 
   if (next.appendedEvidence) {
     const baseUris = new Set(base.evidenceList.map((item) => item.uri));
     const allPresent = next.appendedEvidence.every((item) => baseUris.has(item.uri));
-    if (allPresent) delete next.appendedEvidence;
+    if (allPresent) {
+      delete next.appendedEvidence;
+      changed = true;
+    }
   }
 
-  if (next.pendingChallenge && (base.status === "disputed" || base.currentChallengeDisputeId))
+  if (next.pendingChallenge && (base.status === "disputed" || base.currentChallengeDisputeId)) {
     delete next.pendingChallenge;
-
-  if (
-    next.status === undefined &&
-    next.requestStatus === undefined &&
-    next.funded === undefined &&
-    next.validVouches === undefined &&
-    next.onChainVouches === undefined &&
-    next.offChainVouches === undefined &&
-    next.appendedEvidence === undefined &&
-    next.pendingChallenge === undefined
-  ) {
-    return null;
+    changed = true;
   }
 
-  return next;
+  if (isOverlayEmpty(next)) return null;
+
+  return changed ? next : overlay;
 };
 
 export function RequestOptimisticProvider({
@@ -114,46 +145,59 @@ export function RequestOptimisticProvider({
 }) {
   const router = useRouter();
   const [overlay, setOverlay] = useState<RequestOptimisticOverlay | null>(null);
+  const hasOverlay = !isOverlayEmpty(overlay);
+  const wasOverlayActiveRef = useRef(false);
 
   useEffect(() => {
     setOverlay((current) => reconcileOverlay(base, current));
   }, [base]);
 
-  // cleanr overlay after 2 mins
   useEffect(() => {
-    if (!overlay) return;
+    if (!enablePolling) {
+      wasOverlayActiveRef.current = hasOverlay;
+      return;
+    }
+
+    if (wasOverlayActiveRef.current && !hasOverlay) {
+      wasOverlayActiveRef.current = false;
+    } else {
+      wasOverlayActiveRef.current = hasOverlay;
+    }
+    return;
+  }, [enablePolling, hasOverlay, router]);
+
+  // clear overlay after TTL (only starts once when overlay becomes active)
+  useEffect(() => {
+    if (!hasOverlay) return;
     const timeoutId = window.setTimeout(() => {
       setOverlay(null);
     }, OVERLAY_TTL_MS);
     return () => window.clearTimeout(timeoutId);
-  }, [overlay]);
+  }, [hasOverlay]);
 
-  // refresh in background every 2 seconds for 8 times
+  // refresh in background every 2 seconds until the overlay clears or TTL expires
   useEffect(() => {
-    if (!enablePolling || !overlay) return;
+    if (!enablePolling || !hasOverlay) return;
 
-    let attempts = 0;
     const intervalId = window.setInterval(() => {
-      attempts += 1;
       router.refresh();
-
-      if (attempts >= MAX_REFRESH_ATTEMPTS) {
-        window.clearInterval(intervalId);
-      }
     }, REFRESH_INTERVAL_MS);
 
     return () => window.clearInterval(intervalId);
-  }, [enablePolling, overlay, router]);
+  }, [enablePolling, hasOverlay, router]);
 
   const applyPatch = useCallback((patch: RequestOptimisticOverlay) => {
-    setOverlay((current) => ({
-      ...current,
-      ...patch,
-      appendedEvidence:
-        patch.appendedEvidence || current?.appendedEvidence
-          ? mergeEvidence(current?.appendedEvidence ?? [], patch.appendedEvidence)
-          : undefined,
-    }));
+    setOverlay((current) => {
+      const next = {
+        ...current,
+        ...patch,
+        appendedEvidence:
+          patch.appendedEvidence || current?.appendedEvidence
+            ? mergeEvidence(current?.appendedEvidence ?? [], patch.appendedEvidence)
+            : undefined,
+      };
+      return isOverlayEmpty(next) ? null : next;
+    });
   }, []);
 
   const clearOverlay = useCallback(() => {
@@ -165,6 +209,7 @@ export function RequestOptimisticProvider({
       ...base,
       status: overlay?.status ?? base.status,
       requestStatus: overlay?.requestStatus ?? base.requestStatus,
+      lastStatusChange: overlay?.lastStatusChange ?? base.lastStatusChange,
       funded: overlay?.funded ?? base.funded,
       validVouches: overlay?.validVouches ?? base.validVouches,
       onChainVouches: overlay?.onChainVouches ?? base.onChainVouches,

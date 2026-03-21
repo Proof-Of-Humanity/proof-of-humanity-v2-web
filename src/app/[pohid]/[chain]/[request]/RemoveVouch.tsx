@@ -8,7 +8,7 @@ import { useEffectOnce } from "@legendapp/state/react";
 import { SupportedChain, idToChain } from "config/chains";
 import ActionButton from "components/ActionButton";
 import { useRequestOptimistic } from "optimistic/request";
-import type { RequestOptimisticBase, RequestOptimisticOverlay } from "optimistic/types";
+import type { RequestOptimisticOverlay } from "optimistic/types";
 import { useAccount } from "wagmi";
 
 enableReactUse();
@@ -16,19 +16,20 @@ enableReactUse();
 const normalizeAddress = (value: Address) => value.toLowerCase();
 
 export const buildRemoveVouchSuccessPatch = (
-  state: RequestOptimisticBase,
+  onChainVouches: Address[],
+  validVouches: number,
   voucher: Address,
 ): RequestOptimisticOverlay | undefined => {
   const normalized = normalizeAddress(voucher);
-  const nextOnChainVouches = state.onChainVouches.filter(
+  const nextOnChainVouches = onChainVouches.filter(
     (value) => normalizeAddress(value) !== normalized,
   );
 
-  if (nextOnChainVouches.length === state.onChainVouches.length) return undefined;
+  if (nextOnChainVouches.length === onChainVouches.length) return undefined;
 
   return {
     onChainVouches: nextOnChainVouches,
-    validVouches: Math.max(0, state.validVouches - 1),
+    validVouches: Math.max(0, validVouches - 1),
   };
 };
 
@@ -52,7 +53,7 @@ export default function RemoveVouch({
   tooltip,
 }: RemoveVouchProps) {
   const loading = useLoading();
-  const requestOptimistic = useRequestOptimistic();
+  const { effective, applyPatch } = useRequestOptimistic();
   const { address } = useAccount();
 
   const [prepareRemoveVouch, removeOnchainVouch, status] = usePoHWrite(
@@ -68,14 +69,18 @@ export default function RemoveVouch({
         },
         onSuccess() {
           if (!address) return;
-          const patch = buildRemoveVouchSuccessPatch(requestOptimistic.effective, address);
+          const patch = buildRemoveVouchSuccessPatch(
+            effective.onChainVouches,
+            effective.validVouches,
+            address,
+          );
           if (patch) {
-            requestOptimistic.applyPatch(patch);
+            applyPatch(patch);
           }
           toast.success("Request remove vouch successful");
         },
       }),
-      [address, loading, requestOptimistic],
+      [address, applyPatch, effective.onChainVouches, effective.validVouches, loading],
     ),
   );
 

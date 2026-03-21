@@ -22,7 +22,7 @@ import { HumanityQuery } from "generated/graphql";
 import { sdk } from "config/subgraph";
 import { useLoading } from "hooks/useLoading";
 import useWeb3Loaded from "hooks/useWeb3Loaded";
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "react-toastify";
 import { timeAgo } from "utils/time";
 import { Address, Hash, createPublicClient, http, decodeEventLog, TransactionReceipt, Log } from "viem";
@@ -305,7 +305,17 @@ export default function CrossChain({
   winningStatus,
 }: CrossChainProps) {
   const { address } = useAccount();
-  const profileOptimistic = useProfileOptimistic();
+  const { effective, applyPatch } = useProfileOptimistic();
+  const profileOptimisticRef = useRef({
+    pendingUpdate: effective.pendingUpdate,
+    applyPatch,
+  });
+  useEffect(() => {
+    profileOptimisticRef.current = {
+      pendingUpdate: effective.pendingUpdate,
+      applyPatch,
+    };
+  }, [applyPatch, effective.pendingUpdate]);
   const loading = useLoading();
   const web3Loaded = useWeb3Loaded();
   const chainId = useChainId() as SupportedChainId;
@@ -315,7 +325,13 @@ export default function CrossChain({
   const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
   const [isRelayModalOpen, setIsRelayModalOpen] = useState(false);
   const [isLastTransferModalOpen, setIsLastTransferModalOpen] = useState(false);
-  const effectiveWinningStatus = profileOptimistic.effective.winningStatus;
+  const effectiveWinningStatus = effective.winningStatus;
+  const closeAllModals = useCallback(() => {
+    setIsTransferModalOpen(false);
+    setIsUpdateModalOpen(false);
+    setIsRelayModalOpen(false);
+    setIsLastTransferModalOpen(false);
+  }, []);
 
   const [prepareTransfer, doTransfer] = useCCPoHWrite(
     "transferHumanity",
@@ -328,13 +344,13 @@ export default function CrossChain({
           fire();
         },
         onSuccess() {
-          profileOptimistic.applyPatch(buildTransferSuccessPatch());
+          applyPatch(buildTransferSuccessPatch());
           toast.success("Transfer initiated!");
           loading.stop();
-          setIsTransferModalOpen(false);
+          closeAllModals();
         },
       }),
-      [loading, profileOptimistic],
+      [applyPatch, closeAllModals, loading],
     ),
   );
   
@@ -349,13 +365,10 @@ export default function CrossChain({
           fire();
         },
         onSuccess() {
-          profileOptimistic.applyPatch(buildUpdateSuccessPatch());
+          applyPatch(buildUpdateSuccessPatch());
           toast.success("Update transaction sent!");
           loading.stop();
-          setTimeout(() => {
-          setIsRelayModalOpen(false);
-          setIsLastTransferModalOpen(false);
-          }, 1000);
+          closeAllModals();
         },
         onError() {
           toast.error("Transaction failed");
@@ -366,7 +379,7 @@ export default function CrossChain({
           loading.stop();
         },
       }),
-      [loading, profileOptimistic],
+      [applyPatch, closeAllModals, loading],
     ),
   );
 
@@ -381,13 +394,10 @@ export default function CrossChain({
           fire();
         },
         onSuccess() {
-          profileOptimistic.applyPatch(buildUpdateSuccessPatch());
+          applyPatch(buildUpdateSuccessPatch());
           toast.success("Relay transaction sent!");
           loading.stop();
-          setTimeout(() => {
-          setIsRelayModalOpen(false);
-          setIsLastTransferModalOpen(false);
-          }, 1000);
+          closeAllModals();
         },
         onError() {
           toast.error("Transaction failed");
@@ -398,7 +408,7 @@ export default function CrossChain({
           loading.stop();
         },
       }),
-      [loading, profileOptimistic],
+      [applyPatch, closeAllModals, loading],
     ),
   );
 
@@ -509,6 +519,9 @@ export default function CrossChain({
 
     // No pending update - message has been relayed
     setPendingRelayUpdate({} as RelayUpdateParams);
+    if (profileOptimisticRef.current.pendingUpdate) {
+      profileOptimisticRef.current.applyPatch({ pendingUpdate: undefined });
+    }
   }, [web3Loaded, homeChain, pohId]);
 
   const handleExecuteRelay = async () => {
@@ -678,8 +691,8 @@ export default function CrossChain({
           />
           {homeChain.name}
         </span>
-        {(profileOptimistic.effective.pendingTransfer ||
-          profileOptimistic.effective.pendingUpdate) && (
+        {(effective.pendingTransfer ||
+          effective.pendingUpdate) && (
           <span className="text-secondaryText mt-2 text-center sm:text-left">
             Waiting for indexed cross-chain state.
           </span>
@@ -691,7 +704,7 @@ export default function CrossChain({
         homeChain.id === chainId &&
         effectiveWinningStatus !== "transferring" &&
         effectiveWinningStatus !== "transferred" &&
-        !profileOptimistic.effective.pendingTransfer &&
+        !effective.pendingTransfer &&
         (
           <Modal
             formal
@@ -733,7 +746,7 @@ export default function CrossChain({
         homeChain.id === chainId &&
         effectiveWinningStatus !== "transferring" &&
         effectiveWinningStatus !== "transferred" &&
-        !profileOptimistic.effective.pendingUpdate &&
+        !effective.pendingUpdate &&
         (!pendingRelayUpdate || !pendingRelayUpdate.encodedData) && (
           <Modal
             formal

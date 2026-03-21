@@ -5,7 +5,7 @@ import Modal from "components/Modal";
 import ActionButton from "components/ActionButton";
 import usePoHWrite from "contracts/hooks/usePoHWrite";
 import { useLoading } from "hooks/useLoading";
-import type { RequestOptimisticBase, RequestOptimisticOverlay } from "optimistic/types";
+import type { RequestOptimisticOverlay } from "optimistic/types";
 import { Hash, formatEther, parseEther } from "viem";
 import useChainParam from "hooks/useChainParam";
 import { useAccount, useBalance, useChainId } from "wagmi";
@@ -14,10 +14,11 @@ import { idToChain } from "config/chains";
 import { useRequestOptimistic } from "optimistic/request";
 
 export const buildFundSuccessPatch = (
-  state: RequestOptimisticBase,
+  funded: bigint,
+  totalCost: bigint,
   value: bigint,
 ): RequestOptimisticOverlay => ({
-  funded: state.funded + value > state.totalCost ? state.totalCost : state.funded + value,
+  funded: funded + value > totalCost ? totalCost : funded + value,
 });
 
 interface FundButtonProps {
@@ -33,7 +34,7 @@ const FundButton: React.FC<FundButtonProps> = ({
   totalCost,
   funded,
 }) => {
-  const requestOptimistic = useRequestOptimistic();
+  const { effective, applyPatch } = useRequestOptimistic();
   const chain = useChainParam()!;
   const userChainId = useChainId();
   const [addedFundInput, setAddedFundInput] = useState("");
@@ -60,8 +61,8 @@ const FundButton: React.FC<FundButtonProps> = ({
           toast.error("Transaction rejected");
         },
         onSuccess(ctx) {
-          requestOptimistic.applyPatch(
-            buildFundSuccessPatch(requestOptimistic.effective, ctx.value ?? 0n),
+          applyPatch(
+            buildFundSuccessPatch(effective.funded, effective.totalCost, ctx.value ?? 0n),
           );
           loading.stop();
           setIsModalOpen(false);
@@ -69,7 +70,7 @@ const FundButton: React.FC<FundButtonProps> = ({
           toast.success("Request funded successfully");
         },
       }),
-      [address, loading, requestOptimistic],
+      [applyPatch, effective.funded, effective.totalCost, loading],
     ),
   );
 

@@ -63,6 +63,7 @@ export default function useWagmiWrite<
   const { data: receipt, status: transactionStatus } = useWaitForTransactionReceipt({
     hash: data,
   });
+  const effectsRef = useRef(effects);
   const lastWriteRef = useRef<{
     args?: readonly unknown[];
     value?: bigint;
@@ -70,6 +71,10 @@ export default function useWagmiWrite<
   } | null>(null);
   const lastPendingHashRef = useRef<typeof data>();
   const lastSuccessHashRef = useRef<typeof data>();
+
+  useEffect(() => {
+    effectsRef.current = effects;
+  }, [effects]);
 
   const fireWrite = useCallback(
     (request: any) => {
@@ -87,26 +92,26 @@ export default function useWagmiWrite<
     switch (prepareStatus) {
       case "success":
         if (prepared.request && enabled) {
-          effects?.onReady?.(() => fireWrite(prepared.request));
+          effectsRef.current?.onReady?.(() => fireWrite(prepared.request));
           setEnabled(false);
         }
         break;
       case "error":
         if (enabled) {
-          effects?.onFail?.();
+          effectsRef.current?.onFail?.();
           setEnabled(false);
         }
     }
-  }, [prepareStatus, effects, enabled, prepared?.request, fireWrite]);
+  }, [prepareStatus, enabled, prepared?.request, fireWrite]);
 
   useEffect(() => {
     switch (status) {
       case "error":
         console.log(writeError);
-        effects?.onError?.(writeError);
+        effectsRef.current?.onError?.(writeError);
         setEnabled(false);
     }
-  }, [status, effects, writeError]);
+  }, [status, writeError]);
 
   useEffect(() => {
     if (!data) return;
@@ -115,7 +120,7 @@ export default function useWagmiWrite<
       case "pending":
         if (lastPendingHashRef.current !== data) {
           lastPendingHashRef.current = data;
-          effects?.onLoading?.();
+          effectsRef.current?.onLoading?.();
         }
         break;
       case "success":
@@ -130,13 +135,12 @@ export default function useWagmiWrite<
             txHash: data,
             receipt,
           };
-          effects?.onSuccess?.(ctx);
+          effectsRef.current?.onSuccess?.(ctx);
         }
         break;
     }
   }, [
     transactionStatus,
-    effects,
     data,
     receipt,
     contract,
@@ -145,25 +149,27 @@ export default function useWagmiWrite<
     defaultChainId,
   ]);
 
-  return useMemo(
-    () =>
-      [
-        (params: { value?: bigint; args?: WriteArgs<C, F> } = {}) => {
-          if (params.value !== undefined) setValue(params.value);
-          if (params.args) setArgs(params.args);
-          setEnabled(true);
-        },
-        () => {
-          if (prepared?.request)
-            fireWrite(prepared.request);
-          setEnabled(false);
-        },
-        {
-          prepare: prepareStatus,
-          write: status,
-          transaction: transactionStatus,
-        },
-      ] as const,
-    [prepareStatus, status, transactionStatus, prepared?.request, fireWrite],
+  const prepare = useCallback((params: { value?: bigint; args?: WriteArgs<C, F> } = {}) => {
+    if (params.value !== undefined) setValue(params.value);
+    if (params.args) setArgs(params.args);
+    setEnabled(true);
+  }, []);
+
+  const firePrepared = useCallback(() => {
+    if (prepared?.request) {
+      fireWrite(prepared.request);
+    }
+    setEnabled(false);
+  }, [prepared?.request, fireWrite]);
+
+  const writeStatus = useMemo(
+    () => ({
+      prepare: prepareStatus,
+      write: status,
+      transaction: transactionStatus,
+    }),
+    [prepareStatus, status, transactionStatus],
   );
+
+  return [prepare, firePrepared, writeStatus] as const;
 }

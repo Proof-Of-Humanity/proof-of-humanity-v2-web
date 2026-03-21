@@ -32,6 +32,7 @@ import type { Address } from "viem";
 import { RequestOptimisticProvider } from "optimistic/request";
 import ActionBar from "./ActionBar";
 import Evidence from "./Evidence";
+import OptimisticVouchIndicator from "./OptimisticVouchIndicator";
 import {
   RequestInfoSection,
   RequestInfoSectionSkeleton,
@@ -279,6 +280,7 @@ export default async function Request({ params }: PageProps) {
   const optimisticBase = {
     status: request.status.id,
     requestStatus,
+    lastStatusChange: Number(request.lastStatusChange),
     funded,
     totalCost: BigInt(contractData.baseDeposit) + arbitrationCost,
     validVouches,
@@ -506,9 +508,14 @@ export default async function Request({ params }: PageProps) {
             <div className="flex w-full flex-wrap justify-center gap-2 md:justify-between md:flex-row md:items-center">
               {vouchersData.find((v) => v) && (
                 <div className="text-secondaryText mt-8 flex flex-col items-center text-center md:items-start md:text-left">
-                  {request.status.id === "vouching"
-                    ? "Available vouches for this PoHID"
-                    : "Vouched for this request"}
+                  <span className="flex items-center">
+                    {request.status.id === "vouching"
+                      ? "Available vouches for this PoHID"
+                      : "Vouched for this request"}
+                    {request.status.id === "vouching" && (
+                      <OptimisticVouchIndicator serverCount={validVouches} />
+                    )}
+                  </span>
                   <div className="flex flex-wrap justify-center gap-2 md:justify-start">
                     {vouchersData.map(async (vouch, idx) => {
                       const vouchLocal = await Promise.resolve(vouch);
