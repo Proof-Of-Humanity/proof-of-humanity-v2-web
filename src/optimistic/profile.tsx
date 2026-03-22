@@ -94,7 +94,7 @@ export function ProfileOptimisticProvider({
     () => ({
       ...base,
       winningStatus: overlay?.pendingTransfer ? "transferring" : base.winningStatus,
-      pendingRevocation: overlay?.pendingRevocation ?? false,
+      pendingRevocation: base.hasPendingRevocation || (overlay?.pendingRevocation ?? false),
       pendingTransfer: overlay?.pendingTransfer ?? false,
       pendingUpdate: overlay?.pendingUpdate ?? false,
     }),
