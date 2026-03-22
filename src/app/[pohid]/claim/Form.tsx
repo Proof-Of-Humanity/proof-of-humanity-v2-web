@@ -129,6 +129,7 @@ export default function Form({
         toast.info("Transaction pending");
       },
       onSuccess() {
+        loading.stop();
         step$.set(Step.finalized);
         toast.success("Request created");
       },
@@ -235,26 +236,38 @@ export default function Form({
     }
   };
 
-  state$.onChange(({ value }) => {
-    if (!value.uri) return;
-    if (!currentTotalCost) return;
-    const selfFundedWei = BigInt(parseEther(selfFunded$.get().toString()));
-    const funded =
-      selfFundedWei > currentTotalCost
-        ? currentTotalCost
-        : selfFundedWei;
-    loading.start("Submitting...");
-    if (renewal)
-      prepareRenewHumanity({
-        value: funded,
-        args: [value.uri],
-      });
-    else
-      prepareClaimHumanity({
-        value: funded,
-        args: [value.pohId, value.uri, value.name],
-      });
-  });
+  useEffect(() => {
+    const unsubscribe = state$.onChange(({ value }) => {
+      if (!value.uri) return;
+      if (!currentTotalCost) return;
+      const selfFundedWei = BigInt(parseEther(selfFunded$.get().toString()));
+      const funded =
+        selfFundedWei > currentTotalCost
+          ? currentTotalCost
+          : selfFundedWei;
+      loading.start("Submitting...");
+      if (renewal)
+        prepareRenewHumanity({
+          value: funded,
+          args: [value.uri],
+        });
+      else
+        prepareClaimHumanity({
+          value: funded,
+          args: [value.pohId, value.uri, value.name],
+        });
+    });
+
+    return () => unsubscribe();
+  }, [
+    currentTotalCost,
+    loading,
+    prepareClaimHumanity,
+    prepareRenewHumanity,
+    renewal,
+    selfFunded$,
+    state$,
+  ]);
 
   // const steps = useMemo(
   //   () =>

@@ -48,6 +48,10 @@ type AMBMessageInfo = {
   type: 'UserRequestForSignature' | 'UserRequestForAffirmation';
 } | null;
 
+const isReceiptPendingError = (error: unknown) =>
+  error instanceof Error &&
+  error.name === "TransactionReceiptNotFoundError";
+
 export const buildTransferSuccessPatch = (): ProfileOptimisticOverlay => ({
   pendingTransfer: true,
 });
@@ -326,14 +330,8 @@ export default function CrossChain({
   const [isRelayModalOpen, setIsRelayModalOpen] = useState(false);
   const [isLastTransferModalOpen, setIsLastTransferModalOpen] = useState(false);
   const effectiveWinningStatus = effective.winningStatus;
-  const closeAllModals = useCallback(() => {
-    setIsTransferModalOpen(false);
-    setIsUpdateModalOpen(false);
-    setIsRelayModalOpen(false);
-    setIsLastTransferModalOpen(false);
-  }, []);
 
-  const [prepareTransfer, doTransfer] = useCCPoHWrite(
+  const [prepareTransfer, , transferStatus] = useCCPoHWrite(
     "transferHumanity",
     useMemo(
       () => ({
@@ -347,14 +345,14 @@ export default function CrossChain({
           applyPatch(buildTransferSuccessPatch());
           toast.success("Transfer initiated!");
           loading.stop();
-          closeAllModals();
+          setIsTransferModalOpen(false);
         },
       }),
-      [applyPatch, closeAllModals, loading],
+      [applyPatch, loading],
     ),
   );
   
-  const [prepareUpdate] = useCCPoHWrite(
+  const [prepareUpdate, , updateStatus] = useCCPoHWrite(
     "updateHumanity",
     useMemo(
       () => ({
@@ -368,7 +366,7 @@ export default function CrossChain({
           applyPatch(buildUpdateSuccessPatch());
           toast.success("Update transaction sent!");
           loading.stop();
-          closeAllModals();
+          setIsUpdateModalOpen(false);
         },
         onError() {
           toast.error("Transaction failed");
@@ -379,11 +377,11 @@ export default function CrossChain({
           loading.stop();
         },
       }),
-      [applyPatch, closeAllModals, loading],
+      [applyPatch, loading],
     ),
   );
 
-  const [prepareRelayWrite] = useRelayWrite(
+  const [prepareRelayWrite, , relayStatus] = useRelayWrite(
     "executeSignatures",
     useMemo(
       () => ({
@@ -397,7 +395,8 @@ export default function CrossChain({
           applyPatch(buildUpdateSuccessPatch());
           toast.success("Relay transaction sent!");
           loading.stop();
-          closeAllModals();
+          setIsRelayModalOpen(false);
+          setIsLastTransferModalOpen(false);
         },
         onError() {
           toast.error("Transaction failed");
@@ -408,7 +407,7 @@ export default function CrossChain({
           loading.stop();
         },
       }),
-      [applyPatch, closeAllModals, loading],
+      [applyPatch, loading],
     ),
   );
 
@@ -422,6 +421,43 @@ export default function CrossChain({
   const [pendingRelayUpdate, setPendingRelayUpdate] = useState(
     {} as RelayUpdateParams,
   );
+  const hasTransferInFlight =
+    transferStatus.write === "pending" ||
+    (transferStatus.write === "success" && transferStatus.transaction === "pending");
+  const hasUpdateInFlight =
+    updateStatus.write === "pending" ||
+    (updateStatus.write === "success" && updateStatus.transaction === "pending");
+  const hasRelayInFlight =
+    relayStatus.write === "pending" ||
+    (relayStatus.write === "success" && relayStatus.transaction === "pending");
+
+  const closeTransferModal = useCallback(() => {
+    setIsTransferModalOpen(false);
+    if (!hasTransferInFlight) {
+      loading.stop();
+    }
+  }, [hasTransferInFlight, loading]);
+
+  const closeUpdateModal = useCallback(() => {
+    setIsUpdateModalOpen(false);
+    if (!hasUpdateInFlight) {
+      loading.stop();
+    }
+  }, [hasUpdateInFlight, loading]);
+
+  const closeRelayModal = useCallback(() => {
+    setIsRelayModalOpen(false);
+    if (!hasRelayInFlight) {
+      loading.stop();
+    }
+  }, [hasRelayInFlight, loading]);
+
+  const closeLastTransferModal = useCallback(() => {
+    setIsLastTransferModalOpen(false);
+    if (!hasRelayInFlight) {
+      loading.stop();
+    }
+  }, [hasRelayInFlight, loading]);
 
   const publicClient =
     lastTransferChain &&
@@ -438,89 +474,92 @@ export default function CrossChain({
       return;
     }
 
-    const sendingChainId = homeChain.id as SupportedChainId;
-    const receivingChainId = getForeignChain(homeChain.id) as SupportedChainId;
-    
-    const [sendingUpdates, receivingUpdates] = await Promise.all([
-      sdk[sendingChainId].CrossChainUpdates({ humanityId: pohId }),
-      sdk[receivingChainId].CrossChainUpdates({ humanityId: pohId }),
-    ]);
-    
-    const latestOutUpdate = sendingUpdates?.outUpdates?.[0];
-    const latestInUpdate = receivingUpdates?.inUpdates?.[0];
-
-    if (!latestOutUpdate) {
-      setPendingRelayUpdate({} as RelayUpdateParams);
-      return;
-    }
-
-    const publicClientSending = createPublicClient({
-      chain: supportedChains[sendingChainId],
-      transport: http(getChainRpc(sendingChainId)),
-    });
-
-    const txSending = await publicClientSending.getTransactionReceipt({
-      hash: latestOutUpdate.txHash as Hash,
-    });
-
-    // Check expiration
-    const expirationTime = getUpdateExpiration(txSending, sendingChainId);
-    const expired = expirationTime ? Number(expirationTime) < Date.now() / 1000 : true;
-    
-    if (expired) {
-      setPendingRelayUpdate({} as RelayUpdateParams);
-      return;
-    }
-    
-    // Get AMB message info
-    const ambInfo = getAMBMessageInfo(
-      txSending,
-      sendingChainId,
-      Number(latestOutUpdate.logIndex),
-    );
-    
-    if (!ambInfo || !ambInfo.encodedData || !ambInfo.messageId) {
-         setPendingRelayUpdate({} as RelayUpdateParams);
-         return;
-    }
-
-    const { messageId: messageIdSending, encodedData } = ambInfo;
-
-    let messageIdReceiving;
-    if (latestInUpdate) {
-      const publicClientReceiving = createPublicClient({
-        chain: supportedChains[receivingChainId],
-        transport: http(getChainRpc(receivingChainId)),
-      });
-
-      const txReceiving = await publicClientReceiving.getTransactionReceipt({
-        hash: latestInUpdate.txHash as Hash,
-      });
-
-      messageIdReceiving = getRelayedMessageId(
-        txReceiving,
-        receivingChainId,
-        Number(latestInUpdate.logIndex),
-      );
-    }
-
-    // Check if there's a pending update that needs to be relayed
-    if (!latestInUpdate || messageIdSending !== messageIdReceiving) {
+    try {
+      const sendingChainId = homeChain.id as SupportedChainId;
+      const receivingChainId = getForeignChain(homeChain.id) as SupportedChainId;
       
-      // Show pending relay button on both chains
-      setPendingRelayUpdate({
-        sideChainId: sendingChainId,
-        receivingChainId: receivingChainId,
-        publicClientSide: publicClientSending,
-        encodedData: encodedData,
-      });
-      return;
-    }
+      const [sendingUpdates, receivingUpdates] = await Promise.all([
+        sdk[sendingChainId].CrossChainUpdates({ humanityId: pohId }),
+        sdk[receivingChainId].CrossChainUpdates({ humanityId: pohId }),
+      ]);
+      
+      const latestOutUpdate = sendingUpdates?.outUpdates?.[0];
+      const latestInUpdate = receivingUpdates?.inUpdates?.[0];
 
-    // No pending update - message has been relayed
-    setPendingRelayUpdate({} as RelayUpdateParams);
-    if (profileOptimisticRef.current.pendingUpdate) {
-      profileOptimisticRef.current.applyPatch({ pendingUpdate: undefined });
+      if (!latestOutUpdate) {
+        setPendingRelayUpdate({} as RelayUpdateParams);
+        return;
+      }
+
+      const publicClientSending = createPublicClient({
+        chain: supportedChains[sendingChainId],
+        transport: http(getChainRpc(sendingChainId)),
+      });
+
+      const txSending = await publicClientSending.getTransactionReceipt({
+        hash: latestOutUpdate.txHash as Hash,
+      });
+
+      const expirationTime = getUpdateExpiration(txSending, sendingChainId);
+      const expired = expirationTime ? Number(expirationTime) < Date.now() / 1000 : true;
+      
+      if (expired) {
+        setPendingRelayUpdate({} as RelayUpdateParams);
+        return;
+      }
+      
+      const ambInfo = getAMBMessageInfo(
+        txSending,
+        sendingChainId,
+        Number(latestOutUpdate.logIndex),
+      );
+      
+      if (!ambInfo || !ambInfo.encodedData || !ambInfo.messageId) {
+           setPendingRelayUpdate({} as RelayUpdateParams);
+           return;
+      }
+
+      const { messageId: messageIdSending, encodedData } = ambInfo;
+
+      let messageIdReceiving;
+      if (latestInUpdate) {
+        const publicClientReceiving = createPublicClient({
+          chain: supportedChains[receivingChainId],
+          transport: http(getChainRpc(receivingChainId)),
+        });
+
+        const txReceiving = await publicClientReceiving.getTransactionReceipt({
+          hash: latestInUpdate.txHash as Hash,
+        });
+
+        messageIdReceiving = getRelayedMessageId(
+          txReceiving,
+          receivingChainId,
+          Number(latestInUpdate.logIndex),
+        );
+      }
+
+      if (!latestInUpdate || messageIdSending !== messageIdReceiving) {
+        setPendingRelayUpdate({
+          sideChainId: sendingChainId,
+          receivingChainId: receivingChainId,
+          publicClientSide: publicClientSending,
+          encodedData: encodedData,
+        });
+        return;
+      }
+
+      setPendingRelayUpdate({} as RelayUpdateParams);
+      if (profileOptimisticRef.current.pendingUpdate) {
+        profileOptimisticRef.current.applyPatch({ pendingUpdate: undefined });
+      }
+    } catch (error) {
+      if (isReceiptPendingError(error)) {
+        setPendingRelayUpdate({} as RelayUpdateParams);
+        return;
+      }
+
+      console.error("Failed to check pending cross-chain update", error);
     }
   }, [web3Loaded, homeChain, pohId]);
 
@@ -611,20 +650,20 @@ export default function CrossChain({
     const isOnCorrectChain = chainId === pendingRelayUpdate.receivingChainId;
     
     return (
-      <Modal
-        open={isRelayModalOpen}
-        onClose={() => setIsRelayModalOpen(false)}
-        trigger={
-          <button 
-            className="m-4 border-2 border-blue-500 p-2 font-bold text-blue-500"
-            onClick={() => setIsRelayModalOpen(true)}
-          >
-            ⏳ Pending relay
-          </button>
-        }
-        header="Pending state update"
-      >
-        <div className="paper flex flex-col p-4">
+      <>
+        <button 
+          className="m-4 border-2 border-blue-500 p-2 font-bold text-blue-500"
+          onClick={() => setIsRelayModalOpen(true)}
+        >
+          ⏳ Pending relay
+        </button>
+        <Modal
+          open={isRelayModalOpen}
+          onClose={closeRelayModal}
+          canClose={!hasRelayInFlight}
+          header="Pending state update"
+        >
+          <div className="paper flex flex-col p-4">
           <span className="txt text-primaryText m-2 font-semibold">
             {sendingChainName} ▶ {receivingChainName}
           </span>
@@ -668,8 +707,9 @@ export default function CrossChain({
               )}
             </>
           )}
-        </div>
-      </Modal>
+          </div>
+        </Modal>
+      </>
     );
   };
 
@@ -679,6 +719,23 @@ export default function CrossChain({
       checkPendingUpdate();
     }
   }, [checkPendingUpdate, effectiveWinningStatus]);
+
+  useEffect(() => {
+    if (effective.pendingTransfer || effectiveWinningStatus === "transferred") {
+      closeTransferModal();
+    }
+    if (effective.pendingUpdate || effectiveWinningStatus === "transferred") {
+      closeUpdateModal();
+      closeRelayModal();
+    }
+  }, [
+    closeRelayModal,
+    closeTransferModal,
+    closeUpdateModal,
+    effective.pendingTransfer,
+    effective.pendingUpdate,
+    effectiveWinningStatus,
+  ]);
 
   return (
     <div className="flex w-full flex-col items-center border-t p-4 sm:flex-row sm:items-center sm:justify-between">
@@ -706,24 +763,21 @@ export default function CrossChain({
         effectiveWinningStatus !== "transferred" &&
         !effective.pendingTransfer &&
         (
-          <Modal
-            formal
-            open={isTransferModalOpen}
-            onClose={() => setIsTransferModalOpen(false)}
-            header="Transfer"
-            trigger={
-              <button 
-                className="text-sky-500" 
-                onClick={() => {
-                  setIsTransferModalOpen(true);
-                  doTransfer();
-                }}
-              >
-                Transfer
-              </button>
-            }
-          >
-            <div className="p-4">
+          <>
+            <button 
+              className="text-sky-500" 
+              onClick={() => setIsTransferModalOpen(true)}
+            >
+              Transfer
+            </button>
+            <Modal
+              formal
+              open={isTransferModalOpen}
+              onClose={closeTransferModal}
+              canClose={!hasTransferInFlight}
+              header="Transfer"
+            >
+              <div className="p-4">
               <span className="txt text-primaryText m-2">
                 Transfer your humanity to another chain. If you use a contract
                 wallet make sure it has the same address on both chains.
@@ -738,8 +792,9 @@ export default function CrossChain({
               >
                 Transfer
               </button>
-            </div>
-          </Modal>
+              </div>
+            </Modal>
+          </>
         )}
 
       {web3Loaded &&
@@ -748,21 +803,21 @@ export default function CrossChain({
         effectiveWinningStatus !== "transferred" &&
         !effective.pendingUpdate &&
         (!pendingRelayUpdate || !pendingRelayUpdate.encodedData) && (
-          <Modal
-            formal
-            open={isUpdateModalOpen}
-            onClose={() => setIsUpdateModalOpen(false)}
-            header="Update"
-            trigger={
-              <button 
-                className="text-sky-500"
-                onClick={() => setIsUpdateModalOpen(true)}
-              >
-                Update state
-              </button>
-            }
-          >
-            <div className="p-4"> 
+          <>
+            <button 
+              className="text-sky-500"
+              onClick={() => setIsUpdateModalOpen(true)}
+            >
+              Update state
+            </button>
+            <Modal
+              formal
+              open={isUpdateModalOpen}
+              onClose={closeUpdateModal}
+              canClose={!hasUpdateInFlight}
+              header="Update"
+            >
+              <div className="p-4"> 
               <span className="txt text-primaryText m-2">
                 Update humanity state on another chain. If you use wallet
                 contract make sure it has same address on both chains.
@@ -813,8 +868,9 @@ export default function CrossChain({
                   );
                 })}
               </div>
-            </div>
-          </Modal>
+              </div>
+            </Modal>
+          </>
         )}
       {web3Loaded &&
         //address?.toLowerCase() === claimer &&
@@ -822,20 +878,20 @@ export default function CrossChain({
         homeChain &&
         effectiveWinningStatus === "transferred" &&
         publicClient && (
-          <Modal
-            open={isLastTransferModalOpen}
-            onClose={() => setIsLastTransferModalOpen(false)}
-            trigger={
-              <button 
-                className="m-4 border-2 border-blue-500 p-2 font-bold text-blue-500"
-                onClick={() => setIsLastTransferModalOpen(true)}
-              >
-                ⏳ Pending relay
-              </button>
-            }
-            header="Last transfer"
-          >
-            <div className="paper flex flex-col p-4">
+          <>
+            <button 
+              className="m-4 border-2 border-blue-500 p-2 font-bold text-blue-500"
+              onClick={() => setIsLastTransferModalOpen(true)}
+            >
+              ⏳ Pending relay
+            </button>
+            <Modal
+              open={isLastTransferModalOpen}
+              onClose={closeLastTransferModal}
+              canClose={!hasRelayInFlight}
+              header="Last transfer"
+            >
+              <div className="paper flex flex-col p-4">
               <span className="text-primaryText">
                 {lastTransferChain?.name} ▶ {homeChain?.name}
               </span>
@@ -863,8 +919,9 @@ export default function CrossChain({
                   </span>
                 </div>
               )}
-            </div>
-          </Modal>
+              </div>
+            </Modal>
+          </>
         )}
       {!!pendingRelayUpdate && pendingRelayUpdate.encodedData
         ? showPendingUpdate()

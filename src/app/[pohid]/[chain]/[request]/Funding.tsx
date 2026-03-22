@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { toast } from "react-toastify";
 import Field from "components/Field";
 import Modal from "components/Modal";
@@ -43,6 +43,11 @@ const FundButton: React.FC<FundButtonProps> = ({
   const { data: balanceData } = useBalance({ address, chainId: userChainId });
   const loading = useLoading();
   const [isLoading, loadingMessage] = loading.use();
+  const closeModal = useCallback(() => {
+    setIsModalOpen(false);
+    setAddedFundInput("");
+    loading.stop();
+  }, [loading]);
 
   const [prepareFund] = usePoHWrite(
     "fundRequest",
@@ -64,13 +69,11 @@ const FundButton: React.FC<FundButtonProps> = ({
           applyPatch(
             buildFundSuccessPatch(effective.funded, effective.totalCost, ctx.value ?? 0n),
           );
-          loading.stop();
-          setIsModalOpen(false);
-          setAddedFundInput("");
+          closeModal();
           toast.success("Request funded successfully");
         },
       }),
-      [applyPatch, effective.funded, effective.totalCost, loading],
+      [applyPatch, closeModal, effective.funded, effective.totalCost, loading],
     ),
   );
 
@@ -125,7 +128,8 @@ const FundButton: React.FC<FundButtonProps> = ({
         formal
         header="Fund"
         open={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
+        onClose={closeModal}
+        canClose={!isLoading}
       >
         <div className="flex flex-col p-4">
         <div className="flex w-full justify-center rounded p-4 font-bold">

@@ -165,6 +165,16 @@ export default function Challenge({
   
   const loading = useLoading();
   const [isLoading, loadingMessage] = loading.use();
+  const reason$ = useObservable<Reason>("none");
+  const reason = reason$.use();
+
+  const [justification, setJustification] = useState("");
+  const closeModal = useCallback(() => {
+    setIsOpen(false);
+    setJustification("");
+    reason$.set("none");
+    loading.stop();
+  }, [loading, reason$]);
 
   const [prepare] = usePoHWrite(
     "challengeRequest",
@@ -191,19 +201,13 @@ export default function Challenge({
               getChallengeDisputeId(ctx),
             ),
           );
-          loading.stop();
-          setIsOpen(false);
+          closeModal();
           toast.success("Challenge submitted successfully");
         },
       }),
-      [applyPatch, loading, revocation],
+      [applyPatch, closeModal, loading, revocation],
     ),
   );
-
-  const reason$ = useObservable<Reason>("none");
-  const reason = reason$.use();
-
-  const [justification, setJustification] = useState("");
 
   const submit = useCallback(async () => {
     if (revocation === !reason && !justification) return;
@@ -260,21 +264,21 @@ export default function Challenge({
     { reason: "deceased" as Reason, text: "Deceased" },
   ];
   return (
-    <Modal
-      formal
-      open={isOpen}
-      onClose={() => setIsOpen(false)}
-      header="Challenge"
-      trigger={
-        <ActionButton
-          onClick={() => setIsOpen(true)}
-          label="Challenge"
-          disabled={userChainId !== chain.id}
-          tooltip={userChainId !== chain.id ? `Switch your chain above to ${idToChain(chain.id)?.name || 'the correct chain'}` : undefined}
-        />
-      }
-    >
-      <div className="flex flex-col flex-wrap items-center p-4">
+    <>
+      <ActionButton
+        onClick={() => setIsOpen(true)}
+        label="Challenge"
+        disabled={userChainId !== chain.id}
+        tooltip={userChainId !== chain.id ? `Switch your chain above to ${idToChain(chain.id)?.name || 'the correct chain'}` : undefined}
+      />
+      <Modal
+        formal
+        open={isOpen}
+        onClose={closeModal}
+        canClose={!isLoading}
+        header="Challenge"
+      >
+        <div className="flex flex-col flex-wrap items-center p-4">
         <ALink className="flex" href={ipfs(arbitrationInfo.policy)}>
           <DocumentIcon className="fill-theme h-6 w-6" />
           <strong className="text-orange mr-1 font-semibold">
@@ -329,7 +333,8 @@ export default function Challenge({
             }}
           />
         </AuthGuard>
-      </div>
-    </Modal>
+        </div>
+      </Modal>
+    </>
   );
 }

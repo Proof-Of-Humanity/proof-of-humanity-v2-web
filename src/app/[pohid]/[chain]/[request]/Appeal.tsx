@@ -307,12 +307,8 @@ const Appeal: React.FC<AppealProps> = ({
   return disputeStatus === DisputeStatusEnum.Appealable &&
     !error &&
     !loading ? (
-    <Modal
-      header={`Appeal case #${disputeId}`}
-      open={isAppealModalOpen}
-      onClose={() => setAppealModalOpen(false)}
-      trigger={
-        <button onClick={() => setAppealModalOpen(true)} className="
+    <>
+      <button onClick={() => setAppealModalOpen(true)} className="
           btn-sec 
           py-2
           rounded
@@ -332,9 +328,12 @@ const Appeal: React.FC<AppealProps> = ({
             )
           </span>
         </button>
-      }
-    >
-      <div className="paper w-full px-16 py-8">
+      <Modal
+        header={`Appeal case #${disputeId}`}
+        open={isAppealModalOpen}
+        onClose={() => setAppealModalOpen(false)}
+      >
+        <div className="paper w-full px-16 py-8">
         <h1 className="mb-4 text-xl">
           Appeal the decision: {formatedCurrentRuling}
         </h1>
@@ -462,8 +461,9 @@ const Appeal: React.FC<AppealProps> = ({
             onSuccess={handleFundSuccess}
           />
         </div>
-      </div>
-    </Modal>
+        </div>
+      </Modal>
+    </>
   ) : null;
 };
 

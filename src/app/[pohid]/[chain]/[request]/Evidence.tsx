@@ -20,7 +20,7 @@ import useIPFS from "hooks/useIPFS";
 import { useLoading } from "hooks/useLoading";
 import DocumentIcon from "icons/NoteMajor.svg";
 import type { OptimisticEvidenceItem, RequestOptimisticOverlay } from "optimistic/types";
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "react-toastify";
 import useSWR from "swr";
 import ActionButton from "components/ActionButton";
@@ -133,7 +133,21 @@ export default function Evidence({
   );
   const [modalOpen, setModalOpen] = useState(false);
   const loading = useLoading();
-  const [pending] = loading.use();
+  const [pending, loadingMessage] = loading.use();
+  const state$ = useObservable({
+    uri: "",
+  });
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [file, setFile] = useState<File | null>(null);
+  const closeModal = useCallback(() => {
+    setModalOpen(false);
+    setTitle("");
+    setDescription("");
+    setFile(null);
+    state$.uri.set("");
+    loading.stop();
+  }, [loading, state$]);
 
   const { uploadFile } = useAtlasProvider();
   const [prepare] = usePoHWrite(
@@ -142,6 +156,7 @@ export default function Evidence({
       () => ({
         onReady(fire) {
           fire();
+          loading.start("Transaction pending");
           toast.info("Transaction pending");
         },
         onError() {
@@ -155,25 +170,16 @@ export default function Evidence({
               buildEvidenceSuccessPatch(uri, address, ctx.txHash),
             );
           }
-          loading.stop();
           toast.success("Evidence submitted successfully");
-          setModalOpen(false);
+          closeModal();
         },
       }),
-      [address, applyPatch, loading],
+      [address, applyPatch, closeModal, loading],
     ),
   );
 
-  const state$ = useObservable({
-    uri: "",
-  });
-
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [file, setFile] = useState<File | null>(null);
-
   const submit = async () => {
-    loading.start();
+    loading.start("Uploading evidence...");
 
     let evidenceFileURI;
     try {
@@ -216,35 +222,40 @@ export default function Evidence({
     }
   };
 
-  state$.onChange(({ value }) => {
-    if (!value.uri) return;
-    prepare({ args: [pohId, BigInt(requestIndex), value.uri] });
-  });
+  useEffect(() => {
+    const unsubscribe = state$.onChange(({ value }) => {
+      if (!value.uri) return;
+      prepare({ args: [pohId, BigInt(requestIndex), value.uri] });
+    });
+
+    return () => unsubscribe();
+  }, [pohId, prepare, requestIndex, state$]);
 
   const isEvidenceDisabled = chainReq.id !== chainId;
 
   return (
     <Accordion title="Evidence">
       {requestIndex >= 0 && (
-        <Modal
-          formal
-          open={modalOpen}
-          header="Evidence"
-          trigger={
-            <ActionButton
-              disabled={isEvidenceDisabled}
-              onClick={() => setModalOpen(true)}
-              label="Add Evidence"
-              className="mx-2 mt-4 self-end"
-              tooltip={
-                isEvidenceDisabled
-                  ? `Switch your chain above to ${idToChain(chainReq.id)?.name || "the correct chain"}`
-                  : undefined
-              }
-            />
-          }
-        >
-          <div className="bg-whiteBackground flex flex-col flex-wrap p-4">
+        <>
+          <ActionButton
+            disabled={isEvidenceDisabled}
+            onClick={() => setModalOpen(true)}
+            label="Add Evidence"
+            className="mx-2 mt-4 self-end"
+            tooltip={
+              isEvidenceDisabled
+                ? `Switch your chain above to ${idToChain(chainReq.id)?.name || "the correct chain"}`
+                : undefined
+            }
+          />
+          <Modal
+            formal
+            open={modalOpen}
+            onClose={closeModal}
+            canClose={!pending}
+            header="Evidence"
+          >
+            <div className="bg-whiteBackground flex flex-col flex-wrap p-4">
             {policy && (
               <div className="centered text-primaryText flex-col">
                 <ExternalLink
@@ -292,11 +303,12 @@ export default function Evidence({
                 isLoading={pending}
                 className="mt-12"
                 onClick={submit}
-                label="Submit"
+                label={loadingMessage || "Submit"}
               />
             </AuthGuard>
-          </div>
-        </Modal>
+            </div>
+          </Modal>
+        </>
       )}
 
       {effective.evidenceList.map((item, i) => (

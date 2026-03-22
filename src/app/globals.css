@@ -55,6 +55,28 @@
     @apply fixed left-0 top-0 z-10 flex h-screen w-full items-center justify-center bg-slate-800/30 backdrop-blur;
   }
 
+  .modal-backdrop {
+    opacity: 0;
+    transition: opacity 180ms ease;
+  }
+
+  .modal-backdrop-open {
+    opacity: 1;
+  }
+
+  .modal-shell {
+    opacity: 0;
+    transform: translate(-50%, -48%) scale(0.98);
+    transition:
+      opacity 180ms ease,
+      transform 180ms cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .modal-shell-open {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+
   .dot {
     @apply h-2 w-2 rounded-full;
   }

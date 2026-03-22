@@ -222,6 +222,7 @@ export default function Vouch({
           header="Vouch"
           open={isOpen}
           onClose={() => setIsOpen(false)}
+          canClose={!isOnchainLoading}
         >
           <div className="flex flex-col items-center p-4">
             <span className="txt m-2 text-primaryText">

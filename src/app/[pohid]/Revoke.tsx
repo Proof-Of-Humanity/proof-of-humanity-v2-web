@@ -2,6 +2,7 @@
 
 import { enableReactUse } from "@legendapp/state/config/enableReactUse";
 import ALink from "components/ExternalLink";
+import ActionButton from "components/ActionButton";
 import Field from "components/Field";
 import Label from "components/Label";
 import Modal from "components/Modal";
@@ -12,7 +13,7 @@ import { ContractData } from "data/contract";
 import { useLoading } from "hooks/useLoading";
 import useWeb3Loaded from "hooks/useWeb3Loaded";
 import DocumentIcon from "icons/NoteMajor.svg";
-import React, { useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "react-toastify";
 import { ipfs } from "utils/ipfs";
 import { formatEth } from "utils/misc";
@@ -48,12 +49,22 @@ export default function Revoke({
   const [file, setFile] = useState<File | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
   const loading = useLoading(false, "Revoke");
-  const [pending] = loading.use();
+  const [pending, loadingMessage] = loading.use();
   const connectedChainId = useChainId() as SupportedChainId;
   const web3Loaded = useWeb3Loaded();
   const { switchChain } = useSwitchChain();
   
   const { uploadFile } = useAtlasProvider();
+  const resetModalState = useCallback(() => {
+    setTitle("");
+    setDescription("");
+    setFile(null);
+    loading.stop();
+  }, [loading]);
+  const closeModal = useCallback(() => {
+    setModalOpen(false);
+    resetModalState();
+  }, [resetModalState]);
 
   const [prepare] = usePoHWrite(
     "revokeHumanity",
@@ -61,6 +72,7 @@ export default function Revoke({
       () => ({
         onReady(fire) {
           fire();
+          loading.start("Transaction pending");
           toast.info("Transaction pending");
         },
         onFail() {
@@ -73,17 +85,23 @@ export default function Revoke({
         },
         onSuccess() {
           applyPatch(buildRevokeSuccessPatch());
-          setModalOpen(false);
+          closeModal();
           toast.success("Request created");
         },
       }),
-      [applyPatch, loading],
+      [applyPatch, closeModal, loading],
     ),
   );
 
+  useEffect(() => {
+    if (effective.pendingRevocation) {
+      closeModal();
+    }
+  }, [closeModal, effective.pendingRevocation]);
+
   const submit = async () => {
     try {
-      loading.start();
+      loading.start("Uploading evidence...");
 
       let fileURI;
       if (file) {
@@ -137,29 +155,24 @@ export default function Revoke({
   return (
     <div className="flex w-full flex-col items-center">
       {effective.pendingRevocation && (
-        <div className="mb-4 flex w-full max-w-md items-center gap-3 rounded-lg border border-orange-300 bg-orange-50 px-4 py-3 dark:border-orange-600 dark:bg-orange-900/20">
-          <svg className="h-5 w-5 shrink-0 animate-spin text-orange-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-          </svg>
-          <span className="text-sm text-orange-700 dark:text-orange-300">
-            Revocation request submitted. Waiting for on-chain confirmation&hellip;
-          </span>
-        </div>
+        <span className="text-secondaryText mb-4">
+          Removal proposed. Waiting for indexed state.
+        </span>
       )}
+      {!effective.pendingRevocation ? (
+        <button
+          onClick={() => setModalOpen(true)}
+          className="btn-main mb-4"
+        >
+          Revoke
+        </button>
+      ) : null}
       <Modal
         formal
         open={modalOpen}
+        onClose={closeModal}
+        canClose={!pending}
         header="Revoke"
-        trigger={
-          <button
-            onClick={() => setModalOpen(true)}
-            className="btn-main mb-4"
-            disabled={effective.pendingRevocation}
-          >
-            Revoke
-          </button>
-        }
       >
         <div className="flex flex-col items-center p-4">
         <ALink className="flex" href={ipfs(arbitrationInfo.policy)}>
@@ -205,13 +218,13 @@ export default function Revoke({
         </div>
 
           <AuthGuard signInButtonProps={{ className: "mt-12 px-5 py-2" }}>
-            <button
+            <ActionButton
               disabled={pending}
-              className="btn-main mt-12"
+              isLoading={pending}
+              className="mt-12"
               onClick={submit}
-            >
-              Revoke
-            </button>
+              label={loadingMessage || "Revoke"}
+            />
           </AuthGuard>
         </div>
       </Modal>
