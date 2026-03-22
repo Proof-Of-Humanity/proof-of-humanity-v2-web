@@ -75,7 +75,7 @@ export default function Vouch({
   chain,
   address,
 }: VouchButtonProps) {
-  const { effective, applyPatch } = useRequestOptimistic();
+  const { effective, applyAction } = useRequestOptimistic();
   const userChainId = useChainId();
   const [isOpen, setIsOpen] = useState(false);
   const [prepare, addVouch , status] = usePoHWrite(
@@ -97,7 +97,7 @@ export default function Vouch({
             address,
           );
           if (patch) {
-            applyPatch(patch);
+            applyAction("vouch", patch);
           }
           toast.success("Vouched successfully");
           setIsOpen(false);
@@ -105,7 +105,7 @@ export default function Vouch({
       }),
       [
         address,
-        applyPatch,
+        applyAction,
         effective.offChainVouches,
         effective.onChainVouches,
         effective.validVouches,
@@ -149,7 +149,7 @@ export default function Vouch({
               },
             );
             if (patch) {
-              applyPatch(patch);
+              applyAction("vouch", patch);
             }
             toast.success("Vouched successfully");
             setIsOpen(false);
@@ -166,7 +166,7 @@ export default function Vouch({
     }),
     [
       address,
-      applyPatch,
+      applyAction,
       chain.name,
       claimer,
       effective.offChainVouches,

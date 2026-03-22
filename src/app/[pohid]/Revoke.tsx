@@ -43,7 +43,7 @@ export default function Revoke({
   homeChain,
   arbitrationInfo,
 }: RevokeProps) {
-  const { effective, applyPatch } = useProfileOptimistic();
+  const { effective, pendingAction, applyAction } = useProfileOptimistic();
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [file, setFile] = useState<File | null>(null);
@@ -84,12 +84,12 @@ export default function Revoke({
           toast.error("Transaction rejected");
         },
         onSuccess() {
-          applyPatch(buildRevokeSuccessPatch());
+          applyAction("revoke", buildRevokeSuccessPatch());
           closeModal();
           toast.success("Request created");
         },
       }),
-      [applyPatch, closeModal, loading],
+      [applyAction, closeModal, loading],
     ),
   );
 
@@ -156,7 +156,9 @@ export default function Revoke({
     <div className="flex w-full flex-col items-center">
       {effective.pendingRevocation && (
         <span className="text-secondaryText mb-4">
-          Removal proposed. Waiting for indexed state.
+          {pendingAction === "revoke"
+            ? "Removal proposed. Waiting for indexed state."
+            : "Removal proposed."}
         </span>
       )}
       {!effective.pendingRevocation ? (

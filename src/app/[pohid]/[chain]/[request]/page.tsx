@@ -293,7 +293,6 @@ export default async function Request({ params }: PageProps) {
       submitter: item.submitter as Address,
     })),
     revocation: request.revocation,
-    currentChallengeDisputeId: currentChallenge?.disputeId,
   };
 
   //const policyUpdate = request.arbitratorHistory.updateTime;
@@ -307,7 +306,6 @@ export default async function Request({ params }: PageProps) {
         requester={request.requester}
         contractData={contractData}
         pohId={pohId}
-        lastStatusChange={+request.lastStatusChange}
         revocation={request.revocation}
         currentChallenge={currentChallenge}
         arbitrationHistory={request.arbitratorHistory}
@@ -513,7 +511,7 @@ export default async function Request({ params }: PageProps) {
                       ? "Available vouches for this PoHID"
                       : "Vouched for this request"}
                     {request.status.id === "vouching" && (
-                      <OptimisticVouchIndicator serverCount={validVouches} />
+                      <OptimisticVouchIndicator />
                     )}
                   </span>
                   <div className="flex flex-wrap justify-center gap-2 md:justify-start">
@@ -556,9 +554,6 @@ export default async function Request({ params }: PageProps) {
       </div>
 
       <Evidence
-        list={request.evidenceGroup.evidence.sort(
-          (a, b) => Number(a.creationTime) - Number(b.creationTime),
-        )}
         pohId={pohId}
         requestIndex={request.index}
         arbitrationInfo={request.arbitratorHistory}

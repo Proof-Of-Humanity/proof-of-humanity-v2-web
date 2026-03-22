@@ -105,9 +105,9 @@ const STATUS_CONFIG: Record<RequestStatus, StatusConfig> = {
   },
   [RequestStatus.REJECTED]: {
     baseLabel: "Rejected",
-    tooltip: "Submission was rejected after being challenged.",
+    tooltip: "Request was rejected after being challenged.",
     color: STATUS_COLORS.rejected,
-    filter: { status: "resolved", revocation: false, winnerParty_: { id_not: "requester" } }
+    filter: { status: "resolved", winnerParty_: { id_not: "requester" } }
   },
   [RequestStatus.EXPIRED]: {
     baseLabel: "Expired", 
@@ -171,7 +171,6 @@ export const STATUS_FILTER_OPTIONS = Object.values(RequestStatus).filter(
 
 const isRejectedRequest = (request: RawRequestData): boolean => {
   return request.status.id === "resolved" &&
-    !request.revocation &&
     request.winnerParty?.id !== "requester";
 };
 
@@ -185,25 +184,19 @@ export const getResolvedRequestStatus = ({
   revocation = false,
   expired = false,
   rejected = false,
-  winnerPartyId,
 }: {
   revocation?: boolean;
   expired?: boolean;
   rejected?: boolean;
-  winnerPartyId?: string | null;
 }): RequestStatus => {
+  if (rejected) {
+    return RequestStatus.REJECTED;
+  }
   if (revocation) {
-    return winnerPartyId === "requester"
-      ? RequestStatus.RESOLVED_REVOCATION
-      : expired
-        ? RequestStatus.EXPIRED
-        : RequestStatus.RESOLVED_CLAIM;
+    return RequestStatus.RESOLVED_REVOCATION;
   }
   if (expired) {
     return RequestStatus.EXPIRED;
-  }
-  if (rejected) {
-    return RequestStatus.REJECTED;
   }
   return RequestStatus.RESOLVED_CLAIM;
 };
@@ -230,7 +223,6 @@ export const getRequestStatusFromState = (
         revocation,
         expired,
         rejected,
-        winnerPartyId,
       });
     
     case "withdrawn":

@@ -34,7 +34,7 @@ const FundButton: React.FC<FundButtonProps> = ({
   totalCost,
   funded,
 }) => {
-  const { effective, applyPatch } = useRequestOptimistic();
+  const { effective, applyAction } = useRequestOptimistic();
   const chain = useChainParam()!;
   const userChainId = useChainId();
   const [addedFundInput, setAddedFundInput] = useState("");
@@ -66,14 +66,15 @@ const FundButton: React.FC<FundButtonProps> = ({
           toast.error("Transaction rejected");
         },
         onSuccess(ctx) {
-          applyPatch(
+          applyAction(
+            "fund",
             buildFundSuccessPatch(effective.funded, effective.totalCost, ctx.value ?? 0n),
           );
           closeModal();
           toast.success("Request funded successfully");
         },
       }),
-      [applyPatch, closeModal, effective.funded, effective.totalCost, loading],
+      [applyAction, closeModal, effective.funded, effective.totalCost, loading],
     ),
   );
 

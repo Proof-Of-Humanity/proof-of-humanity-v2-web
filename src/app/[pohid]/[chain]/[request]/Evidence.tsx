@@ -45,7 +45,6 @@ export const buildEvidenceSuccessItem = (
   uri,
   creationTime: Math.floor(Date.now() / 1000),
   submitter,
-  pending: true,
 });
 
 export const buildEvidenceSuccessPatch = (
@@ -53,7 +52,7 @@ export const buildEvidenceSuccessPatch = (
   submitter: Address,
   txHash?: string,
 ): RequestOptimisticOverlay => ({
-  appendedEvidence: [buildEvidenceSuccessItem(uri, submitter, txHash)],
+  evidenceList: [buildEvidenceSuccessItem(uri, submitter, txHash)],
 });
 
 interface ItemInterface {
@@ -61,10 +60,10 @@ interface ItemInterface {
   uri: string;
   creationTime: number;
   sender: Address;
-  pending?: boolean;
+  isPending?: boolean;
 }
 
-function Item({ index, uri, creationTime, sender, pending }: ItemInterface) {
+function Item({ index, uri, creationTime, sender, isPending }: ItemInterface) {
   const chain = useChainParam()!;
   const [evidence] = useIPFS<EvidenceFile>(uri);
   const ipfsUri = evidence?.fileURI
@@ -74,13 +73,13 @@ function Item({ index, uri, creationTime, sender, pending }: ItemInterface) {
       : undefined;
 
   return (
-    <div className={`mt-4 flex flex-col${pending ? " opacity-70" : ""}`}>
+    <div className={`mt-4 flex flex-col${isPending ? " opacity-70" : ""}`}>
       <div className="paper relative px-8 py-4">
         <span className="absolute left-3 text-sm text-slate-500">
           {romanize(index + 1)}
         </span>
-        {pending && (
-          <span className="absolute right-3 top-2 text-xs text-orange-400 animate-pulse font-medium">
+        {isPending && (
+          <span className="absolute right-3 top-2 text-xs font-medium text-orange-400 animate-pulse">
             Pending
           </span>
         )}
@@ -113,16 +112,15 @@ interface EvidenceProps {
   pohId: Hash;
   requestIndex: number;
   arbitrationInfo: NonNullable<RequestQuery["request"]>["arbitratorHistory"];
-  list: NonNullable<RequestQuery["request"]>["evidenceGroup"]["evidence"];
 }
 
 export default function Evidence({
   pohId,
   requestIndex,
-  list,
   arbitrationInfo,
 }: EvidenceProps) {
-  const { effective, applyPatch } = useRequestOptimistic();
+  const { effective, pendingAction, pendingEvidenceItem, applyAction } =
+    useRequestOptimistic();
   const chainReq = useChainParam()!;
   const chainId = useChainId();
   const { address } = useAccount();
@@ -159,14 +157,21 @@ export default function Evidence({
           loading.start("Transaction pending");
           toast.info("Transaction pending");
         },
+        onFail() {
+          state$.uri.set("");
+          loading.stop();
+          toast.error("Transaction failed");
+        },
         onError() {
+          state$.uri.set("");
           loading.stop();
           toast.error("Transaction rejected");
         },
         onSuccess(ctx) {
           const uri = typeof ctx.args?.[2] === "string" ? ctx.args[2] : undefined;
           if (address && uri) {
-            applyPatch(
+            applyAction(
+              "evidence",
               buildEvidenceSuccessPatch(uri, address, ctx.txHash),
             );
           }
@@ -174,11 +179,12 @@ export default function Evidence({
           closeModal();
         },
       }),
-      [address, applyPatch, closeModal, loading],
+      [address, applyAction, closeModal, loading],
     ),
   );
 
   const submit = async () => {
+    state$.uri.set("");
     loading.start("Uploading evidence...");
 
     let evidenceFileURI;
@@ -245,7 +251,7 @@ export default function Evidence({
             tooltip={
               isEvidenceDisabled
                 ? `Switch your chain above to ${idToChain(chainReq.id)?.name || "the correct chain"}`
-                : undefined
+              : undefined
             }
           />
           <Modal
@@ -318,9 +324,19 @@ export default function Evidence({
           creationTime={item.creationTime}
           sender={item.submitter}
           uri={item.uri}
-          pending={item.pending}
+          isPending={false}
         />
       ))}
+      {pendingAction === "evidence" && pendingEvidenceItem && (
+        <Item
+          key={pendingEvidenceItem.id}
+          index={effective.evidenceList.length}
+          creationTime={pendingEvidenceItem.creationTime}
+          sender={pendingEvidenceItem.submitter}
+          uri={pendingEvidenceItem.uri}
+          isPending
+        />
+      )}
     </Accordion>
   );
 }

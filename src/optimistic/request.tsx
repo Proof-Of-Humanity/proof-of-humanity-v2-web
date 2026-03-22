@@ -1,151 +1,94 @@
 "use client";
 
-import {
-  createContext,
-  useContext,
-  useMemo,
-  type ReactNode,
-} from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
+import { useRouter } from "next/navigation";
 import type {
   OptimisticEvidenceItem,
   RequestOptimisticBase,
   RequestOptimisticOverlay,
+  RequestPendingAction,
 } from "./types";
-import useOptimisticOverlay from "./useOptimisticOverlay";
 
 const OVERLAY_TTL_MS = 2 * 60 * 1000;
 const REFRESH_INTERVAL_MS = 2000;
 
 interface RequestOptimisticContextValue {
-  base: RequestOptimisticBase; // the current potentially stale data from the subgraph
-  effective: RequestOptimisticBase & {
-    pendingChallenge?: RequestOptimisticOverlay["pendingChallenge"];
-  }; // final state after merging base + overlay 
-  applyPatch: (patch: RequestOptimisticOverlay) => void;
-  clearOverlay: () => void;
+  base: RequestOptimisticBase;
+  effective: RequestOptimisticBase;
+  pendingAction: RequestPendingAction | null;
+  pendingEvidenceItem: OptimisticEvidenceItem | null;
+  applyAction: (
+    action: RequestPendingAction,
+    patch: RequestOptimisticOverlay,
+  ) => void;
+  clearAction: () => void;
 }
 
 const RequestOptimisticContext =
   createContext<RequestOptimisticContextValue | null>(null);
 
-const isOverlayEmpty = (overlay: RequestOptimisticOverlay | null) =>
-  !overlay ||
-  (overlay.status === undefined &&
-    overlay.requestStatus === undefined &&
-    overlay.lastStatusChange === undefined &&
-    overlay.funded === undefined &&
-    overlay.validVouches === undefined &&
-    overlay.onChainVouches === undefined &&
-    overlay.offChainVouches === undefined &&
-    overlay.appendedEvidence === undefined &&
-    overlay.pendingChallenge === undefined);
+const normalizeEvidenceUri = (value: string) => value.trim();
 
-const dedupeEvidence = (items: OptimisticEvidenceItem[]) => {
-  const seen = new Set<string>();
-  return items.filter((item) => {
-    if (seen.has(item.uri)) return false;
-    seen.add(item.uri);
-    return true;
-  });
-};
-
-const mergeEvidence = (
-  base: OptimisticEvidenceItem[],
-  appended?: OptimisticEvidenceItem[],
-) =>
-  dedupeEvidence([...(base ?? []), ...(appended ?? [])]).sort(
-    (left, right) => left.creationTime - right.creationTime,
-  );
-
-const reconcileOverlay = (
+const isRequestActionReconciled = (
   base: RequestOptimisticBase,
   overlay: RequestOptimisticOverlay | null,
+  pendingAction: RequestPendingAction | null,
 ) => {
-  if (!overlay) return null;
+  if (!overlay || !pendingAction) return false;
 
-  const next: RequestOptimisticOverlay = { ...overlay };
-  let changed = false;
-
-  // remove fields that are now present in the base
-  if (next.status === base.status) {
-    delete next.status;
-    changed = true;
+  switch (pendingAction) {
+    case "fund":
+      return typeof overlay.funded === "bigint" && base.funded >= overlay.funded;
+    case "challenge":
+    case "withdraw":
+    case "advance":
+    case "execute":
+      return (
+        overlay.status === base.status &&
+        overlay.requestStatus === base.requestStatus &&
+        typeof overlay.lastStatusChange === "number" &&
+        base.lastStatusChange >= overlay.lastStatusChange
+      );
+    case "evidence":
+      return (
+        !!overlay.evidenceList &&
+        overlay.evidenceList.every((item) =>
+          base.evidenceList.some(
+            (baseItem) =>
+              normalizeEvidenceUri(baseItem.uri) ===
+              normalizeEvidenceUri(item.uri),
+          ),
+        )
+      );
+    case "vouch":
+      return (
+        typeof overlay.validVouches === "number" &&
+        base.validVouches >= overlay.validVouches
+      );
+    case "removeVouch":
+      return (
+        typeof overlay.validVouches === "number" &&
+        base.validVouches <= overlay.validVouches
+      );
+    default:
+      return false;
   }
-  if (next.requestStatus === base.requestStatus) {
-    delete next.requestStatus;
-    changed = true;
-  }
-  if (
-    typeof next.lastStatusChange === "number" &&
-    base.lastStatusChange >= next.lastStatusChange
-  ) {
-    delete next.lastStatusChange;
-    changed = true;
-  }
-  if (typeof next.funded === "bigint" && base.funded >= next.funded) {
-    delete next.funded;
-    changed = true;
-  }
-  if (typeof next.validVouches === "number" && base.validVouches === next.validVouches) {
-    delete next.validVouches;
-    changed = true;
-  }
-
-  if (next.onChainVouches) {
-    const baseSet = new Set(base.onChainVouches.map((item) => item.toLowerCase()));
-    const matches = next.onChainVouches.every((item) => baseSet.has(item.toLowerCase()));
-    if (matches) {
-      delete next.onChainVouches;
-      changed = true;
-    }
-  }
-
-  if (next.offChainVouches) {
-    const baseSet = new Set(base.offChainVouches.map((item) => item.voucher.toLowerCase()));
-    const matches = next.offChainVouches.every((item) =>
-      baseSet.has(item.voucher.toLowerCase()),
-    );
-    if (matches) {
-      delete next.offChainVouches;
-      changed = true;
-    }
-  }
-
-  if (next.appendedEvidence) {
-    const baseUris = new Set(base.evidenceList.map((item) => item.uri));
-    const allPresent = next.appendedEvidence.every((item) => baseUris.has(item.uri));
-    if (allPresent) {
-      delete next.appendedEvidence;
-      changed = true;
-    }
-  }
-
-  if (next.pendingChallenge && (base.status === "disputed" || base.currentChallengeDisputeId)) {
-    delete next.pendingChallenge;
-    changed = true;
-  }
-
-  if (isOverlayEmpty(next)) return null;
-
-  //reconcile is only called when base changes, but still we return same overlat if nothing changes to prevent re renders
-  return changed ? next : overlay;
 };
 
-const mergePatch = (
-  current: RequestOptimisticOverlay | null,
-  patch: RequestOptimisticOverlay,
-) => {
-  const next = {
-    ...current,
-    ...patch,
-    appendedEvidence:
-      patch.appendedEvidence || current?.appendedEvidence
-        ? mergeEvidence(current?.appendedEvidence ?? [], patch.appendedEvidence)
-        : undefined,
-  };
-
-  return isOverlayEmpty(next) ? null : next;
-};
+const mergeRequest = (
+  base: RequestOptimisticBase,
+  overlay: RequestOptimisticOverlay | null,
+): RequestOptimisticBase => ({
+  ...base,
+  status: overlay?.status ?? base.status,
+  requestStatus: overlay?.requestStatus ?? base.requestStatus,
+  lastStatusChange: overlay?.lastStatusChange ?? base.lastStatusChange,
+  funded: overlay?.funded ?? base.funded,
+  validVouches: overlay?.validVouches ?? base.validVouches,
+  onChainVouches: overlay?.onChainVouches ?? base.onChainVouches,
+  offChainVouches: overlay?.offChainVouches ?? base.offChainVouches,
+  evidenceList: base.evidenceList,
+});
 
 export function RequestOptimisticProvider({
   base,
@@ -156,40 +99,80 @@ export function RequestOptimisticProvider({
   enablePolling?: boolean;
   children: ReactNode;
 }) {
-  const { overlay, applyPatch, clearOverlay } = useOptimisticOverlay({
-    base,
-    enablePolling,
-    ttlMs: OVERLAY_TTL_MS,
-    refreshIntervalMs: REFRESH_INTERVAL_MS,
-    isOverlayEmpty,
-    reconcileOverlay,
-    mergePatch,
-  });
-
-  const effective = useMemo(
-    () => ({
-      ...base,
-      status: overlay?.status ?? base.status,
-      requestStatus: overlay?.requestStatus ?? base.requestStatus,
-      lastStatusChange: overlay?.lastStatusChange ?? base.lastStatusChange,
-      funded: overlay?.funded ?? base.funded,
-      validVouches: overlay?.validVouches ?? base.validVouches,
-      onChainVouches: overlay?.onChainVouches ?? base.onChainVouches,
-      offChainVouches: overlay?.offChainVouches ?? base.offChainVouches,
-      evidenceList: mergeEvidence(base.evidenceList, overlay?.appendedEvidence),
-      pendingChallenge: overlay?.pendingChallenge,
-    }),
-    [base, overlay],
+  const router = useRouter();
+  const [overlay, setOverlay] = useState<RequestOptimisticOverlay | null>(null);
+  const [pendingAction, setPendingAction] = useState<RequestPendingAction | null>(
+    null,
   );
+
+  const effective = useMemo(() => mergeRequest(base, overlay), [base, overlay]);
+  const pendingEvidenceItem = useMemo(
+    () =>
+      pendingAction === "evidence" && overlay?.evidenceList?.length
+        ? overlay.evidenceList[0]
+        : null,
+    [overlay, pendingAction],
+  );
+  const hasActiveAction = pendingAction !== null;
+
+  useEffect(() => {
+    if (!isRequestActionReconciled(base, overlay, pendingAction)) return;
+
+    setOverlay(null);
+    setPendingAction(null);
+  }, [base, overlay, pendingAction]);
+
+  useEffect(() => {
+    if (!hasActiveAction) return;
+
+    const timeoutId = window.setTimeout(() => {
+      setOverlay(null);
+      setPendingAction(null);
+    }, OVERLAY_TTL_MS);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [hasActiveAction]);
+
+  useEffect(() => {
+    if (!enablePolling || !hasActiveAction) return;
+
+    const intervalId = window.setInterval(() => {
+      router.refresh();
+    }, REFRESH_INTERVAL_MS);
+
+    return () => window.clearInterval(intervalId);
+  }, [enablePolling, hasActiveAction, router]);
+
+  const applyAction = useCallback(
+    (action: RequestPendingAction, patch: RequestOptimisticOverlay) => {
+      setPendingAction(action);
+      setOverlay(patch);
+    },
+    [],
+  );
+
+  const clearAction = useCallback(() => {
+    setOverlay(null);
+    setPendingAction(null);
+  }, []);
 
   const value = useMemo(
     () => ({
       base,
       effective,
-      applyPatch,
-      clearOverlay,
+      pendingAction,
+      pendingEvidenceItem,
+      applyAction,
+      clearAction,
     }),
-    [base, effective, applyPatch, clearOverlay],
+    [
+      base,
+      effective,
+      pendingAction,
+      pendingEvidenceItem,
+      applyAction,
+      clearAction,
+    ],
   );
 
   return (

@@ -1,13 +1,12 @@
 "use client";
 
-import {
-  createContext,
-  useContext,
-  useMemo,
-  type ReactNode,
-} from "react";
-import type { ProfileOptimisticBase, ProfileOptimisticOverlay } from "./types";
-import useOptimisticOverlay from "./useOptimisticOverlay";
+import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
+import { useRouter } from "next/navigation";
+import type {
+  ProfileOptimisticBase,
+  ProfileOptimisticOverlay,
+  ProfilePendingAction,
+} from "./types";
 
 const OVERLAY_TTL_MS = 5 * 60 * 1000;
 const REFRESH_INTERVAL_MS = 2000;
@@ -15,59 +14,51 @@ const REFRESH_INTERVAL_MS = 2000;
 interface ProfileOptimisticContextValue {
   base: ProfileOptimisticBase;
   effective: ProfileOptimisticBase & {
-    pendingRevocation: boolean;
-    pendingTransfer: boolean;
     pendingUpdate: boolean;
   };
-  applyPatch: (patch: ProfileOptimisticOverlay) => void;
-  clearOverlay: () => void;
+  pendingAction: ProfilePendingAction | null;
+  applyAction: (
+    action: ProfilePendingAction,
+    patch: ProfileOptimisticOverlay,
+  ) => void;
+  clearAction: () => void;
 }
 
 const ProfileOptimisticContext =
   createContext<ProfileOptimisticContextValue | null>(null);
 
-const isOverlayEmpty = (overlay: ProfileOptimisticOverlay | null) =>
-  !overlay ||
-  (overlay.pendingRevocation === undefined &&
-    overlay.pendingTransfer === undefined &&
-    overlay.pendingUpdate === undefined);
-
-const reconcileOverlay = (
+const mergeProfile = (
   base: ProfileOptimisticBase,
   overlay: ProfileOptimisticOverlay | null,
+) => ({
+  winningStatus: overlay?.winningStatus ?? base.winningStatus,
+  pendingRevocation: overlay?.pendingRevocation ?? base.pendingRevocation,
+  pendingUpdate: overlay?.pendingUpdate ?? false,
+});
+
+const isProfileActionReconciled = (
+  base: ProfileOptimisticBase,
+  overlay: ProfileOptimisticOverlay | null,
+  pendingAction: ProfilePendingAction | null,
 ) => {
-  if (!overlay) return null;
+  if (!overlay || !pendingAction) return false;
 
-  const next = { ...overlay };
-  let changed = false;
-
-  if (base.hasPendingRevocation && next.pendingRevocation !== undefined) {
-    delete next.pendingRevocation;
-    changed = true;
+  switch (pendingAction) {
+    case "revoke":
+      return (
+        overlay.pendingRevocation !== undefined &&
+        base.pendingRevocation === overlay.pendingRevocation
+      );
+    case "transfer":
+      return (
+        overlay.winningStatus !== undefined &&
+        base.winningStatus === overlay.winningStatus
+      );
+    case "update":
+      return false;
+    default:
+      return false;
   }
-  if (
-    (base.winningStatus === "transferring" || base.winningStatus === "transferred") &&
-    next.pendingTransfer !== undefined
-  ) {
-    delete next.pendingTransfer;
-    changed = true;
-  }
-
-  if (isOverlayEmpty(next)) return null;
-
-  return changed ? next : overlay;
-};
-
-const mergePatch = (
-  current: ProfileOptimisticOverlay | null,
-  patch: ProfileOptimisticOverlay,
-) => {
-  const next = {
-    ...current,
-    ...patch,
-  };
-
-  return isOverlayEmpty(next) ? null : next;
 };
 
 export function ProfileOptimisticProvider({
@@ -79,36 +70,81 @@ export function ProfileOptimisticProvider({
   enablePolling?: boolean;
   children: ReactNode;
 }) {
-  const { overlay, applyPatch, clearOverlay } = useOptimisticOverlay({
-    base,
-    enablePolling,
-    ttlMs: OVERLAY_TTL_MS,
-    refreshIntervalMs: REFRESH_INTERVAL_MS,
-    refreshOnClear: true,
-    isOverlayEmpty,
-    reconcileOverlay,
-    mergePatch,
-  });
-
-  const effective = useMemo(
-    () => ({
-      ...base,
-      winningStatus: overlay?.pendingTransfer ? "transferring" : base.winningStatus,
-      pendingRevocation: base.hasPendingRevocation || (overlay?.pendingRevocation ?? false),
-      pendingTransfer: overlay?.pendingTransfer ?? false,
-      pendingUpdate: overlay?.pendingUpdate ?? false,
-    }),
-    [base, overlay],
+  const router = useRouter();
+  const [overlay, setOverlay] = useState<ProfileOptimisticOverlay | null>(null);
+  const [pendingAction, setPendingAction] = useState<ProfilePendingAction | null>(
+    null,
   );
+
+  const effective = useMemo(() => mergeProfile(base, overlay), [base, overlay]);
+  const hasActiveAction = pendingAction !== null;
+
+  useEffect(() => {
+    if (!isProfileActionReconciled(base, overlay, pendingAction)) return;
+
+    setOverlay((current) => {
+      if (!current) return null;
+
+      if (pendingAction === "revoke") {
+        const next = { ...current };
+        delete next.pendingRevocation;
+        return Object.keys(next).length ? next : null;
+      }
+
+      if (pendingAction === "transfer") {
+        const next = { ...current };
+        delete next.winningStatus;
+        return Object.keys(next).length ? next : null;
+      }
+
+      return current;
+    });
+    setPendingAction(null);
+  }, [base, overlay, pendingAction]);
+
+  useEffect(() => {
+    if (!hasActiveAction && !overlay?.pendingUpdate) return;
+
+    const timeoutId = window.setTimeout(() => {
+      setOverlay(null);
+      setPendingAction(null);
+    }, OVERLAY_TTL_MS);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [hasActiveAction, overlay]);
+
+  useEffect(() => {
+    if (!enablePolling || (!hasActiveAction && !overlay?.pendingUpdate)) return;
+
+    const intervalId = window.setInterval(() => {
+      router.refresh();
+    }, REFRESH_INTERVAL_MS);
+
+    return () => window.clearInterval(intervalId);
+  }, [enablePolling, hasActiveAction, overlay, router]);
+
+  const applyAction = useCallback(
+    (action: ProfilePendingAction, patch: ProfileOptimisticOverlay) => {
+      setPendingAction(action);
+      setOverlay(patch);
+    },
+    [],
+  );
+
+  const clearAction = useCallback(() => {
+    setOverlay(null);
+    setPendingAction(null);
+  }, []);
 
   const value = useMemo(
     () => ({
       base,
       effective,
-      applyPatch,
-      clearOverlay,
+      pendingAction,
+      applyAction,
+      clearAction,
     }),
-    [base, effective, applyPatch, clearOverlay],
+    [base, effective, pendingAction, applyAction, clearAction],
   );
 
   return (

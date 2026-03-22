@@ -53,7 +53,7 @@ export default function RemoveVouch({
   tooltip,
 }: RemoveVouchProps) {
   const loading = useLoading();
-  const { effective, applyPatch } = useRequestOptimistic();
+  const { effective, applyAction } = useRequestOptimistic();
   const { address } = useAccount();
 
   const [prepareRemoveVouch, removeOnchainVouch, status] = usePoHWrite(
@@ -75,12 +75,12 @@ export default function RemoveVouch({
             address,
           );
           if (patch) {
-            applyPatch(patch);
+            applyAction("removeVouch", patch);
           }
           toast.success("Request remove vouch successful");
         },
       }),
-      [address, applyPatch, effective.onChainVouches, effective.validVouches, loading],
+      [address, applyAction, effective.onChainVouches, effective.validVouches, loading],
     ),
   );
 

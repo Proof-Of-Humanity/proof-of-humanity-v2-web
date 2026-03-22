@@ -187,7 +187,7 @@ async function Profile({ params: { pohid } }: PageProps) {
     ) as PoHRequest[];
 
   const hasActiveRequests = activeRequests.length > 0;
-  const hasPendingRevocation = activeRequests.some((request) => request.revocation);
+  const pendingRevocation = activeRequests.some((request) => request.revocation);
   const latestRequest = allRequests
     .filter((request) => !isTransferArtifactRequest(request))
     .sort(
@@ -223,18 +223,33 @@ async function Profile({ params: { pohid } }: PageProps) {
     pohId,
     profileRequests,
   );
-  const profileHeader = latestRequest
-    ? {
-      claimer: latestRequest.claimer,
-      evidence: latestRequest.evidenceGroup.evidence,
-      humanityWinnerClaim:
-        humanity[latestRequest.chainId]?.humanity?.winnerClaim ?? [],
-      registrationEvidenceRevokedReq:
-        latestRequest.registrationEvidenceRevokedReq,
-      requester: latestRequest.requester,
-      revocation: latestRequest.revocation,
-    }
-    : undefined;
+  const profileHeader =
+    homeChain &&
+    winnerClaimData.request &&
+    winnerClaimData.requestStatus !== RequestStatus.EXPIRED
+      ? {
+          claimer: humanity[homeChain.id]!.humanity!.registration!.claimer,
+          evidence: winnerClaimData.request.evidenceGroup.evidence,
+          humanityWinnerClaim:
+            humanity[winnerClaimData.chainId as SupportedChainId]?.humanity
+              ?.winnerClaim ?? [],
+          registrationEvidenceRevokedReq: "",
+          requester:
+            humanity[homeChain.id]!.humanity!.registration!.claimer.id,
+          revocation: false,
+        }
+      : latestRequest
+        ? {
+            claimer: latestRequest.claimer,
+            evidence: latestRequest.evidenceGroup.evidence,
+            humanityWinnerClaim:
+              humanity[latestRequest.chainId]?.humanity?.winnerClaim ?? [],
+            registrationEvidenceRevokedReq:
+              latestRequest.registrationEvidenceRevokedReq,
+            requester: latestRequest.requester,
+            revocation: latestRequest.revocation,
+          }
+        : undefined;
 
   return (
     <div className="content">
@@ -334,7 +349,7 @@ async function Profile({ params: { pohid } }: PageProps) {
             <ProfileOptimisticProvider
               base={{
                 winningStatus: winnerClaimData.status,
-                hasPendingRevocation,
+                pendingRevocation,
               }}
             >
               <Revoke
@@ -352,18 +367,17 @@ async function Profile({ params: { pohid } }: PageProps) {
                 contractData={contractData}
                 homeChain={homeChain}
                 pohId={pohId}
-                humanity={humanity}
-                lastTransfer={humanity[lastTransferChain.id].outTransfer}
-                lastTransferChain={lastTransferChain}
-                winningStatus={winnerClaimData.status}
-              />
+              humanity={humanity}
+              lastTransfer={humanity[lastTransferChain.id].outTransfer}
+              lastTransferChain={lastTransferChain}
+            />
             </ProfileOptimisticProvider>
           </>
         ) : latestTransferArtifact?.status.id === "transferred" ? (
           <ProfileOptimisticProvider
             base={{
               winningStatus: "transferred",
-              hasPendingRevocation: false,
+              pendingRevocation: false,
             }}
           >
             <CrossChain
@@ -376,7 +390,6 @@ async function Profile({ params: { pohid } }: PageProps) {
               humanity={humanity}
               lastTransfer={humanity[lastTransferChain.id].outTransfer}
               lastTransferChain={lastTransferChain}
-              winningStatus={"transferred"}
             />
           </ProfileOptimisticProvider>
         ) : (

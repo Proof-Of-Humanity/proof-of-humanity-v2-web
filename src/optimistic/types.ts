@@ -1,12 +1,23 @@
 import { Address, Hash } from "viem";
 import { RequestStatus } from "utils/status";
 
+export type RequestPendingAction =
+  | "fund"
+  | "challenge"
+  | "evidence"
+  | "vouch"
+  | "removeVouch"
+  | "withdraw"
+  | "advance"
+  | "execute";
+
+export type ProfilePendingAction = "revoke" | "transfer" | "update";
+
 export interface OptimisticEvidenceItem {
   id: string;
   uri: string;
   creationTime: number;
   submitter: Address;
-  pending?: boolean;
 }
 
 export interface RequestOptimisticBase {
@@ -20,7 +31,6 @@ export interface RequestOptimisticBase {
   offChainVouches: { voucher: Address; expiration: number; signature: Hash }[];
   evidenceList: OptimisticEvidenceItem[];
   revocation: boolean;
-  currentChallengeDisputeId?: string;
 }
 
 export interface RequestOptimisticOverlay {
@@ -31,20 +41,16 @@ export interface RequestOptimisticOverlay {
   validVouches?: number;
   onChainVouches?: Address[];
   offChainVouches?: { voucher: Address; expiration: number; signature: Hash }[];
-  appendedEvidence?: OptimisticEvidenceItem[];
-  pendingChallenge?: {
-    disputeId?: string;
-    createdAt: number;
-  };
+  evidenceList?: OptimisticEvidenceItem[];
 }
 
 export interface ProfileOptimisticBase {
   winningStatus?: string;
-  hasPendingRevocation: boolean;
+  pendingRevocation: boolean;
 }
 
 export interface ProfileOptimisticOverlay {
+  winningStatus?: string;
   pendingRevocation?: boolean;
-  pendingTransfer?: boolean;
   pendingUpdate?: boolean;
 }

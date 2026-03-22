@@ -22,7 +22,7 @@ import { HumanityQuery } from "generated/graphql";
 import { sdk } from "config/subgraph";
 import { useLoading } from "hooks/useLoading";
 import useWeb3Loaded from "hooks/useWeb3Loaded";
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "react-toastify";
 import { timeAgo } from "utils/time";
 import { Address, Hash, createPublicClient, http, decodeEventLog, TransactionReceipt, Log } from "viem";
@@ -53,7 +53,7 @@ const isReceiptPendingError = (error: unknown) =>
   error.name === "TransactionReceiptNotFoundError";
 
 export const buildTransferSuccessPatch = (): ProfileOptimisticOverlay => ({
-  pendingTransfer: true,
+  winningStatus: "transferring",
 });
 
 export const buildUpdateSuccessPatch = (): ProfileOptimisticOverlay => ({
@@ -117,7 +117,7 @@ function getAMBMessageInfo(
   updateLogIndex?: number,
 ): AMBMessageInfo {
     const isGnosisChain = chainId === 100 || chainId === 10200; // Gnosis or Chiado
-    
+
     if (isGnosisChain) {
       const ambEvent = typeof updateLogIndex === "number"
         ? findClosestLog(
@@ -162,10 +162,10 @@ function getAMBMessageInfo(
       }
     } else {
       // Ethereum -> Gnosis: Look for UserRequestForAffirmation (Foreign AMB)
-      const ambAbi = getContractInfo("EthereumAMBBridge", chainId)?.abi;
-      if (!ambAbi) {
-        return null;
-      }
+    const ambAbi = getContractInfo("EthereumAMBBridge", chainId)?.abi;
+    if (!ambAbi) {
+      return null;
+    }
 
       const ambEvent = typeof updateLogIndex === "number"
         ? findClosestLog(
@@ -197,7 +197,7 @@ function getAMBMessageInfo(
               return false;
             }
           });
-      
+
       if (ambEvent) {
         const decoded = decodeEventLog({
           abi: ambAbi,
@@ -249,7 +249,7 @@ function getRelayedMessageId(
               return false;
             }
           });
-      
+
       if (relayedEvent) {
           const decoded = decodeEventLog({
               abi: ambAbi,
@@ -295,7 +295,6 @@ interface CrossChainProps {
   pohId: Hash;
   lastTransfer: HumanityQuery["outTransfer"];
   lastTransferChain?: SupportedChain;
-  winningStatus?: string;
 }
 
 export default function CrossChain({
@@ -306,20 +305,10 @@ export default function CrossChain({
   homeChain,
   lastTransfer,
   lastTransferChain,
-  winningStatus,
 }: CrossChainProps) {
   const { address } = useAccount();
-  const { effective, applyPatch } = useProfileOptimistic();
-  const profileOptimisticRef = useRef({
-    pendingUpdate: effective.pendingUpdate,
-    applyPatch,
-  });
-  useEffect(() => {
-    profileOptimisticRef.current = {
-      pendingUpdate: effective.pendingUpdate,
-      applyPatch,
-    };
-  }, [applyPatch, effective.pendingUpdate]);
+  const { effective, pendingAction, applyAction, clearAction } =
+    useProfileOptimistic();
   const loading = useLoading();
   const web3Loaded = useWeb3Loaded();
   const chainId = useChainId() as SupportedChainId;
@@ -329,7 +318,20 @@ export default function CrossChain({
   const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
   const [isRelayModalOpen, setIsRelayModalOpen] = useState(false);
   const [isLastTransferModalOpen, setIsLastTransferModalOpen] = useState(false);
+  type RelayUpdateParams = {
+    sideChainId: SupportedChainId;
+    receivingChainId: SupportedChainId;
+    publicClientSide: ReturnType<typeof createPublicClient>;
+    encodedData: `0x${string}`;
+  };
+  const [pendingRelayUpdate, setPendingRelayUpdate] = useState(
+    {} as RelayUpdateParams,
+  );
   const effectiveWinningStatus = effective.winningStatus;
+  const hasPendingCrossChainState =
+    effective.pendingUpdate ||
+    effectiveWinningStatus === "transferring" ||
+    effectiveWinningStatus === "transferred";
 
   const [prepareTransfer, , transferStatus] = useCCPoHWrite(
     "transferHumanity",
@@ -342,13 +344,13 @@ export default function CrossChain({
           fire();
         },
         onSuccess() {
-          applyPatch(buildTransferSuccessPatch());
+          applyAction("transfer", buildTransferSuccessPatch());
           toast.success("Transfer initiated!");
           loading.stop();
           setIsTransferModalOpen(false);
         },
       }),
-      [applyPatch, loading],
+      [applyAction, loading],
     ),
   );
   
@@ -363,7 +365,7 @@ export default function CrossChain({
           fire();
         },
         onSuccess() {
-          applyPatch(buildUpdateSuccessPatch());
+          applyAction("update", buildUpdateSuccessPatch());
           toast.success("Update transaction sent!");
           loading.stop();
           setIsUpdateModalOpen(false);
@@ -377,7 +379,7 @@ export default function CrossChain({
           loading.stop();
         },
       }),
-      [applyPatch, loading],
+      [applyAction, loading],
     ),
   );
 
@@ -392,7 +394,7 @@ export default function CrossChain({
           fire();
         },
         onSuccess() {
-          applyPatch(buildUpdateSuccessPatch());
+          applyAction("update", buildUpdateSuccessPatch());
           toast.success("Relay transaction sent!");
           loading.stop();
           setIsRelayModalOpen(false);
@@ -407,20 +409,10 @@ export default function CrossChain({
           loading.stop();
         },
       }),
-      [applyPatch, loading],
+      [applyAction, loading],
     ),
   );
 
-  type RelayUpdateParams = {
-    sideChainId: SupportedChainId;
-    receivingChainId: SupportedChainId;
-    publicClientSide: ReturnType<typeof createPublicClient>;
-    encodedData: `0x${string}`;
-  };
-
-  const [pendingRelayUpdate, setPendingRelayUpdate] = useState(
-    {} as RelayUpdateParams,
-  );
   const hasTransferInFlight =
     transferStatus.write === "pending" ||
     (transferStatus.write === "success" && transferStatus.transaction === "pending");
@@ -482,7 +474,7 @@ export default function CrossChain({
         sdk[sendingChainId].CrossChainUpdates({ humanityId: pohId }),
         sdk[receivingChainId].CrossChainUpdates({ humanityId: pohId }),
       ]);
-      
+
       const latestOutUpdate = sendingUpdates?.outUpdates?.[0];
       const latestInUpdate = receivingUpdates?.inUpdates?.[0];
 
@@ -507,16 +499,16 @@ export default function CrossChain({
         setPendingRelayUpdate({} as RelayUpdateParams);
         return;
       }
-      
+
       const ambInfo = getAMBMessageInfo(
         txSending,
         sendingChainId,
         Number(latestOutUpdate.logIndex),
       );
-      
+
       if (!ambInfo || !ambInfo.encodedData || !ambInfo.messageId) {
-           setPendingRelayUpdate({} as RelayUpdateParams);
-           return;
+        setPendingRelayUpdate({} as RelayUpdateParams);
+        return;
       }
 
       const { messageId: messageIdSending, encodedData } = ambInfo;
@@ -550,8 +542,8 @@ export default function CrossChain({
       }
 
       setPendingRelayUpdate({} as RelayUpdateParams);
-      if (profileOptimisticRef.current.pendingUpdate) {
-        profileOptimisticRef.current.applyPatch({ pendingUpdate: undefined });
+      if (effective.pendingUpdate) {
+        clearAction();
       }
     } catch (error) {
       if (isReceiptPendingError(error)) {
@@ -561,7 +553,7 @@ export default function CrossChain({
 
       console.error("Failed to check pending cross-chain update", error);
     }
-  }, [web3Loaded, homeChain, pohId]);
+  }, [clearAction, effective.pendingUpdate, homeChain, pohId, web3Loaded]);
 
   const handleExecuteRelay = async () => {
     loading.start("Fetching signatures...");
@@ -721,7 +713,7 @@ export default function CrossChain({
   }, [checkPendingUpdate, effectiveWinningStatus]);
 
   useEffect(() => {
-    if (effective.pendingTransfer || effectiveWinningStatus === "transferred") {
+    if (effectiveWinningStatus === "transferring" || effectiveWinningStatus === "transferred") {
       closeTransferModal();
     }
     if (effective.pendingUpdate || effectiveWinningStatus === "transferred") {
@@ -732,7 +724,6 @@ export default function CrossChain({
     closeRelayModal,
     closeTransferModal,
     closeUpdateModal,
-    effective.pendingTransfer,
     effective.pendingUpdate,
     effectiveWinningStatus,
   ]);
@@ -748,10 +739,11 @@ export default function CrossChain({
           />
           {homeChain.name}
         </span>
-        {(effective.pendingTransfer ||
-          effective.pendingUpdate) && (
+        {hasPendingCrossChainState && (
           <span className="text-secondaryText mt-2 text-center sm:text-left">
-            Waiting for indexed cross-chain state.
+            {pendingAction === "transfer"
+              ? "Waiting for indexed cross-chain state."
+              : "Cross-chain state update pending."}
           </span>
         )}
       </div>
@@ -761,7 +753,6 @@ export default function CrossChain({
         homeChain.id === chainId &&
         effectiveWinningStatus !== "transferring" &&
         effectiveWinningStatus !== "transferred" &&
-        !effective.pendingTransfer &&
         (
           <>
             <button 

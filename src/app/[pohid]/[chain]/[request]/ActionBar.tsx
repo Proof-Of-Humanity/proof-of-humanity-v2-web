@@ -34,13 +34,6 @@ import Vouch from "./Vouch";
 
 enableReactUse();
 
-// const encodeClaimToAdvance = (claimer: Address, vouchers: Address[]) =>
-//   encodeFunctionData<typeof abis.ProofOfHumanity, "advanceState">({
-//     abi: abis.ProofOfHumanity,
-//     functionName: "advanceState",
-//     args: [claimer, vouchers, []],
-//   });
-
 export const buildAdvanceSuccessPatch = (): RequestOptimisticOverlay => ({
   status: "resolving",
   requestStatus: getResolvingRequestStatus(false),
@@ -53,7 +46,6 @@ export const buildExecuteSuccessPatch = (
   status: "resolved",
   requestStatus: getResolvedRequestStatus({
     revocation,
-    winnerPartyId: "requester",
   }),
   lastStatusChange: Math.floor(Date.now() / 1000),
 });
@@ -70,12 +62,10 @@ interface ActionBarProps {
   requester: Address;
   revocation: boolean;
   index: number;
-  lastStatusChange: number;
   contractData: ContractData;
   currentChallenge?: ArrayElement<
     NonNullable<NonNullable<RequestQuery>["request"]>["challenges"]
   >;
-  advanceRequestsOnChainVouches?: { claimer: Address; vouchers: Address[] }[];
   arbitrationHistory: {
     __typename?: "ArbitratorHistory" | undefined;
     updateTime: any;
@@ -93,18 +83,16 @@ export default function ActionBar({
   requester,
   index,
   revocation,
-  lastStatusChange,
   arbitrationCost,
   contractData,
   currentChallenge,
-  // advanceRequestsOnChainVouches,
   arbitrationHistory,
   humanityExpirationTime,
   usedReasons = [],
 }: ActionBarProps) {
   const chain = useChainParam()!;
   const { address } = useAccount();
-  const { effective, applyPatch } = useRequestOptimistic();
+  const { effective, pendingAction, applyAction } = useRequestOptimistic();
   const web3Loaded = useWeb3Loaded();
   const userChainId = useChainId();
   const { data: me } = useSWR(address, getMyData);
@@ -116,14 +104,6 @@ export default function ActionBar({
   const effectiveOffChainVouches = effective.offChainVouches;
   const effectiveLastStatusChange = effective.lastStatusChange;
   const effectiveRevocation = effective.revocation;
-  const pendingChallenge = effective.pendingChallenge;
-  const currentChallengeDisputeId =
-    currentChallenge?.disputeId !== undefined &&
-    currentChallenge?.disputeId !== null
-      ? Number(currentChallenge.disputeId)
-      : null;
-  const hasIndexedChallengeDetails =
-    currentChallengeDisputeId !== null && currentChallengeDisputeId > 0;
   const hasChallengeReason =
     !!currentChallenge && !revocation && currentChallenge.reason.id !== "none";
 
@@ -178,11 +158,11 @@ export default function ActionBar({
           toast.error("Transaction rejected");
         },
         onSuccess() {
-          applyPatch(buildExecuteSuccessPatch(effectiveRevocation));
+          applyAction("execute", buildExecuteSuccessPatch(effectiveRevocation));
           toast.success("Request executed successfully");
         },
       }),
-      [applyPatch, effectiveRevocation],
+      [applyAction, effectiveRevocation],
     ),
   );
   const [prepareAdvance, advanceFire, advanceStatus] = usePoHWrite(
@@ -194,11 +174,11 @@ export default function ActionBar({
         },
         onSuccess() {
           if (effectiveRevocation) return;
-          applyPatch(buildAdvanceSuccessPatch());
+          applyAction("advance", buildAdvanceSuccessPatch());
           toast.success("Request advanced to resolving state");
         },
       }),
-      [applyPatch, effectiveRevocation],
+      [applyAction, effectiveRevocation],
     ),
   );
   const [prepareWithdraw, withdraw, withdrawStatus] = usePoHWrite(
@@ -209,11 +189,11 @@ export default function ActionBar({
           toast.error("Transaction rejected");
         },
         onSuccess() {
-          applyPatch(buildWithdrawSuccessPatch());
+          applyAction("withdraw", buildWithdrawSuccessPatch());
           toast.success("Request withdrawn successfully");
         },
       }),
-      [applyPatch],
+      [applyAction],
     ),
   );
 
@@ -583,13 +563,13 @@ export default function ActionBar({
           </>
         )}
 
-        {action === ActionType.DISPUTED && (currentChallenge || pendingChallenge) && (
+        {action === ActionType.DISPUTED && (
           <>
             <span className="text-center text-slate-400 md:text-left">
-              {hasIndexedChallengeDetails
-                ? "The request was challenged"
-                : "Challenge confirmed onchain. Waiting for indexed dispute details"}
-              {hasChallengeReason && (
+              {pendingAction === "challenge"
+                ? "Challenge confirmed onchain. Waiting for indexed dispute details"
+                : "The request was challenged"}
+              {pendingAction !== "challenge" && hasChallengeReason && (
                 <>
                   {" "}
                   for{" "}
@@ -601,7 +581,7 @@ export default function ActionBar({
               .
             </span>
 
-            {hasIndexedChallengeDetails && currentChallenge && (
+            {pendingAction !== "challenge" && currentChallenge && (
               <div className="flex flex-wrap justify-center gap-4 lg:flex-nowrap lg:justify-start">
                 <Appeal
                   pohId={pohId}

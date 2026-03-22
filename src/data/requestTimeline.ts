@@ -73,6 +73,7 @@ const getProfileRequestTimelineItem = (
   pohId: Hash,
   request: RequestWithChain,
 ): TimelineItem | null => {
+  const requestTimelineId = `${request.chainId}:${request.id}`;
   const requestHref = `/${prettifyId(pohId)}/${idToChain(
     request.chainId,
   )?.name.toLowerCase()}/${Number(request.index)}`;
@@ -90,7 +91,7 @@ const getProfileRequestTimelineItem = (
   switch (requestStatus) {
     case RequestStatus.VOUCHING:
       return {
-        id: request.id,
+        id: requestTimelineId,
         kind: "submitted",
         title: request.revocation ? "Removal requested" : "Profile submitted",
         timestamp: Number(request.creationTime),
@@ -100,7 +101,7 @@ const getProfileRequestTimelineItem = (
       };
     case RequestStatus.PENDING_CLAIM:
       return {
-        id: request.id,
+        id: requestTimelineId,
         kind: "inReview",
         title: "In review",
         timestamp:
@@ -111,7 +112,7 @@ const getProfileRequestTimelineItem = (
       };
     case RequestStatus.PENDING_REVOCATION:
       return {
-        id: request.id,
+        id: requestTimelineId,
         kind: "submitted",
         title: "Removal requested",
         timestamp: Number(request.creationTime),
@@ -122,7 +123,7 @@ const getProfileRequestTimelineItem = (
     case RequestStatus.DISPUTED_CLAIM:
     case RequestStatus.DISPUTED_REVOCATION:
       return {
-        id: request.id,
+        id: requestTimelineId,
         kind: "challenged",
         title: "Challenged",
         timestamp:
@@ -133,7 +134,7 @@ const getProfileRequestTimelineItem = (
       };
     case RequestStatus.RESOLVED_CLAIM:
       return {
-        id: request.id,
+        id: requestTimelineId,
         kind: "verified",
         title: "Verified human",
         timestamp:
@@ -144,7 +145,7 @@ const getProfileRequestTimelineItem = (
       };
     case RequestStatus.RESOLVED_REVOCATION:
       return {
-        id: request.id,
+        id: requestTimelineId,
         kind: "removed",
         title: "Removed",
         timestamp:
@@ -155,7 +156,7 @@ const getProfileRequestTimelineItem = (
       };
     case RequestStatus.REJECTED:
       return {
-        id: request.id,
+        id: requestTimelineId,
         kind: "rejected",
         title: "Rejected",
         timestamp:
@@ -166,7 +167,7 @@ const getProfileRequestTimelineItem = (
       };
     case RequestStatus.WITHDRAWN:
       return {
-        id: request.id,
+        id: requestTimelineId,
         kind: "withdrawn",
         title: "Withdrawn",
         timestamp:
@@ -179,7 +180,7 @@ const getProfileRequestTimelineItem = (
       const timestamp = Number(request.expirationTime);
       if (!Number.isFinite(timestamp) || timestamp <= 0) return null;
       return {
-        id: `${request.id}-expired`,
+        id: `${requestTimelineId}-expired`,
         kind: "expired",
         title: "Expired",
         timestamp,

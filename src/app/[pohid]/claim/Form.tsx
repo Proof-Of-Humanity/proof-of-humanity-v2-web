@@ -140,7 +140,6 @@ export default function Form({
       },
       onReady(fire) {
         fire();
-        toast.info("Transaction pending");
       },
     }),
     [step$, loading, state$],

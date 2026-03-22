@@ -11,11 +11,9 @@ import { formatEth } from "utils/misc";
 import cn from "classnames";
 import Image from "next/image";
 import { useObservable } from "@legendapp/state/react";
-import { getContractInfo } from "contracts";
-import type { WriteSuccessContext } from "contracts/hooks/types";
 import usePoHWrite from "contracts/hooks/usePoHWrite";
 import type { RequestOptimisticOverlay } from "optimistic/types";
-import { Hash, decodeEventLog } from "viem";
+import { Hash } from "viem";
 import DocumentIcon from "icons/NoteMajor.svg";
 import { ObservablePrimitiveBaseFns } from "@legendapp/state";
 import { ContractData } from "data/contract";
@@ -60,40 +58,12 @@ function reasonToIdx(reason: Reason) {
   }
 }
 
-export const getChallengeDisputeId = (ctx: WriteSuccessContext) => {
-  if (!ctx.receipt || ctx.contract !== "ProofOfHumanity") return undefined;
-
-  const abi = getContractInfo("ProofOfHumanity", ctx.chainId).abi;
-
-  for (const log of ctx.receipt.logs) {
-    try {
-      const decoded = decodeEventLog({
-        abi,
-        data: log.data,
-        topics: log.topics,
-      });
-      if (decoded.eventName === "RequestChallenged") {
-        return String((decoded.args as { disputeId?: bigint }).disputeId ?? "");
-      }
-    } catch {
-      continue;
-    }
-  }
-
-  return undefined;
-};
-
 export const buildChallengeSuccessPatch = (
   revocation: boolean,
-  disputeId?: string,
 ): RequestOptimisticOverlay => ({
   status: "disputed",
   requestStatus: getDisputedRequestStatus(revocation),
   lastStatusChange: Math.floor(Date.now() / 1000),
-  pendingChallenge: {
-    disputeId,
-    createdAt: Date.now(),
-  },
 });
 
 interface ReasonCardInterface {
@@ -158,7 +128,7 @@ export default function Challenge({
   usedReasons = [],
 }: ChallengeInterface) {
   const { uploadFile } = useAtlasProvider();
-  const { applyPatch } = useRequestOptimistic();
+  const { applyAction } = useRequestOptimistic();
   const chain = useChainParam()!;
   const userChainId = useChainId();
   const [isOpen, setIsOpen] = useState(false);
@@ -194,18 +164,18 @@ export default function Challenge({
           loading.stop();
           toast.error("Transaction rejected");
         },
-        onSuccess(ctx) {
-          applyPatch(
+        onSuccess() {
+          applyAction(
+            "challenge",
             buildChallengeSuccessPatch(
               revocation,
-              getChallengeDisputeId(ctx),
             ),
           );
           closeModal();
           toast.success("Challenge submitted successfully");
         },
       }),
-      [applyPatch, closeModal, loading, revocation],
+      [applyAction, closeModal, loading, revocation],
     ),
   );
 
