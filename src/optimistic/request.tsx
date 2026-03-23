@@ -45,9 +45,7 @@ const isRequestActionReconciled = (
     case "execute":
       return (
         overlay.status === base.status &&
-        overlay.requestStatus === base.requestStatus &&
-        typeof overlay.lastStatusChange === "number" &&
-        base.lastStatusChange >= overlay.lastStatusChange
+        overlay.requestStatus === base.requestStatus
       );
     case "evidence":
       return (

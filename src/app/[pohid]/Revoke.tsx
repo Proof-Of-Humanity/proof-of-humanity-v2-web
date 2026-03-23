@@ -168,7 +168,7 @@ export default function Revoke({
           label="Revoke"
           className="mb-4"
           disabled={isReconciling}
-          tooltip={isReconciling ? "Wait for the current profile update to finish indexing" : undefined}
+          tooltip={isReconciling ? "Syncing" : undefined}
         />
       ) : null}
       <Modal
@@ -228,7 +228,7 @@ export default function Revoke({
               className="mt-12"
               onClick={submit}
               label={loadingMessage || "Revoke"}
-              tooltip={isReconciling ? "Wait for the current profile update to finish indexing" : undefined}
+              tooltip={isReconciling ? "Syncing" : undefined}
             />
           </AuthGuard>
         </div>

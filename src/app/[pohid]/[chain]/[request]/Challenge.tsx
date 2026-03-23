@@ -240,7 +240,7 @@ export default function Challenge({
         onClick={() => setIsOpen(true)}
         label="Challenge"
         disabled={isReconciling || userChainId !== chain.id}
-        tooltip={isReconciling ? "Wait for the current request update to finish indexing" : userChainId !== chain.id ? `Switch your chain above to ${idToChain(chain.id)?.name || 'the correct chain'}` : undefined}
+        tooltip={isReconciling ? "Syncing" : userChainId !== chain.id ? `Switch your chain above to ${idToChain(chain.id)?.name || 'the correct chain'}` : undefined}
       />
       <Modal
         formal
@@ -300,7 +300,7 @@ export default function Challenge({
               onClick: submit,
               isLoading,
               label: loadingMessage || "Challenge request",
-              tooltip: isReconciling ? "Wait for the current request update to finish indexing" : userChainId !== chain.id ? `Switch your chain above to ${idToChain(chain.id)?.name || 'the correct chain'}` : undefined,
+              tooltip: isReconciling ? "Syncing" : userChainId !== chain.id ? `Switch your chain above to ${idToChain(chain.id)?.name || 'the correct chain'}` : undefined,
             }}
           />
         </AuthGuard>

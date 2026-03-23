@@ -109,13 +109,12 @@ const FundButton: React.FC<FundButtonProps> = ({
     insufficientFunds;
 
   const getTooltipMessage = () => {
-    if (isReconciling) return "Wait for the current request update to finish indexing";
+    if (isReconciling) return "Syncing";
     if (!isConnected) return "Please connect your wallet";
     if (userChainId !== chain.id) return `Switch your chain above to ${idToChain(chain.id)?.name || 'the correct chain'}`;
     if (!addedFundInput) return "Please enter an amount to fund";
     if (exceedsRemaining) return `Amount exceeds remaining needed (${formatEth(remainingAmount)} ${chain.nativeCurrency.symbol})`;
     if (insufficientFunds) return `Insufficient balance. You have ${formatEth(balanceData?.value ?? 0n)} ${chain.nativeCurrency.symbol}`;
-    if (isLoading) return "Transaction in progress";
     return undefined;
   };
 
@@ -126,7 +125,7 @@ const FundButton: React.FC<FundButtonProps> = ({
         label="Fund"
         className="mb-2 w-auto"
         disabled={isReconciling || userChainId !== chain.id}
-        tooltip={isReconciling ? "Wait for the current request update to finish indexing" : userChainId !== chain.id ? `Switch your chain above to ${idToChain(chain.id)?.name || 'the correct chain'}` : undefined}
+        tooltip={isReconciling ? "Syncing" : userChainId !== chain.id ? `Switch your chain above to ${idToChain(chain.id)?.name || 'the correct chain'}` : undefined}
       />
       <Modal
         formal
@@ -156,14 +155,21 @@ const FundButton: React.FC<FundButtonProps> = ({
           onChange={(e) => setAddedFundInput(e.target.value)}
           disabled={isLoading}
         />
-        <ActionButton
-          disabled={isDisabled}
-          isLoading={isLoading}
-          onClick={handleSubmit}
-          className="mt-6 mx-auto"
-          label={loadingMessage || "Fund request"}
-          tooltip={getTooltipMessage()}
-        />
+        <div className="group relative mt-6 flex justify-center">
+          <ActionButton
+            disabled={isDisabled}
+            isLoading={isLoading}
+            onClick={handleSubmit}
+            label={loadingMessage || "Fund request"}
+            className="w-auto"
+          />
+          {getTooltipMessage() && (
+            <span className="opacity-0 group-hover:opacity-100 absolute bottom-full left-1/2 z-10 mb-2 w-max max-w-[240px] -translate-x-1/2 rounded-md bg-neutral-700 px-3 py-2 text-center text-sm text-white transition-opacity pointer-events-none whitespace-normal">
+              {getTooltipMessage()}
+              <span className="absolute top-full left-1/2 h-0 w-0 -translate-x-1/2 border-x-[5px] border-x-transparent border-t-[5px] border-t-neutral-700" />
+            </span>
+          )}
+        </div>
       </div>
       </Modal>
     </>

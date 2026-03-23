@@ -99,7 +99,7 @@ export default function RemoveVouch({
           className="mb-2 w-auto"
           isLoading={status.write === "pending"}
           disabled={status.write === "pending" || isReconciling || disabled || userChainId !== chain.id}
-          tooltip={isReconciling ? "Wait for the current request update to finish indexing" : tooltip || (userChainId !== chain.id ? `Switch your chain above to ${idToChain(chain.id)?.name || 'the correct chain'}` : undefined)}
+          tooltip={isReconciling ? "Syncing" : tooltip || (userChainId !== chain.id ? `Switch your chain above to ${idToChain(chain.id)?.name || 'the correct chain'}` : undefined)}
         />
       </div>
     )

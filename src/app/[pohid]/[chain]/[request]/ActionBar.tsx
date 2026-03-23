@@ -105,8 +105,6 @@ export default function ActionBar({
   const effectiveLastStatusChange = effective.lastStatusChange;
   const effectiveRevocation = effective.revocation;
   const isReconciling = pendingAction !== null;
-  const hasChallengeReason =
-    !!currentChallenge && !revocation && currentChallenge.reason.id !== "none";
 
   const { didIVouchFor, isVouchOnchain } = useMemo(() => {
     const lowerAddr = address?.toLowerCase();
@@ -395,7 +393,7 @@ export default function ActionBar({
                         label={isWithdrawLoading ? "Withdrawing" : "Withdraw"}
                         tooltip={
                           isReconciling
-                            ? "Wait for the current request update to finish indexing"
+                            ? "Syncing"
                             : isWithdrawPrepareError
                             ? "Withdraw not possible, please try again"
                             : userChainId !== chain.id
@@ -496,7 +494,7 @@ export default function ActionBar({
                   onClick={withdraw}
                   variant="secondary"
                   label={"Withdraw"}
-                  tooltip={isReconciling ? "Wait for the current request update to finish indexing" : isWithdrawPrepareError ? "Withdraw not possible, please try again" : userChainId !== chain.id ? `Switch your chain above to ${idToChain(chain.id)?.name || 'the correct chain'}` : undefined}
+                  tooltip={isReconciling ? "Syncing" : isWithdrawPrepareError ? "Withdraw not possible, please try again" : userChainId !== chain.id ? `Switch your chain above to ${idToChain(chain.id)?.name || 'the correct chain'}` : undefined}
                   className="mb-2 w-auto"
                 />
               ) : !didIVouchFor ? (
@@ -522,7 +520,7 @@ export default function ActionBar({
                 isLoading={isAdvanceLoading}
                 onClick={advanceFire}
                 label={isAdvanceLoading ? "Advancing" : "Advance"}
-                tooltip={isReconciling ? "Wait for the current request update to finish indexing" : isAdvancePrepareError ? "Advance not possible, please try again" : userChainId !== chain.id ? `Switch your chain above to ${idToChain(chain.id)?.name || 'the correct chain'}` : undefined}
+                tooltip={isReconciling ? "Syncing" : isAdvancePrepareError ? "Advance not possible, please try again" : userChainId !== chain.id ? `Switch your chain above to ${idToChain(chain.id)?.name || 'the correct chain'}` : undefined}
                 className="mb-2 w-auto"
               />
             </div>
@@ -539,7 +537,7 @@ export default function ActionBar({
                 isLoading={isExecuteLoading}
                 onClick={execute}
                 label={isExecuteLoading ? "Executing" : "Execute"}
-                tooltip={isReconciling ? "Wait for the current request update to finish indexing" : isExecutePrepareError ? "Execute not possible, please try again" : userChainId !== chain.id ? `Switch your chain above to ${idToChain(chain.id)?.name || 'the correct chain'}` : undefined}
+                tooltip={isReconciling ? "Syncing" : isExecutePrepareError ? "Execute not possible, please try again" : userChainId !== chain.id ? `Switch your chain above to ${idToChain(chain.id)?.name || 'the correct chain'}` : undefined}
                 className="mb-2 w-auto"
               />
             </div>
@@ -572,7 +570,10 @@ export default function ActionBar({
               {pendingAction === "challenge"
                 ? "Challenge confirmed onchain. Waiting for indexed dispute details"
                 : "The request was challenged"}
-              {pendingAction !== "challenge" && hasChallengeReason && (
+              {pendingAction !== "challenge" &&
+                currentChallenge &&
+                !revocation &&
+                currentChallenge.reason.id !== "none" && (
                 <>
                   {" "}
                   for{" "}

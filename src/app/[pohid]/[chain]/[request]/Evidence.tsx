@@ -244,19 +244,21 @@ export default function Evidence({
     <Accordion title="Evidence">
       {requestIndex >= 0 && (
         <>
-          <ActionButton
-            disabled={isReconciling || isEvidenceDisabled}
-            onClick={() => setModalOpen(true)}
-            label="Add Evidence"
-            className="mx-2 mt-4 self-end"
-            tooltip={
-              isReconciling
-                ? "Wait for the current request update to finish indexing"
-                : isEvidenceDisabled
-                ? `Switch your chain above to ${idToChain(chainReq.id)?.name || "the correct chain"}`
-              : undefined
-            }
-          />
+          <div className="group relative mt-4 mr-2 self-end">
+            <ActionButton
+              disabled={isReconciling || isEvidenceDisabled}
+              onClick={() => setModalOpen(true)}
+              label="Add Evidence"
+            />
+            {(isReconciling || isEvidenceDisabled) && (
+              <span className="opacity-0 group-hover:opacity-100 absolute bottom-full left-1/2 z-10 mb-2 w-max max-w-[240px] -translate-x-1/2 rounded-md bg-neutral-700 px-3 py-2 text-center text-sm text-white transition-opacity pointer-events-none whitespace-normal">
+                {isReconciling
+                  ? "Syncing"
+                  : `Switch your chain above to ${idToChain(chainReq.id)?.name || "the correct chain"}`}
+                <span className="absolute top-full left-1/2 h-0 w-0 -translate-x-1/2 border-x-[5px] border-x-transparent border-t-[5px] border-t-neutral-700" />
+              </span>
+            )}
+          </div>
           <Modal
             formal
             open={modalOpen}
@@ -313,7 +315,7 @@ export default function Evidence({
                 className="mt-12"
                 onClick={submit}
                 label={loadingMessage || "Submit"}
-                tooltip={isReconciling ? "Wait for the current request update to finish indexing" : undefined}
+                tooltip={isReconciling ? "Syncing" : undefined}
               />
             </AuthGuard>
             </div>

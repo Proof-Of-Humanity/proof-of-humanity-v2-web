@@ -1,7 +1,6 @@
 "use client";
 
 import ChainLogo from "components/ChainLogo";
-import ActionButton from "components/ActionButton";
 import Modal from "components/Modal";
 import TimeAgo from "components/TimeAgo";
 import LoadingSpinner from "components/Integrations/Circles/LoadingSpinner";
@@ -330,10 +329,8 @@ export default function CrossChain({
   );
   const effectiveWinningStatus = effective.winningStatus;
   const isReconciling = pendingAction !== null;
-  const hasPendingCrossChainState =
-    effective.pendingUpdate ||
-    effectiveWinningStatus === "transferring" ||
-    effectiveWinningStatus === "transferred";
+  const showCrossChainBanner =
+    pendingAction === "transfer" || effective.pendingUpdate;
 
   const [prepareTransfer, , transferStatus] = useCCPoHWrite(
     "transferHumanity",
@@ -741,7 +738,7 @@ export default function CrossChain({
           />
           {homeChain.name}
         </span>
-        {hasPendingCrossChainState && (
+        {showCrossChainBanner && (
           <span className="text-secondaryText mt-2 text-center sm:text-left">
             {pendingAction === "transfer"
               ? "Waiting for indexed cross-chain state."
@@ -757,14 +754,21 @@ export default function CrossChain({
         effectiveWinningStatus !== "transferred" &&
         (
           <>
-            <ActionButton 
-              onClick={() => setIsTransferModalOpen(true)}
-              label="Transfer"
-              disabled={isReconciling}
-              tooltip={isReconciling ? "Wait for the current profile update to finish indexing" : undefined}
-              variant="secondary"
-              className="text-sky-500 !border-0 !rounded-none !px-0 !py-0 !font-normal"
-            />
+            <div className="group relative">
+              <button 
+                className="text-sky-500" 
+                disabled={isReconciling}
+                onClick={() => setIsTransferModalOpen(true)}
+              >
+                Transfer
+              </button>
+              {isReconciling && (
+                <span className="opacity-0 group-hover:opacity-100 absolute bottom-full left-1/2 z-10 mb-2 w-max -translate-x-1/2 rounded-md bg-neutral-700 px-3 py-2 text-center text-sm text-white transition-opacity pointer-events-none">
+                  Syncing
+                  <span className="absolute top-full left-1/2 h-0 w-0 -translate-x-1/2 border-x-[5px] border-x-transparent border-t-[5px] border-t-neutral-700" />
+                </span>
+              )}
+            </div>
             <Modal
               formal
               open={isTransferModalOpen}
@@ -799,14 +803,21 @@ export default function CrossChain({
         !effective.pendingUpdate &&
         (!pendingRelayUpdate || !pendingRelayUpdate.encodedData) && (
           <>
-            <ActionButton 
-              onClick={() => setIsUpdateModalOpen(true)}
-              label="Update state"
-              disabled={isReconciling}
-              tooltip={isReconciling ? "Wait for the current profile update to finish indexing" : undefined}
-              variant="secondary"
-              className="text-sky-500 !border-0 !rounded-none !px-0 !py-0 !font-normal"
-            />
+            <div className="group relative">
+              <button 
+                className="text-sky-500"
+                disabled={isReconciling}
+                onClick={() => setIsUpdateModalOpen(true)}
+              >
+                Update state
+              </button>
+              {isReconciling && (
+                <span className="opacity-0 group-hover:opacity-100 absolute bottom-full left-1/2 z-10 mb-2 w-max -translate-x-1/2 rounded-md bg-neutral-700 px-3 py-2 text-center text-sm text-white transition-opacity pointer-events-none">
+                  Syncing
+                  <span className="absolute top-full left-1/2 h-0 w-0 -translate-x-1/2 border-x-[5px] border-x-transparent border-t-[5px] border-t-neutral-700" />
+                </span>
+              )}
+            </div>
             <Modal
               formal
               open={isUpdateModalOpen}

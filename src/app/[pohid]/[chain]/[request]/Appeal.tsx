@@ -123,7 +123,7 @@ const SideFunding: React.FC<SideFundingProps> = ({
           label="Fund"
           disabled={disabled || !contributor || errorRef.current || loosingSideHasEnd || userChainId !== chainId}
           isLoading={isLoading}
-          tooltip={disabled ? "Wait for the current request update to finish indexing" : userChainId !== chainId ? `Switch your chain above to ${idToChain(chainId)?.name || 'the correct chain'}` : undefined}
+          tooltip={disabled ? "Syncing" : userChainId !== chainId ? `Switch your chain above to ${idToChain(chainId)?.name || 'the correct chain'}` : undefined}
         />
       </div>
       <Progress
@@ -313,14 +313,14 @@ const Appeal: React.FC<AppealProps> = ({
     !error &&
     !loading ? (
     <>
-      <ActionButton
-        onClick={() => setAppealModalOpen(true)}
-        disabled={isReconciling}
-        variant="secondary"
-        className="py-2 rounded w-[150px] md:w-auto"
-        tooltip={isReconciling ? "Wait for the current request update to finish indexing" : undefined}
-        ariaLabel="Appeal"
-        label={
+      <div className="group relative w-[150px] md:w-auto">
+        <button onClick={() => setAppealModalOpen(true)} disabled={isReconciling} className="
+          btn-sec 
+          py-2
+          rounded
+          w-[150px]
+          md:w-auto
+        ">
           <span className="
             flex 
             items-center
@@ -333,8 +333,14 @@ const Appeal: React.FC<AppealProps> = ({
             <TimeAgo time={parseInt(String(period[1]))} />
             )
           </span>
-        }
-      />
+        </button>
+        {isReconciling && (
+          <span className="opacity-0 group-hover:opacity-100 absolute bottom-full left-1/2 z-10 mb-2 w-max -translate-x-1/2 rounded-md bg-neutral-700 px-3 py-2 text-center text-sm text-white transition-opacity pointer-events-none">
+            Syncing
+            <span className="absolute top-full left-1/2 h-0 w-0 -translate-x-1/2 border-x-[5px] border-x-transparent border-t-[5px] border-t-neutral-700" />
+          </span>
+        )}
+      </div>
       <Modal
         header={`Appeal case #${disputeId}`}
         open={isAppealModalOpen}
