@@ -121,6 +121,7 @@ export default function Evidence({
 }: EvidenceProps) {
   const { effective, pendingAction, pendingEvidenceItem, applyAction } =
     useRequestOptimistic();
+  const isReconciling = pendingAction !== null;
   const chainReq = useChainParam()!;
   const chainId = useChainId();
   const { address } = useAccount();
@@ -244,12 +245,14 @@ export default function Evidence({
       {requestIndex >= 0 && (
         <>
           <ActionButton
-            disabled={isEvidenceDisabled}
+            disabled={isReconciling || isEvidenceDisabled}
             onClick={() => setModalOpen(true)}
             label="Add Evidence"
             className="mx-2 mt-4 self-end"
             tooltip={
-              isEvidenceDisabled
+              isReconciling
+                ? "Wait for the current request update to finish indexing"
+                : isEvidenceDisabled
                 ? `Switch your chain above to ${idToChain(chainReq.id)?.name || "the correct chain"}`
               : undefined
             }
@@ -305,11 +308,12 @@ export default function Evidence({
             </div>
             <AuthGuard signInButtonProps={{ className: "mt-12" }}>
               <ActionButton
-                disabled={pending}
+                disabled={pending || isReconciling}
                 isLoading={pending}
                 className="mt-12"
                 onClick={submit}
                 label={loadingMessage || "Submit"}
+                tooltip={isReconciling ? "Wait for the current request update to finish indexing" : undefined}
               />
             </AuthGuard>
             </div>

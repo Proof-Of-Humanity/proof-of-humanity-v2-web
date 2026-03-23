@@ -75,9 +75,10 @@ export default function Vouch({
   chain,
   address,
 }: VouchButtonProps) {
-  const { effective, applyAction } = useRequestOptimistic();
+  const { effective, pendingAction, applyAction } = useRequestOptimistic();
   const userChainId = useChainId();
   const [isOpen, setIsOpen] = useState(false);
+  const isReconciling = pendingAction !== null;
   const [prepare, addVouch , status] = usePoHWrite(
     "addVouch",
     useMemo(
@@ -214,8 +215,8 @@ export default function Vouch({
           onClick={() => setIsOpen(true)}
           label="Vouch"
           className="mb-2 w-auto"
-          disabled={userChainId !== chain.id}
-          tooltip={userChainId !== chain.id ? `Switch your chain above to ${idToChain(chain.id)?.name || 'the correct chain'}` : undefined}
+          disabled={isReconciling || userChainId !== chain.id}
+          tooltip={isReconciling ? "Wait for the current request update to finish indexing" : userChainId !== chain.id ? `Switch your chain above to ${idToChain(chain.id)?.name || 'the correct chain'}` : undefined}
         />
         <Modal
           formal
@@ -240,7 +241,8 @@ export default function Vouch({
               label="VOUCH"
               className="mt-4"
               isLoading={isPending}
-              disabled={isPending}
+              disabled={isPending || isReconciling}
+              tooltip={isReconciling ? "Wait for the current request update to finish indexing" : undefined}
               variant="primary"
             />
             <span
@@ -250,11 +252,11 @@ export default function Vouch({
                   : "cursor-pointer"
               }`}
               onClick={() => {
-                if (isOnchainLoading) return;
+                if (isOnchainLoading || isReconciling) return;
                 addVouch();
               }}
-              aria-disabled={isOnchainLoading}
-              aria-busy={isOnchainLoading}
+              aria-disabled={isOnchainLoading || isReconciling}
+              aria-busy={isOnchainLoading || isReconciling}
             >
               or vouch on chain
             </span>

@@ -104,6 +104,7 @@ export default function ActionBar({
   const effectiveOffChainVouches = effective.offChainVouches;
   const effectiveLastStatusChange = effective.lastStatusChange;
   const effectiveRevocation = effective.revocation;
+  const isReconciling = pendingAction !== null;
   const hasChallengeReason =
     !!currentChallenge && !revocation && currentChallenge.reason.id !== "none";
 
@@ -387,13 +388,15 @@ export default function ActionBar({
                         />
                       )}
                       <ActionButton
-                        disabled={isWithdrawPrepareError || userChainId !== chain.id}
+                        disabled={isReconciling || isWithdrawPrepareError || userChainId !== chain.id}
                         isLoading={isWithdrawLoading}
                         onClick={withdraw}
                         variant="secondary"
                         label={isWithdrawLoading ? "Withdrawing" : "Withdraw"}
                         tooltip={
-                          isWithdrawPrepareError
+                          isReconciling
+                            ? "Wait for the current request update to finish indexing"
+                            : isWithdrawPrepareError
                             ? "Withdraw not possible, please try again"
                             : userChainId !== chain.id
                               ? `Switch your chain above to ${idToChain(chain.id)?.name || 'the correct chain'}`
@@ -488,12 +491,12 @@ export default function ActionBar({
             <div className="flex justify-center gap-4 md:justify-start">
               {requester.toLocaleLowerCase() === address?.toLowerCase() ? (
                 <ActionButton
-                  disabled={isWithdrawPrepareError || userChainId !== chain.id}
+                  disabled={isReconciling || isWithdrawPrepareError || userChainId !== chain.id}
                   isLoading={isWithdrawLoading}
                   onClick={withdraw}
                   variant="secondary"
                   label={"Withdraw"}
-                  tooltip={isWithdrawPrepareError ? "Withdraw not possible, please try again" : userChainId !== chain.id ? `Switch your chain above to ${idToChain(chain.id)?.name || 'the correct chain'}` : undefined}
+                  tooltip={isReconciling ? "Wait for the current request update to finish indexing" : isWithdrawPrepareError ? "Withdraw not possible, please try again" : userChainId !== chain.id ? `Switch your chain above to ${idToChain(chain.id)?.name || 'the correct chain'}` : undefined}
                   className="mb-2 w-auto"
                 />
               ) : !didIVouchFor ? (
@@ -515,11 +518,11 @@ export default function ActionBar({
                 />
               ) : null}
               <ActionButton
-                disabled={isAdvancePrepareError || userChainId !== chain.id}
+                disabled={isReconciling || isAdvancePrepareError || userChainId !== chain.id}
                 isLoading={isAdvanceLoading}
                 onClick={advanceFire}
                 label={isAdvanceLoading ? "Advancing" : "Advance"}
-                tooltip={isAdvancePrepareError ? "Advance not possible, please try again" : userChainId !== chain.id ? `Switch your chain above to ${idToChain(chain.id)?.name || 'the correct chain'}` : undefined}
+                tooltip={isReconciling ? "Wait for the current request update to finish indexing" : isAdvancePrepareError ? "Advance not possible, please try again" : userChainId !== chain.id ? `Switch your chain above to ${idToChain(chain.id)?.name || 'the correct chain'}` : undefined}
                 className="mb-2 w-auto"
               />
             </div>
@@ -532,11 +535,11 @@ export default function ActionBar({
             </span>
             <div className="flex flex-col items-center justify-between gap-4 font-normal md:flex-row md:items-center">
               <ActionButton
-                disabled={isExecutePrepareError || userChainId !== chain.id}
+                disabled={isReconciling || isExecutePrepareError || userChainId !== chain.id}
                 isLoading={isExecuteLoading}
                 onClick={execute}
                 label={isExecuteLoading ? "Executing" : "Execute"}
-                tooltip={isExecutePrepareError ? "Execute not possible, please try again" : userChainId !== chain.id ? `Switch your chain above to ${idToChain(chain.id)?.name || 'the correct chain'}` : undefined}
+                tooltip={isReconciling ? "Wait for the current request update to finish indexing" : isExecutePrepareError ? "Execute not possible, please try again" : userChainId !== chain.id ? `Switch your chain above to ${idToChain(chain.id)?.name || 'the correct chain'}` : undefined}
                 className="mb-2 w-auto"
               />
             </div>

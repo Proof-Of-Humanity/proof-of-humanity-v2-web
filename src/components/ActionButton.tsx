@@ -6,7 +6,7 @@ export type ActionButtonVariant = 'primary' | 'secondary';
 
 export interface ActionButtonProps {
   onClick: () => void;
-  label: string;
+  label: React.ReactNode;
   disabled?: boolean;
   isLoading?: boolean;
   ariaLabel?: string;
@@ -41,10 +41,11 @@ const ActionButton = React.forwardRef<HTMLButtonElement, ActionButtonProps>(
   ) => {
     const mergedButtonClasses = twMerge(
       buttonStyles[variant],
-      buttonBaseClass
+      buttonBaseClass,
+      className,
     );
 
-    const mergedWrapperClasses = twMerge("relative group w-full md:w-fit", className);
+    const mergedWrapperClasses = "relative group w-full md:w-fit";
 
     const buttonContent = (
       <>
@@ -65,8 +66,8 @@ const ActionButton = React.forwardRef<HTMLButtonElement, ActionButtonProps>(
       <button
         ref={ref}
         onClick={onClick}
-        aria-label={ariaLabel || label}
-        className={tooltip ? mergedButtonClasses : twMerge(mergedButtonClasses, className)}
+        aria-label={ariaLabel || (typeof label === "string" ? label : undefined)}
+        className={mergedButtonClasses}
         disabled={disabled || isLoading}
       >
         {buttonContent}

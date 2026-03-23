@@ -22,6 +22,7 @@ import usePoHWrite from "contracts/hooks/usePoHWrite";
 import { RequestQuery } from "generated/graphql";
 import { useLoading } from "hooks/useLoading";
 import Image from "next/image";
+import { useRequestOptimistic } from "optimistic/request";
 import { useMemo, useRef, useState } from "react";
 import { toast } from "react-toastify";
 import { RequestStatus } from "utils/status";
@@ -41,6 +42,7 @@ interface SideFundingProps {
   chainId: SupportedChainId;
   loosingSideHasEnd: boolean;
   onSuccess?: () => void;
+  disabled?: boolean;
 }
 
 const SideFunding: React.FC<SideFundingProps> = ({
@@ -54,6 +56,7 @@ const SideFunding: React.FC<SideFundingProps> = ({
   chainId,
   loosingSideHasEnd,
   onSuccess,
+  disabled = false,
 }) => {
   const userChainId = useChainId();
   const title = side === SideEnum.claimer ? "Claimer" : "Challenger";
@@ -118,9 +121,9 @@ const SideFunding: React.FC<SideFundingProps> = ({
             });
           }}
           label="Fund"
-          disabled={!contributor || errorRef.current || loosingSideHasEnd || userChainId !== chainId}
+          disabled={disabled || !contributor || errorRef.current || loosingSideHasEnd || userChainId !== chainId}
           isLoading={isLoading}
-          tooltip={userChainId !== chainId ? `Switch your chain above to ${idToChain(chainId)?.name || 'the correct chain'}` : undefined}
+          tooltip={disabled ? "Wait for the current request update to finish indexing" : userChainId !== chainId ? `Switch your chain above to ${idToChain(chainId)?.name || 'the correct chain'}` : undefined}
         />
       </div>
       <Progress
@@ -162,6 +165,8 @@ const Appeal: React.FC<AppealProps> = ({
   revocation,
   requestStatus,
 }) => {
+  const { pendingAction } = useRequestOptimistic();
+  const isReconciling = pendingAction !== null;
   const [totalClaimerCost, setTotalClaimerCost] = useState(0n);
   const [totalChallengerCost, setTotalChallengerCost] = useState(0n);
   const [formatedCurrentRuling, setFormatedCurrentRuling] = useState("");
@@ -308,13 +313,14 @@ const Appeal: React.FC<AppealProps> = ({
     !error &&
     !loading ? (
     <>
-      <button onClick={() => setAppealModalOpen(true)} className="
-          btn-sec 
-          py-2
-          rounded
-          w-[150px]
-          md:w-auto
-        ">
+      <ActionButton
+        onClick={() => setAppealModalOpen(true)}
+        disabled={isReconciling}
+        variant="secondary"
+        className="py-2 rounded w-[150px] md:w-auto"
+        tooltip={isReconciling ? "Wait for the current request update to finish indexing" : undefined}
+        ariaLabel="Appeal"
+        label={
           <span className="
             flex 
             items-center
@@ -327,7 +333,8 @@ const Appeal: React.FC<AppealProps> = ({
             <TimeAgo time={parseInt(String(period[1]))} />
             )
           </span>
-        </button>
+        }
+      />
       <Modal
         header={`Appeal case #${disputeId}`}
         open={isAppealModalOpen}
@@ -443,6 +450,7 @@ const Appeal: React.FC<AppealProps> = ({
                 : false
             }
             onSuccess={handleFundSuccess}
+            disabled={isReconciling}
           />
           <SideFunding
             side={SideEnum.challenger}
@@ -459,6 +467,7 @@ const Appeal: React.FC<AppealProps> = ({
                 : false
             }
             onSuccess={handleFundSuccess}
+            disabled={isReconciling}
           />
         </div>
         </div>

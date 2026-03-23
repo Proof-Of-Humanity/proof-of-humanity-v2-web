@@ -34,7 +34,7 @@ const FundButton: React.FC<FundButtonProps> = ({
   totalCost,
   funded,
 }) => {
-  const { effective, applyAction } = useRequestOptimistic();
+  const { effective, pendingAction, applyAction } = useRequestOptimistic();
   const chain = useChainParam()!;
   const userChainId = useChainId();
   const [addedFundInput, setAddedFundInput] = useState("");
@@ -97,16 +97,19 @@ const FundButton: React.FC<FundButtonProps> = ({
   }, [inputAmount, balanceData, addedFundInput]);
 
   const exceedsRemaining = inputAmount != null && inputAmount > remainingAmount;
+  const isReconciling = pendingAction !== null;
   
   const isDisabled =
     !isConnected ||
     !addedFundInput ||
     isLoading ||
+    isReconciling ||
     userChainId !== chain.id ||
     exceedsRemaining ||
     insufficientFunds;
 
   const getTooltipMessage = () => {
+    if (isReconciling) return "Wait for the current request update to finish indexing";
     if (!isConnected) return "Please connect your wallet";
     if (userChainId !== chain.id) return `Switch your chain above to ${idToChain(chain.id)?.name || 'the correct chain'}`;
     if (!addedFundInput) return "Please enter an amount to fund";
@@ -122,8 +125,8 @@ const FundButton: React.FC<FundButtonProps> = ({
         onClick={() => setIsModalOpen(true)}
         label="Fund"
         className="mb-2 w-auto"
-        disabled={userChainId !== chain.id}
-        tooltip={userChainId !== chain.id ? `Switch your chain above to ${idToChain(chain.id)?.name || 'the correct chain'}` : undefined}
+        disabled={isReconciling || userChainId !== chain.id}
+        tooltip={isReconciling ? "Wait for the current request update to finish indexing" : userChainId !== chain.id ? `Switch your chain above to ${idToChain(chain.id)?.name || 'the correct chain'}` : undefined}
       />
       <Modal
         formal

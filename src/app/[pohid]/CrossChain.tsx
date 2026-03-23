@@ -1,6 +1,7 @@
 "use client";
 
 import ChainLogo from "components/ChainLogo";
+import ActionButton from "components/ActionButton";
 import Modal from "components/Modal";
 import TimeAgo from "components/TimeAgo";
 import LoadingSpinner from "components/Integrations/Circles/LoadingSpinner";
@@ -328,6 +329,7 @@ export default function CrossChain({
     {} as RelayUpdateParams,
   );
   const effectiveWinningStatus = effective.winningStatus;
+  const isReconciling = pendingAction !== null;
   const hasPendingCrossChainState =
     effective.pendingUpdate ||
     effectiveWinningStatus === "transferring" ||
@@ -755,12 +757,14 @@ export default function CrossChain({
         effectiveWinningStatus !== "transferred" &&
         (
           <>
-            <button 
-              className="text-sky-500" 
+            <ActionButton 
               onClick={() => setIsTransferModalOpen(true)}
-            >
-              Transfer
-            </button>
+              label="Transfer"
+              disabled={isReconciling}
+              tooltip={isReconciling ? "Wait for the current profile update to finish indexing" : undefined}
+              variant="secondary"
+              className="text-sky-500 !border-0 !rounded-none !px-0 !py-0 !font-normal"
+            />
             <Modal
               formal
               open={isTransferModalOpen}
@@ -795,12 +799,14 @@ export default function CrossChain({
         !effective.pendingUpdate &&
         (!pendingRelayUpdate || !pendingRelayUpdate.encodedData) && (
           <>
-            <button 
-              className="text-sky-500"
+            <ActionButton 
               onClick={() => setIsUpdateModalOpen(true)}
-            >
-              Update state
-            </button>
+              label="Update state"
+              disabled={isReconciling}
+              tooltip={isReconciling ? "Wait for the current profile update to finish indexing" : undefined}
+              variant="secondary"
+              className="text-sky-500 !border-0 !rounded-none !px-0 !py-0 !font-normal"
+            />
             <Modal
               formal
               open={isUpdateModalOpen}

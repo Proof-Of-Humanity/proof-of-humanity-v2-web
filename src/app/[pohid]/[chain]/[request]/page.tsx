@@ -137,6 +137,13 @@ export default async function Request({ params }: PageProps) {
         : null;
   }
 
+  const displayedClaimerId =
+    request.revocation && request.humanity.registration?.claimer.id
+      ? (request.humanity.registration.claimer.id as Address)
+      : (request.claimer.id as Address);
+  const displayedClaimerName =
+    registrationFile?.name || request.claimer.name || "";
+
   interface VouchData {
     voucher: Address | undefined;
     name: string | null | undefined;
@@ -359,8 +366,7 @@ export default async function Request({ params }: PageProps) {
               )}
 
               <span className="text-primaryText mb-12 mt-4 text-2xl">
-                {/* {request.claimer.name} */}
-                {registrationFile ? registrationFile.name : ""}
+                {displayedClaimerName}
               </span>
 
               <span className="text-secondaryText text-sm font-light">
@@ -376,14 +382,14 @@ export default async function Request({ params }: PageProps) {
           <div className="flex w-full flex-col p-[24px] lg:p-[32px]">
             <div className="mb-8 flex flex-col-reverse items-center justify-between md:items-stretch md:flex-row">
               <div className="flex w-full flex-col items-center md:w-auto md:flex-row md:items-center md:justify-start">
-                <Identicon diameter={24} address={request.claimer.id} />
+                <Identicon diameter={24} address={displayedClaimerId} />
                 <ExternalLink
                   className="mt-1 text-center font-semibold text-slate-400 hover:text-slate-600 md:ml-2 md:mt-0 md:text-left"
-                  href={explorerLink(request.claimer.id, chain)}
+                  href={explorerLink(displayedClaimerId, chain)}
                 >
-                  {request.claimer.id.slice(0, 20)}
+                  {displayedClaimerId.slice(0, 20)}
                   <wbr />
-                  {request.claimer.id.slice(20)}
+                  {displayedClaimerId.slice(20)}
                 </ExternalLink>
               </div>
               <span className="text-primaryText flex items-center justify-center md:justify-start mb-2 md:mb-0">
@@ -438,7 +444,7 @@ export default async function Request({ params }: PageProps) {
               )}
 
               <span className="text-primaryText mb-[16px] mt-4 text-2xl">
-                {request.claimer.name}
+                {displayedClaimerName}
               </span>
 
               <span className="text-secondaryText mb-[32px] text-sm font-light">

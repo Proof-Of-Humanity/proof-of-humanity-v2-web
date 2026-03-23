@@ -53,8 +53,9 @@ export default function RemoveVouch({
   tooltip,
 }: RemoveVouchProps) {
   const loading = useLoading();
-  const { effective, applyAction } = useRequestOptimistic();
+  const { effective, pendingAction, applyAction } = useRequestOptimistic();
   const { address } = useAccount();
+  const isReconciling = pendingAction !== null;
 
   const [prepareRemoveVouch, removeOnchainVouch, status] = usePoHWrite(
     "removeVouch",
@@ -97,8 +98,8 @@ export default function RemoveVouch({
           label="Remove Vouch"
           className="mb-2 w-auto"
           isLoading={status.write === "pending"}
-          disabled={status.write === "pending" || disabled || userChainId !== chain.id}
-          tooltip={tooltip || (userChainId !== chain.id ? `Switch your chain above to ${idToChain(chain.id)?.name || 'the correct chain'}` : undefined)}
+          disabled={status.write === "pending" || isReconciling || disabled || userChainId !== chain.id}
+          tooltip={isReconciling ? "Wait for the current request update to finish indexing" : tooltip || (userChainId !== chain.id ? `Switch your chain above to ${idToChain(chain.id)?.name || 'the correct chain'}` : undefined)}
         />
       </div>
     )

@@ -128,10 +128,11 @@ export default function Challenge({
   usedReasons = [],
 }: ChallengeInterface) {
   const { uploadFile } = useAtlasProvider();
-  const { applyAction } = useRequestOptimistic();
+  const { pendingAction, applyAction } = useRequestOptimistic();
   const chain = useChainParam()!;
   const userChainId = useChainId();
   const [isOpen, setIsOpen] = useState(false);
+  const isReconciling = pendingAction !== null;
   
   const loading = useLoading();
   const [isLoading, loadingMessage] = loading.use();
@@ -238,8 +239,8 @@ export default function Challenge({
       <ActionButton
         onClick={() => setIsOpen(true)}
         label="Challenge"
-        disabled={userChainId !== chain.id}
-        tooltip={userChainId !== chain.id ? `Switch your chain above to ${idToChain(chain.id)?.name || 'the correct chain'}` : undefined}
+        disabled={isReconciling || userChainId !== chain.id}
+        tooltip={isReconciling ? "Wait for the current request update to finish indexing" : userChainId !== chain.id ? `Switch your chain above to ${idToChain(chain.id)?.name || 'the correct chain'}` : undefined}
       />
       <Modal
         formal
@@ -293,13 +294,13 @@ export default function Challenge({
             {...{
               disabled:
                 (!revocation
-                  ? !justification || reason === "none" || userChainId !== chain.id
-                  : !justification || userChainId !== chain.id),
+                  ? !justification || reason === "none" || isReconciling || userChainId !== chain.id
+                  : !justification || isReconciling || userChainId !== chain.id),
               className: "mt-12",
               onClick: submit,
               isLoading,
               label: loadingMessage || "Challenge request",
-              tooltip: userChainId !== chain.id ? `Switch your chain above to ${idToChain(chain.id)?.name || 'the correct chain'}` : undefined,
+              tooltip: isReconciling ? "Wait for the current request update to finish indexing" : userChainId !== chain.id ? `Switch your chain above to ${idToChain(chain.id)?.name || 'the correct chain'}` : undefined,
             }}
           />
         </AuthGuard>

@@ -44,6 +44,7 @@ export default function Revoke({
   arbitrationInfo,
 }: RevokeProps) {
   const { effective, pendingAction, applyAction } = useProfileOptimistic();
+  const isReconciling = pendingAction !== null;
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [file, setFile] = useState<File | null>(null);
@@ -162,12 +163,13 @@ export default function Revoke({
         </span>
       )}
       {!effective.pendingRevocation ? (
-        <button
+        <ActionButton
           onClick={() => setModalOpen(true)}
-          className="btn-main mb-4"
-        >
-          Revoke
-        </button>
+          label="Revoke"
+          className="mb-4"
+          disabled={isReconciling}
+          tooltip={isReconciling ? "Wait for the current profile update to finish indexing" : undefined}
+        />
       ) : null}
       <Modal
         formal
@@ -221,11 +223,12 @@ export default function Revoke({
 
           <AuthGuard signInButtonProps={{ className: "mt-12 px-5 py-2" }}>
             <ActionButton
-              disabled={pending}
+              disabled={pending || isReconciling}
               isLoading={pending}
               className="mt-12"
               onClick={submit}
               label={loadingMessage || "Revoke"}
+              tooltip={isReconciling ? "Wait for the current profile update to finish indexing" : undefined}
             />
           </AuthGuard>
         </div>
