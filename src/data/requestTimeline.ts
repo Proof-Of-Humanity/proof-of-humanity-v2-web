@@ -154,6 +154,17 @@ const getProfileRequestTimelineItem = (
         href: requestHref,
         requestIndex: Number(request.index),
       };
+    case RequestStatus.REJECTED_REVOCATION:
+      return {
+        id: requestTimelineId,
+        kind: "verified",
+        title: "Removal rejected",
+        timestamp:
+          Number(request.lastStatusChange) || Number(request.creationTime),
+        chainId: request.chainId,
+        href: requestHref,
+        requestIndex: Number(request.index),
+      };
     case RequestStatus.REJECTED:
       return {
         id: requestTimelineId,
@@ -366,8 +377,8 @@ const createEventTimelineItems = async (
           if (!isRelevantRequestEvent) return [];
           return [
             toTimelineItem({
-              kind: "rejected",
-              title: "Rejected",
+              kind: event.revocation ? "verified" : "rejected",
+              title: event.revocation ? "Removal rejected" : "Rejected",
             }),
           ];
         case "REQUEST_WITHDRAWN":

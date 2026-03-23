@@ -617,6 +617,8 @@ export default function ActionBar({
           <span className="text-center md:text-left">
             {effectiveRequestStatus === RequestStatus.EXPIRED ?
               "Request has expired" :
+              effectiveRequestStatus === RequestStatus.REJECTED_REVOCATION ?
+                "Removal request was rejected" :
               effectiveRequestStatus === RequestStatus.REJECTED ?
                 "Request was rejected" : "Request was accepted"}
             <TimeAgo

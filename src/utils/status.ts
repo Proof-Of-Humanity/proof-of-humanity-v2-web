@@ -9,6 +9,7 @@ export enum RequestStatus {
   DISPUTED_REVOCATION = "DISPUTED_REVOCATION",
   RESOLVED_CLAIM = "RESOLVED_CLAIM",
   RESOLVED_REVOCATION = "RESOLVED_REVOCATION",
+  REJECTED_REVOCATION = "REJECTED_REVOCATION",
   REJECTED = "REJECTED", 
   EXPIRED = "EXPIRED",
   WITHDRAWN = "WITHDRAWN",
@@ -103,11 +104,25 @@ const STATUS_CONFIG: Record<RequestStatus, StatusConfig> = {
       winnerParty_: { id: "requester" }
     }
   },
+  [RequestStatus.REJECTED_REVOCATION]: {
+    baseLabel: "Removal Rejected",
+    tooltip: "Revocation request lost; profile remains verified.",
+    color: STATUS_COLORS.registered,
+    filter: {
+      status: "resolved",
+      revocation: true,
+      winnerParty_: { id_not: "requester" }
+    }
+  },
   [RequestStatus.REJECTED]: {
     baseLabel: "Rejected",
     tooltip: "Request was rejected after being challenged.",
     color: STATUS_COLORS.rejected,
-    filter: { status: "resolved", winnerParty_: { id_not: "requester" } }
+    filter: {
+      status: "resolved",
+      revocation: false,
+      winnerParty_: { id_not: "requester" }
+    }
   },
   [RequestStatus.EXPIRED]: {
     baseLabel: "Expired", 
@@ -171,6 +186,13 @@ export const STATUS_FILTER_OPTIONS = Object.values(RequestStatus).filter(
 
 const isRejectedRequest = (request: RawRequestData): boolean => {
   return request.status.id === "resolved" &&
+    !request.revocation &&
+    request.winnerParty?.id !== "requester";
+};
+
+const isRejectedRevocationRequest = (request: RawRequestData): boolean => {
+  return request.status.id === "resolved" &&
+    request.revocation &&
     request.winnerParty?.id !== "requester";
 };
 
@@ -182,13 +204,18 @@ export const getDisputedRequestStatus = (revocation: boolean): RequestStatus =>
 
 export const getResolvedRequestStatus = ({
   revocation = false,
+  revocationRejected = false,
   expired = false,
   rejected = false,
 }: {
   revocation?: boolean;
+  revocationRejected?: boolean;
   expired?: boolean;
   rejected?: boolean;
 }): RequestStatus => {
+  if (revocationRejected) {
+    return RequestStatus.REJECTED_REVOCATION;
+  }
   if (rejected) {
     return RequestStatus.REJECTED;
   }
@@ -205,8 +232,8 @@ export const getRequestStatusFromState = (
   status: string,
   revocation: boolean = false,
   expired: boolean = false,
+  revocationRejected: boolean = false,
   rejected: boolean = false,
-  winnerPartyId?: string | null,
 ): RequestStatus => {
   switch (status) {
     case "vouching":
@@ -221,6 +248,7 @@ export const getRequestStatusFromState = (
     case "resolved":
       return getResolvedRequestStatus({
         revocation,
+        revocationRejected,
         expired,
         rejected,
       });
@@ -269,14 +297,15 @@ export const getStatus = (
     },
     contractData,
   );
+  const revocationRejected = isRejectedRevocationRequest(request);
   const rejected = isRejectedRequest(request);
 
   return getRequestStatusFromState(
     request.status.id,
     request.revocation,
     expired,
+    revocationRejected,
     rejected,
-    request.winnerParty?.id,
   );
 };
 
