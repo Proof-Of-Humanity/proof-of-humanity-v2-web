@@ -305,7 +305,10 @@ export default async function Request({ params }: PageProps) {
   //const policyUpdate = request.arbitratorHistory.updateTime;
 
   return (
-    <RequestOptimisticProvider base={optimisticBase}>
+    <RequestOptimisticProvider
+      base={optimisticBase}
+      storageKey={`request:${pohId}:${chain.id}:${request.index}`}
+    >
       <div className="content mx-auto flex w-[92vw] sm:w-[84vw] max-w-[1500px] flex-col justify-center font-semibold md:w-[76vw]">
       <ActionBar
         arbitrationCost={arbitrationCost}

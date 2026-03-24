@@ -2,11 +2,17 @@
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
+import { useAccount } from "wagmi";
 import type {
   ProfileOptimisticBase,
   ProfileOptimisticOverlay,
   ProfilePendingAction,
 } from "./types";
+import {
+  clearOptimisticState,
+  loadOptimisticState,
+  persistOptimisticState,
+} from "./persistence";
 
 const OVERLAY_TTL_MS = 5 * 60 * 1000;
 const REFRESH_INTERVAL_MS = 2000;
@@ -24,8 +30,34 @@ interface ProfileOptimisticContextValue {
   clearAction: () => void;
 }
 
+type ProfileOptimisticState = {
+  overlay: ProfileOptimisticOverlay | null;
+  pendingAction: ProfilePendingAction | null;
+};
+
 const ProfileOptimisticContext =
   createContext<ProfileOptimisticContextValue | null>(null);
+
+const PROFILE_RECONCILE_CONFIG = {
+  revoke: {
+    overlayKey: "pendingRevocation",
+    isReconciled: (
+      base: ProfileOptimisticBase,
+      overlay: ProfileOptimisticOverlay,
+    ) =>
+      overlay.pendingRevocation !== undefined &&
+      base.pendingRevocation === overlay.pendingRevocation,
+  },
+  transfer: {
+    overlayKey: "winningStatus",
+    isReconciled: (
+      base: ProfileOptimisticBase,
+      overlay: ProfileOptimisticOverlay,
+    ) =>
+      overlay.winningStatus !== undefined &&
+      base.winningStatus === overlay.winningStatus,
+  },
+} as const;
 
 const mergeProfile = (
   base: ProfileOptimisticBase,
@@ -43,98 +75,142 @@ const isProfileActionReconciled = (
 ) => {
   if (!overlay || !pendingAction) return false;
 
-  switch (pendingAction) {
-    case "revoke":
-      return (
-        overlay.pendingRevocation !== undefined &&
-        base.pendingRevocation === overlay.pendingRevocation
-      );
-    case "transfer":
-      return (
-        overlay.winningStatus !== undefined &&
-        base.winningStatus === overlay.winningStatus
-      );
-    case "update":
-      return false;
-    default:
-      return false;
-  }
+  if (pendingAction === "update") return false;
+
+  return PROFILE_RECONCILE_CONFIG[pendingAction].isReconciled(base, overlay);
+};
+
+const clearReconciledProfileOverlay = (
+  overlay: ProfileOptimisticOverlay | null,
+  pendingAction: ProfilePendingAction | null,
+) => {
+  if (!overlay || !pendingAction || pendingAction === "update") return overlay;
+
+  const next = { ...overlay };
+  delete next[PROFILE_RECONCILE_CONFIG[pendingAction].overlayKey];
+
+  return Object.keys(next).length ? next : null;
+};
+
+const getInitialProfileState = (
+  scopedStorageKey?: string,
+): ProfileOptimisticState => {
+  const persisted = loadOptimisticState<
+    ProfilePendingAction,
+    ProfileOptimisticOverlay
+  >(scopedStorageKey);
+
+  return {
+    overlay: persisted?.overlay ?? null,
+    pendingAction: persisted?.pendingAction ?? null,
+  };
 };
 
 export function ProfileOptimisticProvider({
   base,
   enablePolling = true,
+  storageKey,
+  account,
   children,
 }: {
   base: ProfileOptimisticBase;
   enablePolling?: boolean;
+  storageKey?: string;
+  account?: string;
+  children: ReactNode;
+}) {
+  const { address } = useAccount();
+  const normalizedAccount = (account ?? address)?.toLowerCase();
+  const scopedStorageKey =
+    storageKey && normalizedAccount
+      ? `${storageKey}:${normalizedAccount}`
+      : undefined;
+
+  return (
+    <ProfileOptimisticProviderInner
+      key={scopedStorageKey ?? "profile-optimistic-local"}
+      base={base}
+      enablePolling={enablePolling}
+      scopedStorageKey={scopedStorageKey}
+    >
+      {children}
+    </ProfileOptimisticProviderInner>
+  );
+}
+
+function ProfileOptimisticProviderInner({
+  base,
+  enablePolling,
+  scopedStorageKey,
+  children,
+}: {
+  base: ProfileOptimisticBase;
+  enablePolling: boolean;
+  scopedStorageKey?: string;
   children: ReactNode;
 }) {
   const router = useRouter();
-  const [overlay, setOverlay] = useState<ProfileOptimisticOverlay | null>(null);
-  const [pendingAction, setPendingAction] = useState<ProfilePendingAction | null>(
-    null,
+  const [{ overlay, pendingAction }, setOptimisticState] =
+    useState<ProfileOptimisticState>(() => getInitialProfileState(scopedStorageKey));
+
+  const clearActiveState = useCallback(() => {
+    setOptimisticState({
+      overlay: null,
+      pendingAction: null,
+    });
+    clearOptimisticState(scopedStorageKey);
+  }, [scopedStorageKey]);
+
+  const applyAction = useCallback(
+    (action: ProfilePendingAction, patch: ProfileOptimisticOverlay) => {
+      setOptimisticState({
+        overlay: patch,
+        pendingAction: action,
+      });
+      persistOptimisticState({
+        storageKey: scopedStorageKey,
+        pendingAction: action,
+        overlay: patch,
+        ttlMs: OVERLAY_TTL_MS,
+      });
+    },
+    [scopedStorageKey],
   );
 
   const effective = useMemo(() => mergeProfile(base, overlay), [base, overlay]);
   const hasActiveAction = pendingAction !== null;
+  const hasPendingOverlay = hasActiveAction || !!overlay?.pendingUpdate;
 
   useEffect(() => {
     if (!isProfileActionReconciled(base, overlay, pendingAction)) return;
 
-    setOverlay((current) => {
-      if (!current) return null;
-
-      if (pendingAction === "revoke") {
-        const next = { ...current };
-        delete next.pendingRevocation;
-        return Object.keys(next).length ? next : null;
-      }
-
-      if (pendingAction === "transfer") {
-        const next = { ...current };
-        delete next.winningStatus;
-        return Object.keys(next).length ? next : null;
-      }
-
-      return current;
-    });
-    setPendingAction(null);
-  }, [base, overlay, pendingAction]);
+    setOptimisticState((current) => ({
+      overlay: clearReconciledProfileOverlay(
+        current.overlay,
+        current.pendingAction,
+      ),
+      pendingAction: null,
+    }));
+    clearOptimisticState(scopedStorageKey);
+  }, [base, overlay, pendingAction, scopedStorageKey]);
 
   useEffect(() => {
-    if (!hasActiveAction && !overlay?.pendingUpdate) return;
+    if (!hasPendingOverlay) return;
 
-    const timeoutId = window.setTimeout(() => {
-      setOverlay(null);
-      setPendingAction(null);
-    }, OVERLAY_TTL_MS);
+    const timeoutId = window.setTimeout(clearActiveState, OVERLAY_TTL_MS);
 
     return () => window.clearTimeout(timeoutId);
-  }, [hasActiveAction, overlay]);
+  }, [hasPendingOverlay, clearActiveState]);
 
   useEffect(() => {
-    if (!enablePolling || (!hasActiveAction && !overlay?.pendingUpdate)) return;
+    if (!enablePolling || !hasPendingOverlay) return;
 
     const intervalId = window.setInterval(() => {
       router.refresh();
     }, REFRESH_INTERVAL_MS);
 
     return () => window.clearInterval(intervalId);
-  }, [enablePolling, hasActiveAction, overlay, router]);
-
-  const applyAction = useCallback(
-    (action: ProfilePendingAction, patch: ProfileOptimisticOverlay) => {
-      setPendingAction(action);
-      setOverlay(patch);
-    },
-    [],
-  );
-
-  const clearAction = useCallback(() => {
-    setOverlay(null);
-    setPendingAction(null);
-  }, []);
+  }, [enablePolling, hasPendingOverlay, router]);
 
   const value = useMemo(
     () => ({
@@ -142,9 +218,9 @@ export function ProfileOptimisticProvider({
       effective,
       pendingAction,
       applyAction,
-      clearAction,
+      clearAction: clearActiveState,
     }),
-    [base, effective, pendingAction, applyAction, clearAction],
+    [base, effective, pendingAction, applyAction, clearActiveState],
   );
 
   return (

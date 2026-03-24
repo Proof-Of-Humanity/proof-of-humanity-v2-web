@@ -351,6 +351,7 @@ async function Profile({ params: { pohid } }: PageProps) {
                 winningStatus: winnerClaimData.status,
                 pendingRevocation,
               }}
+              storageKey={`profile:${pohId}`}
             >
               <Revoke
                 pohId={pohId}
@@ -379,6 +380,7 @@ async function Profile({ params: { pohid } }: PageProps) {
               winningStatus: "transferred",
               pendingRevocation: false,
             }}
+            storageKey={`profile:${pohId}`}
           >
             <CrossChain
               claimer={
