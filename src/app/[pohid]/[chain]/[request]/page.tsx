@@ -73,6 +73,28 @@ export default async function Request({ params }: PageProps) {
     contractData.arbitrationInfo.extraData,
   );
   const requestStatus = getStatus(request, contractData);
+  const sourceWinningEvidence =
+    requestStatus === "TRANSFERRED" || requestStatus === "TRANSFERRING"
+      ? request.humanity.winnerClaim.at(0)?.evidenceGroup.evidence
+      : undefined;
+  const displayEvidence =
+    sourceWinningEvidence && sourceWinningEvidence.length > 0
+      ? sourceWinningEvidence
+      : request.evidenceGroup.evidence;
+  const displayEvidenceList =
+    sourceWinningEvidence && sourceWinningEvidence.length > 0
+      ? sourceWinningEvidence.map((item, index) => ({
+          id: `${request.id}-winner-claim-${index}`,
+          uri: item.uri,
+          creationTime: Number(request.lastStatusChange || request.creationTime),
+          submitter: request.requester as Address,
+        }))
+      : request.evidenceGroup.evidence.map((item) => ({
+          id: item.id,
+          uri: item.uri,
+          creationTime: Number(item.creationTime),
+          submitter: item.submitter as Address,
+        }));
 
   let onChainVouches: Array<Address> = [];
   const fetchedOffChainVouches: OffChainVouch[] = await getOffChainVouches(
@@ -125,10 +147,8 @@ export default async function Request({ params }: PageProps) {
         : null;
   } else {
     const registrationEvidence =
-      request.evidenceGroup.evidence.length > 0
-        ? await ipfsFetch<EvidenceFile>(
-          request.evidenceGroup.evidence.at(-1)!.uri,
-        )
+      displayEvidence.length > 0
+        ? await ipfsFetch<EvidenceFile>(displayEvidence.at(-1)!.uri)
         : null;
 
     registrationFile =
@@ -293,12 +313,7 @@ export default async function Request({ params }: PageProps) {
     validVouches,
     onChainVouches,
     offChainVouches,
-    evidenceList: request.evidenceGroup.evidence.map((item) => ({
-      id: item.id,
-      uri: item.uri,
-      creationTime: Number(item.creationTime),
-      submitter: item.submitter as Address,
-    })),
+    evidenceList: displayEvidenceList,
     revocation: request.revocation,
   };
 

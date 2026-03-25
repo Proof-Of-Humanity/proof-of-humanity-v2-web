@@ -30,6 +30,6 @@ export const getHumanityData = cache(async (pohId: Hash) => {
     (acc, chain, i) => ({ ...acc, [chain.id]: res[i] }),
     {} as Record<SupportedChainId, HumanityQuery>,
   );
-  sanitizeHumanityRequests(out);
+  await sanitizeHumanityRequests(out);
   return out;
 });

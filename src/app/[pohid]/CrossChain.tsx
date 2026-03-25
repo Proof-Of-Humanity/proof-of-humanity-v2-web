@@ -3,6 +3,7 @@
 import ChainLogo from "components/ChainLogo";
 import Modal from "components/Modal";
 import TimeAgo from "components/TimeAgo";
+import ActionButton from "components/ActionButton";
 import LoadingSpinner from "components/Integrations/Circles/LoadingSpinner";
 import {
   SupportedChain,
@@ -331,15 +332,24 @@ export default function CrossChain({
   const isReconciling = pendingAction !== null;
   const showCrossChainBanner =
     pendingAction === "transfer" || effective.pendingUpdate;
+  const latestTransferTimestamp = Number(lastTransfer?.transferTimestamp || 0);
+  const hasReceivedLatestTransfer =
+    effectiveWinningStatus === "transferred" &&
+    latestTransferTimestamp > 0 &&
+    !!humanity[homeChain.id].crossChainRegistration &&
+    Number(
+      humanity[homeChain.id].crossChainRegistration!.lastReceivedTransferTimestamp,
+    ) >= latestTransferTimestamp;
 
   const [prepareTransfer, , transferStatus] = useCCPoHWrite(
     "transferHumanity",
     useMemo(
       () => ({
         onLoading() {
-          loading.start();
+          loading.start("Transaction pending...");
         },
         onReady(fire) {
+          toast.info("Transaction pending");
           fire();
         },
         onSuccess() {
@@ -347,6 +357,14 @@ export default function CrossChain({
           toast.success("Transfer initiated!");
           loading.stop();
           setIsTransferModalOpen(false);
+        },
+        onError() {
+          toast.error("Transaction failed");
+          loading.stop();
+        },
+        onFail() {
+          toast.error("Simulation failed");
+          loading.stop();
         },
       }),
       [applyAction, loading],
@@ -781,16 +799,17 @@ export default function CrossChain({
                 Transfer your humanity to another chain. If you use a contract
                 wallet make sure it has the same address on both chains.
               </span>
-              <button
-                className="btn-main mt-4"
+              <ActionButton
+                className="mt-4"
+                disabled={hasTransferInFlight}
+                isLoading={hasTransferInFlight}
+                label={loadingMessage || "Transfer"}
                 onClick={() =>
                   prepareTransfer({
                     args: [contractData[homeChain.id].gateways[contractData[homeChain.id].gateways.length - 1].id],
                   })
                 }
-              >
-                Transfer
-              </button>
+              />
               </div>
             </Modal>
           </>
@@ -885,6 +904,7 @@ export default function CrossChain({
         //homeChain?.id === chainId &&
         homeChain &&
         effectiveWinningStatus === "transferred" &&
+        !hasReceivedLatestTransfer &&
         publicClient && (
           <>
             <button 

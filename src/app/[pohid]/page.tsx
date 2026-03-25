@@ -11,6 +11,8 @@ import {
 import { getContractDataAllChains } from "data/contract";
 import { getArbitrationCost } from "data/costs";
 import { getHumanityData } from "data/humanity";
+import { getHumanityEvents } from "data/humanityEvents";
+import { getRequestData } from "data/request";
 import { HumanityQuery } from "generated/graphql";
 import Image from "next/image";
 import Link from "next/link";
@@ -41,8 +43,96 @@ type WinnerClaimRequest = NonNullable<
 type WinnerClaimData = {
   chainId?: SupportedChainId;
   request?: WinnerClaimRequest;
+  requestQuery?: ArrayElement<NonNullable<HumanityQuery["humanity"]>["requests"]>;
   status?: string;
   requestStatus?: RequestStatus;
+};
+
+const getDisplayEvidence = (
+  requestEvidence: { uri: string }[],
+  winnerClaimEvidence?: { uri: string }[],
+) =>
+  winnerClaimEvidence && winnerClaimEvidence.length > 0
+    ? winnerClaimEvidence
+    : requestEvidence;
+
+const resolveTransferDisplaySource = async ({
+  pohId,
+  request,
+  humanity,
+}: {
+  pohId: `0x${string}`;
+  request: PoHRequest;
+  humanity: Record<SupportedChainId, HumanityQuery>;
+}) => {
+  const currentChainWinnerClaim =
+    humanity[request.chainId]?.humanity?.winnerClaim?.at(0)?.evidenceGroup.evidence;
+  const fallback = {
+    claimer: request.claimer,
+    evidence: getDisplayEvidence(
+      request.evidenceGroup.evidence,
+      currentChainWinnerClaim,
+    ),
+  };
+  const events = await getHumanityEvents(pohId);
+  let currentChainId = request.chainId;
+  let currentRequest = await getRequestData(
+    currentChainId,
+    pohId,
+    Number(request.index),
+  );
+
+  if (!currentRequest) {
+    return fallback;
+  }
+
+  while (Number(currentRequest.index) <= -100 && currentRequest.inTransferHash) {
+    const currentTransferHash = currentRequest.inTransferHash.toLowerCase();
+    const parentTransfer = events.find(
+      (event) =>
+        event.type === "TRANSFER_INITIATED" &&
+        event.transferHash?.toLowerCase() === currentTransferHash,
+    );
+
+    if (
+      !parentTransfer ||
+      parentTransfer.requestIndex === null ||
+      parentTransfer.requestIndex === undefined
+    ) {
+      break;
+    }
+
+    const parentRequest = await getRequestData(
+      parentTransfer.chainId,
+      pohId,
+      parentTransfer.requestIndex,
+    );
+
+    if (!parentRequest) {
+      break;
+    }
+
+    currentRequest = parentRequest;
+    currentChainId = parentTransfer.chainId;
+  }
+
+  if (currentRequest.evidenceGroup.evidence.length) {
+    return {
+      claimer: currentRequest.claimer,
+      evidence: currentRequest.evidenceGroup.evidence,
+    };
+  }
+
+  const currentRequestWinnerClaim =
+    humanity[currentChainId]?.humanity?.winnerClaim?.at(0)?.evidenceGroup.evidence;
+
+  return {
+    claimer: currentRequest.claimer,
+    evidence: getDisplayEvidence(
+      currentRequest.evidenceGroup.evidence,
+      currentRequestWinnerClaim,
+    ),
+  };
 };
 
 const isTransferArtifactRequest = (request: {
@@ -84,17 +174,13 @@ async function Profile({ params: { pohid } }: PageProps) {
     )
     : 0n;
 
-  const lastEvidenceChain = homeChain
-    ? supportedChains.sort((chain1, chain2) => {
+  const lastEvidenceChain = [...supportedChains]
+    .filter((chain) => !!humanity[chain.id]?.humanity?.winnerClaim[0])
+    .sort((chain1, chain2) => {
       const req1 = humanity[chain1.id]?.humanity?.winnerClaim[0];
       const req2 = humanity[chain2.id]?.humanity?.winnerClaim[0];
-      return req2
-        ? req1
-          ? Number(req2.resolutionTime) - Number(req1.resolutionTime)
-          : 1
-        : -1;
-    })[0]
-    : null;
+      return Number(req2?.resolutionTime || 0) - Number(req1?.resolutionTime || 0);
+    })[0];
 
   const retrieveWinnerClaimData = (): WinnerClaimData => {
     let chainId;
@@ -102,19 +188,20 @@ async function Profile({ params: { pohid } }: PageProps) {
     let currentRequest;
     let requestQuery;
     let requestStatus;
-    if (homeChain && lastEvidenceChain) {
+    if (lastEvidenceChain) {
       const request = humanity[lastEvidenceChain.id].humanity!.winnerClaim[0];
       if (request) {
         requestQuery = humanity[lastEvidenceChain.id]!.humanity!.requests.find(
           (req) => req.index === request!.index,
         );
+        if (!requestQuery) return {};
         requestStatus = getStatus(
           {
-            status: { id: requestQuery?.status.id || "resolved" },
-            creationTime: requestQuery?.creationTime || 0,
+            status: { id: requestQuery.status.id },
+            creationTime: requestQuery.creationTime,
             expirationTime: requestQuery?.expirationTime,
             index: request.index,
-            revocation: requestQuery!.revocation,
+            revocation: requestQuery.revocation,
             winnerParty: requestQuery?.winnerParty,
           },
           {
@@ -125,15 +212,25 @@ async function Profile({ params: { pohid } }: PageProps) {
         if (requestStatus !== RequestStatus.EXPIRED) {
           chainId = lastEvidenceChain.id;
           currentRequest = request;
-          status = requestQuery?.status.id as string;
+          status = requestQuery.status.id as string;
         }
       }
     }
 
-    return { chainId, request: currentRequest, status, requestStatus };
+    return {
+      chainId,
+      request: currentRequest,
+      requestQuery,
+      status,
+      requestStatus,
+    };
   };
 
   const winnerClaimData = retrieveWinnerClaimData();
+  const hasCurrentWinnerClaim =
+    !!winnerClaimData.request &&
+    !!winnerClaimData.requestQuery &&
+    winnerClaimData.requestStatus !== RequestStatus.EXPIRED;
 
   const allRequests = supportedChains.flatMap((chain) =>
     (humanity[chain.id]?.humanity?.requests ?? []).map((request) => ({
@@ -204,7 +301,7 @@ async function Profile({ params: { pohid } }: PageProps) {
         Number(requestA.lastStatusChange || requestA.creationTime),
     )[0];
 
-  const lastTransferChain = supportedChains.sort((chain1, chain2) => {
+  const lastTransferChain = [...supportedChains].sort((chain1, chain2) => {
     const out1 = humanity[chain1.id]?.outTransfer;
     const out2 = humanity[chain2.id]?.outTransfer;
     return out2
@@ -219,23 +316,60 @@ async function Profile({ params: { pohid } }: PageProps) {
     +humanity[homeChain.id]!.humanity!.registration!.expirationTime -
     Date.now() / 1000 <
     +contractData[homeChain.id].renewalPeriodDuration;
+  const transferWinningStatus =
+    latestTransferArtifact?.status.id === "transferred" ||
+    latestTransferArtifact?.status.id === "transferring"
+      ? latestTransferArtifact.status.id
+      : undefined;
+  const isTransferPendingProfile = !homeChain && !!transferWinningStatus;
+  const currentTransferRequest =
+    isTransferPendingProfile && latestTransferArtifact
+      ? (latestTransferArtifact as PoHRequest)
+      : undefined;
+  const transferDisplaySource = currentTransferRequest
+    ? await resolveTransferDisplaySource({
+        pohId,
+        request: currentTransferRequest,
+        humanity,
+      })
+    : undefined;
+  const transferHomeChain = transferWinningStatus
+    ? idToChain(getForeignChain(lastTransferChain.id))!
+    : undefined;
+  const transferClaimer =
+    (winnerClaimData.requestQuery?.claimer.id ||
+      humanity[transferHomeChain?.id as SupportedChainId]?.crossChainRegistration
+        ?.claimer.id) as `0x${string}` | undefined;
   const profileTimelineDataPromise = getProfileTimelineData(
     pohId,
     profileRequests,
   );
   const profileHeader =
-    homeChain &&
-    winnerClaimData.request &&
-    winnerClaimData.requestStatus !== RequestStatus.EXPIRED
+    currentTransferRequest
       ? {
-          claimer: humanity[homeChain.id]!.humanity!.registration!.claimer,
-          evidence: winnerClaimData.request.evidenceGroup.evidence,
+          claimer: transferDisplaySource?.claimer || currentTransferRequest.claimer,
+          evidence: transferDisplaySource?.evidence || getDisplayEvidence(
+            currentTransferRequest.evidenceGroup.evidence,
+            humanity[currentTransferRequest.chainId]?.humanity?.winnerClaim?.at(0)
+              ?.evidenceGroup.evidence,
+          ),
+          humanityWinnerClaim:
+            humanity[currentTransferRequest.chainId]?.humanity?.winnerClaim ??
+            [],
+          registrationEvidenceRevokedReq:
+            currentTransferRequest.registrationEvidenceRevokedReq,
+          requester: currentTransferRequest.requester,
+          revocation: currentTransferRequest.revocation,
+        }
+      : hasCurrentWinnerClaim
+      ? {
+          claimer: winnerClaimData.requestQuery!.claimer,
+          evidence: winnerClaimData.request!.evidenceGroup.evidence,
           humanityWinnerClaim:
             humanity[winnerClaimData.chainId as SupportedChainId]?.humanity
               ?.winnerClaim ?? [],
           registrationEvidenceRevokedReq: "",
-          requester:
-            humanity[homeChain.id]!.humanity!.registration!.claimer.id,
+          requester: winnerClaimData.requestQuery!.requester,
           revocation: false,
         }
       : latestRequest
@@ -273,8 +407,7 @@ async function Profile({ params: { pohid } }: PageProps) {
           </span>
         </div>
 
-        {homeChain &&
-          winnerClaimData.requestStatus !== RequestStatus.EXPIRED ? (
+        {homeChain && hasCurrentWinnerClaim ? (
           <>
             <div className="mb-2 flex text-emerald-500">
               Claimed by
@@ -302,13 +435,11 @@ async function Profile({ params: { pohid } }: PageProps) {
                 }
               />
             </span>
-            {winnerClaimData.request && homeChain ? (
+            {winnerClaimData.request ? (
               <div className="mt-4 flex items-center justify-center mb-3">
                 <Card
                   chainId={winnerClaimData.chainId as SupportedChainId}
-                  claimer={
-                    humanity[homeChain.id]!.humanity!.registration!.claimer.id
-                  }
+                  claimer={winnerClaimData.requestQuery!.claimer}
                   evidence={winnerClaimData.request.evidenceGroup.evidence}
                   humanity={{
                     id: pohId,
@@ -317,9 +448,7 @@ async function Profile({ params: { pohid } }: PageProps) {
                         .humanity!.winnerClaim,
                   }}
                   index={winnerClaimData.request.index}
-                  requester={
-                    humanity[homeChain.id]!.humanity!.registration!.claimer.id
-                  }
+                  requester={winnerClaimData.requestQuery!.requester}
                   revocation={false}
                   registrationEvidenceRevokedReq={""}
                   requestStatus={winnerClaimData.requestStatus as RequestStatus}
@@ -374,20 +503,52 @@ async function Profile({ params: { pohid } }: PageProps) {
             />
             </ProfileOptimisticProvider>
           </>
-        ) : latestTransferArtifact?.status.id === "transferred" ? (
+        ) : isTransferPendingProfile && transferHomeChain ? (
           <ProfileOptimisticProvider
             base={{
-              winningStatus: "transferred",
+              winningStatus: transferWinningStatus,
               pendingRevocation: false,
             }}
             storageKey={`profile:${pohId}`}
           >
+            {currentTransferRequest ? (
+              <>
+                <span className="text-secondaryText mb-2">
+                  Transfer pending. Showing current transfer request.
+                </span>
+                <div className="mt-4 mb-3 flex items-center justify-center">
+                  <Card
+                    chainId={currentTransferRequest.chainId}
+                    claimer={transferDisplaySource?.claimer || currentTransferRequest.claimer}
+                    evidence={transferDisplaySource?.evidence || getDisplayEvidence(
+                      currentTransferRequest.evidenceGroup.evidence,
+                      humanity[currentTransferRequest.chainId]?.humanity?.winnerClaim?.at(0)
+                        ?.evidenceGroup.evidence,
+                    )}
+                    humanity={{
+                      id: pohId,
+                      registration:
+                        humanity[currentTransferRequest.chainId]?.humanity
+                          ?.registration,
+                      winnerClaim:
+                        humanity[currentTransferRequest.chainId]!.humanity!
+                          .winnerClaim,
+                    }}
+                    index={currentTransferRequest.index}
+                    requester={currentTransferRequest.requester}
+                    revocation={currentTransferRequest.revocation}
+                    registrationEvidenceRevokedReq={
+                      currentTransferRequest.registrationEvidenceRevokedReq
+                    }
+                    requestStatus={currentTransferRequest.requestStatus}
+                  />
+                </div>
+              </>
+            ) : null}
             <CrossChain
-              claimer={
-                humanity[lastTransferChain.id]?.humanity!.registration?.claimer.id
-              }
+              claimer={(transferClaimer || pohId) as `0x${string}`}
               contractData={contractData}
-              homeChain={idToChain(getForeignChain(lastTransferChain.id))!}
+              homeChain={transferHomeChain}
               pohId={pohId}
               humanity={humanity}
               lastTransfer={humanity[lastTransferChain.id].outTransfer}
