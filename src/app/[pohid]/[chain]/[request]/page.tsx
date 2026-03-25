@@ -433,9 +433,9 @@ export default async function Request({ params }: PageProps) {
             </div>
 
             {registrationFile && (
-              <div className="flex w-full justify-center md:justify-start">
+              <div className="w-full">
                 <video
-                  className="mx-auto max-h-72 w-auto max-w-full rounded bg-black object-contain sm:max-h-64 md:mx-0"
+                  className="h-auto w-full rounded bg-black"
                   src={`${ipfs(registrationFile.video)}#t=0.001`}
                   controls
                   playsInline
