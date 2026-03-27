@@ -3494,6 +3494,21 @@ export type MeQueryVariables = Exact<{
 
 export type MeQuery = { __typename?: 'Query', claimer?: { __typename?: 'Claimer', registration?: { __typename?: 'Registration', id: any, expirationTime: any } | null, currentRequest?: { __typename?: 'Request', index: any, status: { __typename?: 'Status', id: string }, humanity: { __typename?: 'Humanity', id: any } } | null } | null };
 
+export type ProfileHumanityQueryVariables = Exact<{
+  id: Scalars['ID'];
+  humanityId: Scalars['Bytes'];
+}>;
+
+
+export type ProfileHumanityQuery = { __typename?: 'Query', humanity?: { __typename?: 'Humanity', registration?: { __typename?: 'Registration', expirationTime: any, claimer: { __typename?: 'Claimer', id: any, name?: string | null } } | null, requests: Array<{ __typename?: 'Request', id: any, creationTime: any, lastStatusChange: any, index: any, revocation: boolean, expirationTime?: any | null, registrationEvidenceRevokedReq: string, requester: any, status: { __typename?: 'Status', id: string }, claimer: { __typename?: 'Claimer', id: any, name?: string | null }, winnerParty?: { __typename?: 'Party', id: string } | null, evidenceGroup: { __typename?: 'EvidenceGroup', evidence: Array<{ __typename?: 'Evidence', uri: string }> } }> } | null, crossChainRegistration?: { __typename?: 'CrossChainRegistration', expirationTime: any, lastReceivedTransferTimestamp: any, claimer: { __typename?: 'Claimer', id: any } } | null, outTransfer?: { __typename?: 'OutTransfer', foreignProxy: any, transferHash: any, transferTimestamp: any } | null, inTransfers: Array<{ __typename?: 'InTransfer', id: any }> };
+
+export type ProfileRequestQueryVariables = Exact<{
+  id: Scalars['ID'];
+}>;
+
+
+export type ProfileRequestQuery = { __typename?: 'Query', request?: { __typename?: 'Request', index: any, inTransferHash?: any | null, revocation: boolean, registrationEvidenceRevokedReq: string, requester: any, claimer: { __typename?: 'Claimer', id: any, name?: string | null }, evidenceGroup: { __typename?: 'EvidenceGroup', evidence: Array<{ __typename?: 'Evidence', uri: string }> } } | null };
+
 export type RegistrationQueryVariables = Exact<{
   id: Scalars['ID'];
 }>;
@@ -3564,7 +3579,7 @@ export const WinnerClaimFragmentDoc = gql`
     index
     resolutionTime
     evidenceGroup {
-      evidence(orderBy: creationTime, first: 1) {
+      evidence(orderBy: creationTime, orderDirection: desc, first: 1) {
         uri
       }
     }
@@ -3808,6 +3823,79 @@ export const MeDocument = gql`
   }
 }
     `;
+export const ProfileHumanityDocument = gql`
+    query ProfileHumanity($id: ID!, $humanityId: Bytes!) {
+  humanity(id: $id) {
+    registration {
+      expirationTime
+      claimer {
+        id
+        name
+      }
+    }
+    requests {
+      id
+      status {
+        id
+      }
+      claimer {
+        id
+        name
+      }
+      winnerParty {
+        id
+      }
+      creationTime
+      lastStatusChange
+      index
+      revocation
+      expirationTime
+      registrationEvidenceRevokedReq
+      requester
+      evidenceGroup {
+        evidence(orderBy: creationTime, orderDirection: desc, first: 1) {
+          uri
+        }
+      }
+    }
+  }
+  crossChainRegistration(id: $id) {
+    claimer {
+      id
+    }
+    expirationTime
+    lastReceivedTransferTimestamp
+  }
+  outTransfer(id: $id) {
+    foreignProxy
+    transferHash
+    transferTimestamp
+  }
+  inTransfers(where: {humanityId: $humanityId}) {
+    id
+  }
+}
+    `;
+export const ProfileRequestDocument = gql`
+    query ProfileRequest($id: ID!) {
+  request(id: $id) {
+    index
+    inTransferHash
+    revocation
+    registrationEvidenceRevokedReq
+    requester
+    claimer {
+      id
+      name
+    }
+    evidenceGroup {
+      evidence(orderBy: creationTime, orderDirection: desc, first: 1) {
+        uri
+      }
+    }
+  }
+}
+    `;
 export const RegistrationDocument = gql`
     query Registration($id: ID!) {
   registration(id: $id) {
@@ -4046,6 +4134,12 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     },
     Me(variables: MeQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<MeQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<MeQuery>({ document: MeDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'Me', 'query', variables);
+    },
+    ProfileHumanity(variables: ProfileHumanityQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<ProfileHumanityQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<ProfileHumanityQuery>({ document: ProfileHumanityDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'ProfileHumanity', 'query', variables);
+    },
+    ProfileRequest(variables: ProfileRequestQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<ProfileRequestQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<ProfileRequestQuery>({ document: ProfileRequestDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'ProfileRequest', 'query', variables);
     },
     Registration(variables: RegistrationQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<RegistrationQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<RegistrationQuery>({ document: RegistrationDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'Registration', 'query', variables);

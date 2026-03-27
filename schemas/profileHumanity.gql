@@ -1,0 +1,51 @@
+query ProfileHumanity($id: ID!, $humanityId: Bytes!) {
+  humanity(id: $id) {
+    registration {
+      expirationTime
+      claimer {
+        id
+        name
+      }
+    }
+    requests {
+      id
+      status {
+        id
+      }
+      claimer {
+        id
+        name
+      }
+      winnerParty {
+        id
+      }
+      creationTime
+      lastStatusChange
+      index
+      revocation
+      expirationTime
+      registrationEvidenceRevokedReq
+      requester
+      evidenceGroup {
+        evidence(orderBy: creationTime, orderDirection: desc, first: 1) {
+          uri
+        }
+      }
+    }
+  }
+  crossChainRegistration(id: $id) {
+    claimer {
+      id
+    }
+    expirationTime
+    lastReceivedTransferTimestamp
+  }
+  outTransfer(id: $id) {
+    foreignProxy
+    transferHash
+    transferTimestamp
+  }
+  inTransfers(where: { humanityId: $humanityId }) {
+    id
+  }
+}

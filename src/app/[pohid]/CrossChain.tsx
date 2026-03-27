@@ -19,7 +19,7 @@ import { getContractInfo } from "contracts";
 import useCCPoHWrite from "contracts/hooks/useCCPoHWrite";
 import useRelayWrite from "contracts/hooks/useRelayWrite";
 import { ContractData } from "data/contract";
-import { HumanityQuery } from "generated/graphql";
+import { ProfileHumanityQuery } from "generated/graphql";
 import { sdk } from "config/subgraph";
 import { useLoading } from "hooks/useLoading";
 import useWeb3Loaded from "hooks/useWeb3Loaded";
@@ -290,12 +290,13 @@ function getRelayedMessageId(
 
 interface CrossChainProps {
   contractData: Record<SupportedChainId, ContractData>;
-  humanity: Record<SupportedChainId, HumanityQuery>;
+  humanity: Record<SupportedChainId, ProfileHumanityQuery>;
   claimer: Address;
   homeChain: SupportedChain;
   pohId: Hash;
-  lastTransfer: HumanityQuery["outTransfer"];
+  lastTransfer: ProfileHumanityQuery["outTransfer"];
   lastTransferChain?: SupportedChain;
+  hasReceivedLatestTransfer: boolean;
 }
 
 export default function CrossChain({
@@ -306,6 +307,7 @@ export default function CrossChain({
   homeChain,
   lastTransfer,
   lastTransferChain,
+  hasReceivedLatestTransfer,
 }: CrossChainProps) {
   const { address } = useAccount();
   const { effective, pendingAction, applyAction, clearAction } =
@@ -332,15 +334,6 @@ export default function CrossChain({
   const isReconciling = pendingAction !== null;
   const showCrossChainBanner =
     pendingAction === "transfer" || effective.pendingUpdate;
-  const latestTransferTimestamp = Number(lastTransfer?.transferTimestamp || 0);
-  const hasReceivedLatestTransfer =
-    effectiveWinningStatus === "transferred" &&
-    latestTransferTimestamp > 0 &&
-    !!humanity[homeChain.id].crossChainRegistration &&
-    Number(
-      humanity[homeChain.id].crossChainRegistration!.lastReceivedTransferTimestamp,
-    ) >= latestTransferTimestamp;
-
   const [prepareTransfer, , transferStatus] = useCCPoHWrite(
     "transferHumanity",
     useMemo(
