@@ -92,14 +92,18 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
     setShowCamera(false);
   };
 
-  const acceptRawVideoAfterTimeout = (blob: Blob, previewUrl: string) => {
+  const acceptRawVideoAfterTimeout = (blob: Blob) => {
     console.warn("[Video Upload] Processing timed out, accepting original upload.", {
       timeoutMs: VIDEO_PROCESSING_TIMEOUT_MS,
       sizeBytes: blob.size,
       type: blob.type || "unknown",
     });
 
-    acceptProcessedVideo(blob, previewUrl, [MEDIA_MESSAGES.videoProcessingTimeoutWarning]);
+    acceptProcessedVideo(
+      blob,
+      URL.createObjectURL(blob),
+      [MEDIA_MESSAGES.videoProcessingTimeoutWarning],
+    );
   };
 
   const showWarningToasts = (messages: string[]) => {
@@ -158,7 +162,7 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
     }
 
     if (result === timeoutResult) {
-      acceptRawVideoAfterTimeout(blob, previewUrl);
+      acceptRawVideoAfterTimeout(blob);
       return;
     }
 

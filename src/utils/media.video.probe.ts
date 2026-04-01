@@ -4,11 +4,31 @@ import { randomString } from "./misc";
 
 let ffmpeg: FFmpeg | null = null;
 let ffmpegLoadPromise: Promise<void> | null = null;
+let ffmpegProgressLoggingBound = false;
 
 const UNRECOGNIZED_FORMAT_ERROR = MEDIA_MESSAGES.invalidVideoFile;
 const FFMPEG_ASSET_VERSION = "20260227";
 const FFMPEG_LOAD_TIMEOUT_MS = 15000;
 const FFMPEG_LOAD_ERROR_CODE = "FFMPEG_LOAD_ERROR";
+
+const logFFmpegProbe = (
+  stage: string,
+  details: Record<string, unknown> = {},
+): void => {
+  console.info(`[FFmpeg Probe] ${stage}`, details);
+};
+
+const logFFmpegProbeError = (
+  stage: string,
+  error: unknown,
+  details: Record<string, unknown> = {},
+): void => {
+  console.error(`[FFmpeg Probe] ${stage}`, {
+    ...details,
+    message: error instanceof Error ? error.message : String(error),
+    error,
+  });
+};
 
 export const isFFmpegLoadError = (
   error: unknown,
@@ -31,22 +51,40 @@ const getFFmpegAssetURL = (assetPath: string): string => {
 
 export const loadFFMPEG = async (): Promise<FFmpeg> => {
   if (typeof SharedArrayBuffer === "undefined") {
+    logFFmpegProbe("load_blocked", { reason: "shared_array_buffer_unavailable" });
     throw createFFmpegLoadError();
   }
 
   if (!ffmpeg) {
+    logFFmpegProbe("instance_create");
     ffmpeg = new FFmpeg();
   }
 
   const ffmpegInstance = ffmpeg;
 
+  if (!ffmpegProgressLoggingBound) {
+    ffmpegInstance.on("progress", ({ progress, time }) => {
+      logFFmpegProbe("progress", { progress, time });
+    });
+    ffmpegProgressLoggingBound = true;
+  }
+
   if (ffmpegInstance.loaded) {
+    logFFmpegProbe("load_cache_hit");
     return ffmpegInstance;
   }
 
   if (!ffmpegLoadPromise) {
+    logFFmpegProbe("load_start", {
+      coreURL: getFFmpegAssetURL("/ffmpeg/ffmpeg-core.js"),
+      wasmURL: getFFmpegAssetURL("/ffmpeg/ffmpeg-core.wasm"),
+      workerURL: getFFmpegAssetURL("/ffmpeg/ffmpeg-core.worker.js"),
+      classWorkerURL: getFFmpegAssetURL("/ffmpeg/ffmpeg-worker.js"),
+      timeoutMs: FFMPEG_LOAD_TIMEOUT_MS,
+    });
     ffmpegLoadPromise = new Promise<void>((resolve, reject) => {
       const timeoutId = window.setTimeout(() => {
+        logFFmpegProbe("load_timeout", { timeoutMs: FFMPEG_LOAD_TIMEOUT_MS });
         reject(createFFmpegLoadError());
       }, FFMPEG_LOAD_TIMEOUT_MS);
 
@@ -59,10 +97,12 @@ export const loadFFMPEG = async (): Promise<FFmpeg> => {
         })
         .then(() => {
           window.clearTimeout(timeoutId);
+          logFFmpegProbe("load_success");
           resolve();
         })
         .catch((error) => {
           window.clearTimeout(timeoutId);
+          logFFmpegProbeError("load_failure", error);
           reject(error);
         });
     }).catch((error) => {
@@ -75,11 +115,13 @@ export const loadFFMPEG = async (): Promise<FFmpeg> => {
           // Ignore cleanup errors
         }
       }
+      logFFmpegProbe("load_reset_after_failure");
       throw isFFmpegLoadError(error) ? error : createFFmpegLoadError();
     });
   }
 
   await ffmpegLoadPromise;
+  logFFmpegProbe("load_ready");
   return ffmpegInstance;
 };
 
@@ -257,16 +299,25 @@ export const probeVideoMetrics = async (
   let inputName: string | null = null;
   let ffmpegInstance: FFmpeg | null = null;
   let logger: LogEventCallback | null = null;
+  const startedAt = Date.now();
 
   try {
+    logFFmpegProbe("probe_start", { inputSizeBytes: inputBuffer.byteLength });
     ffmpegInstance = await loadFFMPEG();
+    logFFmpegProbe("probe_ffmpeg_ready", { durationMs: Date.now() - startedAt });
 
     const inputArray = new Uint8Array(inputBuffer);
     const inputFormat = detectVideoFormat(inputArray);
     if (!inputFormat) throw new Error(UNRECOGNIZED_FORMAT_ERROR);
+    logFFmpegProbe("probe_input_format_detected", { inputFormat });
 
     inputName = `${randomString(16)}.${inputFormat}`;
+    logFFmpegProbe("probe_write_file_start", { inputName });
     await ffmpegInstance.writeFile(inputName, new Uint8Array(inputArray));
+    logFFmpegProbe("probe_write_file_complete", {
+      inputName,
+      durationMs: Date.now() - startedAt,
+    });
 
     let durationSec: number | null = null;
     let width: number | null = null;
@@ -288,6 +339,8 @@ export const probeVideoMetrics = async (
     let maxFreezeDurationSec = 0;
 
     logger = ({ message }) => {
+      logFFmpegProbe("ffmpeg_log", { inputName, message });
+
       if (!sawInputVideoStream && /Stream #\d+:\d+.*Video:/.test(message)) {
         sawInputVideoStream = true;
       }
@@ -398,8 +451,32 @@ export const probeVideoMetrics = async (
     };
     ffmpegInstance.on("log", logger);
 
+    let execResult: number | null = null;
+
     try {
-      await ffmpegInstance.exec([
+      logFFmpegProbe("probe_exec_start", {
+        inputName,
+        command: [
+          "-threads",
+          "0",
+          "-filter_threads",
+          "0",
+          "-i",
+          inputName,
+          "-map",
+          "0:v:0",
+          "-vf",
+          "freezedetect=n=0.0008:d=0.8,showinfo,fps=1,blurdetect",
+          "-map",
+          "0:a:0?",
+          "-af",
+          "silencedetect=n=-38dB:d=0.8",
+          "-f",
+          "null",
+          "-",
+        ],
+      });
+      execResult = await ffmpegInstance.exec([
         "-threads",
         "0",
         "-filter_threads",
@@ -418,12 +495,31 @@ export const probeVideoMetrics = async (
         "null",
         "-",
       ]);
-    } catch {
-      // Null sink can still throw, but metadata logs are usually produced.
+      logFFmpegProbe("probe_exec_complete", {
+        inputName,
+        execResult,
+        durationMs: Date.now() - startedAt,
+      });
+    } catch (error) {
+      logFFmpegProbeError("probe_exec_threw", error, {
+        inputName,
+        durationMs: Date.now() - startedAt,
+      });
+      // Keep existing behavior. The null sink invocation may still throw
+      // after producing useful metadata logs.
     } finally {
       if (logger) {
         ffmpegInstance.off("log", logger);
       }
+      logFFmpegProbe("probe_exec_finally", { inputName });
+    }
+
+    if (typeof execResult === "number" && execResult !== 0) {
+      logFFmpegProbeError("probe_exec_non_zero_exit", new Error(`ffmpeg exec exited with code ${execResult}`), {
+        inputName,
+        execResult,
+        durationMs: Date.now() - startedAt,
+      });
     }
 
     if (
@@ -481,15 +577,28 @@ export const probeVideoMetrics = async (
       freezeRatio,
     };
 
+    logFFmpegProbe("probe_result", {
+      inputName,
+      durationMs: Date.now() - startedAt,
+      result,
+    });
     return result;
   } catch (err) {
+    logFFmpegProbeError("probe_failure", err, {
+      inputName,
+      durationMs: Date.now() - startedAt,
+    });
     console.error("❌ [Video Probe] Error while extracting video metrics:", err);
     throw err instanceof Error ? err : new Error("Video probe failed.");
   } finally {
     try {
-      if (inputName && ffmpegInstance) await ffmpegInstance.deleteFile(inputName);
-    } catch {
-      // ignore cleanup failures
+      if (inputName && ffmpegInstance) {
+        logFFmpegProbe("probe_cleanup_start", { inputName });
+        await ffmpegInstance.deleteFile(inputName);
+        logFFmpegProbe("probe_cleanup_complete", { inputName });
+      }
+    } catch (error) {
+      logFFmpegProbeError("probe_cleanup_failed", error, { inputName });
     }
   }
 };
