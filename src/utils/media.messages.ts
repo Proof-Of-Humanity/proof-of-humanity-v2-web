@@ -47,6 +47,8 @@ export const MEDIA_MESSAGES = {
     "Audio appears mostly silent. Please speak clearly throughout the recording.",
   videoLowBitrateWarning:
     "Video bitrate is lower than recommended. For better clarity, use good lighting and your camera's higher quality mode.",
+  videoProcessingTimeoutWarning:
+    "Video processing took longer than 2 minutes. You can continue with the original upload, but please review the preview carefully before submitting.",
   videoProcessingHardRefreshWarning:
     "Video processing could not start. Please do a hard refresh (Cmd+Shift+R or Ctrl+Shift+R) and try again.",
   photoUnsupportedFormat: (fileType: string) =>
