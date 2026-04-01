@@ -38,7 +38,6 @@ import {
   TimelineHistorySectionSkeleton,
 } from "./TimelineSection";
 import DocumentIcon from "components/DocumentIcon";
-import VideoThumbnail from "components/VideoThumbnail";
 import { getStatus } from "utils/status";
 
 interface PageProps {
@@ -434,21 +433,15 @@ export default async function Request({ params }: PageProps) {
             </div>
 
             {registrationFile && (
-              <>
-                <Previewed
-                  isVideo
-                  uri={ipfs(registrationFile.video)}
-                  trigger={
-                    <VideoThumbnail
-                      className="w-full cursor-pointer rounded"
-                      src={ipfs(registrationFile.video)}
-                    />
-                  }
+              <div className="w-full">
+                <video
+                  className="h-auto w-full rounded bg-black"
+                  src={`${ipfs(registrationFile.video)}#t=0.001`}
+                  controls
+                  playsInline
+                  preload="metadata"
                 />
-                <span className="text-secondaryText mt-1 text-center text-sm md:text-left">
-                  Tap video to preview fullscreen
-                </span>
-              </>
+              </div>
             )}
 
             <div className="flex w-full flex-wrap justify-center gap-2 md:justify-between md:flex-row md:items-center">
