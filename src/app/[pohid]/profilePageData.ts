@@ -14,6 +14,10 @@ import { getRequestData } from "data/request";
 import type { ProfileHumanityQuery } from "generated/graphql";
 import { getStatus, RequestStatus } from "utils/status";
 
+import {
+  CrossChainStatusUnavailableError,
+  RelayDataUnavailableError,
+} from "./errors";
 import { resolvePendingUpdateRelay } from "./cross-chain/CrossChain";
 import {
   deriveCrossChainState,
@@ -255,7 +259,6 @@ export const getProfilePageData = cache(async (pohId: `0x${string}`) => {
   let pendingUpdateRelayStatus: Awaited<
     ReturnType<typeof resolvePendingUpdateRelay>
   > = {
-    lastOutUpdateTimestamp: undefined,
     pendingUpdateRelay: null,
   };
   let pendingUpdateError: Error | undefined;
@@ -270,9 +273,11 @@ export const getProfilePageData = cache(async (pohId: `0x${string}`) => {
       });
     } catch (error) {
       pendingUpdateError =
-        error instanceof Error
+        error instanceof RelayDataUnavailableError
           ? error
-          : new Error("Unknown pending update relay failure.");
+          : new CrossChainStatusUnavailableError(
+              "Pending relay status could not be loaded.",
+            );
     }
   }
 

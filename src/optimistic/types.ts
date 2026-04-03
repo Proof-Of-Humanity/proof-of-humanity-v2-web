@@ -53,7 +53,6 @@ export interface ProfileOptimisticBase {
   winningStatus?: string;
   pendingRevocation: boolean;
   lastTransferTimestamp?: number;
-  lastOutUpdateTimestamp?: number;
   hasPendingUpdateRelay: boolean;
   hasPendingTransferRelay: boolean;
 }
@@ -62,7 +61,6 @@ export interface ProfileOptimisticOverlay {
   winningStatus?: string;
   pendingRevocation?: boolean;
   lastTransferTimestamp?: number;
-  lastOutUpdateTimestamp?: number;
   hasPendingUpdateRelay?: boolean;
   hasPendingTransferRelay?: boolean;
 }

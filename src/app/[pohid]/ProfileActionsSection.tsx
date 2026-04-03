@@ -41,7 +41,6 @@ export default async function ProfileActionsSection({
       base={{
         winningStatus: latestWinningRequest?.status.id,
         lastTransferTimestamp,
-        lastOutUpdateTimestamp: pendingUpdateRelayStatus.lastOutUpdateTimestamp,
         pendingRevocation: profileState.pendingRevocation,
         hasPendingUpdateRelay: !!pendingUpdateRelayStatus.pendingUpdateRelay,
         hasPendingTransferRelay: pageState === "TRANSFER_PENDING",

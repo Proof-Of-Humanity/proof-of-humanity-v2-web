@@ -13,17 +13,18 @@ import {
 } from "config/chains";
 import useCCPoHWrite from "contracts/hooks/useCCPoHWrite";
 import type { ProfileHumanityQuery } from "generated/graphql";
-import { useLoading } from "hooks/useLoading";
 import useWeb3Loaded from "hooks/useWeb3Loaded";
 import { useProfileOptimistic } from "optimistic/profile";
 import { timeAgo } from "utils/time";
+import {
+  ACTION_STATES,
+  isActionStateError,
+  isActionStateLoading,
+  WAITING_FOR_INDEXER_TOOLTIP,
+} from "../useActionFeedback";
+import useActionFeedback from "../useActionFeedback";
 
-const buildUpdateSuccessPatch = ({
-  previousLastOutUpdateTimestamp,
-}: {
-  previousLastOutUpdateTimestamp?: number;
-}) => ({
-  lastOutUpdateTimestamp: previousLastOutUpdateTimestamp ?? 0,
+const buildUpdateSuccessPatch = () => ({
   hasPendingUpdateRelay: true,
 });
 
@@ -32,59 +33,52 @@ export default function UpdateStateSection({
   homeChain,
   gatewayId,
   pohId,
-  debugDisableExecution = false,
 }: {
   humanity: Record<SupportedChainId, ProfileHumanityQuery>;
   homeChain: SupportedChain;
   gatewayId: `0x${string}`;
   pohId: `0x${string}`;
-  debugDisableExecution?: boolean;
 }) {
   const chainId = useChainId() as SupportedChainId;
-  const { base, pendingAction, applyAction } = useProfileOptimistic();
-  const loading = useLoading();
+  const { pendingAction, applyAction } = useProfileOptimistic();
   const web3Loaded = useWeb3Loaded();
   const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
-  const [updateError, setUpdateError] = useState<string | null>(null);
-  const [isLoading, loadingMessage] = loading.use();
   const isReconciling = pendingAction !== null;
+  const {
+    actionState,
+    actionMessage,
+    setIdle,
+    setFeedbackState,
+    setUnavailable,
+    setWriteError,
+  } = useActionFeedback();
   const [prepareUpdate, , updateStatus] = useCCPoHWrite(
     "updateHumanity",
     useMemo(
       () => ({
         onLoading() {
-          loading.start("Transaction pending...");
+          setFeedbackState(ACTION_STATES.txPending);
         },
         onReady(fire: () => void) {
-          setUpdateError(null);
-          loading.start("Confirm in wallet...");
+          setFeedbackState(ACTION_STATES.confirmWallet);
           fire();
         },
         onSuccess() {
-          applyAction(
-            "update",
-            buildUpdateSuccessPatch({
-              previousLastOutUpdateTimestamp: base.lastOutUpdateTimestamp,
-            }),
-          );
+          applyAction("update", buildUpdateSuccessPatch());
           toast.success("Update transaction sent!");
-          loading.stop();
+          setIdle();
           setIsUpdateModalOpen(false);
         },
-        onError() {
-          setUpdateError("Transaction failed. Check your wallet and try again.");
-          toast.error("Transaction failed");
-          loading.stop();
+        onError(error) {
+          toast.error(setWriteError(error));
         },
         onFail() {
-          setUpdateError(
-            "Simulation failed. The update is not currently executable.",
-          );
-          toast.error("Simulation failed");
-          loading.stop();
+          const message = "Update is not available right now.";
+          setUnavailable(message);
+          toast.error(message);
         },
       }),
-      [applyAction, base.lastOutUpdateTimestamp, loading],
+      [applyAction, setFeedbackState, setIdle, setUnavailable, setWriteError],
     ),
   );
 
@@ -96,9 +90,9 @@ export default function UpdateStateSection({
   const closeUpdateModal = useCallback(() => {
     setIsUpdateModalOpen(false);
     if (!hasUpdateInFlight) {
-      loading.stop();
+      setIdle();
     }
-  }, [hasUpdateInFlight, loading]);
+  }, [hasUpdateInFlight, setIdle]);
   const sectionState =
     !web3Loaded || homeChain.id !== chainId
       ? "hidden"
@@ -117,7 +111,7 @@ export default function UpdateStateSection({
           Update state
         </button>
         <span className="pointer-events-none absolute bottom-full left-1/2 z-10 mb-2 w-max -translate-x-1/2 rounded-md bg-neutral-700 px-3 py-2 text-center text-sm text-white opacity-0 transition-opacity group-hover:opacity-100">
-          Waiting for indexer
+          {WAITING_FOR_INDEXER_TOOLTIP}
           <span className="absolute left-1/2 top-full h-0 w-0 -translate-x-1/2 border-x-[5px] border-t-[5px] border-x-transparent border-t-neutral-700" />
         </span>
       </div>
@@ -136,7 +130,7 @@ export default function UpdateStateSection({
         </button>
         {isReconciling ? (
           <span className="pointer-events-none absolute bottom-full left-1/2 z-10 mb-2 w-max -translate-x-1/2 rounded-md bg-neutral-700 px-3 py-2 text-center text-sm text-white opacity-0 transition-opacity group-hover:opacity-100">
-            Waiting for indexer
+            {WAITING_FOR_INDEXER_TOOLTIP}
             <span className="absolute left-1/2 top-full h-0 w-0 -translate-x-1/2 border-x-[5px] border-t-[5px] border-x-transparent border-t-neutral-700" />
           </span>
         ) : null}
@@ -145,7 +139,7 @@ export default function UpdateStateSection({
         formal
         open={isUpdateModalOpen}
         onClose={closeUpdateModal}
-        canClose={!hasUpdateInFlight}
+        canClose={!hasUpdateInFlight && !isActionStateLoading(actionState)}
         header="Update"
       >
         <div className="p-4">
@@ -153,17 +147,17 @@ export default function UpdateStateSection({
             Update humanity state on another chain. If you use wallet contract
             make sure it has same address on both chains.
           </span>
-          {isLoading ? (
+          {isActionStateLoading(actionState) ? (
             <div className="paper border-stroke bg-whiteBackground mt-4 px-3 py-2">
               <span className="text-secondaryText text-sm font-medium">
-                {loadingMessage}
+                {actionMessage}
               </span>
             </div>
           ) : null}
-          {updateError ? (
+          {isActionStateError(actionState) ? (
             <div className="paper border-orange bg-lightOrange mt-4 px-3 py-2">
               <span className="text-orange text-sm font-medium">
-                {updateError}
+                {actionMessage}
               </span>
             </div>
           ) : null}
@@ -211,21 +205,20 @@ export default function UpdateStateSection({
                   ) : (
                     <button
                       className="disabled:text-secondaryText shrink-0 text-blue-500 underline underline-offset-2 disabled:cursor-not-allowed disabled:no-underline"
-                      disabled={isLoading}
+                      disabled={
+                        isActionStateLoading(actionState) || hasUpdateInFlight
+                      }
                       onClick={() => {
-                        setUpdateError(null);
-
-                        if (debugDisableExecution) {
-                          toast.info("Harness mode: update execution disabled");
-                          return;
-                        }
+                        setIdle();
 
                         prepareUpdate({
                           args: [gatewayId, pohId],
                         });
                       }}
                     >
-                      {isLoading ? "Processing..." : "Update state"}
+                      {isActionStateLoading(actionState) || hasUpdateInFlight
+                        ? "Processing..."
+                        : "Update state"}
                     </button>
                   )}
                 </div>

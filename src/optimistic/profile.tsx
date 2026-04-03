@@ -81,11 +81,8 @@ const PROFILE_RECONCILE_CONFIG = {
       base: ProfileOptimisticBase,
       overlay: ProfileOptimisticOverlay,
     ) =>
-      (overlay.lastOutUpdateTimestamp !== undefined &&
-        base.lastOutUpdateTimestamp !== undefined &&
-        base.lastOutUpdateTimestamp !== overlay.lastOutUpdateTimestamp) ||
-      (overlay.hasPendingUpdateRelay !== undefined &&
-        base.hasPendingUpdateRelay === overlay.hasPendingUpdateRelay),
+      overlay.hasPendingUpdateRelay !== undefined &&
+      base.hasPendingUpdateRelay === overlay.hasPendingUpdateRelay,
   },
   relayTransfer: {
     isReconciled: (
@@ -112,8 +109,6 @@ const mergeProfile = (
   winningStatus: overlay?.winningStatus ?? base.winningStatus,
   lastTransferTimestamp:
     overlay?.lastTransferTimestamp ?? base.lastTransferTimestamp,
-  lastOutUpdateTimestamp:
-    overlay?.lastOutUpdateTimestamp ?? base.lastOutUpdateTimestamp,
   pendingRevocation: overlay?.pendingRevocation ?? base.pendingRevocation,
   hasPendingUpdateRelay:
     overlay?.hasPendingUpdateRelay ?? base.hasPendingUpdateRelay,

@@ -9,8 +9,14 @@ import TimeAgo from "components/TimeAgo";
 import { idToChain, type SupportedChainId } from "config/chains";
 import { getContractInfo } from "contracts";
 import useRelayWrite from "contracts/hooks/useRelayWrite";
-import { useLoading } from "hooks/useLoading";
 import { useProfileOptimistic } from "optimistic/profile";
+import {
+  ACTION_STATES,
+  isActionStateError,
+  isActionStateLoading,
+} from "../useActionFeedback";
+import { RelayDataUnavailableError } from "../errors";
+import useActionFeedback from "../useActionFeedback";
 import { getChainPublicClient } from "./publicClient";
 import {
   RELAY_MODE_MANUAL_SIGNATURES,
@@ -33,7 +39,6 @@ type PendingRelaySectionProps = {
   destinationChainId: SupportedChainId;
   encodedData?: `0x${string}`;
   transferTimestamp?: number;
-  debugDisableExecution?: boolean;
 };
 
 export default function PendingRelaySection({
@@ -43,12 +48,8 @@ export default function PendingRelaySection({
   destinationChainId,
   encodedData,
   transferTimestamp,
-  debugDisableExecution = false,
 }: PendingRelaySectionProps) {
-  const loading = useLoading();
-  const [isLoading, loadingMessage] = loading.use();
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [relayError, setRelayError] = useState<string | null>(null);
   const { switchChain } = useSwitchChain();
   const chainId = useChainId() as SupportedChainId;
   const { effective, pendingAction, applyAction } = useProfileOptimistic();
@@ -59,6 +60,14 @@ export default function PendingRelaySection({
     mode === "transfer"
       ? effective.hasPendingTransferRelay
       : effective.hasPendingUpdateRelay;
+  const {
+    actionState,
+    actionMessage,
+    setIdle,
+    setFeedbackState,
+    setUnavailable,
+    setWriteError,
+  } = useActionFeedback();
   const relayAction = mode === "transfer" ? "relayTransfer" : "relayUpdate";
   const relayActionState =
     relayMode === RELAY_MODE_WAIT_ONLY
@@ -72,12 +81,8 @@ export default function PendingRelaySection({
     "executeSignatures",
     useMemo(
       () => ({
-        onLoading() {
-          loading.start("Transaction pending...");
-        },
         onReady(fire: () => void) {
-          setRelayError(null);
-          loading.start("Confirm in wallet...");
+          setFeedbackState(ACTION_STATES.confirmWallet);
           fire();
         },
         onSuccess() {
@@ -88,25 +93,30 @@ export default function PendingRelaySection({
               : buildUpdateRelaySuccessPatch(),
           );
           toast.success("Relay transaction sent!");
-          loading.stop();
+          setIdle();
           setIsModalOpen(false);
         },
-        onError() {
-          setRelayError(
-            "Relay transaction failed. Check your wallet and try again.",
-          );
-          toast.error("Transaction failed");
-          loading.stop();
+        onLoading() {
+          setFeedbackState(ACTION_STATES.txPending);
+        },
+        onError(error) {
+          toast.error(setWriteError(error));
         },
         onFail() {
-          setRelayError(
-            "Relay is not ready yet. Wait for confirmations and try again.",
-          );
-          toast.error("Confirmation takes around 10 minutes. Come back later");
-          loading.stop();
+          const message = "Relay cannot be executed right now.";
+          setUnavailable(message);
+          toast.error(message);
         },
       }),
-      [applyAction, loading, mode, relayAction],
+      [
+        applyAction,
+        mode,
+        relayAction,
+        setFeedbackState,
+        setIdle,
+        setUnavailable,
+        setWriteError,
+      ],
     ),
   );
 
@@ -117,21 +127,16 @@ export default function PendingRelaySection({
   const closeModal = useCallback(() => {
     setIsModalOpen(false);
     if (!hasRelayInFlight) {
-      loading.stop();
+      setIdle();
     }
-  }, [hasRelayInFlight, loading]);
+  }, [hasRelayInFlight, setIdle]);
 
   const handleExecuteRelay = async () => {
-    if (debugDisableExecution) {
-      toast.info("Harness mode: relay execution disabled");
-      return;
-    }
     if (!encodedData) {
       return;
     }
 
-    setRelayError(null);
-    loading.start("Fetching signatures...");
+    setFeedbackState(ACTION_STATES.txPending, "Fetching relay approvals...");
 
     try {
       const publicClient = getChainPublicClient(sourceChainId);
@@ -146,14 +151,24 @@ export default function PendingRelaySection({
       prepareRelayWrite({
         args: [encodedData, signatures],
       });
-    } catch {
-      setRelayError(
-        "Signatures are not available yet. Try again after more confirmations.",
-      );
-      toast.info("Confirmation takes around 10 minutes. Come back later");
-      loading.stop();
+    } catch (error) {
+      const message =
+        error instanceof RelayDataUnavailableError
+          ? error.message
+          : "Relay approvals are not ready yet. Wait a bit and try again.";
+      setUnavailable(message);
+      toast.info(message);
     }
   };
+
+  const waitMessage =
+    relayMode === RELAY_MODE_WAIT_ONLY
+      ? mode === "transfer"
+        ? "This transfer relay is handled automatically by the bridge."
+        : "This state update relay is handled automatically by the bridge."
+      : !encodedData
+        ? "Relay details are still loading. Check back in a moment."
+        : "Relay approvals are not ready yet. Wait a bit and try again.";
 
   if (!relayPending) {
     return (
@@ -176,7 +191,7 @@ export default function PendingRelaySection({
       <Modal
         open={isModalOpen}
         onClose={closeModal}
-        canClose={!hasRelayInFlight}
+        canClose={!hasRelayInFlight && !isActionStateLoading(actionState)}
         header={mode === "transfer" ? "Last transfer" : "Pending state update"}
       >
         <div className="paper flex flex-col p-4">
@@ -202,17 +217,17 @@ export default function PendingRelaySection({
               {destinationChainName}.
             </span>
           )}
-          {isLoading ? (
+          {isActionStateLoading(actionState) ? (
             <div className="paper border-stroke bg-whiteBackground mt-4 px-3 py-2">
               <span className="text-secondaryText text-sm font-medium">
-                {loadingMessage}
+                {actionMessage}
               </span>
             </div>
           ) : null}
-          {relayError ? (
+          {isActionStateError(actionState) ? (
             <div className="paper border-orange bg-lightOrange mt-4 px-3 py-2">
               <span className="text-orange text-sm font-medium">
-                {relayError}
+                {actionMessage}
               </span>
             </div>
           ) : null}
@@ -237,10 +252,10 @@ export default function PendingRelaySection({
             encodedData ? (
             <button
               className="btn-main mt-4"
-              disabled={isLoading}
+              disabled={isActionStateLoading(actionState) || hasRelayInFlight}
               onClick={handleExecuteRelay}
             >
-              {isLoading
+              {isActionStateLoading(actionState) || hasRelayInFlight
                 ? "Processing..."
                 : mode === "transfer"
                   ? "Relay Transferring Profile"
@@ -248,11 +263,7 @@ export default function PendingRelaySection({
             </button>
           ) : (
             <div className="paper mt-4 p-4">
-              <span className="txt text-secondaryText">
-                {mode === "transfer"
-                  ? "Relaying the transferring profile in this chain can take around 30 minutes."
-                  : "Relaying a state update from this chain can take around 30 minutes. The relay will be processed automatically by the bridge oracles."}
-              </span>
+              <span className="txt text-secondaryText">{waitMessage}</span>
             </div>
           )}
         </div>

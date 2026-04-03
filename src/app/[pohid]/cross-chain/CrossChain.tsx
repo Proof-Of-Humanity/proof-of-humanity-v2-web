@@ -9,6 +9,10 @@ import type { ProfileHumanityQuery } from "generated/graphql";
 import { type Hash, TransactionReceiptNotFoundError } from "viem";
 
 import type { ProfilePageState } from "../profileState";
+import {
+  CrossChainStatusUnavailableError,
+  RelayDataUnavailableError,
+} from "../errors";
 import { getBridgeStrategy } from "./bridgeStrategies";
 import type { CrossChainState } from "./crossChainState";
 import CrossChainError from "./CrossChainError";
@@ -39,8 +43,32 @@ interface CrossChainProps {
   pendingUpdateRelayStatus: {
     pendingUpdateRelay: PendingRelayDescriptor | null;
   };
-  pendingUpdateError?: Error;
+  pendingUpdateError?:
+    | RelayDataUnavailableError
+    | CrossChainStatusUnavailableError;
 }
+
+const getPendingUpdateStatusMessage = (
+  error?: RelayDataUnavailableError | CrossChainStatusUnavailableError,
+) => {
+  if (error instanceof RelayDataUnavailableError) {
+    return {
+      title: "Relay details unavailable",
+      description: error.message,
+      nextStep: "Refresh the page or try again in a moment.",
+    };
+  }
+
+  if (error instanceof CrossChainStatusUnavailableError) {
+    return {
+      title: "Update unavailable",
+      description: error.message,
+      nextStep: "Refresh the page or try again in a moment.",
+    };
+  }
+
+  return null;
+};
 
 const getTransactionReceiptIfIndexed = async ({
   chainId,
@@ -87,7 +115,9 @@ async function decodeTransferRelayPayload({
   });
 
   if (!outboundBridgeMessage?.encodedData) {
-    throw new Error("Failed to decode pending transfer relay payload.");
+    throw new RelayDataUnavailableError(
+      "Pending transfer relay details could not be loaded.",
+    );
   }
 
   return outboundBridgeMessage.encodedData;
@@ -102,7 +132,6 @@ export async function resolvePendingUpdateRelay({
   pohId: Hash;
   latestWinningRequestTimestamp?: number;
 }): Promise<{
-  lastOutUpdateTimestamp?: number;
   pendingUpdateRelay: PendingRelayDescriptor | null;
 }> {
   const sourceChainId = homeChain.id as SupportedChainId;
@@ -115,7 +144,6 @@ export async function resolvePendingUpdateRelay({
 
   if (!latestOutUpdate) {
     return {
-      lastOutUpdateTimestamp: undefined,
       pendingUpdateRelay: null,
     };
   }
@@ -127,7 +155,6 @@ export async function resolvePendingUpdateRelay({
     outboundUpdateTimestamp < latestWinningRequestTimestamp
   ) {
     return {
-      lastOutUpdateTimestamp: outboundUpdateTimestamp,
       pendingUpdateRelay: null,
     };
   }
@@ -145,7 +172,6 @@ export async function resolvePendingUpdateRelay({
 
   if (!sourceReceipt) {
     return {
-      lastOutUpdateTimestamp: outboundUpdateTimestamp,
       pendingUpdateRelay,
     };
   }
@@ -162,14 +188,15 @@ export async function resolvePendingUpdateRelay({
   });
 
   if (!sourceMessageInfo?.encodedData) {
-    throw new Error("Failed to decode pending update relay payload.");
+    throw new RelayDataUnavailableError(
+      "Pending update relay details could not be loaded.",
+    );
   }
 
   pendingUpdateRelay.encodedData = sourceMessageInfo.encodedData;
 
   if (!latestInUpdate) {
     return {
-      lastOutUpdateTimestamp: outboundUpdateTimestamp,
       pendingUpdateRelay,
     };
   }
@@ -181,7 +208,6 @@ export async function resolvePendingUpdateRelay({
 
   if (!destinationReceipt) {
     return {
-      lastOutUpdateTimestamp: outboundUpdateTimestamp,
       pendingUpdateRelay,
     };
   }
@@ -194,13 +220,11 @@ export async function resolvePendingUpdateRelay({
 
   if (updateAlreadyRelayed) {
     return {
-      lastOutUpdateTimestamp: outboundUpdateTimestamp,
       pendingUpdateRelay: null,
     };
   }
 
   return {
-    lastOutUpdateTimestamp: outboundUpdateTimestamp,
     pendingUpdateRelay,
   };
 }
@@ -217,6 +241,9 @@ export default async function CrossChain({
   pendingUpdateRelayStatus,
   pendingUpdateError,
 }: CrossChainProps) {
+  const pendingUpdateStatusMessage =
+    getPendingUpdateStatusMessage(pendingUpdateError);
+
   try {
     let pendingTransferRelay: PendingRelayDescriptor | null = null;
     const transferClaimer =
@@ -291,13 +318,13 @@ export default async function CrossChain({
                 title={pendingUpdateError.message}
               >
                 <span className="text-orange block text-xs font-semibold uppercase tracking-[0.08em]">
-                  Update unavailable
+                  {pendingUpdateStatusMessage?.title}
                 </span>
                 <span className="text-primaryText mt-1 block text-sm font-medium">
-                  Pending relay status could not be loaded.
+                  {pendingUpdateStatusMessage?.description}
                 </span>
                 <span className="text-secondaryText mt-1 block text-sm">
-                  Refresh the page or try again in a moment.
+                  {pendingUpdateStatusMessage?.nextStep}
                 </span>
               </div>
             ) : null}

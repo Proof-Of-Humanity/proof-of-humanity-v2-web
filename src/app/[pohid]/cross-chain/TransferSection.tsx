@@ -9,9 +9,15 @@ import Modal from "components/Modal";
 import TimeAgo from "components/TimeAgo";
 import { SupportedChainId, type SupportedChain } from "config/chains";
 import useCCPoHWrite from "contracts/hooks/useCCPoHWrite";
-import { useLoading } from "hooks/useLoading";
 import useWeb3Loaded from "hooks/useWeb3Loaded";
 import { useProfileOptimistic } from "optimistic/profile";
+import {
+  ACTION_STATES,
+  isActionStateError,
+  isActionStateLoading,
+  WAITING_FOR_INDEXER_TOOLTIP,
+} from "../useActionFeedback";
+import useActionFeedback from "../useActionFeedback";
 
 const buildTransferSuccessPatch = ({
   previousLastTransferTimestamp,
@@ -28,34 +34,36 @@ export default function TransferSection({
   homeChain,
   gatewayId,
   transferCooldownEndsAt,
-  debugDisableExecution = false,
 }: {
   claimer: `0x${string}`;
   homeChain: SupportedChain;
   gatewayId: `0x${string}`;
   transferCooldownEndsAt?: number;
-  debugDisableExecution?: boolean;
 }) {
   const { address } = useAccount();
   const chainId = useChainId() as SupportedChainId;
   const { base, pendingAction, applyAction } = useProfileOptimistic();
-  const loading = useLoading();
   const web3Loaded = useWeb3Loaded();
   const [isTransferModalOpen, setIsTransferModalOpen] = useState(false);
-  const [transferError, setTransferError] = useState<string | null>(null);
-  const [isLoading, loadingMessage] = loading.use();
   const isReconciling = pendingAction !== null;
   const nowSeconds = Date.now() / 1000;
+  const {
+    actionState,
+    actionMessage,
+    setIdle,
+    setFeedbackState,
+    setUnavailable,
+    setWriteError,
+  } = useActionFeedback();
   const [prepareTransfer, , transferStatus] = useCCPoHWrite(
     "transferHumanity",
     useMemo(
       () => ({
         onLoading() {
-          loading.start("Transaction pending...");
+          setFeedbackState(ACTION_STATES.txPending);
         },
         onReady(fire: () => void) {
-          setTransferError(null);
-          loading.start("Confirm in wallet...");
+          setFeedbackState(ACTION_STATES.confirmWallet);
           fire();
         },
         onSuccess() {
@@ -66,25 +74,26 @@ export default function TransferSection({
             }),
           );
           toast.success("Transfer initiated!");
-          loading.stop();
+          setIdle();
           setIsTransferModalOpen(false);
         },
-        onError() {
-          setTransferError(
-            "Transaction failed. Check your wallet and try again.",
-          );
-          toast.error("Transaction failed");
-          loading.stop();
+        onError(error) {
+          toast.error(setWriteError(error));
         },
         onFail() {
-          setTransferError(
-            "Simulation failed. The transfer is not currently executable.",
-          );
-          toast.error("Simulation failed");
-          loading.stop();
+          const message = "Transfer is not available right now.";
+          setUnavailable(message);
+          toast.error(message);
         },
       }),
-      [applyAction, base.lastTransferTimestamp, loading],
+      [
+        applyAction,
+        base.lastTransferTimestamp,
+        setFeedbackState,
+        setIdle,
+        setUnavailable,
+        setWriteError,
+      ],
     ),
   );
 
@@ -96,9 +105,9 @@ export default function TransferSection({
   const closeTransferModal = useCallback(() => {
     setIsTransferModalOpen(false);
     if (!hasTransferInFlight) {
-      loading.stop();
+      setIdle();
     }
-  }, [hasTransferInFlight, loading]);
+  }, [hasTransferInFlight, setIdle]);
 
   const sectionState =
     pendingAction === "transfer"
@@ -122,7 +131,7 @@ export default function TransferSection({
           Transfer
         </button>
         <span className="pointer-events-none absolute bottom-full left-1/2 z-10 mb-2 w-max -translate-x-1/2 rounded-md bg-neutral-700 px-3 py-2 text-center text-sm text-white opacity-0 transition-opacity group-hover:opacity-100">
-          Waiting for indexer
+          {WAITING_FOR_INDEXER_TOOLTIP}
           <span className="absolute left-1/2 top-full h-0 w-0 -translate-x-1/2 border-x-[5px] border-t-[5px] border-x-transparent border-t-neutral-700" />
         </span>
       </div>
@@ -149,7 +158,7 @@ export default function TransferSection({
         </button>
         {isReconciling ? (
           <span className="pointer-events-none absolute bottom-full left-1/2 z-10 mb-2 w-max -translate-x-1/2 rounded-md bg-neutral-700 px-3 py-2 text-center text-sm text-white opacity-0 transition-opacity group-hover:opacity-100">
-            Waiting for indexer
+            {WAITING_FOR_INDEXER_TOOLTIP}
             <span className="absolute left-1/2 top-full h-0 w-0 -translate-x-1/2 border-x-[5px] border-t-[5px] border-x-transparent border-t-neutral-700" />
           </span>
         ) : null}
@@ -158,7 +167,7 @@ export default function TransferSection({
         formal
         open={isTransferModalOpen}
         onClose={closeTransferModal}
-        canClose={!hasTransferInFlight}
+        canClose={!hasTransferInFlight && !isActionStateLoading(actionState)}
         header="Transfer"
       >
         <div className="p-4">
@@ -166,32 +175,31 @@ export default function TransferSection({
             Transfer your humanity to another chain. If you use a contract
             wallet make sure it has the same address on both chains.
           </span>
-          {isLoading ? (
+          {isActionStateLoading(actionState) ? (
             <div className="paper border-stroke bg-whiteBackground mt-4 px-3 py-2">
               <span className="text-secondaryText text-sm font-medium">
-                {loadingMessage}
+                {actionMessage}
               </span>
             </div>
           ) : null}
-          {transferError ? (
+          {isActionStateError(actionState) ? (
             <div className="paper border-orange bg-lightOrange mt-4 px-3 py-2">
               <span className="text-orange text-sm font-medium">
-                {transferError}
+                {actionMessage}
               </span>
             </div>
           ) : null}
           <div className="mt-4 flex justify-center">
             <ActionButton
-              disabled={hasTransferInFlight}
-              isLoading={hasTransferInFlight}
-              label={hasTransferInFlight ? "Transfering..." : "Transfer"}
+              disabled={
+                hasTransferInFlight || isActionStateLoading(actionState)
+              }
+              isLoading={
+                hasTransferInFlight || isActionStateLoading(actionState)
+              }
+              label={hasTransferInFlight ? "Transferring..." : "Transfer"}
               onClick={() => {
-                setTransferError(null);
-
-                if (debugDisableExecution) {
-                  toast.info("Harness mode: transfer execution disabled");
-                  return;
-                }
+                setIdle();
 
                 prepareTransfer({
                   args: [gatewayId],

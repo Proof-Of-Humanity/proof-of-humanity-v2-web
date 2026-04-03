@@ -23,6 +23,13 @@ import { useAtlasProvider, Roles } from "@kleros/kleros-app";
 import AuthGuard from "components/AuthGuard";
 import { useProfileOptimistic } from "optimistic/profile";
 import type { ProfileOptimisticOverlay } from "optimistic/types";
+import {
+  ACTION_STATES,
+  isActionStateError,
+  isActionStateLoading,
+  WAITING_FOR_INDEXER_TOOLTIP,
+} from "./useActionFeedback";
+import useActionFeedback from "./useActionFeedback";
 
 enableReactUse();
 
@@ -54,14 +61,23 @@ export default function Revoke({
   const connectedChainId = useChainId() as SupportedChainId;
   const web3Loaded = useWeb3Loaded();
   const { switchChain } = useSwitchChain();
-  
+  const {
+    actionState,
+    actionMessage,
+    setIdle,
+    setFeedbackState,
+    setUnavailable,
+    setWriteError,
+  } = useActionFeedback();
+
   const { uploadFile } = useAtlasProvider();
   const resetModalState = useCallback(() => {
     setTitle("");
     setDescription("");
     setFile(null);
+    setIdle();
     loading.stop();
-  }, [loading]);
+  }, [loading, setIdle]);
   const closeModal = useCallback(() => {
     setModalOpen(false);
     resetModalState();
@@ -72,25 +88,37 @@ export default function Revoke({
     useMemo(
       () => ({
         onReady(fire) {
+          loading.stop();
+          setFeedbackState(ACTION_STATES.confirmWallet);
           fire();
-          loading.start("Transaction pending");
-          toast.info("Transaction pending");
+        },
+        onLoading() {
+          setFeedbackState(ACTION_STATES.txPending);
         },
         onFail() {
-          loading.stop();
-          toast.error("Transaction failed");
+          const message = "Revoke is not available right now.";
+          setUnavailable(message);
+          toast.error(message);
         },
-        onError() {
-          loading.stop();
-          toast.error("Transaction rejected");
+        onError(error) {
+          toast.error(setWriteError(error));
         },
         onSuccess() {
           applyAction("revoke", buildRevokeSuccessPatch());
+          setIdle();
           closeModal();
           toast.success("Request created");
         },
       }),
-      [applyAction, closeModal, loading],
+      [
+        applyAction,
+        closeModal,
+        loading,
+        setFeedbackState,
+        setIdle,
+        setUnavailable,
+        setWriteError,
+      ],
     ),
   );
 
@@ -125,7 +153,7 @@ export default function Revoke({
         "evidence",
         {
           type: "text/plain",
-        }
+        },
       );
 
       const evidenceUri = await uploadFile(evidenceTextFile, Roles.Evidence);
@@ -138,7 +166,9 @@ export default function Revoke({
 
       prepare({ args: [pohId, evidenceUri], value: cost });
     } catch (error) {
-      toast.error(`Failed to upload evidence : ${error instanceof Error ? error.message : "Unknown error"}`);
+      toast.error(
+        `Failed to upload evidence : ${error instanceof Error ? error.message : "Unknown error"}`,
+      );
       loading.stop();
     }
   };
@@ -146,7 +176,7 @@ export default function Revoke({
   if (web3Loaded && homeChain.id !== connectedChainId)
     return (
       <button
-        onClick={() => switchChain?.({chainId : homeChain.id})}
+        onClick={() => switchChain?.({ chainId: homeChain.id })}
         className="btn-sec mb-4"
       >
         Connect to {homeChain.name} to revoke
@@ -168,67 +198,84 @@ export default function Revoke({
           label="Revoke"
           className="mb-4"
           disabled={isReconciling}
-          tooltip={isReconciling ? "Waiting for indexer" : undefined}
+          tooltip={isReconciling ? WAITING_FOR_INDEXER_TOOLTIP : undefined}
         />
       ) : null}
       <Modal
         formal
         open={modalOpen}
         onClose={closeModal}
-        canClose={!pending}
+        canClose={!pending && !isActionStateLoading(actionState)}
         header="Revoke"
       >
         <div className="flex flex-col items-center p-4">
-        <ALink className="flex" href={ipfs(arbitrationInfo.policy)}>
-          <DocumentIcon className="fill-orange h-6 w-6" />
-          <strong className="text-orange mr-1 font-semibold">Policy</strong>
-        </ALink>
+          <ALink className="flex" href={ipfs(arbitrationInfo.policy)}>
+            <DocumentIcon className="fill-orange h-6 w-6" />
+            <strong className="text-orange mr-1 font-semibold">Policy</strong>
+          </ALink>
 
-        <span className="txt text-primaryText mt-8">
-          In order to request removal you need to deposit
-        </span>
-        <span className="text-primaryText text-xl font-semibold">
-          {formatEth(cost)} {homeChain.nativeCurrency.symbol}
-        </span>
+          <span className="txt text-primaryText mt-8">
+            In order to request removal you need to deposit
+          </span>
+          <span className="text-primaryText text-xl font-semibold">
+            {formatEth(cost)} {homeChain.nativeCurrency.symbol}
+          </span>
 
-        <span className="text-primaryText m-4">
-          Anyone can put a deposit claiming the removal to be incorrect. If no
-          one does, the individual is removed from the list. If one does, a
-          dispute is created.
-        </span>
+          <span className="text-primaryText m-4">
+            Anyone can put a deposit claiming the removal to be incorrect. If no
+            one does, the individual is removed from the list. If one does, a
+            dispute is created.
+          </span>
 
-        <Field
-          label="Title"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-        />
-        <Field
-          textarea
-          label="Description (Your Arguments)"
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-        />
-        <Label>File</Label>
-        <div className="bordered w-full rounded-sm">
-          <Uploader
-            className="bg-whiteBackgroundWithOpacity text-primaryText flex w-full justify-center rounded-sm p-2 outline-dotted outline-white"
-            type="all"
-            onDrop={(acceptedFiles) => setFile(acceptedFiles[0])}
-          >
-            {file
-              ? file.name
-              : "Drag 'n drop some files here, or click to select files"}
-          </Uploader>
-        </div>
+          <Field
+            label="Title"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+          />
+          <Field
+            textarea
+            label="Description (Your Arguments)"
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+          />
+          <Label>File</Label>
+          <div className="bordered w-full rounded-sm">
+            <Uploader
+              className="bg-whiteBackgroundWithOpacity text-primaryText flex w-full justify-center rounded-sm p-2 outline-dotted outline-white"
+              type="all"
+              onDrop={(acceptedFiles) => setFile(acceptedFiles[0])}
+            >
+              {file
+                ? file.name
+                : "Drag 'n drop some files here, or click to select files"}
+            </Uploader>
+          </div>
+
+          {isActionStateLoading(actionState) ? (
+            <div className="paper border-stroke bg-whiteBackground mt-4 px-3 py-2">
+              <span className="text-secondaryText text-sm font-medium">
+                {actionMessage}
+              </span>
+            </div>
+          ) : null}
+          {isActionStateError(actionState) ? (
+            <div className="paper border-orange bg-lightOrange mt-4 px-3 py-2">
+              <span className="text-orange text-sm font-medium">
+                {actionMessage}
+              </span>
+            </div>
+          ) : null}
 
           <AuthGuard signInButtonProps={{ className: "mt-12 px-5 py-2" }}>
             <ActionButton
-              disabled={pending || isReconciling}
-              isLoading={pending}
+              disabled={
+                pending || isReconciling || isActionStateLoading(actionState)
+              }
+              isLoading={pending || isActionStateLoading(actionState)}
               className="mt-12"
               onClick={submit}
-              label={loadingMessage || "Revoke"}
-              tooltip={isReconciling ? "Waiting for indexer" : undefined}
+              label={loadingMessage || actionMessage || "Revoke"}
+              tooltip={isReconciling ? WAITING_FOR_INDEXER_TOOLTIP : undefined}
             />
           </AuthGuard>
         </div>

@@ -47,7 +47,11 @@ export default function useWagmiWrite<
 
   const [enabled, setEnabled] = useState(false);
 
-  const { data: prepared, status: prepareStatus } = useSimulateContract({
+  const {
+    data: prepared,
+    status: prepareStatus,
+    error: prepareError,
+  } = useSimulateContract({
     address: contractInfo.address as `0x${string}`,
     abi: contractInfo.abi as Abi,
     functionName,
@@ -99,16 +103,15 @@ export default function useWagmiWrite<
         break;
       case "error":
         if (enabled) {
-          effectsRef.current?.onFail?.();
+          effectsRef.current?.onFail?.(prepareError);
           setEnabled(false);
         }
     }
-  }, [prepareStatus, enabled, prepared?.request, fireWrite]);
+  }, [prepareStatus, enabled, prepared?.request, prepareError, fireWrite]);
 
   useEffect(() => {
     switch (status) {
       case "error":
-        console.log(writeError);
         effectsRef.current?.onError?.(writeError);
         setEnabled(false);
     }
