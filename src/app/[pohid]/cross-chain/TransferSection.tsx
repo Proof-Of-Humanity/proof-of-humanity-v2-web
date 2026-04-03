@@ -70,7 +70,9 @@ export default function TransferSection({
           setIsTransferModalOpen(false);
         },
         onError() {
-          setTransferError("Transaction failed. Check your wallet and try again.");
+          setTransferError(
+            "Transaction failed. Check your wallet and try again.",
+          );
           toast.error("Transaction failed");
           loading.stop();
         },
@@ -178,24 +180,25 @@ export default function TransferSection({
               </span>
             </div>
           ) : null}
-          <ActionButton
-            className="mt-4"
-            disabled={hasTransferInFlight}
-            isLoading={hasTransferInFlight}
-            label={hasTransferInFlight ? "Transfering..." : "Transfer"}
-            onClick={() => {
-              setTransferError(null);
+          <div className="mt-4 flex justify-center">
+            <ActionButton
+              disabled={hasTransferInFlight}
+              isLoading={hasTransferInFlight}
+              label={hasTransferInFlight ? "Transfering..." : "Transfer"}
+              onClick={() => {
+                setTransferError(null);
 
-              if (debugDisableExecution) {
-                toast.info("Harness mode: transfer execution disabled");
-                return;
-              }
+                if (debugDisableExecution) {
+                  toast.info("Harness mode: transfer execution disabled");
+                  return;
+                }
 
-              prepareTransfer({
-                args: [gatewayId],
-              });
-            }}
-          />
+                prepareTransfer({
+                  args: [gatewayId],
+                });
+              }}
+            />
+          </div>
         </div>
       </Modal>
     </>

@@ -38,7 +38,7 @@ import {
 
 import Card from "./Card";
 import SubgraphsStatus from "./SubgraphsStatus";
-import Loading from "app/[pohid]/loading";
+import Loading from "components/Loading";
 
 enableReactUse();
 

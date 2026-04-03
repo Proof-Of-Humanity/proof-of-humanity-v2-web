@@ -31,4 +31,5 @@ export type AMBMessageInfoParams = {
 export type RelayedMessageMatchParams = {
   txReceipt: TransactionReceipt;
   messageId: Hash;
+  destinationChainId: number;
 };

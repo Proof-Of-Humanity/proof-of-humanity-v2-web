@@ -8,19 +8,16 @@ import { sdk } from "config/subgraph";
 import type { ProfileHumanityQuery } from "generated/graphql";
 import { type Hash, TransactionReceiptNotFoundError } from "viem";
 
-import CrossChainError from "./cross-chain/CrossChainError";
-import PendingRelaySection from "./cross-chain/PendingRelaySection";
-import {
-  getAMBMessageInfo,
-  hasRelayedMessage,
-} from "./cross-chain/relayHelpers";
-import TransferSection from "./cross-chain/TransferSection";
-import { getChainPublicClient } from "./cross-chain/publicClient";
-import UpdateStateSection from "./cross-chain/UpdateStateSection";
-import { getBridgeStrategy } from "./cross-chain/bridgeStrategies";
-import { RELAY_MODE_WAIT_ONLY, type RelayMode } from "./cross-chain/types";
-import type { ProfilePageState } from "./profileState";
-import type { CrossChainState } from "./page";
+import type { ProfilePageState } from "../profileState";
+import { getBridgeStrategy } from "./bridgeStrategies";
+import type { CrossChainState } from "./crossChainState";
+import CrossChainError from "./CrossChainError";
+import PendingRelaySection from "./PendingRelaySection";
+import { getChainPublicClient } from "./publicClient";
+import { getAMBMessageInfo, hasRelayedMessage } from "./relayHelpers";
+import TransferSection from "./TransferSection";
+import { RELAY_MODE_WAIT_ONLY, type RelayMode } from "./types";
+import UpdateStateSection from "./UpdateStateSection";
 
 type PendingRelayDescriptor = {
   relayMode: RelayMode;
@@ -99,9 +96,11 @@ async function decodeTransferRelayPayload({
 export async function resolvePendingUpdateRelay({
   homeChain,
   pohId,
+  latestWinningRequestTimestamp,
 }: {
   homeChain: SupportedChain;
   pohId: Hash;
+  latestWinningRequestTimestamp?: number;
 }): Promise<{
   lastOutUpdateTimestamp?: number;
   pendingUpdateRelay: PendingRelayDescriptor | null;
@@ -122,9 +121,13 @@ export async function resolvePendingUpdateRelay({
   }
 
   const outboundUpdateTimestamp = Number(latestOutUpdate.timestamp || 0);
-  if (!outboundUpdateTimestamp) {
+
+  if (
+    latestWinningRequestTimestamp &&
+    outboundUpdateTimestamp < latestWinningRequestTimestamp
+  ) {
     return {
-      lastOutUpdateTimestamp: undefined,
+      lastOutUpdateTimestamp: outboundUpdateTimestamp,
       pendingUpdateRelay: null,
     };
   }
@@ -158,7 +161,7 @@ export async function resolvePendingUpdateRelay({
     humanityId: pohId,
   });
 
-  if (!sourceMessageInfo?.messageId || !sourceMessageInfo.encodedData) {
+  if (!sourceMessageInfo?.encodedData) {
     throw new Error("Failed to decode pending update relay payload.");
   }
 
@@ -186,6 +189,7 @@ export async function resolvePendingUpdateRelay({
   const updateAlreadyRelayed = hasRelayedMessage({
     txReceipt: destinationReceipt,
     messageId: sourceMessageInfo.messageId,
+    destinationChainId,
   });
 
   if (updateAlreadyRelayed) {

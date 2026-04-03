@@ -1,6 +1,6 @@
 "use client";
 
-import Loading from "app/[pohid]/loading";
+import Loading from "components/Loading";
 import Image from "next/image";
 import { useSearchParams } from "next/navigation";
 import React, { Suspense } from "react";

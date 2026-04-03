@@ -113,7 +113,7 @@ export default function Timeline({ items, profileHeader }: TimelineProps) {
           observer.disconnect();
         }
       },
-      { threshold: 0.2, rootMargin: "0px 0px -10% 0px" },
+      { threshold: 0.05, rootMargin: "0px 0px 12% 0px" },
     );
 
     observer.observe(node);
@@ -126,7 +126,7 @@ export default function Timeline({ items, profileHeader }: TimelineProps) {
   return (
     <div
       ref={rootRef}
-      className={`timeline-root mt-10 border-t pt-8 ${isVisible ? "timeline-visible" : "timeline-hidden"}`}
+      className={`timeline-root mt-8 border-t pt-8 ${isVisible ? "timeline-visible" : "timeline-hidden"}`}
     >
       <h2 className="text-primaryText text-xl font-semibold">
         Timeline History
@@ -143,12 +143,13 @@ export default function Timeline({ items, profileHeader }: TimelineProps) {
             <div className="flex w-full items-start gap-4">
               <div className="flex w-6 shrink-0 flex-col items-center">
                 <div
-                  className={`timeline-dot-shell bg-whiteBackground ${item.kind === "transferred" ||
-                      item.kind === "verified" ||
-                      item.kind === "rejected"
+                  className={`timeline-dot-shell bg-whiteBackground ${
+                    item.kind === "transferred" ||
+                    item.kind === "verified" ||
+                    item.kind === "rejected"
                       ? "-mt-0.5 h-5 w-5 border-transparent"
                       : styles.dot
-                    }`}
+                  }`}
                   style={{ animationDelay: itemDelay }}
                 >
                   {item.kind === "transferred" ? (
@@ -222,11 +223,7 @@ export default function Timeline({ items, profileHeader }: TimelineProps) {
             </div>
           );
 
-          return (
-            <div key={item.id}>
-              {content}
-            </div>
-          );
+          return <div key={item.id}>{content}</div>;
         })}
       </div>
     </div>

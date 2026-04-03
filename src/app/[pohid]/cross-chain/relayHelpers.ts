@@ -1,5 +1,7 @@
-import { getForeignChain } from "config/chains";
 import { decodeEventLog, decodeFunctionData, toFunctionSelector } from "viem";
+import { gnosis, gnosisChiado } from "viem/chains";
+
+import { getForeignChain } from "config/chains";
 
 import crossChainProofOfHumanityAbi from "contracts/deployments/CrossChainProofOfHumanity/abi";
 import ethereumAMBBridgeAbi from "contracts/deployments/EthereumAMBBridge/abi";
@@ -139,16 +141,26 @@ export function getAMBMessageInfo({
 export function hasRelayedMessage({
   txReceipt,
   messageId,
+  destinationChainId,
 }: RelayedMessageMatchParams) {
+  const isGnosisDestination =
+    destinationChainId === gnosis.id || destinationChainId === gnosisChiado.id;
+  const completionEventName = isGnosisDestination
+    ? "AffirmationCompleted"
+    : "RelayedMessage";
+  const completionEventAbi = isGnosisDestination
+    ? gnosisAMBBridgeAbi
+    : ethereumAMBBridgeAbi;
+
   for (const log of txReceipt.logs) {
     try {
       const decoded = decodeEventLog({
-        abi: ethereumAMBBridgeAbi,
+        abi: completionEventAbi,
         data: log.data,
         topics: log.topics,
       });
 
-      if (decoded.eventName !== "RelayedMessage") {
+      if (decoded.eventName !== completionEventName) {
         continue;
       }
 

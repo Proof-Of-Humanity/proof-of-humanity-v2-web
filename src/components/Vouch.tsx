@@ -39,7 +39,6 @@ const Vouch: React.FC<VouchingTooltipProps> = ({
         left-1/2 -translate-x-1/2 translate-y-full m-4 mx-auto p-[8px] z-10 \
         not-italic font-normal leading-[normal] outline-black outline-color: #E5E5E5 \
         ${reducedTooltip ? "" : "w-[219px] h-[72px]"}`;
-  console.log(pohId, href)
   return (
     <Link key={key} href={pohId && href}>
       <div className="group relative flex">

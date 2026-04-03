@@ -33,7 +33,7 @@ export async function TimelineHistorySection({
 
 export function TimelineHistorySectionSkeleton() {
   return (
-    <div className="mt-10 border-t pt-8">
+    <div className="mt-8 border-t pt-8">
       <div className="bg-grey h-7 w-44 animate-pulse rounded" />
       <div className="mt-6">
         {Array.from({ length: 2 }).map((_, index) => (

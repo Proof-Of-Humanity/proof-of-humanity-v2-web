@@ -507,7 +507,6 @@ export default async function Request({ params }: PageProps) {
                     <div className="flex flex-wrap justify-center gap-2 md:justify-start">
                       {vourchesForData.map(async (vouch, idx) => {
                         const vouchLocal = await Promise.resolve(vouch);
-                        console.log({ vouchLocal }, vouchLocal.pohId === undefined);
                         if (vouchLocal.pohId === undefined) return null;
                         return (
                           <Vouch
@@ -541,7 +540,6 @@ export default async function Request({ params }: PageProps) {
                     </span>
                     <div className="flex flex-wrap justify-center gap-2 md:justify-start">
                       {vouchersData.map(async (vouch, idx) => {
-                        console.log({ vouch });
                         const vouchLocal = await Promise.resolve(vouch);
                         return (
                           <Vouch
