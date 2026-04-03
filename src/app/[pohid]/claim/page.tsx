@@ -7,7 +7,7 @@ import dynamic from "next/dynamic";
 import { redirect } from "next/navigation";
 import { machinifyId } from "utils/identifier";
 import { Hash } from "viem";
-import Loading from "../loading";
+import Loading from "app/[pohid]/loading";
 
 const Form = dynamic(() => import("./Form"), {
   ssr: false,

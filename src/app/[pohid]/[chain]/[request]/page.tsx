@@ -84,17 +84,17 @@ export default async function Request({ params }: PageProps) {
   const displayEvidenceList =
     sourceWinningEvidence && sourceWinningEvidence.length > 0
       ? sourceWinningEvidence.map((item, index) => ({
-          id: `${request.id}-winner-claim-${index}`,
-          uri: item.uri,
-          creationTime: Number(request.lastStatusChange || request.creationTime),
-          submitter: request.requester as Address,
-        }))
+        id: `${request.id}-winner-claim-${index}`,
+        uri: item.uri,
+        creationTime: Number(request.lastStatusChange || request.creationTime),
+        submitter: request.requester as Address,
+      }))
       : request.evidenceGroup.evidence.map((item) => ({
-          id: item.id,
-          uri: item.uri,
-          creationTime: Number(item.creationTime),
-          submitter: item.submitter as Address,
-        }));
+        id: item.id,
+        uri: item.uri,
+        creationTime: Number(item.creationTime),
+        submitter: item.submitter as Address,
+      }));
 
   let onChainVouches: Array<Address> = [];
   const fetchedOffChainVouches: OffChainVouch[] = await getOffChainVouches(
@@ -247,7 +247,6 @@ export default async function Request({ params }: PageProps) {
     true,
     true,
   );
-
   const vouchersData = prepareVouchData(
     await Promise.all([
       ...offChainVouches.map((vouch) => getClaimerData(vouch.voucher)),
@@ -325,263 +324,266 @@ export default async function Request({ params }: PageProps) {
       storageKey={`request:${pohId}:${chain.id}:${request.index}`}
     >
       <div className="content mx-auto flex w-[92vw] sm:w-[84vw] max-w-[1500px] flex-col justify-center font-semibold md:w-[76vw]">
-      <ActionBar
-        arbitrationCost={arbitrationCost}
-        index={request.index}
-        requester={request.requester}
-        contractData={contractData}
-        pohId={pohId}
-        revocation={request.revocation}
-        currentChallenge={currentChallenge}
-        arbitrationHistory={request.arbitratorHistory}
-        humanityExpirationTime={request.expirationTime}
-        usedReasons={usedReasons}
-      />
-      <div className="border-stroke bg-whiteBackground mb-6 rounded border shadow">
-        {request.revocation && revocationFile && (
-          <div className="bg-primaryBackground p-4">
-            <div className="relative">
-              <div className="text-primaryText flex flex-col items-center gap-2 text-center md:flex-row md:justify-between md:text-left">
-                Revocation requested - {revocationFile.name}
-                {revocationFile.fileURI && (
-                  <Attachment uri={revocationFile.fileURI} />
-                )}
+        <ActionBar
+          arbitrationCost={arbitrationCost}
+          index={request.index}
+          requester={request.requester}
+          contractData={contractData}
+          pohId={pohId}
+          revocation={request.revocation}
+          currentChallenge={currentChallenge}
+          arbitrationHistory={request.arbitratorHistory}
+          humanityExpirationTime={request.expirationTime}
+          usedReasons={usedReasons}
+        />
+        <div className="border-stroke bg-whiteBackground mb-6 rounded border shadow">
+          {request.revocation && revocationFile && (
+            <div className="bg-primaryBackground p-4">
+              <div className="relative">
+                <div className="text-primaryText flex flex-col items-center gap-2 text-center md:flex-row md:justify-between md:text-left">
+                  Revocation requested - {revocationFile.name}
+                  {revocationFile.fileURI && (
+                    <Attachment uri={revocationFile.fileURI} />
+                  )}
+                </div>
+                <p className="text-primaryText text-center md:text-left">
+                  {revocationFile.description}
+                </p>
               </div>
-              <p className="text-primaryText text-center md:text-left">
-                {revocationFile.description}
-              </p>
-            </div>
-            <div className="flex flex-wrap items-center justify-center text-center text-sm font-normal md:justify-start md:text-left">
-              <span className="text-secondaryText mr-2">Requested by</span>
-              <Identicon diameter={16} address={request.requester} />
-              <ExternalLink
-                className="ml-1 flex flex-wrap break-words break-all text-blue-500 underline underline-offset-2"
-                href={explorerLink(request.requester, chain)}
-              >
-                {request.requester}
-              </ExternalLink>
-            </div>
-          </div>
-        )}
-
-        <div className="flex flex-col md:flex-row">
-          <div className="background border-stroke hidden w-2/5 flex-col items-stretch justify-between border-r px-8 pt-8 md:flex">
-            <div className="flex flex-col items-center">
-              {registrationFile && (
-                <Previewed
-                  uri={ipfs(registrationFile.photo)}
-                  trigger={
-                    <Image
-                      className="h-32 w-32 cursor-pointer rounded-full bg-cover bg-center bg-no-repeat object-cover"
-                      alt="image"
-                      src={ipfs(registrationFile.photo)}
-                      width={144}
-                      height={144}
-                      unoptimized={true} //Skips cache
-                    />
-                  }
-                />
-              )}
-
-              <span className="text-primaryText mb-12 mt-4 text-2xl">
-                {displayedClaimerName}
-              </span>
-
-              <span className="text-secondaryText text-sm font-light">
-                {registrationFile ? registrationFile.bio : ""}
-              </span>
-            </div>
-
-            <Label className="text-orange mb-8">
-              Last update: <TimeAgo time={request.lastStatusChange} />
-            </Label>
-          </div>
-
-          <div className="flex w-full flex-col p-[24px] lg:p-[32px]">
-            <div className="mb-8 flex flex-col-reverse items-center justify-between md:items-stretch md:flex-row">
-              <div className="flex w-full flex-col items-center md:w-auto md:flex-row md:items-center md:justify-start">
-                <Identicon diameter={24} address={displayedClaimerId} />
+              <div className="flex flex-wrap items-center justify-center text-center text-sm font-normal md:justify-start md:text-left">
+                <span className="text-secondaryText mr-2">Requested by</span>
+                <Identicon diameter={16} address={request.requester} />
                 <ExternalLink
-                  className="mt-1 text-center font-semibold text-slate-400 hover:text-slate-600 md:ml-2 md:mt-0 md:text-left"
-                  href={explorerLink(displayedClaimerId, chain)}
+                  className="ml-1 flex flex-wrap break-words break-all text-blue-500 underline underline-offset-2"
+                  href={explorerLink(request.requester, chain)}
                 >
-                  {displayedClaimerId.slice(0, 20)}
-                  <wbr />
-                  {displayedClaimerId.slice(20)}
+                  {request.requester}
                 </ExternalLink>
               </div>
-              <span className="text-primaryText flex items-center justify-center md:justify-start mb-2 md:mb-0">
-                <ChainLogo
-                  chainId={chain.id}
-                  className="fill-primaryText m-1 h-4 w-4"
-                />
-                {chain.name}
-              </span>
             </div>
-            <div className="mb-4 h-1 w-full border-b"></div>
-            <div className="mb-2 flex flex-col-reverse items-center justify-center md:items-stretch md:justify-between md:flex-row">
-              <Suspense fallback={<RequestInfoSectionSkeleton />}>
-                <RequestInfoSection
-                  chainId={chain.id}
+          )}
+
+          <div className="flex flex-col md:flex-row">
+            <div className="background border-stroke hidden w-2/5 flex-col items-stretch justify-between border-r px-8 pt-8 md:flex">
+              <div className="flex flex-col items-center">
+                {registrationFile && (
+                  <Previewed
+                    uri={ipfs(registrationFile.photo)}
+                    trigger={
+                      <Image
+                        className="h-32 w-32 cursor-pointer rounded-full bg-cover bg-center bg-no-repeat object-cover"
+                        alt="image"
+                        src={ipfs(registrationFile.photo)}
+                        width={144}
+                        height={144}
+                        unoptimized={true} //Skips cache
+                      />
+                    }
+                  />
+                )}
+
+                <span className="text-primaryText mb-12 mt-4 text-2xl">
+                  {displayedClaimerName}
+                </span>
+
+                <span className="text-secondaryText text-sm font-light">
+                  {registrationFile ? registrationFile.bio : ""}
+                </span>
+              </div>
+
+              <Label className="text-orange mb-8">
+                Last update: <TimeAgo time={request.lastStatusChange} />
+              </Label>
+            </div>
+
+            <div className="flex w-full flex-col p-[24px] lg:p-[32px]">
+              <div className="mb-8 flex flex-col-reverse items-center justify-between md:items-stretch md:flex-row">
+                <div className="flex w-full flex-col items-center md:w-auto md:flex-row md:items-center md:justify-start">
+                  <Identicon diameter={24} address={displayedClaimerId} />
+                  <ExternalLink
+                    className="mt-1 text-center font-semibold text-slate-400 hover:text-slate-600 md:ml-2 md:mt-0 md:text-left"
+                    href={explorerLink(displayedClaimerId, chain)}
+                  >
+                    {displayedClaimerId.slice(0, 20)}
+                    <wbr />
+                    {displayedClaimerId.slice(20)}
+                  </ExternalLink>
+                </div>
+                <span className="text-primaryText flex items-center justify-center md:justify-start mb-2 md:mb-0">
+                  <ChainLogo
+                    chainId={chain.id}
+                    className="fill-primaryText m-1 h-4 w-4"
+                  />
+                  {chain.name}
+                </span>
+              </div>
+              <div className="mb-4 h-1 w-full border-b"></div>
+              <div className="mb-2 flex flex-col-reverse items-center justify-center md:items-stretch md:justify-between md:flex-row">
+                <Suspense fallback={<RequestInfoSectionSkeleton />}>
+                  <RequestInfoSection
+                    chainId={chain.id}
+                    timelineDataPromise={timelineDataPromise}
+                  />
+                </Suspense>
+              </div>
+              <div className="text-orange mb-8 flex flex-wrap gap-x-[8px] gap-y-[8px] font-medium justify-center md:justify-start">
+                <Link
+                  className="text-orange flex flex-row flex-wrap text-center justify-center gap-x-[8px] font-semibold hover:text-orange-500 md:justify-start"
+                  href={`/${prettifyId(pohId)}`}
+                >
+                  <Image
+                    alt="poh id"
+                    src="/logo/pohid.svg"
+                    height={24}
+                    width={24}
+                  />
+                  {prettifyId(pohId).slice(0, 20)}
+                  <wbr />
+                  {prettifyId(pohId).slice(20)} <span>- Open ID</span> <Arrow />
+                </Link>
+              </div>
+
+              <div className="flex flex-col items-center md:hidden">
+                {registrationFile && (
+                  <Previewed
+                    uri={ipfs(registrationFile.photo)}
+                    trigger={
+                      <Image
+                        className="h-32 w-32 cursor-pointer rounded-full object-cover"
+                        alt="image"
+                        src={ipfs(registrationFile.photo)}
+                        width={144}
+                        height={144}
+                        unoptimized={true} //Skips cache
+                      />
+                    }
+                  />
+                )}
+
+                <span className="text-primaryText mb-[16px] mt-4 text-2xl">
+                  {displayedClaimerName}
+                </span>
+
+                <span className="text-secondaryText mb-[32px] text-sm font-light">
+                  {registrationFile ? registrationFile.bio : ""}
+                </span>
+              </div>
+
+              {registrationFile && (
+                <>
+                  <Previewed
+                    isVideo
+                    uri={ipfs(registrationFile.video)}
+                    trigger={
+                      <VideoThumbnail
+                        className="w-full cursor-pointer rounded"
+                        src={ipfs(registrationFile.video)}
+                      />
+                    }
+                  />
+                  <span className="text-secondaryText mt-1 text-center text-sm md:text-left">
+                    Tap video to preview fullscreen
+                  </span>
+                </>
+              )}
+
+              <div className="flex w-full flex-wrap justify-center gap-2 md:justify-between md:flex-row md:items-center">
+                {policyLink && (
+                  <div className="flex w-full flex-col items-center md:flex-row md:items-end md:justify-end font-normal">
+                    <Link
+                      href={`/attachment?url=${ipfs(policyLink)}`}
+                      className="flex justify-center items-center text-primaryText ml-0 md:ml-2"
+                    >
+                      <DocumentIcon className="fill-orange h-6 w-6" />
+                      <div className="text-primaryText group relative flex py-[8px]">
+                        Relevant Policy
+                      </div>
+                    </Link>
+                  </div>
+                )}
+                {vourchesForData.find((v) => v) && (
+                  <div className="text-secondaryText mt-8 flex flex-col items-center text-center md:items-start md:text-left">
+                    This PoHID vouched for
+                    <div className="flex flex-wrap justify-center gap-2 md:justify-start">
+                      {vourchesForData.map(async (vouch, idx) => {
+                        const vouchLocal = await Promise.resolve(vouch);
+                        console.log({ vouchLocal }, vouchLocal.pohId === undefined);
+                        if (vouchLocal.pohId === undefined) return null;
+                        return (
+                          <Vouch
+                            isActive={true}
+                            reason={undefined}
+                            name={vouchLocal.name}
+                            photo={vouchLocal.photo}
+                            idx={idx}
+                            href={`/${prettifyId(vouchLocal.pohId!)}`}
+                            pohId={vouchLocal.pohId}
+                            address={vouchLocal.pohId}
+                            isOnChain={vouchLocal.isOnChain}
+                            reducedTooltip={true}
+                          />
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+              </div>
+              <div className="flex w-full flex-wrap justify-center gap-2 md:justify-between md:flex-row md:items-center">
+                {vouchersData.find((v) => v) && (
+                  <div className="text-secondaryText mt-8 flex flex-col items-center text-center md:items-start md:text-left">
+                    <span className="flex items-center">
+                      {request.status.id === "vouching"
+                        ? "Available vouches for this PoHID"
+                        : "Vouched for this request"}
+                      {request.status.id === "vouching" && (
+                        <OptimisticVouchIndicator />
+                      )}
+                    </span>
+                    <div className="flex flex-wrap justify-center gap-2 md:justify-start">
+                      {vouchersData.map(async (vouch, idx) => {
+                        console.log({ vouch });
+                        const vouchLocal = await Promise.resolve(vouch);
+                        return (
+                          <Vouch
+                            isActive={request.status.id === "vouching" ?
+                              vouchLocal.vouchStatus?.isValid : true}
+                            reason={
+                              request.status.id === "vouching"
+                                ? vouchLocal.vouchStatus?.reason
+                                : undefined
+                            }
+                            name={vouchLocal.name}
+                            photo={vouchLocal.photo}
+                            idx={idx}
+                            href={`/${prettifyId(vouchLocal.pohId!)}`}
+                            pohId={vouchLocal.pohId}
+                            address={vouchLocal.voucher}
+                            isOnChain={vouchLocal.isOnChain}
+                            reducedTooltip={request.status.id !== "vouching"}
+                          />
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+              </div>
+              <Suspense fallback={<TimelineHistorySectionSkeleton />}>
+                <TimelineHistorySection
                   timelineDataPromise={timelineDataPromise}
                 />
               </Suspense>
+              <Label className="text-orange mb-8 text-center md:hidden">
+                Last update: <TimeAgo time={request.lastStatusChange} />
+              </Label>
             </div>
-            <div className="text-orange mb-8 flex flex-wrap gap-x-[8px] gap-y-[8px] font-medium justify-center md:justify-start">
-              <Link
-                className="text-orange flex flex-row flex-wrap text-center justify-center gap-x-[8px] font-semibold hover:text-orange-500 md:justify-start"
-                href={`/${prettifyId(pohId)}`}
-              >
-                <Image
-                  alt="poh id"
-                  src="/logo/pohid.svg"
-                  height={24}
-                  width={24}
-                />
-                {prettifyId(pohId).slice(0, 20)}
-                <wbr />
-                {prettifyId(pohId).slice(20)} <span>- Open ID</span> <Arrow />
-              </Link>
-            </div>
-
-            <div className="flex flex-col items-center md:hidden">
-              {registrationFile && (
-                <Previewed
-                  uri={ipfs(registrationFile.photo)}
-                  trigger={
-                    <Image
-                      className="h-32 w-32 cursor-pointer rounded-full object-cover"
-                      alt="image"
-                      src={ipfs(registrationFile.photo)}
-                      width={144}
-                      height={144}
-                      unoptimized={true} //Skips cache
-                    />
-                  }
-                />
-              )}
-
-              <span className="text-primaryText mb-[16px] mt-4 text-2xl">
-                {displayedClaimerName}
-              </span>
-
-              <span className="text-secondaryText mb-[32px] text-sm font-light">
-                {registrationFile ? registrationFile.bio : ""}
-              </span>
-            </div>
-
-            {registrationFile && (
-              <>
-                <Previewed
-                  isVideo
-                  uri={ipfs(registrationFile.video)}
-                  trigger={
-                    <VideoThumbnail
-                      className="w-full cursor-pointer rounded"
-                      src={ipfs(registrationFile.video)}
-                    />
-                  }
-                />
-                <span className="text-secondaryText mt-1 text-center text-sm md:text-left">
-                  Tap video to preview fullscreen
-                </span>
-              </>
-            )}
-
-            <div className="flex w-full flex-wrap justify-center gap-2 md:justify-between md:flex-row md:items-center">
-              {policyLink && (
-                <div className="flex w-full flex-col items-center md:flex-row md:items-end md:justify-end font-normal">
-                  <Link
-                    href={`/attachment?url=${ipfs(policyLink)}`}
-                    className="flex justify-center items-center text-primaryText ml-0 md:ml-2"
-                  >
-                    <DocumentIcon className="fill-orange h-6 w-6" />
-                    <div className="text-primaryText group relative flex py-[8px]">
-                      Relevant Policy
-                    </div>
-                  </Link>
-                </div>
-              )}
-              {vourchesForData.find((v) => v) && (
-                <div className="text-secondaryText mt-8 flex flex-col items-center text-center md:items-start md:text-left">
-                  This PoHID vouched for
-                  <div className="flex flex-wrap justify-center gap-2 md:justify-start">
-                    {vourchesForData.map(async (vouch, idx) => {
-                      const vouchLocal = await Promise.resolve(vouch);
-                      return (
-                        <Vouch
-                          isActive={true}
-                          reason={undefined}
-                          name={vouchLocal.name}
-                          photo={vouchLocal.photo}
-                          idx={idx}
-                          href={`/${prettifyId(vouchLocal.pohId!)}`}
-                          pohId={vouchLocal.pohId}
-                          address={vouchLocal.pohId}
-                          isOnChain={vouchLocal.isOnChain}
-                          reducedTooltip={true}
-                        />
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
-            </div>
-            <div className="flex w-full flex-wrap justify-center gap-2 md:justify-between md:flex-row md:items-center">
-              {vouchersData.find((v) => v) && (
-                <div className="text-secondaryText mt-8 flex flex-col items-center text-center md:items-start md:text-left">
-                  <span className="flex items-center">
-                    {request.status.id === "vouching"
-                      ? "Available vouches for this PoHID"
-                      : "Vouched for this request"}
-                    {request.status.id === "vouching" && (
-                      <OptimisticVouchIndicator />
-                    )}
-                  </span>
-                  <div className="flex flex-wrap justify-center gap-2 md:justify-start">
-                    {vouchersData.map(async (vouch, idx) => {
-                      const vouchLocal = await Promise.resolve(vouch);
-                      return (
-                        <Vouch
-                          isActive={request.status.id === "vouching" ?
-                            vouchLocal.vouchStatus?.isValid : true}
-                          reason={
-                            request.status.id === "vouching"
-                              ? vouchLocal.vouchStatus?.reason
-                              : undefined
-                          }
-                          name={vouchLocal.name}
-                          photo={vouchLocal.photo}
-                          idx={idx}
-                          href={`/${prettifyId(vouchLocal.pohId!)}`}
-                          pohId={vouchLocal.pohId}
-                          address={vouchLocal.voucher}
-                          isOnChain={vouchLocal.isOnChain}
-                          reducedTooltip={request.status.id !== "vouching"}
-                        />
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
-            </div>
-            <Suspense fallback={<TimelineHistorySectionSkeleton />}>
-              <TimelineHistorySection
-                timelineDataPromise={timelineDataPromise}
-              />
-            </Suspense>
-            <Label className="text-orange mb-8 text-center md:hidden">
-              Last update: <TimeAgo time={request.lastStatusChange} />
-            </Label>
           </div>
         </div>
-      </div>
 
-      <Evidence
-        pohId={pohId}
-        requestIndex={request.index}
-        arbitrationInfo={request.arbitratorHistory}
-      />
+        <Evidence
+          pohId={pohId}
+          requestIndex={request.index}
+          arbitrationInfo={request.arbitratorHistory}
+        />
       </div>
     </RequestOptimisticProvider>
   );

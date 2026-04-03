@@ -43,6 +43,8 @@ query ProfileHumanity($id: ID!, $humanityId: Bytes!) {
   outTransfer(id: $id) {
     foreignProxy
     transferHash
+    txHash
+    logIndex
     transferTimestamp
   }
   inTransfers(where: { humanityId: $humanityId }) {

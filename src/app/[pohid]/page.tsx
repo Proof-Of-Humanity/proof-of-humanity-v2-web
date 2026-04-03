@@ -21,9 +21,10 @@ import { Suspense } from "react";
 import { ProfileOptimisticProvider } from "optimistic/profile";
 import { shortenAddress } from "utils/address";
 import { machinifyId, prettifyId } from "utils/identifier";
-import { buildTransferContext, isTransferStatus } from "utils/profileTransferContext";
 import { getStatus, RequestStatus } from "utils/status";
-import CrossChain from "./CrossChain";
+import CrossChain, { resolvePendingUpdateRelay } from "./CrossChain";
+import CrossChainLoading from "./cross-chain/CrossChainLoading";
+import { deriveProfileState, type ProfilePageState } from "./profileState";
 import { TimelineHistorySectionSkeleton } from "./[chain]/[request]/TimelineSection";
 import { ProfileTimelineSection } from "./TimelineSection";
 import Renew from "./Renew";
@@ -39,62 +40,89 @@ type PoHRequest = ArrayElement<
 type DisplayRequest =
   | PoHRequest
   | (NonNullable<Awaited<ReturnType<typeof getProfileRequestData>>> & {
-    chainId: SupportedChainId;
-  });
+      chainId: SupportedChainId;
+    });
 
-type PageState = "CLAIMED" | "TRANSFER_PENDING" | "REMOVED" | "NOT_CLAIMED";
+export type CrossChainState = {
+  canShowCrossChain: boolean;
+  canTransfer: boolean;
+  canUpdate: boolean;
+};
 
-const sortRequestsByLatest = (requestA: PoHRequest, requestB: PoHRequest) =>
-  Number(requestB.lastStatusChange || requestB.creationTime) -
-  Number(requestA.lastStatusChange || requestA.creationTime);
+export const deriveCrossChainState = ({
+  pageState,
+  pendingRevocation,
+  hasHomeChain,
+}: {
+  pageState: ProfilePageState;
+  pendingRevocation: boolean;
+  hasHomeChain: boolean;
+}): CrossChainState => {
+  const canTransfer =
+    hasHomeChain && pageState === "CLAIMED" && !pendingRevocation;
+  const canUpdate =
+    hasHomeChain && (pageState === "CLAIMED" || pageState === "REMOVED");
 
-const isWinningRequest = (request: PoHRequest) =>
-  request.winnerParty?.id === "requester" &&
-  !request.revocation &&
-  [
-    RequestStatus.RESOLVED_CLAIM,
-    RequestStatus.TRANSFERRING,
-    RequestStatus.TRANSFERRED,
-  ].includes(request.requestStatus);
+  return {
+    canShowCrossChain:
+      hasHomeChain &&
+      (pageState === "TRANSFER_PENDING" || canTransfer || canUpdate),
+    canTransfer,
+    canUpdate,
+  };
+};
 
-const isSameRequest = (
-  requestA?: Pick<PoHRequest, "chainId" | "index">,
-  requestB?: Pick<PoHRequest, "chainId" | "index">,
-) =>
-  !!requestA &&
-  !!requestB &&
-  requestA.chainId === requestB.chainId &&
-  requestA.index === requestB.index;
+export const isTransferCooldownActive = ({
+  transferCooldownEndsAt,
+  nowSeconds,
+}: {
+  transferCooldownEndsAt?: number;
+  nowSeconds: number;
+}) =>
+  transferCooldownEndsAt !== undefined
+    ? transferCooldownEndsAt >= nowSeconds
+    : false;
+
+export const isOutboundUpdateExpired = (
+  outboundUpdateTimestamp: bigint,
+  nowSeconds: number,
+) => nowSeconds > Number(outboundUpdateTimestamp);
 
 const toWinnerClaim = (request?: DisplayRequest | PoHRequest) =>
   request
     ? [
-      {
-        index: request.index,
-        resolutionTime:
-          "lastStatusChange" in request
-            ? request.lastStatusChange || request.creationTime || 0
-            : 0,
-        evidenceGroup: {
-          evidence: request.evidenceGroup.evidence,
+        {
+          index: request.index,
+          resolutionTime:
+            "lastStatusChange" in request
+              ? request.lastStatusChange || request.creationTime || 0
+              : 0,
+          evidenceGroup: {
+            evidence: request.evidenceGroup.evidence,
+          },
         },
-      },
-    ]
+      ]
     : [];
 
-// if request is -100 ,its means it was transferred walk back its lineage to find actual source request
+/**
+ * @notice Resolves a synthetic bridged request back to its real source request.
+ * @dev Negative request indexes are transfer-created artifacts. The profile UI
+ *      walks transfer lineage so card and header identity/evidence come from
+ *      the original source request.
+ */
 const enrichRequest = async ({
   pohId,
   request,
+  humanityEvents,
 }: {
   pohId: `0x${string}`;
   request: DisplayRequest;
+  humanityEvents: Awaited<ReturnType<typeof getHumanityEvents>>;
 }): Promise<DisplayRequest> => {
   if (Number(request.index) > -100) {
     return request;
   }
 
-  const events = await getHumanityEvents(pohId);
   let currentChainId = request.chainId;
   let currentRequest = await getProfileRequestData(
     currentChainId,
@@ -106,12 +134,15 @@ const enrichRequest = async ({
     return request;
   }
 
-  while (Number(currentRequest.index) <= -100 && currentRequest.inTransferHash) {
-    const parentTransfer = events.find(
+  while (
+    Number(currentRequest.index) <= -100 &&
+    currentRequest.inTransferHash
+  ) {
+    const parentTransfer = humanityEvents.find(
       (event) =>
         event.type === "TRANSFER_INITIATED" &&
         event.transferHash?.toLowerCase() ===
-        currentRequest!.inTransferHash!.toLowerCase(),
+          currentRequest!.inTransferHash!.toLowerCase(),
     );
 
     if (
@@ -148,25 +179,12 @@ async function Profile({ params: { pohid } }: PageProps) {
 
   if (!pohId) return <>Not found</>;
 
-  const [humanity, contractData] = await Promise.all([
+  const [humanity, contractData, humanityEvents] = await Promise.all([
     getProfileData(pohId),
     getContractDataAllChains(),
+    getHumanityEvents(pohId),
   ]);
   const nowSeconds = Date.now() / 1000;
-
-  const homeChain = supportedChains.find(
-    (chain) =>
-      !!humanity[chain.id]?.humanity?.registration &&
-      !(humanity[chain.id]?.humanity?.registration?.expirationTime < nowSeconds),
-  );
-
-  const arbitrationCost = homeChain
-    ? await getArbitrationCost(
-      homeChain,
-      contractData[homeChain.id].arbitrationInfo.arbitrator,
-      contractData[homeChain.id].arbitrationInfo.extraData,
-    )
-    : 0n;
 
   const allRequests = supportedChains.flatMap((chain) =>
     (humanity[chain.id]?.humanity?.requests ?? []).map((request) => ({
@@ -178,121 +196,150 @@ async function Profile({ params: { pohid } }: PageProps) {
     })),
   ) as PoHRequest[];
 
-  const transferContext = buildTransferContext({
+  const profileState = deriveProfileState({
     humanity,
     allRequests,
-    supportedChains,
+    nowSeconds,
     getForeignChain,
-    idToChain,
   });
-  // The latest requester-won non-revocation request the profile can render as verified.
-  const latestWinningRequest = allRequests
-    .filter(isWinningRequest)
-    .sort(sortRequestsByLatest)[0];
-  // Timeline history excludes the current winning request and transfer artifact requests.
-  const timelineRequests = allRequests
-    .filter((request) => !isSameRequest(request, latestWinningRequest))
-    .filter((request) => !isTransferStatus(request))
-    .sort(sortRequestsByLatest);
-  // Pending/disputed revocations keep the verified card visible but block some controls.
-  const pendingRevocation = allRequests
-    .filter((request) => !isTransferStatus(request))
-    .filter((request) => !isSameRequest(request, latestWinningRequest))
-    .some((request) =>
-      [
-        RequestStatus.PENDING_REVOCATION,
-        RequestStatus.DISPUTED_REVOCATION,
-      ].includes(request.requestStatus),
-    );
-  const latestNonTransferRequest = allRequests
-    .filter((request) => !isTransferStatus(request))
-    .sort(sortRequestsByLatest)[0];
-  const latestResolvedRequest = allRequests
-    .filter((request) => request.status.id === "resolved")
-    .sort(sortRequestsByLatest)[0];
-  // A requester-won resolved revocation is the terminal "removed" state.
-  const removedByRevocation =
-    !!latestResolvedRequest &&
-    latestResolvedRequest.revocation &&
-    latestResolvedRequest.winnerParty?.id === "requester";
-  // CLAIMED: active registration and a winning request.
-  // TRANSFER_PENDING: latest transfer is still in flight, but we keep the winning identity visible.
-  // REMOVED: latest resolved request removed the profile.
-  // NOT_CLAIMED: no active winning claim and no active transfer.
-  const pageState: PageState = removedByRevocation
-    ? "REMOVED"
-    : homeChain && latestWinningRequest
-      ? "CLAIMED"
-      : transferContext?.pending && latestWinningRequest
-        ? "TRANSFER_PENDING"
-        : "NOT_CLAIMED";
-  // The main card only exists for claimed and transfer-pending profiles.
-  let mainCardRequest: DisplayRequest | undefined =
-    pageState === "CLAIMED" || pageState === "TRANSFER_PENDING"
-      ? latestWinningRequest
+  const pageState: ProfilePageState = profileState.pageState;
+  const latestWinningRequest = profileState.latestWinningRequest;
+  const winningRequestChainId = latestWinningRequest?.chainId;
+  const showsWinningRequestCard =
+    pageState === "CLAIMED" || pageState === "TRANSFER_PENDING";
+  const homeChainId =
+    pageState === "TRANSFER_PENDING" && winningRequestChainId
+      ? (getForeignChain(winningRequestChainId) as SupportedChainId)
+      : winningRequestChainId;
+  const homeChain = homeChainId ? idToChain(homeChainId) : null;
+  const claimedRegistration =
+    pageState === "CLAIMED" && homeChain
+      ? humanity[homeChain.id]?.humanity?.registration
       : undefined;
-  const canShowRenewSection = pageState === "CLAIMED" && !pendingRevocation;
+  const claimedHomeChain = claimedRegistration && homeChain ? homeChain : null;
+
+  const arbitrationCost =
+    claimedHomeChain && claimedRegistration
+      ? await getArbitrationCost(
+          claimedHomeChain,
+          contractData[claimedHomeChain.id].arbitrationInfo.arbitrator,
+          contractData[claimedHomeChain.id].arbitrationInfo.extraData,
+        )
+      : 0n;
+  /**
+   * @notice Request rendered by the main card.
+   * @dev Only claimed and transfer-pending profiles render a main identity card.
+   */
+  let mainCardRequest: DisplayRequest | undefined = showsWinningRequestCard
+    ? profileState.latestWinningRequest
+    : undefined;
+  const canShowRenewSection =
+    !!claimedRegistration && !profileState.pendingRevocation;
   const canRenew =
     canShowRenewSection &&
     !!homeChain &&
-    Number(humanity[homeChain.id]?.humanity?.registration?.expirationTime || 0) -
-    nowSeconds <
-    Number(contractData[homeChain.id]?.renewalPeriodDuration || 0);
-  const canShowCrossChain =
-    (pageState === "CLAIMED" && !pendingRevocation) ||
-    pageState === "TRANSFER_PENDING";
-  // The header falls back to the latest non-transfer request when there is no winning claim.
-  let headerRequest: DisplayRequest | undefined =
-    pageState === "CLAIMED" || pageState === "TRANSFER_PENDING"
-      ? latestWinningRequest
-      : latestNonTransferRequest;
-
-  // Enrich synthetic bridged requests so the rest of the page can render one request shape.
-  [mainCardRequest, headerRequest] = await Promise.all([
-    mainCardRequest
-      ? enrichRequest({
-        pohId,
-        request: mainCardRequest,
-      })
-      : Promise.resolve(undefined),
-    headerRequest
-      ? enrichRequest({
-        pohId,
-        request: headerRequest,
-      })
-      : Promise.resolve(undefined),
-  ]);
-  const transferSourceChain = transferContext?.sourceChain;
-  const latestTransfer = transferSourceChain
-    ? humanity[transferSourceChain.id].outTransfer
+    Number(claimedRegistration?.expirationTime || 0) - nowSeconds <
+      Number(contractData[homeChain.id]?.renewalPeriodDuration || 0);
+  const crossChainState = deriveCrossChainState({
+    pageState,
+    pendingRevocation: profileState.pendingRevocation,
+    hasHomeChain: !!homeChain,
+  });
+  const transferSourceChainId =
+    pageState === "TRANSFER_PENDING" ? winningRequestChainId : homeChain?.id;
+  const lastTransferTimestamp = transferSourceChainId
+    ? Number(
+        humanity[transferSourceChainId]?.outTransfer?.transferTimestamp || 0,
+      ) || undefined
     : undefined;
-  const transferDestinationChain = transferContext?.destinationChain;
-  const transferDisplayClaimer =
-    (mainCardRequest?.claimer.id ||
-      humanity[transferDestinationChain?.id as SupportedChainId]?.crossChainRegistration
-        ?.claimer.id ||
-      humanity[transferSourceChain?.id as SupportedChainId]?.crossChainRegistration
-        ?.claimer.id) as `0x${string}` | undefined;
-  const hasReceivedLatestTransfer =
-    !!homeChain &&
-    !!latestTransfer?.transferHash &&
-    humanity[homeChain.id].inTransfers.some(
-      (inTransfer) =>
-        inTransfer.id.toLowerCase() === latestTransfer.transferHash.toLowerCase(),
-    );
+  /**
+   * @notice Request rendered by the profile header.
+   * @dev Falls back to the latest non-transfer request when no winning request
+   *      exists for the current profile state.
+   */
+  let headerRequest: DisplayRequest | undefined = showsWinningRequestCard
+    ? latestWinningRequest
+    : profileState.latestNonTransferRequest;
+
+  /**
+   * @notice Normalizes header and card requests into one renderable shape.
+   * @dev Synthetic bridged requests are enriched before rendering so the rest
+   *      of the page does not need transfer-specific branches.
+   */
+  if (mainCardRequest) {
+    const enrichedRequest = await enrichRequest({
+      pohId,
+      request: mainCardRequest,
+      humanityEvents,
+    });
+    mainCardRequest = enrichedRequest;
+    headerRequest = enrichedRequest;
+  } else if (headerRequest) {
+    headerRequest = await enrichRequest({
+      pohId,
+      request: headerRequest,
+      humanityEvents,
+    });
+  }
+  const crossChainGatewayId = homeChain
+    ? contractData[homeChain.id].gateways[
+        contractData[homeChain.id].gateways.length - 1
+      ]?.id
+    : undefined;
+  const crossChainProps =
+    homeChain && crossChainState.canShowCrossChain
+      ? {
+          homeChain,
+          transferCooldownEndsAt: lastTransferTimestamp
+            ? lastTransferTimestamp +
+              contractData[homeChain.id].transferCooldown
+            : undefined,
+        }
+      : null;
+  let pendingUpdateRelayStatus: Awaited<
+    ReturnType<typeof resolvePendingUpdateRelay>
+  > = {
+    lastOutUpdateTimestamp: undefined,
+    pendingUpdateRelay: null,
+  };
+  let pendingUpdateError: Error | undefined;
+
+  if (crossChainState.canUpdate && homeChain) {
+    try {
+      pendingUpdateRelayStatus = await resolvePendingUpdateRelay({
+        homeChain,
+        pohId,
+      });
+    } catch (error) {
+      console.error("[pending-update-relay] resolve failed", {
+        pohId,
+        pageState,
+        homeChainId: homeChain.id,
+        winningRequestChainId,
+        error,
+      });
+      pendingUpdateError =
+        error instanceof Error
+          ? error
+          : new Error("Unknown pending update relay failure.");
+    }
+  }
   const profileTimelineDataPromise = getProfileTimelineData(
     pohId,
-    timelineRequests as Parameters<typeof getProfileTimelineData>[1],
+    profileState.timelineRequests as Parameters<
+      typeof getProfileTimelineData
+    >[1],
   );
   const profileHeader = headerRequest
     ? {
-      claimer: headerRequest.claimer,
-      evidence: headerRequest.evidenceGroup.evidence,
-      humanityWinnerClaim: toWinnerClaim(headerRequest),
-      registrationEvidenceRevokedReq: headerRequest.registrationEvidenceRevokedReq,
-      requester: headerRequest.requester,
-      revocation: headerRequest.revocation,
-    }
+        claimer: headerRequest.claimer,
+        evidence: headerRequest.evidenceGroup.evidence,
+        humanityWinnerClaim: toWinnerClaim(headerRequest),
+        registrationEvidenceRevokedReq:
+          headerRequest.registrationEvidenceRevokedReq,
+        requester: headerRequest.requester,
+        revocation: headerRequest.revocation,
+      }
     : undefined;
 
   return (
@@ -317,30 +364,25 @@ async function Profile({ params: { pohid } }: PageProps) {
           </span>
         </div>
 
-        {pageState === "CLAIMED" && homeChain ? (
+        {claimedRegistration && claimedHomeChain ? (
           <>
             <div className="mb-2 flex text-emerald-500">
               Claimed by
               <ExternalLink
                 className="ml-2 underline underline-offset-2"
                 href={explorerLink(
-                  humanity[homeChain.id]!.humanity!.registration!.claimer.id,
-                  homeChain,
+                  claimedRegistration.claimer.id,
+                  claimedHomeChain,
                 )}
               >
-                {shortenAddress(
-                  humanity[homeChain.id]!.humanity!.registration!.claimer.id,
-                )}
+                {shortenAddress(claimedRegistration.claimer.id)}
               </ExternalLink>
             </div>
             <span className="text-secondaryText mb-2">
-              {humanity[homeChain.id]!.humanity!.registration!.expirationTime <
-                nowSeconds
+              {claimedRegistration.expirationTime < nowSeconds
                 ? "Expired "
                 : "Expires "}
-              <TimeAgo
-                time={humanity[homeChain.id]!.humanity!.registration!.expirationTime}
-              />
+              <TimeAgo time={claimedRegistration.expirationTime} />
             </span>
           </>
         ) : null}
@@ -349,17 +391,17 @@ async function Profile({ params: { pohid } }: PageProps) {
           <span className="text-secondaryText mb-2">Transfer pending.</span>
         ) : null}
 
-        {(pageState === "CLAIMED" || pageState === "TRANSFER_PENDING") &&
-          mainCardRequest ? (
+        {showsWinningRequestCard && mainCardRequest ? (
           <>
-            <div className="mt-4 mb-3 flex items-center justify-center">
+            <div className="mb-3 mt-4 flex items-center justify-center">
               <Card
                 chainId={mainCardRequest.chainId}
                 claimer={mainCardRequest.claimer}
                 evidence={mainCardRequest.evidenceGroup.evidence}
                 humanity={{
                   id: pohId,
-                  registration: humanity[mainCardRequest.chainId]?.humanity?.registration,
+                  registration:
+                    humanity[mainCardRequest.chainId]?.humanity?.registration,
                   winnerClaim: toWinnerClaim(mainCardRequest),
                 }}
                 index={mainCardRequest.index}
@@ -371,89 +413,27 @@ async function Profile({ params: { pohid } }: PageProps) {
                 requestStatus={
                   pageState === "TRANSFER_PENDING"
                     ? RequestStatus.RESOLVED_CLAIM
-                    : latestWinningRequest?.requestStatus ||
+                    : profileState.latestWinningRequest?.requestStatus ||
                       RequestStatus.RESOLVED_CLAIM
                 }
               />
             </div>
 
-            {canShowRenewSection && homeChain ? (
+            {canShowRenewSection && claimedHomeChain ? (
               canRenew ? (
-                <Renew
-                  claimer={
-                    humanity[homeChain.id]!.humanity!.registration!.claimer.id
-                  }
-                  pohId={pohId}
-                />
+                <Renew claimer={claimedRegistration.claimer.id} pohId={pohId} />
               ) : (
                 <span className="text-secondaryText mb-4">
                   Renewal available{" "}
                   <TimeAgo
                     time={
-                      +humanity[homeChain.id]!.humanity!.registration!
-                        .expirationTime -
-                      +contractData[homeChain.id].renewalPeriodDuration
+                      +claimedRegistration.expirationTime -
+                      +contractData[claimedHomeChain.id].renewalPeriodDuration
                     }
                   />
                 </span>
               )
             ) : null}
-
-            <ProfileOptimisticProvider
-              base={{
-                winningStatus:
-                  pageState === "TRANSFER_PENDING"
-                    ? transferContext?.request?.status.id === "transferring"
-                      ? "transferring"
-                      : transferContext?.request
-                        ? "transferred"
-                        : undefined
-                    : latestWinningRequest?.status.id,
-                pendingRevocation,
-              }}
-              storageKey={`profile:${pohId}`}
-            >
-              {pageState === "CLAIMED" && homeChain ? (
-                <Revoke
-                  pohId={pohId}
-                  arbitrationInfo={contractData[homeChain.id].arbitrationInfo!}
-                  homeChain={homeChain}
-                  cost={
-                    arbitrationCost +
-                    BigInt(contractData[homeChain.id].baseDeposit)
-                  }
-                />
-              ) : null}
-
-              {canShowCrossChain ? (
-                <CrossChain
-                  claimer={
-                    pageState === "TRANSFER_PENDING"
-                      ? ((transferDisplayClaimer || pohId) as `0x${string}`)
-                      : humanity[homeChain!.id]!.humanity!.registration!.claimer.id
-                  }
-                  contractData={contractData}
-                  hasReceivedLatestTransfer={
-                    pageState === "TRANSFER_PENDING"
-                      ? !!transferContext?.received
-                      : hasReceivedLatestTransfer
-                  }
-                  homeChain={
-                    pageState === "TRANSFER_PENDING"
-                      ? transferDestinationChain!
-                      : homeChain!
-                  }
-                  pohId={pohId}
-                  humanity={humanity}
-                  lastTransfer={
-                    pageState === "TRANSFER_PENDING"
-                      ? transferContext?.lastTransfer
-                      : latestTransfer
-                  }
-                  lastTransferChain={transferSourceChain}
-                />
-              ) : null}
-            </ProfileOptimisticProvider>
           </>
         ) : (
           <>
@@ -472,6 +452,51 @@ async function Profile({ params: { pohid } }: PageProps) {
             ) : null}
           </>
         )}
+
+        <ProfileOptimisticProvider
+          base={{
+            winningStatus: latestWinningRequest?.status.id,
+            lastTransferTimestamp,
+            lastOutUpdateTimestamp:
+              pendingUpdateRelayStatus.lastOutUpdateTimestamp,
+            pendingRevocation: profileState.pendingRevocation,
+            hasPendingUpdateRelay:
+              !!pendingUpdateRelayStatus.pendingUpdateRelay,
+            hasPendingTransferRelay: pageState === "TRANSFER_PENDING",
+          }}
+          storageKey={`profile:${pohId}`}
+        >
+          {claimedRegistration && claimedHomeChain ? (
+            <Revoke
+              pohId={pohId}
+              arbitrationInfo={
+                contractData[claimedHomeChain.id].arbitrationInfo!
+              }
+              homeChain={claimedHomeChain}
+              cost={
+                arbitrationCost +
+                BigInt(contractData[claimedHomeChain.id].baseDeposit)
+              }
+            />
+          ) : null}
+
+          {crossChainProps ? (
+            <Suspense fallback={<CrossChainLoading />}>
+              <CrossChain
+                homeChain={crossChainProps.homeChain}
+                pageState={pageState}
+                pohId={pohId}
+                humanity={humanity}
+                gatewayId={crossChainGatewayId}
+                winningRequestChainId={winningRequestChainId}
+                crossChainState={crossChainState}
+                transferCooldownEndsAt={crossChainProps.transferCooldownEndsAt}
+                pendingUpdateRelayStatus={pendingUpdateRelayStatus}
+                pendingUpdateError={pendingUpdateError}
+              />
+            </Suspense>
+          ) : null}
+        </ProfileOptimisticProvider>
       </div>
 
       <Suspense fallback={<TimelineHistorySectionSkeleton />}>

@@ -19,15 +19,15 @@ import { Abi, ParseAbiParameter, toBytes, zeroAddress } from "viem";
 const defaultForInputs = (inputs: readonly ParseAbiParameter<string>[]) =>
   inputs.length
     ? inputs.map((inp) => {
-      if (inp.type.endsWith("[]")) return [];
-      if (inp.type === "address") return zeroAddress;
-      if (inp.type === "bool") return false;
-      if (inp.type === "string") return "";
-      if (inp.type.startsWith("uint")) return 0n;
-      if (inp.type.startsWith("bytes")) return toBytes(0);
-      if (inp.type.startsWith("int")) return 0n;
-      throw new Error("Abi error");
-    })
+        if (inp.type.endsWith("[]")) return [];
+        if (inp.type === "address") return zeroAddress;
+        if (inp.type === "bool") return false;
+        if (inp.type === "string") return "";
+        if (inp.type.startsWith("uint")) return 0n;
+        if (inp.type.startsWith("bytes")) return toBytes(0);
+        if (inp.type.startsWith("int")) return 0n;
+        throw new Error("Abi error");
+      })
     : undefined;
 
 export default function useWagmiWrite<
@@ -55,14 +55,15 @@ export default function useWagmiWrite<
     value,
     args,
     query: {
-      enabled
-    }
+      enabled,
+    },
   } as any);
 
   const { writeContract, data, status, error: writeError } = useWriteContract();
-  const { data: receipt, status: transactionStatus } = useWaitForTransactionReceipt({
-    hash: data,
-  });
+  const { data: receipt, status: transactionStatus } =
+    useWaitForTransactionReceipt({
+      hash: data,
+    });
   const effectsRef = useRef(effects);
   const lastWriteRef = useRef<{
     args?: readonly unknown[];
@@ -131,7 +132,8 @@ export default function useWagmiWrite<
             functionName: String(functionName),
             args: lastWriteRef.current?.args,
             value: lastWriteRef.current?.value,
-            chainId: lastWriteRef.current?.chainId ?? (chain?.id || defaultChainId),
+            chainId:
+              lastWriteRef.current?.chainId ?? (chain?.id || defaultChainId),
             txHash: data,
             receipt,
           };
@@ -149,11 +151,14 @@ export default function useWagmiWrite<
     defaultChainId,
   ]);
 
-  const prepare = useCallback((params: { value?: bigint; args?: WriteArgs<C, F> } = {}) => {
-    if (params.value !== undefined) setValue(params.value);
-    if (params.args) setArgs(params.args);
-    setEnabled(true);
-  }, []);
+  const prepare = useCallback(
+    (params: { value?: bigint; args?: WriteArgs<C, F> } = {}) => {
+      if (params.value !== undefined) setValue(params.value);
+      if (params.args) setArgs(params.args);
+      setEnabled(true);
+    },
+    [],
+  );
 
   const firePrepared = useCallback(() => {
     if (prepared?.request) {

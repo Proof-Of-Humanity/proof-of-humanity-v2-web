@@ -57,7 +57,11 @@ const initialRequestBase: RequestOptimisticBase = {
 
 const initialProfileBase: ProfileOptimisticBase = {
   winningStatus: "none",
+  lastTransferTimestamp: undefined,
+  lastOutUpdateTimestamp: undefined,
   pendingRevocation: false,
+  hasPendingUpdateRelay: false,
+  hasPendingTransferRelay: false,
 };
 
 const tooltip = (message: string) => (

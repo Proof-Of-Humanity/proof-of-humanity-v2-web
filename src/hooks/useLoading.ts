@@ -1,5 +1,8 @@
+import { enableReactUse } from "@legendapp/state/config/enableReactUse";
 import { useObservable } from "@legendapp/state/react";
 import { useMemo } from "react";
+
+enableReactUse();
 
 export const useLoading = (
   initState: boolean = false,

@@ -28,9 +28,8 @@ const Vouch: React.FC<VouchingTooltipProps> = ({
   isOnChain,
   reducedTooltip,
 }) => {
-  const avatarClassName = `w-8 h-8 rounded-full cursor-pointer object-cover ${
-    !isActive ? "opacity-25" : ""
-  }`;
+  const avatarClassName = `w-8 h-8 rounded-full cursor-pointer object-cover ${!isActive ? "opacity-25" : ""
+    }`;
   const tooltipClassName = `\
         group-hover:visible invisible \
         group-hover:translate-y-6 ease-in-out transition transform absolute \
@@ -40,7 +39,7 @@ const Vouch: React.FC<VouchingTooltipProps> = ({
         left-1/2 -translate-x-1/2 translate-y-full m-4 mx-auto p-[8px] z-10 \
         not-italic font-normal leading-[normal] outline-black outline-color: #E5E5E5 \
         ${reducedTooltip ? "" : "w-[219px] h-[72px]"}`;
-
+  console.log(pohId, href)
   return (
     <Link key={key} href={pohId && href}>
       <div className="group relative flex">

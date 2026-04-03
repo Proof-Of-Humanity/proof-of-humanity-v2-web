@@ -11,7 +11,12 @@ export type RequestPendingAction =
   | "advance"
   | "execute";
 
-export type ProfilePendingAction = "revoke" | "transfer" | "update";
+export type ProfilePendingAction =
+  | "revoke"
+  | "transfer"
+  | "update"
+  | "relayTransfer"
+  | "relayUpdate";
 
 export interface OptimisticEvidenceItem {
   id: string;
@@ -47,10 +52,17 @@ export interface RequestOptimisticOverlay {
 export interface ProfileOptimisticBase {
   winningStatus?: string;
   pendingRevocation: boolean;
+  lastTransferTimestamp?: number;
+  lastOutUpdateTimestamp?: number;
+  hasPendingUpdateRelay: boolean;
+  hasPendingTransferRelay: boolean;
 }
 
 export interface ProfileOptimisticOverlay {
   winningStatus?: string;
   pendingRevocation?: boolean;
-  pendingUpdate?: boolean;
+  lastTransferTimestamp?: number;
+  lastOutUpdateTimestamp?: number;
+  hasPendingUpdateRelay?: boolean;
+  hasPendingTransferRelay?: boolean;
 }
