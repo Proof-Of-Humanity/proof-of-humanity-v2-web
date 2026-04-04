@@ -1,8 +1,9 @@
 "use client";
 
+import { useAppKit } from "@reown/appkit/react";
 import { useCallback, useMemo, useState } from "react";
 import { toast } from "react-toastify";
-import { useChainId, useSwitchChain } from "wagmi";
+import { useAccount, useChainId, useSwitchChain } from "wagmi";
 
 import Modal from "components/Modal";
 import TimeAgo from "components/TimeAgo";
@@ -50,6 +51,8 @@ export default function PendingRelaySection({
   transferTimestamp,
 }: PendingRelaySectionProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const modal = useAppKit();
+  const { isConnected } = useAccount();
   const { switchChain } = useSwitchChain();
   const chainId = useChainId() as SupportedChainId;
   const { effective, pendingAction, applyAction } = useProfileOptimistic();
@@ -72,11 +75,13 @@ export default function PendingRelaySection({
   const relayActionState =
     relayMode === RELAY_MODE_WAIT_ONLY
       ? "wait"
-      : !isOnCorrectChain
-        ? "switch-chain"
-        : encodedData
-          ? "manual-relay"
-          : "wait";
+      : !isConnected
+        ? "connect-wallet"
+        : !isOnCorrectChain
+          ? "switch-chain"
+          : encodedData
+            ? "manual-relay"
+            : "wait";
   const [prepareRelayWrite, , relayStatus] = useRelayWrite(
     "executeSignatures",
     useMemo(
@@ -130,6 +135,13 @@ export default function PendingRelaySection({
       setIdle();
     }
   }, [hasRelayInFlight, setIdle]);
+
+  const openConnectWallet = useCallback(() => {
+    setIsModalOpen(false);
+    window.setTimeout(() => {
+      modal.open({ view: "Connect" });
+    }, 0);
+  }, [modal]);
 
   const handleExecuteRelay = async () => {
     if (!encodedData) {
@@ -232,7 +244,18 @@ export default function PendingRelaySection({
             </div>
           ) : null}
 
-          {relayActionState === "switch-chain" ? (
+          {relayActionState === "connect-wallet" ? (
+            <div className="mt-4 flex flex-col gap-3">
+              <div className="paper border-orange p-3">
+                <span className="txt text-orange">
+                  ⚠️ Connect your wallet to execute the relay
+                </span>
+              </div>
+              <button className="btn-main" onClick={openConnectWallet}>
+                Connect wallet
+              </button>
+            </div>
+          ) : relayActionState === "switch-chain" ? (
             <div className="mt-4 flex flex-col gap-3">
               <div className="paper border-orange p-3">
                 <span className="txt text-orange">

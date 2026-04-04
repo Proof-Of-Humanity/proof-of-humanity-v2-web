@@ -32,19 +32,22 @@ export default async function ProfileActionsSection({
     profileState,
   } = await getProfilePageData(pohId);
 
+  const baseSnapshot = {
+    winningStatus: latestWinningRequest?.status.id,
+    lastTransferTimestamp,
+    pendingRevocation: profileState.pendingRevocation,
+    hasPendingUpdateRelay: !!pendingUpdateRelayStatus.pendingUpdateRelay,
+    hasPendingTransferRelay: pageState === "TRANSFER_PENDING",
+  };
+
   if (!claimedRegistration && !crossChainProps) {
     return null;
   }
+  console.log({ baseSnapshot })
 
   return (
     <ProfileOptimisticProvider
-      base={{
-        winningStatus: latestWinningRequest?.status.id,
-        lastTransferTimestamp,
-        pendingRevocation: profileState.pendingRevocation,
-        hasPendingUpdateRelay: !!pendingUpdateRelayStatus.pendingUpdateRelay,
-        hasPendingTransferRelay: pageState === "TRANSFER_PENDING",
-      }}
+      base={baseSnapshot}
       storageKey={`profile:${pohId}`}
     >
       {claimedRegistration && claimedHomeChain ? (

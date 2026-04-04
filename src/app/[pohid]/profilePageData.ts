@@ -36,26 +36,24 @@ type PoHRequest = ArrayElement<
 type DisplayRequest =
   | PoHRequest
   | (NonNullable<Awaited<ReturnType<typeof getRequestData>>> & {
-      chainId: SupportedChainId;
-    });
+    chainId: SupportedChainId;
+  });
 
-const toWinnerClaim = (request?: DisplayRequest | PoHRequest) =>
-  request
-    ? [
-        {
-          index: request.index,
-          resolutionTime:
-            "lastStatusChange" in request
-              ? request.lastStatusChange || request.creationTime || 0
-              : 0,
-          evidenceGroup: {
-            evidence: request.evidenceGroup.evidence,
-          },
-        },
-      ]
-    : [];
+type EnrichedDisplayRequest = DisplayRequest & {
+  identityClaimer: DisplayRequest["claimer"];
+  identityRequester: DisplayRequest["requester"];
+  identityEvidenceGroup: DisplayRequest["evidenceGroup"];
+  identityRegistrationEvidenceRevokedReq: string;
+};
 
-const enrichRequest = async ({
+const sortByLatestTimestamp = (
+  requestA: Pick<PoHRequest, "lastStatusChange" | "creationTime">,
+  requestB: Pick<PoHRequest, "lastStatusChange" | "creationTime">,
+) =>
+  Number(requestB.lastStatusChange || requestB.creationTime || 0) -
+  Number(requestA.lastStatusChange || requestA.creationTime || 0);
+
+const resolveSourceRequest = async ({
   pohId,
   request,
   humanityEvents,
@@ -83,7 +81,7 @@ const enrichRequest = async ({
       (event) =>
         event.type === "TRANSFER_INITIATED" &&
         event.transferHash?.toLowerCase() ===
-          currentRequest!.inTransferHash!.toLowerCase(),
+        currentRequest!.inTransferHash!.toLowerCase(),
     );
 
     if (
@@ -111,6 +109,54 @@ const enrichRequest = async ({
   return { ...currentRequest, chainId: currentChainId };
 };
 
+const enrichRequest = async ({
+  pohId,
+  request,
+  humanityEvents,
+  allRequests,
+}: {
+  pohId: `0x${string}`;
+  request: DisplayRequest;
+  humanityEvents: Awaited<ReturnType<typeof getHumanityEvents>>;
+  allRequests: PoHRequest[];
+}): Promise<EnrichedDisplayRequest> => {
+  let identitySourceSeed = request;
+
+  if (request.revocation) { //revocation request doesn't have the identity information, so we need to find the latest winning identity request
+    const requestTimestamp = Number(
+      request.lastStatusChange || request.creationTime || 0,
+    );
+    const latestWinningIdentityRequest = allRequests
+      .filter(
+        (candidate) =>
+          candidate.winnerParty?.id === "requester" &&
+          !candidate.revocation &&
+          Number(candidate.lastStatusChange || candidate.creationTime || 0) <=
+          requestTimestamp,
+      )
+      .sort(sortByLatestTimestamp)[0];
+
+    if (latestWinningIdentityRequest) {
+      identitySourceSeed = latestWinningIdentityRequest;
+    }
+  }
+
+  const identitySourceRequest = await resolveSourceRequest({
+    pohId,
+    request: identitySourceSeed,
+    humanityEvents,
+  });
+
+  return {
+    ...request,
+    identityClaimer: identitySourceRequest.claimer,
+    identityRequester: identitySourceRequest.requester,
+    identityRegistrationEvidenceRevokedReq:
+      identitySourceRequest.registrationEvidenceRevokedReq,
+    identityEvidenceGroup: identitySourceRequest.evidenceGroup,
+  };
+};
+
 export type ProfilePageData = {
   humanity: Record<SupportedChainId, ProfileHumanityQuery>;
   contractData: Awaited<ReturnType<typeof getContractDataAllChains>>;
@@ -120,10 +166,10 @@ export type ProfilePageData = {
   winningRequestChainId?: SupportedChainId;
   homeChain: ReturnType<typeof idToChain>;
   claimedRegistration:
-    | NonNullable<ProfileHumanityQuery["humanity"]>["registration"]
-    | undefined;
+  | NonNullable<ProfileHumanityQuery["humanity"]>["registration"]
+  | undefined;
   claimedHomeChain: NonNullable<ReturnType<typeof idToChain>> | null;
-  mainCardRequest?: DisplayRequest;
+  mainCardRequest?: EnrichedDisplayRequest;
   canShowRenewSection: boolean;
   canRenew: boolean;
   crossChainState: CrossChainState;
@@ -171,8 +217,8 @@ export const getProfilePageData = cache(async (pohId: `0x${string}`) => {
   const winningRequestChainId = latestWinningRequest?.chainId;
   const latestWinningRequestTimestamp = Number(
     latestWinningRequest?.lastStatusChange ||
-      latestWinningRequest?.creationTime ||
-      0,
+    latestWinningRequest?.creationTime ||
+    0,
   );
   const showsWinningRequestCard =
     pageState === "CLAIMED" || pageState === "TRANSFER_PENDING";
@@ -190,22 +236,21 @@ export const getProfilePageData = cache(async (pohId: `0x${string}`) => {
   const arbitrationCost =
     claimedHomeChain && claimedRegistration
       ? await getArbitrationCost(
-          claimedHomeChain,
-          contractData[claimedHomeChain.id].arbitrationInfo.arbitrator,
-          contractData[claimedHomeChain.id].arbitrationInfo.extraData,
-        )
+        claimedHomeChain,
+        contractData[claimedHomeChain.id].arbitrationInfo.arbitrator,
+        contractData[claimedHomeChain.id].arbitrationInfo.extraData,
+      )
       : 0n;
 
-  let mainCardRequest: DisplayRequest | undefined = showsWinningRequestCard
-    ? profileState.latestWinningRequest
-    : undefined;
+  let selectedMainCardRequest: DisplayRequest | undefined =
+    showsWinningRequestCard ? profileState.latestWinningRequest : undefined;
   const canShowRenewSection =
     !!claimedRegistration && !profileState.pendingRevocation;
   const canRenew =
     canShowRenewSection &&
     !!homeChain &&
     Number(claimedRegistration?.expirationTime || 0) - nowSeconds <
-      Number(contractData[homeChain.id]?.renewalPeriodDuration || 0);
+    Number(contractData[homeChain.id]?.renewalPeriodDuration || 0);
   const crossChainState = deriveCrossChainState({
     pageState,
     pendingRevocation: profileState.pendingRevocation,
@@ -215,34 +260,38 @@ export const getProfilePageData = cache(async (pohId: `0x${string}`) => {
     pageState === "TRANSFER_PENDING" ? winningRequestChainId : homeChain?.id;
   const lastTransferTimestamp = transferSourceChainId
     ? Number(
-        humanity[transferSourceChainId]?.outTransfer?.transferTimestamp || 0,
-      ) || undefined
+      humanity[transferSourceChainId]?.outTransfer?.transferTimestamp || 0,
+    ) || undefined
     : undefined;
 
   let headerRequest: DisplayRequest | undefined = showsWinningRequestCard
     ? latestWinningRequest
     : profileState.latestNonTransferRequest;
+  let mainCardRequest: EnrichedDisplayRequest | undefined;
+  let enrichedHeaderRequest: EnrichedDisplayRequest | undefined;
 
-  if (mainCardRequest) {
+  if (selectedMainCardRequest) {
     const enrichedRequest = await enrichRequest({
       pohId,
-      request: mainCardRequest,
+      request: selectedMainCardRequest,
       humanityEvents,
+      allRequests,
     });
     mainCardRequest = enrichedRequest;
-    headerRequest = enrichedRequest;
+    enrichedHeaderRequest = enrichedRequest;
   } else if (headerRequest) {
-    headerRequest = await enrichRequest({
+    enrichedHeaderRequest = await enrichRequest({
       pohId,
       request: headerRequest,
       humanityEvents,
+      allRequests,
     });
   }
 
   const crossChainGatewayId = homeChain
     ? contractData[homeChain.id].gateways[
-        contractData[homeChain.id].gateways.length - 1
-      ]?.id
+      contractData[homeChain.id].gateways.length - 1
+    ]?.id
     : undefined;
   const transferCooldownEndsAt =
     homeChain && lastTransferTimestamp
@@ -251,9 +300,9 @@ export const getProfilePageData = cache(async (pohId: `0x${string}`) => {
   const crossChainProps =
     homeChain && crossChainState.canShowCrossChain
       ? {
-          homeChain,
-          transferCooldownEndsAt,
-        }
+        homeChain,
+        transferCooldownEndsAt,
+      }
       : null;
 
   let pendingUpdateRelayStatus: Awaited<
@@ -276,21 +325,17 @@ export const getProfilePageData = cache(async (pohId: `0x${string}`) => {
         error instanceof RelayDataUnavailableError
           ? error
           : new CrossChainStatusUnavailableError(
-              "Pending relay status could not be loaded.",
-            );
+            "Pending relay status could not be loaded.",
+          );
     }
   }
 
-  const profileHeader = headerRequest
+  const profileHeader = enrichedHeaderRequest
     ? {
-        claimer: headerRequest.claimer,
-        evidence: headerRequest.evidenceGroup.evidence,
-        humanityWinnerClaim: toWinnerClaim(headerRequest),
-        registrationEvidenceRevokedReq:
-          headerRequest.registrationEvidenceRevokedReq,
-        requester: headerRequest.requester,
-        revocation: headerRequest.revocation,
-      }
+      claimer: enrichedHeaderRequest.identityClaimer,
+      evidence: enrichedHeaderRequest.identityEvidenceGroup.evidence,
+      requester: enrichedHeaderRequest.identityRequester,
+    }
     : undefined;
 
   return {

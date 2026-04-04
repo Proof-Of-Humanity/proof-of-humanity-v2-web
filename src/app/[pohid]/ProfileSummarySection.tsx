@@ -66,8 +66,8 @@ export default async function ProfileSummarySection({
           <div className="mb-3 mt-4 flex items-center justify-center">
             <Card
               chainId={mainCardRequest.chainId}
-              claimer={mainCardRequest.claimer}
-              evidence={mainCardRequest.evidenceGroup.evidence}
+              claimer={mainCardRequest.identityClaimer}
+              evidence={mainCardRequest.identityEvidenceGroup.evidence}
               humanity={{
                 id: pohId,
                 registration:
@@ -82,16 +82,16 @@ export default async function ProfileSummarySection({
                           0
                         : 0,
                     evidenceGroup: {
-                      evidence: mainCardRequest.evidenceGroup.evidence,
+                      evidence: mainCardRequest.identityEvidenceGroup.evidence,
                     },
                   },
                 ],
               }}
               index={mainCardRequest.index}
-              requester={mainCardRequest.requester}
+              requester={mainCardRequest.identityRequester}
               revocation={mainCardRequest.revocation}
               registrationEvidenceRevokedReq={
-                mainCardRequest.registrationEvidenceRevokedReq
+                mainCardRequest.identityRegistrationEvidenceRevokedReq
               }
               requestStatus={
                 pageState === "TRANSFER_PENDING"

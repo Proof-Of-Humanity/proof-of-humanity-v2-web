@@ -304,7 +304,6 @@ const Appeal: React.FC<AppealProps> = ({
           );
         setError(true);
         errorRef.current = true;
-        console.log(e);
       }
     };
     getAppealData();

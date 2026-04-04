@@ -1,5 +1,6 @@
 "use client";
 
+import { useAppKit } from "@reown/appkit/react";
 import { enableReactUse } from "@legendapp/state/config/enableReactUse";
 import ALink from "components/ExternalLink";
 import ActionButton from "components/ActionButton";
@@ -18,14 +19,13 @@ import { toast } from "react-toastify";
 import { ipfs } from "utils/ipfs";
 import { formatEth } from "utils/misc";
 import { Hash } from "viem";
-import { useChainId, useSwitchChain } from "wagmi";
+import { useAccount, useChainId, useSwitchChain } from "wagmi";
 import { useAtlasProvider, Roles } from "@kleros/kleros-app";
 import AuthGuard from "components/AuthGuard";
 import { useProfileOptimistic } from "optimistic/profile";
 import type { ProfileOptimisticOverlay } from "optimistic/types";
 import {
   ACTION_STATES,
-  isActionStateError,
   isActionStateLoading,
   WAITING_FOR_INDEXER_TOOLTIP,
 } from "./useActionFeedback";
@@ -58,6 +58,8 @@ export default function Revoke({
   const [modalOpen, setModalOpen] = useState(false);
   const loading = useLoading(false, "Revoke");
   const [pending, loadingMessage] = loading.use();
+  const modal = useAppKit();
+  const { isConnected } = useAccount();
   const connectedChainId = useChainId() as SupportedChainId;
   const web3Loaded = useWeb3Loaded();
   const { switchChain } = useSwitchChain();
@@ -173,6 +175,16 @@ export default function Revoke({
     }
   };
 
+  if (web3Loaded && !isConnected)
+    return (
+      <button
+        onClick={() => modal.open({ view: "Connect" })}
+        className="btn-sec mb-4"
+      >
+        Connect wallet
+      </button>
+    );
+
   if (web3Loaded && homeChain.id !== connectedChainId)
     return (
       <button
@@ -250,21 +262,6 @@ export default function Revoke({
                 : "Drag 'n drop some files here, or click to select files"}
             </Uploader>
           </div>
-
-          {isActionStateLoading(actionState) ? (
-            <div className="paper border-stroke bg-whiteBackground mt-4 px-3 py-2">
-              <span className="text-secondaryText text-sm font-medium">
-                {actionMessage}
-              </span>
-            </div>
-          ) : null}
-          {isActionStateError(actionState) ? (
-            <div className="paper border-orange bg-lightOrange mt-4 px-3 py-2">
-              <span className="text-orange text-sm font-medium">
-                {actionMessage}
-              </span>
-            </div>
-          ) : null}
 
           <AuthGuard signInButtonProps={{ className: "mt-12 px-5 py-2" }}>
             <ActionButton

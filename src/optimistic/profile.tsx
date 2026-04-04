@@ -7,6 +7,7 @@ import {
   useEffect,
   useMemo,
   useState,
+  useTransition,
   type ReactNode,
 } from "react";
 import { useRouter } from "next/navigation";
@@ -183,6 +184,7 @@ function ProfileOptimisticProviderInner({
   children: ReactNode;
 }) {
   const router = useRouter();
+  const [isRefreshPending, startRefreshTransition] = useTransition();
   const [{ overlay, pendingAction }, setOptimisticState] =
     useState<ProfileOptimisticState>(() =>
       getInitialProfileState(scopedStorageKey),
@@ -215,7 +217,8 @@ function ProfileOptimisticProviderInner({
   const effective = useMemo(() => mergeProfile(base, overlay), [base, overlay]);
 
   useEffect(() => {
-    if (!isProfileActionReconciled(base, overlay, pendingAction)) return;
+    const isReconciled = isProfileActionReconciled(base, overlay, pendingAction);
+    if (!isReconciled) return;
 
     clearActiveState();
   }, [base, overlay, pendingAction, clearActiveState]);
@@ -229,14 +232,22 @@ function ProfileOptimisticProviderInner({
   }, [pendingAction, clearActiveState]);
 
   useEffect(() => {
-    if (!enablePolling || pendingAction === null) return;
+    if (!enablePolling || pendingAction === null || isRefreshPending) return;
 
-    const intervalId = window.setInterval(() => {
-      router.refresh();
+    const timeoutId = window.setTimeout(() => {
+      startRefreshTransition(() => {
+        router.refresh();
+      });
     }, REFRESH_INTERVAL_MS);
 
-    return () => window.clearInterval(intervalId);
-  }, [enablePolling, pendingAction, router]);
+    return () => window.clearTimeout(timeoutId);
+  }, [
+    enablePolling,
+    pendingAction,
+    router,
+    isRefreshPending,
+    startRefreshTransition,
+  ]);
 
   const value = useMemo(
     () => ({

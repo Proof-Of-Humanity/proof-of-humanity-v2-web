@@ -23,6 +23,9 @@ export interface OptimisticEvidenceItem {
   uri: string;
   creationTime: number;
   submitter: Address;
+  name?: string;
+  description?: string;
+  fileURI?: string;
 }
 
 export interface RequestOptimisticBase {

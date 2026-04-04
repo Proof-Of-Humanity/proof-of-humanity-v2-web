@@ -1,6 +1,15 @@
 "use client";
 
-import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+  useTransition,
+  type ReactNode,
+} from "react";
 import { useRouter } from "next/navigation";
 import { useAccount } from "wagmi";
 import type {
@@ -64,7 +73,10 @@ const REQUEST_RECONCILE_CHECKS = {
   vouch: (base: RequestOptimisticBase, overlay: RequestOptimisticOverlay) =>
     typeof overlay.validVouches === "number" &&
     base.validVouches >= overlay.validVouches,
-  removeVouch: (base: RequestOptimisticBase, overlay: RequestOptimisticOverlay) =>
+  removeVouch: (
+    base: RequestOptimisticBase,
+    overlay: RequestOptimisticOverlay,
+  ) =>
     typeof overlay.validVouches === "number" &&
     base.validVouches <= overlay.validVouches,
 } satisfies Record<
@@ -155,8 +167,11 @@ function RequestOptimisticProviderInner({
   children: ReactNode;
 }) {
   const router = useRouter();
+  const [isRefreshPending, startRefreshTransition] = useTransition();
   const [{ overlay, pendingAction }, setOptimisticState] =
-    useState<RequestOptimisticState>(() => getInitialRequestState(scopedStorageKey));
+    useState<RequestOptimisticState>(() =>
+      getInitialRequestState(scopedStorageKey),
+    );
 
   const clearActiveState = useCallback(() => {
     setOptimisticState({
@@ -164,7 +179,7 @@ function RequestOptimisticProviderInner({
       pendingAction: null,
     });
     clearOptimisticState(scopedStorageKey);
-  }, [scopedStorageKey]);
+  }, [overlay, pendingAction, scopedStorageKey]);
 
   const applyAction = useCallback(
     (action: RequestPendingAction, patch: RequestOptimisticOverlay) => {
@@ -179,7 +194,7 @@ function RequestOptimisticProviderInner({
         ttlMs: OVERLAY_TTL_MS,
       });
     },
-    [scopedStorageKey],
+    [base, scopedStorageKey],
   );
 
   const effective = useMemo(() => mergeRequest(base, overlay), [base, overlay]);
@@ -194,27 +209,33 @@ function RequestOptimisticProviderInner({
 
   useEffect(() => {
     if (!isRequestActionReconciled(base, overlay, pendingAction)) return;
-
     clearActiveState();
   }, [base, overlay, pendingAction, clearActiveState]);
 
   useEffect(() => {
     if (!hasActiveAction) return;
-
     const timeoutId = window.setTimeout(clearActiveState, OVERLAY_TTL_MS);
 
     return () => window.clearTimeout(timeoutId);
   }, [hasActiveAction, clearActiveState]);
 
   useEffect(() => {
-    if (!enablePolling || !hasActiveAction) return;
+    if (!enablePolling || !hasActiveAction || isRefreshPending) return;
 
-    const intervalId = window.setInterval(() => {
-      router.refresh();
+    const timeoutId = window.setTimeout(() => {
+      startRefreshTransition(() => {
+        router.refresh();
+      });
     }, REFRESH_INTERVAL_MS);
 
-    return () => window.clearInterval(intervalId);
-  }, [enablePolling, hasActiveAction, router]);
+    return () => window.clearTimeout(timeoutId);
+  }, [
+    enablePolling,
+    hasActiveAction,
+    isRefreshPending,
+    router,
+    startRefreshTransition,
+  ]);
 
   const value = useMemo(
     () => ({
@@ -245,7 +266,9 @@ function RequestOptimisticProviderInner({
 export function useRequestOptimistic() {
   const context = useContext(RequestOptimisticContext);
   if (!context) {
-    throw new Error("useRequestOptimistic must be used within RequestOptimisticProvider");
+    throw new Error(
+      "useRequestOptimistic must be used within RequestOptimisticProvider",
+    );
   }
   return context;
 }
