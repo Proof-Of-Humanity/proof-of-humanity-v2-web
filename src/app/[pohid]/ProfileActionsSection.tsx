@@ -27,8 +27,6 @@ export default async function ProfileActionsSection({
     crossChainState,
     winningRequestChainId,
     lastTransferTimestamp,
-    pendingUpdateRelayStatus,
-    pendingUpdateError,
     profileState,
   } = await getProfilePageData(pohId);
 
@@ -36,15 +34,12 @@ export default async function ProfileActionsSection({
     winningStatus: latestWinningRequest?.status.id,
     lastTransferTimestamp,
     pendingRevocation: profileState.pendingRevocation,
-    hasPendingUpdateRelay: !!pendingUpdateRelayStatus.pendingUpdateRelay,
     hasPendingTransferRelay: pageState === "TRANSFER_PENDING",
   };
 
   if (!claimedRegistration && !crossChainProps) {
     return null;
   }
-  console.log({ baseSnapshot })
-
   return (
     <ProfileOptimisticProvider
       base={baseSnapshot}
@@ -71,10 +66,17 @@ export default async function ProfileActionsSection({
             humanity={humanity}
             gatewayId={crossChainGatewayId}
             winningRequestChainId={winningRequestChainId}
+            latestWinningRequestTimestamp={
+              latestWinningRequest
+                ? Number(
+                    latestWinningRequest.lastStatusChange ||
+                      latestWinningRequest.creationTime ||
+                      0,
+                  ) || undefined
+                : undefined
+            }
             crossChainState={crossChainState}
             transferCooldownEndsAt={crossChainProps.transferCooldownEndsAt}
-            pendingUpdateRelayStatus={pendingUpdateRelayStatus}
-            pendingUpdateError={pendingUpdateError}
           />
         </Suspense>
       ) : null}

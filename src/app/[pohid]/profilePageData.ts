@@ -15,11 +15,6 @@ import type { ProfileHumanityQuery } from "generated/graphql";
 import { getStatus, RequestStatus } from "utils/status";
 
 import {
-  CrossChainStatusUnavailableError,
-  RelayDataUnavailableError,
-} from "./errors";
-import { resolvePendingUpdateRelay } from "./cross-chain/CrossChain";
-import {
   deriveCrossChainState,
   type CrossChainState,
 } from "./cross-chain/crossChainState";
@@ -177,10 +172,6 @@ export type ProfilePageData = {
   lastTransferTimestamp?: number;
   transferCooldownEndsAt?: number;
   arbitrationCost: bigint;
-  pendingUpdateRelayStatus: Awaited<
-    ReturnType<typeof resolvePendingUpdateRelay>
-  >;
-  pendingUpdateError?: Error;
   profileHeader?: ProfileTimelineHeaderProps;
   crossChainProps: {
     homeChain: NonNullable<ReturnType<typeof idToChain>>;
@@ -215,11 +206,6 @@ export const getProfilePageData = cache(async (pohId: `0x${string}`) => {
   const pageState: ProfilePageState = profileState.pageState;
   const latestWinningRequest = profileState.latestWinningRequest;
   const winningRequestChainId = latestWinningRequest?.chainId;
-  const latestWinningRequestTimestamp = Number(
-    latestWinningRequest?.lastStatusChange ||
-    latestWinningRequest?.creationTime ||
-    0,
-  );
   const showsWinningRequestCard =
     pageState === "CLAIMED" || pageState === "TRANSFER_PENDING";
   const homeChainId =
@@ -305,31 +291,6 @@ export const getProfilePageData = cache(async (pohId: `0x${string}`) => {
       }
       : null;
 
-  let pendingUpdateRelayStatus: Awaited<
-    ReturnType<typeof resolvePendingUpdateRelay>
-  > = {
-    pendingUpdateRelay: null,
-  };
-  let pendingUpdateError: Error | undefined;
-
-  if (crossChainState.canUpdate) {
-    try {
-      pendingUpdateRelayStatus = await resolvePendingUpdateRelay({
-        homeChain: homeChain as NonNullable<typeof homeChain>,
-        pohId,
-        latestWinningRequestTimestamp:
-          latestWinningRequestTimestamp || undefined,
-      });
-    } catch (error) {
-      pendingUpdateError =
-        error instanceof RelayDataUnavailableError
-          ? error
-          : new CrossChainStatusUnavailableError(
-            "Pending relay status could not be loaded.",
-          );
-    }
-  }
-
   const profileHeader = enrichedHeaderRequest
     ? {
       claimer: enrichedHeaderRequest.identityClaimer,
@@ -356,8 +317,6 @@ export const getProfilePageData = cache(async (pohId: `0x${string}`) => {
     lastTransferTimestamp,
     transferCooldownEndsAt,
     arbitrationCost,
-    pendingUpdateRelayStatus,
-    pendingUpdateError,
     profileHeader,
     crossChainProps,
   } satisfies ProfilePageData;

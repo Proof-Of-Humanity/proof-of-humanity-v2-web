@@ -38,6 +38,7 @@ type ProfileReconcileConfig = Record<
 
 interface ProfileOptimisticContextValue {
   base: ProfileOptimisticBase;
+  overlay: ProfileOptimisticOverlay | null;
   effective: ProfileOptimisticBase;
   pendingAction: ProfilePendingAction | null;
   applyAction: (
@@ -54,6 +55,14 @@ type ProfileOptimisticState = {
 
 const ProfileOptimisticContext =
   createContext<ProfileOptimisticContextValue | null>(null);
+
+const EMPTY_PROFILE_BASE: ProfileOptimisticBase = {
+  winningStatus: undefined,
+  pendingRevocation: false,
+  lastTransferTimestamp: undefined,
+  hasPendingUpdateRelay: false,
+  hasPendingTransferRelay: false,
+};
 
 const PROFILE_RECONCILE_CONFIG = {
   revoke: {
@@ -117,6 +126,14 @@ const mergeProfile = (
     overlay?.hasPendingTransferRelay ?? base.hasPendingTransferRelay,
 });
 
+const mergeBase = (
+  parentBase: ProfileOptimisticBase,
+  base: Partial<ProfileOptimisticBase>,
+): ProfileOptimisticBase => ({
+  ...parentBase,
+  ...base,
+});
+
 const isProfileActionReconciled = (
   base: ProfileOptimisticBase,
   overlay: ProfileOptimisticOverlay | null,
@@ -147,12 +164,13 @@ export function ProfileOptimisticProvider({
   account,
   children,
 }: {
-  base: ProfileOptimisticBase;
+  base: Partial<ProfileOptimisticBase>;
   enablePolling?: boolean;
   storageKey?: string;
   account?: string;
   children: ReactNode;
 }) {
+  const parentContext = useContext(ProfileOptimisticContext);
   const { address } = useAccount();
   const normalizedAccount = (account ?? address)?.toLowerCase();
   const scopedStorageKey =
@@ -160,10 +178,25 @@ export function ProfileOptimisticProvider({
       ? `${storageKey}:${normalizedAccount}`
       : undefined;
 
+  if (parentContext) {
+    const mergedBase = mergeBase(parentContext.base, base);
+    const value = {
+      ...parentContext,
+      base: mergedBase,
+      effective: mergeProfile(mergedBase, parentContext.overlay),
+    };
+
+    return (
+      <ProfileOptimisticContext.Provider value={value}>
+        {children}
+      </ProfileOptimisticContext.Provider>
+    );
+  }
+
   return (
     <ProfileOptimisticProviderInner
       key={scopedStorageKey ?? "profile-optimistic-local"}
-      base={base}
+      base={mergeBase(EMPTY_PROFILE_BASE, base)}
       enablePolling={enablePolling}
       scopedStorageKey={scopedStorageKey}
     >
@@ -252,12 +285,13 @@ function ProfileOptimisticProviderInner({
   const value = useMemo(
     () => ({
       base,
+      overlay,
       effective,
       pendingAction,
       applyAction,
       clearAction: clearActiveState,
     }),
-    [base, effective, pendingAction, applyAction, clearActiveState],
+    [base, overlay, effective, pendingAction, applyAction, clearActiveState],
   );
 
   return (
