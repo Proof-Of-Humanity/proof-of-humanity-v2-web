@@ -23,6 +23,7 @@ import {
   WAITING_FOR_INDEXER_TOOLTIP,
 } from "../useActionFeedback";
 import useActionFeedback from "../useActionFeedback";
+import ProfileErrorCard from "../ProfileErrorCard";
 
 const buildUpdateSuccessPatch = () => ({
   hasPendingUpdateRelay: true,
@@ -155,10 +156,8 @@ export default function UpdateStateSection({
             </div>
           ) : null}
           {isActionStateError(actionState) ? (
-            <div className="paper border-orange bg-lightOrange mt-4 px-3 py-2">
-              <span className="text-orange text-sm font-medium">
-                {actionMessage}
-              </span>
+            <div className="mt-4">
+              <ProfileErrorCard title={actionMessage ?? ""} />
             </div>
           ) : null}
 

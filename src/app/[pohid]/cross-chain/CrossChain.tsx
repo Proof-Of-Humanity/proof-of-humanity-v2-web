@@ -17,6 +17,7 @@ import {
 import { getBridgeStrategy } from "./bridgeStrategies";
 import type { CrossChainState } from "./crossChainState";
 import CrossChainError from "./CrossChainError";
+import CrossChainStatusStrip from "./CrossChainStatusStrip";
 import PendingRelaySection from "./PendingRelaySection";
 import { getChainPublicClient } from "./publicClient";
 import { getAMBMessageInfo, hasRelayedMessage } from "./relayHelpers";
@@ -288,13 +289,75 @@ export default async function CrossChain({
           error instanceof RelayDataUnavailableError
             ? error
             : new CrossChainStatusUnavailableError(
-              "Pending relay status could not be loaded.",
-            );
+                "Pending relay status could not be loaded.",
+              );
       }
     }
 
     const pendingUpdateStatusMessage =
       getPendingUpdateStatusMessage(pendingUpdateError);
+    let crossChainActions: React.ReactNode;
+
+    if (pendingTransferRelay) {
+      crossChainActions = (
+        <PendingRelaySection
+          mode="transfer"
+          relayMode={pendingTransferRelay.relayMode}
+          sourceChainId={pendingTransferRelay.sourceChainId}
+          destinationChainId={pendingTransferRelay.destinationChainId}
+          encodedData={pendingTransferRelay.encodedData}
+          transferTimestamp={pendingTransferRelay.transferTimestamp}
+        />
+      );
+    } else if (pendingUpdateRelayStatus.pendingUpdateRelay) {
+      const pendingUpdateRelay = pendingUpdateRelayStatus.pendingUpdateRelay;
+
+      crossChainActions = (
+        <PendingRelaySection
+          mode="update"
+          relayMode={pendingUpdateRelay.relayMode}
+          sourceChainId={pendingUpdateRelay.sourceChainId}
+          destinationChainId={pendingUpdateRelay.destinationChainId}
+          encodedData={pendingUpdateRelay.encodedData}
+          transferTimestamp={pendingUpdateRelay.transferTimestamp}
+        />
+      );
+    } else {
+      crossChainActions = (
+        <>
+          {gatewayId && crossChainState.canTransfer && transferClaimer ? (
+            <TransferSection
+              claimer={transferClaimer as `0x${string}`}
+              homeChain={homeChain}
+              gatewayId={gatewayId as `0x${string}`}
+              transferCooldownEndsAt={transferCooldownEndsAt}
+            />
+          ) : null}
+          {gatewayId && crossChainState.canUpdate && !pendingUpdateError ? (
+            <UpdateStateSection
+              humanity={humanity}
+              homeChain={homeChain}
+              gatewayId={gatewayId as `0x${string}`}
+              pohId={pohId}
+            />
+          ) : null}
+          {pendingUpdateError ? (
+            <div className="mt-4 w-full min-w-0 sm:ml-4 sm:mt-0 sm:flex-1">
+              <CrossChainStatusStrip
+                title={pendingUpdateStatusMessage?.title ?? ""}
+                description={[
+                  pendingUpdateStatusMessage?.description,
+                  pendingUpdateStatusMessage?.nextStep,
+                ]
+                  .filter(Boolean)
+                  .join(" ")}
+              />
+            </div>
+          ) : null}
+        </>
+      );
+    }
+    throw new Error("testing");
 
     return (
       <ProfileOptimisticProvider
@@ -314,49 +377,7 @@ export default async function CrossChain({
             </span>
           </div>
 
-          {pendingTransferRelay ? (
-            <PendingRelaySection mode="transfer" {...pendingTransferRelay} />
-          ) : pendingUpdateRelayStatus.pendingUpdateRelay ? (
-            <PendingRelaySection
-              mode="update"
-              {...pendingUpdateRelayStatus.pendingUpdateRelay}
-            />
-          ) : (
-            <>
-              {gatewayId && crossChainState.canTransfer && transferClaimer ? (
-                <TransferSection
-                  claimer={transferClaimer as `0x${string}`}
-                  homeChain={homeChain}
-                  gatewayId={gatewayId}
-                  transferCooldownEndsAt={transferCooldownEndsAt}
-                />
-              ) : null}
-              {gatewayId && crossChainState.canUpdate && !pendingUpdateError ? (
-                <UpdateStateSection
-                  humanity={humanity}
-                  homeChain={homeChain}
-                  gatewayId={gatewayId}
-                  pohId={pohId}
-                />
-              ) : null}
-              {pendingUpdateError ? (
-                <div
-                  className="paper border-orange bg-lightOrange mt-4 max-w-[360px] px-3 py-3 sm:ml-4 sm:mt-0"
-                  title={pendingUpdateError.message}
-                >
-                  <span className="text-orange block text-xs font-semibold uppercase tracking-[0.08em]">
-                    {pendingUpdateStatusMessage?.title}
-                  </span>
-                  <span className="text-primaryText mt-1 block text-sm font-medium">
-                    {pendingUpdateStatusMessage?.description}
-                  </span>
-                  <span className="text-secondaryText mt-1 block text-sm">
-                    {pendingUpdateStatusMessage?.nextStep}
-                  </span>
-                </div>
-              ) : null}
-            </>
-          )}
+          {crossChainActions}
         </div>
       </ProfileOptimisticProvider>
     );

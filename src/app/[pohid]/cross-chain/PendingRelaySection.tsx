@@ -24,6 +24,7 @@ import {
   RELAY_MODE_WAIT_ONLY,
   type RelayMode,
 } from "./types";
+import ProfileErrorCard from "../ProfileErrorCard";
 
 const buildTransferRelaySuccessPatch = () => ({
   hasPendingTransferRelay: false,
@@ -41,6 +42,16 @@ type PendingRelaySectionProps = {
   encodedData?: `0x${string}`;
   transferTimestamp?: number;
 };
+
+function PendingRelayPromptCard({ message }: { message: string }) {
+  return (
+    <div className="paper border-stroke bg-whiteBackground rounded-2xl px-4 py-4 sm:px-5 sm:py-5">
+      <span className="text-primaryText text-base font-semibold">
+        {message}
+      </span>
+    </div>
+  );
+}
 
 export default function PendingRelaySection({
   mode,
@@ -201,12 +212,13 @@ export default function PendingRelaySection({
         ⏳ Pending relay
       </button>
       <Modal
+        formal
         open={isModalOpen}
         onClose={closeModal}
         canClose={!hasRelayInFlight && !isActionStateLoading(actionState)}
         header={mode === "transfer" ? "Last transfer" : "Pending state update"}
       >
-        <div className="paper flex flex-col p-4">
+        <div className="flex flex-col p-4">
           <div className="paper border-stroke bg-whiteBackground mb-4 p-3">
             <div className="text-secondaryText text-xs font-semibold uppercase tracking-[0.08em]">
               Relay route
@@ -237,32 +249,23 @@ export default function PendingRelaySection({
             </div>
           ) : null}
           {isActionStateError(actionState) ? (
-            <div className="paper border-orange bg-lightOrange mt-4 px-3 py-2">
-              <span className="text-orange text-sm font-medium">
-                {actionMessage}
-              </span>
+            <div className="mt-4">
+              <ProfileErrorCard title={actionMessage ?? ""} />
             </div>
           ) : null}
 
           {relayActionState === "connect-wallet" ? (
             <div className="mt-4 flex flex-col gap-3">
-              <div className="paper border-orange p-3">
-                <span className="txt text-orange">
-                  ⚠️ Connect your wallet to execute the relay
-                </span>
-              </div>
+              <PendingRelayPromptCard message="⚠️ Connect your wallet to execute the relay" />
               <button className="btn-main" onClick={openConnectWallet}>
                 Connect wallet
               </button>
             </div>
           ) : relayActionState === "switch-chain" ? (
             <div className="mt-4 flex flex-col gap-3">
-              <div className="paper border-orange p-3">
-                <span className="txt text-orange">
-                  ⚠️ Please switch to <strong>{destinationChainName}</strong> to
-                  execute the relay
-                </span>
-              </div>
+              <PendingRelayPromptCard
+                message={`⚠️ Please switch to ${destinationChainName} to execute the relay`}
+              />
               <button
                 className="btn-main"
                 onClick={() => switchChain({ chainId: destinationChainId })}

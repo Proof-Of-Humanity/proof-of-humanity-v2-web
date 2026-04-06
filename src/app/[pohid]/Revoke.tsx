@@ -26,10 +26,12 @@ import { useProfileOptimistic } from "optimistic/profile";
 import type { ProfileOptimisticOverlay } from "optimistic/types";
 import {
   ACTION_STATES,
+  isActionStateError,
   isActionStateLoading,
   WAITING_FOR_INDEXER_TOOLTIP,
 } from "./useActionFeedback";
 import useActionFeedback from "./useActionFeedback";
+import ProfileErrorCard from "./ProfileErrorCard";
 
 enableReactUse();
 
@@ -262,6 +264,12 @@ export default function Revoke({
                 : "Drag 'n drop some files here, or click to select files"}
             </Uploader>
           </div>
+
+          {isActionStateError(actionState) ? (
+            <div className="mt-4 w-full">
+              <ProfileErrorCard title={actionMessage ?? ""} />
+            </div>
+          ) : null}
 
           <AuthGuard signInButtonProps={{ className: "mt-12 px-5 py-2" }}>
             <ActionButton
