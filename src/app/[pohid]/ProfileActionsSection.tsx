@@ -43,50 +43,54 @@ export default async function ProfileActionsSection({
       return null;
     }
     return (
-      <ProfileOptimisticProvider
-        base={baseSnapshot}
-        storageKey={`profile:${pohId}`}
-      >
-        {claimedRegistration && claimedHomeChain ? (
-          <Revoke
-            pohId={pohId}
-            arbitrationInfo={contractData[claimedHomeChain.id].arbitrationInfo!}
-            homeChain={claimedHomeChain}
-            cost={
-              arbitrationCost +
-              BigInt(contractData[claimedHomeChain.id].baseDeposit)
-            }
-          />
-        ) : null}
-
-        {crossChainProps ? (
-          <Suspense fallback={<CrossChainLoading />}>
-            <CrossChain
-              homeChain={crossChainProps.homeChain}
-              pageState={pageState}
+      <div className="mt-4 w-full self-stretch">
+        <ProfileOptimisticProvider
+          base={baseSnapshot}
+          storageKey={`profile:${pohId}`}
+        >
+          {claimedRegistration && claimedHomeChain ? (
+            <Revoke
               pohId={pohId}
-              humanity={humanity}
-              gatewayId={crossChainGatewayId}
-              winningRequestChainId={winningRequestChainId}
-              latestWinningRequestTimestamp={
-                latestWinningRequest
-                  ? Number(
-                    latestWinningRequest.lastStatusChange ||
-                    latestWinningRequest.creationTime ||
-                    0,
-                  ) || undefined
-                  : undefined
+              arbitrationInfo={
+                contractData[claimedHomeChain.id].arbitrationInfo!
               }
-              crossChainState={crossChainState}
-              transferCooldownEndsAt={crossChainProps.transferCooldownEndsAt}
+              homeChain={claimedHomeChain}
+              cost={
+                arbitrationCost +
+                BigInt(contractData[claimedHomeChain.id].baseDeposit)
+              }
             />
-          </Suspense>
-        ) : null}
-      </ProfileOptimisticProvider>
+          ) : null}
+
+          {crossChainProps ? (
+            <Suspense fallback={<CrossChainLoading />}>
+              <CrossChain
+                homeChain={crossChainProps.homeChain}
+                pageState={pageState}
+                pohId={pohId}
+                humanity={humanity}
+                gatewayId={crossChainGatewayId}
+                winningRequestChainId={winningRequestChainId}
+                latestWinningRequestTimestamp={
+                  latestWinningRequest
+                    ? Number(
+                        latestWinningRequest.lastStatusChange ||
+                          latestWinningRequest.creationTime ||
+                          0,
+                      ) || undefined
+                    : undefined
+                }
+                crossChainState={crossChainState}
+                transferCooldownEndsAt={crossChainProps.transferCooldownEndsAt}
+              />
+            </Suspense>
+          ) : null}
+        </ProfileOptimisticProvider>
+      </div>
     );
   } catch {
     return (
-      <div className="mt-8 w-full border-t px-4 py-4">
+      <div className="mt-8 w-full self-stretch border-t px-4 py-4">
         <ProfileSectionPlaceholderError
           section="Actions"
           title="Actions unavailable"
