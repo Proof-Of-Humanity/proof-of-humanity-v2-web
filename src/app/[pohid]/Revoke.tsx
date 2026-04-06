@@ -11,6 +11,12 @@ import Uploader from "components/Uploader";
 import { SupportedChain, SupportedChainId } from "config/chains";
 import usePoHWrite from "contracts/hooks/usePoHWrite";
 import { ContractData } from "data/contract";
+import useActionFeedback, {
+  ACTION_STATES,
+  isActionStateError,
+  isActionStateLoading,
+  WAITING_FOR_INDEXER_TOOLTIP,
+} from "hooks/useActionFeedback";
 import { useLoading } from "hooks/useLoading";
 import useWeb3Loaded from "hooks/useWeb3Loaded";
 import DocumentIcon from "icons/NoteMajor.svg";
@@ -24,13 +30,6 @@ import { useAtlasProvider, Roles } from "@kleros/kleros-app";
 import AuthGuard from "components/AuthGuard";
 import { useProfileOptimistic } from "optimistic/profile";
 import type { ProfileOptimisticOverlay } from "optimistic/types";
-import {
-  ACTION_STATES,
-  isActionStateError,
-  isActionStateLoading,
-  WAITING_FOR_INDEXER_TOOLTIP,
-} from "./useActionFeedback";
-import useActionFeedback from "./useActionFeedback";
 import ProfileErrorCard from "./ProfileErrorCard";
 
 enableReactUse();

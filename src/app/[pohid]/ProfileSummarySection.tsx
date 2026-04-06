@@ -9,6 +9,7 @@ import { RequestStatus } from "utils/status";
 
 import { getProfilePageData } from "./profilePageData";
 import Renew from "./Renew";
+import ProfileSectionErrorCard from "./ProfileSectionErrorCard";
 
 interface ProfileSummarySectionProps {
   pohId: Hash;
@@ -17,124 +18,137 @@ interface ProfileSummarySectionProps {
 export default async function ProfileSummarySection({
   pohId,
 }: ProfileSummarySectionProps) {
-  const {
-    humanity,
-    contractData,
-    profileState,
-    pageState,
-    claimedRegistration,
-    claimedHomeChain,
-    mainCardRequest,
-    canShowRenewSection,
-    canRenew,
-  } = await getProfilePageData(pohId);
+  try {
+    const {
+      humanity,
+      contractData,
+      profileState,
+      pageState,
+      claimedRegistration,
+      claimedHomeChain,
+      mainCardRequest,
+      canShowRenewSection,
+      canRenew,
+    } = await getProfilePageData(pohId);
 
-  const showsWinningRequestCard =
-    pageState === "CLAIMED" || pageState === "TRANSFER_PENDING";
+    const showsWinningRequestCard =
+      pageState === "CLAIMED" || pageState === "TRANSFER_PENDING";
 
-  return (
-    <>
-      {claimedRegistration && claimedHomeChain ? (
-        <>
-          <div className="mb-2 flex text-emerald-500">
-            Claimed by
-            <ExternalLink
-              className="ml-2 underline underline-offset-2"
-              href={explorerLink(
-                claimedRegistration.claimer.id,
-                claimedHomeChain,
-              )}
-            >
-              {shortenAddress(claimedRegistration.claimer.id)}
-            </ExternalLink>
-          </div>
-          <span className="text-secondaryText mb-2">
-            {claimedRegistration.expirationTime < Date.now() / 1000
-              ? "Expired "
-              : "Expires "}
-            <TimeAgo time={claimedRegistration.expirationTime} />
-          </span>
-        </>
-      ) : null}
+    return (
+      <>
+        {claimedRegistration && claimedHomeChain ? (
+          <>
+            <div className="mb-2 flex text-emerald-500">
+              Claimed by
+              <ExternalLink
+                className="ml-2 underline underline-offset-2"
+                href={explorerLink(
+                  claimedRegistration.claimer.id,
+                  claimedHomeChain,
+                )}
+              >
+                {shortenAddress(claimedRegistration.claimer.id)}
+              </ExternalLink>
+            </div>
+            <span className="text-secondaryText mb-2">
+              {claimedRegistration.expirationTime < Date.now() / 1000
+                ? "Expired "
+                : "Expires "}
+              <TimeAgo time={claimedRegistration.expirationTime} />
+            </span>
+          </>
+        ) : null}
 
-      {pageState === "TRANSFER_PENDING" ? (
-        <span className="text-secondaryText mb-2">Transfer pending.</span>
-      ) : null}
+        {pageState === "TRANSFER_PENDING" ? (
+          <span className="text-secondaryText mb-2">Transfer pending.</span>
+        ) : null}
 
-      {showsWinningRequestCard && mainCardRequest ? (
-        <>
-          <div className="mb-3 mt-4 flex items-center justify-center">
-            <Card
-              chainId={mainCardRequest.chainId}
-              claimer={mainCardRequest.identityClaimer}
-              evidence={mainCardRequest.identityEvidenceGroup.evidence}
-              humanity={{
-                id: pohId,
-                registration:
-                  humanity[mainCardRequest.chainId]?.humanity?.registration,
-                winnerClaim: [
-                  {
-                    index: mainCardRequest.index,
-                    resolutionTime:
-                      "lastStatusChange" in mainCardRequest
-                        ? mainCardRequest.lastStatusChange ||
+        {showsWinningRequestCard && mainCardRequest ? (
+          <>
+            <div className="mb-3 mt-4 flex items-center justify-center">
+              <Card
+                chainId={mainCardRequest.chainId}
+                claimer={mainCardRequest.identityClaimer}
+                evidence={mainCardRequest.identityEvidenceGroup.evidence}
+                humanity={{
+                  id: pohId,
+                  registration:
+                    humanity[mainCardRequest.chainId]?.humanity?.registration,
+                  winnerClaim: [
+                    {
+                      index: mainCardRequest.index,
+                      resolutionTime:
+                        "lastStatusChange" in mainCardRequest
+                          ? mainCardRequest.lastStatusChange ||
                           mainCardRequest.creationTime ||
                           0
-                        : 0,
-                    evidenceGroup: {
-                      evidence: mainCardRequest.identityEvidenceGroup.evidence,
+                          : 0,
+                      evidenceGroup: {
+                        evidence:
+                          mainCardRequest.identityEvidenceGroup.evidence,
+                      },
                     },
-                  },
-                ],
-              }}
-              index={mainCardRequest.index}
-              requester={mainCardRequest.identityRequester}
-              revocation={mainCardRequest.revocation}
-              registrationEvidenceRevokedReq={
-                mainCardRequest.identityRegistrationEvidenceRevokedReq
-              }
-              requestStatus={
-                pageState === "TRANSFER_PENDING"
-                  ? RequestStatus.RESOLVED_CLAIM
-                  : profileState.latestWinningRequest?.requestStatus ||
+                  ],
+                }}
+                index={mainCardRequest.index}
+                requester={mainCardRequest.identityRequester}
+                revocation={mainCardRequest.revocation}
+                registrationEvidenceRevokedReq={
+                  mainCardRequest.identityRegistrationEvidenceRevokedReq
+                }
+                requestStatus={
+                  pageState === "TRANSFER_PENDING"
+                    ? RequestStatus.RESOLVED_CLAIM
+                    : profileState.latestWinningRequest?.requestStatus ||
                     RequestStatus.RESOLVED_CLAIM
-              }
-            />
-          </div>
+                }
+              />
+            </div>
 
-          {canShowRenewSection && claimedHomeChain && claimedRegistration ? (
-            canRenew ? (
-              <Renew claimer={claimedRegistration.claimer.id} pohId={pohId} />
-            ) : (
-              <span className="text-secondaryText mb-4">
-                Renewal available{" "}
-                <TimeAgo
-                  time={
-                    +claimedRegistration.expirationTime -
-                    +contractData[claimedHomeChain.id].renewalPeriodDuration
-                  }
-                />
-              </span>
-            )
-          ) : null}
-        </>
-      ) : (
-        <>
-          <span className="text-orange mb-6">
-            {pageState === "REMOVED" ? "Removed" : "Not claimed"}
-          </span>
-          {pageState === "NOT_CLAIMED" || pageState === "REMOVED" ? (
-            <Link
-              className="btn-main mb-6"
-              href={`/${pohId}/claim`}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Claim humanity
-            </Link>
-          ) : null}
-        </>
-      )}
-    </>
-  );
+            {canShowRenewSection && claimedHomeChain && claimedRegistration ? (
+              canRenew ? (
+                <Renew claimer={claimedRegistration.claimer.id} pohId={pohId} />
+              ) : (
+                <span className="text-secondaryText mb-4">
+                  Renewal available{" "}
+                  <TimeAgo
+                    time={
+                      +claimedRegistration.expirationTime -
+                      +contractData[claimedHomeChain.id].renewalPeriodDuration
+                    }
+                  />
+                </span>
+              )
+            ) : null}
+          </>
+        ) : (
+          <>
+            <span className="text-orange mb-6">
+              {pageState === "REMOVED" ? "Removed" : "Not claimed"}
+            </span>
+            {pageState === "NOT_CLAIMED" || pageState === "REMOVED" ? (
+              <Link
+                className="btn-main mb-6"
+                href={`/${pohId}/claim`}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Claim humanity
+              </Link>
+            ) : null}
+          </>
+        )}
+      </>
+    );
+  } catch {
+    return (
+      <div className="w-full px-6">
+        <ProfileSectionErrorCard
+          section="Summary"
+          title="Summary unavailable"
+          description="We couldn't load the current registration summary for this profile."
+        />
+      </div>
+    );
+  }
 }

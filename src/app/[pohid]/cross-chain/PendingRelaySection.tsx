@@ -10,14 +10,13 @@ import TimeAgo from "components/TimeAgo";
 import { idToChain, type SupportedChainId } from "config/chains";
 import { getContractInfo } from "contracts";
 import useRelayWrite from "contracts/hooks/useRelayWrite";
-import { useProfileOptimistic } from "optimistic/profile";
-import {
+import useActionFeedback, {
   ACTION_STATES,
   isActionStateError,
   isActionStateLoading,
-} from "../useActionFeedback";
+} from "hooks/useActionFeedback";
+import { useProfileOptimistic } from "optimistic/profile";
 import { RelayDataUnavailableError } from "../errors";
-import useActionFeedback from "../useActionFeedback";
 import { getChainPublicClient } from "./publicClient";
 import {
   RELAY_MODE_MANUAL_SIGNATURES,
@@ -234,7 +233,7 @@ export default function PendingRelaySection({
             </div>
           </div>
           {mode === "transfer" && transferTimestamp ? (
-            <TimeAgo time={transferTimestamp} />
+            <TimeAgo className="text-primaryText" time={transferTimestamp} />
           ) : (
             <span className="txt text-secondaryText m-2">
               There is a pending state update that needs to be relayed on{" "}

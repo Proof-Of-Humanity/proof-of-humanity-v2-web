@@ -6,7 +6,7 @@ import ProfileActionsLoading from "./ProfileActionsLoading";
 import ProfileActionsSection from "./ProfileActionsSection";
 import ProfileSummaryLoading from "./ProfileSummaryLoading";
 import ProfileSummarySection from "./ProfileSummarySection";
-import ProfileTimelineShell from "./ProfileTimelineShell";
+import ProfileTimelineSection from "./ProfileTimelineSection";
 
 interface PageProps {
   params: { pohid: string };
@@ -49,7 +49,7 @@ async function Profile({ params: { pohid } }: PageProps) {
       </div>
 
       <Suspense fallback={<TimelineHistorySectionSkeleton />}>
-        <ProfileTimelineShell pohId={pohId} />
+        <ProfileTimelineSection pohId={pohId} />
       </Suspense>
     </div>
   );

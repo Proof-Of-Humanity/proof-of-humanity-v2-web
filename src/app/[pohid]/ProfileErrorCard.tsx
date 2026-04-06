@@ -12,14 +12,14 @@ export default function ProfileErrorCard({
   nextStep,
 }: ProfileErrorCardProps) {
   return (
-    <div className="paper border-stroke bg-whiteBackground w-full min-w-0 rounded-2xl px-4 py-4 sm:px-5 sm:py-5">
-      <div className="flex items-start gap-3">
-        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white/5 text-sm font-semibold text-red-300">
+    <div className="paper border-stroke bg-whiteBackground w-full min-w-0 rounded-lg px-2 py-3 sm:px-5 sm:py-2">
+      <div className="flex items-center justify-center gap-3">
+        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-red-500/10 text-sm font-semibold text-red-400">
           !
         </div>
         <div className="min-w-0 flex-1">
           {label ? (
-            <div className="text-secondaryText mb-1 text-[11px] font-semibold uppercase tracking-[0.08em]">
+            <div className="text-secondaryText text-base font-semibold uppercase tracking-[0.08em]">
               {label}
             </div>
           ) : null}

@@ -9,15 +9,14 @@ import Modal from "components/Modal";
 import TimeAgo from "components/TimeAgo";
 import { SupportedChainId, type SupportedChain } from "config/chains";
 import useCCPoHWrite from "contracts/hooks/useCCPoHWrite";
-import useWeb3Loaded from "hooks/useWeb3Loaded";
-import { useProfileOptimistic } from "optimistic/profile";
-import {
+import useActionFeedback, {
   ACTION_STATES,
   isActionStateError,
   isActionStateLoading,
   WAITING_FOR_INDEXER_TOOLTIP,
-} from "../useActionFeedback";
-import useActionFeedback from "../useActionFeedback";
+} from "hooks/useActionFeedback";
+import useWeb3Loaded from "hooks/useWeb3Loaded";
+import { useProfileOptimistic } from "optimistic/profile";
 import ProfileErrorCard from "../ProfileErrorCard";
 
 const buildTransferSuccessPatch = ({

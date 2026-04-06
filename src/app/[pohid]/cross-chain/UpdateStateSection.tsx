@@ -13,16 +13,15 @@ import {
 } from "config/chains";
 import useCCPoHWrite from "contracts/hooks/useCCPoHWrite";
 import type { ProfileHumanityQuery } from "generated/graphql";
-import useWeb3Loaded from "hooks/useWeb3Loaded";
-import { useProfileOptimistic } from "optimistic/profile";
-import { timeAgo } from "utils/time";
-import {
+import useActionFeedback, {
   ACTION_STATES,
   isActionStateError,
   isActionStateLoading,
   WAITING_FOR_INDEXER_TOOLTIP,
-} from "../useActionFeedback";
-import useActionFeedback from "../useActionFeedback";
+} from "hooks/useActionFeedback";
+import useWeb3Loaded from "hooks/useWeb3Loaded";
+import { useProfileOptimistic } from "optimistic/profile";
+import { timeAgo } from "utils/time";
 import ProfileErrorCard from "../ProfileErrorCard";
 
 const buildUpdateSuccessPatch = () => ({

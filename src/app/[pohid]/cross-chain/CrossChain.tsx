@@ -289,8 +289,8 @@ export default async function CrossChain({
           error instanceof RelayDataUnavailableError
             ? error
             : new CrossChainStatusUnavailableError(
-                "Pending relay status could not be loaded.",
-              );
+              "Pending relay status could not be loaded.",
+            );
       }
     }
 
@@ -357,7 +357,6 @@ export default async function CrossChain({
         </>
       );
     }
-    throw new Error("testing");
 
     return (
       <ProfileOptimisticProvider

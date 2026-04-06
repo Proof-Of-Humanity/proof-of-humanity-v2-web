@@ -290,7 +290,6 @@ export const getProfilePageData = cache(async (pohId: `0x${string}`) => {
         transferCooldownEndsAt,
       }
       : null;
-
   const profileHeader = enrichedHeaderRequest
     ? {
       claimer: enrichedHeaderRequest.identityClaimer,
