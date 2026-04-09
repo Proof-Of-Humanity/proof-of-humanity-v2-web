@@ -179,17 +179,13 @@ export function ProfileOptimisticProvider({
       : undefined;
 
   if (parentContext) {
-    const mergedBase = mergeBase(parentContext.base, base);
-    const value = {
-      ...parentContext,
-      base: mergedBase,
-      effective: mergeProfile(mergedBase, parentContext.overlay),
-    };
-
     return (
-      <ProfileOptimisticContext.Provider value={value}>
+      <NestedProfileOptimisticProvider
+        parentContext={parentContext}
+        base={base}
+      >
         {children}
-      </ProfileOptimisticContext.Provider>
+      </NestedProfileOptimisticProvider>
     );
   }
 
@@ -202,6 +198,60 @@ export function ProfileOptimisticProvider({
     >
       {children}
     </ProfileOptimisticProviderInner>
+  );
+}
+
+function NestedProfileOptimisticProvider({
+  parentContext,
+  base,
+  children,
+}: {
+  parentContext: ProfileOptimisticContextValue;
+  base: Partial<ProfileOptimisticBase>;
+  children: ReactNode;
+}) {
+  const mergedBase = useMemo(
+    () => mergeBase(parentContext.base, base),
+    [parentContext.base, base],
+  );
+  const effective = useMemo(
+    () => mergeProfile(mergedBase, parentContext.overlay),
+    [mergedBase, parentContext.overlay],
+  );
+
+  useEffect(() => {
+    // Some profile actions reconcile against cross-chain facts that only exist
+    // inside this nested subtree. When that child-owned base catches up, it must
+    // clear the shared parent action or the rest of the actions area stays stuck
+    // in the waiting-for-indexer state.
+    const isReconciled = isProfileActionReconciled(
+      mergedBase,
+      parentContext.overlay,
+      parentContext.pendingAction,
+    );
+    if (!isReconciled) return;
+
+    parentContext.clearAction();
+  }, [
+    mergedBase,
+    parentContext.overlay,
+    parentContext.pendingAction,
+    parentContext.clearAction,
+  ]);
+
+  const value = useMemo(
+    () => ({
+      ...parentContext,
+      base: mergedBase,
+      effective,
+    }),
+    [parentContext, mergedBase, effective],
+  );
+
+  return (
+    <ProfileOptimisticContext.Provider value={value}>
+      {children}
+    </ProfileOptimisticContext.Provider>
   );
 }
 
@@ -250,7 +300,11 @@ function ProfileOptimisticProviderInner({
   const effective = useMemo(() => mergeProfile(base, overlay), [base, overlay]);
 
   useEffect(() => {
-    const isReconciled = isProfileActionReconciled(base, overlay, pendingAction);
+    const isReconciled = isProfileActionReconciled(
+      base,
+      overlay,
+      pendingAction,
+    );
     if (!isReconciled) return;
 
     clearActiveState();

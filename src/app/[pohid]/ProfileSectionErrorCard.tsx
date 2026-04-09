@@ -18,7 +18,7 @@ export default function ProfileSectionErrorCard({
       <div className="text-secondaryText text-xs font-semibold uppercase tracking-[0.08em]">
         {section}
       </div>
-      <div className="paper border-stroke bg-whiteBackground mt-3 w-full rounded-lg px-5 py-6 text-center sm:px-6">
+      <div className="border-stroke bg-whiteBackground mt-3 w-full rounded-lg border px-5 py-6 text-center sm:px-6">
         <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-full bg-red-500/10 text-base font-semibold text-red-400">
           !
         </div>
@@ -30,7 +30,7 @@ export default function ProfileSectionErrorCard({
         </div>
         <RetryButton
           label={retryLabel}
-          className="paper border-stroke bg-whiteBackground text-primaryText mt-4 inline-flex rounded-full px-4 py-2 text-sm font-semibold"
+          className="border-stroke bg-whiteBackground text-primaryText mt-4 inline-flex rounded-full border px-4 py-2 text-sm font-semibold"
         />
       </div>
     </div>

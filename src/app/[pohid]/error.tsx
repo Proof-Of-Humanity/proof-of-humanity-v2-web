@@ -28,7 +28,7 @@ export default function Error({
           </div>
         </div>
 
-        <div className="paper border-stroke bg-whiteBackground flex w-full max-w-2xl flex-col items-center rounded-3xl px-6 py-8 text-center sm:px-8">
+        <div className="border-stroke bg-whiteBackground flex w-full max-w-2xl flex-col items-center rounded-3xl border px-6 py-8 text-center sm:px-8">
           <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-red-500/10 text-lg font-semibold text-red-400">
             !
           </div>

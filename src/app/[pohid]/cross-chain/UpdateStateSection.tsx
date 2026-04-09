@@ -1,8 +1,9 @@
 "use client";
 
+import { useAppKit } from "@reown/appkit/react";
 import { useCallback, useMemo, useState } from "react";
 import { toast } from "react-toastify";
-import { useChainId } from "wagmi";
+import { useAccount, useChainId, useSwitchChain } from "wagmi";
 
 import ChainLogo from "components/ChainLogo";
 import Modal from "components/Modal";
@@ -39,7 +40,10 @@ export default function UpdateStateSection({
   gatewayId: `0x${string}`;
   pohId: `0x${string}`;
 }) {
+  const modal = useAppKit();
+  const { isConnected } = useAccount();
   const chainId = useChainId() as SupportedChainId;
+  const { switchChain } = useSwitchChain();
   const { pendingAction, applyAction } = useProfileOptimistic();
   const web3Loaded = useWeb3Loaded();
   const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
@@ -93,12 +97,22 @@ export default function UpdateStateSection({
       setIdle();
     }
   }, [hasUpdateInFlight, setIdle]);
-  const sectionState =
-    !web3Loaded || homeChain.id !== chainId
-      ? "hidden"
-      : pendingAction === "update"
-        ? "pending"
-        : "action";
+  const openConnectWallet = useCallback(() => {
+    setIsUpdateModalOpen(false);
+    window.setTimeout(() => {
+      modal.open({ view: "Connect" });
+    }, 0);
+  }, [modal]);
+  const sectionState = !web3Loaded
+    ? "hidden"
+    : pendingAction === "update"
+      ? "pending"
+      : "action";
+  const updateGuardState = !isConnected
+    ? "connect-wallet"
+    : homeChain.id !== chainId
+      ? "switch-chain"
+      : "ready";
 
   if (sectionState === "hidden") {
     return null;
@@ -143,86 +157,117 @@ export default function UpdateStateSection({
         header="Update"
       >
         <div className="p-4">
-          <span className="txt text-primaryText m-2">
-            Update humanity state on another chain. If you use wallet contract
-            make sure it has same address on both chains.
-          </span>
-          {isActionStateLoading(actionState) ? (
-            <div className="paper border-stroke bg-whiteBackground mt-4 px-3 py-2">
-              <span className="text-secondaryText text-sm font-medium">
-                {actionMessage}
+          {updateGuardState !== "ready" ? (
+            <>
+              <span className="txt text-primaryText m-2 text-center">
+                {updateGuardState === "connect-wallet"
+                  ? "Connect your wallet on the home chain to review destination chains and submit the state update."
+                  : "State updates must be submitted from the home chain wallet before you can choose the destination chain."}
               </span>
-            </div>
-          ) : null}
-          {isActionStateError(actionState) ? (
-            <div className="mt-4">
-              <ProfileErrorCard title={actionMessage ?? ""} />
-            </div>
-          ) : null}
-
-          <div className="mt-4">
-            {supportedChains.map((chain) => {
-              const crossChainReg = humanity[chain.id].crossChainRegistration;
-              const isExpired = crossChainReg
-                ? Number(crossChainReg.expirationTime) < Date.now() / 1000
-                : true;
-              const isValid =
-                chain.id === homeChain.id || (crossChainReg && !isExpired);
-
-              return (
-                <div
-                  key={chain.id}
-                  className="text-primaryText m-2 flex items-center justify-between gap-4 border p-3"
+              <div className="mt-4 flex justify-center">
+                <button
+                  className="btn-main"
+                  onClick={
+                    updateGuardState === "connect-wallet"
+                      ? openConnectWallet
+                      : () => switchChain({ chainId: homeChain.id })
+                  }
                 >
-                  <div className="min-w-0">
-                    <div className="flex items-center">
-                      <ChainLogo
-                        chainId={chain.id}
-                        className="fill-primaryText mr-1 h-4 w-4"
-                      />
-                      {chain.name} {isValid ? "✔" : "❌"}
-                    </div>
-                    <div className="text-secondaryText mt-1 text-sm">
+                  {updateGuardState === "connect-wallet"
+                    ? "Connect wallet"
+                    : `Switch to ${homeChain.name}`}
+                </button>
+              </div>
+            </>
+          ) : (
+            <>
+              <span className="txt text-primaryText m-2">
+                Update humanity state on another chain. If you use wallet
+                contract make sure it has same address on both chains.
+              </span>
+              {isActionStateLoading(actionState) ? (
+                <div className="paper border-stroke bg-whiteBackground mt-4 px-3 py-2">
+                  <span className="text-secondaryText text-sm font-medium">
+                    {actionMessage}
+                  </span>
+                </div>
+              ) : null}
+              {isActionStateError(actionState) ? (
+                <div className="mt-4">
+                  <ProfileErrorCard title={actionMessage ?? ""} />
+                </div>
+              ) : null}
+
+              <div className="mt-4">
+                {supportedChains.map((chain) => {
+                  const crossChainReg =
+                    humanity[chain.id].crossChainRegistration;
+                  const isExpired = crossChainReg
+                    ? Number(crossChainReg.expirationTime) < Date.now() / 1000
+                    : true;
+                  const isValid =
+                    chain.id === homeChain.id || (crossChainReg && !isExpired);
+
+                  return (
+                    <div
+                      key={chain.id}
+                      className="text-primaryText m-2 flex items-center justify-between gap-4 border p-3"
+                    >
+                      <div className="min-w-0">
+                        <div className="flex items-center">
+                          <ChainLogo
+                            chainId={chain.id}
+                            className="fill-primaryText mr-1 h-4 w-4"
+                          />
+                          {chain.name} {isValid ? "✔" : "❌"}
+                        </div>
+                        <div className="text-secondaryText mt-1 text-sm">
+                          {chain.id === homeChain.id ? (
+                            <span>Home chain</span>
+                          ) : crossChainReg ? (
+                            <span
+                              className={isExpired ? "text-orange-500" : ""}
+                            >
+                              {isExpired ? "Expired " : "Expires "}
+                              {timeAgo(crossChainReg.expirationTime)}
+                            </span>
+                          ) : (
+                            <span>No cross-chain registration yet.</span>
+                          )}
+                        </div>
+                      </div>
+
                       {chain.id === homeChain.id ? (
-                        <span>Home chain</span>
-                      ) : crossChainReg ? (
-                        <span className={isExpired ? "text-orange-500" : ""}>
-                          {isExpired ? "Expired " : "Expires "}
-                          {timeAgo(crossChainReg.expirationTime)}
-                        </span>
+                        <div className="text-secondaryText text-sm font-medium">
+                          Source
+                        </div>
                       ) : (
-                        <span>No cross-chain registration yet.</span>
+                        <button
+                          className="disabled:text-secondaryText shrink-0 text-blue-500 underline underline-offset-2 disabled:cursor-not-allowed disabled:no-underline"
+                          disabled={
+                            isActionStateLoading(actionState) ||
+                            hasUpdateInFlight
+                          }
+                          onClick={() => {
+                            setIdle();
+
+                            prepareUpdate({
+                              args: [gatewayId, pohId],
+                            });
+                          }}
+                        >
+                          {isActionStateLoading(actionState) ||
+                          hasUpdateInFlight
+                            ? "Processing..."
+                            : "Update state"}
+                        </button>
                       )}
                     </div>
-                  </div>
-
-                  {chain.id === homeChain.id ? (
-                    <div className="text-secondaryText text-sm font-medium">
-                      Source
-                    </div>
-                  ) : (
-                    <button
-                      className="disabled:text-secondaryText shrink-0 text-blue-500 underline underline-offset-2 disabled:cursor-not-allowed disabled:no-underline"
-                      disabled={
-                        isActionStateLoading(actionState) || hasUpdateInFlight
-                      }
-                      onClick={() => {
-                        setIdle();
-
-                        prepareUpdate({
-                          args: [gatewayId, pohId],
-                        });
-                      }}
-                    >
-                      {isActionStateLoading(actionState) || hasUpdateInFlight
-                        ? "Processing..."
-                        : "Update state"}
-                    </button>
-                  )}
-                </div>
-              );
-            })}
-          </div>
+                  );
+                })}
+              </div>
+            </>
+          )}
         </div>
       </Modal>
     </>

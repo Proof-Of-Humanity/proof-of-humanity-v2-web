@@ -14,7 +14,7 @@ interface ModalProps extends React.HTMLAttributes<HTMLDivElement> {
   header?: string;
 }
 
-const ANIMATION_MS = 180;
+const ANIMATION_MS = 260;
 
 const Modal: React.FC<ModalProps> = ({
   formal,
@@ -25,16 +25,25 @@ const Modal: React.FC<ModalProps> = ({
   onClose,
   canClose = true,
 }) => {
-  const [isRendered, setIsRendered] = useState(open);
-  const [isVisible, setIsVisible] = useState(open);
+  const [isRendered, setIsRendered] = useState(false);
+  const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {
     if (open) {
       setIsRendered(true);
-      const frame = window.requestAnimationFrame(() => {
-        setIsVisible(true);
+      let firstFrame = 0;
+      let secondFrame = 0;
+
+      firstFrame = window.requestAnimationFrame(() => {
+        secondFrame = window.requestAnimationFrame(() => {
+          setIsVisible(true);
+        });
       });
-      return () => window.cancelAnimationFrame(frame);
+
+      return () => {
+        window.cancelAnimationFrame(firstFrame);
+        window.cancelAnimationFrame(secondFrame);
+      };
     }
 
     setIsVisible(false);
@@ -70,7 +79,7 @@ const Modal: React.FC<ModalProps> = ({
           />
           <div
             className={cn(
-              "absolute-centered fixed z-30 w-4/5 md:w-3/5 xl:w-2/5 modal-shell",
+              "modal-shell fixed left-1/2 top-1/2 z-30 w-4/5 md:w-3/5 xl:w-2/5",
               {
                 "bg-whiteBackground border-stroke overflow-clip rounded border":
                   formal,

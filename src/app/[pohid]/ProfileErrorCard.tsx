@@ -12,7 +12,7 @@ export default function ProfileErrorCard({
   nextStep,
 }: ProfileErrorCardProps) {
   return (
-    <div className="paper border-stroke bg-whiteBackground w-full min-w-0 rounded-lg px-2 py-3 sm:px-5 sm:py-2">
+    <div className="border-stroke bg-whiteBackground w-full min-w-0 rounded-lg border px-2 py-3 sm:px-5 sm:py-2">
       <div className="flex items-center justify-center gap-3">
         <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-red-500/10 text-sm font-semibold text-red-400">
           !

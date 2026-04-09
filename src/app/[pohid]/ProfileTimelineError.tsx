@@ -20,7 +20,7 @@ export default function ProfileTimelineError({
           <div className="border-stroke mt-1 h-40 w-0 border-l" />
         </div>
         <div className="min-w-0 flex-1 pt-0.5">
-          <div className="paper border-stroke bg-whiteBackground rounded-2xl px-5 py-5 sm:px-6">
+          <div className="border-stroke bg-whiteBackground rounded-2xl border px-5 py-5 sm:px-6">
             <div className="flex items-center gap-3">
               <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-red-500/10 text-xs font-semibold text-red-400">
                 !
@@ -32,7 +32,7 @@ export default function ProfileTimelineError({
             <div className="text-secondaryText mt-3 text-sm leading-6">
               {description}
             </div>
-            <RetryButton className="paper border-stroke bg-whiteBackground text-primaryText mt-4 inline-flex rounded-full px-4 py-2 text-sm font-semibold" />
+            <RetryButton className="border-stroke bg-whiteBackground text-primaryText mt-4 inline-flex rounded-full border px-4 py-2 text-sm font-semibold" />
           </div>
         </div>
       </div>

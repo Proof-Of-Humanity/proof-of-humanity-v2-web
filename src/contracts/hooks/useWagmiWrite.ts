@@ -14,7 +14,7 @@ import {
 } from "wagmi";
 import useChainParam from "hooks/useChainParam";
 import { getContractInfo, ContractName } from "contracts";
-import { Abi, ParseAbiParameter, toBytes, zeroAddress } from "viem";
+import { Abi, Hash, ParseAbiParameter, toBytes, zeroAddress } from "viem";
 
 const defaultForInputs = (inputs: readonly ParseAbiParameter<string>[]) =>
   inputs.length
@@ -36,7 +36,8 @@ export default function useWagmiWrite<
 >(contract: C, functionName: F, effects?: Effects) {
   const chain = useChainParam();
   const defaultChainId = useChainId() as SupportedChainId;
-  const contractInfo = getContractInfo(contract, chain?.id || defaultChainId);
+  const currentChainId = (chain?.id || defaultChainId) as SupportedChainId;
+  const contractInfo = getContractInfo(contract, currentChainId);
   const abiFragment = (contractInfo.abi as Abi).find(
     (item) => item.type === "function" && item.name === functionName,
   );
@@ -44,7 +45,9 @@ export default function useWagmiWrite<
   const [args, setArgs] = useState(
     defaultForInputs((abiFragment as any).inputs) as WriteArgs<C, F>,
   );
-
+  const [submittedTx, setSubmittedTx] = useState<
+    { hash: Hash; chainId: SupportedChainId } | undefined
+  >();
   const [enabled, setEnabled] = useState(false);
 
   const {
@@ -63,10 +66,11 @@ export default function useWagmiWrite<
     },
   } as any);
 
-  const { writeContract, data, status, error: writeError } = useWriteContract();
+  const { writeContractAsync, status, error: writeError } = useWriteContract();
   const { data: receipt, status: transactionStatus } =
     useWaitForTransactionReceipt({
-      hash: data,
+      hash: submittedTx?.hash,
+      chainId: submittedTx?.chainId,
     });
   const effectsRef = useRef(effects);
   const lastWriteRef = useRef<{
@@ -74,8 +78,8 @@ export default function useWagmiWrite<
     value?: bigint;
     chainId: number;
   } | null>(null);
-  const lastPendingHashRef = useRef<typeof data>();
-  const lastSuccessHashRef = useRef<typeof data>();
+  const lastPendingHashRef = useRef<Hash | undefined>();
+  const lastSuccessHashRef = useRef<Hash | undefined>();
 
   useEffect(() => {
     effectsRef.current = effects;
@@ -83,14 +87,21 @@ export default function useWagmiWrite<
 
   const fireWrite = useCallback(
     (request: any) => {
+      const writeChainId =
+        (request?.chain?.id as SupportedChainId | undefined) ?? currentChainId;
       lastWriteRef.current = {
         args: args as readonly unknown[] | undefined,
         value,
-        chainId: chain?.id || defaultChainId,
+        chainId: writeChainId,
       };
-      writeContract(request);
+      setSubmittedTx(undefined);
+      void writeContractAsync(request)
+        .then((hash) => {
+          setSubmittedTx({ hash, chainId: writeChainId });
+        })
+        .catch(() => undefined);
     },
-    [args, value, chain?.id, defaultChainId, writeContract],
+    [args, value, currentChainId, writeContractAsync],
   );
 
   useEffect(() => {
@@ -118,26 +129,26 @@ export default function useWagmiWrite<
   }, [status, writeError]);
 
   useEffect(() => {
-    if (!data) return;
+    const txHash = submittedTx?.hash;
+    if (!txHash) return;
 
     switch (transactionStatus) {
       case "pending":
-        if (lastPendingHashRef.current !== data) {
-          lastPendingHashRef.current = data;
+        if (lastPendingHashRef.current !== txHash) {
+          lastPendingHashRef.current = txHash;
           effectsRef.current?.onLoading?.();
         }
         break;
       case "success":
-        if (lastSuccessHashRef.current !== data) {
-          lastSuccessHashRef.current = data;
+        if (lastSuccessHashRef.current !== txHash) {
+          lastSuccessHashRef.current = txHash;
           const ctx: WriteSuccessContext = {
             contract,
             functionName: String(functionName),
             args: lastWriteRef.current?.args,
             value: lastWriteRef.current?.value,
-            chainId:
-              lastWriteRef.current?.chainId ?? (chain?.id || defaultChainId),
-            txHash: data,
+            chainId: lastWriteRef.current?.chainId ?? currentChainId,
+            txHash,
             receipt,
           };
           effectsRef.current?.onSuccess?.(ctx);
@@ -146,12 +157,11 @@ export default function useWagmiWrite<
     }
   }, [
     transactionStatus,
-    data,
+    submittedTx?.hash,
     receipt,
     contract,
     functionName,
-    chain?.id,
-    defaultChainId,
+    currentChainId,
   ]);
 
   const prepare = useCallback(

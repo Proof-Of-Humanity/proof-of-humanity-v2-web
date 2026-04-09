@@ -42,16 +42,6 @@ type PendingRelaySectionProps = {
   transferTimestamp?: number;
 };
 
-function PendingRelayPromptCard({ message }: { message: string }) {
-  return (
-    <div className="paper border-stroke bg-whiteBackground rounded-2xl px-4 py-4 sm:px-5 sm:py-5">
-      <span className="text-primaryText text-base font-semibold">
-        {message}
-      </span>
-    </div>
-  );
-}
-
 export default function PendingRelaySection({
   mode,
   relayMode,
@@ -254,17 +244,18 @@ export default function PendingRelaySection({
           ) : null}
 
           {relayActionState === "connect-wallet" ? (
-            <div className="mt-4 flex flex-col gap-3">
-              <PendingRelayPromptCard message="⚠️ Connect your wallet to execute the relay" />
-              <button className="btn-main" onClick={openConnectWallet}>
-                Connect wallet
-              </button>
-            </div>
+            <>
+              <span className="txt text-primaryText m-2 text-center">
+                Connect your wallet to execute the relay.
+              </span>
+              <div className="mt-4 flex justify-center">
+                <button className="btn-main" onClick={openConnectWallet}>
+                  Connect wallet
+                </button>
+              </div>
+            </>
           ) : relayActionState === "switch-chain" ? (
-            <div className="mt-4 flex flex-col gap-3">
-              <PendingRelayPromptCard
-                message={`⚠️ Please switch to ${destinationChainName} to execute the relay`}
-              />
+            <div className="mt-4 flex justify-center">
               <button
                 className="btn-main"
                 onClick={() => switchChain({ chainId: destinationChainId })}

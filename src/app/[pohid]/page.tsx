@@ -32,7 +32,7 @@ async function Profile({ params: { pohid } }: PageProps) {
         </div>
         <div className="flex flex-col items-center">
           <span className="text-xs text-slate-400">POH ID</span>
-          <span className="mb-12 text-center text-xl font-semibold">
+          <span className="mb-4 text-center text-xl font-semibold">
             {prettifyId(pohId).slice(0, 20)}
             <wbr />
             {prettifyId(pohId).slice(20)}

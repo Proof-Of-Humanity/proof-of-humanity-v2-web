@@ -178,22 +178,26 @@ export default function Revoke({
 
   if (web3Loaded && !isConnected)
     return (
-      <button
-        onClick={() => modal.open({ view: "Connect" })}
-        className="btn-sec mb-4"
-      >
-        Connect wallet
-      </button>
+      <div className="flex w-full justify-center">
+        <button
+          onClick={() => modal.open({ view: "Connect" })}
+          className="btn-sec mb-4"
+        >
+          Connect wallet
+        </button>
+      </div>
     );
 
   if (web3Loaded && homeChain.id !== connectedChainId)
     return (
-      <button
-        onClick={() => switchChain?.({ chainId: homeChain.id })}
-        className="btn-sec mb-4"
-      >
-        Connect to {homeChain.name} to revoke
-      </button>
+      <div className="flex w-full justify-center">
+        <button
+          onClick={() => switchChain?.({ chainId: homeChain.id })}
+          className="btn-sec mb-4"
+        >
+          Connect to {homeChain.name} to revoke
+        </button>
+      </div>
     );
 
   return (

@@ -48,11 +48,34 @@ export interface TimelineItem {
   kind: TimelineItemKind;
   title: string;
   timestamp: number;
+  isActive?: boolean;
   chainId?: SupportedChainId;
   href?: string;
   externalHref?: string;
   requestIndex?: number;
 }
+
+const ACTIVE_TIMELINE_KINDS = new Set<TimelineItemKind>([
+  "submitted",
+  "inReview",
+  "challenged",
+  "appeal",
+]);
+
+const markLatestActiveTimelineItem = (items: TimelineItem[]) => {
+  const sortedItems = [...items].sort(
+    (itemA, itemB) => itemB.timestamp - itemA.timestamp,
+  );
+  const latestActiveIndex =
+    sortedItems.length > 0 && ACTIVE_TIMELINE_KINDS.has(sortedItems[0].kind)
+      ? 0
+      : -1;
+
+  return sortedItems.map((item, index) => ({
+    ...item,
+    isActive: index === latestActiveIndex,
+  }));
+};
 
 interface CurrentRequestWithChain extends CurrentRequest {
   chainId: SupportedChainId;
@@ -277,7 +300,18 @@ const createEventTimelineItems = async (
     },
     {} as Record<string, HumanityEventRecord>,
   );
-
+  const currentRequestIndex = Number(currentRequest.index);
+  const currentRequestStatus = getStatus(
+    {
+      status: currentRequest.status,
+      revocation: currentRequest.revocation,
+      winnerParty: currentRequest.winnerParty,
+      index: currentRequestIndex,
+      creationTime: currentRequest.creationTime,
+      expirationTime: currentRequest.expirationTime,
+    },
+    { humanityLifespan },
+  );
   const timelineItems: TimelineItem[] = events.flatMap<TimelineItem>(
     (event) => {
       const requestRef =
@@ -426,18 +460,6 @@ const createEventTimelineItems = async (
     },
   );
 
-  const currentRequestIndex = Number(currentRequest.index);
-  const currentRequestStatus = getStatus(
-    {
-      status: currentRequest.status,
-      revocation: currentRequest.revocation,
-      winnerParty: currentRequest.winnerParty,
-      index: currentRequestIndex,
-      creationTime: currentRequest.creationTime,
-      expirationTime: currentRequest.expirationTime,
-    },
-    { humanityLifespan },
-  );
   const expiredTimestamp = Number(currentRequest.expirationTime);
 
   if (
@@ -523,10 +545,10 @@ export const getRequestTimelineData = async (
   );
 
   return {
-    timelineItems: [
+    timelineItems: markLatestActiveTimelineItem([
       ...eventTimelineItems,
       ...resolvedOffChainVouchTimelineItems,
-    ].sort((itemA, itemB) => itemB.timestamp - itemA.timestamp),
+    ]),
     requestCounts,
   };
 };
@@ -541,8 +563,6 @@ export const getProfileTimelineData = async (
     .filter((item): item is TimelineItem => !!item);
 
   return {
-    timelineItems: requestTimelineItems.sort(
-      (itemA, itemB) => itemB.timestamp - itemA.timestamp,
-    ),
+    timelineItems: markLatestActiveTimelineItem(requestTimelineItems),
   };
 };

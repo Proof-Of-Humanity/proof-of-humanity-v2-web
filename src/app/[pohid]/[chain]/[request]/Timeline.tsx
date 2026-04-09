@@ -20,72 +20,85 @@ interface TimelineProps {
 
 const TIMELINE_STYLES: Record<
   TimelineItem["kind"],
-  { dot: string; text: string; accent: string }
+  { dot: string; text: string; accent: string; pulse: string }
 > = {
   submitted: {
     dot: "border-orange-400",
     text: "text-primaryText",
     accent: "bg-orange-400",
+    pulse: "bg-orange-400/20",
   },
   inReview: {
     dot: "border-sky-400",
     text: "text-primaryText",
     accent: "bg-sky-400",
+    pulse: "bg-sky-400/20",
   },
   challenged: {
     dot: "border-amber-400",
     text: "text-primaryText",
     accent: "bg-amber-400",
+    pulse: "bg-amber-400/20",
   },
   vouchRemoved: {
     dot: "border-rose-400",
     text: "text-primaryText",
     accent: "bg-rose-400",
+    pulse: "bg-rose-400/20",
   },
   appeal: {
     dot: "border-fuchsia-400",
     text: "text-primaryText",
     accent: "bg-fuchsia-400",
+    pulse: "bg-fuchsia-400/20",
   },
   verified: {
     dot: "border-emerald-400",
     text: "text-primaryText",
     accent: "bg-emerald-400",
+    pulse: "bg-emerald-400/20",
   },
   removed: {
     dot: "border-rose-400",
     text: "text-primaryText",
     accent: "bg-rose-400",
+    pulse: "bg-rose-400/20",
   },
   rejected: {
     dot: "border-red-400",
     text: "text-primaryText",
     accent: "bg-red-400",
+    pulse: "bg-red-400/20",
   },
   expired: {
     dot: "border-slate-500",
     text: "text-primaryText",
     accent: "bg-slate-500",
+    pulse: "bg-slate-500/20",
   },
   withdrawn: {
     dot: "border-slate-300",
     text: "text-primaryText",
     accent: "bg-slate-300",
+    pulse: "bg-slate-300/20",
   },
   transferred: {
     dot: "border-orange-500",
     text: "text-primaryText",
     accent: "bg-orange-500",
+    pulse: "bg-orange-500/20",
   },
   received: {
     dot: "border-teal-500",
     text: "text-primaryText",
     accent: "bg-teal-500",
+    pulse: "bg-teal-500/20",
   },
   vouchReceived: {
     dot: "border-violet-400",
     text: "text-primaryText",
     accent: "bg-violet-400",
+    pulse: "bg-violet-400/20",
   },
 };
 
@@ -160,7 +173,22 @@ export default function Timeline({ items, profileHeader }: TimelineProps) {
                     item.kind === "vouchRemoved" ? (
                     <CrossCircleIcon />
                   ) : (
-                    <div className={`timeline-dot-core ${styles.accent}`} />
+                    <div className="relative flex h-4 w-4 items-center justify-center">
+                      {item.isActive ? (
+                        <>
+                          <div
+                            className={`absolute h-4 w-4 rounded-full border ${styles.dot} ${styles.pulse}`}
+                            style={{ opacity: 0.35 }}
+                          />
+                          <div
+                            className={`timeline-dot-pulse absolute h-4 w-4 rounded-full ${styles.pulse}`}
+                          />
+                        </>
+                      ) : null}
+                      <div
+                        className={`timeline-dot-core relative ${styles.accent}`}
+                      />
+                    </div>
                   )}
                 </div>
                 {!isLast && (
