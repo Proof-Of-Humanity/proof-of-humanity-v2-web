@@ -34,6 +34,16 @@ enableReactUse();
 //     args: [claimer, vouchers, []],
 //   });
 
+const toOffChainContractSignature = (signature: Hash) => {
+  const parsed = hexToSignature(signature);
+
+  return {
+    v: parsed.yParity + 27,
+    r: parsed.r,
+    s: parsed.s,
+  };
+};
+
 interface ActionBarProps {
   pohId: Hash;
   arbitrationCost: bigint;
@@ -207,12 +217,9 @@ export default function ActionBar({
           requester,
           onChainVouches,
           offChainVouches.map((v) => {
-            const sig = hexToSignature(v.signature);
             return {
+              ...toOffChainContractSignature(v.signature),
               expirationTime: v.expiration,
-              v: Number(sig.v),
-              r: sig.r,
-              s: sig.s,
             };
           }),
         ],
