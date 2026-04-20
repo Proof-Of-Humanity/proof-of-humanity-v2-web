@@ -1,4 +1,3 @@
-import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import Modal from "components/Modal";
 import usePoHWrite from "contracts/hooks/usePoHWrite";
@@ -10,6 +9,54 @@ import { getContractInfo } from "contracts";
 import { toast } from "react-toastify";
 import { SupportedChain, idToChain } from "config/chains";
 import ActionButton from "components/ActionButton";
+import { useRequestOptimistic } from "optimistic/request";
+import type { RequestOptimisticOverlay } from "optimistic/types";
+
+const normalizeAddress = (value: Address) => value.toLowerCase();
+
+export const buildAddVouchSuccessPatch = (
+  onChainVouches: Address[],
+  offChainVouches: { voucher: Address; expiration: number; signature: `0x${string}` }[],
+  validVouches: number,
+  voucher: Address,
+): RequestOptimisticOverlay | undefined => {
+  const normalized = normalizeAddress(voucher);
+  const hasOnChain = onChainVouches.some(
+    (value) => normalizeAddress(value) === normalized,
+  );
+  const hasOffChain = offChainVouches.some(
+    (value) => normalizeAddress(value.voucher) === normalized,
+  );
+
+  if (hasOnChain || hasOffChain) return undefined;
+
+  return {
+    onChainVouches: [...onChainVouches, voucher],
+    validVouches: validVouches + 1,
+  };
+};
+
+export const buildGaslessVouchSuccessPatch = (
+  onChainVouches: Address[],
+  offChainVouches: { voucher: Address; expiration: number; signature: `0x${string}` }[],
+  validVouches: number,
+  voucher: { voucher: Address; expiration: number; signature: `0x${string}` },
+): RequestOptimisticOverlay | undefined => {
+  const normalized = normalizeAddress(voucher.voucher);
+  const hasOnChain = onChainVouches.some(
+    (value) => normalizeAddress(value) === normalized,
+  );
+  const hasOffChain = offChainVouches.some(
+    (value) => normalizeAddress(value.voucher) === normalized,
+  );
+
+  if (hasOnChain || hasOffChain) return undefined;
+
+  return {
+    offChainVouches: [...offChainVouches, voucher],
+    validVouches: validVouches + 1,
+  };
+};
 
 interface VouchButtonProps {
   pohId: Hash;
@@ -28,9 +75,10 @@ export default function Vouch({
   chain,
   address,
 }: VouchButtonProps) {
-  const router = useRouter();
+  const { effective, pendingAction, applyAction } = useRequestOptimistic();
   const userChainId = useChainId();
   const [isOpen, setIsOpen] = useState(false);
+  const isReconciling = pendingAction !== null;
   const [prepare, addVouch , status] = usePoHWrite(
     "addVouch",
     useMemo(
@@ -42,12 +90,27 @@ export default function Vouch({
           toast.info("Transaction pending");
         },
         onSuccess() {
+          if (!address) return;
+          const patch = buildAddVouchSuccessPatch(
+            effective.onChainVouches,
+            effective.offChainVouches,
+            effective.validVouches,
+            address,
+          );
+          if (patch) {
+            applyAction("vouch", patch);
+          }
           toast.success("Vouched successfully");
           setIsOpen(false);
-          setTimeout(() => router.refresh(), 1000);
         },
       }),
-      [],
+      [
+        address,
+        applyAction,
+        effective.offChainVouches,
+        effective.onChainVouches,
+        effective.validVouches,
+      ],
     ),
   );
 
@@ -64,31 +127,57 @@ export default function Vouch({
     [],
   );
 
-  const { signTypedData , isPending } = useSignTypedData({
-    mutation: {
-      onSuccess: async (signature) => {
-        try {
-          await axios.post(`/api/vouch/${chain.name}/add`, {
-            claimer,
-            pohId,
-            voucher: address!,
-            expiration,
-            signature,
-          });
-          toast.success("Vouched successfully");
-          setIsOpen(false);
-          router.refresh();
-        } catch (err) {
-          console.error(err);
+  const signTypedDataConfig = useMemo(
+    () => ({
+      mutation: {
+        onSuccess: async (signature: `0x${string}`) => {
+          try {
+            await axios.post(`/api/vouch/${chain.name}/add`, {
+              claimer,
+              pohId,
+              voucher: address!,
+              expiration,
+              signature,
+            });
+            const patch = buildGaslessVouchSuccessPatch(
+              effective.onChainVouches,
+              effective.offChainVouches,
+              effective.validVouches,
+              {
+                voucher: address!,
+                expiration,
+                signature,
+              },
+            );
+            if (patch) {
+              applyAction("vouch", patch);
+            }
+            toast.success("Vouched successfully");
+            setIsOpen(false);
+          } catch (err) {
+            console.error(err);
+            toast.error("Error vouching. Please try again.");
+          }
+        },
+        onError: (error: Error) => {
+          console.error(error);
           toast.error("Error vouching. Please try again.");
-        }
+        },
       },
-      onError: (error) => {
-        console.error(error);
-        toast.error("Error vouching. Please try again.");
-      },
-    },
-  });
+    }),
+    [
+      address,
+      applyAction,
+      chain.name,
+      claimer,
+      effective.offChainVouches,
+      effective.onChainVouches,
+      effective.validVouches,
+      expiration,
+      pohId,
+    ],
+  );
+  const { signTypedData , isPending } = useSignTypedData(signTypedDataConfig);
 
   const gaslessVouch = () => {
     signTypedData({
@@ -126,14 +215,15 @@ export default function Vouch({
           onClick={() => setIsOpen(true)}
           label="Vouch"
           className="mb-2 w-auto"
-          disabled={userChainId !== chain.id}
-          tooltip={userChainId !== chain.id ? `Switch your chain above to ${idToChain(chain.id)?.name || 'the correct chain'}` : undefined}
+          disabled={isReconciling || userChainId !== chain.id}
+          tooltip={isReconciling ? "Syncing" : userChainId !== chain.id ? `Switch your chain above to ${idToChain(chain.id)?.name || 'the correct chain'}` : undefined}
         />
         <Modal
           formal
           header="Vouch"
           open={isOpen}
           onClose={() => setIsOpen(false)}
+          canClose={!isOnchainLoading}
         >
           <div className="flex flex-col items-center p-4">
             <span className="txt m-2 text-primaryText">
@@ -151,7 +241,8 @@ export default function Vouch({
               label="VOUCH"
               className="mt-4"
               isLoading={isPending}
-              disabled={isPending}
+              disabled={isPending || isReconciling}
+              tooltip={isReconciling ? "Syncing" : undefined}
               variant="primary"
             />
             <span
@@ -161,11 +252,11 @@ export default function Vouch({
                   : "cursor-pointer"
               }`}
               onClick={() => {
-                if (isOnchainLoading) return;
+                if (isOnchainLoading || isReconciling) return;
                 addVouch();
               }}
-              aria-disabled={isOnchainLoading}
-              aria-busy={isOnchainLoading}
+              aria-disabled={isOnchainLoading || isReconciling}
+              aria-busy={isOnchainLoading || isReconciling}
             >
               or vouch on chain
             </span>

@@ -13,31 +13,17 @@ export interface ProfileTimelineHeaderProps {
     name?: string | null;
   };
   evidence: { uri: string }[];
-  humanityWinnerClaim: {
-    evidenceGroup: {
-      evidence: { uri: string }[];
-    };
-  }[];
-  registrationEvidenceRevokedReq: string;
   requester: Address;
-  revocation: boolean;
 }
 
 function HeaderContent({
   claimer,
   evidence,
-  humanityWinnerClaim,
-  registrationEvidenceRevokedReq,
   requester,
-  revocation,
 }: ProfileTimelineHeaderProps) {
-  const [evidenceURI] = useIPFS<EvidenceFile>(
-    revocation
-      ? registrationEvidenceRevokedReq ||
-      humanityWinnerClaim.at(0)?.evidenceGroup.evidence.at(-1)?.uri
-      : evidence.at(-1)?.uri,
-    { suspense: true },
-  );
+  const [evidenceURI] = useIPFS<EvidenceFile>(evidence.at(-1)?.uri, {
+    suspense: true,
+  });
   const [data] = useIPFS<RegistrationFile>(evidenceURI?.fileURI, {
     suspense: true,
   });
@@ -50,7 +36,7 @@ function HeaderContent({
   return (
     <div className="mb-6 flex items-center gap-3">
       <div
-        className="h-12 w-12 shrink-0 rounded-full bg-slate-200 bg-cover bg-center bg-no-repeat -ml-1"
+        className="-ml-1 h-12 w-12 shrink-0 rounded-full bg-slate-200 bg-cover bg-center bg-no-repeat"
         style={
           data?.photo
             ? { backgroundImage: `url('${ipfs(data.photo)}')` }

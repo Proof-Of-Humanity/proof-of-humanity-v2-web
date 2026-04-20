@@ -22,6 +22,7 @@ import usePoHWrite from "contracts/hooks/usePoHWrite";
 import { RequestQuery } from "generated/graphql";
 import { useLoading } from "hooks/useLoading";
 import Image from "next/image";
+import { useRequestOptimistic } from "optimistic/request";
 import { useMemo, useRef, useState } from "react";
 import { toast } from "react-toastify";
 import { RequestStatus } from "utils/status";
@@ -41,6 +42,7 @@ interface SideFundingProps {
   chainId: SupportedChainId;
   loosingSideHasEnd: boolean;
   onSuccess?: () => void;
+  disabled?: boolean;
 }
 
 const SideFunding: React.FC<SideFundingProps> = ({
@@ -54,6 +56,7 @@ const SideFunding: React.FC<SideFundingProps> = ({
   chainId,
   loosingSideHasEnd,
   onSuccess,
+  disabled = false,
 }) => {
   const userChainId = useChainId();
   const title = side === SideEnum.claimer ? "Claimer" : "Challenger";
@@ -118,9 +121,9 @@ const SideFunding: React.FC<SideFundingProps> = ({
             });
           }}
           label="Fund"
-          disabled={!contributor || errorRef.current || loosingSideHasEnd || userChainId !== chainId}
+          disabled={disabled || !contributor || errorRef.current || loosingSideHasEnd || userChainId !== chainId}
           isLoading={isLoading}
-          tooltip={userChainId !== chainId ? `Switch your chain above to ${idToChain(chainId)?.name || 'the correct chain'}` : undefined}
+          tooltip={disabled ? "Syncing" : userChainId !== chainId ? `Switch your chain above to ${idToChain(chainId)?.name || 'the correct chain'}` : undefined}
         />
       </div>
       <Progress
@@ -162,6 +165,8 @@ const Appeal: React.FC<AppealProps> = ({
   revocation,
   requestStatus,
 }) => {
+  const { pendingAction } = useRequestOptimistic();
+  const isReconciling = pendingAction !== null;
   const [totalClaimerCost, setTotalClaimerCost] = useState(0n);
   const [totalChallengerCost, setTotalChallengerCost] = useState(0n);
   const [formatedCurrentRuling, setFormatedCurrentRuling] = useState("");
@@ -299,7 +304,6 @@ const Appeal: React.FC<AppealProps> = ({
           );
         setError(true);
         errorRef.current = true;
-        console.log(e);
       }
     };
     getAppealData();
@@ -307,12 +311,9 @@ const Appeal: React.FC<AppealProps> = ({
   return disputeStatus === DisputeStatusEnum.Appealable &&
     !error &&
     !loading ? (
-    <Modal
-      header={`Appeal case #${disputeId}`}
-      open={isAppealModalOpen}
-      onClose={() => setAppealModalOpen(false)}
-      trigger={
-        <button onClick={() => setAppealModalOpen(true)} className="
+    <>
+      <div className="group relative w-[150px] md:w-auto">
+        <button onClick={() => setAppealModalOpen(true)} disabled={isReconciling} className="
           btn-sec 
           py-2
           rounded
@@ -332,9 +333,19 @@ const Appeal: React.FC<AppealProps> = ({
             )
           </span>
         </button>
-      }
-    >
-      <div className="paper w-full px-16 py-8">
+        {isReconciling && (
+          <span className="opacity-0 group-hover:opacity-100 absolute bottom-full left-1/2 z-10 mb-2 w-max -translate-x-1/2 rounded-md bg-neutral-700 px-3 py-2 text-center text-sm text-white transition-opacity pointer-events-none">
+            Syncing
+            <span className="absolute top-full left-1/2 h-0 w-0 -translate-x-1/2 border-x-[5px] border-x-transparent border-t-[5px] border-t-neutral-700" />
+          </span>
+        )}
+      </div>
+      <Modal
+        header={`Appeal case #${disputeId}`}
+        open={isAppealModalOpen}
+        onClose={() => setAppealModalOpen(false)}
+      >
+        <div className="paper w-full px-16 py-8">
         <h1 className="mb-4 text-xl">
           Appeal the decision: {formatedCurrentRuling}
         </h1>
@@ -444,6 +455,7 @@ const Appeal: React.FC<AppealProps> = ({
                 : false
             }
             onSuccess={handleFundSuccess}
+            disabled={isReconciling}
           />
           <SideFunding
             side={SideEnum.challenger}
@@ -460,10 +472,12 @@ const Appeal: React.FC<AppealProps> = ({
                 : false
             }
             onSuccess={handleFundSuccess}
+            disabled={isReconciling}
           />
         </div>
-      </div>
-    </Modal>
+        </div>
+      </Modal>
+    </>
   ) : null;
 };
 

@@ -72,9 +72,11 @@ export const getHumanityEvents = cache(async (humanityId: Hash) => {
     supportedChains.map((chain) => getHumanityEventsForChain(chain.id, humanityId)),
   );
 
-  return results
+  const flattened = results
     .flat()
     .sort((eventA, eventB) => eventA.timestamp - eventB.timestamp);
+
+  return flattened;
 });
 
 export const getTimelineRequestNode = cache(async (

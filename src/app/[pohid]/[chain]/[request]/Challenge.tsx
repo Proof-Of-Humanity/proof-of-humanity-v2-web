@@ -12,6 +12,7 @@ import cn from "classnames";
 import Image from "next/image";
 import { useObservable } from "@legendapp/state/react";
 import usePoHWrite from "contracts/hooks/usePoHWrite";
+import type { RequestOptimisticOverlay } from "optimistic/types";
 import { Hash } from "viem";
 import DocumentIcon from "icons/NoteMajor.svg";
 import { ObservablePrimitiveBaseFns } from "@legendapp/state";
@@ -22,6 +23,8 @@ import AuthGuard from "components/AuthGuard";
 import ActionButton from "components/ActionButton";
 import { useChainId } from "wagmi";
 import { idToChain } from "config/chains";
+import { getDisputedRequestStatus } from "utils/status";
+import { useRequestOptimistic } from "optimistic/request";
 
 type Reason =
   | "none"
@@ -54,6 +57,14 @@ function reasonToIdx(reason: Reason) {
       return 0;
   }
 }
+
+export const buildChallengeSuccessPatch = (
+  revocation: boolean,
+): RequestOptimisticOverlay => ({
+  status: "disputed",
+  requestStatus: getDisputedRequestStatus(revocation),
+  lastStatusChange: Math.floor(Date.now() / 1000),
+});
 
 interface ReasonCardInterface {
   text: string;
@@ -117,11 +128,24 @@ export default function Challenge({
   usedReasons = [],
 }: ChallengeInterface) {
   const { uploadFile } = useAtlasProvider();
+  const { pendingAction, applyAction } = useRequestOptimistic();
   const chain = useChainParam()!;
   const userChainId = useChainId();
+  const [isOpen, setIsOpen] = useState(false);
+  const isReconciling = pendingAction !== null;
   
   const loading = useLoading();
   const [isLoading, loadingMessage] = loading.use();
+  const reason$ = useObservable<Reason>("none");
+  const reason = reason$.use();
+
+  const [justification, setJustification] = useState("");
+  const closeModal = useCallback(() => {
+    setIsOpen(false);
+    setJustification("");
+    reason$.set("none");
+    loading.stop();
+  }, [loading, reason$]);
 
   const [prepare] = usePoHWrite(
     "challengeRequest",
@@ -142,18 +166,19 @@ export default function Challenge({
           toast.error("Transaction rejected");
         },
         onSuccess() {
-          loading.stop();
+          applyAction(
+            "challenge",
+            buildChallengeSuccessPatch(
+              revocation,
+            ),
+          );
+          closeModal();
           toast.success("Challenge submitted successfully");
         },
       }),
-      [loading],
+      [applyAction, closeModal, loading, revocation],
     ),
   );
-
-  const reason$ = useObservable<Reason>("none");
-  const reason = reason$.use();
-
-  const [justification, setJustification] = useState("");
 
   const submit = useCallback(async () => {
     if (revocation === !reason && !justification) return;
@@ -210,19 +235,21 @@ export default function Challenge({
     { reason: "deceased" as Reason, text: "Deceased" },
   ];
   return (
-    <Modal
-      formal
-      header="Challenge"
-      trigger={
-        <ActionButton
-          onClick={() => {}}
-          label="Challenge"
-          disabled={userChainId !== chain.id}
-          tooltip={userChainId !== chain.id ? `Switch your chain above to ${idToChain(chain.id)?.name || 'the correct chain'}` : undefined}
-        />
-      }
-    >
-      <div className="flex flex-col flex-wrap items-center p-4">
+    <>
+      <ActionButton
+        onClick={() => setIsOpen(true)}
+        label="Challenge"
+        disabled={isReconciling || userChainId !== chain.id}
+        tooltip={isReconciling ? "Syncing" : userChainId !== chain.id ? `Switch your chain above to ${idToChain(chain.id)?.name || 'the correct chain'}` : undefined}
+      />
+      <Modal
+        formal
+        open={isOpen}
+        onClose={closeModal}
+        canClose={!isLoading}
+        header="Challenge"
+      >
+        <div className="flex flex-col flex-wrap items-center p-4">
         <ALink className="flex" href={ipfs(arbitrationInfo.policy)}>
           <DocumentIcon className="fill-theme h-6 w-6" />
           <strong className="text-orange mr-1 font-semibold">
@@ -267,17 +294,18 @@ export default function Challenge({
             {...{
               disabled:
                 (!revocation
-                  ? !justification || reason === "none" || userChainId !== chain.id
-                  : !justification || userChainId !== chain.id),
+                  ? !justification || reason === "none" || isReconciling || userChainId !== chain.id
+                  : !justification || isReconciling || userChainId !== chain.id),
               className: "mt-12",
               onClick: submit,
               isLoading,
               label: loadingMessage || "Challenge request",
-              tooltip: userChainId !== chain.id ? `Switch your chain above to ${idToChain(chain.id)?.name || 'the correct chain'}` : undefined,
+              tooltip: isReconciling ? "Syncing" : userChainId !== chain.id ? `Switch your chain above to ${idToChain(chain.id)?.name || 'the correct chain'}` : undefined,
             }}
           />
         </AuthGuard>
-      </div>
-    </Modal>
+        </div>
+      </Modal>
+    </>
   );
 }

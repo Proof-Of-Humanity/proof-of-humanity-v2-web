@@ -48,11 +48,34 @@ export interface TimelineItem {
   kind: TimelineItemKind;
   title: string;
   timestamp: number;
+  isActive?: boolean;
   chainId?: SupportedChainId;
   href?: string;
   externalHref?: string;
   requestIndex?: number;
 }
+
+const ACTIVE_TIMELINE_KINDS = new Set<TimelineItemKind>([
+  "submitted",
+  "inReview",
+  "challenged",
+  "appeal",
+]);
+
+const markLatestActiveTimelineItem = (items: TimelineItem[]) => {
+  const sortedItems = [...items].sort(
+    (itemA, itemB) => itemB.timestamp - itemA.timestamp,
+  );
+  const latestActiveIndex =
+    sortedItems.length > 0 && ACTIVE_TIMELINE_KINDS.has(sortedItems[0].kind)
+      ? 0
+      : -1;
+
+  return sortedItems.map((item, index) => ({
+    ...item,
+    isActive: index === latestActiveIndex,
+  }));
+};
 
 interface CurrentRequestWithChain extends CurrentRequest {
   chainId: SupportedChainId;
@@ -73,6 +96,7 @@ const getProfileRequestTimelineItem = (
   pohId: Hash,
   request: RequestWithChain,
 ): TimelineItem | null => {
+  const requestTimelineId = `${request.chainId}:${request.id}`;
   const requestHref = `/${prettifyId(pohId)}/${idToChain(
     request.chainId,
   )?.name.toLowerCase()}/${Number(request.index)}`;
@@ -90,7 +114,7 @@ const getProfileRequestTimelineItem = (
   switch (requestStatus) {
     case RequestStatus.VOUCHING:
       return {
-        id: request.id,
+        id: requestTimelineId,
         kind: "submitted",
         title: request.revocation ? "Removal requested" : "Profile submitted",
         timestamp: Number(request.creationTime),
@@ -100,7 +124,7 @@ const getProfileRequestTimelineItem = (
       };
     case RequestStatus.PENDING_CLAIM:
       return {
-        id: request.id,
+        id: requestTimelineId,
         kind: "inReview",
         title: "In review",
         timestamp:
@@ -111,7 +135,7 @@ const getProfileRequestTimelineItem = (
       };
     case RequestStatus.PENDING_REVOCATION:
       return {
-        id: request.id,
+        id: requestTimelineId,
         kind: "submitted",
         title: "Removal requested",
         timestamp: Number(request.creationTime),
@@ -122,7 +146,7 @@ const getProfileRequestTimelineItem = (
     case RequestStatus.DISPUTED_CLAIM:
     case RequestStatus.DISPUTED_REVOCATION:
       return {
-        id: request.id,
+        id: requestTimelineId,
         kind: "challenged",
         title: "Challenged",
         timestamp:
@@ -133,7 +157,7 @@ const getProfileRequestTimelineItem = (
       };
     case RequestStatus.RESOLVED_CLAIM:
       return {
-        id: request.id,
+        id: requestTimelineId,
         kind: "verified",
         title: "Verified human",
         timestamp:
@@ -144,7 +168,7 @@ const getProfileRequestTimelineItem = (
       };
     case RequestStatus.RESOLVED_REVOCATION:
       return {
-        id: request.id,
+        id: requestTimelineId,
         kind: "removed",
         title: "Removed",
         timestamp:
@@ -153,9 +177,20 @@ const getProfileRequestTimelineItem = (
         href: requestHref,
         requestIndex: Number(request.index),
       };
+    case RequestStatus.REJECTED_REVOCATION:
+      return {
+        id: requestTimelineId,
+        kind: "verified",
+        title: "Removal rejected",
+        timestamp:
+          Number(request.lastStatusChange) || Number(request.creationTime),
+        chainId: request.chainId,
+        href: requestHref,
+        requestIndex: Number(request.index),
+      };
     case RequestStatus.REJECTED:
       return {
-        id: request.id,
+        id: requestTimelineId,
         kind: "rejected",
         title: "Rejected",
         timestamp:
@@ -166,7 +201,7 @@ const getProfileRequestTimelineItem = (
       };
     case RequestStatus.WITHDRAWN:
       return {
-        id: request.id,
+        id: requestTimelineId,
         kind: "withdrawn",
         title: "Withdrawn",
         timestamp:
@@ -179,7 +214,7 @@ const getProfileRequestTimelineItem = (
       const timestamp = Number(request.expirationTime);
       if (!Number.isFinite(timestamp) || timestamp <= 0) return null;
       return {
-        id: `${request.id}-expired`,
+        id: `${requestTimelineId}-expired`,
         kind: "expired",
         title: "Expired",
         timestamp,
@@ -265,7 +300,18 @@ const createEventTimelineItems = async (
     },
     {} as Record<string, HumanityEventRecord>,
   );
-
+  const currentRequestIndex = Number(currentRequest.index);
+  const currentRequestStatus = getStatus(
+    {
+      status: currentRequest.status,
+      revocation: currentRequest.revocation,
+      winnerParty: currentRequest.winnerParty,
+      index: currentRequestIndex,
+      creationTime: currentRequest.creationTime,
+      expirationTime: currentRequest.expirationTime,
+    },
+    { humanityLifespan },
+  );
   const timelineItems: TimelineItem[] = events.flatMap<TimelineItem>(
     (event) => {
       const requestRef =
@@ -365,8 +411,8 @@ const createEventTimelineItems = async (
           if (!isRelevantRequestEvent) return [];
           return [
             toTimelineItem({
-              kind: "rejected",
-              title: "Rejected",
+              kind: event.revocation ? "verified" : "rejected",
+              title: event.revocation ? "Removal rejected" : "Rejected",
             }),
           ];
         case "REQUEST_WITHDRAWN":
@@ -414,18 +460,6 @@ const createEventTimelineItems = async (
     },
   );
 
-  const currentRequestIndex = Number(currentRequest.index);
-  const currentRequestStatus = getStatus(
-    {
-      status: currentRequest.status,
-      revocation: currentRequest.revocation,
-      winnerParty: currentRequest.winnerParty,
-      index: currentRequestIndex,
-      creationTime: currentRequest.creationTime,
-      expirationTime: currentRequest.expirationTime,
-    },
-    { humanityLifespan },
-  );
   const expiredTimestamp = Number(currentRequest.expirationTime);
 
   if (
@@ -511,10 +545,10 @@ export const getRequestTimelineData = async (
   );
 
   return {
-    timelineItems: [
+    timelineItems: markLatestActiveTimelineItem([
       ...eventTimelineItems,
       ...resolvedOffChainVouchTimelineItems,
-    ].sort((itemA, itemB) => itemB.timestamp - itemA.timestamp),
+    ]),
     requestCounts,
   };
 };
@@ -529,8 +563,6 @@ export const getProfileTimelineData = async (
     .filter((item): item is TimelineItem => !!item);
 
   return {
-    timelineItems: requestTimelineItems.sort(
-      (itemA, itemB) => itemB.timestamp - itemA.timestamp,
-    ),
+    timelineItems: markLatestActiveTimelineItem(requestTimelineItems),
   };
 };

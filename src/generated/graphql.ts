@@ -1566,8 +1566,10 @@ export type OutTransfer = {
   __typename?: 'OutTransfer';
   foreignProxy: Scalars['Bytes'];
   id: Scalars['Bytes'];
+  logIndex: Scalars['BigInt'];
   transferHash: Scalars['Bytes'];
   transferTimestamp: Scalars['BigInt'];
+  txHash: Scalars['Bytes'];
 };
 
 export type OutTransfer_Filter = {
@@ -1594,6 +1596,14 @@ export type OutTransfer_Filter = {
   id_not?: InputMaybe<Scalars['Bytes']>;
   id_not_contains?: InputMaybe<Scalars['Bytes']>;
   id_not_in?: InputMaybe<Array<Scalars['Bytes']>>;
+  logIndex?: InputMaybe<Scalars['BigInt']>;
+  logIndex_gt?: InputMaybe<Scalars['BigInt']>;
+  logIndex_gte?: InputMaybe<Scalars['BigInt']>;
+  logIndex_in?: InputMaybe<Array<Scalars['BigInt']>>;
+  logIndex_lt?: InputMaybe<Scalars['BigInt']>;
+  logIndex_lte?: InputMaybe<Scalars['BigInt']>;
+  logIndex_not?: InputMaybe<Scalars['BigInt']>;
+  logIndex_not_in?: InputMaybe<Array<Scalars['BigInt']>>;
   or?: InputMaybe<Array<InputMaybe<OutTransfer_Filter>>>;
   transferHash?: InputMaybe<Scalars['Bytes']>;
   transferHash_contains?: InputMaybe<Scalars['Bytes']>;
@@ -1613,13 +1623,25 @@ export type OutTransfer_Filter = {
   transferTimestamp_lte?: InputMaybe<Scalars['BigInt']>;
   transferTimestamp_not?: InputMaybe<Scalars['BigInt']>;
   transferTimestamp_not_in?: InputMaybe<Array<Scalars['BigInt']>>;
+  txHash?: InputMaybe<Scalars['Bytes']>;
+  txHash_contains?: InputMaybe<Scalars['Bytes']>;
+  txHash_gt?: InputMaybe<Scalars['Bytes']>;
+  txHash_gte?: InputMaybe<Scalars['Bytes']>;
+  txHash_in?: InputMaybe<Array<Scalars['Bytes']>>;
+  txHash_lt?: InputMaybe<Scalars['Bytes']>;
+  txHash_lte?: InputMaybe<Scalars['Bytes']>;
+  txHash_not?: InputMaybe<Scalars['Bytes']>;
+  txHash_not_contains?: InputMaybe<Scalars['Bytes']>;
+  txHash_not_in?: InputMaybe<Array<Scalars['Bytes']>>;
 };
 
 export enum OutTransfer_OrderBy {
   ForeignProxy = 'foreignProxy',
   Id = 'id',
+  LogIndex = 'logIndex',
   TransferHash = 'transferHash',
-  TransferTimestamp = 'transferTimestamp'
+  TransferTimestamp = 'transferTimestamp',
+  TxHash = 'txHash'
 }
 
 export type OutUpdate = {
@@ -3494,6 +3516,21 @@ export type MeQueryVariables = Exact<{
 
 export type MeQuery = { __typename?: 'Query', claimer?: { __typename?: 'Claimer', registration?: { __typename?: 'Registration', id: any, expirationTime: any } | null, currentRequest?: { __typename?: 'Request', index: any, status: { __typename?: 'Status', id: string }, humanity: { __typename?: 'Humanity', id: any } } | null } | null };
 
+export type ProfileHumanityQueryVariables = Exact<{
+  id: Scalars['ID'];
+  humanityId: Scalars['Bytes'];
+}>;
+
+
+export type ProfileHumanityQuery = { __typename?: 'Query', humanity?: { __typename?: 'Humanity', registration?: { __typename?: 'Registration', expirationTime: any, claimer: { __typename?: 'Claimer', id: any, name?: string | null } } | null, requests: Array<{ __typename?: 'Request', id: any, creationTime: any, lastStatusChange: any, index: any, revocation: boolean, expirationTime?: any | null, registrationEvidenceRevokedReq: string, requester: any, status: { __typename?: 'Status', id: string }, claimer: { __typename?: 'Claimer', id: any, name?: string | null }, winnerParty?: { __typename?: 'Party', id: string } | null, evidenceGroup: { __typename?: 'EvidenceGroup', evidence: Array<{ __typename?: 'Evidence', uri: string }> } }> } | null, crossChainRegistration?: { __typename?: 'CrossChainRegistration', expirationTime: any, lastReceivedTransferTimestamp: any, claimer: { __typename?: 'Claimer', id: any } } | null, outTransfer?: { __typename?: 'OutTransfer', foreignProxy: any, transferHash: any, txHash: any, logIndex: any, transferTimestamp: any } | null, inTransfers: Array<{ __typename?: 'InTransfer', id: any }> };
+
+export type ProfileRequestQueryVariables = Exact<{
+  id: Scalars['ID'];
+}>;
+
+
+export type ProfileRequestQuery = { __typename?: 'Query', request?: { __typename?: 'Request', index: any, inTransferHash?: any | null, revocation: boolean, registrationEvidenceRevokedReq: string, requester: any, claimer: { __typename?: 'Claimer', id: any, name?: string | null }, evidenceGroup: { __typename?: 'EvidenceGroup', evidence: Array<{ __typename?: 'Evidence', uri: string }> } } | null };
+
 export type RegistrationQueryVariables = Exact<{
   id: Scalars['ID'];
 }>;
@@ -3564,7 +3601,7 @@ export const WinnerClaimFragmentDoc = gql`
     index
     resolutionTime
     evidenceGroup {
-      evidence(orderBy: creationTime, first: 1) {
+      evidence(orderBy: creationTime, orderDirection: desc, first: 1) {
         uri
       }
     }
@@ -3766,6 +3803,8 @@ export const HumanityDocument = gql`
   outTransfer(id: $id) {
     foreignProxy
     transferHash
+    txHash
+    logIndex
     transferTimestamp
   }
 }
@@ -3803,6 +3842,81 @@ export const MeDocument = gql`
       }
       humanity {
         id
+      }
+    }
+  }
+}
+    `;
+export const ProfileHumanityDocument = gql`
+    query ProfileHumanity($id: ID!, $humanityId: Bytes!) {
+  humanity(id: $id) {
+    registration {
+      expirationTime
+      claimer {
+        id
+        name
+      }
+    }
+    requests {
+      id
+      status {
+        id
+      }
+      claimer {
+        id
+        name
+      }
+      winnerParty {
+        id
+      }
+      creationTime
+      lastStatusChange
+      index
+      revocation
+      expirationTime
+      registrationEvidenceRevokedReq
+      requester
+      evidenceGroup {
+        evidence(orderBy: creationTime, orderDirection: desc, first: 1) {
+          uri
+        }
+      }
+    }
+  }
+  crossChainRegistration(id: $id) {
+    claimer {
+      id
+    }
+    expirationTime
+    lastReceivedTransferTimestamp
+  }
+  outTransfer(id: $id) {
+    foreignProxy
+    transferHash
+    txHash
+    logIndex
+    transferTimestamp
+  }
+  inTransfers(where: {humanityId: $humanityId}) {
+    id
+  }
+}
+    `;
+export const ProfileRequestDocument = gql`
+    query ProfileRequest($id: ID!) {
+  request(id: $id) {
+    index
+    inTransferHash
+    revocation
+    registrationEvidenceRevokedReq
+    requester
+    claimer {
+      id
+      name
+    }
+    evidenceGroup {
+      evidence(orderBy: creationTime, orderDirection: desc, first: 1) {
+        uri
       }
     }
   }
@@ -4018,58 +4132,64 @@ const defaultWrapper: SdkFunctionWrapper = (action, _operationName, _operationTy
 export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = defaultWrapper) {
   return {
     GetCirclesAccountsByaddress(variables: GetCirclesAccountsByaddressQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<GetCirclesAccountsByaddressQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<GetCirclesAccountsByaddressQuery>({ document: GetCirclesAccountsByaddressDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'GetCirclesAccountsByaddress', 'query', variables);
+      return withWrapper((wrappedRequestHeaders) => client.request<GetCirclesAccountsByaddressQuery>(GetCirclesAccountsByaddressDocument, variables, { ...requestHeaders, ...wrappedRequestHeaders }), 'GetCirclesAccountsByaddress', 'query', variables);
     },
     GetHumanityWithCircleAccountById(variables: GetHumanityWithCircleAccountByIdQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<GetHumanityWithCircleAccountByIdQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<GetHumanityWithCircleAccountByIdQuery>({ document: GetHumanityWithCircleAccountByIdDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'GetHumanityWithCircleAccountById', 'query', variables);
+      return withWrapper((wrappedRequestHeaders) => client.request<GetHumanityWithCircleAccountByIdQuery>(GetHumanityWithCircleAccountByIdDocument, variables, { ...requestHeaders, ...wrappedRequestHeaders }), 'GetHumanityWithCircleAccountById', 'query', variables);
     },
     HumanityIdByClaimer(variables: HumanityIdByClaimerQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<HumanityIdByClaimerQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<HumanityIdByClaimerQuery>({ document: HumanityIdByClaimerDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'HumanityIdByClaimer', 'query', variables);
+      return withWrapper((wrappedRequestHeaders) => client.request<HumanityIdByClaimerQuery>(HumanityIdByClaimerDocument, variables, { ...requestHeaders, ...wrappedRequestHeaders }), 'HumanityIdByClaimer', 'query', variables);
     },
     RequestsToAdvance(variables?: RequestsToAdvanceQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<RequestsToAdvanceQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<RequestsToAdvanceQuery>({ document: RequestsToAdvanceDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'RequestsToAdvance', 'query', variables);
+      return withWrapper((wrappedRequestHeaders) => client.request<RequestsToAdvanceQuery>(RequestsToAdvanceDocument, variables, { ...requestHeaders, ...wrappedRequestHeaders }), 'RequestsToAdvance', 'query', variables);
     },
     Claimer(variables: ClaimerQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<ClaimerQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<ClaimerQuery>({ document: ClaimerDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'Claimer', 'query', variables);
+      return withWrapper((wrappedRequestHeaders) => client.request<ClaimerQuery>(ClaimerDocument, variables, { ...requestHeaders, ...wrappedRequestHeaders }), 'Claimer', 'query', variables);
     },
     Contract(variables?: ContractQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<ContractQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<ContractQuery>({ document: ContractDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'Contract', 'query', variables);
+      return withWrapper((wrappedRequestHeaders) => client.request<ContractQuery>(ContractDocument, variables, { ...requestHeaders, ...wrappedRequestHeaders }), 'Contract', 'query', variables);
     },
     CrossChainUpdates(variables: CrossChainUpdatesQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<CrossChainUpdatesQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<CrossChainUpdatesQuery>({ document: CrossChainUpdatesDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'CrossChainUpdates', 'query', variables);
+      return withWrapper((wrappedRequestHeaders) => client.request<CrossChainUpdatesQuery>(CrossChainUpdatesDocument, variables, { ...requestHeaders, ...wrappedRequestHeaders }), 'CrossChainUpdates', 'query', variables);
     },
     Humanity(variables: HumanityQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<HumanityQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<HumanityQuery>({ document: HumanityDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'Humanity', 'query', variables);
+      return withWrapper((wrappedRequestHeaders) => client.request<HumanityQuery>(HumanityDocument, variables, { ...requestHeaders, ...wrappedRequestHeaders }), 'Humanity', 'query', variables);
     },
     HumanityEvents(variables: HumanityEventsQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<HumanityEventsQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<HumanityEventsQuery>({ document: HumanityEventsDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'HumanityEvents', 'query', variables);
+      return withWrapper((wrappedRequestHeaders) => client.request<HumanityEventsQuery>(HumanityEventsDocument, variables, { ...requestHeaders, ...wrappedRequestHeaders }), 'HumanityEvents', 'query', variables);
     },
     Me(variables: MeQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<MeQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<MeQuery>({ document: MeDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'Me', 'query', variables);
+      return withWrapper((wrappedRequestHeaders) => client.request<MeQuery>(MeDocument, variables, { ...requestHeaders, ...wrappedRequestHeaders }), 'Me', 'query', variables);
+    },
+    ProfileHumanity(variables: ProfileHumanityQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<ProfileHumanityQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<ProfileHumanityQuery>(ProfileHumanityDocument, variables, { ...requestHeaders, ...wrappedRequestHeaders }), 'ProfileHumanity', 'query', variables);
+    },
+    ProfileRequest(variables: ProfileRequestQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<ProfileRequestQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<ProfileRequestQuery>(ProfileRequestDocument, variables, { ...requestHeaders, ...wrappedRequestHeaders }), 'ProfileRequest', 'query', variables);
     },
     Registration(variables: RegistrationQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<RegistrationQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<RegistrationQuery>({ document: RegistrationDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'Registration', 'query', variables);
+      return withWrapper((wrappedRequestHeaders) => client.request<RegistrationQuery>(RegistrationDocument, variables, { ...requestHeaders, ...wrappedRequestHeaders }), 'Registration', 'query', variables);
     },
     Request(variables: RequestQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<RequestQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<RequestQuery>({ document: RequestDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'Request', 'query', variables);
+      return withWrapper((wrappedRequestHeaders) => client.request<RequestQuery>(RequestDocument, variables, { ...requestHeaders, ...wrappedRequestHeaders }), 'Request', 'query', variables);
     },
     RequestTimelineNode(variables: RequestTimelineNodeQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<RequestTimelineNodeQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<RequestTimelineNodeQuery>({ document: RequestTimelineNodeDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'RequestTimelineNode', 'query', variables);
+      return withWrapper((wrappedRequestHeaders) => client.request<RequestTimelineNodeQuery>(RequestTimelineNodeDocument, variables, { ...requestHeaders, ...wrappedRequestHeaders }), 'RequestTimelineNode', 'query', variables);
     },
     Requests(variables?: RequestsQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<RequestsQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<RequestsQuery>({ document: RequestsDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'Requests', 'query', variables);
+      return withWrapper((wrappedRequestHeaders) => client.request<RequestsQuery>(RequestsDocument, variables, { ...requestHeaders, ...wrappedRequestHeaders }), 'Requests', 'query', variables);
     },
     RewardClaim(variables: RewardClaimQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<RewardClaimQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<RewardClaimQuery>({ document: RewardClaimDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'RewardClaim', 'query', variables);
+      return withWrapper((wrappedRequestHeaders) => client.request<RewardClaimQuery>(RewardClaimDocument, variables, { ...requestHeaders, ...wrappedRequestHeaders }), 'RewardClaim', 'query', variables);
     },
     IsSynced(variables: IsSyncedQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<IsSyncedQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<IsSyncedQuery>({ document: IsSyncedDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'IsSynced', 'query', variables);
+      return withWrapper((wrappedRequestHeaders) => client.request<IsSyncedQuery>(IsSyncedDocument, variables, { ...requestHeaders, ...wrappedRequestHeaders }), 'IsSynced', 'query', variables);
     },
     Transfer(variables: TransferQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<TransferQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<TransferQuery>({ document: TransferDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'Transfer', 'query', variables);
+      return withWrapper((wrappedRequestHeaders) => client.request<TransferQuery>(TransferDocument, variables, { ...requestHeaders, ...wrappedRequestHeaders }), 'Transfer', 'query', variables);
     },
     HumanityVouch(variables: HumanityVouchQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<HumanityVouchQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<HumanityVouchQuery>({ document: HumanityVouchDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'HumanityVouch', 'query', variables);
+      return withWrapper((wrappedRequestHeaders) => client.request<HumanityVouchQuery>(HumanityVouchDocument, variables, { ...requestHeaders, ...wrappedRequestHeaders }), 'HumanityVouch', 'query', variables);
     }
   };
 }

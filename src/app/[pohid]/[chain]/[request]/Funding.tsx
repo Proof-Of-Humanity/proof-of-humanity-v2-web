@@ -1,16 +1,25 @@
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { toast } from "react-toastify";
 import Field from "components/Field";
 import Modal from "components/Modal";
 import ActionButton from "components/ActionButton";
 import usePoHWrite from "contracts/hooks/usePoHWrite";
 import { useLoading } from "hooks/useLoading";
+import type { RequestOptimisticOverlay } from "optimistic/types";
 import { Hash, formatEther, parseEther } from "viem";
 import useChainParam from "hooks/useChainParam";
-import { useRouter } from "next/navigation";
 import { useAccount, useBalance, useChainId } from "wagmi";
 import { formatEth } from "utils/misc";
 import { idToChain } from "config/chains";
+import { useRequestOptimistic } from "optimistic/request";
+
+export const buildFundSuccessPatch = (
+  funded: bigint,
+  totalCost: bigint,
+  value: bigint,
+): RequestOptimisticOverlay => ({
+  funded: funded + value > totalCost ? totalCost : funded + value,
+});
 
 interface FundButtonProps {
   pohId: Hash;
@@ -25,7 +34,7 @@ const FundButton: React.FC<FundButtonProps> = ({
   totalCost,
   funded,
 }) => {
-  const router = useRouter();
+  const { effective, pendingAction, applyAction } = useRequestOptimistic();
   const chain = useChainParam()!;
   const userChainId = useChainId();
   const [addedFundInput, setAddedFundInput] = useState("");
@@ -34,6 +43,11 @@ const FundButton: React.FC<FundButtonProps> = ({
   const { data: balanceData } = useBalance({ address, chainId: userChainId });
   const loading = useLoading();
   const [isLoading, loadingMessage] = loading.use();
+  const closeModal = useCallback(() => {
+    setIsModalOpen(false);
+    setAddedFundInput("");
+    loading.stop();
+  }, [loading]);
 
   const [prepareFund] = usePoHWrite(
     "fundRequest",
@@ -51,15 +65,16 @@ const FundButton: React.FC<FundButtonProps> = ({
           loading.stop();
           toast.error("Transaction rejected");
         },
-        onSuccess() {
-          loading.stop();
-          setIsModalOpen(false);
-          setAddedFundInput("");
+        onSuccess(ctx) {
+          applyAction(
+            "fund",
+            buildFundSuccessPatch(effective.funded, effective.totalCost, ctx.value ?? 0n),
+          );
+          closeModal();
           toast.success("Request funded successfully");
-          setTimeout(() => router.refresh(), 1000);
         },
       }),
-      [loading, router],
+      [applyAction, closeModal, effective.funded, effective.totalCost, loading],
     ),
   );
 
@@ -82,22 +97,24 @@ const FundButton: React.FC<FundButtonProps> = ({
   }, [inputAmount, balanceData, addedFundInput]);
 
   const exceedsRemaining = inputAmount != null && inputAmount > remainingAmount;
+  const isReconciling = pendingAction !== null;
   
   const isDisabled =
     !isConnected ||
     !addedFundInput ||
     isLoading ||
+    isReconciling ||
     userChainId !== chain.id ||
     exceedsRemaining ||
     insufficientFunds;
 
   const getTooltipMessage = () => {
+    if (isReconciling) return "Syncing";
     if (!isConnected) return "Please connect your wallet";
     if (userChainId !== chain.id) return `Switch your chain above to ${idToChain(chain.id)?.name || 'the correct chain'}`;
     if (!addedFundInput) return "Please enter an amount to fund";
     if (exceedsRemaining) return `Amount exceeds remaining needed (${formatEth(remainingAmount)} ${chain.nativeCurrency.symbol})`;
     if (insufficientFunds) return `Insufficient balance. You have ${formatEth(balanceData?.value ?? 0n)} ${chain.nativeCurrency.symbol}`;
-    if (isLoading) return "Transaction in progress";
     return undefined;
   };
 
@@ -107,14 +124,15 @@ const FundButton: React.FC<FundButtonProps> = ({
         onClick={() => setIsModalOpen(true)}
         label="Fund"
         className="mb-2 w-auto"
-        disabled={userChainId !== chain.id}
-        tooltip={userChainId !== chain.id ? `Switch your chain above to ${idToChain(chain.id)?.name || 'the correct chain'}` : undefined}
+        disabled={isReconciling || userChainId !== chain.id}
+        tooltip={isReconciling ? "Syncing" : userChainId !== chain.id ? `Switch your chain above to ${idToChain(chain.id)?.name || 'the correct chain'}` : undefined}
       />
       <Modal
         formal
         header="Fund"
         open={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
+        onClose={closeModal}
+        canClose={!isLoading}
       >
         <div className="flex flex-col p-4">
         <div className="flex w-full justify-center rounded p-4 font-bold">
@@ -137,14 +155,21 @@ const FundButton: React.FC<FundButtonProps> = ({
           onChange={(e) => setAddedFundInput(e.target.value)}
           disabled={isLoading}
         />
-        <ActionButton
-          disabled={isDisabled}
-          isLoading={isLoading}
-          onClick={handleSubmit}
-          className="mt-6 mx-auto"
-          label={loadingMessage || "Fund request"}
-          tooltip={getTooltipMessage()}
-        />
+        <div className="group relative mt-6 flex justify-center">
+          <ActionButton
+            disabled={isDisabled}
+            isLoading={isLoading}
+            onClick={handleSubmit}
+            label={loadingMessage || "Fund request"}
+            className="w-auto"
+          />
+          {getTooltipMessage() && (
+            <span className="opacity-0 group-hover:opacity-100 absolute bottom-full left-1/2 z-10 mb-2 w-max max-w-[240px] -translate-x-1/2 rounded-md bg-neutral-700 px-3 py-2 text-center text-sm text-white transition-opacity pointer-events-none whitespace-normal">
+              {getTooltipMessage()}
+              <span className="absolute top-full left-1/2 h-0 w-0 -translate-x-1/2 border-x-[5px] border-x-transparent border-t-[5px] border-t-neutral-700" />
+            </span>
+          )}
+        </div>
       </div>
       </Modal>
     </>

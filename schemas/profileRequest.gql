@@ -1,0 +1,18 @@
+query ProfileRequest($id: ID!) {
+  request(id: $id) {
+    index
+    inTransferHash
+    revocation
+    registrationEvidenceRevokedReq
+    requester
+    claimer {
+      id
+      name
+    }
+    evidenceGroup {
+      evidence(orderBy: creationTime, orderDirection: desc, first: 1) {
+        uri
+      }
+    }
+  }
+}
