@@ -56,6 +56,16 @@ export const buildWithdrawSuccessPatch = (): RequestOptimisticOverlay => ({
   lastStatusChange: Math.floor(Date.now() / 1000),
 });
 
+const toOffChainContractSignature = (signature: Hash) => {
+  const parsed = hexToSignature(signature);
+
+  return {
+    v: parsed.yParity + 27,
+    r: parsed.r,
+    s: parsed.s,
+  };
+};
+
 interface ActionBarProps {
   pohId: Hash;
   arbitrationCost: bigint;
@@ -272,12 +282,9 @@ export default function ActionBar({
         requester,
         effectiveOnChainVouches,
         effectiveOffChainVouches.map((v) => {
-          const sig = hexToSignature(v.signature);
           return {
             expirationTime: v.expiration,
-            v: Number(sig.v),
-            r: sig.r,
-            s: sig.s,
+            ...toOffChainContractSignature(v.signature),
           };
         }),
       ],
