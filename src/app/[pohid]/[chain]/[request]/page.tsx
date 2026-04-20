@@ -6,6 +6,7 @@ import Identicon from "components/Identicon";
 import Label from "components/Label";
 import Previewed from "components/Previewed";
 import TimeAgo from "components/TimeAgo";
+import VideoThumbnail from "components/VideoThumbnail";
 import Vouch from "components/Vouch";
 import {
   SupportedChainId,
@@ -40,7 +41,6 @@ import {
   TimelineHistorySectionSkeleton,
 } from "./TimelineSection";
 import DocumentIcon from "components/DocumentIcon";
-import VideoThumbnail from "components/VideoThumbnail";
 import { getStatus } from "utils/status";
 
 interface PageProps {
