@@ -20,72 +20,85 @@ interface TimelineProps {
 
 const TIMELINE_STYLES: Record<
   TimelineItem["kind"],
-  { dot: string; text: string; accent: string }
+  { dot: string; text: string; accent: string; pulse: string }
 > = {
   submitted: {
     dot: "border-orange-400",
     text: "text-primaryText",
     accent: "bg-orange-400",
+    pulse: "bg-orange-400/20",
   },
   inReview: {
     dot: "border-sky-400",
     text: "text-primaryText",
     accent: "bg-sky-400",
+    pulse: "bg-sky-400/20",
   },
   challenged: {
     dot: "border-amber-400",
     text: "text-primaryText",
     accent: "bg-amber-400",
+    pulse: "bg-amber-400/20",
   },
   vouchRemoved: {
     dot: "border-rose-400",
     text: "text-primaryText",
     accent: "bg-rose-400",
+    pulse: "bg-rose-400/20",
   },
   appeal: {
     dot: "border-fuchsia-400",
     text: "text-primaryText",
     accent: "bg-fuchsia-400",
+    pulse: "bg-fuchsia-400/20",
   },
   verified: {
     dot: "border-emerald-400",
     text: "text-primaryText",
     accent: "bg-emerald-400",
+    pulse: "bg-emerald-400/20",
   },
   removed: {
     dot: "border-rose-400",
     text: "text-primaryText",
     accent: "bg-rose-400",
+    pulse: "bg-rose-400/20",
   },
   rejected: {
     dot: "border-red-400",
     text: "text-primaryText",
     accent: "bg-red-400",
+    pulse: "bg-red-400/20",
   },
   expired: {
     dot: "border-slate-500",
     text: "text-primaryText",
     accent: "bg-slate-500",
+    pulse: "bg-slate-500/20",
   },
   withdrawn: {
     dot: "border-slate-300",
     text: "text-primaryText",
     accent: "bg-slate-300",
+    pulse: "bg-slate-300/20",
   },
   transferred: {
     dot: "border-orange-500",
     text: "text-primaryText",
     accent: "bg-orange-500",
+    pulse: "bg-orange-500/20",
   },
   received: {
     dot: "border-teal-500",
     text: "text-primaryText",
     accent: "bg-teal-500",
+    pulse: "bg-teal-500/20",
   },
   vouchReceived: {
     dot: "border-violet-400",
     text: "text-primaryText",
     accent: "bg-violet-400",
+    pulse: "bg-violet-400/20",
   },
 };
 
@@ -113,7 +126,7 @@ export default function Timeline({ items, profileHeader }: TimelineProps) {
           observer.disconnect();
         }
       },
-      { threshold: 0.2, rootMargin: "0px 0px -10% 0px" },
+      { threshold: 0.05, rootMargin: "0px 0px 12% 0px" },
     );
 
     observer.observe(node);
@@ -126,7 +139,7 @@ export default function Timeline({ items, profileHeader }: TimelineProps) {
   return (
     <div
       ref={rootRef}
-      className={`timeline-root mt-10 border-t pt-8 ${isVisible ? "timeline-visible" : "timeline-hidden"}`}
+      className={`timeline-root mt-8 border-t pt-8 ${isVisible ? "timeline-visible" : "timeline-hidden"}`}
     >
       <h2 className="text-primaryText text-xl font-semibold">
         Timeline History
@@ -143,12 +156,13 @@ export default function Timeline({ items, profileHeader }: TimelineProps) {
             <div className="flex w-full items-start gap-4">
               <div className="flex w-6 shrink-0 flex-col items-center">
                 <div
-                  className={`timeline-dot-shell bg-whiteBackground ${item.kind === "transferred" ||
-                      item.kind === "verified" ||
-                      item.kind === "rejected"
+                  className={`timeline-dot-shell bg-whiteBackground ${
+                    item.kind === "transferred" ||
+                    item.kind === "verified" ||
+                    item.kind === "rejected"
                       ? "-mt-0.5 h-5 w-5 border-transparent"
                       : styles.dot
-                    }`}
+                  }`}
                   style={{ animationDelay: itemDelay }}
                 >
                   {item.kind === "transferred" ? (
@@ -159,7 +173,22 @@ export default function Timeline({ items, profileHeader }: TimelineProps) {
                     item.kind === "vouchRemoved" ? (
                     <CrossCircleIcon />
                   ) : (
-                    <div className={`timeline-dot-core ${styles.accent}`} />
+                    <div className="relative flex h-4 w-4 items-center justify-center">
+                      {item.isActive ? (
+                        <>
+                          <div
+                            className={`absolute h-4 w-4 rounded-full border ${styles.dot} ${styles.pulse}`}
+                            style={{ opacity: 0.35 }}
+                          />
+                          <div
+                            className={`timeline-dot-pulse absolute h-4 w-4 rounded-full ${styles.pulse}`}
+                          />
+                        </>
+                      ) : null}
+                      <div
+                        className={`timeline-dot-core relative ${styles.accent}`}
+                      />
+                    </div>
                   )}
                 </div>
                 {!isLast && (
@@ -222,11 +251,7 @@ export default function Timeline({ items, profileHeader }: TimelineProps) {
             </div>
           );
 
-          return (
-            <div key={item.id}>
-              {content}
-            </div>
-          );
+          return <div key={item.id}>{content}</div>;
         })}
       </div>
     </div>

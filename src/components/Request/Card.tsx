@@ -23,7 +23,10 @@ interface ContentProps {
   evidence: RequestsQueryItem["evidenceGroup"]["evidence"];
   claimer: RequestsQueryItem["claimer"];
   requester: Address;
-  humanity: { id: Hash } & WinnerClaimFragment;
+  humanity: {
+    id: Hash;
+    registration?: { claimer: { id: Address } } | null;
+  } & WinnerClaimFragment;
 }
 
 interface CardInterface extends ContentProps {
@@ -77,6 +80,10 @@ const Content = ({
         : data && data.name
           ? data.name
           : "";
+  const displayedClaimerId =
+    revocation && humanity.registration?.claimer.id
+      ? humanity.registration.claimer.id
+      : requester;
 
   return (
     <div className="flex h-full flex-col items-center p-3">
@@ -89,7 +96,9 @@ const Content = ({
       </span>
       <div className="grid grid-cols-3 items-center">
         <ChainLogo chainId={chainId} className="fill-primaryText h-4 w-4" />
-        <span className="text-secondaryText">{shortenAddress(requester)}</span>
+        <span className="text-secondaryText">
+          {shortenAddress(displayedClaimerId)}
+        </span>
       </div>
     </div>
   );
@@ -103,10 +112,10 @@ function Card({
   chainId,
   claimer,
   evidence,
-  humanity: { id: pohId, winnerClaim },
+  humanity,
   requestStatus,
 }: CardInterface) {
-
+  const pohId = humanity.id;
   const statusColor = getStatusColor(requestStatus);
   const tooltip = getStatusTooltip(requestStatus);
 
@@ -143,7 +152,7 @@ function Card({
             chainId={chainId}
             claimer={claimer}
             evidence={evidence}
-            humanity={{ id: pohId, winnerClaim }}
+            humanity={humanity}
             requester={requester}
             revocation={revocation}
             registrationEvidenceRevokedReq={registrationEvidenceRevokedReq}

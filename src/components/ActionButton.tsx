@@ -6,7 +6,7 @@ export type ActionButtonVariant = 'primary' | 'secondary';
 
 export interface ActionButtonProps {
   onClick: () => void;
-  label: string;
+  label: React.ReactNode;
   disabled?: boolean;
   isLoading?: boolean;
   ariaLabel?: string;
@@ -25,61 +25,71 @@ const buttonStyles = {
 const buttonBaseClass =
   'w-full md:w-auto normal-case disabled:opacity-50 disabled:cursor-not-allowed px-5 py-2';
 
-export default function ActionButton({
-  onClick,
-  label,
-  disabled = false,
-  isLoading = false,
-  ariaLabel,
-  className = '',
-  variant = 'primary',
-  tooltip,
-}: ActionButtonProps) {
-
-  const mergedButtonClasses = twMerge(
-    buttonStyles[variant],
-    buttonBaseClass
-  );
-
-  const mergedWrapperClasses = twMerge("relative group w-full md:w-fit", className);
-
-  const buttonContent = (
-    <>
-      {isLoading && (
-        <Image
-          alt="loading"
-          src="/logo/poh-white.svg"
-          className="animate-flip fill-white mr-2"
-          width={14}
-          height={14}
-        />
-      )}
-      {label}
-    </>
-  );
-
-  const button = (
-    <button
-      onClick={onClick}
-      aria-label={ariaLabel || label}
-      className={tooltip ? mergedButtonClasses : twMerge(mergedButtonClasses, className)}
-      disabled={disabled || isLoading}
-    >
-      {buttonContent}
-    </button>
-  );
-
-  if (tooltip) {
-    return (
-      <div className={mergedWrapperClasses}>
-        {button}
-        <span className="opacity-0 group-hover:opacity-100 absolute bottom-full left-1/2 z-10 mb-2 w-max -translate-x-1/2 rounded-md bg-neutral-700 px-3 py-2 text-center text-sm text-white transition-opacity pointer-events-none">
-          {tooltip}
-          <span className="absolute top-full left-1/2 h-0 w-0 -translate-x-1/2 border-x-[5px] border-x-transparent border-t-[5px] border-t-neutral-700" />
-        </span>
-      </div>
+const ActionButton = React.forwardRef<HTMLButtonElement, ActionButtonProps>(
+  (
+    {
+      onClick,
+      label,
+      disabled = false,
+      isLoading = false,
+      ariaLabel,
+      className = '',
+      variant = 'primary',
+      tooltip,
+    },
+    ref,
+  ) => {
+    const mergedButtonClasses = twMerge(
+      buttonStyles[variant],
+      buttonBaseClass,
+      className,
     );
-  }
 
-  return button;
-}
+    const mergedWrapperClasses = "relative group w-full md:w-fit";
+
+    const buttonContent = (
+      <>
+        {isLoading && (
+          <Image
+            alt="loading"
+            src="/logo/poh-white.svg"
+            className="animate-flip fill-white mr-2"
+            width={14}
+            height={14}
+          />
+        )}
+        {label}
+      </>
+    );
+
+    const button = (
+      <button
+        ref={ref}
+        onClick={onClick}
+        aria-label={ariaLabel || (typeof label === "string" ? label : undefined)}
+        className={mergedButtonClasses}
+        disabled={disabled || isLoading}
+      >
+        {buttonContent}
+      </button>
+    );
+
+    if (tooltip) {
+      return (
+        <div className={mergedWrapperClasses}>
+          {button}
+          <span className="opacity-0 group-hover:opacity-100 absolute bottom-full left-1/2 z-10 mb-2 w-max -translate-x-1/2 rounded-md bg-neutral-700 px-3 py-2 text-center text-sm text-white transition-opacity pointer-events-none">
+            {tooltip}
+            <span className="absolute top-full left-1/2 h-0 w-0 -translate-x-1/2 border-x-[5px] border-x-transparent border-t-[5px] border-t-neutral-700" />
+          </span>
+        </div>
+      );
+    }
+
+    return button;
+  }
+);
+
+ActionButton.displayName = 'ActionButton';
+
+export default ActionButton;

@@ -43,13 +43,13 @@ export const getClaimerData = cache(async (id: Address) => {
 });
 
 export async function getClaimerName(id: Address): Promise<string | null> {
-    const normalizedId = String(id).toLowerCase();
-    const res = await Promise.all(
-      supportedChains.map((chain) => sdk[chain.id].Claimer({ id: normalizedId })),
-    );
-    for (const r of res) {
-      const name = r?.claimer?.name;
-      if (name && name.trim()) return name.trim();
-    }
-    return null;
+  const normalizedId = String(id).toLowerCase();
+  const res = await Promise.all(
+    supportedChains.map((chain) => sdk[chain.id].Claimer({ id: normalizedId })),
+  );
+  for (const r of res) {
+    const name = r?.claimer?.name;
+    if (name && name.trim()) return name.trim();
+  }
+  return null;
 }

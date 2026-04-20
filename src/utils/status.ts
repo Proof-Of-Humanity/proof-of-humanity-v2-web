@@ -9,6 +9,7 @@ export enum RequestStatus {
   DISPUTED_REVOCATION = "DISPUTED_REVOCATION",
   RESOLVED_CLAIM = "RESOLVED_CLAIM",
   RESOLVED_REVOCATION = "RESOLVED_REVOCATION",
+  REJECTED_REVOCATION = "REJECTED_REVOCATION",
   REJECTED = "REJECTED", 
   EXPIRED = "EXPIRED",
   WITHDRAWN = "WITHDRAWN",
@@ -103,11 +104,25 @@ const STATUS_CONFIG: Record<RequestStatus, StatusConfig> = {
       winnerParty_: { id: "requester" }
     }
   },
+  [RequestStatus.REJECTED_REVOCATION]: {
+    baseLabel: "Removal Rejected",
+    tooltip: "Revocation request lost; profile remains verified.",
+    color: STATUS_COLORS.registered,
+    filter: {
+      status: "resolved",
+      revocation: true,
+      winnerParty_: { id_not: "requester" }
+    }
+  },
   [RequestStatus.REJECTED]: {
     baseLabel: "Rejected",
-    tooltip: "Submission was rejected after being challenged.",
+    tooltip: "Request was rejected after being challenged.",
     color: STATUS_COLORS.rejected,
-    filter: { status: "resolved", revocation: false, winnerParty_: { id_not: "requester" } }
+    filter: {
+      status: "resolved",
+      revocation: false,
+      winnerParty_: { id_not: "requester" }
+    }
   },
   [RequestStatus.EXPIRED]: {
     baseLabel: "Expired", 
@@ -175,41 +190,68 @@ const isRejectedRequest = (request: RawRequestData): boolean => {
     request.winnerParty?.id !== "requester";
 };
 
-/**
- * Determines the RequestStatus enum value from raw status data.
- */
-const getRequestStatus = (
+const isRejectedRevocationRequest = (request: RawRequestData): boolean => {
+  return request.status.id === "resolved" &&
+    request.revocation &&
+    request.winnerParty?.id !== "requester";
+};
+
+export const getResolvingRequestStatus = (revocation: boolean): RequestStatus =>
+  revocation ? RequestStatus.PENDING_REVOCATION : RequestStatus.PENDING_CLAIM;
+
+export const getDisputedRequestStatus = (revocation: boolean): RequestStatus =>
+  revocation ? RequestStatus.DISPUTED_REVOCATION : RequestStatus.DISPUTED_CLAIM;
+
+export const getResolvedRequestStatus = ({
+  revocation = false,
+  revocationRejected = false,
+  expired = false,
+  rejected = false,
+}: {
+  revocation?: boolean;
+  revocationRejected?: boolean;
+  expired?: boolean;
+  rejected?: boolean;
+}): RequestStatus => {
+  if (revocationRejected) {
+    return RequestStatus.REJECTED_REVOCATION;
+  }
+  if (rejected) {
+    return RequestStatus.REJECTED;
+  }
+  if (revocation) {
+    return RequestStatus.RESOLVED_REVOCATION;
+  }
+  if (expired) {
+    return RequestStatus.EXPIRED;
+  }
+  return RequestStatus.RESOLVED_CLAIM;
+};
+
+export const getRequestStatusFromState = (
   status: string,
   revocation: boolean = false,
   expired: boolean = false,
+  revocationRejected: boolean = false,
   rejected: boolean = false,
-  winnerPartyId?: string | null,
 ): RequestStatus => {
   switch (status) {
     case "vouching":
       return RequestStatus.VOUCHING;
     
     case "resolving":
-      return revocation ? RequestStatus.PENDING_REVOCATION : RequestStatus.PENDING_CLAIM;
+      return getResolvingRequestStatus(revocation);
     
     case "disputed":
-      return revocation ? RequestStatus.DISPUTED_REVOCATION : RequestStatus.DISPUTED_CLAIM;
+      return getDisputedRequestStatus(revocation);
     
     case "resolved":
-      if (revocation) {
-        return winnerPartyId === "requester"
-          ? RequestStatus.RESOLVED_REVOCATION
-          : expired
-            ? RequestStatus.EXPIRED
-            : RequestStatus.RESOLVED_CLAIM;
-      }
-      if (expired) {
-        return RequestStatus.EXPIRED;
-      }
-      if (rejected) {
-        return RequestStatus.REJECTED;
-      }
-      return RequestStatus.RESOLVED_CLAIM;
+      return getResolvedRequestStatus({
+        revocation,
+        revocationRejected,
+        expired,
+        rejected,
+      });
     
     case "withdrawn":
       return RequestStatus.WITHDRAWN;
@@ -255,14 +297,15 @@ export const getStatus = (
     },
     contractData,
   );
+  const revocationRejected = isRejectedRevocationRequest(request);
   const rejected = isRejectedRequest(request);
 
-  return getRequestStatus(
+  return getRequestStatusFromState(
     request.status.id,
     request.revocation,
     expired,
+    revocationRejected,
     rejected,
-    request.winnerParty?.id,
   );
 };
 

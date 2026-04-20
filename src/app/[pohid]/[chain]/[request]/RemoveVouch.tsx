@@ -7,8 +7,31 @@ import { toast } from "react-toastify";
 import { useEffectOnce } from "@legendapp/state/react";
 import { SupportedChain, idToChain } from "config/chains";
 import ActionButton from "components/ActionButton";
+import { useRequestOptimistic } from "optimistic/request";
+import type { RequestOptimisticOverlay } from "optimistic/types";
+import { useAccount } from "wagmi";
 
 enableReactUse();
+
+const normalizeAddress = (value: Address) => value.toLowerCase();
+
+export const buildRemoveVouchSuccessPatch = (
+  onChainVouches: Address[],
+  validVouches: number,
+  voucher: Address,
+): RequestOptimisticOverlay | undefined => {
+  const normalized = normalizeAddress(voucher);
+  const nextOnChainVouches = onChainVouches.filter(
+    (value) => normalizeAddress(value) !== normalized,
+  );
+
+  if (nextOnChainVouches.length === onChainVouches.length) return undefined;
+
+  return {
+    onChainVouches: nextOnChainVouches,
+    validVouches: Math.max(0, validVouches - 1),
+  };
+};
 
 interface RemoveVouchProps {
   pohId: Hash;
@@ -30,7 +53,9 @@ export default function RemoveVouch({
   tooltip,
 }: RemoveVouchProps) {
   const loading = useLoading();
-  const [pending] = loading.use();
+  const { effective, pendingAction, applyAction } = useRequestOptimistic();
+  const { address } = useAccount();
+  const isReconciling = pendingAction !== null;
 
   const [prepareRemoveVouch, removeOnchainVouch, status] = usePoHWrite(
     "removeVouch",
@@ -44,10 +69,19 @@ export default function RemoveVouch({
           toast.info("Transaction pending");
         },
         onSuccess() {
+          if (!address) return;
+          const patch = buildRemoveVouchSuccessPatch(
+            effective.onChainVouches,
+            effective.validVouches,
+            address,
+          );
+          if (patch) {
+            applyAction("removeVouch", patch);
+          }
           toast.success("Request remove vouch successful");
         },
       }),
-      [loading],
+      [address, applyAction, effective.onChainVouches, effective.validVouches, loading],
     ),
   );
 
@@ -64,8 +98,8 @@ export default function RemoveVouch({
           label="Remove Vouch"
           className="mb-2 w-auto"
           isLoading={status.write === "pending"}
-          disabled={status.write === "pending" || disabled || userChainId !== chain.id}
-          tooltip={tooltip || (userChainId !== chain.id ? `Switch your chain above to ${idToChain(chain.id)?.name || 'the correct chain'}` : undefined)}
+          disabled={status.write === "pending" || isReconciling || disabled || userChainId !== chain.id}
+          tooltip={isReconciling ? "Syncing" : tooltip || (userChainId !== chain.id ? `Switch your chain above to ${idToChain(chain.id)?.name || 'the correct chain'}` : undefined)}
         />
       </div>
     )
