@@ -32,6 +32,7 @@ interface PhotoProps {
 const SAMPLE_VIDEO_URL =
   "/api/media/sample-registration-video";
 const isSampleSubmissionEnabled = true;
+const VIDEO_PROCESSING_TIMEOUT_MS = 2 * 60 * 1000;
 
 function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
   const WARNING_TOAST_BASE_MS = 5000;
@@ -76,6 +77,35 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
     setValidationError(MEDIA_MESSAGES.genericVideoProcessingError);
   };
 
+  const acceptProcessedVideo = (content: Blob, uri: string, warnings: string[]) => {
+    setVideoQualityWarnings(warnings);
+    if (warnings.length > 0) {
+      showWarningToasts(warnings);
+    }
+
+    setVideoValidationErrors([]);
+    setRawPreviewUri(null);
+
+    if (video?.uri) URL.revokeObjectURL(video.uri);
+    video$.set({ content, uri });
+    setRecording(false);
+    setShowCamera(false);
+  };
+
+  const acceptRawVideoAfterTimeout = (blob: Blob) => {
+    console.warn("[Video Upload] Processing timed out, accepting original upload.", {
+      timeoutMs: VIDEO_PROCESSING_TIMEOUT_MS,
+      sizeBytes: blob.size,
+      type: blob.type || "unknown",
+    });
+
+    acceptProcessedVideo(
+      blob,
+      URL.createObjectURL(blob),
+      [MEDIA_MESSAGES.videoProcessingTimeoutWarning],
+    );
+  };
+
   const showWarningToasts = (messages: string[]) => {
     if (messages.length === 0) return;
 
@@ -105,13 +135,43 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
       loading.start("Compressing video");
     }
 
-    const result = await processVideoInput(blob);
+    console.info("[Video Upload] Starting processing.", {
+      sizeBytes: blob.size,
+      type: blob.type || "unknown",
+      needsCompression,
+    });
+
+    const timeoutResult = Symbol("video-processing-timeout");
+    let processingTimeoutId: number | null = null;
+    const result = await Promise.race([
+      processVideoInput(blob),
+      new Promise<typeof timeoutResult>((resolve) => {
+        processingTimeoutId = window.setTimeout(
+          () => resolve(timeoutResult),
+          VIDEO_PROCESSING_TIMEOUT_MS,
+        );
+      }),
+    ]);
+    if (processingTimeoutId !== null) {
+      window.clearTimeout(processingTimeoutId);
+    }
+
     if (cancelledRef.current) {
       URL.revokeObjectURL(previewUrl);
       return;
     }
 
+    if (result === timeoutResult) {
+      acceptRawVideoAfterTimeout(blob);
+      return;
+    }
+
     if (result.error) {
+      console.info("[Video Upload] Processing finished with validation issues.", {
+        errorCount: result.error.messages.length,
+        warningCount: result.error.warnings.length,
+      });
+
       const errorMessages = result.error.messages;
       const warningMessages = result.error.warnings;
 
@@ -130,22 +190,21 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
 
     const processed = result.data;
 
-    setVideoQualityWarnings(processed.warnings);
-    if (processed.warnings.length > 0) {
-      showWarningToasts(processed.warnings);
-    }
-
-    setVideoValidationErrors([]);
-    URL.revokeObjectURL(previewUrl);
-    setRawPreviewUri(null);
-
-    if (video?.uri) URL.revokeObjectURL(video.uri);
-    video$.set({
-      content: processed.blob,
-      uri: URL.createObjectURL(processed.blob),
+    console.info("[Video Upload] Processing finished successfully.", {
+      outputSizeBytes: processed.meta.sizeBytes,
+      didCompress: processed.didCompress,
+      warningCount: processed.warnings.length,
+      width: processed.meta.width,
+      height: processed.meta.height,
+      durationSec: processed.meta.duration,
     });
-    setRecording(false);
-    setShowCamera(false);
+
+    URL.revokeObjectURL(previewUrl);
+    acceptProcessedVideo(
+      processed.blob,
+      URL.createObjectURL(processed.blob),
+      processed.warnings,
+    );
 
     if (needsCompression && processed.didCompress) {
       toast.success("Video compressed successfully");

@@ -58,6 +58,13 @@ const GENERIC_PROCESSING_ERROR: BlockingVideoError = {
   userMessage: MEDIA_MESSAGES.genericVideoProcessingError,
 };
 
+const logVideoPipeline = (
+  stage: string,
+  details: Record<string, unknown> = {},
+): void => {
+  console.info(`[Video Pipeline] ${stage}`, details);
+};
+
 const isFiniteNumber = (value: unknown): value is number =>
   typeof value === "number" && Number.isFinite(value);
 
@@ -92,6 +99,7 @@ export const processVideoInput = async (input: Blob): Promise<VideoPipelineResul
   try {
     const validationErrors: BlockingVideoError[] = [];
     let collectedWarnings: string[] = [];
+    const startedAt = Date.now();
 
     const typeError = validateVideoType(input.type);
     if (typeError) {
@@ -100,8 +108,14 @@ export const processVideoInput = async (input: Blob): Promise<VideoPipelineResul
 
     const rawBuffer = await input.arrayBuffer();
     const rawArray = new Uint8Array(rawBuffer);
+    logVideoPipeline("raw_buffer_ready", {
+      sizeBytes: rawBuffer.byteLength,
+    });
 
     const rawFormat = detectVideoFormat(rawArray);
+    logVideoPipeline("raw_format_detected", {
+      rawFormat,
+    });
     if (!rawFormat) {
       validationErrors.push({
         code: MEDIA_ERROR_CODES.INVALID_FORMAT,
@@ -114,11 +128,25 @@ export const processVideoInput = async (input: Blob): Promise<VideoPipelineResul
 
     const canUseFFmpeg = !DISABLE_FFMPEG && typeof SharedArrayBuffer !== "undefined";
 
+    logVideoPipeline("start", {
+      sizeBytes: input.size,
+      inputType: input.type || "unknown",
+      normalizedMime,
+      canUseFFmpeg,
+    });
+
     if (!canUseFFmpeg) {
+      logVideoPipeline("ffmpeg_unavailable_fallback", {
+        reason: DISABLE_FFMPEG ? "ffmpeg_disabled" : "shared_array_buffer_unavailable",
+      });
+
       let rawMeta: BrowserVideoMetadata | null = null;
       try {
         rawMeta = await readVideoMetadata(normalizedBlob);
       } catch { }
+      logVideoPipeline("fallback_metadata_read", {
+        rawMeta,
+      });
 
       if (rawMeta !== null) {
         if (isFiniteNumber(rawMeta.duration)) {
@@ -159,12 +187,24 @@ export const processVideoInput = async (input: Blob): Promise<VideoPipelineResul
       }
 
       if (validationErrors.length > 0) {
+        logVideoPipeline("fallback_validation_failed", {
+          errorCodes: validationErrors.map((error) => error.code),
+          warningCount: collectedWarnings.length,
+        });
         return {
           data: null,
           error: buildAggregatedValidationError(validationErrors, collectedWarnings),
         };
       }
 
+      logVideoPipeline("fallback_complete", {
+        durationMs: Date.now() - startedAt,
+        durationSec: rawMeta?.duration ?? 0,
+        width: rawMeta?.width ?? 0,
+        height: rawMeta?.height ?? 0,
+        sizeBytes: normalizedBlob.size,
+        warningCount: collectedWarnings.length,
+      });
       return {
         data: {
           blob: normalizedBlob,
@@ -192,6 +232,10 @@ export const processVideoInput = async (input: Blob): Promise<VideoPipelineResul
     try {
       probe = await probeVideoMetrics(rawBuffer);
     } catch (error) {
+      logVideoPipeline("probe_failed", {
+        isFFmpegLoadError: isFFmpegLoadError(error),
+        message: error instanceof Error ? error.message : String(error),
+      });
       if (isFFmpegLoadError(error)) {
         return {
           data: null,
@@ -211,6 +255,15 @@ export const processVideoInput = async (input: Blob): Promise<VideoPipelineResul
       };
     }
 
+    logVideoPipeline("probe_complete", {
+      durationSec: probe.durationSec,
+      width: probe.width,
+      height: probe.height,
+      videoCodec: probe.videoCodec,
+      videoBitrateKbps: probe.videoBitrateKbps,
+      hasAudio: probe.hasAudio,
+    });
+
     const probeDuration = probe.durationSec;
     const probeWidth = probe.width;
     const probeHeight = probe.height;
@@ -223,6 +276,9 @@ export const processVideoInput = async (input: Blob): Promise<VideoPipelineResul
       try {
         fallbackMeta = await readVideoMetadata(normalizedBlob);
       } catch { }
+      logVideoPipeline("probe_metadata_fallback_read", {
+        fallbackMeta,
+      });
     }
 
     const durationForChecks = isFiniteNumber(probeDuration)
@@ -240,6 +296,12 @@ export const processVideoInput = async (input: Blob): Promise<VideoPipelineResul
       : isPositiveNumber(fallbackMeta?.height)
         ? fallbackMeta.height
         : null;
+    logVideoPipeline("validation_inputs_ready", {
+      durationForChecks,
+      widthForChecks,
+      heightForChecks,
+      inputSizeBytes: input.size,
+    });
 
     if (rawFormat === "webm") {
       const webmCodec = probe.videoCodec?.toLowerCase();
@@ -290,8 +352,17 @@ export const processVideoInput = async (input: Blob): Promise<VideoPipelineResul
       validationErrors.push(qualityResult.error);
     }
     collectedWarnings = collectedWarnings.concat(qualityResult.warnings);
+    logVideoPipeline("quality_validation_complete", {
+      qualityErrorCode: qualityResult.error?.code ?? null,
+      warningCount: qualityResult.warnings.length,
+      warnings: qualityResult.warnings,
+    });
 
     if (validationErrors.length > 0) {
+      logVideoPipeline("pre_sanitize_validation_failed", {
+        errorCodes: validationErrors.map((error) => error.code),
+        warningCount: collectedWarnings.length,
+      });
       return {
         data: null,
         error: buildAggregatedValidationError(validationErrors, collectedWarnings),
@@ -304,6 +375,14 @@ export const processVideoInput = async (input: Blob): Promise<VideoPipelineResul
 
     const needsCompression = input.size > VIDEO_LIMITS.maxSizeBytes;
 
+    logVideoPipeline("sanitize_start", {
+      needsCompression,
+      durationSec: finalProbeDuration,
+      width: finalProbeWidth,
+      height: finalProbeHeight,
+      inputSizeBytes: input.size,
+    });
+
     let sanitizedArray: Uint8Array;
     try {
       sanitizedArray = await videoSanitizer(
@@ -312,6 +391,10 @@ export const processVideoInput = async (input: Blob): Promise<VideoPipelineResul
         finalProbeDuration > 0 ? finalProbeDuration : undefined,
       );
     } catch (error) {
+      logVideoPipeline("sanitize_failed", {
+        isFFmpegLoadError: isFFmpegLoadError(error),
+        message: error instanceof Error ? error.message : String(error),
+      });
       if (isFFmpegLoadError(error)) {
         return {
           data: null,
@@ -347,6 +430,12 @@ export const processVideoInput = async (input: Blob): Promise<VideoPipelineResul
       type: getVideoMimeType(sanitizedFormat),
     });
 
+    logVideoPipeline("sanitize_complete", {
+      outputFormat: sanitizedFormat,
+      outputSizeBytes: processedBlob.size,
+      inputSizeBytes: input.size,
+    });
+
     const postValidationErrors: BlockingVideoError[] = [];
     const postSizeError = validateVideoSize(processedBlob.size);
     if (postSizeError) {
@@ -365,11 +454,20 @@ export const processVideoInput = async (input: Blob): Promise<VideoPipelineResul
       needsCompression || nearSizeLimit || nearDurationLimit || nearResolutionLimit;
 
     if (shouldRunPostSanitizeProbe) {
+      logVideoPipeline("post_sanitize_probe_start", {
+        needsCompression,
+        nearSizeLimit,
+        nearDurationLimit,
+        nearResolutionLimit,
+      });
       let postProbe: Awaited<ReturnType<typeof probeVideoMetrics>> | null = null;
       try {
         const postBuffer = await processedBlob.arrayBuffer();
         postProbe = await probeVideoMetrics(postBuffer);
       } catch { }
+      logVideoPipeline("post_sanitize_probe_complete", {
+        postProbe,
+      });
 
       if (postProbe) {
         const postDuration = postProbe.durationSec;
@@ -403,12 +501,25 @@ export const processVideoInput = async (input: Blob): Promise<VideoPipelineResul
     }
 
     if (postValidationErrors.length > 0) {
+      logVideoPipeline("post_sanitize_validation_failed", {
+        errorCodes: postValidationErrors.map((error) => error.code),
+        warningCount: collectedWarnings.length,
+      });
       return {
         data: null,
         error: buildAggregatedValidationError(postValidationErrors, collectedWarnings),
       };
     }
 
+    logVideoPipeline("complete", {
+      durationMs: Date.now() - startedAt,
+      didCompress: needsCompression && processedBlob.size < input.size,
+      warningCount: collectedWarnings.length,
+      outputSizeBytes: processedBlob.size,
+      durationSec: finalProbeDuration,
+      width: finalProbeWidth,
+      height: finalProbeHeight,
+    });
     return {
       data: {
         blob: processedBlob,
@@ -424,6 +535,9 @@ export const processVideoInput = async (input: Blob): Promise<VideoPipelineResul
       error: null,
     };
   } catch (error) {
+    logVideoPipeline("unexpected_failure", {
+      message: error instanceof Error ? error.message : String(error),
+    });
     if (isFFmpegLoadError(error)) {
       return {
         data: null,
