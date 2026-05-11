@@ -117,6 +117,8 @@ interface ChallengeInterface {
   arbitrationCost: bigint;
   arbitrationInfo: ContractData["arbitrationInfo"];
   usedReasons?: string[];
+  disabled?: boolean;
+  tooltip?: string;
 }
 
 export default function Challenge({
@@ -126,6 +128,8 @@ export default function Challenge({
   arbitrationCost,
   arbitrationInfo,
   usedReasons = [],
+  disabled: externalDisabled,
+  tooltip: externalTooltip,
 }: ChallengeInterface) {
   const { uploadFile } = useAtlasProvider();
   const { pendingAction, applyAction } = useRequestOptimistic();
@@ -239,8 +243,8 @@ export default function Challenge({
       <ActionButton
         onClick={() => setIsOpen(true)}
         label="Challenge"
-        disabled={isReconciling || userChainId !== chain.id}
-        tooltip={isReconciling ? "Syncing" : userChainId !== chain.id ? `Switch your chain above to ${idToChain(chain.id)?.name || 'the correct chain'}` : undefined}
+        disabled={externalDisabled || isReconciling || userChainId !== chain.id}
+        tooltip={externalDisabled ? externalTooltip : isReconciling ? "Syncing" : userChainId !== chain.id ? `Switch your chain above to ${idToChain(chain.id)?.name || 'the correct chain'}` : undefined}
       />
       <Modal
         formal

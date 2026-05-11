@@ -26,6 +26,8 @@ interface FundButtonProps {
   index: number;
   totalCost: bigint;
   funded: bigint;
+  disabled?: boolean;
+  tooltip?: string;
 }
 
 const FundButton: React.FC<FundButtonProps> = ({
@@ -33,6 +35,8 @@ const FundButton: React.FC<FundButtonProps> = ({
   index,
   totalCost,
   funded,
+  disabled: externalDisabled,
+  tooltip: externalTooltip,
 }) => {
   const { effective, pendingAction, applyAction } = useRequestOptimistic();
   const chain = useChainParam()!;
@@ -124,8 +128,8 @@ const FundButton: React.FC<FundButtonProps> = ({
         onClick={() => setIsModalOpen(true)}
         label="Fund"
         className="mb-2 w-auto"
-        disabled={isReconciling || userChainId !== chain.id}
-        tooltip={isReconciling ? "Syncing" : userChainId !== chain.id ? `Switch your chain above to ${idToChain(chain.id)?.name || 'the correct chain'}` : undefined}
+        disabled={externalDisabled || isReconciling || userChainId !== chain.id}
+        tooltip={externalDisabled ? externalTooltip : isReconciling ? "Syncing" : userChainId !== chain.id ? `Switch your chain above to ${idToChain(chain.id)?.name || 'the correct chain'}` : undefined}
       />
       <Modal
         formal

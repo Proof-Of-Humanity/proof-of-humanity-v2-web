@@ -23,6 +23,7 @@ query Request($id: ID!) {
     humanity {
       id
       nbRequests
+      nbPendingRequests
       nbLegacyRequests
       registration {
         expirationTime

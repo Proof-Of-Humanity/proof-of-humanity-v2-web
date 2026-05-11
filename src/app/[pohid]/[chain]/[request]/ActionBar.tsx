@@ -31,6 +31,7 @@ import Challenge from "./Challenge";
 import FundButton from "./Funding";
 import RemoveVouch from "./RemoveVouch";
 import Vouch from "./Vouch";
+import { AlertTriangleIcon, InfoCircleIcon } from "./AlertIcons";
 
 enableReactUse();
 
@@ -86,6 +87,8 @@ interface ActionBarProps {
   };
   humanityExpirationTime?: number;
   usedReasons?: string[];
+  humanityClaimed?: boolean;
+  anotherClaimPending?: boolean;
 }
 
 export default function ActionBar({
@@ -99,6 +102,8 @@ export default function ActionBar({
   arbitrationHistory,
   humanityExpirationTime,
   usedReasons = [],
+  humanityClaimed = false,
+  anotherClaimPending = false,
 }: ActionBarProps) {
   const chain = useChainParam()!;
   const { address } = useAccount();
@@ -115,6 +120,8 @@ export default function ActionBar({
   const effectiveLastStatusChange = effective.lastStatusChange;
   const effectiveRevocation = effective.revocation;
   const isReconciling = pendingAction !== null;
+  const lockClaimed = humanityClaimed && !effectiveRevocation;
+  const claimedTooltip = "This humanity is already claimed";
 
   const { didIVouchFor, isVouchOnchain } = useMemo(() => {
     const lowerAddr = address?.toLowerCase();
@@ -334,7 +341,33 @@ export default function ActionBar({
   const statusColor = getStatusColor(effectiveRequestStatus);
 
   return (
-    <div className="paper border-stroke bg-whiteBackground text-primaryText flex flex-col items-center justify-between gap-[12px] px-[24px] py-[24px] md:flex-row lg:gap-[20px]">
+    <div className="paper border-stroke bg-whiteBackground text-primaryText flex flex-col rounded">
+      {(lockClaimed || (anotherClaimPending && !effectiveRevocation)) && (
+        <div className="flex flex-col gap-2 border-b border-stroke px-[24px] py-[14px]">
+          {lockClaimed && (
+            <div className="flex items-start gap-3 rounded-md bg-orange/10 px-3 py-2">
+              <AlertTriangleIcon className="text-orange mt-0.5 shrink-0" />
+              <div className="flex flex-col md:flex-row md:items-center md:gap-2">
+                <span className="text-orange text-sm font-semibold">
+                  This humanity is already claimed
+                </span>
+                <span className="text-secondaryText text-xs md:text-sm">
+                  Only Withdraw and Remove vouch remain available.
+                </span>
+              </div>
+            </div>
+          )}
+          {anotherClaimPending && !effectiveRevocation && (
+            <div className="flex items-start gap-3 rounded-md bg-orange/10 px-3 py-2">
+              <InfoCircleIcon className="text-orange mt-0.5 shrink-0" />
+              <span className="text-orange text-sm font-semibold">
+                Another request is already claiming this humanity
+              </span>
+            </div>
+          )}
+        </div>
+      )}
+      <div className="flex flex-col items-center justify-between gap-[12px] px-[24px] py-[24px] md:flex-row lg:gap-[20px]">
       <div className="flex items-center">
         <span className="mr-4">Status</span>
         <span
@@ -390,6 +423,8 @@ export default function ActionBar({
                           }
                           index={index}
                           funded={effectiveFunded}
+                          disabled={lockClaimed}
+                          tooltip={lockClaimed ? claimedTooltip : undefined}
                         />
                       )}
                       <ActionButton
@@ -454,6 +489,8 @@ export default function ActionBar({
                       me={me}
                       chain={chain}
                       address={address}
+                      disabled={lockClaimed}
+                      tooltip={lockClaimed ? claimedTooltip : undefined}
                     />
                   </>
                 ) : (
@@ -466,6 +503,8 @@ export default function ActionBar({
                         }
                         index={index}
                         funded={effectiveFunded}
+                        disabled={lockClaimed}
+                        tooltip={lockClaimed ? claimedTooltip : undefined}
                       />
                     )}
                     <RemoveVouch
@@ -523,11 +562,11 @@ export default function ActionBar({
                 />
               ) : null}
               <ActionButton
-                disabled={isReconciling || isAdvancePrepareError || userChainId !== chain.id}
+                disabled={lockClaimed || isReconciling || isAdvancePrepareError || userChainId !== chain.id}
                 isLoading={isAdvanceLoading}
                 onClick={advanceFire}
                 label={isAdvanceLoading ? "Advancing" : "Advance"}
-                tooltip={isReconciling ? "Syncing" : isAdvancePrepareError ? "Advance not possible, please try again" : userChainId !== chain.id ? `Switch your chain above to ${idToChain(chain.id)?.name || 'the correct chain'}` : undefined}
+                tooltip={lockClaimed ? claimedTooltip : isReconciling ? "Syncing" : isAdvancePrepareError ? "Advance not possible, please try again" : userChainId !== chain.id ? `Switch your chain above to ${idToChain(chain.id)?.name || 'the correct chain'}` : undefined}
                 className="mb-2 w-auto"
               />
             </div>
@@ -540,11 +579,11 @@ export default function ActionBar({
             </span>
             <div className="flex flex-col items-center justify-between gap-4 font-normal md:flex-row md:items-center">
               <ActionButton
-                disabled={isReconciling || isExecutePrepareError || userChainId !== chain.id}
+                disabled={lockClaimed || isReconciling || isExecutePrepareError || userChainId !== chain.id}
                 isLoading={isExecuteLoading}
                 onClick={execute}
                 label={isExecuteLoading ? "Executing" : "Execute"}
-                tooltip={isReconciling ? "Syncing" : isExecutePrepareError ? "Execute not possible, please try again" : userChainId !== chain.id ? `Switch your chain above to ${idToChain(chain.id)?.name || 'the correct chain'}` : undefined}
+                tooltip={lockClaimed ? claimedTooltip : isReconciling ? "Syncing" : isExecutePrepareError ? "Execute not possible, please try again" : userChainId !== chain.id ? `Switch your chain above to ${idToChain(chain.id)?.name || 'the correct chain'}` : undefined}
                 className="mb-2 w-auto"
               />
             </div>
@@ -567,6 +606,8 @@ export default function ActionBar({
               arbitrationCost={arbitrationCost}
               arbitrationInfo={contractData.arbitrationInfo!}
               usedReasons={usedReasons}
+              disabled={lockClaimed}
+              tooltip={lockClaimed ? claimedTooltip : undefined}
             />
           </>
         )}
@@ -584,7 +625,7 @@ export default function ActionBar({
                 <>
                   {" "}
                   for{" "}
-                  <strong className="text-status-challenged capitalize">
+                  <strong className="text-orange capitalize">
                     {currentChallenge.reason.id}
                   </strong>
                 </>
@@ -607,6 +648,8 @@ export default function ActionBar({
                   chainId={chain.id}
                   revocation={revocation}
                   requestStatus={effectiveRequestStatus}
+                  disabled={lockClaimed}
+                  tooltip={lockClaimed ? claimedTooltip : undefined}
                 />
 
                 <ExternalLink
@@ -650,6 +693,7 @@ export default function ActionBar({
             .
           </span>
         )}
+      </div>
       </div>
     </div>
   );

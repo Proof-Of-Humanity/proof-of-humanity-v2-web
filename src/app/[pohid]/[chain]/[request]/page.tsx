@@ -318,6 +318,18 @@ export default async function Request({ params }: PageProps) {
 
   //const policyUpdate = request.arbitratorHistory.updateTime;
 
+  const nowSec = Math.floor(Date.now() / 1000);
+  const registration = request.humanity.registration;
+  const humanityClaimed =
+    !request.revocation &&
+    !!registration &&
+    Number(registration.expirationTime) > nowSec &&
+    (registration.claimer.id as string).toLowerCase() !==
+      (request.claimer.id as string).toLowerCase();
+  const anotherClaimPending =
+    !request.revocation &&
+    Number(request.humanity.nbPendingRequests ?? 0) > 1;
+
   return (
     <RequestOptimisticProvider
       base={optimisticBase}
@@ -335,6 +347,8 @@ export default async function Request({ params }: PageProps) {
           arbitrationHistory={request.arbitratorHistory}
           humanityExpirationTime={request.expirationTime}
           usedReasons={usedReasons}
+          humanityClaimed={humanityClaimed}
+          anotherClaimPending={anotherClaimPending}
         />
         <div className="border-stroke bg-whiteBackground mb-6 rounded border shadow">
           {request.revocation && revocationFile && (

@@ -61,12 +61,14 @@ interface FormProps {
   renewal?: RegistrationQuery["registration"] & {
     chain: SupportedChain;
   };
+  hasPastVerifiedClaim?: boolean;
 }
 
 export default function Form({
   contractData,
   fallbackTotalCosts,
   renewal,
+  hasPastVerifiedClaim = false,
 }: FormProps) {
   const params = useParams();
   const { address, isConnected } = useAccount();
@@ -330,6 +332,16 @@ export default function Form({
       }
     }
   }, [address, initiatingAddress, renewal]);
+
+  useEffect(() => {
+    if (
+      renewal ||
+      hasPastVerifiedClaim ||
+      !address ||
+      state.pohId.toLowerCase() === address.toLowerCase()
+    ) return;
+    redirect(`/${address}/claim`, RedirectType.replace);
+  }, [renewal, hasPastVerifiedClaim, address, state.pohId]);
 
   if (
     !isConnected ||
