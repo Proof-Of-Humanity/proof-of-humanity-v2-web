@@ -31,6 +31,7 @@ import Challenge from "./Challenge";
 import FundButton from "./Funding";
 import RemoveVouch from "./RemoveVouch";
 import Vouch from "./Vouch";
+import { AlertTriangleIcon, InfoCircleIcon } from "./AlertIcons";
 
 enableReactUse();
 
@@ -340,26 +341,40 @@ export default function ActionBar({
   const statusColor = getStatusColor(effectiveRequestStatus);
 
   return (
-    <div className="paper border-stroke bg-whiteBackground text-primaryText flex flex-col items-center justify-between gap-[12px] px-[24px] py-[24px] md:flex-row lg:gap-[20px]">
-      <div className="flex flex-col items-center gap-2 md:items-start">
-        <div className="flex items-center">
-          <span className="mr-4">Status</span>
-          <span
-            className={`rounded-full px-3 py-1 text-white bg-status-${statusColor} whitespace-nowrap`}
-          >
-            {getStatusLabel(effectiveRequestStatus, "actionBar")}
-          </span>
+    <div className="paper border-stroke bg-whiteBackground text-primaryText flex flex-col rounded">
+      {(lockClaimed || (anotherClaimPending && !effectiveRevocation)) && (
+        <div className="flex flex-col gap-2 border-b border-stroke px-[24px] py-[14px]">
+          {lockClaimed && (
+            <div className="flex items-start gap-3 rounded-md bg-orange/10 px-3 py-2">
+              <AlertTriangleIcon className="text-orange mt-0.5 shrink-0" />
+              <div className="flex flex-col md:flex-row md:items-center md:gap-2">
+                <span className="text-orange text-sm font-semibold">
+                  This humanity is already claimed
+                </span>
+                <span className="text-secondaryText text-xs md:text-sm">
+                  Only Withdraw and Remove vouch remain available.
+                </span>
+              </div>
+            </div>
+          )}
+          {anotherClaimPending && !effectiveRevocation && (
+            <div className="flex items-start gap-3 rounded-md bg-orange/10 px-3 py-2">
+              <InfoCircleIcon className="text-orange mt-0.5 shrink-0" />
+              <span className="text-orange text-sm font-semibold">
+                Another request is already claiming this humanity
+              </span>
+            </div>
+          )}
         </div>
-        {lockClaimed && (
-          <span className="text-status-challenged text-xs md:text-sm">
-            This humanity is already claimed
-          </span>
-        )}
-        {!lockClaimed && anotherClaimPending && !effectiveRevocation && (
-          <span className="text-orange text-xs md:text-sm">
-            Another request is already claiming this humanity
-          </span>
-        )}
+      )}
+      <div className="flex flex-col items-center justify-between gap-[12px] px-[24px] py-[24px] md:flex-row lg:gap-[20px]">
+      <div className="flex items-center">
+        <span className="mr-4">Status</span>
+        <span
+          className={`rounded-full px-3 py-1 text-white bg-status-${statusColor} whitespace-nowrap`}
+        >
+          {getStatusLabel(effectiveRequestStatus, "actionBar")}
+        </span>
       </div>
       <div className="flex w-full flex-col justify-between gap-[12px] font-normal md:flex-row md:items-center">
         {web3Loaded &&
@@ -488,6 +503,8 @@ export default function ActionBar({
                         }
                         index={index}
                         funded={effectiveFunded}
+                        disabled={lockClaimed}
+                        tooltip={lockClaimed ? claimedTooltip : undefined}
                       />
                     )}
                     <RemoveVouch
@@ -608,7 +625,7 @@ export default function ActionBar({
                 <>
                   {" "}
                   for{" "}
-                  <strong className="text-status-challenged capitalize">
+                  <strong className="text-orange capitalize">
                     {currentChallenge.reason.id}
                   </strong>
                 </>
@@ -676,6 +693,7 @@ export default function ActionBar({
             .
           </span>
         )}
+      </div>
       </div>
     </div>
   );
