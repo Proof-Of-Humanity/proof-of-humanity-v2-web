@@ -65,6 +65,8 @@ interface VouchButtonProps {
   me: any;
   chain: SupportedChain;
   address: Address | undefined;
+  disabled?: boolean;
+  tooltip?: string;
 }
 
 export default function Vouch({
@@ -74,6 +76,8 @@ export default function Vouch({
   me,
   chain,
   address,
+  disabled: externalDisabled,
+  tooltip: externalTooltip,
 }: VouchButtonProps) {
   const { effective, pendingAction, applyAction } = useRequestOptimistic();
   const userChainId = useChainId();
@@ -215,8 +219,8 @@ export default function Vouch({
           onClick={() => setIsOpen(true)}
           label="Vouch"
           className="mb-2 w-auto"
-          disabled={isReconciling || userChainId !== chain.id}
-          tooltip={isReconciling ? "Syncing" : userChainId !== chain.id ? `Switch your chain above to ${idToChain(chain.id)?.name || 'the correct chain'}` : undefined}
+          disabled={externalDisabled || isReconciling || userChainId !== chain.id}
+          tooltip={externalDisabled ? externalTooltip : isReconciling ? "Syncing" : userChainId !== chain.id ? `Switch your chain above to ${idToChain(chain.id)?.name || 'the correct chain'}` : undefined}
         />
         <Modal
           formal

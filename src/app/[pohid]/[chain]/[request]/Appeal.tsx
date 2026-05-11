@@ -149,6 +149,8 @@ interface AppealProps {
   >;
   revocation: boolean;
   requestStatus: RequestStatus;
+  disabled?: boolean;
+  tooltip?: string;
 }
 
 const Appeal: React.FC<AppealProps> = ({
@@ -164,6 +166,8 @@ const Appeal: React.FC<AppealProps> = ({
   currentChallenge,
   revocation,
   requestStatus,
+  disabled: externalDisabled,
+  tooltip: externalTooltip,
 }) => {
   const { pendingAction } = useRequestOptimistic();
   const isReconciling = pendingAction !== null;
@@ -313,7 +317,7 @@ const Appeal: React.FC<AppealProps> = ({
     !loading ? (
     <>
       <div className="group relative w-[150px] md:w-auto">
-        <button onClick={() => setAppealModalOpen(true)} disabled={isReconciling} className="
+        <button onClick={() => setAppealModalOpen(true)} disabled={externalDisabled || isReconciling} className="
           btn-sec 
           py-2
           rounded
@@ -333,9 +337,9 @@ const Appeal: React.FC<AppealProps> = ({
             )
           </span>
         </button>
-        {isReconciling && (
+        {(externalDisabled || isReconciling) && (
           <span className="opacity-0 group-hover:opacity-100 absolute bottom-full left-1/2 z-10 mb-2 w-max -translate-x-1/2 rounded-md bg-neutral-700 px-3 py-2 text-center text-sm text-white transition-opacity pointer-events-none">
-            Syncing
+            {externalDisabled ? (externalTooltip ?? "Disabled") : "Syncing"}
             <span className="absolute top-full left-1/2 h-0 w-0 -translate-x-1/2 border-x-[5px] border-x-transparent border-t-[5px] border-t-neutral-700" />
           </span>
         )}

@@ -1,6 +1,7 @@
 import { supportedChains } from "config/chains";
 import { getContractDataAllChains } from "data/contract";
 import { getTotalCosts } from "data/costs";
+import { getHumanityData } from "data/humanity";
 import { getRegistrationData } from "data/registration";
 import { RedirectType } from "next/dist/client/components/redirect";
 import dynamic from "next/dynamic";
@@ -28,9 +29,10 @@ export default async function Claim({ params: { pohid } }: PageProps) {
     );
   }
 
-  const [contractData, registrationData] = await Promise.all([
+  const [contractData, registrationData, humanityData] = await Promise.all([
     getContractDataAllChains(),
     getRegistrationData(pohid as Hash),
+    getHumanityData(machinifyId(pohid) as Hash),
   ]);
 
   const registrationChain = supportedChains.find(
@@ -45,6 +47,11 @@ export default async function Claim({ params: { pohid } }: PageProps) {
   if (registrationChain && !isRenewal) {
     redirect(`/${pohid}`, RedirectType.replace);
   }
+
+  const hasPastVerifiedClaim = supportedChains.some(
+    (chain) =>
+      (humanityData[chain.id]?.humanity?.winnerClaim?.length ?? 0) > 0,
+  );
 
   const totalCosts = await getTotalCosts(contractData);
 
@@ -65,6 +72,7 @@ export default async function Claim({ params: { pohid } }: PageProps) {
             chain: registrationChain,
           }
         }
+        hasPastVerifiedClaim={hasPastVerifiedClaim}
       />
     </div>
   );
