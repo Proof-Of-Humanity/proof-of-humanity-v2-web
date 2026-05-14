@@ -26,16 +26,15 @@ import { useRequestOptimistic } from "optimistic/request";
 import { useMemo, useRef, useState } from "react";
 import { toast } from "react-toastify";
 import { RequestStatus } from "utils/status";
-import { eth2Wei, formatEth } from "utils/misc";
-import { Address } from "viem";
-import { useChainId } from "wagmi";
+import { formatEth } from "utils/misc";
+import { Address, parseEther } from "viem";
+import { useAccount, useBalance, useChainId } from "wagmi";
 import { useRouter } from "next/navigation";
 
 interface SideFundingProps {
   side: SideEnum;
   arbitrator: Address;
   disputeId: bigint;
-  contributor: Address;
   requester: Address;
   requesterFunds: bigint;
   appealCost: bigint;
@@ -49,7 +48,6 @@ const SideFunding: React.FC<SideFundingProps> = ({
   side,
   disputeId,
   arbitrator,
-  contributor,
   requester,
   requesterFunds,
   appealCost,
@@ -59,10 +57,12 @@ const SideFunding: React.FC<SideFundingProps> = ({
   disabled = false,
 }) => {
   const userChainId = useChainId();
+  const { isConnected, address } = useAccount();
+  const { data: balanceData } = useBalance({ address, chainId: userChainId });
   const title = side === SideEnum.claimer ? "Claimer" : "Challenger";
   const shrunkAddress: string =
     requester.substring(0, 6) + " ... " + requester.slice(-4);
-  const [requesterInput, setRequesterInput] = useState(0n);
+  const [requesterInput, setRequesterInput] = useState("");
   const loading = useLoading();
   const [isLoading] = loading.use();
   const errorRef = useRef(false);
@@ -70,6 +70,39 @@ const SideFunding: React.FC<SideFundingProps> = ({
   const value = (formatEth(requesterFunds) * 100) / formatEth(appealCost);
   const valueProgress = value > 100 ? 100 : value;
   const unit = idToChain(chainId)?.nativeCurrency.symbol;
+
+  const remainingAmount = appealCost > requesterFunds ? appealCost - requesterFunds : 0n;
+  const inputAmount = useMemo(() => {
+    if (!requesterInput) return 0n;
+    try {
+      const parsed = parseEther(requesterInput);
+      return parsed < 0n ? 0n : parsed;
+    } catch {
+      return null;
+    }
+  }, [requesterInput]);
+
+  const isInvalidInput = inputAmount === null;
+  const isZeroInput = inputAmount === 0n;
+  const insufficientFunds = !isInvalidInput && balanceData !== undefined && inputAmount! > balanceData.value;
+  const exceedsRemaining = !isInvalidInput && inputAmount! > remainingAmount;
+
+  const isDisabled =
+    disabled || errorRef.current || loosingSideHasEnd || userChainId !== chainId ||
+    !isConnected || !requesterInput || isInvalidInput || isZeroInput || isLoading || exceedsRemaining || insufficientFunds;
+
+  const getTooltipMessage = () => {
+    if (disabled) return "Syncing";
+    if (loosingSideHasEnd) return "Appeal time has ended for this side";
+    if (!isConnected) return "Please connect your wallet";
+    if (userChainId !== chainId) return `Switch your chain above to ${idToChain(chainId)?.name || 'the correct chain'}`;
+    if (!requesterInput) return "Please enter an amount to fund";
+    if (isInvalidInput) return "Please enter a valid amount";
+    if (isZeroInput) return "Amount must be greater than 0";
+    if (exceedsRemaining) return `Amount exceeds remaining needed (${formatEth(remainingAmount)} ${unit})`;
+    if (insufficientFunds) return `Insufficient balance. You have ${formatEth(balanceData?.value ?? 0n)} ${unit}`;
+    return undefined;
+  };
 
   const [prepareFundAppeal] = usePoHWrite(
     "fundAppeal",
@@ -100,7 +133,7 @@ const SideFunding: React.FC<SideFundingProps> = ({
   );
 
   return (
-    <div className="w-full border p-4">
+    <div className="w-full min-w-0 border p-4">
       <div className="mb-2 flex gap-2">
         <Identicon diameter={32} address={requester} />
         <div className="flex flex-col">
@@ -108,22 +141,30 @@ const SideFunding: React.FC<SideFundingProps> = ({
           <span className="text-sm">{shrunkAddress}</span>
         </div>
       </div>
-      <div className="flex gap-1">
+      <div className="flex flex-col gap-2 sm:flex-row sm:gap-1">
         <Field
           type="number"
-          onChange={(v) => setRequesterInput(eth2Wei(+v.target.value))}
+          className="no-spinner"
+          step="any"
+          min={0}
+          max={formatEth(remainingAmount)}
+          value={requesterInput}
+          onChange={(v) => setRequesterInput(v.target.value)}
+          disabled={isLoading}
         />
         <ActionButton
           onClick={async () => {
+            if (inputAmount === null || inputAmount === 0n) return;
             prepareFundAppeal({
               args: [arbitrator as Address, BigInt(disputeId), side],
-              value: requesterInput,
+              value: inputAmount,
             });
           }}
           label="Fund"
-          disabled={disabled || !contributor || errorRef.current || loosingSideHasEnd || userChainId !== chainId}
+          className="sm:w-auto"
+          disabled={isDisabled}
           isLoading={isLoading}
-          tooltip={disabled ? "Syncing" : userChainId !== chainId ? `Switch your chain above to ${idToChain(chainId)?.name || 'the correct chain'}` : undefined}
+          tooltip={getTooltipMessage()}
         />
       </div>
       <Progress
@@ -139,7 +180,6 @@ interface AppealProps {
   requestIndex: number;
   arbitrator: Address;
   extraData: any;
-  contributor: Address;
   claimer: Address;
   challenger: Address;
   disputeId: bigint;
@@ -157,7 +197,6 @@ const Appeal: React.FC<AppealProps> = ({
   disputeId,
   arbitrator,
   extraData,
-  contributor,
   chainId,
   claimer,
   challenger,
@@ -313,30 +352,20 @@ const Appeal: React.FC<AppealProps> = ({
     !loading ? (
     <>
       <div className="group relative w-[150px] md:w-auto">
-        <button onClick={() => setAppealModalOpen(true)} disabled={isReconciling} className="
-          btn-sec 
-          py-2
-          rounded
-          w-[150px]
-          md:w-auto
-        ">
-          <span className="
-            flex 
-            items-center
-            flex-wrap
-            md:flex-nowrap
-            flex-inline
-            whitespace-nowrap
-          ">
+        <button
+          onClick={() => setAppealModalOpen(true)}
+          disabled={isReconciling}
+          className="btn-sec w-[150px] rounded py-2 md:w-auto"
+        >
+          <span className="flex-inline flex flex-wrap items-center whitespace-nowrap md:flex-nowrap">
             Appeal (ends&nbsp;
-            <TimeAgo time={parseInt(String(period[1]))} />
-            )
+            <TimeAgo time={parseInt(String(period[1]))} />)
           </span>
         </button>
         {isReconciling && (
-          <span className="opacity-0 group-hover:opacity-100 absolute bottom-full left-1/2 z-10 mb-2 w-max -translate-x-1/2 rounded-md bg-neutral-700 px-3 py-2 text-center text-sm text-white transition-opacity pointer-events-none">
+          <span className="pointer-events-none absolute bottom-full left-1/2 z-10 mb-2 w-max -translate-x-1/2 rounded-md bg-neutral-700 px-3 py-2 text-center text-sm text-white opacity-0 transition-opacity group-hover:opacity-100">
             Syncing
-            <span className="absolute top-full left-1/2 h-0 w-0 -translate-x-1/2 border-x-[5px] border-x-transparent border-t-[5px] border-t-neutral-700" />
+            <span className="absolute left-1/2 top-full h-0 w-0 -translate-x-1/2 border-x-[5px] border-t-[5px] border-x-transparent border-t-neutral-700" />
           </span>
         )}
       </div>
@@ -344,107 +373,106 @@ const Appeal: React.FC<AppealProps> = ({
         header={`Appeal case #${disputeId}`}
         open={isAppealModalOpen}
         onClose={() => setAppealModalOpen(false)}
+        className="max-h-[calc(100vh-2rem)] !w-[calc(100vw-2rem)] max-w-[1020px] overflow-y-auto md:!w-[88vw] xl:!w-[1020px]"
       >
-        <div className="paper w-full px-16 py-8">
-        <h1 className="mb-4 text-xl">
-          Appeal the decision: {formatedCurrentRuling}
-        </h1>
-        <div className="gradient-border relative overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-r from-[#FF9966] to-[#FF8CA9]"></div>
-          <div className="absolute inset-0 border-2 border-solid border-transparent"></div>
-          <div className="mb-1"></div>
-        </div>
-        <div className="container mt-4">
-          <div className="flex items-center">
-            <BulletedNumber number={1} />
-            {!revocation ? (
-              <span className="mx-2 mt-2 text-sm">
-                The profile was challenged for{" "}
-                <strong className="text-status-challenged capitalize">
-                  {currentChallenge.reason.id}
-                </strong>
-                .
-              </span>
-            ) : (
-              <span className="mx-2 mt-2 text-sm">
-                The profile was challenged.
-              </span>
-            )}
+        <div className="paper w-full px-4 py-6 sm:px-8 lg:px-16 lg:py-8">
+          <h1 className="mb-4 text-xl">
+            Appeal the decision: {formatedCurrentRuling}
+          </h1>
+          <div className="gradient-border relative overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-r from-[#FF9966] to-[#FF8CA9]"></div>
+            <div className="absolute inset-0 border-2 border-solid border-transparent"></div>
+            <div className="mb-1"></div>
           </div>
-          <div className="flex items-center">
-            <BulletedNumber number={2} />
+          <div className="mt-4 space-y-2">
+            <div className="flex items-start">
+              <BulletedNumber number={1} />
+              {!revocation ? (
+                <span className="mx-2 mt-2 text-sm">
+                  The profile was challenged for{" "}
+                  <strong className="text-status-challenged capitalize">
+                    {currentChallenge.reason.id}
+                  </strong>
+                  .
+                </span>
+              ) : (
+                <span className="mx-2 mt-2 text-sm">
+                  The profile was challenged.
+                </span>
+              )}
+            </div>
+            <div className="flex items-start">
+              <BulletedNumber number={2} />
 
-            <span className="mx-2 mt-2 text-sm">
-              Independent jurors evaluated the evidence, policy compliance, and
-              voted in favor of:{" "}
-              {currentRulingFormatted === SideEnum.challenger
-                ? "Challenger"
-                : currentRulingFormatted === SideEnum.claimer
-                  ? "Claimer"
-                  : "Shared"}
-              .
-              <div className="mt-[-1.4rem]">
+              <div className="mx-2 mt-2 min-w-0 text-sm">
+                <span className="inline">
+                  Independent jurors evaluated the evidence, policy compliance,
+                  and voted in favor of:{" "}
+                  {currentRulingFormatted === SideEnum.challenger
+                    ? "Challenger"
+                    : currentRulingFormatted === SideEnum.claimer
+                      ? "Claimer"
+                      : "Shared"}
+                  .{" "}
+                </span>
                 <ExternalLink
-                  className="text-orange mx-2 flex flex-row flex-wrap justify-end gap-x-[8px] text-sm font-semibold leading-none hover:text-orange-500 md:gap-2 lg:gap-3"
+                  className="text-orange inline-flex max-w-full flex-wrap items-center gap-x-2 gap-y-1 align-baseline text-sm font-semibold leading-snug hover:text-orange-500"
                   href={`https://klerosboard.com/${chainId}/cases/${currentChallenge.disputeId}`}
                 >
-                  <span className="mt-1 text-right text-sm font-semibold leading-none">
+                  <span className="text-sm font-semibold leading-snug">
                     Check how the jury voted
                   </span>
                   <Arrow />
                 </ExternalLink>
               </div>
-            </span>
-          </div>
-          <div className="flex items-center">
-            <BulletedNumber number={3} current={!loosingSideHasEnd} />
-            {loosingSideHasEnd ? (
+            </div>
+            <div className="flex items-start">
+              <BulletedNumber number={3} current={!loosingSideHasEnd} />
+              {loosingSideHasEnd ? (
+                <span className="mx-2 mt-2 text-sm">
+                  The losing party's appeal time ended&nbsp;
+                  <TimeAgo time={loosingSideDeadline} />.
+                </span>
+              ) : (
+                <span className="mx-2 mt-2 text-sm">
+                  The losing party's appeal time ends&nbsp;
+                  <TimeAgo time={loosingSideDeadline} />.
+                </span>
+              )}
+            </div>
+            <div className="flex items-start">
+              <BulletedNumber number={4} current />
               <span className="mx-2 mt-2 text-sm">
-                The losing party's appeal time ended&nbsp;
-                <TimeAgo time={loosingSideDeadline} />.
-              </span>
-            ) : (
-              <span className="mx-2 mt-2 text-sm">
-                The losing party's appeal time ends&nbsp;
-                <TimeAgo time={loosingSideDeadline} />.
-              </span>
-            )}
-          </div>
-          <div className="flex items-center">
-            <BulletedNumber number={4} current />
-            <span className="mx-2 mt-2 text-sm">
-              Appeal timeframe ends&nbsp;
-              <TimeAgo time={parseInt(String(period[1]))} />.
-            </span>
-          </div>
-          <div className="mb-4 mt-4">
-            <span className="text-sm">
-              In order to appeal the decision, you need to fully fund the
-              crowdfunding deposit. The dispute will be sent to the jurors when
-              the full deposit is reached. Note that if the previous round loser
-              funds its side, the previous round winner should also fully fund
-              its side, in order not to lose the case.
-            </span>
-            <div className="mt-4 flex items-center opacity-75">
-              <Image
-                alt="warning"
-                src="/logo/exclamation.svg"
-                height={24}
-                width={24}
-              />
-              <span className="mx-2 text-sm opacity-75">
-                External contributors can also crowdfund the appeal.
+                Appeal timeframe ends&nbsp;
+                <TimeAgo time={parseInt(String(period[1]))} />.
               </span>
             </div>
+            <div className="mb-4 mt-4">
+              <span className="text-sm">
+                In order to appeal the decision, you need to fully fund the
+                crowdfunding deposit. The dispute will be sent to the jurors
+                when the full deposit is reached. Note that if the previous
+                round loser funds its side, the previous round winner should
+                also fully fund its side, in order not to lose the case.
+              </span>
+              <div className="mt-4 flex items-center opacity-75">
+                <Image
+                  alt="warning"
+                  src="/logo/exclamation.svg"
+                  height={24}
+                  width={24}
+                />
+                <span className="mx-2 min-w-0 text-sm opacity-75">
+                  External contributors can also crowdfund the appeal.
+                </span>
+              </div>
+            </div>
           </div>
-        </div>
-        <br />
-        <div className="flex items-center">
+          <div className="mt-8 grid grid-cols-1 md:grid-cols-2">
           <SideFunding
             side={SideEnum.claimer}
             disputeId={disputeId}
             arbitrator={arbitrator!}
-            contributor={contributor}
             requester={claimer}
             requesterFunds={claimerFunds}
             appealCost={totalClaimerCost}
@@ -461,7 +489,6 @@ const Appeal: React.FC<AppealProps> = ({
             side={SideEnum.challenger}
             disputeId={disputeId}
             arbitrator={arbitrator!}
-            contributor={contributor}
             requester={challenger}
             requesterFunds={challengerFunds}
             appealCost={totalChallengerCost}

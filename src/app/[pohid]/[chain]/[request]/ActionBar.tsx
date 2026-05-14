@@ -600,7 +600,6 @@ export default function ActionBar({
                   disputeId={currentChallenge.disputeId}
                   arbitrator={arbitrationHistory.arbitrator}
                   extraData={arbitrationHistory.extraData}
-                  contributor={address!}
                   claimer={requester}
                   challenger={currentChallenge.challenger?.id}
                   currentChallenge={currentChallenge}
