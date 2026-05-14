@@ -108,11 +108,12 @@ const SideFunding: React.FC<SideFundingProps> = ({
     "fundAppeal",
     useMemo(
       () => ({
-        onLoading() {
-          loading.start("Funding...");
-        },
         onReady(fire) {
           fire();
+        },
+        onError() {
+          loading.stop();
+          toast.error("Transaction rejected");
         },
         onSuccess() {
           loading.stop();
@@ -155,6 +156,7 @@ const SideFunding: React.FC<SideFundingProps> = ({
         <ActionButton
           onClick={async () => {
             if (inputAmount === null || inputAmount === 0n) return;
+            loading.start("Funding...");
             prepareFundAppeal({
               args: [arbitrator as Address, BigInt(disputeId), side],
               value: inputAmount,

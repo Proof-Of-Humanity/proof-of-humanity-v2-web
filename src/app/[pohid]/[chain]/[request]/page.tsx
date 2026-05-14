@@ -106,9 +106,9 @@ export default async function Request({ params }: PageProps) {
     request.status.id === "vouching" ? [...fetchedOffChainVouches] : [];
 
   if (request.status.id === "vouching") {
-    onChainVouches = request.claimer.vouchesReceived.map(
-      (v) => v.from.id as Address,
-    );
+    onChainVouches = request.claimer.vouchesReceived
+      .filter((v) => v.humanity.id === request.humanity.id)
+      .map((v) => v.from.id as Address);
 
     // If offChain voucher has been registered before, it will appear at subgraph,
     // so we remove it from onChain since the contract has no data of it
@@ -220,7 +220,9 @@ export default async function Request({ params }: PageProps) {
         } else if (!skipStatusCheck && isOnChain) {
           out.vouchStatus = isValidOnChainVouch(
             request.claimer.vouchesReceived.find(
-              (v) => v.from.id === out.voucher!,
+              (v) =>
+                v.from.id === out.voucher! &&
+                v.humanity.id === request.humanity.id,
             )! as VouchQuery,
           );
         }
