@@ -64,7 +64,7 @@ const SideFunding: React.FC<SideFundingProps> = ({
     requester.substring(0, 6) + " ... " + requester.slice(-4);
   const [requesterInput, setRequesterInput] = useState("");
   const loading = useLoading();
-  const [isLoading] = loading.use();
+  const [isLoading, loadingMessage] = loading.use();
   const errorRef = useRef(false);
 
   const value = (formatEth(requesterFunds) * 100) / formatEth(appealCost);
@@ -109,7 +109,7 @@ const SideFunding: React.FC<SideFundingProps> = ({
     useMemo(
       () => ({
         onLoading() {
-          loading.start();
+          loading.start("Funding...");
         },
         onReady(fire) {
           fire();
@@ -160,7 +160,7 @@ const SideFunding: React.FC<SideFundingProps> = ({
               value: inputAmount,
             });
           }}
-          label="Fund"
+          label={loadingMessage || "Fund"}
           className="sm:w-auto"
           disabled={isDisabled}
           isLoading={isLoading}
