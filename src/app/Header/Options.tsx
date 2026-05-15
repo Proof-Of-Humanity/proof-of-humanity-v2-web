@@ -82,7 +82,7 @@ const Options: React.FC = () => {
         alt="toggle theme"
         onClick={toggleTheme}
         className="ml-2 cursor-pointer"
-        src={isDarkMode ? " /logo/light-icon.svg" : "/logo/night-icon.svg"}
+        src={isDarkMode ? "/logo/light-icon.svg" : "/logo/night-icon.svg"}
         height={16}
         width={16}
       />

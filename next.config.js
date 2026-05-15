@@ -1,5 +1,9 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  experimental: {
+    // Tree-shake barrel imports for heavy libs (Next 15-safe, opt-in).
+    optimizePackageImports: ["wagmi", "viem"],
+  },
   async headers() {
     return [
       {
@@ -22,7 +26,12 @@ const nextConfig = {
     ];
   },
   webpack: (config, { isServer }) => {
-    if (!isServer) config.resolve.fallback.fs = false;
+    if (!isServer) {
+      config.resolve.fallback = {
+        ...(config.resolve.fallback || {}),
+        fs: false,
+      };
+    }
     config.module.rules.push({
       test: /\.svg$/i,
       issuer: /\.[jt]sx?$/,

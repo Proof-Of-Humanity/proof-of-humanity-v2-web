@@ -9,10 +9,11 @@ import ProfileSummarySection from "./ProfileSummarySection";
 import ProfileTimelineSection from "./ProfileTimelineSection";
 
 interface PageProps {
-  params: { pohid: string };
+  params: Promise<{ pohid: string }>;
 }
 
-async function Profile({ params: { pohid } }: PageProps) {
+async function Profile({ params }: PageProps) {
+  const { pohid } = await params;
   const pohId = machinifyId(pohid);
 
   if (!pohId) return <>Not found</>;

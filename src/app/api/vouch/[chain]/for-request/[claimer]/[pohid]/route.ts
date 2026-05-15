@@ -2,31 +2,31 @@ import { HttpStatusCode } from "axios";
 import { paramToChainAny } from "config/chains";
 import datalake from "config/supabase";
 import { NextRequest, NextResponse } from "next/server";
-import { Address, Hash } from "viem";
 
 interface RequestParams {
   chain: string;
-  claimer: Address;
-  pohid: Hash;
+  claimer: string;
+  pohid: string;
 }
 
 export const dynamic = "force-dynamic";
 export async function GET(
   _request: NextRequest,
-  { params }: { params: RequestParams },
+  { params }: { params: Promise<RequestParams> },
 ) {
   try {
-    const chain = paramToChainAny(params.chain);
-    console.log("API Route GET called with params:", params);
+    const { chain: chainParam, claimer, pohid } = await params;
+    const chain = paramToChainAny(chainParam);
+    console.log("API Route GET called with params:", { chain: chainParam, claimer, pohid });
 
     if (!chain) {
-      console.error("API Route Error: Unsupported chain", params.chain);
+      console.error("API Route Error: Unsupported chain", chainParam);
       throw new Error("unsupported chain");
     }
     console.log("API Route resolved chain ID:", chain.id);
 
-    const claimerLower = params.claimer.toLowerCase();
-    const pohidLower = params.pohid.toLowerCase();
+    const claimerLower = claimer.toLowerCase();
+    const pohidLower = pohid.toLowerCase();
 
     const { data, error } = await datalake
       .from("poh-vouchdb")
