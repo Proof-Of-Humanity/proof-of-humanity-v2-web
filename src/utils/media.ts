@@ -1,5 +1,4 @@
 export { IS_IOS, IS_MOBILE } from "./media.device";
-export { getCroppedPhoto, sanitizeImage } from "./media.image";
 export {
   probeVideoMetrics,
   detectVideoFormat,

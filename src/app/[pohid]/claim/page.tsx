@@ -3,23 +3,17 @@ import { getContractDataAllChains } from "data/contract";
 import { getTotalCosts } from "data/costs";
 import { getHumanityData } from "data/humanity";
 import { getRegistrationData } from "data/registration";
-import { RedirectType } from "next/dist/client/components/redirect";
-import dynamic from "next/dynamic";
-import { redirect } from "next/navigation";
+import { redirect, RedirectType } from "next/navigation";
 import { machinifyId } from "utils/identifier";
 import { Hash } from "viem";
-import Loading from "components/Loading";
-
-const Form = dynamic(() => import("./Form"), {
-  ssr: false,
-  loading: () => <Loading />,
-});
+import FormLoader from "./FormLoader";
 
 interface PageProps {
-  params: { pohid: string };
+  params: Promise<{ pohid: string }>;
 }
 
-export default async function Claim({ params: { pohid } }: PageProps) {
+export default async function Claim({ params }: PageProps) {
+  const { pohid } = await params;
   if (!machinifyId(pohid)) {
     return (
       <div className="m-auto flex flex-col text-center">
@@ -57,7 +51,7 @@ export default async function Claim({ params: { pohid } }: PageProps) {
 
   return (
     <div className="content paper flex flex-col px-4 py-4 sm:px-8 sm:py-6 lg:px-10 lg:py-6">
-      <Form
+      <FormLoader
         contractData={contractData}
         fallbackTotalCosts={supportedChains.reduce(
           (acc, chain) => ({

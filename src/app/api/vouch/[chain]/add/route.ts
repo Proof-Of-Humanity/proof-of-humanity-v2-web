@@ -26,10 +26,11 @@ interface AddVouchParams {
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: AddVouchParams },
+  { params }: { params: Promise<AddVouchParams> },
 ) {
   try {
-    const chain = paramToChainAny(params.chain);
+    const { chain: chainParam } = await params;
+    const chain = paramToChainAny(chainParam);
 
     if (!chain) throw new Error("unsupported chain");
 

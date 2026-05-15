@@ -10,10 +10,11 @@ interface RequestParams {
 
 export async function GET(
   _request: NextRequest,
-  { params }: { params: RequestParams },
+  { params }: { params: Promise<RequestParams> },
 ) {
   try {
-    const chain = paramToChainAny(params.chain);
+    const { chain: chainParam } = await params;
+    const chain = paramToChainAny(chainParam);
 
     if (!chain) throw new Error("unsupported chain");
 

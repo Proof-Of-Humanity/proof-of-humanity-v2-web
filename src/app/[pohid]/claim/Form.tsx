@@ -16,8 +16,7 @@ import usePoHWrite from "contracts/hooks/usePoHWrite";
 import { ContractData } from "data/contract";
 import { RegistrationQuery } from "generated/graphql";
 import { useLoading } from "hooks/useLoading";
-import { RedirectType } from "next/dist/client/components/redirect";
-import { redirect, useParams } from "next/navigation";
+import { redirect, RedirectType, useParams } from "next/navigation";
 import { Fragment, MutableRefObject, useEffect, useMemo, useRef } from "react";
 import { toast } from "react-toastify";
 import { machinifyId } from "utils/identifier";
@@ -55,7 +54,7 @@ export interface SubmissionState {
   uri: string;
 }
 
-interface FormProps {
+export interface FormProps {
   contractData: Record<SupportedChainId, ContractData>;
   fallbackTotalCosts: Record<SupportedChainId, string>;
   renewal?: RegistrationQuery["registration"] & {
