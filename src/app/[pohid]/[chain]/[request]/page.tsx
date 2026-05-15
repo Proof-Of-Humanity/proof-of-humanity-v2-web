@@ -44,18 +44,19 @@ import DocumentIcon from "components/DocumentIcon";
 import { getStatus } from "utils/status";
 
 interface PageProps {
-  params: { pohid: string; chain: string; request: string };
+  params: Promise<{ pohid: string; chain: string; request: string }>;
 }
 
 export default async function Request({ params }: PageProps) {
-  const chain = paramToChain(params.chain);
+  const { pohid, chain: chainParam, request: requestParam } = await params;
+  const chain = paramToChain(chainParam);
 
   if (!chain) throw new Error("unsupported chain");
 
-  const pohId = machinifyId(params.pohid)!;
+  const pohId = machinifyId(pohid)!;
 
   const [request, contractData] = await Promise.all([
-    getRequestData(chain.id, pohId, +params.request),
+    getRequestData(chain.id, pohId, +requestParam),
     getContractData(chain.id),
   ]);
   if (!request) return <span>Error occured</span>;

@@ -1,78 +1,95 @@
-import Jimp from "jimp";
 import { Area } from "react-easy-crop";
 import { on } from "./events";
-import { concatBuffers } from "./misc";
 
-const exifRemoved = async (buffer: Uint8Array) => {
-  const dv = new DataView(buffer.buffer);
-  const formatTag = dv.getUint16(0);
+const MAX_IMAGE_SIDE = 1080;
+const SANITIZE_JPEG_QUALITY = 0.95;
 
-  if (formatTag !== 0xffd8) {
-    return buffer;
-  }
+const blobToImage = (blob: Blob): Promise<HTMLImageElement> =>
+  new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(blob);
+    const image = new Image();
+    const done = (cb: () => void) => {
+      URL.revokeObjectURL(url);
+      cb();
+    };
+    on(image, "load", () => done(() => resolve(image)));
+    on(image, "error", (error) => done(() => reject(error)));
+    image.src = url;
+  });
 
-  const pieces = [];
-  let i = 0;
-  let recess = 0;
-  let offset = 2;
-  let app1 = dv.getUint16(offset);
-  offset += 2;
-
-  while (offset < dv.byteLength) {
-    if (app1 === 0xffda) break;
-    if (app1 === 0xffe1) {
-      pieces[i++] = { recess, offset: offset - 2 };
-      recess = offset + dv.getUint16(offset);
-    }
-    offset += dv.getUint16(offset);
-    app1 = dv.getUint16(offset);
-    offset += 2;
-  }
-
-  return concatBuffers(
-    ...pieces.map((v) => buffer.slice(v.recess, v.offset).buffer),
-    buffer.slice(recess).buffer,
-  );
+const drawToCanvas = (
+  image: HTMLImageElement,
+  width: number,
+  height: number,
+): HTMLCanvasElement => {
+  const canvas = document.createElement("canvas");
+  canvas.width = width;
+  canvas.height = height;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) throw new Error("Canvas 2D context unavailable");
+  ctx.drawImage(image, 0, 0, width, height);
+  return canvas;
 };
 
-const isGrayscale = async (image: Jimp) => {
+const canvasIsGrayscale = (canvas: HTMLCanvasElement): boolean => {
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return false;
+  const { data } = ctx.getImageData(0, 0, canvas.width, canvas.height);
   let red = 0;
   let green = 0;
   let blue = 0;
-
-  image.scan(
-    0,
-    0,
-    image.bitmap.width,
-    image.bitmap.height,
-    function (_x, _y, idx) {
-      red += this.bitmap.data[idx + 0];
-      green += this.bitmap.data[idx + 1];
-      blue += this.bitmap.data[idx + 2];
-    },
-  );
-
+  for (let i = 0; i < data.length; i += 4) {
+    red += data[i];
+    green += data[i + 1];
+    blue += data[i + 2];
+  }
   return red === green && green === blue;
 };
 
-export const sanitizeImage = async (buffer: Buffer) => {
-  const image = await Jimp.read(buffer);
-  const { bitmap } = image;
+const canvasToBlob = (canvas: HTMLCanvasElement, quality: number): Promise<Blob> =>
+  new Promise((resolve, reject) => {
+    canvas.toBlob(
+      (blob) => (blob ? resolve(blob) : reject(new Error("toBlob returned null"))),
+      "image/jpeg",
+      quality,
+    );
+  });
 
-  if (await isGrayscale(image)) {
+export const sanitizeImage = async (
+  input: Blob | ArrayBufferLike | Uint8Array,
+): Promise<Blob> => {
+  const toBlob = (bytes: Uint8Array): Blob => {
+    const copy = new Uint8Array(bytes.byteLength);
+    copy.set(bytes);
+    return new Blob([copy.buffer]);
+  };
+
+  const blob =
+    input instanceof Blob
+      ? input
+      : input instanceof Uint8Array
+        ? toBlob(input)
+        : toBlob(new Uint8Array(input));
+
+  const image = await blobToImage(blob);
+
+  const scale = Math.min(
+    1,
+    MAX_IMAGE_SIDE / image.naturalWidth,
+    MAX_IMAGE_SIDE / image.naturalHeight,
+  );
+  const targetWidth = Math.max(1, Math.round(image.naturalWidth * scale));
+  const targetHeight = Math.max(1, Math.round(image.naturalHeight * scale));
+
+  // Sample the full image once to detect grayscale, then re-draw at target size.
+  // (Re-encoding through canvas implicitly strips EXIF.)
+  const probe = drawToCanvas(image, image.naturalWidth, image.naturalHeight);
+  if (canvasIsGrayscale(probe)) {
     throw new Error("Image is grayscale!");
   }
 
-  const targetWidth = Math.min(bitmap.width, 1080);
-  const targetHeight = Math.min(bitmap.height, 1080);
-
-  const processed = await image
-    .quality(95)
-    .resize(targetWidth, targetHeight)
-    .getBufferAsync(Jimp.MIME_JPEG);
-  const cleaned = await exifRemoved(processed);
-
-  return new Blob([new Uint8Array(cleaned)], { type: "image/jpeg" });
+  const output = drawToCanvas(image, targetWidth, targetHeight);
+  return canvasToBlob(output, SANITIZE_JPEG_QUALITY);
 };
 
 const createImage = (url: string): Promise<HTMLImageElement> =>

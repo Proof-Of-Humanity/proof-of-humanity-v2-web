@@ -18,9 +18,8 @@ import Cropper from "react-easy-crop";
 import type { Area, Point } from "react-easy-crop/types";
 import { toast } from "react-toastify";
 import ReactWebcam from "react-webcam";
+import { getCroppedPhoto, sanitizeImage } from "utils/media.image";
 import {
-  getCroppedPhoto,
-  sanitizeImage,
   validatePhotoDimensions,
   validatePhotoSize,
   PHOTO_LIMITS,
