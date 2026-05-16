@@ -1,5 +1,8 @@
-import Popup from "reactjs-popup";
+import { Popup } from "reactjs-popup";
 import { useEffect, useState } from "react";
+import type { ComponentType } from "react";
+
+const PopupComponent = Popup as ComponentType<any>;
 
 interface PopoverInterface {
   trigger: JSX.Element;
@@ -40,7 +43,7 @@ const Popover: React.FC<PopoverInterface> = ({
   }, []);
 
   return (
-    <Popup
+    <PopupComponent
       {...{
         trigger,
         position,
@@ -55,7 +58,7 @@ const Popover: React.FC<PopoverInterface> = ({
       >
         {children}
       </div>
-    </Popup>
+    </PopupComponent>
   );
 };
 

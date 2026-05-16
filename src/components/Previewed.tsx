@@ -1,6 +1,6 @@
 "use client";
 
-import Popup from "reactjs-popup";
+import { useState } from "react";
 
 interface ImageProps {
   uri: string;
@@ -13,12 +13,30 @@ export default function Previewed({
   trigger,
   isVideo = false,
 }: ImageProps) {
+  const [isOpen, setIsOpen] = useState(false);
+  const triggerElement =
+    typeof trigger === "function" ? trigger(isOpen) : trigger;
+
   return (
-    <Popup trigger={trigger} modal nested>
-      {(close) => (
+    <>
+      <span
+        className="inline-flex"
+        role="button"
+        tabIndex={0}
+        onClick={() => setIsOpen(true)}
+        onKeyDown={(event) => {
+          if (event.key === "Enter" || event.key === " ") {
+            event.preventDefault();
+            setIsOpen(true);
+          }
+        }}
+      >
+        {triggerElement}
+      </span>
+      {isOpen && (
         <div
           className="backdrop fixed inset-0 z-30 flex items-center justify-center p-4"
-          onClick={close}
+          onClick={() => setIsOpen(false)}
         >
           {isVideo ? (
             <video
@@ -28,7 +46,7 @@ export default function Previewed({
               playsInline
               webkit-playsinline=""
               onClick={(event) => event.stopPropagation()}
-              onEnded={close}
+              onEnded={() => setIsOpen(false)}
             />
           ) : (
             <img
@@ -40,6 +58,6 @@ export default function Previewed({
           )}
         </div>
       )}
-    </Popup>
+    </>
   );
 }
