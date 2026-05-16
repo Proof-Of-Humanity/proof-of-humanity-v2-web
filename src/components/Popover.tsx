@@ -1,5 +1,8 @@
-import Popup from "reactjs-popup";
+import { Popup } from "reactjs-popup";
 import { useEffect, useState } from "react";
+import type { ComponentType } from "react";
+
+const PopupComponent = Popup as ComponentType<any>;
 
 interface PopoverInterface {
   trigger: JSX.Element;
@@ -10,7 +13,14 @@ interface PopoverInterface {
   onClose?: () => void;
 }
 
-const Popover: React.FC<PopoverInterface> = ({ trigger, children, className, open, onOpen, onClose }) => {
+const Popover: React.FC<PopoverInterface> = ({
+  trigger,
+  children,
+  className,
+  open,
+  onOpen,
+  onClose,
+}) => {
   const [position, setPosition] = useState<"bottom right" | "bottom center">(
     "bottom right",
   );
@@ -33,20 +43,22 @@ const Popover: React.FC<PopoverInterface> = ({ trigger, children, className, ope
   }, []);
 
   return (
-    <Popup 
+    <PopupComponent
       {...{
         trigger,
         position,
         arrow: false,
         open,
         onOpen,
-        onClose
+        onClose,
       }}
     >
-      <div className={`bg-whiteBackground text-secondaryText shadow-shade-500/50 mt-1 rounded shadow-md ${className || 'w-48'}`}>
+      <div
+        className={`bg-whiteBackground text-secondaryText shadow-shade-500/50 mt-1 rounded shadow-md ${className || "w-48"}`}
+      >
         {children}
       </div>
-    </Popup>
+    </PopupComponent>
   );
 };
 
