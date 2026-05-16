@@ -2,7 +2,10 @@
 
 import cn from "classnames";
 import { useEffect, useState } from "react";
-import Popup from "reactjs-popup";
+import { Popup } from "reactjs-popup";
+import type { ComponentType } from "react";
+
+const PopupComponent = Popup as ComponentType<any>;
 
 interface ModalProps extends React.HTMLAttributes<HTMLDivElement> {
   children: React.ReactNode;
@@ -62,7 +65,7 @@ const Modal: React.FC<ModalProps> = ({
   if (!isRendered) return null;
 
   return (
-    <Popup
+    <PopupComponent
       modal
       open={isRendered}
       closeOnEscape={false}
@@ -97,7 +100,7 @@ const Modal: React.FC<ModalProps> = ({
           </div>
         </>
       )}
-    </Popup>
+    </PopupComponent>
   );
 };
 
