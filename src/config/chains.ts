@@ -1,5 +1,4 @@
 import { ChainSet, configSetSelection } from "contracts";
-import { isAddress } from "viem";
 import { gnosis, gnosisChiado, mainnet, sepolia } from "@reown/appkit/networks";
 import {
   getForeignChain as getForeignChainMain,
@@ -44,13 +43,6 @@ function getExplorerUrl(chainId: number): string {
   return chain ? chain.explorer : "";
 }
 
-export function shortenAddress(address: `0x${string}`, chars = 4): string {
-  if (!isAddress(address))
-    throw Error(`Invalid 'address' parameter '${address}'.`);
-
-  return `${address.substring(0, chars)}..${address.substring(42 - chars)}`;
-}
-
 export const explorerLink = (address: string, chain: SupportedChain) =>
   `https://${getExplorerUrl(chain.id)}/address/${address}`;
 
@@ -59,7 +51,7 @@ export const supportedChains =
     ? supportedChainsMain
     : supportedChainsTest;
 
-export const defaultChain = supportedChains[0];
+export const defaultChain = supportedChains[0]!;
 
 export const legacyChain =
   configSetSelection.chainSet === ChainSet.MAINNETS
@@ -71,7 +63,6 @@ export type SupportedChainId = SupportedChain["id"];
 export type AnySupportedChain =
   | ArrayElement<typeof supportedChainsMain>
   | ArrayElement<typeof supportedChainsTest>;
-export type AnySupportedChainId = AnySupportedChain["id"];
 
 export function nameToChain(name: string): SupportedChain | null {
   return configSetSelection.chainSet === ChainSet.MAINNETS

@@ -42,7 +42,10 @@ export const incrementByKey = async (key: string, hashedAddress: string) => {
   const store = getStore(STORE_NAME);
 
   for (let attempt = 0; attempt < MAX_RETRIES; attempt += 1) {
-    const current = await store.getWithMetadata(key, { type: "json", consistency: "strong" });
+    const current = await store.getWithMetadata(key, {
+      type: "json",
+      consistency: "strong",
+    });
     const currentData = current?.data as AnalyticsBlob | undefined;
     const hll = new HyperLogLog(currentData?.hll);
     hll.add(hashedAddress);
@@ -59,7 +62,11 @@ export const incrementByKey = async (key: string, hashedAddress: string) => {
 
     const delay =
       RETRY_BASE_DELAY_MS + Math.floor(Math.random() * RETRY_JITTER_MS);
-    console.warn("[seer-analytics] increment retry scheduled", { key, attempt, delay });
+    console.warn("[seer-analytics] increment retry scheduled", {
+      key,
+      attempt,
+      delay,
+    });
     await new Promise((resolve) => setTimeout(resolve, delay));
   }
 
@@ -78,11 +85,13 @@ export const getMetricsRangeTotal = async (
     dayStarts.push(day);
   }
 
-  const shardReads: Promise<{ day: number; value: AnalyticsBlob | null }>[] = [];
+  const shardReads: Promise<{ day: number; value: AnalyticsBlob | null }>[] =
+    [];
   for (const day of dayStarts) {
     for (let shard = 0; shard < SHARD_COUNT; shard += 1) {
       shardReads.push(
-        store.get(`seer-claim/${day}/${shard}`, { type: "json" })
+        store
+          .get(`seer-claim/${day}/${shard}`, { type: "json" })
           .then((value) => ({ day, value: value as AnalyticsBlob | null })),
       );
     }
@@ -141,13 +150,18 @@ export const isHumanOnAnySupportedChain = async (address: Address) => {
     try {
       const rpc = process.env[rpcEnv];
       if (!rpc) {
-        console.warn("[seer-analytics] isHuman missing rpc", { chainId: chain.id, rpcEnv });
+        console.warn("[seer-analytics] isHuman missing rpc", {
+          chainId: chain.id,
+          rpcEnv,
+        });
         return false;
       }
 
       const contract = getContractInfo("ProofOfHumanity", chain.id);
       if (!contract.address) {
-        console.warn("[seer-analytics] isHuman missing contract", { chainId: chain.id });
+        console.warn("[seer-analytics] isHuman missing contract", {
+          chainId: chain.id,
+        });
         return false;
       }
 

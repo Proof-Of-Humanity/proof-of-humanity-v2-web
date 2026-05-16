@@ -14,7 +14,6 @@ import HashBasedRedirectHandler from "../components/HashBasedRedirectHandler";
 import { SettingsPopoverProvider } from "../context/SettingsPopoverContext";
 import AirdropBanner from "../components/AirdropBanner";
 
-
 export const metadata: Metadata = {
   title: "Proof of Humanity V2",
 };

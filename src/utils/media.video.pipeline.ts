@@ -65,7 +65,9 @@ const isPositiveNumber = (value: unknown): value is number =>
   isFiniteNumber(value) && value > 0;
 
 const uniqueMessages = (messages: (string | undefined)[]): string[] => {
-  const values = messages.filter((message): message is string => Boolean(message));
+  const values = messages.filter((message): message is string =>
+    Boolean(message),
+  );
   return [...new Set(values)];
 };
 
@@ -88,7 +90,9 @@ export const warmVideoPipeline = (): void => {
   loadFFMPEG().catch(() => undefined);
 };
 
-export const processVideoInput = async (input: Blob): Promise<VideoPipelineResult> => {
+export const processVideoInput = async (
+  input: Blob,
+): Promise<VideoPipelineResult> => {
   try {
     const validationErrors: BlockingVideoError[] = [];
     let collectedWarnings: string[] = [];
@@ -112,13 +116,14 @@ export const processVideoInput = async (input: Blob): Promise<VideoPipelineResul
     const normalizedMime = normalizeVideoMimeType(input.type);
     const normalizedBlob = input.slice(0, input.size, normalizedMime);
 
-    const canUseFFmpeg = !DISABLE_FFMPEG && typeof SharedArrayBuffer !== "undefined";
+    const canUseFFmpeg =
+      !DISABLE_FFMPEG && typeof SharedArrayBuffer !== "undefined";
 
     if (!canUseFFmpeg) {
       let rawMeta: BrowserVideoMetadata | null = null;
       try {
         rawMeta = await readVideoMetadata(normalizedBlob);
-      } catch { }
+      } catch {}
 
       if (rawMeta !== null) {
         if (isFiniteNumber(rawMeta.duration)) {
@@ -128,8 +133,14 @@ export const processVideoInput = async (input: Blob): Promise<VideoPipelineResul
           }
         }
 
-        if (isPositiveNumber(rawMeta.width) && isPositiveNumber(rawMeta.height)) {
-          const resolutionError = validateVideoResolution(rawMeta.width, rawMeta.height);
+        if (
+          isPositiveNumber(rawMeta.width) &&
+          isPositiveNumber(rawMeta.height)
+        ) {
+          const resolutionError = validateVideoResolution(
+            rawMeta.width,
+            rawMeta.height,
+          );
           if (resolutionError) {
             validationErrors.push(resolutionError);
           }
@@ -161,7 +172,10 @@ export const processVideoInput = async (input: Blob): Promise<VideoPipelineResul
       if (validationErrors.length > 0) {
         return {
           data: null,
-          error: buildAggregatedValidationError(validationErrors, collectedWarnings),
+          error: buildAggregatedValidationError(
+            validationErrors,
+            collectedWarnings,
+          ),
         };
       }
 
@@ -184,7 +198,10 @@ export const processVideoInput = async (input: Blob): Promise<VideoPipelineResul
     if (!rawFormat) {
       return {
         data: null,
-        error: buildAggregatedValidationError(validationErrors, collectedWarnings),
+        error: buildAggregatedValidationError(
+          validationErrors,
+          collectedWarnings,
+        ),
       };
     }
 
@@ -197,7 +214,9 @@ export const processVideoInput = async (input: Blob): Promise<VideoPipelineResul
           data: null,
           error: buildAggregatedValidationError(
             [],
-            collectedWarnings.concat(MEDIA_MESSAGES.videoProcessingHardRefreshWarning),
+            collectedWarnings.concat(
+              MEDIA_MESSAGES.videoProcessingHardRefreshWarning,
+            ),
           ),
         };
       }
@@ -222,7 +241,7 @@ export const processVideoInput = async (input: Blob): Promise<VideoPipelineResul
     ) {
       try {
         fallbackMeta = await readVideoMetadata(normalizedBlob);
-      } catch { }
+      } catch {}
     }
 
     const durationForChecks = isFiniteNumber(probeDuration)
@@ -259,7 +278,10 @@ export const processVideoInput = async (input: Blob): Promise<VideoPipelineResul
     }
 
     if (isPositiveNumber(widthForChecks) && isPositiveNumber(heightForChecks)) {
-      const probeResolutionError = validateVideoResolution(widthForChecks, heightForChecks);
+      const probeResolutionError = validateVideoResolution(
+        widthForChecks,
+        heightForChecks,
+      );
       if (probeResolutionError) {
         validationErrors.push(probeResolutionError);
       }
@@ -294,13 +316,22 @@ export const processVideoInput = async (input: Blob): Promise<VideoPipelineResul
     if (validationErrors.length > 0) {
       return {
         data: null,
-        error: buildAggregatedValidationError(validationErrors, collectedWarnings),
+        error: buildAggregatedValidationError(
+          validationErrors,
+          collectedWarnings,
+        ),
       };
     }
 
-    const finalProbeDuration = isFiniteNumber(durationForChecks) ? durationForChecks : 0;
-    const finalProbeWidth = isPositiveNumber(widthForChecks) ? widthForChecks : 0;
-    const finalProbeHeight = isPositiveNumber(heightForChecks) ? heightForChecks : 0;
+    const finalProbeDuration = isFiniteNumber(durationForChecks)
+      ? durationForChecks
+      : 0;
+    const finalProbeWidth = isPositiveNumber(widthForChecks)
+      ? widthForChecks
+      : 0;
+    const finalProbeHeight = isPositiveNumber(heightForChecks)
+      ? heightForChecks
+      : 0;
 
     const needsCompression = input.size > VIDEO_LIMITS.maxSizeBytes;
 
@@ -317,7 +348,9 @@ export const processVideoInput = async (input: Blob): Promise<VideoPipelineResul
           data: null,
           error: buildAggregatedValidationError(
             [],
-            collectedWarnings.concat(MEDIA_MESSAGES.videoProcessingHardRefreshWarning),
+            collectedWarnings.concat(
+              MEDIA_MESSAGES.videoProcessingHardRefreshWarning,
+            ),
           ),
         };
       }
@@ -339,7 +372,10 @@ export const processVideoInput = async (input: Blob): Promise<VideoPipelineResul
       });
       return {
         data: null,
-        error: buildAggregatedValidationError(validationErrors, collectedWarnings),
+        error: buildAggregatedValidationError(
+          validationErrors,
+          collectedWarnings,
+        ),
       };
     }
 
@@ -353,23 +389,30 @@ export const processVideoInput = async (input: Blob): Promise<VideoPipelineResul
       postValidationErrors.push(postSizeError);
     }
 
-    const nearSizeLimit = processedBlob.size >= Math.floor(VIDEO_LIMITS.maxSizeBytes * 0.9);
+    const nearSizeLimit =
+      processedBlob.size >= Math.floor(VIDEO_LIMITS.maxSizeBytes * 0.9);
     const nearDurationLimit =
-      finalProbeDuration > 0 && finalProbeDuration >= VIDEO_LIMITS.maxDurationSec * 0.9;
+      finalProbeDuration > 0 &&
+      finalProbeDuration >= VIDEO_LIMITS.maxDurationSec * 0.9;
     const nearResolutionLimit =
       finalProbeWidth > 0 &&
       finalProbeHeight > 0 &&
-      Math.min(finalProbeWidth, finalProbeHeight) <= VIDEO_LIMITS.minDimensionPx + 32;
+      Math.min(finalProbeWidth, finalProbeHeight) <=
+        VIDEO_LIMITS.minDimensionPx + 32;
     // ffmpeg run is expensive, only run post probe estimates are near limit
     const shouldRunPostSanitizeProbe =
-      needsCompression || nearSizeLimit || nearDurationLimit || nearResolutionLimit;
+      needsCompression ||
+      nearSizeLimit ||
+      nearDurationLimit ||
+      nearResolutionLimit;
 
     if (shouldRunPostSanitizeProbe) {
-      let postProbe: Awaited<ReturnType<typeof probeVideoMetrics>> | null = null;
+      let postProbe: Awaited<ReturnType<typeof probeVideoMetrics>> | null =
+        null;
       try {
         const postBuffer = await processedBlob.arrayBuffer();
         postProbe = await probeVideoMetrics(postBuffer);
-      } catch { }
+      } catch {}
 
       if (postProbe) {
         const postDuration = postProbe.durationSec;
@@ -394,7 +437,10 @@ export const processVideoInput = async (input: Blob): Promise<VideoPipelineResul
         }
 
         if (isPositiveNumber(postWidth) && isPositiveNumber(postHeight)) {
-          const postResolutionError = validateVideoResolution(postWidth, postHeight);
+          const postResolutionError = validateVideoResolution(
+            postWidth,
+            postHeight,
+          );
           if (postResolutionError) {
             postValidationErrors.push(postResolutionError);
           }
@@ -405,7 +451,10 @@ export const processVideoInput = async (input: Blob): Promise<VideoPipelineResul
     if (postValidationErrors.length > 0) {
       return {
         data: null,
-        error: buildAggregatedValidationError(postValidationErrors, collectedWarnings),
+        error: buildAggregatedValidationError(
+          postValidationErrors,
+          collectedWarnings,
+        ),
       };
     }
 
@@ -436,10 +485,7 @@ export const processVideoInput = async (input: Blob): Promise<VideoPipelineResul
 
     return {
       data: null,
-      error: buildAggregatedValidationError(
-        [GENERIC_PROCESSING_ERROR],
-        [],
-      ),
+      error: buildAggregatedValidationError([GENERIC_PROCESSING_ERROR], []),
     };
   }
 };

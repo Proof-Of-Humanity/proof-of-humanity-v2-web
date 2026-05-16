@@ -28,8 +28,9 @@ const Vouch: React.FC<VouchingTooltipProps> = ({
   isOnChain,
   reducedTooltip,
 }) => {
-  const avatarClassName = `w-8 h-8 rounded-full cursor-pointer object-cover ${!isActive ? "opacity-25" : ""
-    }`;
+  const avatarClassName = `w-8 h-8 rounded-full cursor-pointer object-cover ${
+    !isActive ? "opacity-25" : ""
+  }`;
   const tooltipClassName = `\
         group-hover:visible invisible \
         group-hover:translate-y-6 ease-in-out transition transform absolute \

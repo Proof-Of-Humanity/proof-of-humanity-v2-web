@@ -32,7 +32,8 @@ const runTrackJob = async (address: Address, requestId: string) => {
     .digest("hex");
   // shard to allocate this hash to
   const dayShard = Number.parseInt(dayHash.slice(0, 8), 16) % SHARD_COUNT;
-  const allTimeShard = Number.parseInt(allTimeHash.slice(0, 8), 16) % SHARD_COUNT;
+  const allTimeShard =
+    Number.parseInt(allTimeHash.slice(0, 8), 16) % SHARD_COUNT;
 
   const isDayWritten = await incrementByKey(
     `seer-claim/${dayStart}/${dayShard}`,
@@ -60,7 +61,10 @@ export default async (request: Request, context: Context) => {
   }
 
   if (request.method !== "POST") {
-    console.warn("[seer-analytics] invalid method", { requestId, method: request.method });
+    console.warn("[seer-analytics] invalid method", {
+      requestId,
+      method: request.method,
+    });
     return new Response(null, { status: 405, headers: corsHeaders });
   }
 
@@ -78,14 +82,12 @@ export default async (request: Request, context: Context) => {
     return new Response(null, { status: 400, headers: corsHeaders });
   }
 
-  const trackPromise = runTrackJob(address, requestId).catch(
-    (error) => {
-      console.error("[seer-analytics] track job failed", {
-        requestId,
-        message: error instanceof Error ? error.message : String(error),
-      });
-    },
-  );
+  const trackPromise = runTrackJob(address, requestId).catch((error) => {
+    console.error("[seer-analytics] track job failed", {
+      requestId,
+      message: error instanceof Error ? error.message : String(error),
+    });
+  });
 
   const waitUntilContext = context as Context & {
     waitUntil?: (promise: Promise<unknown>) => void;

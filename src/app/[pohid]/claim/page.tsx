@@ -43,8 +43,7 @@ export default async function Claim({ params }: PageProps) {
   }
 
   const hasPastVerifiedClaim = supportedChains.some(
-    (chain) =>
-      (humanityData[chain.id]?.humanity?.winnerClaim?.length ?? 0) > 0,
+    (chain) => (humanityData[chain.id]?.humanity?.winnerClaim?.length ?? 0) > 0,
   );
 
   const totalCosts = await getTotalCosts(contractData);

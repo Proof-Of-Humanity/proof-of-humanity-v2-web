@@ -1,37 +1,42 @@
-'use client';
+"use client";
 
-import { useSearchParams, useRouter } from 'next/navigation';
-import { useAtlasProvider } from '@kleros/kleros-app';
-import { useQuery } from '@tanstack/react-query';
+import { useSearchParams, useRouter } from "next/navigation";
+import { useAtlasProvider } from "@kleros/kleros-app";
+import { useQuery } from "@tanstack/react-query";
 
-import CheckCircle from 'icons/CheckCircleMajor.svg';
-import WarningCircle from 'icons/WarningCircleMajor.svg';
-import MinusCircle from 'icons/MinusCircleMajor.svg';
-import CheckCircleMinor from 'icons/CheckCircleMinor.svg';
-import WarningCircleMinor from 'icons/WarningCircleMinor.svg';
-import MinusCircleMinor from 'icons/MinusCircleMinor.svg';
-import ActionButton from 'components/ActionButton';
-import { extractStatusCode } from 'utils/errors';
+import CheckCircle from "icons/CheckCircleMajor.svg";
+import WarningCircle from "icons/WarningCircleMajor.svg";
+import MinusCircle from "icons/MinusCircleMajor.svg";
+import CheckCircleMinor from "icons/CheckCircleMinor.svg";
+import WarningCircleMinor from "icons/WarningCircleMinor.svg";
+import MinusCircleMinor from "icons/MinusCircleMinor.svg";
+import ActionButton from "components/ActionButton";
+import { extractStatusCode } from "utils/errors";
 
-type VerificationStatus = 'loading' | 'success' | 'expired' | 'invalid' | 'error';
+type VerificationStatus =
+  | "loading"
+  | "success"
+  | "expired"
+  | "invalid"
+  | "error";
 
 const getVerificationErrorDescription = (error: unknown): string => {
   const statusCode = extractStatusCode(error);
 
   if (statusCode === 401 || statusCode === 403) {
-    return 'Your verification session expired. Please request a new email link.';
+    return "Your verification session expired. Please request a new email link.";
   }
   if (statusCode === 408 || statusCode === 504) {
-    return 'Verification timed out. Please try again.';
+    return "Verification timed out. Please try again.";
   }
   if (statusCode === 429) {
-    return 'Too many attempts. Please wait a minute and retry.';
+    return "Too many attempts. Please wait a minute and retry.";
   }
   if (statusCode !== null && statusCode >= 500) {
-    return 'Verification service is temporarily unavailable. Please try again.';
+    return "Verification service is temporarily unavailable. Please try again.";
   }
 
-  return 'We could not verify your email right now. Please check your connection and try again.';
+  return "We could not verify your email right now. Please check your connection and try again.";
 };
 
 const ConfirmEmailPage: React.FC = () => {
@@ -39,14 +44,14 @@ const ConfirmEmailPage: React.FC = () => {
   const router = useRouter();
   const { confirmEmail } = useAtlasProvider();
 
-  const address = searchParams.get('address');
-  const token = searchParams.get('token');
+  const address = searchParams.get("address");
+  const token = searchParams.get("token");
 
   const { data, isPending, isError, error, refetch } = useQuery({
-    queryKey: ['confirmEmail', address, token],
+    queryKey: ["confirmEmail", address, token],
     queryFn: async () => {
       if (!address || !token) {
-        throw new Error('Missing address or token');
+        throw new Error("Missing address or token");
       }
       return confirmEmail({ address, token });
     },
@@ -62,24 +67,24 @@ const ConfirmEmailPage: React.FC = () => {
   const getVerificationStatus = (): VerificationStatus => {
     // Still loading or no params
     if (!address || !token) {
-      return 'invalid';
+      return "invalid";
     }
     if (isPending) {
-      return 'loading';
+      return "loading";
     }
     if (isError || data?.isError) {
-      return 'error';
+      return "error";
     }
     if (data?.isConfirmed) {
-      return 'success';
+      return "success";
     }
     if (data?.isTokenExpired) {
-      return 'expired';
+      return "expired";
     }
     if (data?.isTokenInvalid) {
-      return 'invalid';
+      return "invalid";
     }
-    return 'invalid';
+    return "invalid";
   };
 
   const status = getVerificationStatus();
@@ -96,9 +101,9 @@ const ConfirmEmailPage: React.FC = () => {
 
   const statusConfig: Record<VerificationStatus, StatusConfig> = {
     loading: {
-      title: 'Verifying your email...',
-      description: 'Please wait while we confirm your email address.',
-      titleColor: 'text-orange',
+      title: "Verifying your email...",
+      description: "Please wait while we confirm your email address.",
+      titleColor: "text-orange",
     },
     success: {
       title: (
@@ -108,42 +113,44 @@ const ConfirmEmailPage: React.FC = () => {
           Your email has been verified!
         </>
       ),
-      description: "We'll remind you when your actions are required on POH, and send you notifications on key moments to help you achieve the best of Proof of Humanity.",
-      titleColor: 'text-status-registered',
+      description:
+        "We'll remind you when your actions are required on POH, and send you notifications on key moments to help you achieve the best of Proof of Humanity.",
+      titleColor: "text-status-registered",
       buttonText: "Let's start!",
       icon: CheckCircleMinor,
       largeIcon: CheckCircle,
       onClick: () => {
-        router.push('/');
+        router.push("/");
       },
     },
     expired: {
-      title: 'Verification link expired...',
-      description: 'Oops, this verification link has expired. Return to the app and use Juror Alerts to resend a new verification email.',
-      titleColor: 'text-status-revocation',
-      buttonText: 'Go to App',
+      title: "Verification link expired...",
+      description:
+        "Oops, this verification link has expired. Return to the app and use Juror Alerts to resend a new verification email.",
+      titleColor: "text-status-revocation",
+      buttonText: "Go to App",
       icon: WarningCircleMinor,
       largeIcon: WarningCircle,
       onClick: () => {
-        router.push('/app');
+        router.push("/app");
       },
     },
     invalid: {
-      title: 'Invalid link!',
-      description: 'Oops, seems like you followed an invalid link.',
-      titleColor: 'text-primaryText',
-      buttonText: 'Contact support',
+      title: "Invalid link!",
+      description: "Oops, seems like you followed an invalid link.",
+      titleColor: "text-primaryText",
+      buttonText: "Contact support",
       icon: MinusCircleMinor,
       largeIcon: MinusCircle,
       onClick: () => {
-        window.open('https://t.me/proofhumanity', '_blank');
+        window.open("https://t.me/proofhumanity", "_blank");
       },
     },
     error: {
-      title: 'Could not verify right now',
+      title: "Could not verify right now",
       description: getVerificationErrorDescription(error),
-      titleColor: 'text-status-revocation',
-      buttonText: 'Try Again',
+      titleColor: "text-status-revocation",
+      buttonText: "Try Again",
       icon: WarningCircleMinor,
       largeIcon: WarningCircle,
       onClick: () => {
@@ -153,43 +160,51 @@ const ConfirmEmailPage: React.FC = () => {
   };
 
   const config = statusConfig[status];
-  const { title, description, titleColor, buttonText, onClick, icon: IconComponent, largeIcon: LargeIconComponent } = config;
+  const {
+    title,
+    description,
+    titleColor,
+    buttonText,
+    onClick,
+    icon: IconComponent,
+    largeIcon: LargeIconComponent,
+  } = config;
 
   return (
-    <div className="h-full flex flex-col">
-      <div className="flex-grow flex items-center justify-center py-12 lg:py-24 lg:mt-24">
-        <div className="mx-auto px-4 w-full">
-          <div className="grid grid-cols-1 lg:grid-cols-6 gap-8 lg:gap-16 items-center lg:mx-14 xl:mx-32">
-
+    <div className="flex h-full flex-col">
+      <div className="flex flex-grow items-center justify-center py-12 lg:mt-24 lg:py-24">
+        <div className="mx-auto w-full px-4">
+          <div className="grid grid-cols-1 items-center gap-8 lg:mx-14 lg:grid-cols-6 lg:gap-16 xl:mx-32">
             {/* Content Section */}
-            <div className="flex flex-col items-center lg:items-start text-center lg:text-left space-y-8 lg:col-span-4">
-
+            <div className="flex flex-col items-center space-y-8 text-center lg:col-span-4 lg:items-start lg:text-left">
               {IconComponent && (
                 <div className="flex justify-center lg:justify-start">
                   <IconComponent />
                 </div>
               )}
 
-              <h1 className={`text-2xl md:text-3xl lg:text-4xl font-semibold ${titleColor} leading-tight`}>
+              <h1
+                className={`text-2xl font-semibold md:text-3xl lg:text-4xl ${titleColor} leading-tight`}
+              >
                 {title}
               </h1>
 
-              <p className="text-base md:text-lg text-secondaryText leading-relaxed w-full">
+              <p className="text-secondaryText w-full text-base leading-relaxed md:text-lg">
                 {description}
               </p>
 
-              {onClick && buttonText &&
+              {onClick && buttonText && (
                 <ActionButton
                   onClick={onClick}
                   label={buttonText}
-                  className='px-8 py-3'
+                  className="px-8 py-3"
                 />
-              }
+              )}
             </div>
 
             {/* Decorative Icon Section */}
             {LargeIconComponent && (
-              <div className="flex items-center justify-center lg:justify-end lg:col-span-2">
+              <div className="flex items-center justify-center lg:col-span-2 lg:justify-end">
                 <LargeIconComponent />
               </div>
             )}

@@ -63,7 +63,6 @@ const Webcam: React.FC<WebcamProps> = ({
   const [cameraPermission, setCameraPermission] = useState(true);
   const [userMediaError, setUserMediaError] = useState("");
   const [facingMode, setFacingMode] = useState<"user" | "environment">("user");
-  const [mirrored, setMirrored] = useState(false);
 
   const switchFacingMode = () =>
     setFacingMode(facingMode === "user" ? "environment" : "user");
@@ -74,8 +73,11 @@ const Webcam: React.FC<WebcamProps> = ({
     // if (video) loadFFMPEG();
 
     navigator.mediaDevices.enumerateDevices().then((videoDevices) => {
-      setDevices(videoDevices.filter((dev) => dev.kind === "videoinput"));
-      setCurrentCamera(videoDevices[0].deviceId);
+      const cameras = videoDevices.filter(
+        (device) => device.kind === "videoinput",
+      );
+      setDevices(cameras);
+      setCurrentCamera(cameras[0]?.deviceId ?? "");
     });
   };
 
@@ -113,9 +115,7 @@ const Webcam: React.FC<WebcamProps> = ({
         width: IS_MOBILE
           ? { ideal: 1280, max: 1280 }
           : { min: 640, ideal: 1280 },
-        height: IS_MOBILE
-          ? { ideal: 720, max: 720 }
-          : { min: 480, ideal: 720 },
+        height: IS_MOBILE ? { ideal: 720, max: 720 } : { min: 480, ideal: 720 },
         frameRate: IS_MOBILE
           ? { min: 24, ideal: 30, max: 30 }
           : { min: 24, ideal: 30 },
@@ -137,9 +137,11 @@ const Webcam: React.FC<WebcamProps> = ({
   return (
     <div className="relative flex min-h-[300px] items-center justify-center overflow-hidden bg-black sm:min-h-[400px]">
       <ReactWebcam
-        className={cn("h-full w-full object-contain", !IS_MOBILE && "aspect-video")}
+        className={cn(
+          "h-full w-full object-contain",
+          !IS_MOBILE && "aspect-video",
+        )}
         ref={loadCamera}
-        mirrored={mirrored}
         screenshotFormat={"image/jpeg"}
         audio={isVideo}
         muted={true}

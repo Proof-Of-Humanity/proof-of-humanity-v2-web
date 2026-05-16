@@ -81,7 +81,13 @@ export default function RemoveVouch({
           toast.success("Request remove vouch successful");
         },
       }),
-      [address, applyAction, effective.onChainVouches, effective.validVouches, loading],
+      [
+        address,
+        applyAction,
+        effective.onChainVouches,
+        effective.validVouches,
+        loading,
+      ],
     ),
   );
 
@@ -98,8 +104,20 @@ export default function RemoveVouch({
           label="Remove Vouch"
           className="mb-2 w-auto"
           isLoading={status.write === "pending"}
-          disabled={status.write === "pending" || isReconciling || disabled || userChainId !== chain.id}
-          tooltip={isReconciling ? "Syncing" : tooltip || (userChainId !== chain.id ? `Switch your chain above to ${idToChain(chain.id)?.name || 'the correct chain'}` : undefined)}
+          disabled={
+            status.write === "pending" ||
+            isReconciling ||
+            disabled ||
+            userChainId !== chain.id
+          }
+          tooltip={
+            isReconciling
+              ? "Syncing"
+              : tooltip ||
+                (userChainId !== chain.id
+                  ? `Switch your chain above to ${idToChain(chain.id)?.name || "the correct chain"}`
+                  : undefined)
+          }
         />
       </div>
     )

@@ -1,3 +1,3 @@
-import Loading from "components/Loading";
+import RequestLoadingSkeleton from "./RequestLoadingSkeleton";
 
-export default Loading;
+export default RequestLoadingSkeleton;

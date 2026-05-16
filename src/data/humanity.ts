@@ -1,8 +1,4 @@
-import {
-  SupportedChainId,
-  supportedChains,
-  legacyChain,
-} from "config/chains";
+import { SupportedChainId, supportedChains, legacyChain } from "config/chains";
 import { sdk } from "config/subgraph";
 import { HumanityQuery } from "generated/graphql";
 import { cache } from "react";
@@ -13,21 +9,19 @@ export const getHumanityData = cache(async (pohId: Hash) => {
   const res = await Promise.all(
     supportedChains.map((chain) => sdk[chain.id].Humanity({ id: pohId })),
   );
-  if (
-    res[supportedChains.findIndex((c) => c.id === legacyChain.id)]?.humanity
-      ?.requests
-  ) {
-    res[
-      supportedChains.findIndex((c) => c.id === legacyChain.id)
-    ].humanity!.requests = res[
-      supportedChains.findIndex((c) => c.id === legacyChain.id)
+  const legacyChainIndex = supportedChains.findIndex(
+    (c) => c.id === legacyChain.id,
+  );
+  if (legacyChainIndex >= 0 && res[legacyChainIndex]?.humanity?.requests) {
+    res[legacyChainIndex].humanity!.requests = res[
+      legacyChainIndex
     ].humanity!.requests.filter(
-      (r) => !(r.status.id === "vouching" && Number(r.index) <= -1)
+      (r) => !(r.status.id === "vouching" && Number(r.index) <= -1),
     );
   }
 
   const out = supportedChains.reduce(
-    (acc, chain, i) => ({ ...acc, [chain.id]: res[i] }),
+    (acc, chain, i) => ({ ...acc, [chain.id]: res[i]! }),
     {} as Record<SupportedChainId, HumanityQuery>,
   );
   await sanitizeHumanityRequests(out);

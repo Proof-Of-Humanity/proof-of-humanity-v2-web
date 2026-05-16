@@ -10,7 +10,12 @@ import { WinnerClaimFragment } from "generated/graphql";
 import useIPFS from "hooks/useIPFS";
 import { EvidenceFile, RegistrationFile } from "types/docs";
 import { shortenAddress } from "utils/address";
-import {getStatusLabel, getStatusColor, getStatusTooltip, RequestStatus} from "utils/status";
+import {
+  getStatusLabel,
+  getStatusColor,
+  getStatusTooltip,
+  RequestStatus,
+} from "utils/status";
 import { prettifyId } from "utils/identifier";
 import { ipfs } from "utils/ipfs";
 import { RequestsQueryItem } from "./Grid";
@@ -132,11 +137,13 @@ function Card({
             {getStatusLabel(requestStatus)}
           </span>
           <div className="group relative ml-2 flex items-center">
-            <InfoIcon className={`h-4 w-4 stroke-current stroke-2 text-status-${statusColor}`} />
+            <InfoIcon
+              className={`h-4 w-4 stroke-current stroke-2 text-status-${statusColor}`}
+            />
             {tooltip && (
-              <span className="opacity-0 group-hover:opacity-100 absolute bottom-full left-1/2 z-50 mb-2 w-max max-w-[200px] -translate-x-1/2 rounded-md bg-neutral-700 px-3 py-2 text-center text-sm text-white transition-opacity pointer-events-none whitespace-normal">
+              <span className="pointer-events-none absolute bottom-full left-1/2 z-50 mb-2 w-max max-w-[200px] -translate-x-1/2 whitespace-normal rounded-md bg-neutral-700 px-3 py-2 text-center text-sm text-white opacity-0 transition-opacity group-hover:opacity-100">
                 {tooltip}
-                <span className="absolute top-full left-1/2 h-0 w-0 -translate-x-1/2 border-x-[5px] border-x-transparent border-t-[5px] border-t-neutral-700" />
+                <span className="absolute left-1/2 top-full h-0 w-0 -translate-x-1/2 border-x-[5px] border-t-[5px] border-x-transparent border-t-neutral-700" />
               </span>
             )}
           </div>

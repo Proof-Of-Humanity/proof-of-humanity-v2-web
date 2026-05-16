@@ -20,4 +20,4 @@ const AuthGuard: React.FC<AuthGuardProps> = ({
   return <>{isVerified ? children : (fallback ?? defaultFallback)}</>;
 };
 
-export default AuthGuard; 
+export default AuthGuard;

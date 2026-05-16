@@ -38,10 +38,10 @@ export const getMyData = async (account: string) => {
   const homeChain = supportedChains.find((_, i) => {
     const registration = res[i]?.claimer?.registration;
     return !!registration && registration.expirationTime > Date.now() / 1000;
-  })
+  });
   const requestChain = supportedChains.find(
     (chain, i) =>
-      res[i].claimer?.currentRequest &&
+      res[i]?.claimer?.currentRequest &&
       !isTransferStatus(res[i].claimer!.currentRequest!.status.id) &&
       !(
         chain.id === legacyChain.id &&
@@ -50,19 +50,23 @@ export const getMyData = async (account: string) => {
       ),
   );
 
+  const homeChainIndex = homeChain
+    ? supportedChains.findIndex((chain) => chain.id === homeChain.id)
+    : -1;
+  const requestChainIndex = requestChain
+    ? supportedChains.findIndex((chain) => chain.id === requestChain.id)
+    : -1;
+  const homeChainData = homeChainIndex >= 0 ? res[homeChainIndex] : undefined;
+  const requestChainData =
+    requestChainIndex >= 0 ? res[requestChainIndex] : undefined;
+
   return {
     homeChain,
-    pohId:
-      homeChain &&
-      res[supportedChains.indexOf(homeChain as any)].claimer!.registration!.id,
-    expirationTime:
-      homeChain &&
-      res[supportedChains.indexOf(homeChain as any)].claimer!.registration!
-        .expirationTime,
-    currentRequest: requestChain && {
+    pohId: homeChainData?.claimer?.registration?.id,
+    expirationTime: homeChainData?.claimer?.registration?.expirationTime,
+    currentRequest: requestChainData?.claimer?.currentRequest && {
       chain: requestChain,
-      ...res[supportedChains.indexOf(requestChain as any)].claimer!
-        .currentRequest!,
+      ...requestChainData.claimer.currentRequest,
     },
   };
 };

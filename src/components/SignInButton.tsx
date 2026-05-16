@@ -3,7 +3,8 @@ import { toast } from "react-toastify";
 import ActionButton, { ActionButtonProps } from "./ActionButton";
 import { useAccount } from "wagmi";
 
-export interface SignInButtonProps extends Omit<ActionButtonProps, 'onClick' | 'label'> {
+export interface SignInButtonProps
+  extends Omit<ActionButtonProps, "onClick" | "label"> {
   label?: string;
 }
 
@@ -36,4 +37,4 @@ const SignInButton: React.FC<SignInButtonProps> = ({
   );
 };
 
-export default SignInButton; 
+export default SignInButton;

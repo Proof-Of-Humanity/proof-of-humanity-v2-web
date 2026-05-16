@@ -1,6 +1,11 @@
-import { useEffect, useMemo, useState } from "react";
-import { useCapabilities, useSendCalls, useChainId, useCallsStatus } from "wagmi";
-import { encodeFunctionData,  } from "viem";
+import { useEffect, useMemo, useRef, useState } from "react";
+import {
+  useCapabilities,
+  useSendCalls,
+  useChainId,
+  useCallsStatus,
+} from "wagmi";
+import { encodeFunctionData, Hash } from "viem";
 import { getContractInfo } from "contracts/registry";
 import { BatchCall, BatchWriteParams, Effects } from "./types";
 
@@ -8,50 +13,51 @@ export default function useBatchWrite(effects?: Effects) {
   // State
   const [calls, setCalls] = useState<BatchCall[]>([]);
   const [enabled, setEnabled] = useState(false);
+  const lastSuccessBatchIdRef = useRef<string | undefined>();
   const chainId = useChainId();
 
-  const { data: capabilities , isLoading: isCapabilitiesLoading } = useCapabilities();
+  const { data: capabilities, isLoading: isCapabilitiesLoading } =
+    useCapabilities();
 
   const supportsBatchingTransaction = useMemo(
     () =>
       capabilities?.[chainId]?.atomic?.status === "ready" ||
       capabilities?.[chainId]?.atomic?.status === "supported",
-    [capabilities, chainId]
+    [capabilities, chainId],
   );
-  
+
   // Native batch hooks
-  const { 
-    sendCalls, 
+  const {
+    sendCalls,
     status: sendStatus,
-    data : sendData,
-    error: sendError
+    data: sendData,
+    error: sendError,
   } = useSendCalls();
 
-  const {  data: callReceipts, error: callReceiptsError} = useCallsStatus({
-    id: sendData?.id ||  "",
+  const { data: callReceipts, error: callReceiptsError } = useCallsStatus({
+    id: sendData?.id || "",
     query: {
       enabled: !!sendData?.id,
-      refetchInterval: 100
-    }
+      refetchInterval: 100,
+    },
   });
 
-  const writeStatus = (
+  const writeStatus =
     callReceipts?.status === "pending" || sendStatus === "pending"
       ? "pending"
       : callReceipts?.status === "success" && sendStatus === "success"
-      ? "success"
-      : callReceipts?.status === "failure" || sendStatus === "error"
-      ? "error"
-      : "idle"
-  );
+        ? "success"
+        : callReceipts?.status === "failure" || sendStatus === "error"
+          ? "error"
+          : "idle";
 
   // Prepare batch calls for multiple contracts
   const batchCallsData = useMemo(() => {
     if (!calls.length || !chainId) return [];
-    
-    return calls.map(call => {
+
+    return calls.map((call) => {
       const { address, abi } = getContractInfo(call.contract, chainId);
-      
+
       return {
         to: address as `0x${string}`,
         data: encodeFunctionData({
@@ -68,7 +74,11 @@ export default function useBatchWrite(effects?: Effects) {
     if (!enabled || isCapabilitiesLoading) return;
 
     if (!supportsBatchingTransaction) {
-      effects?.onFail?.(new Error("Wallet doesn't support atomic batch transactions (ERC-5792)"));
+      effects?.onFail?.(
+        new Error(
+          "Wallet doesn't support atomic batch transactions (ERC-5792)",
+        ),
+      );
       setEnabled(false);
       return;
     }
@@ -78,24 +88,56 @@ export default function useBatchWrite(effects?: Effects) {
         setEnabled(false);
       });
     }
-  }, [enabled, isCapabilitiesLoading, supportsBatchingTransaction, batchCallsData, sendCalls, effects]);
+  }, [
+    enabled,
+    isCapabilitiesLoading,
+    supportsBatchingTransaction,
+    batchCallsData,
+    sendCalls,
+    effects,
+  ]);
 
   // Effects - Status tracking
   useEffect(() => {
     if (!supportsBatchingTransaction) return;
-    
+
     switch (writeStatus) {
       case "pending":
         effects?.onLoading?.();
         break;
       case "success":
-        effects?.onSuccess?.();
+        if (sendData?.id && lastSuccessBatchIdRef.current !== sendData.id) {
+          lastSuccessBatchIdRef.current = sendData.id;
+          const firstCall = calls[0];
+          if (firstCall) {
+            effects?.onSuccess?.({
+              contract: firstCall.contract,
+              functionName: String(firstCall.functionName),
+              args: firstCall.args as readonly unknown[],
+              value: firstCall.value,
+              chainId,
+              txHash: callReceipts?.receipts?.[0]?.transactionHash as
+                | Hash
+                | undefined,
+            });
+          }
+        }
         break;
       case "error":
         effects?.onError?.(callReceiptsError || sendError);
         break;
     }
-  }, [supportsBatchingTransaction, effects, writeStatus ]);
+  }, [
+    supportsBatchingTransaction,
+    effects,
+    writeStatus,
+    sendData?.id,
+    calls,
+    chainId,
+    callReceipts?.receipts,
+    callReceiptsError,
+    sendError,
+  ]);
 
   // Public API
   const prepare = ({ calls: newCalls }: BatchWriteParams) => {
@@ -114,10 +156,10 @@ export default function useBatchWrite(effects?: Effects) {
   const prepareStatus = isCapabilitiesLoading
     ? "idle"
     : supportsBatchingTransaction && batchCallsData.length > 0
-    ? "success"
-    : !supportsBatchingTransaction
-    ? "error"
-    : "idle";
+      ? "success"
+      : !supportsBatchingTransaction
+        ? "error"
+        : "idle";
 
   return [
     prepare,
@@ -127,4 +169,4 @@ export default function useBatchWrite(effects?: Effects) {
       write: writeStatus,
     },
   ] as const;
-} 
+}

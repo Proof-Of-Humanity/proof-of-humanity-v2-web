@@ -14,5 +14,3 @@ query HumanityIdByClaimer($address: String!, $now: BigInt!) {
     id
   }
 }
-
-

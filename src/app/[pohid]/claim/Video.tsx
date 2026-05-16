@@ -29,8 +29,7 @@ interface PhotoProps {
   videoError: (error: string) => void;
 }
 
-const SAMPLE_VIDEO_URL =
-  "/api/media/sample-registration-video";
+const SAMPLE_VIDEO_URL = "/api/media/sample-registration-video";
 const isSampleSubmissionEnabled = true;
 
 function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
@@ -54,7 +53,9 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
   const [videoValidationErrors, setVideoValidationErrors] = useState<string[]>(
     [],
   );
-  const [videoQualityWarnings, setVideoQualityWarnings] = useState<string[]>([]);
+  const [videoQualityWarnings, setVideoQualityWarnings] = useState<string[]>(
+    [],
+  );
   const [rawPreviewUri, setRawPreviewUri] = useState<string | null>(null);
 
   const [recorder, setRecorder] = useState<MediaRecorder | null>(null);
@@ -81,7 +82,8 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
 
     const autoCloseMs = Math.min(
       WARNING_TOAST_MAX_MS,
-      WARNING_TOAST_BASE_MS + (messages.length - 1) * WARNING_TOAST_PER_MESSAGE_MS,
+      WARNING_TOAST_BASE_MS +
+        (messages.length - 1) * WARNING_TOAST_PER_MESSAGE_MS,
     );
 
     messages.forEach((warningMessage) =>
@@ -178,7 +180,9 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
 
     const [videoTrack] = camera.stream.getVideoTracks();
     if (!videoTrack || videoTrack.readyState !== "live") {
-      setValidationError("Camera not ready. Please wait a moment and try again.");
+      setValidationError(
+        "Camera not ready. Please wait a moment and try again.",
+      );
       return;
     }
 
@@ -202,7 +206,8 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
     ];
     const supportedMimeType = preferredMimeTypes.find(
       (mimeType) =>
-        typeof MediaRecorder !== "undefined" && MediaRecorder.isTypeSupported(mimeType),
+        typeof MediaRecorder !== "undefined" &&
+        MediaRecorder.isTypeSupported(mimeType),
     );
 
     let mediaRecorder: MediaRecorder;
@@ -237,7 +242,8 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
       if (discardRecording) return;
 
       if (recordedChunks.length === 0) {
-        const noDataError = "No video data captured. Please try recording again.";
+        const noDataError =
+          "No video data captured. Please try recording again.";
         setValidationError(noDataError);
         return;
       }
@@ -319,8 +325,7 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
   const isProcessing = pending && !!rawPreviewUri;
   const hasIssues =
     videoValidationErrors.length > 0 || videoQualityWarnings.length > 0;
-  const hasError =
-    !pending && !!rawPreviewUri && !video && hasIssues;
+  const hasError = !pending && !!rawPreviewUri && !video && hasIssues;
   const isAccepted = !!video && !pending;
   const isSourceSelection = !showCamera && !video && !pending && !rawPreviewUri;
 
@@ -371,10 +376,10 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
       </span>
 
       {isSourceSelection && isSampleSubmissionEnabled && (
-        <div className="mx-auto mb-8 w-full max-w-3xl rounded-2xl border border-orange bg-whiteBackground p-4 shadow-sm sm:p-5">
+        <div className="border-orange bg-whiteBackground mx-auto mb-8 w-full max-w-3xl rounded-2xl border p-4 shadow-sm sm:p-5">
           <div className="flex flex-col items-center gap-3 text-center sm:flex-row sm:items-center sm:text-left">
-            <div className="bg-lightOrange flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-orange">
-              <CameraIcon className="h-5 w-5 fill-orange" />
+            <div className="bg-lightOrange border-orange flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border">
+              <CameraIcon className="fill-orange h-5 w-5" />
             </div>
             <div>
               <h3 className="text-primaryText text-lg font-semibold">
@@ -386,7 +391,7 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
             </div>
           </div>
 
-          <div className="mt-4 overflow-hidden rounded-2xl border border-stroke bg-black shadow-sm">
+          <div className="border-stroke mt-4 overflow-hidden rounded-2xl border bg-black shadow-sm">
             <video
               className="aspect-video w-full bg-black object-cover"
               src={SAMPLE_VIDEO_URL}
@@ -416,10 +421,12 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
               <span>Record with Camera (Recommended)</span>
             </button>
 
-            <span className="mt-2 text-sm font-semibold text-primaryText">OR</span>
+            <span className="text-primaryText mt-2 text-sm font-semibold">
+              OR
+            </span>
 
             <Uploader
-              className="mt-1 text-base font-semibold text-primary underline underline-offset-2 hover:text-orange focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-300"
+              className="text-primary hover:text-orange mt-1 text-base font-semibold underline underline-offset-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-300"
               type="video"
               onDrop={handleUploadedVideo}
             >
@@ -471,9 +478,7 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
       {/* ── S3: Processing with raw preview ── */}
       {isProcessing && (
         <div className="mt-4 flex flex-col items-center">
-          <div
-            className="relative inline-block max-w-full overflow-hidden rounded-lg bg-black"
-          >
+          <div className="relative inline-block max-w-full overflow-hidden rounded-lg bg-black">
             <video
               src={rawPreviewUri!}
               className="mx-auto max-h-72 w-auto max-w-full object-contain opacity-60 sm:max-h-64"
@@ -503,9 +508,7 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
             isVideo
             uri={video.uri}
             trigger={
-              <div
-                className="inline-block max-w-full overflow-hidden rounded-lg bg-black"
-              >
+              <div className="inline-block max-w-full overflow-hidden rounded-lg bg-black">
                 <video
                   className="mx-auto max-h-72 w-auto max-w-full cursor-pointer object-contain sm:max-h-64"
                   src={`${video.uri}#t=0.001`}
@@ -520,16 +523,16 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
           </span>
           {hasIssues && (
             <div className="border-stroke bg-primaryBackground mt-4 w-full max-w-2xl rounded-xl border px-5 py-4 shadow-sm">
-              <div className="mb-3 flex items-center justify-center gap-2 text-lg font-semibold text-primaryText">
+              <div className="text-primaryText mb-3 flex items-center justify-center gap-2 text-lg font-semibold">
                 <span className="border-stroke bg-whiteBackground flex h-7 w-7 items-center justify-center rounded-full border">
-                  <InfoIcon className="h-4 w-4 stroke-current stroke-2 text-primaryText" />
+                  <InfoIcon className="text-primaryText h-4 w-4 stroke-current stroke-2" />
                 </span>
                 <span>Issues Found</span>
               </div>
               {videoQualityWarnings.length > 0 && (
                 <div className="mx-auto w-full max-w-lg">
                   <div className="mb-2 flex justify-center">
-                    <span className="rounded-full bg-status-challenged/15 px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-[#D98A1F]">
+                    <span className="bg-status-challenged/15 rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-[#D98A1F]">
                       Warnings
                     </span>
                   </div>
@@ -548,10 +551,7 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
               )}
             </div>
           )}
-          <button
-            className="btn-main mt-4"
-            onClick={advance}
-          >
+          <button className="btn-main mt-4" onClick={advance}>
             Next
           </button>
         </div>
@@ -560,9 +560,7 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
       {/* ── S6: Error with preview ── */}
       {hasError && (
         <div className="flex flex-col items-center">
-          <div
-            className="inline-block max-w-full overflow-hidden rounded-lg bg-black"
-          >
+          <div className="inline-block max-w-full overflow-hidden rounded-lg bg-black">
             <video
               src={rawPreviewUri!}
               controls
@@ -570,27 +568,29 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
             />
           </div>
           <div className="border-stroke bg-primaryBackground mt-4 w-full max-w-2xl rounded-xl border px-5 py-4 shadow-sm">
-            <div className="mb-3 flex items-center justify-center gap-2 text-lg font-semibold text-primaryText">
+            <div className="text-primaryText mb-3 flex items-center justify-center gap-2 text-lg font-semibold">
               <span className="border-stroke bg-whiteBackground flex h-7 w-7 items-center justify-center rounded-full border">
-                <InfoIcon className="h-4 w-4 stroke-current stroke-2 text-primaryText" />
+                <InfoIcon className="text-primaryText h-4 w-4 stroke-current stroke-2" />
               </span>
               <span className="text-primaryText">Issues Found</span>
             </div>
             {videoValidationErrors.length > 0 && (
               <div className="mx-auto w-full max-w-lg">
                 <div className="mb-2 flex justify-center">
-                  <span className="rounded-full bg-status-rejected/15 px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-status-rejected">
+                  <span className="bg-status-rejected/15 text-status-rejected rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em]">
                     Major Issues
                   </span>
                 </div>
-                <ul className="flex flex-col items-center gap-2 text-center text-sm text-primaryText">
+                <ul className="text-primaryText flex flex-col items-center gap-2 text-center text-sm">
                   {videoValidationErrors.map((errorMessage, idx) => (
                     <li
                       key={`error-${idx}`}
                       className="flex items-start justify-center gap-2"
                     >
                       <span className="mt-[7px] h-1.5 w-1.5 shrink-0 rounded-full bg-black" />
-                      <span className="text-status-rejected">{errorMessage}</span>
+                      <span className="text-status-rejected">
+                        {errorMessage}
+                      </span>
                     </li>
                   ))}
                 </ul>
@@ -598,10 +598,14 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
             )}
             {videoQualityWarnings.length > 0 && (
               <div
-                className={videoValidationErrors.length > 0 ? "border-stroke mt-4 border-t pt-4" : ""}
+                className={
+                  videoValidationErrors.length > 0
+                    ? "border-stroke mt-4 border-t pt-4"
+                    : ""
+                }
               >
                 <div className="mb-2 flex justify-center">
-                  <span className="rounded-full bg-status-challenged/15 px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-[#D98A1F]">
+                  <span className="bg-status-challenged/15 rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-[#D98A1F]">
                     Warnings
                   </span>
                 </div>
@@ -619,27 +623,28 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
               </div>
             )}
           </div>
-        </div >
-      )
-      }
+        </div>
+      )}
 
       {/* ── Bottom action button ── */}
-      {
-        ((showCamera && !pending) || isAccepted || isProcessing || isPreparing || hasError) && (
-          <button
-            className="centered text-orange mt-4 text-lg font-semibold uppercase disabled:opacity-50"
-            onClick={() => retakeVideo()}
-            disabled={recording}
-          >
-            <ResetIcon className="fill-orange mr-2 h-6 w-6" />
-            {(isProcessing || isPreparing)
-              ? "Cancel"
-              : showCamera
-                ? "Return"
-                : "Try Again"}
-          </button>
-        )
-      }
+      {((showCamera && !pending) ||
+        isAccepted ||
+        isProcessing ||
+        isPreparing ||
+        hasError) && (
+        <button
+          className="centered text-orange mt-4 text-lg font-semibold uppercase disabled:opacity-50"
+          onClick={() => retakeVideo()}
+          disabled={recording}
+        >
+          <ResetIcon className="fill-orange mr-2 h-6 w-6" />
+          {isProcessing || isPreparing
+            ? "Cancel"
+            : showCamera
+              ? "Return"
+              : "Try Again"}
+        </button>
+      )}
     </>
   );
 }

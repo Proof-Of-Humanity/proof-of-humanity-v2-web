@@ -17,6 +17,12 @@ interface SeerCreditsProps {
   integration: Integration;
 }
 
+type SeerUserData = {
+  hasValidRegistration: boolean;
+  humanityId: string | null;
+  chainId: SupportedChainId | undefined;
+};
+
 export default function SeerCredits({ integration }: SeerCreditsProps) {
   const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
 
@@ -25,9 +31,9 @@ export default function SeerCredits({ integration }: SeerCreditsProps) {
     if (integration.firstInfoSlide) {
       integration.firstInfoSlide.forEach((slide) => {
         if (slide.image) {
-          const link = document.createElement('link');
-          link.rel = 'preload';
-          link.as = 'image';
+          const link = document.createElement("link");
+          link.rel = "preload";
+          link.as = "image";
           link.href = slide.image;
           document.head.appendChild(link);
         }
@@ -38,12 +44,14 @@ export default function SeerCredits({ integration }: SeerCreditsProps) {
   const chainId = useChainId();
   const modal = useAppKit();
 
-  const slidesCompleted = currentSlideIndex >= (integration.firstInfoSlide?.length ?? 0);
+  const slidesCompleted =
+    currentSlideIndex >= (integration.firstInfoSlide?.length ?? 0);
+  const currentSlide = integration.firstInfoSlide?.[currentSlideIndex];
 
   // Query to check if user has an included profile (checking registrations and cross-chain registrations)
-  const { data: userData, isLoading } = useQuery({
+  const { data: userData, isLoading } = useQuery<SeerUserData | null>({
     queryKey: ["seerEligibility", address, chainId],
-    queryFn: async () => {
+    queryFn: async (): Promise<SeerUserData | null> => {
       if (!address) return null;
 
       const normalizedAddress = address.toLowerCase() as Address;
@@ -52,9 +60,11 @@ export default function SeerCredits({ integration }: SeerCreditsProps) {
       const results = await Promise.all(
         supportedChains.map(async (chain) => {
           try {
-            const data = await sdk[chain.id as SupportedChainId].HumanityIdByClaimer({
+            const data = await sdk[
+              chain.id as SupportedChainId
+            ].HumanityIdByClaimer({
               address: normalizedAddress,
-              now
+              now,
             });
 
             const localRegistration = data?.registrations?.[0];
@@ -62,7 +72,7 @@ export default function SeerCredits({ integration }: SeerCreditsProps) {
               return {
                 hasValidRegistration: true,
                 humanityId: localRegistration.humanity.id,
-                chainId: chain.id
+                chainId: chain.id,
               };
             }
 
@@ -71,23 +81,36 @@ export default function SeerCredits({ integration }: SeerCreditsProps) {
               return {
                 hasValidRegistration: true,
                 humanityId: crossChainRegistration.id,
-                chainId: chain.id
+                chainId: chain.id,
               };
             }
 
-            return { hasValidRegistration: false, humanityId: null, chainId: chain.id };
+            return {
+              hasValidRegistration: false,
+              humanityId: null,
+              chainId: chain.id,
+            };
           } catch (error) {
             console.error(`Error checking chain ${chain.id}:`, error);
-            return { hasValidRegistration: false, humanityId: null, chainId: chain.id };
+            return {
+              hasValidRegistration: false,
+              humanityId: null,
+              chainId: chain.id,
+            };
           }
-        })
+        }),
       );
 
-      return results.find(r => r.hasValidRegistration) || { hasValidRegistration: false, humanityId: null };
+      return (
+        results.find((r) => r.hasValidRegistration) || {
+          hasValidRegistration: false,
+          humanityId: null,
+          chainId: undefined,
+        }
+      );
     },
     enabled: isConnected && !!address,
   });
-
 
   const eligibilityStatus: SeerEligibilityStatus = useMemo(() => {
     if (!isConnected) return "disconnected";
@@ -120,57 +143,66 @@ export default function SeerCredits({ integration }: SeerCreditsProps) {
   }, [eligibilityStatus, modal, address]);
 
   return (
-    <div className="flex flex-col w-full md:w-10/12 space-y-8">
+    <div className="flex w-full flex-col space-y-8 md:w-10/12">
       <div className="paper">
         <IntegrationHeader {...{ integration }} />
-        <div className="flex flex-col justify-center items-center px-4 py-2 md:px-8 md:py-4 space-y-4">
-          {!slidesCompleted && integration.firstInfoSlide ? (
+        <div className="flex flex-col items-center justify-center space-y-4 px-4 py-2 md:px-8 md:py-4">
+          {!slidesCompleted && integration.firstInfoSlide && currentSlide ? (
             <>
               <ExternalLink
                 href="https://seer.pm/"
-                className="text-purple text-center text-md my-4"
+                className="text-purple text-md my-4 text-center"
               >
                 Learn more about Seer to get started
               </ExternalLink>
               <ProcessStepCard
-                step={integration.firstInfoSlide[currentSlideIndex]}
+                step={currentSlide}
                 allSlides={integration.firstInfoSlide}
                 currentIndex={currentSlideIndex}
                 previousStep={currentSlideIndex > 0}
-                nextStep={currentSlideIndex < integration.firstInfoSlide.length - 1}
-                isLastSlide={currentSlideIndex === integration.firstInfoSlide.length - 1}
+                nextStep={
+                  currentSlideIndex < integration.firstInfoSlide.length - 1
+                }
+                isLastSlide={
+                  currentSlideIndex === integration.firstInfoSlide.length - 1
+                }
                 onPrevious={() => setCurrentSlideIndex(currentSlideIndex - 1)}
                 onNext={() => setCurrentSlideIndex(currentSlideIndex + 1)}
-                onLastSlideComplete={() => setCurrentSlideIndex(currentSlideIndex + 1)}
+                onLastSlideComplete={() =>
+                  setCurrentSlideIndex(currentSlideIndex + 1)
+                }
               />
             </>
           ) : (
-            <div className="w-full max-w-[1095px] mx-auto p-[1px] rounded-[30px] bg-gradient-to-br from-[#F9BFCE] to-[#BE75FF]">
-              <div className="flex flex-col lg:flex-row rounded-[29px] bg-primaryBackground">
+            <div className="mx-auto w-full max-w-[1095px] rounded-[30px] bg-gradient-to-br from-[#F9BFCE] to-[#BE75FF] p-[1px]">
+              <div className="bg-primaryBackground flex flex-col rounded-[29px] lg:flex-row">
                 <div className="flex-1 p-6 lg:p-8">
-                  <h2 className="text-primaryText text-xl md:text-2xl font-semibold mb-4">
+                  <h2 className="text-primaryText mb-4 text-xl font-semibold md:text-2xl">
                     Claim and use your Seer Credits
                   </h2>
                   <div className="mb-4">
-                    <p className="text-secondaryText text-sm mb-2">
+                    <p className="text-secondaryText mb-2 text-sm">
                       To qualify, you must be an Included profile.
                     </p>
                   </div>
 
                   <div className="space-y-4">
-                    <p className="text-purple text-base md:text-lg font-semibold">
-                      Get monthly Seer Credits to predict, play and earn on Seer!
+                    <p className="text-purple text-base font-semibold md:text-lg">
+                      Get monthly Seer Credits to predict, play and earn on
+                      Seer!
                     </p>
 
-                    <div className="text-secondaryText text-sm leading-relaxed space-y-3">
+                    <div className="text-secondaryText space-y-3 text-sm leading-relaxed">
                       <p>
-                        Seer Credits are monthly rewards given to verified Proof of Humanity users to use on
-                        the Seer Prediction Market platform.
+                        Seer Credits are monthly rewards given to verified Proof
+                        of Humanity users to use on the Seer Prediction Market
+                        platform.
                       </p>
 
                       <p>
-                        Seer Credits refresh every month, so you'll receive a new balance automatically. Use
-                        them before the month ends. Unused credits expire when the next cycle begins.
+                        Seer Credits refresh every month, so you'll receive a
+                        new balance automatically. Use them before the month
+                        ends. Unused credits expire when the next cycle begins.
                       </p>
                     </div>
                   </div>

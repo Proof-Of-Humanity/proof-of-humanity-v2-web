@@ -17,7 +17,11 @@ export async function GET(
   try {
     const { chain: chainParam, claimer, pohid } = await params;
     const chain = paramToChainAny(chainParam);
-    console.log("API Route GET called with params:", { chain: chainParam, claimer, pohid });
+    console.log("API Route GET called with params:", {
+      chain: chainParam,
+      claimer,
+      pohid,
+    });
 
     if (!chain) {
       console.error("API Route Error: Unsupported chain", chainParam);

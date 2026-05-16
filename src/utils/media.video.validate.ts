@@ -26,14 +26,22 @@ const VIDEO_ALLOWED_FORMATS_LABEL = VIDEO_UPLOAD_EXTENSIONS.map((ext) =>
   ext.slice(1),
 ).join(", ");
 
-export const IMAGE_ALLOWED_MIME_TYPES = [
-  "image/jpeg",
-  "image/png",
-  "image/jpg",
-  "image/webp",
-] as const;
+// Keep this disabled for now: uploaded photos are validated after crop/resize.
+// If we re-enable pre-crop upload validation, restore this together with
+// validatePhotoUpload below.
+// export const IMAGE_ALLOWED_MIME_TYPES = [
+//   "image/jpeg",
+//   "image/png",
+//   "image/jpg",
+//   "image/webp",
+// ] as const;
 
-export const IMAGE_UPLOAD_EXTENSIONS = [".jpg", ".jpeg", ".png", ".webp"] as const;
+export const IMAGE_UPLOAD_EXTENSIONS = [
+  ".jpg",
+  ".jpeg",
+  ".png",
+  ".webp",
+] as const;
 
 export const MEDIA_UPLOAD_ACCEPT = {
   image: { "image/*": [...IMAGE_UPLOAD_EXTENSIONS] },
@@ -102,9 +110,13 @@ export type PhotoValidationError = string | null;
 // ─── Video Validation ───────────────────────────────────────────
 
 /** Check if a MIME type is in the allowed video types list. */
-export function validateVideoType(mimeType: string): VideoValidationError | null {
+export function validateVideoType(
+  mimeType: string,
+): VideoValidationError | null {
   const normalizedType = normalizeVideoMimeType(mimeType);
-  if ((VIDEO_LIMITS.allowedTypes as readonly string[]).includes(normalizedType)) {
+  if (
+    (VIDEO_LIMITS.allowedTypes as readonly string[]).includes(normalizedType)
+  ) {
     return null;
   }
 
@@ -144,11 +156,15 @@ export interface VideoMetadata {
 }
 
 /** Validate video duration. */
-export function validateVideoDuration(duration: number): VideoValidationError | null {
+export function validateVideoDuration(
+  duration: number,
+): VideoValidationError | null {
   if (duration > VIDEO_LIMITS.maxDurationSec) {
     return {
       code: MEDIA_ERROR_CODES.DURATION_EXCEEDED,
-      userMessage: MEDIA_MESSAGES.videoDurationExceeded(VIDEO_LIMITS.maxDurationSec),
+      userMessage: MEDIA_MESSAGES.videoDurationExceeded(
+        VIDEO_LIMITS.maxDurationSec,
+      ),
     };
   }
   return null;
@@ -163,14 +179,18 @@ export function validateVideoResolution(
   if (shortEdge < VIDEO_LIMITS.minDimensionPx) {
     return {
       code: MEDIA_ERROR_CODES.RESOLUTION_TOO_SMALL,
-      userMessage: MEDIA_MESSAGES.videoResolutionTooSmall(VIDEO_LIMITS.minDimensionPx),
+      userMessage: MEDIA_MESSAGES.videoResolutionTooSmall(
+        VIDEO_LIMITS.minDimensionPx,
+      ),
     };
   }
   return null;
 }
 
 /** Validate video file size. */
-export function validateVideoSize(sizeBytes: number): VideoValidationError | null {
+export function validateVideoSize(
+  sizeBytes: number,
+): VideoValidationError | null {
   if (sizeBytes > VIDEO_LIMITS.maxSizeBytes) {
     return {
       code: MEDIA_ERROR_CODES.SIZE_EXCEEDED,
@@ -267,10 +287,13 @@ export function validateVideoQuality(
 
   // Warning: low bitrate (prefer probed bitrate when available, otherwise estimate).
   const { duration, width, height, sizeBytes } = meta;
-  const averageBitrateKbps = duration > 0 ? Math.floor((sizeBytes * 8) / duration / 1000) : 0;
+  const averageBitrateKbps =
+    duration > 0 ? Math.floor((sizeBytes * 8) / duration / 1000) : 0;
   const measuredBitrate = options.measuredBitrateKbps;
   const bitrateForCheck =
-    typeof measuredBitrate === "number" && Number.isFinite(measuredBitrate) && measuredBitrate > 0
+    typeof measuredBitrate === "number" &&
+    Number.isFinite(measuredBitrate) &&
+    measuredBitrate > 0
       ? Math.floor(measuredBitrate)
       : averageBitrateKbps;
   const minBitrate = getMinBitrateKbps(width, height);
@@ -284,22 +307,29 @@ export function validateVideoQuality(
 
 // ─── Photo Validation ───────────────────────────────────────────
 
-/** Validate a photo file before loading it into the crop editor. */
-export function validatePhotoUpload(file: File): PhotoValidationError {
-  if (
-    !IMAGE_ALLOWED_MIME_TYPES.includes(
-      file.type as (typeof IMAGE_ALLOWED_MIME_TYPES)[number],
-    )
-  ) {
-    return MEDIA_MESSAGES.photoUnsupportedFormat(file.type);
-  }
-
-  if (file.size > PHOTO_LIMITS.uploadMaxSizeBytes) {
-    return MEDIA_MESSAGES.photoUploadTooLarge(file.size, PHOTO_LIMITS.uploadMaxSizeMb);
-  }
-
-  return null;
-}
+// Keep disabled for future use. This was previously exported, but no live
+// code currently calls it, and webcam photo capture does not pass through an
+// upload File object.
+//
+// /** Validate a photo file before loading it into the crop editor. */
+// export function validatePhotoUpload(file: File): PhotoValidationError {
+//   if (
+//     !IMAGE_ALLOWED_MIME_TYPES.includes(
+//       file.type as (typeof IMAGE_ALLOWED_MIME_TYPES)[number],
+//     )
+//   ) {
+//     return MEDIA_MESSAGES.photoUnsupportedFormat(file.type);
+//   }
+//
+//   if (file.size > PHOTO_LIMITS.uploadMaxSizeBytes) {
+//     return MEDIA_MESSAGES.photoUploadTooLarge(
+//       file.size,
+//       PHOTO_LIMITS.uploadMaxSizeMb,
+//     );
+//   }
+//
+//   return null;
+// }
 
 /** Validate crop dimensions. */
 export function validatePhotoDimensions(
@@ -307,7 +337,10 @@ export function validatePhotoDimensions(
   height: number,
 ): PhotoValidationError {
   if (width < PHOTO_LIMITS.minWidth || height < PHOTO_LIMITS.minHeight) {
-    return MEDIA_MESSAGES.photoDimensionsTooSmall(PHOTO_LIMITS.minWidth, PHOTO_LIMITS.minHeight);
+    return MEDIA_MESSAGES.photoDimensionsTooSmall(
+      PHOTO_LIMITS.minWidth,
+      PHOTO_LIMITS.minHeight,
+    );
   }
   return null;
 }

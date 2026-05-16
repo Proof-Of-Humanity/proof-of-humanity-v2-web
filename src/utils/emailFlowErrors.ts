@@ -33,6 +33,7 @@ export const getEmailFlowErrorMessage = (
     return "Email service is temporarily unavailable. Please try again.";
   }
 
-  if (options?.isResend) return "Couldn't resend verification email. Please try again.";
+  if (options?.isResend)
+    return "Couldn't resend verification email. Please try again.";
   return "Couldn't save email. Please try again.";
 };

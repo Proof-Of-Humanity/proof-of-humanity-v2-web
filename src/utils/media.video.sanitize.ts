@@ -23,16 +23,20 @@ const probeDurationAndRotation = async (
   let rotation = 0;
 
   const logger: LogEventCallback = ({ message }) => {
-    const durationMatch = message.match(/Duration:\s*(\d+):(\d+):(\d+(?:\.\d+)?)/);
-    if (durationMatch) {
+    const durationMatch = message.match(
+      /Duration:\s*(\d+):(\d+):(\d+(?:\.\d+)?)/,
+    );
+    if (durationMatch?.[1] && durationMatch[2] && durationMatch[3]) {
       durationSec =
         parseInt(durationMatch[1], 10) * 3600 +
         parseInt(durationMatch[2], 10) * 60 +
         parseFloat(durationMatch[3]);
     }
 
-    const rotationMatch = message.match(/rotation of (-?\d+(?:\.\d+)?) degrees/i);
-    if (rotationMatch) {
+    const rotationMatch = message.match(
+      /rotation of (-?\d+(?:\.\d+)?) degrees/i,
+    );
+    if (rotationMatch?.[1]) {
       rotation = normalizeRotation(parseFloat(rotationMatch[1]));
     }
   };
@@ -71,8 +75,10 @@ export const videoSanitizer = async (
     await ffmpegInstance.writeFile(inputName, new Uint8Array(inputArray));
 
     const sizeLimitBytes = maxSizeBytes ?? 0;
-    const shouldCompress = sizeLimitBytes > 0 && inputBuffer.byteLength > sizeLimitBytes;
-    const shouldProbeInput = shouldCompress || inputFormat === "mp4" || inputFormat === "mov";
+    const shouldCompress =
+      sizeLimitBytes > 0 && inputBuffer.byteLength > sizeLimitBytes;
+    const shouldProbeInput =
+      shouldCompress || inputFormat === "mp4" || inputFormat === "mov";
     const { durationSec: probedDurationSec, rotation } = shouldProbeInput
       ? await probeDurationAndRotation(ffmpegInstance, inputName)
       : { durationSec: 0, rotation: 0 };
@@ -82,7 +88,8 @@ export const videoSanitizer = async (
     if (shouldCompress) {
       const { videoCodec, audioCodec } = getVideoCodecForFormat(inputFormat);
       const duration =
-        typeof inputDurationSec === "number" && Number.isFinite(inputDurationSec)
+        typeof inputDurationSec === "number" &&
+        Number.isFinite(inputDurationSec)
           ? inputDurationSec
           : probedDurationSec;
 
@@ -157,7 +164,14 @@ export const videoSanitizer = async (
       }
 
       if (inputFormat === "webm") {
-        ffmpegArgs.push("-speed", "8", "-deadline", "realtime", "-threads", "4");
+        ffmpegArgs.push(
+          "-speed",
+          "8",
+          "-deadline",
+          "realtime",
+          "-threads",
+          "4",
+        );
       }
     } else {
       ffmpegArgs = ["-i", inputName, "-map_metadata", "-1", "-c", "copy"];
@@ -183,13 +197,15 @@ export const videoSanitizer = async (
     throw err instanceof Error ? err : new Error("Video sanitization failed.");
   } finally {
     try {
-      if (inputName && ffmpegInstance) await ffmpegInstance.deleteFile(inputName);
+      if (inputName && ffmpegInstance)
+        await ffmpegInstance.deleteFile(inputName);
     } catch {
       // ignore cleanup failures
     }
 
     try {
-      if (outputFilename && ffmpegInstance) await ffmpegInstance.deleteFile(outputFilename);
+      if (outputFilename && ffmpegInstance)
+        await ffmpegInstance.deleteFile(outputFilename);
     } catch {
       // ignore cleanup failures
     }

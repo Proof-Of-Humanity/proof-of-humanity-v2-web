@@ -1,0 +1,9 @@
+.next/
+.yarn/
+build/
+coverage/
+node_modules/
+output/
+public/ffmpeg/
+src/generated/graphql.ts
+yarn.lock

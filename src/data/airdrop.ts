@@ -11,51 +11,57 @@ export interface ProcessedAirdropData {
   amount: bigint;
 }
 
-export async function getProcessedAirdropData(address: Address, chainId: SupportedChainId): Promise<ProcessedAirdropData> {
+export async function getProcessedAirdropData(
+  address: Address,
+  chainId: SupportedChainId,
+): Promise<ProcessedAirdropData> {
   if (!address) {
     throw new Error("Address is required");
   }
 
-    const now = Math.ceil(Date.now() / 1000);
-    const normalizedAddress = address.toLowerCase() as Address;
+  const now = Math.ceil(Date.now() / 1000);
+  const normalizedAddress = address.toLowerCase() as Address;
 
-    const humanityQuery = await sdk[chainId].HumanityIdByClaimer({ address: normalizedAddress, now });
+  const humanityQuery = await sdk[chainId].HumanityIdByClaimer({
+    address: normalizedAddress,
+    now,
+  });
 
-    if (!humanityQuery) {
-      throw new Error("Failed to fetch data from subgraph");
-    }
+  if (!humanityQuery) {
+    throw new Error("Failed to fetch data from subgraph");
+  }
 
-    const localResult = humanityQuery as HumanityIdByClaimerQuery;
-    const localHumanityId = localResult?.registrations?.[0]?.humanity?.id;
-    const crossChainId = localResult?.crossChainRegistrations?.[0]?.id;
-    const humanityId = localHumanityId || crossChainId || null;
+  const localResult = humanityQuery as HumanityIdByClaimerQuery;
+  const localHumanityId = localResult?.registrations?.[0]?.humanity?.id;
+  const crossChainId = localResult?.crossChainRegistrations?.[0]?.id;
+  const humanityId = localHumanityId || crossChainId || null;
 
-    if (!humanityId) {
-      return {
-        walletAddress: address,
-        humanityId: null,
-        claimStatus: "not_eligible",
-        amount: 0n,
-      };
-    }
+  if (!humanityId) {
+    return {
+      walletAddress: address,
+      humanityId: null,
+      claimStatus: "not_eligible",
+      amount: 0n,
+    };
+  }
 
-    const rewardClaimResult = await sdk[chainId].RewardClaim({ id: humanityId });
-    
-    if (rewardClaimResult?.rewardClaim) {
-      return {
-        walletAddress: address,
-        humanityId,
-        claimStatus: "claimed",
-        amount: BigInt(rewardClaimResult.rewardClaim.amount),
-      };
-    }
+  const rewardClaimResult = await sdk[chainId].RewardClaim({ id: humanityId });
 
+  if (rewardClaimResult?.rewardClaim) {
     return {
       walletAddress: address,
       humanityId,
-      claimStatus: "eligible",
-      amount: 0n,
+      claimStatus: "claimed",
+      amount: BigInt(rewardClaimResult.rewardClaim.amount),
     };
+  }
+
+  return {
+    walletAddress: address,
+    humanityId,
+    claimStatus: "eligible",
+    amount: 0n,
+  };
 }
 
 export async function getAirdropContractData(chainId: SupportedChainId) {
@@ -86,7 +92,11 @@ export async function getAirdropContractData(chainId: SupportedChainId) {
   };
 }
 
-export async function getCurrentStake(address: Address, chainId: SupportedChainId, subcourtId: bigint) {
+export async function getCurrentStake(
+  address: Address,
+  chainId: SupportedChainId,
+  subcourtId: bigint,
+) {
   const liquidInfo = getContractInfo("KlerosLiquid", chainId);
   if (!liquidInfo.address) {
     throw new Error(`KlerosLiquid not deployed on chain ${chainId}`);

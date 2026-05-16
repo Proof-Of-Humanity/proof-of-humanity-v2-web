@@ -10,14 +10,14 @@ export default function AirdropBanner() {
   if (!isVisible) return null;
 
   return (
-    <div className="gradient w-full relative border-b-2 border-white/30">
-      <div className="flex items-center py-3 px-4 sm:px-6">
+    <div className="gradient relative w-full border-b-2 border-white/30">
+      <div className="flex items-center px-4 py-3 sm:px-6">
         <Link
           href="/app/pnk-airdrop"
-          className="flex-1 min-w-0 cursor-pointer hover:opacity-90 transition-opacity"
+          className="min-w-0 flex-1 cursor-pointer transition-opacity hover:opacity-90"
         >
-          <div className="flex items-center justify-center gap-2 text-white text-center pr-2">
-            <div className="flex-shrink-0 hidden sm:block">
+          <div className="flex items-center justify-center gap-2 pr-2 text-center text-white">
+            <div className="hidden flex-shrink-0 sm:block">
               <Image
                 src="/logo/poh-white.svg"
                 alt="PoH"
@@ -29,7 +29,9 @@ export default function AirdropBanner() {
               <span className="font-bold">Airdrop for early adopters:</span>
               <span>Register yourself as human,</span>
               <span className="font-bold">claim 1,200 $PNK</span>
-              <span>and stake to double your allocation! First 10,000 humans only.</span>
+              <span>
+                and stake to double your allocation! First 10,000 humans only.
+              </span>
             </div>
           </div>
         </Link>
@@ -38,7 +40,7 @@ export default function AirdropBanner() {
             e.preventDefault();
             setIsVisible(false);
           }}
-          className="flex-shrink-0 p-2 ml-1 text-white hover:opacity-70 transition-opacity"
+          className="ml-1 flex-shrink-0 p-2 text-white transition-opacity hover:opacity-70"
           aria-label="Close banner"
         >
           <svg
@@ -58,4 +60,3 @@ export default function AirdropBanner() {
     </div>
   );
 }
-

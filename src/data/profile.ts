@@ -26,7 +26,8 @@ export const getProfileData = cache(async (pohId: Hash) => {
     data[legacyChain.id].humanity!.requests = data[
       legacyChain.id
     ].humanity!.requests.filter(
-      (request) => !(request.status.id === "vouching" && Number(request.index) <= -1),
+      (request) =>
+        !(request.status.id === "vouching" && Number(request.index) <= -1),
     );
   }
 

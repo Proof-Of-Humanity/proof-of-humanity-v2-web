@@ -16,7 +16,13 @@ import { prettifyId } from "utils/identifier";
 import { ipfs } from "utils/ipfs";
 import { formatEth } from "utils/misc";
 import { Abi, Hash, formatEther } from "viem";
-import { useAccount, useBalance, useChainId, useReadContract, useSwitchChain } from "wagmi";
+import {
+  useAccount,
+  useBalance,
+  useChainId,
+  useReadContract,
+  useSwitchChain,
+} from "wagmi";
 import { MediaState, SubmissionState } from "./Form";
 
 interface ReviewProps {
@@ -79,38 +85,46 @@ function Review({
 
   return (
     <>
-      <span className="my-4 flex w-full flex-col text-2xl font-bold text-primaryText">
+      <span className="text-primaryText my-4 flex w-full flex-col text-2xl font-bold">
         Finalize your registration
         <div className="divider mt-4 w-2/3" />
       </span>
 
       {/* Warning callout */}
-      <div className="mb-6 flex justify-center rounded-lg border border-orange bg-lightOrange px-4 py-4 text-center transition-colors duration-200 hover:bg-[#fbe9e9]">
+      <div className="border-orange bg-lightOrange mb-6 flex justify-center rounded-lg border px-4 py-4 text-center transition-colors duration-200 hover:bg-[#fbe9e9]">
         <div className="flex max-w-2xl flex-col items-center">
-          <InfoIcon className="h-7 w-7 stroke-current stroke-2 text-status-rejected" />
+          <InfoIcon className="text-status-rejected h-7 w-7 stroke-current stroke-2" />
           <div className="mt-2">
-            <p className="font-bold text-primaryText">Required before you continue</p>
-            <p className="mt-1 text-sm text-secondaryText">
-              Review this carefully — incorrect submissions can be challenged and{" "}
-              <span className="font-semibold text-red-500">may lose deposit</span>.
+            <p className="text-primaryText font-bold">
+              Required before you continue
+            </p>
+            <p className="text-secondaryText mt-1 text-sm">
+              Review this carefully — incorrect submissions can be challenged
+              and{" "}
+              <span className="font-semibold text-red-500">
+                may lose deposit
+              </span>
+              .
             </p>
           </div>
         </div>
       </div>
 
       {/* Registration Policy card */}
-      <div className="group mb-6 flex flex-col items-center gap-4 rounded-lg border border-stroke bg-whiteBackground px-4 py-4 text-center transition-colors duration-200 hover:bg-primaryBackground sm:flex-row sm:justify-between sm:py-3 sm:text-left">
+      <div className="border-stroke bg-whiteBackground hover:bg-primaryBackground group mb-6 flex flex-col items-center gap-4 rounded-lg border px-4 py-4 text-center transition-colors duration-200 sm:flex-row sm:justify-between sm:py-3 sm:text-left">
         <div className="group/policy-icon flex items-center gap-3">
-          <DocumentIcon className="h-6 w-6 fill-orange text-orange transition-transform duration-200 group-hover/policy-icon:scale-105" />
+          <DocumentIcon className="fill-orange text-orange h-6 w-6 transition-transform duration-200 group-hover/policy-icon:scale-105" />
           <div>
-            <p className="font-semibold text-primaryText">Registration Policy</p>
-            <p className="text-xs text-secondaryText">
+            <p className="text-primaryText font-semibold">
+              Registration Policy
+            </p>
+            <p className="text-secondaryText text-xs">
               Updated <TimeAgo time={arbitrationInfo.updateTime} />
             </p>
           </div>
         </div>
         <ExternalLink
-          className="group/policy-link flex items-center gap-1 text-sm font-medium text-orange transition-colors duration-200 hover:text-orange/80"
+          className="group/policy-link text-orange hover:text-orange/80 flex items-center gap-1 text-sm font-medium transition-colors duration-200"
           href={ipfs(arbitrationInfo.policy)}
         >
           <span>Open the full policy</span>
@@ -119,37 +133,69 @@ function Review({
       </div>
 
       {/* Checklist */}
-      <div className="mb-6 flex flex-col items-center text-center text-sm text-secondaryText">
+      <div className="text-secondaryText mb-6 flex flex-col items-center text-center text-sm">
         <p className="max-w-2xl">
-          Before proceeding, make sure your submission follows the Registration Policy.
+          Before proceeding, make sure your submission follows the Registration
+          Policy.
         </p>
-        <p className="mt-3 font-bold text-primaryText">Check these 3 things:</p>
+        <p className="text-primaryText mt-3 font-bold">Check these 3 things:</p>
         <ul className="mt-3 flex w-full max-w-2xl flex-col items-start gap-3 px-2 text-left sm:px-0">
           <li className="flex items-start gap-2">
-            <svg className="mt-0.5 h-5 w-5 shrink-0 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            <svg
+              className="mt-0.5 h-5 w-5 shrink-0 text-green-500"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={2}
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+              />
             </svg>
             <span className="text-primaryText">
-              Photo and video are <strong>clear, well-lit, forward-facing</strong>, and
-              not mirrored or blurred.
+              Photo and video are{" "}
+              <strong>clear, well-lit, forward-facing</strong>, and not mirrored
+              or blurred.
             </span>
           </li>
           <li className="flex items-start gap-2">
-            <svg className="mt-0.5 h-5 w-5 shrink-0 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            <svg
+              className="mt-0.5 h-5 w-5 shrink-0 text-green-500"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={2}
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+              />
             </svg>
             <span className="text-primaryText">
-              Your facial features are <strong>fully visible</strong> — no coverings or
-              glare
+              Your facial features are <strong>fully visible</strong> — no
+              coverings or glare
             </span>
           </li>
           <li className="flex items-start gap-2">
-            <svg className="mt-0.5 h-5 w-5 shrink-0 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            <svg
+              className="mt-0.5 h-5 w-5 shrink-0 text-green-500"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={2}
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+              />
             </svg>
             <span className="text-primaryText">
-              Your video shows the <strong>correct wallet address</strong> clearly, and
-              you say the <strong>exact required phrase</strong>
+              Your video shows the <strong>correct wallet address</strong>{" "}
+              clearly, and you say the <strong>exact required phrase</strong>
             </span>
           </li>
         </ul>
@@ -194,7 +240,7 @@ function Review({
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
             <span>Initial deposit</span>
             {balance && (
-              <span className="text-primaryText normal-case text-sm sm:text-base">
+              <span className="text-primaryText text-sm normal-case sm:text-base">
                 Your balance:{" "}
                 <strong>
                   {formatEth(balance.value)} {nativeCurrency.symbol}
@@ -203,17 +249,18 @@ function Review({
             )}
             <ExternalLink
               href={jumperUrl}
-              className="text-purple-600 cursor-pointer py-1 text-sm font-semibold normal-case transition-all hover:text-purple-500 hover:underline sm:ml-auto"
+              className="cursor-pointer py-1 text-sm font-semibold normal-case text-purple-600 transition-all hover:text-purple-500 hover:underline sm:ml-auto"
             >
-              Need {currentChain.nativeCurrency.symbol}? bridge to {currentChain.name} →
+              Need {currentChain.nativeCurrency.symbol}? bridge to{" "}
+              {currentChain.name} →
             </ExternalLink>
           </div>
-
         </Label>
         <div className="txt mb-16 flex flex-col">
           <div
-            className={`flex flex-col gap-3 transition-opacity sm:flex-row sm:flex-wrap sm:items-center sm:gap-2 ${submitForFree ? "opacity-50" : ""
-              }`}
+            className={`flex flex-col gap-3 transition-opacity sm:flex-row sm:flex-wrap sm:items-center sm:gap-2 ${
+              submitForFree ? "opacity-50" : ""
+            }`}
           >
             <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
               <div className="w-full sm:w-48">
@@ -232,12 +279,15 @@ function Review({
                 <span>of</span>
                 <span
                   onClick={() =>
-                    !submitForFree && totalCost && selfFunded$.set(formatEth(totalCost))
+                    !submitForFree &&
+                    totalCost &&
+                    selfFunded$.set(formatEth(totalCost))
                   }
-                  className={`font-semibold underline underline-offset-2 ${submitForFree
+                  className={`font-semibold underline underline-offset-2 ${
+                    submitForFree
                       ? "cursor-not-allowed text-slate-400"
                       : "text-orange cursor-pointer"
-                    }`}
+                  }`}
                 >
                   {totalCostLabel}
                 </span>
@@ -251,34 +301,41 @@ function Review({
                   className="inline-flex cursor-pointer items-center py-1 text-sm font-semibold text-purple-600 transition-all hover:text-purple-500 hover:underline"
                   onClick={() => switchChain?.({ chainId: foreignChainId })}
                 >
-                  Switch to {foreignChain.name} for a smaller deposit ({formatEther(foreignCost)} {foreignChain.nativeCurrency.symbol})
+                  Switch to {foreignChain.name} for a smaller deposit (
+                  {formatEther(foreignCost)}{" "}
+                  {foreignChain.nativeCurrency.symbol})
                 </span>
               </>
             )}
           </div>
 
-          <label className="mt-4 flex cursor-pointer items-start gap-3 text-primaryText sm:items-center">
+          <label className="text-primaryText mt-4 flex cursor-pointer items-start gap-3 sm:items-center">
             <input
               type="checkbox"
               checked={submitForFree}
               onChange={(event) => {
                 const enabled = event.target.checked;
                 submitForFree$.set(enabled);
-                selfFunded$.set(enabled ? 0 : (totalCost ? formatEth(totalCost) : 0));
+                selfFunded$.set(
+                  enabled ? 0 : totalCost ? formatEth(totalCost) : 0,
+                );
               }}
               className="sr-only"
             />
             <span
-              className={`relative mt-0.5 h-7 w-12 shrink-0 rounded-full transition-colors sm:mt-0 ${submitForFree ? "bg-orange" : "bg-slate-200"
-                }`}
+              className={`relative mt-0.5 h-7 w-12 shrink-0 rounded-full transition-colors sm:mt-0 ${
+                submitForFree ? "bg-orange" : "bg-slate-200"
+              }`}
             >
               <span
-                className={`absolute left-1 top-1 h-5 w-5 rounded-full bg-white transition-transform ${submitForFree ? "translate-x-5" : ""
-                  }`}
+                className={`absolute left-1 top-1 h-5 w-5 rounded-full bg-white transition-transform ${
+                  submitForFree ? "translate-x-5" : ""
+                }`}
               />
             </span>
             <span className="min-w-0 flex-1 pt-0.5 text-sm font-medium leading-snug sm:flex-none sm:pt-0 sm:text-base sm:leading-normal">
-              Submit for free — let PoH supporters cover your deposit (you only pay gas)
+              Submit for free — let PoH supporters cover your deposit (you only
+              pay gas)
             </span>
           </label>
 

@@ -6,7 +6,10 @@ export {
   readVideoMetadata,
 } from "./media.video.probe";
 export { videoSanitizer } from "./media.video.sanitize";
-export type { VideoFrameTimingMetrics, VideoProbeMetrics } from "./media.video.probe";
+export type {
+  VideoFrameTimingMetrics,
+  VideoProbeMetrics,
+} from "./media.video.probe";
 export { MEDIA_ERROR_CODES, MEDIA_MESSAGES } from "./media.messages";
 export { processVideoInput, warmVideoPipeline } from "./media.video.pipeline";
 export type {
@@ -17,7 +20,6 @@ export type {
 } from "./media.video.pipeline";
 export {
   getUploadedTypeLabel,
-  IMAGE_ALLOWED_MIME_TYPES,
   IMAGE_UPLOAD_EXTENSIONS,
   MEDIA_UPLOAD_ACCEPT,
   normalizeVideoMimeType,
@@ -26,8 +28,8 @@ export {
   VIDEO_UPLOAD_EXTENSIONS,
   VIDEO_LIMITS,
   validatePhotoDimensions,
+  // validatePhotoUpload,
   validatePhotoSize,
-  validatePhotoUpload,
   validateVideoDuration,
   validateVideoQuality,
   validateVideoResolution,

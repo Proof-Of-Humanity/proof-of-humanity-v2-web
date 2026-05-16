@@ -67,7 +67,9 @@ const markLatestActiveTimelineItem = (items: TimelineItem[]) => {
     (itemA, itemB) => itemB.timestamp - itemA.timestamp,
   );
   const latestActiveIndex =
-    sortedItems.length > 0 && ACTIVE_TIMELINE_KINDS.has(sortedItems[0].kind)
+    sortedItems.length > 0 &&
+    sortedItems[0] &&
+    ACTIVE_TIMELINE_KINDS.has(sortedItems[0].kind)
       ? 0
       : -1;
 
