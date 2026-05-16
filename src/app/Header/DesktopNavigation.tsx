@@ -53,13 +53,12 @@ const DesktopNavigation = ({
       >
         Policy
       </Link>
-      <Link 
-        href="/app" 
+      <Link
+        href="/app"
         className={`${pathname.startsWith("/app") ? "font-bold" : ""}`}
       >
         Rewards
       </Link>
-     
     </div>
   );
 };

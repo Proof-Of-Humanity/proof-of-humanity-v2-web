@@ -17,9 +17,12 @@ const CONTRACTS = {
 } as const;
 
 const API_ENDPOINTS = {
-  KLEROSBOARD_GNOSIS: "https://api.studio.thegraph.com/query/66145/klerosboard-gnosis/version/latest",
-  KLEROSBOARD_MAINNET: "https://api.studio.thegraph.com/query/66145/klerosboard-mainnet/version/latest",
-  CLAIM_MODAL_RAW_URL: "https://raw.githubusercontent.com/kleros/court/master/src/components/claim-modal.js",
+  KLEROSBOARD_GNOSIS:
+    "https://api.studio.thegraph.com/query/66145/klerosboard-gnosis/version/latest",
+  KLEROSBOARD_MAINNET:
+    "https://api.studio.thegraph.com/query/66145/klerosboard-mainnet/version/latest",
+  CLAIM_MODAL_RAW_URL:
+    "https://raw.githubusercontent.com/kleros/court/master/src/components/claim-modal.js",
   IPFS_CDN_BASE: "https://cdn.kleros.link/ipfs",
 } as const;
 
@@ -58,53 +61,59 @@ interface SnapshotData {
   };
 }
 
-
 export const getHumanitySubCourtId = (chainId: SupportedChainId): bigint => {
-  return chainId === 100 ? COURT_IDS.GNOSIS_HUMANITY_SUBCOURT_ID : COURT_IDS.CHIADO_HUMANITY_SUBCOURT_ID;
+  return chainId === 100
+    ? COURT_IDS.GNOSIS_HUMANITY_SUBCOURT_ID
+    : COURT_IDS.CHIADO_HUMANITY_SUBCOURT_ID;
 };
 
 /**
  * Gets the court fee for jurors in the humanity subcourt for a given chain
  */
-export const getHumanityCourtFeeForJuror = cache(async (chainId: SupportedChainId): Promise<bigint> => {
+export const getHumanityCourtFeeForJuror = cache(
+  async (chainId: SupportedChainId): Promise<bigint> => {
     const liquidInfo = getContractInfo("KlerosLiquid", chainId);
     if (!liquidInfo.address) {
       throw new Error(`KlerosLiquid not deployed on chain ${chainId}`);
     }
-  
+
     const chain = idToChain(chainId);
     if (!chain) {
       throw new Error(`Unsupported chain ${chainId}`);
     }
-  
+
     const publicClient = createPublicClient({
       chain,
       transport: http(getChainRpc(chain.id)),
     });
-    const courtId = chainId === 100 
-      ? COURT_IDS.GNOSIS_HUMANITY_SUBCOURT_ID 
-      : COURT_IDS.CHIADO_HUMANITY_SUBCOURT_ID;
+    const courtId =
+      chainId === 100
+        ? COURT_IDS.GNOSIS_HUMANITY_SUBCOURT_ID
+        : COURT_IDS.CHIADO_HUMANITY_SUBCOURT_ID;
     const court = await publicClient.readContract({
       address: liquidInfo.address as `0x${string}`,
       abi: liquidInfo.abi,
       functionName: "courts",
       args: [courtId],
     });
-    
-    return court[4];
-  }); 
 
+    return court[4];
+  },
+);
 
 /**
  * Calculates the KIP-66 target based on elapsed months since start date
  */
 function getKip66Target(): number {
   const now = new Date();
-  let months = (now.getFullYear() - CONFIG.KIP66_START_DATE.getFullYear()) * 12 
-    - CONFIG.KIP66_START_DATE.getMonth() + now.getMonth();
+  let months =
+    (now.getFullYear() - CONFIG.KIP66_START_DATE.getFullYear()) * 12 -
+    CONFIG.KIP66_START_DATE.getMonth() +
+    now.getMonth();
   months = Math.max(0, months);
-  
-  const target = CONFIG.KIP66_INITIAL_TARGET + months * CONFIG.KIP66_MONTHLY_INCREMENT;
+
+  const target =
+    CONFIG.KIP66_INITIAL_TARGET + months * CONFIG.KIP66_MONTHLY_INCREMENT;
   return Math.min(target, CONFIG.KIP66_MAX_TARGET);
 }
 
@@ -114,11 +123,12 @@ function getKip66Target(): number {
 function getPreviousMonthAndYear(date = new Date()): MonthYear {
   const currentMonth = date.getMonth();
   const currentYear = date.getFullYear();
-  
-  const { month, year } = currentMonth === 0 
-    ? { month: 12, year: currentYear - 1 }
-    : { month: currentMonth, year: currentYear };
-  
+
+  const { month, year } =
+    currentMonth === 0
+      ? { month: 12, year: currentYear - 1 }
+      : { month: currentMonth, year: currentYear };
+
   return {
     month: month < 10 ? `0${month}` : month.toString(),
     year: year.toString(),
@@ -135,23 +145,28 @@ async function getLastMonthReward(): Promise<number> {
 
   const buildUrls = (m: string, y: string): string[] => {
     const reg = new RegExp(
-      `"(?<cid>[a-zA-Z0-9]*)/(?<file>(?:snapshot|xdai-snapshot)-${y}-${m}\\.json)"`, 
-      "g"
+      `"(?<cid>[a-zA-Z0-9]*)/(?<file>(?:snapshot|xdai-snapshot)-${y}-${m}\\.json)"`,
+      "g",
     );
     const matches = Array.from(source.matchAll(reg));
-    return matches.map((r) => `${API_ENDPOINTS.IPFS_CDN_BASE}/${r.groups?.cid}/${r.groups?.file}`);
+    return matches.map(
+      (r) =>
+        `${API_ENDPOINTS.IPFS_CDN_BASE}/${r.groups?.cid}/${r.groups?.file}`,
+    );
   };
 
   let urls = buildUrls(month, year);
   if (urls.length === 0) {
-    const prev = getPreviousMonthAndYear(new Date(Number(year), Number(month) - 1, 1));
+    const prev = getPreviousMonthAndYear(
+      new Date(Number(year), Number(month) - 1, 1),
+    );
     urls = buildUrls(prev.month, prev.year);
   }
 
   let lastMonthReward = 0n;
   for (const url of urls) {
     try {
-      const json = await (await fetch(url)).json() as SnapshotData;
+      const json = (await (await fetch(url)).json()) as SnapshotData;
       const hex = json?.totalClaimable?.hex;
       if (hex) {
         lastMonthReward += BigInt(hex);
@@ -160,7 +175,7 @@ async function getLastMonthReward(): Promise<number> {
       continue;
     }
   }
-  
+
   return Number(lastMonthReward) / CONFIG.TOKEN_DECIMALS;
 }
 
@@ -175,9 +190,9 @@ async function getTotalStakedOnGnosis(): Promise<number> {
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ query: "{ klerosCounters { tokenStaked } }" }),
     });
-    const data = await res.json() as KlerosGraphResponse;
+    const data = (await res.json()) as KlerosGraphResponse;
     const weiStr = data?.data?.klerosCounters?.[0]?.tokenStaked;
-    
+
     if (typeof weiStr === "string") {
       return Number(BigInt(weiStr)) / CONFIG.TOKEN_DECIMALS;
     }
@@ -186,16 +201,21 @@ async function getTotalStakedOnGnosis(): Promise<number> {
   }
 
   // Fallback to snapshot data
-  const claimModalSrc = await (await fetch(API_ENDPOINTS.CLAIM_MODAL_RAW_URL)).text();
-  
+  const claimModalSrc = await (
+    await fetch(API_ENDPOINTS.CLAIM_MODAL_RAW_URL)
+  ).text();
+
   const tryMonth = async (m: string, y: string): Promise<number | null> => {
-    const reg = new RegExp(`"(?<cid>[a-zA-Z0-9]*)/xdai-snapshot-${y}-${m}\\.json"`, "g");
+    const reg = new RegExp(
+      `"(?<cid>[a-zA-Z0-9]*)/xdai-snapshot-${y}-${m}\\.json"`,
+      "g",
+    );
     const matches = Array.from(claimModalSrc.matchAll(reg));
-    
+
     for (const match of matches) {
       const url = `${API_ENDPOINTS.IPFS_CDN_BASE}/${match.groups?.cid}/xdai-snapshot-${y}-${m}.json`;
       try {
-        const json = await (await fetch(url)).json() as SnapshotData;
+        const json = (await (await fetch(url)).json()) as SnapshotData;
         const hex = json?.averageTotalStaked?.hex;
         if (hex) {
           return Number(BigInt(hex)) / CONFIG.TOKEN_DECIMALS;
@@ -212,7 +232,9 @@ async function getTotalStakedOnGnosis(): Promise<number> {
   let staked = await tryMonth(month, year);
   if (staked !== null) return staked;
 
-  const prev = getPreviousMonthAndYear(new Date(Number(year), Number(month) - 1, 1));
+  const prev = getPreviousMonthAndYear(
+    new Date(Number(year), Number(month) - 1, 1),
+  );
   staked = await tryMonth(prev.month, prev.year);
   if (staked !== null) return staked;
 
@@ -230,9 +252,9 @@ async function getTotalStakedOnMainnet(): Promise<number> {
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ query: "{ klerosCounters { tokenStaked } }" }),
     });
-    const data = await res.json() as KlerosGraphResponse;
+    const data = (await res.json()) as KlerosGraphResponse;
     const weiStr = data?.data?.klerosCounters?.[0]?.tokenStaked;
-    
+
     if (typeof weiStr === "string") {
       return Number(BigInt(weiStr)) / CONFIG.TOKEN_DECIMALS;
     }
@@ -241,16 +263,21 @@ async function getTotalStakedOnMainnet(): Promise<number> {
   }
 
   // Fallback to snapshot data
-  const claimModalSrc = await (await fetch(API_ENDPOINTS.CLAIM_MODAL_RAW_URL)).text();
+  const claimModalSrc = await (
+    await fetch(API_ENDPOINTS.CLAIM_MODAL_RAW_URL)
+  ).text();
 
   const tryMonth = async (m: string, y: string): Promise<number | null> => {
-    const reg = new RegExp(`"(?<cid>[a-zA-Z0-9]*)/snapshot-${y}-${m}\\.json"`, "g");
+    const reg = new RegExp(
+      `"(?<cid>[a-zA-Z0-9]*)/snapshot-${y}-${m}\\.json"`,
+      "g",
+    );
     const matches = Array.from(claimModalSrc.matchAll(reg));
-    
+
     for (const match of matches) {
       const url = `${API_ENDPOINTS.IPFS_CDN_BASE}/${match.groups?.cid}/snapshot-${y}-${m}.json`;
       try {
-        const json = await (await fetch(url)).json() as SnapshotData;
+        const json = (await (await fetch(url)).json()) as SnapshotData;
         const hex = json?.averageTotalStaked?.hex;
         if (hex) {
           return Number(BigInt(hex)) / CONFIG.TOKEN_DECIMALS;
@@ -267,7 +294,9 @@ async function getTotalStakedOnMainnet(): Promise<number> {
   let staked = await tryMonth(month, year);
   if (staked !== null) return staked;
 
-  const prev = getPreviousMonthAndYear(new Date(Number(year), Number(month) - 1, 1));
+  const prev = getPreviousMonthAndYear(
+    new Date(Number(year), Number(month) - 1, 1),
+  );
   staked = await tryMonth(prev.month, prev.year);
   if (staked !== null) return staked;
 
@@ -310,16 +339,24 @@ async function getTotalPnkSupply(): Promise<number> {
  * @returns The APY as a percentage
  */
 export async function computeGnosisAPY(): Promise<number> {
-  const [totalSupply, totalStakedAllChains, lastMonthReward, gnosisStaked] = await Promise.all([
-    getTotalPnkSupply(),
-    getTotalStakedAllChains(),
-    getLastMonthReward(),
-    getTotalStakedOnGnosis(),
-  ]);
+  const [totalSupply, totalStakedAllChains, lastMonthReward, gnosisStaked] =
+    await Promise.all([
+      getTotalPnkSupply(),
+      getTotalStakedAllChains(),
+      getLastMonthReward(),
+      getTotalStakedOnGnosis(),
+    ]);
 
   const target = getKip66Target();
   const currentStakedRate = totalStakedAllChains / totalSupply;
-  const chainReward = CONFIG.GNOSIS_REWARD_SPLIT * lastMonthReward * (1 + target - currentStakedRate);
-  
-  return (chainReward / gnosisStaked) * CONFIG.MONTHS_PER_YEAR * CONFIG.PERCENTAGE_MULTIPLIER;
+  const chainReward =
+    CONFIG.GNOSIS_REWARD_SPLIT *
+    lastMonthReward *
+    (1 + target - currentStakedRate);
+
+  return (
+    (chainReward / gnosisStaked) *
+    CONFIG.MONTHS_PER_YEAR *
+    CONFIG.PERCENTAGE_MULTIPLIER
+  );
 }

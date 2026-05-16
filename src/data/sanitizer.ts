@@ -27,7 +27,7 @@ const hasRegistrationEvidence = async (
     if (evidences.length === 0) return [];
     if (evidences.length === 1) return [evidences[0].uri];
 
-    // first(home) chain evidence, last(foreign) chain evidence have higher 
+    // first(home) chain evidence, last(foreign) chain evidence have higher
     // likelihood of being the registration evidence
     const first = evidences[0].uri;
     const last = evidences[evidences.length - 1].uri;

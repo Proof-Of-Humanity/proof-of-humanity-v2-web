@@ -16,7 +16,11 @@ const normalizeAddress = (value: Address) => value.toLowerCase();
 
 export const buildAddVouchSuccessPatch = (
   onChainVouches: Address[],
-  offChainVouches: { voucher: Address; expiration: number; signature: `0x${string}` }[],
+  offChainVouches: {
+    voucher: Address;
+    expiration: number;
+    signature: `0x${string}`;
+  }[],
   validVouches: number,
   voucher: Address,
 ): RequestOptimisticOverlay | undefined => {
@@ -38,7 +42,11 @@ export const buildAddVouchSuccessPatch = (
 
 export const buildGaslessVouchSuccessPatch = (
   onChainVouches: Address[],
-  offChainVouches: { voucher: Address; expiration: number; signature: `0x${string}` }[],
+  offChainVouches: {
+    voucher: Address;
+    expiration: number;
+    signature: `0x${string}`;
+  }[],
   validVouches: number,
   voucher: { voucher: Address; expiration: number; signature: `0x${string}` },
 ): RequestOptimisticOverlay | undefined => {
@@ -83,7 +91,7 @@ export default function Vouch({
   const userChainId = useChainId();
   const [isOpen, setIsOpen] = useState(false);
   const isReconciling = pendingAction !== null;
-  const [prepare, addVouch , status] = usePoHWrite(
+  const [prepare, addVouch, status] = usePoHWrite(
     "addVouch",
     useMemo(
       () => ({
@@ -123,8 +131,7 @@ export default function Vouch({
   });
 
   const isOnchainLoading =
-  status.prepare === "pending" ||
-  status.write === "pending";
+    status.prepare === "pending" || status.write === "pending";
 
   const expiration = useMemo(
     () => Math.floor(Date.now() / 1000) + 60 * 60 * 24 * 30 * 6,
@@ -181,14 +188,15 @@ export default function Vouch({
       pohId,
     ],
   );
-  const { signTypedData , isPending } = useSignTypedData(signTypedDataConfig);
+  const { signTypedData, isPending } = useSignTypedData(signTypedDataConfig);
 
   const gaslessVouch = () => {
     signTypedData({
       domain: {
         name: "Proof of Humanity",
         chainId: chain.id,
-        verifyingContract: getContractInfo("ProofOfHumanity", chain.id).address as `0x${string}`,
+        verifyingContract: getContractInfo("ProofOfHumanity", chain.id)
+          .address as `0x${string}`,
       },
       types: {
         IsHumanVoucher: [
@@ -206,7 +214,9 @@ export default function Vouch({
     });
   };
 
-  const isRegistrationValid = !me?.expirationTime ? false : me.expirationTime > Date.now() / 1000;
+  const isRegistrationValid = !me?.expirationTime
+    ? false
+    : me.expirationTime > Date.now() / 1000;
 
   return (
     web3Loaded &&
@@ -219,8 +229,18 @@ export default function Vouch({
           onClick={() => setIsOpen(true)}
           label="Vouch"
           className="mb-2 w-auto"
-          disabled={externalDisabled || isReconciling || userChainId !== chain.id}
-          tooltip={externalDisabled ? externalTooltip : isReconciling ? "Syncing" : userChainId !== chain.id ? `Switch your chain above to ${idToChain(chain.id)?.name || 'the correct chain'}` : undefined}
+          disabled={
+            externalDisabled || isReconciling || userChainId !== chain.id
+          }
+          tooltip={
+            externalDisabled
+              ? externalTooltip
+              : isReconciling
+                ? "Syncing"
+                : userChainId !== chain.id
+                  ? `Switch your chain above to ${idToChain(chain.id)?.name || "the correct chain"}`
+                  : undefined
+          }
         />
         <Modal
           formal
@@ -230,15 +250,15 @@ export default function Vouch({
           canClose={!isOnchainLoading}
         >
           <div className="flex flex-col items-center p-4">
-            <span className="txt m-2 text-primaryText">
+            <span className="txt text-primaryText m-2">
               Make sure the person exists and only vouch for people you have
               physically encountered. Note that in case a profile is removed for
               (Sybil attack) or (Identity theft), all people who had vouched for
-              it get removed as well. Profiles that do not follow the Policy risk
-              being challenged and removed. Make sure you read and understand the
-              Policy before proceeding. Also take into account that although a
-              gasless vouch is possible, it cannot be removed. Gasless vouches
-              expire after one year.
+              it get removed as well. Profiles that do not follow the Policy
+              risk being challenged and removed. Make sure you read and
+              understand the Policy before proceeding. Also take into account
+              that although a gasless vouch is possible, it cannot be removed.
+              Gasless vouches expire after one year.
             </span>
             <ActionButton
               onClick={gaslessVouch}
@@ -252,7 +272,7 @@ export default function Vouch({
             <span
               className={`text-orange mt-4 text-sm underline underline-offset-2 ${
                 isOnchainLoading
-                  ? "opacity-50 cursor-not-allowed pointer-events-none"
+                  ? "pointer-events-none cursor-not-allowed opacity-50"
                   : "cursor-pointer"
               }`}
               onClick={() => {

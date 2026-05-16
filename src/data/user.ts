@@ -38,7 +38,7 @@ export const getMyData = async (account: string) => {
   const homeChain = supportedChains.find((_, i) => {
     const registration = res[i]?.claimer?.registration;
     return !!registration && registration.expirationTime > Date.now() / 1000;
-  })
+  });
   const requestChain = supportedChains.find(
     (chain, i) =>
       res[i].claimer?.currentRequest &&

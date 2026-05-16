@@ -15,7 +15,9 @@ interface CirclesIntegrationProps {
   integration: Integration;
 }
 
-export default React.memo(function CirclesIntegration({ integration }: CirclesIntegrationProps) {
+export default React.memo(function CirclesIntegration({
+  integration,
+}: CirclesIntegrationProps) {
   const [openAccordionKey, setOpenAccordionKey] = useState<string | null>(null);
 
   const handleToggleAccordion = (key: string) => {
@@ -31,30 +33,30 @@ export default React.memo(function CirclesIntegration({ integration }: CirclesIn
     currentMintStep,
     pending,
     isLoadingCirclesData,
-    
+
     // Actions
     setWalletAddress,
     setCurrentCreateAccountStep,
     setCurrentMintStep,
     handleLinkAccount,
     handleRenewTrust,
-    getActionButtonProps
+    getActionButtonProps,
   } = useCirclesIntegration();
 
   return (
-    <div className="flex flex-col paper w-full md:w-10/12">
+    <div className="paper flex w-full flex-col md:w-10/12">
       <IntegrationHeader integration={integration} />
-      
-      <div className="flex flex-col paper justify-center items-center px-4 py-2 md:px-8 md:py-4 space-y-4">
-        <CirclesCreateAccountStep 
+
+      <div className="paper flex flex-col items-center justify-center space-y-4 px-4 py-2 md:px-8 md:py-4">
+        <CirclesCreateAccountStep
           steps={integration.firstInfoSlide || []}
           currentStep={currentCreateAccountStep}
           setCurrentStep={setCurrentCreateAccountStep}
-          isOpen={openAccordionKey === 'createAccount'}
-          onToggle={() => handleToggleAccordion('createAccount')}
+          isOpen={openAccordionKey === "createAccount"}
+          onToggle={() => handleToggleAccordion("createAccount")}
         />
-        
-        <CirclesLinkAccountStep 
+
+        <CirclesLinkAccountStep
           linkStatus={linkStatus}
           walletAddress={walletAddress}
           onAddressChange={(e) => setWalletAddress(e.target.value)}
@@ -64,16 +66,16 @@ export default React.memo(function CirclesIntegration({ integration }: CirclesIn
           isError={isCirclesDataQueryError}
           getActionButtonProps={getActionButtonProps}
           pending={pending}
-          isOpen={openAccordionKey === 'linkAccount'}
-          onToggle={() => handleToggleAccordion('linkAccount')}
+          isOpen={openAccordionKey === "linkAccount"}
+          onToggle={() => handleToggleAccordion("linkAccount")}
         />
-        
-        <CirclesMintTokensStep 
+
+        <CirclesMintTokensStep
           steps={integration.secondInfoSlide || []}
           currentStep={currentMintStep}
           setCurrentStep={setCurrentMintStep}
-          isOpen={openAccordionKey === 'mintTokens'}
-          onToggle={() => handleToggleAccordion('mintTokens')}
+          isOpen={openAccordionKey === "mintTokens"}
+          onToggle={() => handleToggleAccordion("mintTokens")}
         />
       </div>
     </div>

@@ -24,6 +24,8 @@
     "eslint-plugin-prettier": "^5.2.1",
     "eslint-plugin-react": "^7.37.1",
     "events": "^3.3.0",
+    "husky": "9.1.7",
+    "lint-staged": "^17.0.5",
     "os-browserify": "^0.3.0",
     "path-browserify": "^1.0.1",
     "postcss": "^8.4.13",
@@ -83,12 +85,21 @@
     "start": "next start",
     "gql": "DOTENV_CONFIG_PATH=.env.local graphql-codegen --config codegen.yml",
     "wagmi": "wagmi generate",
-    "tsc": "tsc --noEmit && next lint",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "typecheck": "tsc --noEmit",
+    "lint": "next lint",
+    "check": "npm run typecheck && npm run lint",
+    "prepare": "husky",
     "func": "netlify dev"
   },
   "packageManager": "yarn@1.22.22+sha1.ac34549e6aa8e7ead463a7407e1c7390f61a6610",
+  "engines": {
+    "node": "22.22.1",
+    "yarn": "1.22.22"
+  },
   "volta": {
-    "node": "18.20.5",
+    "node": "22.22.1",
     "yarn": "1.22.22"
   }
 }

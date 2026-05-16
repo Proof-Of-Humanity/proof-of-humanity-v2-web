@@ -1,25 +1,28 @@
-import { NextResponse } from 'next/server';
-import type { NextRequest } from 'next/server';
+import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
 
 export function middleware(request: NextRequest) {
   const response = NextResponse.next();
   const pathname = request.nextUrl.pathname;
 
-  const isClaimPage = pathname.includes('/claim');
-  const isFFmpegResource = pathname.startsWith('/ffmpeg/');
-  
+  const isClaimPage = pathname.includes("/claim");
+  const isFFmpegResource = pathname.startsWith("/ffmpeg/");
+
   if (isClaimPage || isFFmpegResource) {
-    response.headers.set('Cross-Origin-Embedder-Policy', 'require-corp');
-    response.headers.set('Cross-Origin-Opener-Policy', 'same-origin');
-    
+    response.headers.set("Cross-Origin-Embedder-Policy", "require-corp");
+    response.headers.set("Cross-Origin-Opener-Policy", "same-origin");
+
     if (isFFmpegResource) {
-      response.headers.set('Cross-Origin-Resource-Policy', 'same-origin');
-      response.headers.set('Cache-Control', 'public, max-age=31536000, immutable');
+      response.headers.set("Cross-Origin-Resource-Policy", "same-origin");
+      response.headers.set(
+        "Cache-Control",
+        "public, max-age=31536000, immutable",
+      );
     } else {
-      response.headers.set('Cross-Origin-Resource-Policy', 'cross-origin');
+      response.headers.set("Cross-Origin-Resource-Policy", "cross-origin");
     }
   } else {
-    response.headers.set('Cross-Origin-Opener-Policy', 'same-origin');
+    response.headers.set("Cross-Origin-Opener-Policy", "same-origin");
   }
 
   return response;
@@ -34,6 +37,6 @@ export const config = {
      * - image optimization
      * - webpack HMR
      */
-    '/((?!api|_next/static|_next/image|_next/webpack-hmr|favicon.ico).*)',
+    "/((?!api|_next/static|_next/image|_next/webpack-hmr|favicon.ico).*)",
   ],
 };

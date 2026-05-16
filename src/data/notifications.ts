@@ -26,7 +26,10 @@ export function buildDefaultSelector(): SettingsSelector {
   };
 }
 
-export function buildSubscribeSettings(email: string, fullName?: string): SettingsUpdate {
+export function buildSubscribeSettings(
+  email: string,
+  fullName?: string,
+): SettingsUpdate {
   const trimmed = email.trim();
   return {
     email: { S: trimmed },
@@ -61,6 +64,8 @@ export async function updateNotificationSettings(params: {
     body: JSON.stringify(body),
   });
   if (!response.ok) {
-    throw new Error(`Failed to update notification settings: ${response.status}`);
+    throw new Error(
+      `Failed to update notification settings: ${response.status}`,
+    );
   }
 }

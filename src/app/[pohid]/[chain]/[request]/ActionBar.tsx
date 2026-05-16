@@ -131,11 +131,15 @@ export default function ActionBar({
     const offChainMatch = effectiveOffChainVouches.some(
       (voucher) => voucher.voucher.toLowerCase() === lowerAddr,
     );
-    return { didIVouchFor: onChainMatch || offChainMatch, isVouchOnchain: onChainMatch };
+    return {
+      didIVouchFor: onChainMatch || offChainMatch,
+      isVouchOnchain: onChainMatch,
+    };
   }, [effectiveOnChainVouches, effectiveOffChainVouches, address]);
 
   const action = useMemo(() => {
-    if (effectiveStatus === "resolved" || effectiveStatus === "withdrawn") return ActionType.NONE;
+    if (effectiveStatus === "resolved" || effectiveStatus === "withdrawn")
+      return ActionType.NONE;
     if (index < 0 && index > -100) return ActionType.OLD_ACTIVE;
     if (effectiveStatus === "disputed") return ActionType.DISPUTED;
     if (effectiveStatus === "vouching") {
@@ -143,12 +147,13 @@ export default function ActionBar({
         return ActionType.FUND;
       if (effectiveValidVouches >= contractData.requiredNumberOfVouches)
         return ActionType.ADVANCE;
-      if (didIVouchFor && isVouchOnchain)
-        return ActionType.REMOVE_VOUCH;
+      if (didIVouchFor && isVouchOnchain) return ActionType.REMOVE_VOUCH;
       return ActionType.VOUCH;
     }
     if (effectiveStatus === "resolving")
-      return +effectiveLastStatusChange + +contractData.challengePeriodDuration < Date.now() / 1000
+      return +effectiveLastStatusChange +
+        +contractData.challengePeriodDuration <
+        Date.now() / 1000
         ? ActionType.EXECUTE
         : ActionType.CHALLENGE;
     return ActionType.NONE;
@@ -215,13 +220,16 @@ export default function ActionBar({
 
   const isAdvanceLoading =
     advanceStatus.write === "pending" ||
-    (advanceStatus.write === "success" && advanceStatus.transaction === "pending");
+    (advanceStatus.write === "success" &&
+      advanceStatus.transaction === "pending");
   const isExecuteLoading =
     executeStatus.write === "pending" ||
-    (executeStatus.write === "success" && executeStatus.transaction === "pending");
+    (executeStatus.write === "success" &&
+      executeStatus.transaction === "pending");
   const isWithdrawLoading =
     withdrawStatus.write === "pending" ||
-    (withdrawStatus.write === "success" && withdrawStatus.transaction === "pending");
+    (withdrawStatus.write === "success" &&
+      withdrawStatus.transaction === "pending");
 
   const isAdvancePrepareError = advanceStatus.prepare === "error";
   const isExecutePrepareError = executeStatus.prepare === "error";
@@ -230,7 +238,12 @@ export default function ActionBar({
   const lastExecutePrepareKeyRef = useRef<string>();
   const lastWithdrawPrepareKeyRef = useRef<string>();
   const advancePrepareKey = useMemo(() => {
-    if (!address || userChainId !== chain.id || action !== ActionType.ADVANCE || revocation) {
+    if (
+      !address ||
+      userChainId !== chain.id ||
+      action !== ActionType.ADVANCE ||
+      revocation
+    ) {
       return null;
     }
 
@@ -314,12 +327,7 @@ export default function ActionBar({
 
     lastExecutePrepareKeyRef.current = executePrepareKey;
     prepareExecute({ args: [pohId, BigInt(index)] });
-  }, [
-    executePrepareKey,
-    index,
-    pohId,
-    prepareExecute,
-  ]);
+  }, [executePrepareKey, index, pohId, prepareExecute]);
 
   useEffect(() => {
     if (!withdrawPrepareKey) {
@@ -331,10 +339,7 @@ export default function ActionBar({
 
     lastWithdrawPrepareKeyRef.current = withdrawPrepareKey;
     prepareWithdraw();
-  }, [
-    prepareWithdraw,
-    withdrawPrepareKey,
-  ]);
+  }, [prepareWithdraw, withdrawPrepareKey]);
 
   const totalCost = BigInt(contractData.baseDeposit) + arbitrationCost;
 
@@ -343,9 +348,9 @@ export default function ActionBar({
   return (
     <div className="paper border-stroke bg-whiteBackground text-primaryText flex flex-col rounded">
       {(lockClaimed || (anotherClaimPending && !effectiveRevocation)) && (
-        <div className="flex flex-col gap-2 border-b border-stroke px-[24px] py-[14px]">
+        <div className="border-stroke flex flex-col gap-2 border-b px-[24px] py-[14px]">
           {lockClaimed && (
-            <div className="flex items-start gap-3 rounded-md bg-orange/10 px-3 py-2">
+            <div className="bg-orange/10 flex items-start gap-3 rounded-md px-3 py-2">
               <AlertTriangleIcon className="text-orange mt-0.5 shrink-0" />
               <div className="flex flex-col md:flex-row md:items-center md:gap-2">
                 <span className="text-orange text-sm font-semibold">
@@ -358,7 +363,7 @@ export default function ActionBar({
             </div>
           )}
           {anotherClaimPending && !effectiveRevocation && (
-            <div className="flex items-start gap-3 rounded-md bg-orange/10 px-3 py-2">
+            <div className="bg-orange/10 flex items-start gap-3 rounded-md px-3 py-2">
               <InfoCircleIcon className="text-orange mt-0.5 shrink-0" />
               <span className="text-orange text-sm font-semibold">
                 Another request is already claiming this humanity
@@ -368,53 +373,140 @@ export default function ActionBar({
         </div>
       )}
       <div className="flex flex-col items-center justify-between gap-[12px] px-[24px] py-[24px] md:flex-row lg:gap-[20px]">
-      <div className="flex items-center">
-        <span className="mr-4">Status</span>
-        <span
-          className={`rounded-full px-3 py-1 text-white bg-status-${statusColor} whitespace-nowrap`}
-        >
-          {getStatusLabel(effectiveRequestStatus, "actionBar")}
-        </span>
-      </div>
-      <div className="flex w-full flex-col justify-between gap-[12px] font-normal md:flex-row md:items-center">
-        {web3Loaded &&
-          (action === ActionType.REMOVE_VOUCH ||
-            action === ActionType.VOUCH ||
-            action === ActionType.FUND) && (
-            <>
-              <div className="flex justify-center gap-6 md:justify-start">
-                <span className="text-center text-slate-400 md:text-left">
-                  {effectiveValidVouches < contractData.requiredNumberOfVouches && (
-                    <>
-                      It needs{" "}
-                      <strong className={`text-status-${statusColor}`}>
-                        {contractData.requiredNumberOfVouches}
-                      </strong>{" "}
-                      {+contractData.requiredNumberOfVouches === 1
-                        ? "vouch"
-                        : "vouches"}{" "}
-                      to proceed
-                    </>
-                  )}
-                  {!!(totalCost - effectiveFunded) && (
-                    <>
-                      {effectiveValidVouches < contractData.requiredNumberOfVouches
-                        ? " + "
-                        : "It needs "}
-                      <strong className={`text-status-${statusColor}`}>
-                        {formatEther(totalCost - effectiveFunded)}{" "}
-                        {chain.nativeCurrency.symbol}
-                      </strong>{" "}
-                      to complete the initial deposit
-                    </>
-                  )}
-                </span>
-              </div>
+        <div className="flex items-center">
+          <span className="mr-4">Status</span>
+          <span
+            className={`rounded-full px-3 py-1 text-white bg-status-${statusColor} whitespace-nowrap`}
+          >
+            {getStatusLabel(effectiveRequestStatus, "actionBar")}
+          </span>
+        </div>
+        <div className="flex w-full flex-col justify-between gap-[12px] font-normal md:flex-row md:items-center">
+          {web3Loaded &&
+            (action === ActionType.REMOVE_VOUCH ||
+              action === ActionType.VOUCH ||
+              action === ActionType.FUND) && (
+              <>
+                <div className="flex justify-center gap-6 md:justify-start">
+                  <span className="text-center text-slate-400 md:text-left">
+                    {effectiveValidVouches <
+                      contractData.requiredNumberOfVouches && (
+                      <>
+                        It needs{" "}
+                        <strong className={`text-status-${statusColor}`}>
+                          {contractData.requiredNumberOfVouches}
+                        </strong>{" "}
+                        {+contractData.requiredNumberOfVouches === 1
+                          ? "vouch"
+                          : "vouches"}{" "}
+                        to proceed
+                      </>
+                    )}
+                    {!!(totalCost - effectiveFunded) && (
+                      <>
+                        {effectiveValidVouches <
+                        contractData.requiredNumberOfVouches
+                          ? " + "
+                          : "It needs "}
+                        <strong className={`text-status-${statusColor}`}>
+                          {formatEther(totalCost - effectiveFunded)}{" "}
+                          {chain.nativeCurrency.symbol}
+                        </strong>{" "}
+                        to complete the initial deposit
+                      </>
+                    )}
+                  </span>
+                </div>
 
-              <div className="flex justify-center gap-4 md:justify-start">
-                {requester.toLocaleLowerCase() === address?.toLowerCase() ? (
-                  <div className="flex flex-col items-center md:items-start">
-                    <div className="flex flex-row justify-center gap-2 md:justify-start">
+                <div className="flex justify-center gap-4 md:justify-start">
+                  {requester.toLocaleLowerCase() === address?.toLowerCase() ? (
+                    <div className="flex flex-col items-center md:items-start">
+                      <div className="flex flex-row justify-center gap-2 md:justify-start">
+                        {action === ActionType.FUND && (
+                          <FundButton
+                            pohId={pohId}
+                            totalCost={
+                              BigInt(contractData.baseDeposit) + arbitrationCost
+                            }
+                            index={index}
+                            funded={effectiveFunded}
+                            disabled={lockClaimed}
+                            tooltip={lockClaimed ? claimedTooltip : undefined}
+                          />
+                        )}
+                        <ActionButton
+                          disabled={
+                            isReconciling ||
+                            isWithdrawPrepareError ||
+                            userChainId !== chain.id
+                          }
+                          isLoading={isWithdrawLoading}
+                          onClick={withdraw}
+                          variant="secondary"
+                          label={isWithdrawLoading ? "Withdrawing" : "Withdraw"}
+                          tooltip={
+                            isReconciling
+                              ? "Syncing"
+                              : isWithdrawPrepareError
+                                ? "Withdraw not possible, please try again"
+                                : userChainId !== chain.id
+                                  ? `Switch your chain above to ${idToChain(chain.id)?.name || "the correct chain"}`
+                                  : undefined
+                          }
+                          className="mb-2 w-auto"
+                        />
+                      </div>
+                      {effectiveValidVouches <
+                        contractData.requiredNumberOfVouches && (
+                        <ExternalLink
+                          href="https://t.me/proofhumanity"
+                          className="text-purple group inline-flex items-center justify-center gap-1 text-sm font-medium underline underline-offset-4 transition-colors hover:opacity-80 md:justify-end"
+                        >
+                          Get a vouch
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            width="24"
+                            height="24"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            className="lucide lucide-external-link h-3.5 w-3.5 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5"
+                          >
+                            <path d="M15 3h6v6"></path>
+                            <path d="M10 14 21 3"></path>
+                            <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+                          </svg>
+                        </ExternalLink>
+                      )}
+                    </div>
+                  ) : !didIVouchFor ? (
+                    <>
+                      {action === ActionType.FUND && (
+                        <FundButton
+                          pohId={pohId}
+                          totalCost={
+                            BigInt(contractData.baseDeposit) + arbitrationCost
+                          }
+                          index={index}
+                          funded={effectiveFunded}
+                        />
+                      )}
+                      <Vouch
+                        pohId={pohId}
+                        claimer={requester}
+                        web3Loaded={web3Loaded}
+                        me={me}
+                        chain={chain}
+                        address={address}
+                        disabled={lockClaimed}
+                        tooltip={lockClaimed ? claimedTooltip : undefined}
+                      />
+                    </>
+                  ) : (
+                    <>
                       {action === ActionType.FUND && (
                         <FundButton
                           pohId={pohId}
@@ -427,272 +519,240 @@ export default function ActionBar({
                           tooltip={lockClaimed ? claimedTooltip : undefined}
                         />
                       )}
-                      <ActionButton
-                        disabled={isReconciling || isWithdrawPrepareError || userChainId !== chain.id}
-                        isLoading={isWithdrawLoading}
-                        onClick={withdraw}
-                        variant="secondary"
-                        label={isWithdrawLoading ? "Withdrawing" : "Withdraw"}
+                      <RemoveVouch
+                        requester={requester}
+                        pohId={pohId}
+                        web3Loaded={web3Loaded}
+                        chain={chain}
+                        userChainId={userChainId}
+                        disabled={!isVouchOnchain}
                         tooltip={
-                          isReconciling
-                            ? "Syncing"
-                            : isWithdrawPrepareError
-                            ? "Withdraw not possible, please try again"
-                            : userChainId !== chain.id
-                              ? `Switch your chain above to ${idToChain(chain.id)?.name || 'the correct chain'}`
-                              : undefined
+                          !isVouchOnchain
+                            ? "Off chain vouches cannot be removed"
+                            : undefined
                         }
-                        className="mb-2 w-auto"
                       />
-                    </div>
-                    {effectiveValidVouches < contractData.requiredNumberOfVouches && (
-                      <ExternalLink
-                        href="https://t.me/proofhumanity"
-                        className="text-purple hover:opacity-80 underline underline-offset-4 text-sm font-medium inline-flex items-center gap-1 group transition-colors justify-center md:justify-end"
-                      >
-                        Get a vouch
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          width="24"
-                          height="24"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          className="lucide lucide-external-link h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
-                        >
-                          <path d="M15 3h6v6"></path>
-                          <path d="M10 14 21 3"></path>
-                          <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
-                        </svg>
-                      </ExternalLink>
-                    )}
-                  </div>
+                    </>
+                  )}
+                </div>
+              </>
+            )}
+
+          {web3Loaded && action === ActionType.ADVANCE && (
+            <>
+              <span className="text-center text-slate-400 md:text-left">
+                Ready to advance
+              </span>
+
+              <div className="flex justify-center gap-4 md:justify-start">
+                {requester.toLocaleLowerCase() === address?.toLowerCase() ? (
+                  <ActionButton
+                    disabled={
+                      isReconciling ||
+                      isWithdrawPrepareError ||
+                      userChainId !== chain.id
+                    }
+                    isLoading={isWithdrawLoading}
+                    onClick={withdraw}
+                    variant="secondary"
+                    label={"Withdraw"}
+                    tooltip={
+                      isReconciling
+                        ? "Syncing"
+                        : isWithdrawPrepareError
+                          ? "Withdraw not possible, please try again"
+                          : userChainId !== chain.id
+                            ? `Switch your chain above to ${idToChain(chain.id)?.name || "the correct chain"}`
+                            : undefined
+                    }
+                    className="mb-2 w-auto"
+                  />
                 ) : !didIVouchFor ? (
-                  <>
-                    {action === ActionType.FUND && (
-                      <FundButton
-                        pohId={pohId}
-                        totalCost={
-                          BigInt(contractData.baseDeposit) + arbitrationCost
-                        }
-                        index={index}
-                        funded={effectiveFunded}
-                      />
-                    )}
-                    <Vouch
-                      pohId={pohId}
-                      claimer={requester}
-                      web3Loaded={web3Loaded}
-                      me={me}
-                      chain={chain}
-                      address={address}
-                      disabled={lockClaimed}
-                      tooltip={lockClaimed ? claimedTooltip : undefined}
-                    />
-                  </>
-                ) : (
-                  <>
-                    {action === ActionType.FUND && (
-                      <FundButton
-                        pohId={pohId}
-                        totalCost={
-                          BigInt(contractData.baseDeposit) + arbitrationCost
-                        }
-                        index={index}
-                        funded={effectiveFunded}
-                        disabled={lockClaimed}
-                        tooltip={lockClaimed ? claimedTooltip : undefined}
-                      />
-                    )}
-                    <RemoveVouch
-                      requester={requester}
-                      pohId={pohId}
-                      web3Loaded={web3Loaded}
-                      chain={chain}
-                      userChainId={userChainId}
-                      disabled={!isVouchOnchain}
-                      tooltip={
-                        !isVouchOnchain
-                          ? "Off chain vouches cannot be removed"
-                          : undefined
-                      }
-                    />
-                  </>
-                )}
+                  <Vouch
+                    pohId={pohId}
+                    claimer={requester}
+                    web3Loaded={web3Loaded}
+                    me={me}
+                    chain={chain}
+                    address={address}
+                  />
+                ) : isVouchOnchain ? (
+                  <RemoveVouch
+                    requester={requester}
+                    pohId={pohId}
+                    web3Loaded={web3Loaded}
+                    chain={chain}
+                    userChainId={userChainId}
+                  />
+                ) : null}
+                <ActionButton
+                  disabled={
+                    lockClaimed ||
+                    isReconciling ||
+                    isAdvancePrepareError ||
+                    userChainId !== chain.id
+                  }
+                  isLoading={isAdvanceLoading}
+                  onClick={advanceFire}
+                  label={isAdvanceLoading ? "Advancing" : "Advance"}
+                  tooltip={
+                    lockClaimed
+                      ? claimedTooltip
+                      : isReconciling
+                        ? "Syncing"
+                        : isAdvancePrepareError
+                          ? "Advance not possible, please try again"
+                          : userChainId !== chain.id
+                            ? `Switch your chain above to ${idToChain(chain.id)?.name || "the correct chain"}`
+                            : undefined
+                  }
+                  className="mb-2 w-auto"
+                />
+              </div>
+            </>
+          )}
+          {action === ActionType.EXECUTE && (
+            <>
+              <span className="text-center text-slate-400 md:text-left">
+                Ready to finalize.
+              </span>
+              <div className="flex flex-col items-center justify-between gap-4 font-normal md:flex-row md:items-center">
+                <ActionButton
+                  disabled={
+                    lockClaimed ||
+                    isReconciling ||
+                    isExecutePrepareError ||
+                    userChainId !== chain.id
+                  }
+                  isLoading={isExecuteLoading}
+                  onClick={execute}
+                  label={isExecuteLoading ? "Executing" : "Execute"}
+                  tooltip={
+                    lockClaimed
+                      ? claimedTooltip
+                      : isReconciling
+                        ? "Syncing"
+                        : isExecutePrepareError
+                          ? "Execute not possible, please try again"
+                          : userChainId !== chain.id
+                            ? `Switch your chain above to ${idToChain(chain.id)?.name || "the correct chain"}`
+                            : undefined
+                  }
+                  className="mb-2 w-auto"
+                />
               </div>
             </>
           )}
 
-        {web3Loaded && action === ActionType.ADVANCE && (
-          <>
-            <span className="text-center text-slate-400 md:text-left">
-              Ready to advance
-            </span>
-
-            <div className="flex justify-center gap-4 md:justify-start">
-              {requester.toLocaleLowerCase() === address?.toLowerCase() ? (
-                <ActionButton
-                  disabled={isReconciling || isWithdrawPrepareError || userChainId !== chain.id}
-                  isLoading={isWithdrawLoading}
-                  onClick={withdraw}
-                  variant="secondary"
-                  label={"Withdraw"}
-                  tooltip={isReconciling ? "Syncing" : isWithdrawPrepareError ? "Withdraw not possible, please try again" : userChainId !== chain.id ? `Switch your chain above to ${idToChain(chain.id)?.name || 'the correct chain'}` : undefined}
-                  className="mb-2 w-auto"
+          {action === ActionType.CHALLENGE && (
+            <>
+              <div className="text-center text-slate-400 md:text-left">
+                Challenge period end:{" "}
+                <TimeAgo
+                  time={
+                    effectiveLastStatusChange +
+                    +contractData.challengePeriodDuration
+                  }
                 />
-              ) : !didIVouchFor ? (
-                <Vouch
-                  pohId={pohId}
-                  claimer={requester}
-                  web3Loaded={web3Loaded}
-                  me={me}
-                  chain={chain}
-                  address={address}
-                />
-              ) : isVouchOnchain ? (
-                <RemoveVouch
-                  requester={requester}
-                  pohId={pohId}
-                  web3Loaded={web3Loaded}
-                  chain={chain}
-                  userChainId={userChainId}
-                />
-              ) : null}
-              <ActionButton
-                disabled={lockClaimed || isReconciling || isAdvancePrepareError || userChainId !== chain.id}
-                isLoading={isAdvanceLoading}
-                onClick={advanceFire}
-                label={isAdvanceLoading ? "Advancing" : "Advance"}
-                tooltip={lockClaimed ? claimedTooltip : isReconciling ? "Syncing" : isAdvancePrepareError ? "Advance not possible, please try again" : userChainId !== chain.id ? `Switch your chain above to ${idToChain(chain.id)?.name || 'the correct chain'}` : undefined}
-                className="mb-2 w-auto"
-              />
-            </div>
-          </>
-        )}
-        {action === ActionType.EXECUTE && (
-          <>
-            <span className="text-center text-slate-400 md:text-left">
-              Ready to finalize.
-            </span>
-            <div className="flex flex-col items-center justify-between gap-4 font-normal md:flex-row md:items-center">
-              <ActionButton
-                disabled={lockClaimed || isReconciling || isExecutePrepareError || userChainId !== chain.id}
-                isLoading={isExecuteLoading}
-                onClick={execute}
-                label={isExecuteLoading ? "Executing" : "Execute"}
-                tooltip={lockClaimed ? claimedTooltip : isReconciling ? "Syncing" : isExecutePrepareError ? "Execute not possible, please try again" : userChainId !== chain.id ? `Switch your chain above to ${idToChain(chain.id)?.name || 'the correct chain'}` : undefined}
-                className="mb-2 w-auto"
-              />
-            </div>
-          </>
-        )}
+              </div>
 
-        {action === ActionType.CHALLENGE && (
-          <>
-            <div className="text-center text-slate-400 md:text-left">
-              Challenge period end:{" "}
-              <TimeAgo
-                time={effectiveLastStatusChange + +contractData.challengePeriodDuration}
+              <Challenge
+                pohId={pohId}
+                requestIndex={index}
+                revocation={revocation}
+                arbitrationCost={arbitrationCost}
+                arbitrationInfo={contractData.arbitrationInfo!}
+                usedReasons={usedReasons}
+                disabled={lockClaimed}
+                tooltip={lockClaimed ? claimedTooltip : undefined}
               />
-            </div>
+            </>
+          )}
 
-            <Challenge
-              pohId={pohId}
-              requestIndex={index}
-              revocation={revocation}
-              arbitrationCost={arbitrationCost}
-              arbitrationInfo={contractData.arbitrationInfo!}
-              usedReasons={usedReasons}
-              disabled={lockClaimed}
-              tooltip={lockClaimed ? claimedTooltip : undefined}
-            />
-          </>
-        )}
+          {action === ActionType.DISPUTED && (
+            <>
+              <span className="text-center text-slate-400 md:text-left">
+                {pendingAction === "challenge"
+                  ? "Challenge confirmed onchain. Waiting for indexed dispute details"
+                  : "The request was challenged"}
+                {pendingAction !== "challenge" &&
+                  currentChallenge &&
+                  !revocation &&
+                  currentChallenge.reason.id !== "none" && (
+                    <>
+                      {" "}
+                      for{" "}
+                      <strong className="text-orange capitalize">
+                        {currentChallenge.reason.id}
+                      </strong>
+                    </>
+                  )}
+                .
+              </span>
 
-        {action === ActionType.DISPUTED && (
-          <>
-            <span className="text-center text-slate-400 md:text-left">
-              {pendingAction === "challenge"
-                ? "Challenge confirmed onchain. Waiting for indexed dispute details"
-                : "The request was challenged"}
-              {pendingAction !== "challenge" &&
-                currentChallenge &&
-                !revocation &&
-                currentChallenge.reason.id !== "none" && (
-                <>
-                  {" "}
-                  for{" "}
-                  <strong className="text-orange capitalize">
-                    {currentChallenge.reason.id}
-                  </strong>
-                </>
+              {pendingAction !== "challenge" && currentChallenge && (
+                <div className="flex flex-wrap justify-center gap-4 lg:flex-nowrap lg:justify-start">
+                  <Appeal
+                    pohId={pohId}
+                    requestIndex={index}
+                    disputeId={currentChallenge.disputeId}
+                    arbitrator={arbitrationHistory.arbitrator}
+                    extraData={arbitrationHistory.extraData}
+                    claimer={requester}
+                    challenger={currentChallenge.challenger?.id}
+                    currentChallenge={currentChallenge}
+                    chainId={chain.id}
+                    revocation={revocation}
+                    requestStatus={effectiveRequestStatus}
+                    disabled={lockClaimed}
+                    tooltip={lockClaimed ? claimedTooltip : undefined}
+                  />
+
+                  <ExternalLink
+                    href={`https://klerosboard.com/${chain.id}/cases/${currentChallenge.disputeId}`}
+                    className="btn-main gradient h-[48px] w-auto items-center justify-center whitespace-nowrap rounded p-2"
+                  >
+                    View case #{currentChallenge.disputeId}
+                  </ExternalLink>
+                </div>
               )}
+            </>
+          )}
+
+          {effectiveStatus === "resolved" && (
+            <span className="text-center md:text-left">
+              {effectiveRequestStatus === RequestStatus.EXPIRED
+                ? "Request has expired"
+                : effectiveRequestStatus === RequestStatus.REJECTED_REVOCATION
+                  ? "Removal request was rejected"
+                  : effectiveRequestStatus === RequestStatus.REJECTED
+                    ? "Request was rejected"
+                    : "Request was accepted"}
+              <TimeAgo
+                className={`ml-1 text-status-${statusColor}`}
+                time={
+                  effectiveRequestStatus === RequestStatus.EXPIRED
+                    ? humanityExpirationTime!
+                    : effectiveLastStatusChange
+                }
+              />
               .
             </span>
+          )}
 
-            {pendingAction !== "challenge" && currentChallenge && (
-              <div className="flex flex-wrap justify-center gap-4 lg:flex-nowrap lg:justify-start">
-                <Appeal
-                  pohId={pohId}
-                  requestIndex={index}
-                  disputeId={currentChallenge.disputeId}
-                  arbitrator={arbitrationHistory.arbitrator}
-                  extraData={arbitrationHistory.extraData}
-                  claimer={requester}
-                  challenger={currentChallenge.challenger?.id}
-                  currentChallenge={currentChallenge}
-                  chainId={chain.id}
-                  revocation={revocation}
-                  requestStatus={effectiveRequestStatus}
-                  disabled={lockClaimed}
-                  tooltip={lockClaimed ? claimedTooltip : undefined}
-                />
-
-                <ExternalLink
-                  href={`https://klerosboard.com/${chain.id}/cases/${currentChallenge.disputeId}`}
-                  className="btn-main gradient h-[48px] rounded w-auto items-center justify-center p-2 whitespace-nowrap"
-                >
-                  View case #{currentChallenge.disputeId}
-                </ExternalLink>
-              </div>
-            )}
-          </>
-        )}
-
-        {effectiveStatus === "resolved" && (
-          <span className="text-center md:text-left">
-            {effectiveRequestStatus === RequestStatus.EXPIRED ?
-              "Request has expired" :
-              effectiveRequestStatus === RequestStatus.REJECTED_REVOCATION ?
-                "Removal request was rejected" :
-              effectiveRequestStatus === RequestStatus.REJECTED ?
-                "Request was rejected" : "Request was accepted"}
-            <TimeAgo
-              className={`ml-1 text-status-${statusColor}`}
-              time={effectiveRequestStatus === RequestStatus.EXPIRED
-                ? humanityExpirationTime!
-                : effectiveLastStatusChange}
-            />
-            .
-          </span>
-        )}
-
-        {index < 0 && index > -100 && (
-          <span className="text-center md:text-left">
-            Check submission on
-            <ExternalLink
-              className={`ml-1 text-status-${statusColor} ml-2 underline underline-offset-2`}
-              href={`https://app.proofofhumanity.id/profile/${pohId}`}
-            >
-              old interface
-            </ExternalLink>
-            .
-          </span>
-        )}
-      </div>
+          {index < 0 && index > -100 && (
+            <span className="text-center md:text-left">
+              Check submission on
+              <ExternalLink
+                className={`ml-1 text-status-${statusColor} ml-2 underline underline-offset-2`}
+                href={`https://app.proofofhumanity.id/profile/${pohId}`}
+              >
+                old interface
+              </ExternalLink>
+              .
+            </span>
+          )}
+        </div>
       </div>
     </div>
   );

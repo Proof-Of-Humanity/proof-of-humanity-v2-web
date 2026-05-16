@@ -9,4 +9,4 @@ export { default as useRelayWrite } from "./useRelayWrite";
 export { default as useBatchWrite } from "./useBatchWrite";
 
 // Export types
-export type { BatchCall, BatchWriteParams } from "./types"; 
+export type { BatchCall, BatchWriteParams } from "./types";

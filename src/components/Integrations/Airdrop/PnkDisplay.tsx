@@ -14,11 +14,11 @@ function formatPnkAmount(amount: bigint): string {
 export default function PnkDisplay({ amount }: { amount?: bigint }) {
   const displayText = amount ? formatPnkAmount(amount) : "";
   return (
-    <div className="flex items-center justify-center gap-2 mb-6">
+    <div className="mb-6 flex items-center justify-center gap-2">
       <Image src="/logo/pnk-token.svg" alt="PNK Token" width={24} height={24} />
-      <span className="text-primaryText text-2xl font-normal">{displayText}</span>
+      <span className="text-primaryText text-2xl font-normal">
+        {displayText}
+      </span>
     </div>
   );
 }
-
-

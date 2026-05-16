@@ -40,7 +40,14 @@ const RegisterLink = ({
     }
 
     router.push(registerUrl);
-  }, [address, isConnected, me, pendingRegisterIntent, router, setPendingRegisterIntent]);
+  }, [
+    address,
+    isConnected,
+    me,
+    pendingRegisterIntent,
+    router,
+    setPendingRegisterIntent,
+  ]);
 
   const handleClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
     if (!isConnected) {
@@ -52,20 +59,18 @@ const RegisterLink = ({
 
   if (me?.pohId) {
     return (
-      <Link
-        href={`/${prettifyId(me.pohId)}`}
-        className={className}
-      >
+      <Link href={`/${prettifyId(me.pohId)}`} className={className}>
         PoH ID
       </Link>
     );
   }
 
-const registerUrl = isConnected && address
-    ? (me?.currentRequest
+  const registerUrl =
+    isConnected && address
+      ? me?.currentRequest
         ? `/${prettifyId(me.currentRequest.humanity.id)}/${me.currentRequest.chain.name}/${me.currentRequest.index}`
-        : `/${prettifyId(address)}/claim`)
-    : "#";
+        : `/${prettifyId(address)}/claim`
+      : "#";
   const shouldOpenInNewTab = registerUrl.includes("/claim");
 
   return (

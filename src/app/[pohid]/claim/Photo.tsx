@@ -75,7 +75,10 @@ function Photo({ advance, photo$ }: PhotoProps) {
   const onCrop = async () => {
     if (!cropPixels || !originalPhoto) return;
 
-    const dimensionError = validatePhotoDimensions(cropPixels.width, cropPixels.height);
+    const dimensionError = validatePhotoDimensions(
+      cropPixels.width,
+      cropPixels.height,
+    );
     if (dimensionError) {
       toast.error(dimensionError);
       return;

@@ -18,7 +18,11 @@ import {
 import { getClaimerData } from "data/claimer";
 import { getContractData } from "data/contract";
 import { getArbitrationCost } from "data/costs";
-import { OffChainVouch, getOffChainVouches, getRequestData } from "data/request";
+import {
+  OffChainVouch,
+  getOffChainVouches,
+  getRequestData,
+} from "data/request";
 import { getRequestTimelineData } from "data/requestTimeline";
 import { ValidVouch, isValidOnChainVouch, isValidVouch } from "data/vouch";
 import { ClaimerQuery, Vouch as VouchQuery } from "generated/graphql";
@@ -85,17 +89,19 @@ export default async function Request({ params }: PageProps) {
   const displayEvidenceList =
     sourceWinningEvidence && sourceWinningEvidence.length > 0
       ? sourceWinningEvidence.map((item, index) => ({
-        id: `${request.id}-winner-claim-${index}`,
-        uri: item.uri,
-        creationTime: Number(request.lastStatusChange || request.creationTime),
-        submitter: request.requester as Address,
-      }))
+          id: `${request.id}-winner-claim-${index}`,
+          uri: item.uri,
+          creationTime: Number(
+            request.lastStatusChange || request.creationTime,
+          ),
+          submitter: request.requester as Address,
+        }))
       : request.evidenceGroup.evidence.map((item) => ({
-        id: item.id,
-        uri: item.uri,
-        creationTime: Number(item.creationTime),
-        submitter: item.submitter as Address,
-      }));
+          id: item.id,
+          uri: item.uri,
+          creationTime: Number(item.creationTime),
+          submitter: item.submitter as Address,
+        }));
 
   let onChainVouches: Array<Address> = [];
   const fetchedOffChainVouches: OffChainVouch[] = await getOffChainVouches(
@@ -131,12 +137,12 @@ export default async function Request({ params }: PageProps) {
       !!request.registrationEvidenceRevokedReq
         ? ipfsFetch<EvidenceFile>(request.registrationEvidenceRevokedReq)
         : request.humanity.winnerClaim.length > 0 &&
-          request.humanity.winnerClaim.at(0)!.evidenceGroup.evidence.length >
-          0
+            request.humanity.winnerClaim.at(0)!.evidenceGroup.evidence.length >
+              0
           ? ipfsFetch<EvidenceFile>(
-            request.humanity.winnerClaim.at(0)!.evidenceGroup.evidence.at(-1)!
-              .uri,
-          )
+              request.humanity.winnerClaim.at(0)!.evidenceGroup.evidence.at(-1)!
+                .uri,
+            )
           : null,
       ipfsFetch<EvidenceFile>(request.evidenceGroup.evidence.at(-1)!.uri),
     ]);
@@ -274,7 +280,7 @@ export default async function Request({ params }: PageProps) {
   // Extract used reasons from existing challenges
 
   const usedReasons = request.challenges
-    ? request.challenges.map(challenge => challenge.reason.id)
+    ? request.challenges.map((challenge) => challenge.reason.id)
     : [];
 
   const policyLink = await (async () => {
@@ -330,15 +336,14 @@ export default async function Request({ params }: PageProps) {
     (registration.claimer.id as string).toLowerCase() !==
       (request.claimer.id as string).toLowerCase();
   const anotherClaimPending =
-    !request.revocation &&
-    Number(request.humanity.nbPendingRequests ?? 0) > 1;
+    !request.revocation && Number(request.humanity.nbPendingRequests ?? 0) > 1;
 
   return (
     <RequestOptimisticProvider
       base={optimisticBase}
       storageKey={`request:${pohId}:${chain.id}:${request.index}`}
     >
-      <div className="content mx-auto flex w-[92vw] sm:w-[84vw] max-w-[1500px] flex-col justify-center font-semibold md:w-[76vw]">
+      <div className="content mx-auto flex w-[92vw] max-w-[1500px] flex-col justify-center font-semibold sm:w-[84vw] md:w-[76vw]">
         <ActionBar
           arbitrationCost={arbitrationCost}
           index={request.index}
@@ -414,7 +419,7 @@ export default async function Request({ params }: PageProps) {
             </div>
 
             <div className="flex w-full flex-col p-[24px] lg:p-[32px]">
-              <div className="mb-8 flex flex-col-reverse items-center justify-between md:items-stretch md:flex-row">
+              <div className="mb-8 flex flex-col-reverse items-center justify-between md:flex-row md:items-stretch">
                 <div className="flex w-full flex-col items-center md:w-auto md:flex-row md:items-center md:justify-start">
                   <Identicon diameter={24} address={displayedClaimerId} />
                   <ExternalLink
@@ -426,7 +431,7 @@ export default async function Request({ params }: PageProps) {
                     {displayedClaimerId.slice(20)}
                   </ExternalLink>
                 </div>
-                <span className="text-primaryText flex items-center justify-center md:justify-start mb-2 md:mb-0">
+                <span className="text-primaryText mb-2 flex items-center justify-center md:mb-0 md:justify-start">
                   <ChainLogo
                     chainId={chain.id}
                     className="fill-primaryText m-1 h-4 w-4"
@@ -435,7 +440,7 @@ export default async function Request({ params }: PageProps) {
                 </span>
               </div>
               <div className="mb-4 h-1 w-full border-b"></div>
-              <div className="mb-2 flex flex-col-reverse items-center justify-center md:items-stretch md:justify-between md:flex-row">
+              <div className="mb-2 flex flex-col-reverse items-center justify-center md:flex-row md:items-stretch md:justify-between">
                 <Suspense fallback={<RequestInfoSectionSkeleton />}>
                   <RequestInfoSection
                     chainId={chain.id}
@@ -443,9 +448,9 @@ export default async function Request({ params }: PageProps) {
                   />
                 </Suspense>
               </div>
-              <div className="text-orange mb-8 flex flex-wrap gap-x-[8px] gap-y-[8px] font-medium justify-center md:justify-start">
+              <div className="text-orange mb-8 flex flex-wrap justify-center gap-x-[8px] gap-y-[8px] font-medium md:justify-start">
                 <Link
-                  className="text-orange flex flex-row flex-wrap text-center justify-center gap-x-[8px] font-semibold hover:text-orange-500 md:justify-start"
+                  className="text-orange flex flex-row flex-wrap justify-center gap-x-[8px] text-center font-semibold hover:text-orange-500 md:justify-start"
                   href={`/${prettifyId(pohId)}`}
                 >
                   <Image
@@ -504,12 +509,12 @@ export default async function Request({ params }: PageProps) {
                 </>
               )}
 
-              <div className="flex w-full flex-wrap justify-center gap-2 md:justify-between md:flex-row md:items-center">
+              <div className="flex w-full flex-wrap justify-center gap-2 md:flex-row md:items-center md:justify-between">
                 {policyLink && (
-                  <div className="flex w-full flex-col items-center md:flex-row md:items-end md:justify-end font-normal">
+                  <div className="flex w-full flex-col items-center font-normal md:flex-row md:items-end md:justify-end">
                     <Link
                       href={`/attachment?url=${ipfs(policyLink)}`}
-                      className="flex justify-center items-center text-primaryText ml-0 md:ml-2"
+                      className="text-primaryText ml-0 flex items-center justify-center md:ml-2"
                     >
                       <DocumentIcon className="fill-orange h-6 w-6" />
                       <div className="text-primaryText group relative flex py-[8px]">
@@ -527,6 +532,7 @@ export default async function Request({ params }: PageProps) {
                         if (vouchLocal.pohId === undefined) return null;
                         return (
                           <Vouch
+                            key={`${vouchLocal.pohId}-${idx}`}
                             isActive={true}
                             reason={undefined}
                             name={vouchLocal.name}
@@ -544,7 +550,7 @@ export default async function Request({ params }: PageProps) {
                   </div>
                 )}
               </div>
-              <div className="flex w-full flex-wrap justify-center gap-2 md:justify-between md:flex-row md:items-center">
+              <div className="flex w-full flex-wrap justify-center gap-2 md:flex-row md:items-center md:justify-between">
                 {vouchersData.find((v) => v) && (
                   <div className="text-secondaryText mt-8 flex flex-col items-center text-center md:items-start md:text-left">
                     <span className="flex items-center">
@@ -560,8 +566,12 @@ export default async function Request({ params }: PageProps) {
                         const vouchLocal = await Promise.resolve(vouch);
                         return (
                           <Vouch
-                            isActive={request.status.id === "vouching" ?
-                              vouchLocal.vouchStatus?.isValid : true}
+                            key={`${vouchLocal.voucher ?? vouchLocal.pohId}-${idx}`}
+                            isActive={
+                              request.status.id === "vouching"
+                                ? vouchLocal.vouchStatus?.isValid
+                                : true
+                            }
                             reason={
                               request.status.id === "vouching"
                                 ? vouchLocal.vouchStatus?.reason

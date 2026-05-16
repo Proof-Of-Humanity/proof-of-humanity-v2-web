@@ -23,7 +23,8 @@ const createFFmpegLoadError = () =>
     code: FFMPEG_LOAD_ERROR_CODE,
   });
 const getFFmpegAssetURL = (assetPath: string): string => {
-  const base = typeof window === "undefined" ? "http://localhost" : window.location.origin;
+  const base =
+    typeof window === "undefined" ? "http://localhost" : window.location.origin;
   const url = new URL(assetPath, base);
   url.searchParams.set("v", FFMPEG_ASSET_VERSION);
   return url.toString();
@@ -171,14 +172,20 @@ const parseDurationToSeconds = (message: string): number | null => {
   const minutes = parseInt(match[2], 10);
   const seconds = parseFloat(match[3]);
 
-  if (!Number.isFinite(hours) || !Number.isFinite(minutes) || !Number.isFinite(seconds)) {
+  if (
+    !Number.isFinite(hours) ||
+    !Number.isFinite(minutes) ||
+    !Number.isFinite(seconds)
+  ) {
     return null;
   }
 
   return hours * 3600 + minutes * 60 + seconds;
 };
 
-const parseResolution = (message: string): { width: number; height: number } | null => {
+const parseResolution = (
+  message: string,
+): { width: number; height: number } | null => {
   if (message.includes("wrapped_avframe")) return null;
   const showInfoMatch = message.match(/\bs:(\d{2,5})x(\d{2,5})\b/);
   const streamMatch = message.match(/,\s*(\d{2,5})x(\d{2,5})(?:[\s,]|$)/);
@@ -188,7 +195,12 @@ const parseResolution = (message: string): { width: number; height: number } | n
   const width = parseInt(match[1], 10);
   const height = parseInt(match[2], 10);
 
-  if (!Number.isFinite(width) || !Number.isFinite(height) || width <= 0 || height <= 0) {
+  if (
+    !Number.isFinite(width) ||
+    !Number.isFinite(height) ||
+    width <= 0 ||
+    height <= 0
+  ) {
     return null;
   }
 
@@ -201,7 +213,9 @@ const parseKbps = (text: string): number | null => {
 };
 
 const parseContainerBitrate = (message: string): number | null => {
-  const bitrateMatch = message.match(/bitrate:\s*([0-9]+(?:\.[0-9]+)?)\s*kb\/s/i);
+  const bitrateMatch = message.match(
+    /bitrate:\s*([0-9]+(?:\.[0-9]+)?)\s*kb\/s/i,
+  );
   if (!bitrateMatch) return null;
   return parseKbps(bitrateMatch[1]);
 };
@@ -211,7 +225,9 @@ const parseVideoStreamBitrate = (message: string): number | null => {
   // FFmpeg's `showinfo` filter creates a fake output stream that always reports 200 kb/s.
   // We must ignore it so we don't overwrite the actual container bitrate.
   if (message.includes("wrapped_avframe")) return null;
-  const bitrateMatches = [...message.matchAll(/([0-9]+(?:\.[0-9]+)?)\s*kb\/s/gi)];
+  const bitrateMatches = [
+    ...message.matchAll(/([0-9]+(?:\.[0-9]+)?)\s*kb\/s/gi),
+  ];
   if (bitrateMatches.length === 0) return null;
   const lastMatch = bitrateMatches[bitrateMatches.length - 1];
   return parseKbps(lastMatch[1]);
@@ -312,7 +328,8 @@ export const probeVideoMetrics = async (
 
       if (containerBitrateKbps === null) {
         const parsedContainerBitrate = parseContainerBitrate(message);
-        if (parsedContainerBitrate !== null) containerBitrateKbps = parsedContainerBitrate;
+        if (parsedContainerBitrate !== null)
+          containerBitrateKbps = parsedContainerBitrate;
       }
 
       if (videoBitrateKbps === null) {
@@ -350,7 +367,10 @@ export const probeVideoMetrics = async (
       );
       if (silenceEndMatch) {
         const parsedSilenceDuration = Number.parseFloat(silenceEndMatch[2]);
-        if (Number.isFinite(parsedSilenceDuration) && parsedSilenceDuration > 0) {
+        if (
+          Number.isFinite(parsedSilenceDuration) &&
+          parsedSilenceDuration > 0
+        ) {
           totalSilenceSec += parsedSilenceDuration;
         }
         pendingSilenceStartSec = null;
@@ -359,7 +379,8 @@ export const probeVideoMetrics = async (
       const freezeStartMatch = message.match(/freeze_start:\s*([-\d.]+)/);
       if (freezeStartMatch) {
         const parsedFreezeStart = Number.parseFloat(freezeStartMatch[1]);
-        if (Number.isFinite(parsedFreezeStart)) pendingFreezeStartSec = parsedFreezeStart;
+        if (Number.isFinite(parsedFreezeStart))
+          pendingFreezeStartSec = parsedFreezeStart;
       }
 
       const freezeEndMatch = message.match(/freeze_end:\s*([-\d.]+)/);
@@ -454,15 +475,15 @@ export const probeVideoMetrics = async (
       lumaMeanSamples > 0 ? lumaMeanSum / lumaMeanSamples : null;
     const nonSilenceSec =
       hasAudio === true &&
-        typeof durationSec === "number" &&
-        Number.isFinite(durationSec) &&
-        durationSec > 0
+      typeof durationSec === "number" &&
+      Number.isFinite(durationSec) &&
+      durationSec > 0
         ? Math.max(0, durationSec - totalSilenceSec)
         : null;
     const freezeRatio =
       typeof durationSec === "number" &&
-        Number.isFinite(durationSec) &&
-        durationSec > 0
+      Number.isFinite(durationSec) &&
+      durationSec > 0
         ? Math.min(1, totalFreezeSec / durationSec)
         : null;
 
@@ -477,17 +498,22 @@ export const probeVideoMetrics = async (
       averageLuma,
       hasAudio,
       nonSilenceSec,
-      maxFreezeDurationSec: maxFreezeDurationSec > 0 ? maxFreezeDurationSec : null,
+      maxFreezeDurationSec:
+        maxFreezeDurationSec > 0 ? maxFreezeDurationSec : null,
       freezeRatio,
     };
 
     return result;
   } catch (err) {
-    console.error("❌ [Video Probe] Error while extracting video metrics:", err);
+    console.error(
+      "❌ [Video Probe] Error while extracting video metrics:",
+      err,
+    );
     throw err instanceof Error ? err : new Error("Video probe failed.");
   } finally {
     try {
-      if (inputName && ffmpegInstance) await ffmpegInstance.deleteFile(inputName);
+      if (inputName && ffmpegInstance)
+        await ffmpegInstance.deleteFile(inputName);
     } catch {
       // ignore cleanup failures
     }

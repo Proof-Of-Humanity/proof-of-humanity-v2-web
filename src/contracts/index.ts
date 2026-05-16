@@ -5,5 +5,6 @@ export { ChainSet, configSetSelection } from "./config";
 import { contractRegistry } from "./registry";
 
 export const CreationBlockNumber = {
-  CrossChainProofOfHumanity: contractRegistry.CrossChainProofOfHumanity.creationBlockNumbers,
+  CrossChainProofOfHumanity:
+    contractRegistry.CrossChainProofOfHumanity.creationBlockNumbers,
 };

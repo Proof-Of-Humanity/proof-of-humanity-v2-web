@@ -26,12 +26,12 @@ export default function Header({ policy }: IHeader) {
   const menuRef = useRef<HTMLDivElement>(null);
   const pathname = usePathname();
   const { isConnected, address } = useAccount();
-  const chainId = useChainId()
+  const chainId = useChainId();
 
-  const config = useConfig()
-  const chains = config.chains
+  const config = useConfig();
+  const chains = config.chains;
 
-  const chain = chains.find(chain => chain.id === chainId)
+  const chain = chains.find((chain) => chain.id === chainId);
   const web3Loaded = useWeb3Loaded();
   const { data: me } = useSWR(address, getMyData);
   const showRewardsCta = Boolean(isConnected && me?.pohId);
@@ -103,8 +103,9 @@ export default function Header({ policy }: IHeader) {
         {showRewardsCta ? (
           <Link
             href="/app"
-            className={`rounded-full border border-white/50 px-3 py-1 text-sm font-semibold text-white transition hover:bg-white/15 ${pathname.startsWith("/app") ? "bg-white/20" : ""
-              }`}
+            className={`rounded-full border border-white/50 px-3 py-1 text-sm font-semibold text-white transition hover:bg-white/15 ${
+              pathname.startsWith("/app") ? "bg-white/20" : ""
+            }`}
           >
             Rewards
           </Link>
@@ -114,8 +115,9 @@ export default function Header({ policy }: IHeader) {
             address={address}
             pendingRegisterIntent={pendingRegisterIntent}
             setPendingRegisterIntent={setPendingRegisterIntent}
-            className={`rounded-full border border-white/50 px-3 py-1 text-sm font-semibold text-white transition hover:bg-white/15 ${pathname.includes("/claim") ? "bg-white/20" : ""
-              }`}
+            className={`rounded-full border border-white/50 px-3 py-1 text-sm font-semibold text-white transition hover:bg-white/15 ${
+              pathname.includes("/claim") ? "bg-white/20" : ""
+            }`}
           />
         ) : null}
         <button
@@ -162,7 +164,9 @@ export default function Header({ policy }: IHeader) {
 
       <div className="flex flex-row items-center">
         <div className="hidden md:block">
-          <WalletSection {...{ chain: chain!, address, isConnected, web3Loaded }} />
+          <WalletSection
+            {...{ chain: chain!, address, isConnected, web3Loaded }}
+          />
         </div>
         <div className="hidden md:block">
           <Options />

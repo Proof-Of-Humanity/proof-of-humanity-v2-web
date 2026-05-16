@@ -8,7 +8,8 @@ import {
   WriteContractParameters,
 } from "viem";
 
-export type ContractAbi<C extends ContractName> = (typeof contractRegistry)[C]['abi'];
+export type ContractAbi<C extends ContractName> =
+  (typeof contractRegistry)[C]["abi"];
 
 export type ReadFunctionName<C extends ContractName> = ReadContractParameters<
   ContractAbi<C>
@@ -51,7 +52,7 @@ export interface Effects {
 // Batch transaction types
 export type BatchCall<
   C extends ContractName = ContractName,
-  F extends WriteFunctionName<C> = WriteFunctionName<C>
+  F extends WriteFunctionName<C> = WriteFunctionName<C>,
 > = {
   contract: C;
   functionName: F;

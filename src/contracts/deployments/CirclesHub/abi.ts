@@ -1,21 +1,21 @@
 export default [
   {
-    "type": "function",
-    "name": "isHuman",
-    "inputs": [
+    type: "function",
+    name: "isHuman",
+    inputs: [
       {
-        "name": "_human",
-        "type": "address",
-        "internalType": "address"
-      }
+        name: "_human",
+        type: "address",
+        internalType: "address",
+      },
     ],
-    "outputs": [
+    outputs: [
       {
-        "name": "",
-        "type": "bool",
-        "internalType": "bool"
-      }
+        name: "",
+        type: "bool",
+        internalType: "bool",
+      },
     ],
-    "stateMutability": "view"
-  }
-] as const; 
+    stateMutability: "view",
+  },
+] as const;

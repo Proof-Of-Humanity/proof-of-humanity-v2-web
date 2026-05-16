@@ -10,7 +10,6 @@ import { RequestsQuery } from "generated/graphql";
 import { cache } from "react";
 import { Address, Hash, concat, keccak256, toHex } from "viem";
 import { sanitizeHeadRequests, sanitizeRequest } from "./sanitizer";
-import { request } from "node:http";
 
 const PROFILES_DISPLAY_REQUIRED_REQS = 12 * 4;
 
@@ -52,8 +51,8 @@ const completeCrossChains = async (
       [chain.id]:
         chain.id === legacyChain.id
           ? res[i].requests.filter(
-            (r) => !(r.status.id === "vouching" && Number(r.index) <= -1)
-          )
+              (r) => !(r.status.id === "vouching" && Number(r.index) <= -1),
+            )
           : res[i].requests,
     }),
     {} as Record<SupportedChainId, RequestsQuery["requests"]>,
@@ -75,8 +74,8 @@ const _getPagedRequests = async () => {
       [chain.id]:
         chain.id === legacyChain.id
           ? res[i].requests.filter(
-            (r) => !(r.status.id === "vouching" && Number(r.index) <= -1)
-          )
+              (r) => !(r.status.id === "vouching" && Number(r.index) <= -1),
+            )
           : res[i].requests,
     }),
     {} as Record<SupportedChainId, RequestsQuery["requests"]>,
@@ -100,7 +99,7 @@ export const getRequestsLoadingPromises = async (
   // Manually filter out legacy vouching requests (index <= -1) for legacy chain
   if (chainId === legacyChain.id) {
     result.requests = result.requests.filter(
-      (r) => !(r.status.id === "vouching" && Number(r.index) <= -1)
+      (r) => !(r.status.id === "vouching" && Number(r.index) <= -1),
     );
   }
 
@@ -130,13 +129,13 @@ export const genRequestId = (pohId: Hash, index: number) => {
         ? toHex(index, { size: 32 })
         : index <= -100
           ? concat([
-            toHex(Math.abs(index), { size: 32 }),
-            toHex("bridged", { size: 7 }),
-          ])
+              toHex(Math.abs(index), { size: 32 }),
+              toHex("bridged", { size: 7 }),
+            ])
           : concat([
-            toHex(Math.abs(index + 1), { size: 32 }),
-            toHex("legacy", { size: 6 }),
-          ]),
+              toHex(Math.abs(index + 1), { size: 32 }),
+              toHex("legacy", { size: 6 }),
+            ]),
     ]),
   );
 };
@@ -171,7 +170,6 @@ export const getOffChainVouches = async (
     return [];
   }
 
-  const baseUrl = process.env.DEPLOYED_APP ?? "http://localhost:3000";
   try {
     const response = await fetch(
       `https://testnets--proof-of-humanity-v2.netlify.app/api/vouch/${chainId}/for-request/${claimer}/${pohId}`,

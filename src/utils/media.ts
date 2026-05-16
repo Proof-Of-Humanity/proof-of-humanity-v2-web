@@ -6,7 +6,10 @@ export {
   readVideoMetadata,
 } from "./media.video.probe";
 export { videoSanitizer } from "./media.video.sanitize";
-export type { VideoFrameTimingMetrics, VideoProbeMetrics } from "./media.video.probe";
+export type {
+  VideoFrameTimingMetrics,
+  VideoProbeMetrics,
+} from "./media.video.probe";
 export { MEDIA_ERROR_CODES, MEDIA_MESSAGES } from "./media.messages";
 export { processVideoInput, warmVideoPipeline } from "./media.video.pipeline";
 export type {

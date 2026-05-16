@@ -46,10 +46,14 @@ const canvasIsGrayscale = (canvas: HTMLCanvasElement): boolean => {
   return red === green && green === blue;
 };
 
-const canvasToBlob = (canvas: HTMLCanvasElement, quality: number): Promise<Blob> =>
+const canvasToBlob = (
+  canvas: HTMLCanvasElement,
+  quality: number,
+): Promise<Blob> =>
   new Promise((resolve, reject) => {
     canvas.toBlob(
-      (blob) => (blob ? resolve(blob) : reject(new Error("toBlob returned null"))),
+      (blob) =>
+        blob ? resolve(blob) : reject(new Error("toBlob returned null")),
       "image/jpeg",
       quality,
     );
