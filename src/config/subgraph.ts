@@ -2,9 +2,6 @@ import { getSdk } from "generated/graphql";
 import { GraphQLClient } from "graphql-request";
 import { gnosis, gnosisChiado, mainnet, sepolia } from "viem/chains";
 
-export type sdkReturnType = ReturnType<typeof getSdk>;
-export type queryType = keyof sdkReturnType;
-
 export const subgraph_url = {
   [mainnet.id]: process.env.MAINNET_SUBGRAPH_URL,
   [gnosis.id]: process.env.GNOSIS_SUBGRAPH_URL,

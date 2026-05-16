@@ -20,7 +20,6 @@ export type {
 } from "./media.video.pipeline";
 export {
   getUploadedTypeLabel,
-  IMAGE_ALLOWED_MIME_TYPES,
   IMAGE_UPLOAD_EXTENSIONS,
   MEDIA_UPLOAD_ACCEPT,
   normalizeVideoMimeType,
@@ -29,8 +28,8 @@ export {
   VIDEO_UPLOAD_EXTENSIONS,
   VIDEO_LIMITS,
   validatePhotoDimensions,
+  // validatePhotoUpload,
   validatePhotoSize,
-  validatePhotoUpload,
   validateVideoDuration,
   validateVideoQuality,
   validateVideoResolution,

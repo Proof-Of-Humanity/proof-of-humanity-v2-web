@@ -163,11 +163,11 @@ export default function Header({ policy }: IHeader) {
       )}
 
       <div className="flex flex-row items-center">
-        <div className="hidden md:block">
-          <WalletSection
-            {...{ chain: chain!, address, isConnected, web3Loaded }}
-          />
-        </div>
+        {chain && (
+          <div className="hidden md:block">
+            <WalletSection {...{ chain, address, isConnected, web3Loaded }} />
+          </div>
+        )}
         <div className="hidden md:block">
           <Options />
         </div>

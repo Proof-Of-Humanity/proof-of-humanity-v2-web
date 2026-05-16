@@ -15,6 +15,14 @@ module.exports = {
     "prefer-const": "warn",
     eqeqeq: ["warn", "always", { null: "ignore" }],
     "object-shorthand": ["warn", "always"],
+    "no-restricted-syntax": [
+      "warn",
+      {
+        selector: "TSNonNullExpression",
+        message:
+          "Avoid non-null assertions. Add a guard or make the type explicit.",
+      },
+    ],
     complexity: ["warn", { max: 20 }],
     "max-depth": ["warn", 4],
     "max-lines": [

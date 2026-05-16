@@ -279,9 +279,9 @@ export default async function Request({ params }: PageProps) {
 
   // Extract used reasons from existing challenges
 
-  const usedReasons = request.challenges
-    ? request.challenges.map((challenge) => challenge.reason.id)
-    : [];
+  const usedReasons = request.challenges.map(
+    (challenge) => challenge.reason.id,
+  );
 
   const policyLink = await (async () => {
     try {
@@ -308,10 +308,7 @@ export default async function Request({ params }: PageProps) {
     request.index >= 0
       ? BigInt(request.challenges[0]?.rounds[0]?.requesterFund.amount ?? 0)
       : 0n;
-  const currentChallenge =
-    request.challenges && request.challenges.length > 0
-      ? request.challenges.at(-1)
-      : undefined;
+  const currentChallenge = request.challenges.at(-1);
   const optimisticBase = {
     status: request.status.id,
     requestStatus,

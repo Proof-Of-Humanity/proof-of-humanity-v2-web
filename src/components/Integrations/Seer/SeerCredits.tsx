@@ -17,6 +17,12 @@ interface SeerCreditsProps {
   integration: Integration;
 }
 
+type SeerUserData = {
+  hasValidRegistration: boolean;
+  humanityId: string | null;
+  chainId: SupportedChainId | undefined;
+};
+
 export default function SeerCredits({ integration }: SeerCreditsProps) {
   const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
 
@@ -43,9 +49,9 @@ export default function SeerCredits({ integration }: SeerCreditsProps) {
   const currentSlide = integration.firstInfoSlide?.[currentSlideIndex];
 
   // Query to check if user has an included profile (checking registrations and cross-chain registrations)
-  const { data: userData, isLoading } = useQuery({
+  const { data: userData, isLoading } = useQuery<SeerUserData | null>({
     queryKey: ["seerEligibility", address, chainId],
-    queryFn: async () => {
+    queryFn: async (): Promise<SeerUserData | null> => {
       if (!address) return null;
 
       const normalizedAddress = address.toLowerCase() as Address;
@@ -99,6 +105,7 @@ export default function SeerCredits({ integration }: SeerCreditsProps) {
         results.find((r) => r.hasValidRegistration) || {
           hasValidRegistration: false,
           humanityId: null,
+          chainId: undefined,
         }
       );
     },

@@ -26,12 +26,15 @@ const VIDEO_ALLOWED_FORMATS_LABEL = VIDEO_UPLOAD_EXTENSIONS.map((ext) =>
   ext.slice(1),
 ).join(", ");
 
-export const IMAGE_ALLOWED_MIME_TYPES = [
-  "image/jpeg",
-  "image/png",
-  "image/jpg",
-  "image/webp",
-] as const;
+// Keep this disabled for now: uploaded photos are validated after crop/resize.
+// If we re-enable pre-crop upload validation, restore this together with
+// validatePhotoUpload below.
+// export const IMAGE_ALLOWED_MIME_TYPES = [
+//   "image/jpeg",
+//   "image/png",
+//   "image/jpg",
+//   "image/webp",
+// ] as const;
 
 export const IMAGE_UPLOAD_EXTENSIONS = [
   ".jpg",
@@ -304,25 +307,29 @@ export function validateVideoQuality(
 
 // ─── Photo Validation ───────────────────────────────────────────
 
-/** Validate a photo file before loading it into the crop editor. */
-export function validatePhotoUpload(file: File): PhotoValidationError {
-  if (
-    !IMAGE_ALLOWED_MIME_TYPES.includes(
-      file.type as (typeof IMAGE_ALLOWED_MIME_TYPES)[number],
-    )
-  ) {
-    return MEDIA_MESSAGES.photoUnsupportedFormat(file.type);
-  }
-
-  if (file.size > PHOTO_LIMITS.uploadMaxSizeBytes) {
-    return MEDIA_MESSAGES.photoUploadTooLarge(
-      file.size,
-      PHOTO_LIMITS.uploadMaxSizeMb,
-    );
-  }
-
-  return null;
-}
+// Keep disabled for future use. This was previously exported, but no live
+// code currently calls it, and webcam photo capture does not pass through an
+// upload File object.
+//
+// /** Validate a photo file before loading it into the crop editor. */
+// export function validatePhotoUpload(file: File): PhotoValidationError {
+//   if (
+//     !IMAGE_ALLOWED_MIME_TYPES.includes(
+//       file.type as (typeof IMAGE_ALLOWED_MIME_TYPES)[number],
+//     )
+//   ) {
+//     return MEDIA_MESSAGES.photoUnsupportedFormat(file.type);
+//   }
+//
+//   if (file.size > PHOTO_LIMITS.uploadMaxSizeBytes) {
+//     return MEDIA_MESSAGES.photoUploadTooLarge(
+//       file.size,
+//       PHOTO_LIMITS.uploadMaxSizeMb,
+//     );
+//   }
+//
+//   return null;
+// }
 
 /** Validate crop dimensions. */
 export function validatePhotoDimensions(
