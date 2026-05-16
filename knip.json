@@ -9,5 +9,12 @@
     "*.config.js",
     "!src/generated/**",
     "!src/contracts/deployments/**/abi.ts"
+  ],
+  "ignoreExportsUsedInFile": true,
+  "ignoreDependencies": [
+    "@svgr/webpack",
+    "eslint",
+    "eslint-config-next",
+    "eslint-config-prettier"
   ]
 }
