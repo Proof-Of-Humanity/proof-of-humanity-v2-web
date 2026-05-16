@@ -201,7 +201,7 @@ function RequestOptimisticProviderInner({
   const pendingEvidenceItem = useMemo(
     () =>
       pendingAction === "evidence" && overlay?.evidenceList?.length
-        ? overlay.evidenceList[0]
+        ? (overlay.evidenceList[0] ?? null)
         : null,
     [overlay, pendingAction],
   );

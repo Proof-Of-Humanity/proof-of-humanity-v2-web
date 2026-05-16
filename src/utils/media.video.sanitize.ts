@@ -26,7 +26,7 @@ const probeDurationAndRotation = async (
     const durationMatch = message.match(
       /Duration:\s*(\d+):(\d+):(\d+(?:\.\d+)?)/,
     );
-    if (durationMatch) {
+    if (durationMatch?.[1] && durationMatch[2] && durationMatch[3]) {
       durationSec =
         parseInt(durationMatch[1], 10) * 3600 +
         parseInt(durationMatch[2], 10) * 60 +
@@ -36,7 +36,7 @@ const probeDurationAndRotation = async (
     const rotationMatch = message.match(
       /rotation of (-?\d+(?:\.\d+)?) degrees/i,
     );
-    if (rotationMatch) {
+    if (rotationMatch?.[1]) {
       rotation = normalizeRotation(parseFloat(rotationMatch[1]));
     }
   };

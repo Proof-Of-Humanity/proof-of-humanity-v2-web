@@ -88,9 +88,11 @@ function Photo({ advance, photo$ }: PhotoProps) {
     try {
       const cropped = await getCroppedPhoto(originalPhoto.uri, cropPixels);
       if (!cropped) return;
+      const croppedBase64 = cropped.split(",")[1];
+      if (!croppedBase64) return;
 
       const sanitized = await sanitizeImage(
-        Buffer.from(base64ToUint8Array(cropped.split(",")[1])),
+        Buffer.from(base64ToUint8Array(croppedBase64)),
       );
 
       const sizeError = validatePhotoSize(sanitized.size);
@@ -114,8 +116,10 @@ function Photo({ advance, photo$ }: PhotoProps) {
 
     const screenshot = camera.getScreenshot();
     if (!screenshot) return;
+    const screenshotBase64 = screenshot.split(",")[1];
+    if (!screenshotBase64) return;
 
-    const buffer = Buffer.from(base64ToUint8Array(screenshot.split(",")[1]));
+    const buffer = Buffer.from(base64ToUint8Array(screenshotBase64));
     if (originalPhoto?.uri) URL.revokeObjectURL(originalPhoto.uri);
     setOriginalPhoto({
       uri: URL.createObjectURL(new Blob([buffer], { type: "image/jpeg" })),

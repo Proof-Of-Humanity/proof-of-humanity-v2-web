@@ -74,7 +74,8 @@ const sortRequests = (request: RequestInterface[]): RequestInterface[] => {
   let requestsOut: RequestInterface[] = new Array<RequestInterface>();
   pohIdGrouped.forEach((val, key) => {
     // We keep only the head request of each pohIdGrouped array which is the one representing the current status of the personhood
-    requestsOut.push(val[0]);
+    const latestRequest = val[0];
+    if (latestRequest) requestsOut.push(latestRequest);
   });
 
   requestsOut.sort(
@@ -90,29 +91,33 @@ const normalize = (
     Object.keys(requestsData).reduce<RequestInterface[]>(
       (acc, chainId) => [
         ...acc,
-        ...requestsData[Number(chainId) as SupportedChainId].map((request) => {
-          const requestStatus = getStatus(
-            {
-              status: request.status,
-              revocation: request.revocation,
-              index: request.index,
-              creationTime: request.creationTime,
-              expirationTime: request.expirationTime,
-              winnerParty: request.winnerParty,
-            },
-            {
-              humanityLifespan:
-                humanityLifespanAllChains[Number(chainId) as SupportedChainId],
-            },
-          );
+        ...(requestsData[Number(chainId) as SupportedChainId] ?? []).map(
+          (request) => {
+            const requestStatus = getStatus(
+              {
+                status: request.status,
+                revocation: request.revocation,
+                index: request.index,
+                creationTime: request.creationTime,
+                expirationTime: request.expirationTime,
+                winnerParty: request.winnerParty,
+              },
+              {
+                humanityLifespan:
+                  humanityLifespanAllChains[
+                    Number(chainId) as SupportedChainId
+                  ],
+              },
+            );
 
-          return {
-            ...request,
-            old: Number(chainId) === legacyChain.id,
-            chainId: Number(chainId) as SupportedChainId,
-            requestStatus,
-          };
-        }),
+            return {
+              ...request,
+              old: Number(chainId) === legacyChain.id,
+              chainId: Number(chainId) as SupportedChainId,
+              requestStatus,
+            };
+          },
+        ),
       ],
       [],
     ),
@@ -256,7 +261,7 @@ function RequestsGrid() {
                   ...acc,
                   [chain.id]: [
                     ...(loadContinued ? chainStacks[chain.id] : []),
-                    ...res[i].requests,
+                    ...(res[i]?.requests ?? []),
                   ],
                 }),
                 chainStacks,

@@ -73,8 +73,11 @@ const Webcam: React.FC<WebcamProps> = ({
     // if (video) loadFFMPEG();
 
     navigator.mediaDevices.enumerateDevices().then((videoDevices) => {
-      setDevices(videoDevices.filter((dev) => dev.kind === "videoinput"));
-      setCurrentCamera(videoDevices[0].deviceId);
+      const cameras = videoDevices.filter(
+        (device) => device.kind === "videoinput",
+      );
+      setDevices(cameras);
+      setCurrentCamera(cameras[0]?.deviceId ?? "");
     });
   };
 

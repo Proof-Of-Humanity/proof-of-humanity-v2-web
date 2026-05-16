@@ -59,7 +59,7 @@ export const supportedChains =
     ? supportedChainsMain
     : supportedChainsTest;
 
-export const defaultChain = supportedChains[0];
+export const defaultChain = supportedChains[0]!;
 
 export const legacyChain =
   configSetSelection.chainSet === ChainSet.MAINNETS

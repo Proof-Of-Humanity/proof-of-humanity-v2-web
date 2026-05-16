@@ -96,7 +96,7 @@ export default function SubgraphsStatus() {
     >
       <h2 className="m-0 text-sm font-semibold leading-6 sm:text-base">
         {unhealthy.length === 1
-          ? `${unhealthy[0].name} is degraded`
+          ? `${unhealthy[0]?.name ?? "Subgraph"} is degraded`
           : `${unhealthy.length} subgraphs are degraded`}
       </h2>
       <p className="m-0 text-xs opacity-90 sm:text-sm">

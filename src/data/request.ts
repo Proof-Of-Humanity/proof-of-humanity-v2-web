@@ -50,10 +50,10 @@ const completeCrossChains = async (
       ...acc,
       [chain.id]:
         chain.id === legacyChain.id
-          ? res[i].requests.filter(
+          ? (res[i]?.requests ?? []).filter(
               (r) => !(r.status.id === "vouching" && Number(r.index) <= -1),
             )
-          : res[i].requests,
+          : (res[i]?.requests ?? []),
     }),
     {} as Record<SupportedChainId, RequestsQuery["requests"]>,
   );
@@ -73,10 +73,10 @@ const _getPagedRequests = async () => {
       ...acc,
       [chain.id]:
         chain.id === legacyChain.id
-          ? res[i].requests.filter(
+          ? (res[i]?.requests ?? []).filter(
               (r) => !(r.status.id === "vouching" && Number(r.index) <= -1),
             )
-          : res[i].requests,
+          : (res[i]?.requests ?? []),
     }),
     {} as Record<SupportedChainId, RequestsQuery["requests"]>,
   );

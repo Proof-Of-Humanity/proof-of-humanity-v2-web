@@ -18,7 +18,8 @@ export default function CirclesMintTokensStep({
   isOpen,
   onToggle,
 }: CirclesMintTokensStepProps) {
-  if (!steps || steps.length === 0) return null;
+  const step = steps[currentStep];
+  if (!step) return null;
 
   return (
     <Accordion
@@ -29,7 +30,7 @@ export default function CirclesMintTokensStep({
     >
       <div className="flex w-full flex-col p-4 md:p-6">
         <CirclesStepCard
-          step={steps[currentStep]}
+          step={step}
           onPrevious={() => setCurrentStep(currentStep - 1)}
           onNext={() => setCurrentStep(currentStep + 1)}
           previousStep={currentStep > 0}

@@ -25,12 +25,12 @@ const hasRegistrationEvidence = async (
 
   const registrationCandidates = (evidences: { uri: string }[]): string[] => {
     if (evidences.length === 0) return [];
-    if (evidences.length === 1) return [evidences[0].uri];
+    if (evidences.length === 1) return [evidences[0]!.uri];
 
     // first(home) chain evidence, last(foreign) chain evidence have higher
     // likelihood of being the registration evidence
-    const first = evidences[0].uri;
-    const last = evidences[evidences.length - 1].uri;
+    const first = evidences[0]!.uri;
+    const last = evidences[evidences.length - 1]!.uri;
     const middle = evidences.slice(1, -1).map((e) => e.uri);
 
     return [first, last, ...middle];
@@ -66,7 +66,7 @@ export const sanitizeRequest = async (
     (request?.revocation &&
       request?.humanity.winnerClaim &&
       (request?.humanity.winnerClaim.length == 0 ||
-        request?.humanity.winnerClaim[0].index <= -100)) ||
+        request?.humanity.winnerClaim[0]?.index <= -100)) ||
     (request &&
       (!request.evidenceGroup ||
         !request.evidenceGroup.evidence ||
@@ -83,14 +83,15 @@ export const sanitizeRequest = async (
     );
 
     let tROut = getTransferringRequest(out, chainId, request);
-    let homeChainId = tROut!.homeChainId;
-    let transferringRequest = tROut?.transferringRequest;
+    if (!tROut?.transferringRequest) return request;
+    let homeChainId = tROut.homeChainId;
+    let transferringRequest = tROut.transferringRequest;
 
     if (
       request?.revocation &&
       request?.humanity.winnerClaim &&
       (request?.humanity.winnerClaim.length == 0 ||
-        request?.humanity.winnerClaim[0].index <= -100)
+        request?.humanity.winnerClaim[0]?.index <= -100)
     ) {
       request.claimer.name = transferringRequest?.claimer.name;
       if (request?.humanity.winnerClaim.length == 0) {
@@ -104,7 +105,7 @@ export const sanitizeRequest = async (
           resolutionTime: transferringRequest?.lastStatusChange,
         });
       } else {
-        request.humanity.winnerClaim[0].evidenceGroup.evidence =
+        request.humanity.winnerClaim[0]!.evidenceGroup.evidence =
           transferringRequest?.evidenceGroup.evidence as any;
       }
       return request;
@@ -119,7 +120,7 @@ export const sanitizeRequest = async (
       if (!transferringRequestComplete) {
         request.claimer.name = transferringRequest?.claimer.name;
         request.evidenceGroup = transferringRequest?.evidenceGroup as any;
-        request.humanity.winnerClaim[0].evidenceGroup.evidence =
+        request.humanity.winnerClaim[0]!.evidenceGroup.evidence =
           transferringRequest?.evidenceGroup.evidence as any;
       } else {
         //request.humanity = transferringRequestComplete?.humanity as any;
@@ -193,7 +194,7 @@ export const sanitizeHumanityRequests = async (
       if (winnerReq && winnerReq.evidenceGroup.evidence.length > 0) {
         out[chain.id].humanity!.winnerClaim[0]!.evidenceGroup.evidence = [
           {
-            uri: winnerReq.evidenceGroup.evidence[0].uri as string,
+            uri: winnerReq.evidenceGroup.evidence[0]!.uri as string,
           },
         ];
       }
@@ -237,7 +238,8 @@ export const getTransferringRequest = (
           (request.creationTime - req2.creationTime),
       );
     var bridgedRequest = orderedBridgedRequests?.at(0);
-    transferredNumber = -100 - bridgedRequest?.index;
+    if (!bridgedRequest) return;
+    transferredNumber = -100 - bridgedRequest.index;
   }
 
   var transferringRequest: any | undefined;
@@ -299,9 +301,10 @@ const completeRequest = (request: Request, transferringRequest: Request) => {
       !request.evidenceGroup.evidence ||
       request.evidenceGroup.evidence.length === 0) /* && !request.revocation */
   ) {
-    request.evidenceGroup.evidence.push(
-      transferringRequest?.evidenceGroup.evidence[0],
-    );
+    const transferringEvidence = transferringRequest.evidenceGroup.evidence[0];
+    if (transferringEvidence) {
+      request.evidenceGroup.evidence.push(transferringEvidence);
+    }
   }
   if (
     request &&
@@ -309,7 +312,7 @@ const completeRequest = (request: Request, transferringRequest: Request) => {
     request.registrationEvidenceRevokedReq == ""
   ) {
     request.registrationEvidenceRevokedReq =
-      transferringRequest?.evidenceGroup.evidence[0].uri;
+      transferringRequest.evidenceGroup.evidence[0]?.uri ?? "";
   }
 };
 
@@ -426,7 +429,7 @@ export const sanitizeHeadRequests = async (
         if (req.revocation) {
           if (req.registrationEvidenceRevokedReq == "" && transferringRequest) {
             req.registrationEvidenceRevokedReq =
-              transferringRequest.evidenceGroup.evidence[0].uri;
+              transferringRequest.evidenceGroup.evidence[0]?.uri ?? "";
           }
         } else {
           if (

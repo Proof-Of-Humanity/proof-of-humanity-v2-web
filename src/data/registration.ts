@@ -13,7 +13,7 @@ export const getRegistrationData = cache(async (id: Hash) => {
     (acc, chain, i) => ({
       ...acc,
       [chain.id]:
-        res[i].registration &&
+        res[i]?.registration &&
         Date.now() / 1000 < res[i].registration!.expirationTime
           ? res[i].registration
           : null,

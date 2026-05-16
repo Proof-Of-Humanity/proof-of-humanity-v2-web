@@ -18,7 +18,8 @@ export default function CirclesCreateAccountStep({
   isOpen,
   onToggle,
 }: CirclesCreateAccountStepProps) {
-  if (!steps || steps.length === 0) return null;
+  const step = steps[currentStep];
+  if (!step) return null;
 
   return (
     <Accordion
@@ -29,7 +30,7 @@ export default function CirclesCreateAccountStep({
     >
       <div className="p-4 md:p-6">
         <IntegrationInfoCard
-          step={steps[currentStep]}
+          step={step}
           onPrevious={() => setCurrentStep(currentStep - 1)}
           onNext={() => setCurrentStep(currentStep + 1)}
           previousStep={currentStep > 0}

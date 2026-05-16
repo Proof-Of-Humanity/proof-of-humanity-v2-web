@@ -40,6 +40,7 @@ export default function SeerCredits({ integration }: SeerCreditsProps) {
 
   const slidesCompleted =
     currentSlideIndex >= (integration.firstInfoSlide?.length ?? 0);
+  const currentSlide = integration.firstInfoSlide?.[currentSlideIndex];
 
   // Query to check if user has an included profile (checking registrations and cross-chain registrations)
   const { data: userData, isLoading } = useQuery({
@@ -139,7 +140,7 @@ export default function SeerCredits({ integration }: SeerCreditsProps) {
       <div className="paper">
         <IntegrationHeader {...{ integration }} />
         <div className="flex flex-col items-center justify-center space-y-4 px-4 py-2 md:px-8 md:py-4">
-          {!slidesCompleted && integration.firstInfoSlide ? (
+          {!slidesCompleted && integration.firstInfoSlide && currentSlide ? (
             <>
               <ExternalLink
                 href="https://seer.pm/"
@@ -148,7 +149,7 @@ export default function SeerCredits({ integration }: SeerCreditsProps) {
                 Learn more about Seer to get started
               </ExternalLink>
               <ProcessStepCard
-                step={integration.firstInfoSlide[currentSlideIndex]}
+                step={currentSlide}
                 allSlides={integration.firstInfoSlide}
                 currentIndex={currentSlideIndex}
                 previousStep={currentSlideIndex > 0}

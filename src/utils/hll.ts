@@ -79,7 +79,7 @@ export class HyperLogLog {
 
     const leadingZeroRank = countLeadingZeros(suffixBits, suffixBitCount) + 1;
     this.sketch.registers[registerIndex] = Math.max(
-      this.sketch.registers[registerIndex],
+      this.sketch.registers[registerIndex] ?? 0,
       leadingZeroRank,
     );
     return this;
@@ -89,8 +89,8 @@ export class HyperLogLog {
     // Merge by taking per-register maxima.
     for (let i = 0; i < HLL_REGISTERS; i += 1) {
       this.sketch.registers[i] = Math.max(
-        this.sketch.registers[i],
-        other.sketch.registers[i],
+        this.sketch.registers[i] ?? 0,
+        other.sketch.registers[i] ?? 0,
       );
     }
     return this;

@@ -14,13 +14,13 @@ export default class ErrorBoundary extends Component<
   ErrorBoundaryInterface,
   ErrorBoundaryState
 > {
-  state = { error: null };
+  override state = { error: null };
 
   static getDerivedStateFromError(error: Error) {
     return { error };
   }
 
-  componentDidUpdate(
+  override componentDidUpdate(
     prevProps: ErrorBoundaryInterface,
     prevState: ErrorBoundaryState,
   ) {
@@ -36,7 +36,7 @@ export default class ErrorBoundary extends Component<
     }
   }
 
-  render() {
+  override render() {
     return this.state.error ? this.props.fallback : this.props.children;
   }
 }

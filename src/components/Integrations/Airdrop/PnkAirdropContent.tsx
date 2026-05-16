@@ -39,6 +39,7 @@ export default function PnkAirdropContent({
 
   const slidesCompleted =
     currentSlideIndex >= (integration.firstInfoSlide?.length ?? 0);
+  const currentSlide = integration.firstInfoSlide?.[currentSlideIndex];
 
   // Preload all slide images on component mount
   useEffect(() => {
@@ -72,10 +73,10 @@ export default function PnkAirdropContent({
       <div className="paper">
         <IntegrationHeader {...{ integration }} />
         <div className="flex flex-col items-center justify-center space-y-4 px-4 py-2 md:px-8 md:py-4">
-          {!slidesCompleted && integration.firstInfoSlide ? (
+          {!slidesCompleted && integration.firstInfoSlide && currentSlide ? (
             <>
               <KlerosInfoCard
-                slide={integration.firstInfoSlide[currentSlideIndex]}
+                slide={currentSlide}
                 previousStep={currentSlideIndex > 0}
                 nextStep={
                   currentSlideIndex < integration.firstInfoSlide.length - 1

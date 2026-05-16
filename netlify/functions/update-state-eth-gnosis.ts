@@ -115,6 +115,7 @@ async function updateStateEthGnosis() {
   if (!gateways || gateways.length === 0) throw new Error("No gateways found");
 
   const gateway = gateways[gateways.length - 1];
+  if (!gateway) throw new Error("No gateway found");
   const gatewayId = gateway.id;
 
   const info = getContractInfo("CrossChainProofOfHumanity", mainnet.id);

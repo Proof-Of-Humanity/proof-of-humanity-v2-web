@@ -306,7 +306,7 @@ export default async function Request({ params }: PageProps) {
   );
   const funded =
     request.index >= 0
-      ? BigInt(request.challenges[0].rounds[0].requesterFund.amount)
+      ? BigInt(request.challenges[0]?.rounds[0]?.requesterFund.amount ?? 0)
       : 0n;
   const currentChallenge =
     request.challenges && request.challenges.length > 0
