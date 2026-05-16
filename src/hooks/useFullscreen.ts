@@ -1,16 +1,6 @@
 import { RefObject, useEffect, useState } from "react";
 import screenfull from "screenfull";
 
-export interface FullScreenOptions {
-  video?: RefObject<
-    HTMLVideoElement & {
-      webkitEnterFullscreen?: () => void;
-      webkitExitFullscreen?: () => void;
-    }
-  >;
-  onClose?: (error?: Error) => void;
-}
-
 const useFullscreen = (ref: RefObject<Element>) => {
   const [isFullscreen, setIsFullscreen] = useState(
     !!((document as any).webkitIsFullscreen || (document as any).mozFullScreen),

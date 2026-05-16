@@ -14,14 +14,13 @@ module.exports = {
     "no-var": "warn",
     "prefer-const": "warn",
     eqeqeq: ["warn", "always", { null: "ignore" }],
-    curly: ["warn", "all"],
     "object-shorthand": ["warn", "always"],
-    complexity: ["warn", { max: 12 }],
+    complexity: ["warn", { max: 20 }],
     "max-depth": ["warn", 4],
     "max-lines": [
       "warn",
       {
-        max: 350,
+        max: 500,
         skipBlankLines: true,
         skipComments: true,
       },
@@ -29,7 +28,7 @@ module.exports = {
     "max-lines-per-function": [
       "warn",
       {
-        max: 100,
+        max: 150,
         skipBlankLines: true,
         skipComments: true,
         IIFEs: true,

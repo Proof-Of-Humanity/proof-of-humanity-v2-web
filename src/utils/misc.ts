@@ -1,30 +1,5 @@
 import { formatEther } from "viem";
 
-export const shuffleArray = <T>(array: T[]): T[] => {
-  for (let i = array.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    const current = array[i]!;
-    array[i] = array[j]!;
-    array[j] = current;
-  }
-  return array;
-};
-
-export const concatBuffers = (
-  ...buffers: ArrayBufferLike[]
-): Uint8Array<ArrayBuffer> => {
-  const totalByteLength = buffers.reduce((sum, bf) => sum + bf.byteLength, 0);
-  const temporary = new Uint8Array(totalByteLength);
-
-  let offset = 0;
-  buffers.forEach((bf) => {
-    temporary.set(new Uint8Array(bf), offset);
-    offset += bf.byteLength;
-  });
-
-  return temporary;
-};
-
 export const base64ToUint8Array = (base64: string) => {
   const binaryString = atob(base64);
   return new Uint8Array(binaryString.length).map((_, i) =>
@@ -44,9 +19,6 @@ export const randomString = (length: number) =>
 
 export const formatEth = (wei: bigint, precision: number = 4) =>
   +parseFloat(formatEther(wei)).toFixed(precision);
-
-export const eth2Wei = (ethAmount: number): bigint =>
-  BigInt(ethAmount * Math.pow(10, 18));
 
 export function romanize(n: number): string {
   if (n < 1) return "";

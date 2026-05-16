@@ -71,7 +71,6 @@ export type SupportedChainId = SupportedChain["id"];
 export type AnySupportedChain =
   | ArrayElement<typeof supportedChainsMain>
   | ArrayElement<typeof supportedChainsTest>;
-export type AnySupportedChainId = AnySupportedChain["id"];
 
 export function nameToChain(name: string): SupportedChain | null {
   return configSetSelection.chainSet === ChainSet.MAINNETS

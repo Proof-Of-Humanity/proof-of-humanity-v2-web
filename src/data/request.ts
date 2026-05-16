@@ -156,11 +156,6 @@ export const getRequestData = cache(
   },
 );
 
-export const getRequestsToAdvance = cache(
-  async (chainId: SupportedChainId) =>
-    (await sdk[chainId]["RequestsToAdvance"]()).status!.requests,
-);
-
 export const getOffChainVouches = async (
   chainId: SupportedChainId,
   claimer: Address,
