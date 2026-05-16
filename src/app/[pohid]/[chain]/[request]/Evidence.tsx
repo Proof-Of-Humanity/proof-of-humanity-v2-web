@@ -345,7 +345,10 @@ export default function Evidence({
                 <Uploader
                   className="bg-whiteBackgroundWithOpacity text-primaryText flex w-full justify-center rounded-sm p-2 outline-dotted outline-white"
                   type="all"
-                  onDrop={(acceptedFiles) => setFile(acceptedFiles[0])}
+                  onDrop={(acceptedFiles) => {
+                    const acceptedFile = acceptedFiles[0];
+                    if (acceptedFile) setFile(acceptedFile);
+                  }}
                 >
                   {file
                     ? file?.name

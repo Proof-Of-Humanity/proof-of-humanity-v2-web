@@ -3,9 +3,12 @@ interface VideoThumbnailProps {
   className?: string;
 }
 
-export default function VideoThumbnail({ src, className }: VideoThumbnailProps) {
+export default function VideoThumbnail({
+  src,
+  className,
+}: VideoThumbnailProps) {
   // Append #t=0.001 to force iOS Safari to render first frame
-  const videoSrc = src.includes('#') ? src : `${src}#t=0.001`;
+  const videoSrc = src.includes("#") ? src : `${src}#t=0.001`;
 
   return (
     <video

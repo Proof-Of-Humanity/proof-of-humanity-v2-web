@@ -27,7 +27,10 @@ export interface InfoSlide {
   imageWidth?: number;
   imageHeight?: number;
   bulletPoints?: string[];
-  featureList?: Array<{ text: string; iconType?: 'check' | 'success' | 'warning' | 'error' | 'pending' }>;
+  featureList?: Array<{
+    text: string;
+    iconType?: "check" | "success" | "warning" | "error" | "pending";
+  }>;
 }
 
 export interface ExternalLink {

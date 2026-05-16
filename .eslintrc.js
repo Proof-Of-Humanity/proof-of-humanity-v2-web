@@ -1,28 +1,47 @@
 module.exports = {
-  extends: [
-    "next",
-    "next/core-web-vitals",
-    "eslint:recommended",
-    "plugin:react/recommended",
-    "plugin:@typescript-eslint/recommended",
-    "prettier",
+  root: true,
+  extends: ["next/core-web-vitals", "prettier"],
+  ignorePatterns: [
+    ".next/",
+    "next-env.d.ts",
+    "src/generated/graphql.ts",
+    "src/contracts/deployments/**/abi.ts",
   ],
-  plugins: ["react", "@typescript-eslint"],
-  parserOptions: {
-    ecmaVersion: 2022,
-    sourceType: "module",
-  },
   rules: {
     "react/no-unescaped-entities": 0,
     "react/display-name": "off",
+    "react-hooks/exhaustive-deps": "warn",
+    "no-var": "warn",
+    "prefer-const": "warn",
+    eqeqeq: ["warn", "always", { null: "ignore" }],
+    "object-shorthand": ["warn", "always"],
+    "no-restricted-syntax": [
+      "warn",
+      {
+        selector: "TSNonNullExpression",
+        message:
+          "Avoid non-null assertions. Add a guard or make the type explicit.",
+      },
+    ],
+    complexity: ["warn", { max: 20 }],
+    "max-depth": ["warn", 4],
+    "max-lines": [
+      "warn",
+      {
+        max: 500,
+        skipBlankLines: true,
+        skipComments: true,
+      },
+    ],
+    "max-lines-per-function": [
+      "warn",
+      {
+        max: 150,
+        skipBlankLines: true,
+        skipComments: true,
+        IIFEs: true,
+      },
+    ],
+    "max-params": ["warn", 5],
   },
 };
-
-/* module.exports = {
-  extends: ["next/core-web-vitals"],
-  rules: {
-    "react/no-unescaped-entities": 0,
-    "react/display-name": "off",
-  },
-};
- */

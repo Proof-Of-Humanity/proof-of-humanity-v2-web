@@ -36,7 +36,9 @@ const getRequestTimestamp = (
 
 const isTransferStatus = (
   request: Pick<ProfileStateRequest, "status"> | null | undefined,
-) => request?.status?.id === "transferred" || request?.status?.id === "transferring";
+) =>
+  request?.status?.id === "transferred" ||
+  request?.status?.id === "transferring";
 
 const isRequesterWinner = (
   request?: Pick<ProfileStateRequest, "winnerParty"> | null,
@@ -45,14 +47,18 @@ const isRequesterWinner = (
 const isRequestExpired = (
   request: Pick<ProfileStateRequest, "expirationTime"> | null | undefined,
   nowSeconds: number,
-) => Number(request?.expirationTime || 0) > 0 && Number(request?.expirationTime || 0) < nowSeconds;
+) =>
+  Number(request?.expirationTime || 0) > 0 &&
+  Number(request?.expirationTime || 0) < nowSeconds;
 
 const sortByLatestTimestamp = (
   requestA: ProfileStateRequest,
   requestB: ProfileStateRequest,
 ) => getRequestTimestamp(requestB) - getRequestTimestamp(requestA);
 
-const hasPendingTransferForWinningRequest = <TRequest extends ProfileStateRequest>({
+const hasPendingTransferForWinningRequest = <
+  TRequest extends ProfileStateRequest,
+>({
   winningRequest,
   humanity,
   nowSeconds,
@@ -64,7 +70,9 @@ const hasPendingTransferForWinningRequest = <TRequest extends ProfileStateReques
   getForeignChain: (chainId: number) => number;
 }): boolean => {
   if (
-    ![RequestStatus.TRANSFERRING, RequestStatus.TRANSFERRED].includes(winningRequest.requestStatus)
+    ![RequestStatus.TRANSFERRING, RequestStatus.TRANSFERRED].includes(
+      winningRequest.requestStatus,
+    )
   ) {
     return false;
   }
@@ -75,7 +83,7 @@ const hasPendingTransferForWinningRequest = <TRequest extends ProfileStateReques
     !lastTransfer ||
     Number(lastTransfer.transferTimestamp || 0) <= 0 ||
     Number(lastTransfer.transferTimestamp || 0) !==
-    getRequestTimestamp(winningRequest)
+      getRequestTimestamp(winningRequest)
   ) {
     return false;
   }
@@ -85,7 +93,9 @@ const hasPendingTransferForWinningRequest = <TRequest extends ProfileStateReques
   }
 
   const destinationChainId = getForeignChain(winningRequest.chainId);
-  const received = humanity[destinationChainId as SupportedChainId].inTransfers.some(
+  const received = humanity[
+    destinationChainId as SupportedChainId
+  ].inTransfers.some(
     (inTransfer) =>
       inTransfer.id.toLowerCase() === lastTransfer.transferHash.toLowerCase(),
   );

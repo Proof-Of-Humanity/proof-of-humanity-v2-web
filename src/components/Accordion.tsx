@@ -21,7 +21,7 @@ const Accordion: React.FC<AccordionProps> = ({
   const [internalOpen, setInternalOpen] = useState(false);
 
   const isControlled = propsIsOpen !== undefined;
-  
+
   const open = isControlled ? propsIsOpen : internalOpen;
 
   const handleToggle = () => {

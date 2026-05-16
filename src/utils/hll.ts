@@ -19,7 +19,9 @@ export type HllSketch = {
 };
 
 const alphaForRegisterCount = (registerCount: number) => {
-  return HLL_ALPHA_NUMERATOR / (1.0 + HLL_ALPHA_DENOMINATOR_COEFF / registerCount);
+  return (
+    HLL_ALPHA_NUMERATOR / (1.0 + HLL_ALPHA_DENOMINATOR_COEFF / registerCount)
+  );
 };
 
 const hashTo64Bits = (value: string): bigint => {
@@ -70,22 +72,26 @@ export class HyperLogLog {
     const suffixBitCount = 64 - this.sketch.precision;
 
     // Top `precision` bits select the register index.
-    const registerIndex = Number(
-      hashBits64 >> BigInt(suffixBitCount),
-    );
+    const registerIndex = Number(hashBits64 >> BigInt(suffixBitCount));
     // Lower bits are used for rho(w): first 1-bit position.
     const suffixMask = (1n << BigInt(suffixBitCount)) - 1n;
     const suffixBits = hashBits64 & suffixMask;
 
     const leadingZeroRank = countLeadingZeros(suffixBits, suffixBitCount) + 1;
-    this.sketch.registers[registerIndex] = Math.max(this.sketch.registers[registerIndex], leadingZeroRank);
+    this.sketch.registers[registerIndex] = Math.max(
+      this.sketch.registers[registerIndex] ?? 0,
+      leadingZeroRank,
+    );
     return this;
   }
 
   merge(other: HyperLogLog): this {
     // Merge by taking per-register maxima.
     for (let i = 0; i < HLL_REGISTERS; i += 1) {
-      this.sketch.registers[i] = Math.max(this.sketch.registers[i], other.sketch.registers[i]);
+      this.sketch.registers[i] = Math.max(
+        this.sketch.registers[i] ?? 0,
+        other.sketch.registers[i] ?? 0,
+      );
     }
     return this;
   }
@@ -97,11 +103,14 @@ export class HyperLogLog {
       (sum, registerValue) => sum + Math.pow(2, -registerValue),
       0,
     );
-    const rawEstimate = (alphaCorrection * registerCount * registerCount) / inversePowerSum;
+    const rawEstimate =
+      (alphaCorrection * registerCount * registerCount) / inversePowerSum;
 
     // Small-range correction: use linear counting when many registers are still zero.
     if (rawEstimate <= HLL_SMALL_RANGE_THRESHOLD_MULTIPLIER * registerCount) {
-      const zeroRegisterCount = this.sketch.registers.filter((registerValue) => registerValue === 0).length;
+      const zeroRegisterCount = this.sketch.registers.filter(
+        (registerValue) => registerValue === 0,
+      ).length;
       if (zeroRegisterCount > 0) {
         return registerCount * Math.log(registerCount / zeroRegisterCount);
       }

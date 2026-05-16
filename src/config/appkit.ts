@@ -1,26 +1,28 @@
-import { cookieStorage, createStorage, http } from 'wagmi'
-import { WagmiAdapter } from '@reown/appkit-adapter-wagmi'
-import { supportedChains, getChainRpc } from './chains'
+import { cookieStorage, createStorage, http } from "wagmi";
+import { WagmiAdapter } from "@reown/appkit-adapter-wagmi";
+import { supportedChains, getChainRpc } from "./chains";
 
-export const projectId = process.env.WALLET_CONNECT_PROJECT_ID
+export const projectId = process.env.WALLET_CONNECT_PROJECT_ID;
 
 if (!projectId) {
-  throw new Error('Project ID is not defined')
+  throw new Error("Project ID is not defined");
 }
 
 const transports = Object.fromEntries(
-  supportedChains.map((chain) => 
-    [[chain.id], http(getChainRpc(Number(chain.id)))])
+  supportedChains.map((chain) => [
+    [chain.id],
+    http(getChainRpc(Number(chain.id))),
+  ]),
 );
 
 export const wagmiAdapter = new WagmiAdapter({
   storage: createStorage({
-    storage: cookieStorage
+    storage: cookieStorage,
   }),
   ssr: true,
   projectId,
   networks: supportedChains as any,
-  transports
-})
+  transports,
+});
 
-export const config = wagmiAdapter.wagmiConfig 
+export const config = wagmiAdapter.wagmiConfig;

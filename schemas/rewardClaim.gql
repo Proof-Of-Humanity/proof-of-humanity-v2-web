@@ -8,5 +8,3 @@ query RewardClaim($id: ID!) {
     timestamp
   }
 }
-
-

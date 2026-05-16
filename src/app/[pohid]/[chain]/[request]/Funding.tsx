@@ -43,7 +43,7 @@ const FundButton: React.FC<FundButtonProps> = ({
   const userChainId = useChainId();
   const [addedFundInput, setAddedFundInput] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const {isConnected, address} = useAccount();
+  const { isConnected, address } = useAccount();
   const { data: balanceData } = useBalance({ address, chainId: userChainId });
   const loading = useLoading();
   const [isLoading, loadingMessage] = loading.use();
@@ -72,7 +72,11 @@ const FundButton: React.FC<FundButtonProps> = ({
         onSuccess(ctx) {
           applyAction(
             "fund",
-            buildFundSuccessPatch(effective.funded, effective.totalCost, ctx.value ?? 0n),
+            buildFundSuccessPatch(
+              effective.funded,
+              effective.totalCost,
+              ctx.value ?? 0n,
+            ),
           );
           closeModal();
           toast.success("Request funded successfully");
@@ -87,7 +91,7 @@ const FundButton: React.FC<FundButtonProps> = ({
 
   const handleSubmit = () => {
     if (!addedFundInput) return;
-    
+
     loading.start("Funding...");
     prepareFund({
       value: BigInt(parseEther(addedFundInput)),
@@ -102,7 +106,7 @@ const FundButton: React.FC<FundButtonProps> = ({
 
   const exceedsRemaining = inputAmount != null && inputAmount > remainingAmount;
   const isReconciling = pendingAction !== null;
-  
+
   const isDisabled =
     !isConnected ||
     !addedFundInput ||
@@ -115,10 +119,13 @@ const FundButton: React.FC<FundButtonProps> = ({
   const getTooltipMessage = () => {
     if (isReconciling) return "Syncing";
     if (!isConnected) return "Please connect your wallet";
-    if (userChainId !== chain.id) return `Switch your chain above to ${idToChain(chain.id)?.name || 'the correct chain'}`;
+    if (userChainId !== chain.id)
+      return `Switch your chain above to ${idToChain(chain.id)?.name || "the correct chain"}`;
     if (!addedFundInput) return "Please enter an amount to fund";
-    if (exceedsRemaining) return `Amount exceeds remaining needed (${formatEth(remainingAmount)} ${chain.nativeCurrency.symbol})`;
-    if (insufficientFunds) return `Insufficient balance. You have ${formatEth(balanceData?.value ?? 0n)} ${chain.nativeCurrency.symbol}`;
+    if (exceedsRemaining)
+      return `Amount exceeds remaining needed (${formatEth(remainingAmount)} ${chain.nativeCurrency.symbol})`;
+    if (insufficientFunds)
+      return `Insufficient balance. You have ${formatEth(balanceData?.value ?? 0n)} ${chain.nativeCurrency.symbol}`;
     return undefined;
   };
 
@@ -129,7 +136,15 @@ const FundButton: React.FC<FundButtonProps> = ({
         label="Fund"
         className="mb-2 w-auto"
         disabled={externalDisabled || isReconciling || userChainId !== chain.id}
-        tooltip={externalDisabled ? externalTooltip : isReconciling ? "Syncing" : userChainId !== chain.id ? `Switch your chain above to ${idToChain(chain.id)?.name || 'the correct chain'}` : undefined}
+        tooltip={
+          externalDisabled
+            ? externalTooltip
+            : isReconciling
+              ? "Syncing"
+              : userChainId !== chain.id
+                ? `Switch your chain above to ${idToChain(chain.id)?.name || "the correct chain"}`
+                : undefined
+        }
       />
       <Modal
         formal
@@ -139,42 +154,46 @@ const FundButton: React.FC<FundButtonProps> = ({
         canClose={!isLoading}
       >
         <div className="flex flex-col p-4">
-        <div className="flex w-full justify-center rounded p-4 font-bold">
-          <span
-            onClick={() => setAddedFundInput(formatEth(remainingAmount).toString())}
-            className="text-orange mx-1 cursor-pointer font-semibold underline underline-offset-2"
-          >
-            {maxFundAmount}
-          </span>{" "}
-          <span className="text-primaryText">{chain.nativeCurrency.symbol} Needed</span>
-        </div>
-        <Field
-          type="number"
-          className="no-spinner"
-          label="Amount funding"
-          step="any"
-          min={0}
-          max={maxFundAmount}
-          value={addedFundInput}
-          onChange={(e) => setAddedFundInput(e.target.value)}
-          disabled={isLoading}
-        />
-        <div className="group relative mt-6 flex justify-center">
-          <ActionButton
-            disabled={isDisabled}
-            isLoading={isLoading}
-            onClick={handleSubmit}
-            label={loadingMessage || "Fund request"}
-            className="w-auto"
-          />
-          {getTooltipMessage() && (
-            <span className="opacity-0 group-hover:opacity-100 absolute bottom-full left-1/2 z-10 mb-2 w-max max-w-[240px] -translate-x-1/2 rounded-md bg-neutral-700 px-3 py-2 text-center text-sm text-white transition-opacity pointer-events-none whitespace-normal">
-              {getTooltipMessage()}
-              <span className="absolute top-full left-1/2 h-0 w-0 -translate-x-1/2 border-x-[5px] border-x-transparent border-t-[5px] border-t-neutral-700" />
+          <div className="flex w-full justify-center rounded p-4 font-bold">
+            <span
+              onClick={() =>
+                setAddedFundInput(formatEth(remainingAmount).toString())
+              }
+              className="text-orange mx-1 cursor-pointer font-semibold underline underline-offset-2"
+            >
+              {maxFundAmount}
+            </span>{" "}
+            <span className="text-primaryText">
+              {chain.nativeCurrency.symbol} Needed
             </span>
-          )}
+          </div>
+          <Field
+            type="number"
+            className="no-spinner"
+            label="Amount funding"
+            step="any"
+            min={0}
+            max={maxFundAmount}
+            value={addedFundInput}
+            onChange={(e) => setAddedFundInput(e.target.value)}
+            disabled={isLoading}
+          />
+          <div className="group relative mt-6 flex justify-center">
+            <ActionButton
+              disabled={isDisabled}
+              isLoading={isLoading}
+              onClick={handleSubmit}
+              label={loadingMessage || "Fund request"}
+              className="w-auto"
+            />
+            {getTooltipMessage() && (
+              <span className="pointer-events-none absolute bottom-full left-1/2 z-10 mb-2 w-max max-w-[240px] -translate-x-1/2 whitespace-normal rounded-md bg-neutral-700 px-3 py-2 text-center text-sm text-white opacity-0 transition-opacity group-hover:opacity-100">
+                {getTooltipMessage()}
+                <span className="absolute left-1/2 top-full h-0 w-0 -translate-x-1/2 border-x-[5px] border-t-[5px] border-x-transparent border-t-neutral-700" />
+              </span>
+            )}
+          </div>
         </div>
-      </div>
       </Modal>
     </>
   );

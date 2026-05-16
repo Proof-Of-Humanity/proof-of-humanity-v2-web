@@ -31,8 +31,8 @@ type PoHRequest = ArrayElement<
 type DisplayRequest =
   | PoHRequest
   | (NonNullable<Awaited<ReturnType<typeof getRequestData>>> & {
-    chainId: SupportedChainId;
-  });
+      chainId: SupportedChainId;
+    });
 
 type EnrichedDisplayRequest = DisplayRequest & {
   identityClaimer: DisplayRequest["claimer"];
@@ -76,7 +76,7 @@ const resolveSourceRequest = async ({
       (event) =>
         event.type === "TRANSFER_INITIATED" &&
         event.transferHash?.toLowerCase() ===
-        currentRequest!.inTransferHash!.toLowerCase(),
+          currentRequest!.inTransferHash!.toLowerCase(),
     );
 
     if (
@@ -117,7 +117,8 @@ const enrichRequest = async ({
 }): Promise<EnrichedDisplayRequest> => {
   let identitySourceSeed = request;
 
-  if (request.revocation) { //revocation request doesn't have the identity information, so we need to find the latest winning identity request
+  if (request.revocation) {
+    //revocation request doesn't have the identity information, so we need to find the latest winning identity request
     const requestTimestamp = Number(
       request.lastStatusChange || request.creationTime || 0,
     );
@@ -127,7 +128,7 @@ const enrichRequest = async ({
           candidate.winnerParty?.id === "requester" &&
           !candidate.revocation &&
           Number(candidate.lastStatusChange || candidate.creationTime || 0) <=
-          requestTimestamp,
+            requestTimestamp,
       )
       .sort(sortByLatestTimestamp)[0];
 
@@ -161,8 +162,8 @@ export type ProfilePageData = {
   winningRequestChainId?: SupportedChainId;
   homeChain: ReturnType<typeof idToChain>;
   claimedRegistration:
-  | NonNullable<ProfileHumanityQuery["humanity"]>["registration"]
-  | undefined;
+    | NonNullable<ProfileHumanityQuery["humanity"]>["registration"]
+    | undefined;
   claimedHomeChain: NonNullable<ReturnType<typeof idToChain>> | null;
   mainCardRequest?: EnrichedDisplayRequest;
   canShowRenewSection: boolean;
@@ -222,10 +223,10 @@ export const getProfilePageData = cache(async (pohId: `0x${string}`) => {
   const arbitrationCost =
     claimedHomeChain && claimedRegistration
       ? await getArbitrationCost(
-        claimedHomeChain,
-        contractData[claimedHomeChain.id].arbitrationInfo.arbitrator,
-        contractData[claimedHomeChain.id].arbitrationInfo.extraData,
-      )
+          claimedHomeChain,
+          contractData[claimedHomeChain.id].arbitrationInfo.arbitrator,
+          contractData[claimedHomeChain.id].arbitrationInfo.extraData,
+        )
       : 0n;
 
   let selectedMainCardRequest: DisplayRequest | undefined =
@@ -236,7 +237,7 @@ export const getProfilePageData = cache(async (pohId: `0x${string}`) => {
     canShowRenewSection &&
     !!homeChain &&
     Number(claimedRegistration?.expirationTime || 0) - nowSeconds <
-    Number(contractData[homeChain.id]?.renewalPeriodDuration || 0);
+      Number(contractData[homeChain.id]?.renewalPeriodDuration || 0);
   const crossChainState = deriveCrossChainState({
     pageState,
     pendingRevocation: profileState.pendingRevocation,
@@ -246,8 +247,8 @@ export const getProfilePageData = cache(async (pohId: `0x${string}`) => {
     pageState === "TRANSFER_PENDING" ? winningRequestChainId : homeChain?.id;
   const lastTransferTimestamp = transferSourceChainId
     ? Number(
-      humanity[transferSourceChainId]?.outTransfer?.transferTimestamp || 0,
-    ) || undefined
+        humanity[transferSourceChainId]?.outTransfer?.transferTimestamp || 0,
+      ) || undefined
     : undefined;
 
   let headerRequest: DisplayRequest | undefined = showsWinningRequestCard
@@ -276,8 +277,8 @@ export const getProfilePageData = cache(async (pohId: `0x${string}`) => {
 
   const crossChainGatewayId = homeChain
     ? contractData[homeChain.id].gateways[
-      contractData[homeChain.id].gateways.length - 1
-    ]?.id
+        contractData[homeChain.id].gateways.length - 1
+      ]?.id
     : undefined;
   const transferCooldownEndsAt =
     homeChain && lastTransferTimestamp
@@ -286,16 +287,16 @@ export const getProfilePageData = cache(async (pohId: `0x${string}`) => {
   const crossChainProps =
     homeChain && crossChainState.canShowCrossChain
       ? {
-        homeChain,
-        transferCooldownEndsAt,
-      }
+          homeChain,
+          transferCooldownEndsAt,
+        }
       : null;
   const profileHeader = enrichedHeaderRequest
     ? {
-      claimer: enrichedHeaderRequest.identityClaimer,
-      evidence: enrichedHeaderRequest.identityEvidenceGroup.evidence,
-      requester: enrichedHeaderRequest.identityRequester,
-    }
+        claimer: enrichedHeaderRequest.identityClaimer,
+        evidence: enrichedHeaderRequest.identityEvidenceGroup.evidence,
+        requester: enrichedHeaderRequest.identityRequester,
+      }
     : undefined;
 
   return {

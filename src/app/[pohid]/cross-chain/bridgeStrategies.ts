@@ -47,7 +47,9 @@ export function getBridgeStrategy(
   sourceChainId: number,
   destinationChainId: number,
 ): BridgeStrategy {
-  const strategy = bridgeStrategies.get(`${sourceChainId}:${destinationChainId}`);
+  const strategy = bridgeStrategies.get(
+    `${sourceChainId}:${destinationChainId}`,
+  );
 
   if (!strategy) {
     throw new Error(

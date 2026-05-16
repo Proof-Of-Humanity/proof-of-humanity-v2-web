@@ -29,7 +29,8 @@ export class APIPoH {
 
   constructor(_chainId: SupportedChainId) {
     this.chainId = _chainId;
-    this.address = getContractInfo("ProofOfHumanity", _chainId).address as Address;
+    this.address = getContractInfo("ProofOfHumanity", _chainId)
+      .address as Address;
     this.publicClient = createPublicClient({
       chain: supportedChains[_chainId],
       transport: http(getChainRpc(_chainId)),

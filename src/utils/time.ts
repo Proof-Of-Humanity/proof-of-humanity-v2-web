@@ -13,13 +13,18 @@ const LEGACY_REQUEST_LIFESPAN = 63115200; // 2 years in seconds
 
 export const isRequestExpired = (
   request: PohRequest,
-  contractData?: { humanityLifespan?: string | number }
+  contractData?: { humanityLifespan?: string | number },
 ): boolean => {
   const { status, index, expirationTime } = request;
   const currentTime = Date.now() / 1000;
 
   if (status.id === "resolved") {
-    if (expirationTime === undefined || expirationTime === null || Number(expirationTime) === 0) return false;
+    if (
+      expirationTime === undefined ||
+      expirationTime === null ||
+      Number(expirationTime) === 0
+    )
+      return false;
     return Number(expirationTime) < currentTime;
   }
 
@@ -29,12 +34,10 @@ export const isRequestExpired = (
   const lifespan = isLegacyRequest
     ? LEGACY_REQUEST_LIFESPAN
     : humanityLifespan
-    ? Number(humanityLifespan)
-    : Infinity;
+      ? Number(humanityLifespan)
+      : Infinity;
 
-  const isExpiredTransferring = (
-    req: PohRequest
-    ): boolean => {
+  const isExpiredTransferring = (req: PohRequest): boolean => {
     if (req.expirationTime !== undefined && req.expirationTime !== null) {
       return Number(req.expirationTime) < currentTime;
     }
@@ -61,14 +64,16 @@ export const formatRelativeTime = (targetDate: Date): string => {
   if (diffMs <= 0) return "now"; // Should ideally not happen if we only call for future dates
 
   const diffSeconds = Math.round(diffMs / 1000);
-  if (diffSeconds < 60) return `${diffSeconds} second${diffSeconds > 1 ? 's' : ''}`;
-  
+  if (diffSeconds < 60)
+    return `${diffSeconds} second${diffSeconds > 1 ? "s" : ""}`;
+
   const diffMinutes = Math.round(diffSeconds / 60);
-  if (diffMinutes < 60) return `${diffMinutes} minute${diffMinutes > 1 ? 's' : ''}`;
-  
+  if (diffMinutes < 60)
+    return `${diffMinutes} minute${diffMinutes > 1 ? "s" : ""}`;
+
   const diffHours = Math.round(diffMinutes / 60);
-  if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? 's' : ''}`;
-  
+  if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? "s" : ""}`;
+
   const diffDays = Math.round(diffHours / 24);
-  return `${diffDays} day${diffDays > 1 ? 's' : ''}`;
+  return `${diffDays} day${diffDays > 1 ? "s" : ""}`;
 };

@@ -17,13 +17,13 @@ export async function generateMetadata({
 }: IntegrationPageProps): Promise<Metadata> {
   const { integrationId } = await params;
   const integration = await getIntegration(integrationId);
-  
+
   if (!integration) {
     return {
       title: "Integration Not Found - Proof of Humanity V2",
     };
   }
-  
+
   return {
     title: `${integration.name} - Proof of Humanity V2`,
   };
@@ -34,28 +34,34 @@ export default async function IntegrationPage({
 }: IntegrationPageProps) {
   const { integrationId } = await params;
   const integration = await getIntegration(integrationId);
-  
+
   if (!integration || !integration.isActive) {
     redirect("/app/");
   }
-  
+
   // Create a mapping of integration IDs to their respective components
-  const IntegrationComponents: Record<string, React.ComponentType<{integration: Integration}>> = {
+  const IntegrationComponents: Record<
+    string,
+    React.ComponentType<{ integration: Integration }>
+  > = {
     circles: CirclesIntegration,
-    'pnk-airdrop': PnkAirdrop,
-    'seer-credits': SeerCredits,
-  };  
+    "pnk-airdrop": PnkAirdrop,
+    "seer-credits": SeerCredits,
+  };
 
   const IntegrationComponent = IntegrationComponents[integration.id];
-  
+
   return (
     <div className="flex flex-col items-center justify-center py-6 md:py-12">
       {IntegrationComponent ? (
-        <IntegrationComponent integration={integration} />  
+        <IntegrationComponent integration={integration} />
       ) : (
         <div role="alert" className="text-center">
           <h2 className="text-xl">Integration Not Implemented</h2>
-          <p>The integration "{integration.name}" exists but has not been implemented yet.</p>
+          <p>
+            The integration "{integration.name}" exists but has not been
+            implemented yet.
+          </p>
         </div>
       )}
     </div>

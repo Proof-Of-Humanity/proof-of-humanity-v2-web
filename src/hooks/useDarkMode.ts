@@ -12,7 +12,8 @@ export function useIsDarkMode(): boolean {
 
   const readIsDark = () => {
     try {
-      const theme = typeof window !== "undefined" ? localStorage.getItem("theme") : null;
+      const theme =
+        typeof window !== "undefined" ? localStorage.getItem("theme") : null;
       if (theme === "dark") return true;
       if (typeof document !== "undefined") {
         return document.documentElement.classList.contains("dark");
@@ -25,11 +26,12 @@ export function useIsDarkMode(): boolean {
     setIsDark(readIsDark());
     if (typeof document === "undefined") return;
     const observer = new MutationObserver(() => setIsDark(readIsDark()));
-    observer.observe(document.documentElement, { attributes: true, attributeFilter: ["class"] });
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ["class"],
+    });
     return () => observer.disconnect();
   }, []);
 
   return isDark;
 }
-
-

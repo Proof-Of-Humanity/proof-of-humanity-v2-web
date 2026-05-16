@@ -71,7 +71,8 @@ const SideFunding: React.FC<SideFundingProps> = ({
   const valueProgress = value > 100 ? 100 : value;
   const unit = idToChain(chainId)?.nativeCurrency.symbol;
 
-  const remainingAmount = appealCost > requesterFunds ? appealCost - requesterFunds : 0n;
+  const remainingAmount =
+    appealCost > requesterFunds ? appealCost - requesterFunds : 0n;
   const inputAmount = useMemo(() => {
     if (!requesterInput) return 0n;
     try {
@@ -84,23 +85,38 @@ const SideFunding: React.FC<SideFundingProps> = ({
 
   const isInvalidInput = inputAmount === null;
   const isZeroInput = inputAmount === 0n;
-  const insufficientFunds = !isInvalidInput && balanceData !== undefined && inputAmount! > balanceData.value;
+  const insufficientFunds =
+    !isInvalidInput &&
+    balanceData !== undefined &&
+    inputAmount! > balanceData.value;
   const exceedsRemaining = !isInvalidInput && inputAmount! > remainingAmount;
 
   const isDisabled =
-    disabled || errorRef.current || loosingSideHasEnd || userChainId !== chainId ||
-    !isConnected || !requesterInput || isInvalidInput || isZeroInput || isLoading || exceedsRemaining || insufficientFunds;
+    disabled ||
+    errorRef.current ||
+    loosingSideHasEnd ||
+    userChainId !== chainId ||
+    !isConnected ||
+    !requesterInput ||
+    isInvalidInput ||
+    isZeroInput ||
+    isLoading ||
+    exceedsRemaining ||
+    insufficientFunds;
 
   const getTooltipMessage = () => {
     if (disabled) return "Syncing";
     if (loosingSideHasEnd) return "Appeal time has ended for this side";
     if (!isConnected) return "Please connect your wallet";
-    if (userChainId !== chainId) return `Switch your chain above to ${idToChain(chainId)?.name || 'the correct chain'}`;
+    if (userChainId !== chainId)
+      return `Switch your chain above to ${idToChain(chainId)?.name || "the correct chain"}`;
     if (!requesterInput) return "Please enter an amount to fund";
     if (isInvalidInput) return "Please enter a valid amount";
     if (isZeroInput) return "Amount must be greater than 0";
-    if (exceedsRemaining) return `Amount exceeds remaining needed (${formatEth(remainingAmount)} ${unit})`;
-    if (insufficientFunds) return `Insufficient balance. You have ${formatEth(balanceData?.value ?? 0n)} ${unit}`;
+    if (exceedsRemaining)
+      return `Amount exceeds remaining needed (${formatEth(remainingAmount)} ${unit})`;
+    if (insufficientFunds)
+      return `Insufficient balance. You have ${formatEth(balanceData?.value ?? 0n)} ${unit}`;
     return undefined;
   };
 
@@ -475,39 +491,39 @@ const Appeal: React.FC<AppealProps> = ({
             </div>
           </div>
           <div className="mt-8 grid grid-cols-1 md:grid-cols-2">
-          <SideFunding
-            side={SideEnum.claimer}
-            disputeId={disputeId}
-            arbitrator={arbitrator!}
-            requester={claimer}
-            requesterFunds={claimerFunds}
-            appealCost={totalClaimerCost}
-            chainId={chainId}
-            loosingSideHasEnd={
-              currentRulingFormatted === SideEnum.challenger
-                ? loosingSideHasEnd
-                : false
-            }
-            onSuccess={handleFundSuccess}
-            disabled={isReconciling}
-          />
-          <SideFunding
-            side={SideEnum.challenger}
-            disputeId={disputeId}
-            arbitrator={arbitrator!}
-            requester={challenger}
-            requesterFunds={challengerFunds}
-            appealCost={totalChallengerCost}
-            chainId={chainId}
-            loosingSideHasEnd={
-              currentRulingFormatted === SideEnum.claimer
-                ? loosingSideHasEnd
-                : false
-            }
-            onSuccess={handleFundSuccess}
-            disabled={isReconciling}
-          />
-        </div>
+            <SideFunding
+              side={SideEnum.claimer}
+              disputeId={disputeId}
+              arbitrator={arbitrator!}
+              requester={claimer}
+              requesterFunds={claimerFunds}
+              appealCost={totalClaimerCost}
+              chainId={chainId}
+              loosingSideHasEnd={
+                currentRulingFormatted === SideEnum.challenger
+                  ? loosingSideHasEnd
+                  : false
+              }
+              onSuccess={handleFundSuccess}
+              disabled={isReconciling}
+            />
+            <SideFunding
+              side={SideEnum.challenger}
+              disputeId={disputeId}
+              arbitrator={arbitrator!}
+              requester={challenger}
+              requesterFunds={challengerFunds}
+              appealCost={totalChallengerCost}
+              chainId={chainId}
+              loosingSideHasEnd={
+                currentRulingFormatted === SideEnum.claimer
+                  ? loosingSideHasEnd
+                  : false
+              }
+              onSuccess={handleFundSuccess}
+              disabled={isReconciling}
+            />
+          </div>
         </div>
       </Modal>
     </>

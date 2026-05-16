@@ -5,7 +5,14 @@ const SAMPLE_VIDEO_URL =
 
 const buildHeaders = (response: Response) => {
   const headers = new Headers();
-  ["accept-ranges", "content-length", "content-range", "content-type", "etag", "last-modified"].forEach((header) => {
+  [
+    "accept-ranges",
+    "content-length",
+    "content-range",
+    "content-type",
+    "etag",
+    "last-modified",
+  ].forEach((header) => {
     const value = response.headers.get(header);
     if (value) {
       headers.set(header, value);
@@ -58,7 +65,9 @@ export async function GET(request: NextRequest) {
   }
 
   if (!response.ok && response.status !== 206) {
-    return new Response("Failed to load sample video", { status: response.status });
+    return new Response("Failed to load sample video", {
+      status: response.status,
+    });
   }
 
   return new Response(response.body, {

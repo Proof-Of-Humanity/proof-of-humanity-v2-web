@@ -8,6 +8,7 @@ import ReactMarkdown from "react-markdown";
 const MarkdownRenderer: DocRenderer = ({ mainState: { currentDocument } }) => {
   if (!currentDocument) return null;
   const base64String = (currentDocument.fileData as string).split(",")[1];
+  if (!base64String) return null;
 
   // Decode the base64 string
   const decodedData = atob(base64String);

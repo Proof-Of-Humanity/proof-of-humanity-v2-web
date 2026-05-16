@@ -1,52 +1,81 @@
 import { InfoSlide } from "types/integrations";
 import Image from "next/image";
-import RightArrowIcon from "icons/ArrowCircleRight.svg"
-import LeftArrowIcon from "icons/ArrowCircleLeft.svg"
+import RightArrowIcon from "icons/ArrowCircleRight.svg";
+import LeftArrowIcon from "icons/ArrowCircleLeft.svg";
 import { addLinkToText } from "components/addLinkToText";
 
-function IntegrationInfoCard({ step, onPrevious, onNext , previousStep, nextStep}: { step: InfoSlide, onPrevious: () => void, onNext: () => void, previousStep: boolean, nextStep: boolean }) {
-    return (
-        <div className="flex flex-col md:flex-row border rounded-[30px] overflow-hidden">
-            {/* Left Column: Text content and navigation */}
-            <div className="flex flex-col rounded-[30px] bg-primaryBackground w-full md:w-1/2 p-4 md:p-6 order-2 md:order-1">
-             <div className="flex flex-col mt-4 md:mt-8 lg:mt-20 min-h-[150px] md:px-8 md:h-80">
-                <p className="text-primaryText text-xl md:text-2xl font-semibold">{step.title}</p>
-                <p className="text-primaryText mt-4 md:mt-6 text-sm md:text-base">{addLinkToText(step.description)}</p>
-                {step.disclaimer && (
-                    <div className="text-primaryText text-sm md:text-base mt-4"><span className="text-red-500">IMPORTANT:</span> You need to be invited into Circles to be able to join the group.</div>
-                )}
-            </div> 
-            {(previousStep || nextStep) && (
-            <div className="flex flex-row justify-center md:justify-end mt-4 md:mr-8">
-            <LeftArrowIcon 
-                 width={32} 
-                 height={32} 
-                 className={`${previousStep ? 'opacity-100 cursor-pointer' : 'opacity-50 cursor-not-allowed pointer-events-none'} mr-2 md:mr-0`}
-                 onClick={onPrevious}
-                 onKeyDown={(e: React.KeyboardEvent<HTMLButtonElement>) => previousStep && e.key === 'Enter' && onPrevious()}
-                 aria-label="Previous step"
-                 role="button"
-                tabIndex={previousStep ? 0 : -1}
-              />
-              <RightArrowIcon 
-                 width={32} 
-                height={32} 
-                className={`ml-2 ${nextStep ? 'opacity-100 cursor-pointer' : 'opacity-50 cursor-not-allowed pointer-events-none'}`}
-                onClick={onNext}
-                onKeyDown={(e: React.KeyboardEvent<HTMLButtonElement>) => nextStep && e.key === 'Enter' && onNext()}
-                 aria-label="Next step"
-                 role="button"
-                tabIndex={nextStep ? 0 : -1}
-               />
+function IntegrationInfoCard({
+  step,
+  onPrevious,
+  onNext,
+  previousStep,
+  nextStep,
+}: {
+  step: InfoSlide;
+  onPrevious: () => void;
+  onNext: () => void;
+  previousStep: boolean;
+  nextStep: boolean;
+}) {
+  return (
+    <div className="flex flex-col overflow-hidden rounded-[30px] border md:flex-row">
+      {/* Left Column: Text content and navigation */}
+      <div className="bg-primaryBackground order-2 flex w-full flex-col rounded-[30px] p-4 md:order-1 md:w-1/2 md:p-6">
+        <div className="mt-4 flex min-h-[150px] flex-col md:mt-8 md:h-80 md:px-8 lg:mt-20">
+          <p className="text-primaryText text-xl font-semibold md:text-2xl">
+            {step.title}
+          </p>
+          <p className="text-primaryText mt-4 text-sm md:mt-6 md:text-base">
+            {addLinkToText(step.description)}
+          </p>
+          {step.disclaimer && (
+            <div className="text-primaryText mt-4 text-sm md:text-base">
+              <span className="text-red-500">IMPORTANT:</span> You need to be
+              invited into Circles to be able to join the group.
             </div>
-            )}
-            </div>
-            {/* Right Column: Image */}
-            <div className="flex justify-center items-center w-full md:w-1/2 order-1 md:order-2">
-                <Image src={step.image || ''} alt={step.title} width={300} height={541} className="my-4 w-full h-auto object-contain max-h-[250px] sm:max-h-[350px] md:max-h-[541px]"/>
-            </div>
+          )}
         </div>
-    )
+        {(previousStep || nextStep) && (
+          <div className="mt-4 flex flex-row justify-center md:mr-8 md:justify-end">
+            <LeftArrowIcon
+              width={32}
+              height={32}
+              className={`${previousStep ? "cursor-pointer opacity-100" : "pointer-events-none cursor-not-allowed opacity-50"} mr-2 md:mr-0`}
+              onClick={onPrevious}
+              onKeyDown={(e: React.KeyboardEvent<HTMLButtonElement>) =>
+                previousStep && e.key === "Enter" && onPrevious()
+              }
+              aria-label="Previous step"
+              role="button"
+              tabIndex={previousStep ? 0 : -1}
+            />
+            <RightArrowIcon
+              width={32}
+              height={32}
+              className={`ml-2 ${nextStep ? "cursor-pointer opacity-100" : "pointer-events-none cursor-not-allowed opacity-50"}`}
+              onClick={onNext}
+              onKeyDown={(e: React.KeyboardEvent<HTMLButtonElement>) =>
+                nextStep && e.key === "Enter" && onNext()
+              }
+              aria-label="Next step"
+              role="button"
+              tabIndex={nextStep ? 0 : -1}
+            />
+          </div>
+        )}
+      </div>
+      {/* Right Column: Image */}
+      <div className="order-1 flex w-full items-center justify-center md:order-2 md:w-1/2">
+        <Image
+          src={step.image || ""}
+          alt={step.title}
+          width={300}
+          height={541}
+          className="my-4 h-auto max-h-[250px] w-full object-contain sm:max-h-[350px] md:max-h-[541px]"
+        />
+      </div>
+    </div>
+  );
 }
 
 export default IntegrationInfoCard;

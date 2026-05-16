@@ -1,12 +1,15 @@
 "use client";
-import React from 'react';
+import React from "react";
 import Image from "next/image";
 import CheckCircleIcon from "icons/CheckCircle.svg";
 import WarningCircle16Icon from "icons/WarningCircle16.svg";
 import ActionButton from "components/ActionButton";
 import CrossCircle16Icon from "icons/CrossCircle16.svg";
 
-export type SeerEligibilityStatus = "eligible" | "not-eligible" | "disconnected";
+export type SeerEligibilityStatus =
+  | "eligible"
+  | "not-eligible"
+  | "disconnected";
 
 interface SeerStatusCardProps {
   status: SeerEligibilityStatus;
@@ -15,12 +18,23 @@ interface SeerStatusCardProps {
   address?: string;
 }
 
-export default function SeerStatusCard({ status, onActionClick, isLoading = false, address }: SeerStatusCardProps) {
+export default function SeerStatusCard({
+  status,
+  onActionClick,
+  isLoading = false,
+  address,
+}: SeerStatusCardProps) {
   const getStatusDisplay = () => {
     switch (status) {
       case "eligible":
         return {
-          icon: <CheckCircleIcon width={16} height={16} className="fill-green-500 mr-1" />,
+          icon: (
+            <CheckCircleIcon
+              width={16}
+              height={16}
+              className="mr-1 fill-green-500"
+            />
+          ),
           label: "Eligible",
           text: "Credits worth $10 appear in Seer on the 1st of each month (auto-refill)",
           textColor: "text-green-500",
@@ -28,7 +42,13 @@ export default function SeerStatusCard({ status, onActionClick, isLoading = fals
         };
       case "not-eligible":
         return {
-          icon: <CrossCircle16Icon width={16} height={16} className="fill-status-removed" />,
+          icon: (
+            <CrossCircle16Icon
+              width={16}
+              height={16}
+              className="fill-status-removed"
+            />
+          ),
           label: "Not eligible:",
           text: "You need to be a verified human",
           textColor: "text-red-500",
@@ -37,7 +57,13 @@ export default function SeerStatusCard({ status, onActionClick, isLoading = fals
       case "disconnected":
       default:
         return {
-          icon: <WarningCircle16Icon width={16} height={16} className="fill-orange" />,
+          icon: (
+            <WarningCircle16Icon
+              width={16}
+              height={16}
+              className="fill-orange"
+            />
+          ),
           label: "Disconnected",
           text: "Connect to check your eligibility",
           textColor: "text-orange",
@@ -69,12 +95,14 @@ export default function SeerStatusCard({ status, onActionClick, isLoading = fals
   // Show loading state
   if (isLoading) {
     return (
-      <div className="lg:w-[391px] p-6 lg:p-8 bg-whiteBackground rounded-[30px] border-t-[1px] border-t-[#BE75FF] lg:border-t-0 lg:border-l-[1px] lg:border-l-[#BE75FF]">
+      <div className="bg-whiteBackground rounded-[30px] border-t-[1px] border-t-[#BE75FF] p-6 lg:w-[391px] lg:border-l-[1px] lg:border-t-0 lg:border-l-[#BE75FF] lg:p-8">
         <div className="text-center">
-          <p className="text-purple text-sm font-medium mb-6">Reward</p>
-          <h3 className="text-primaryText text-xl font-semibold mb-6">Unlock Your $10 Seer Balance</h3>
-          <div className="flex items-center justify-center my-8">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple"></div>
+          <p className="text-purple mb-6 text-sm font-medium">Reward</p>
+          <h3 className="text-primaryText mb-6 text-xl font-semibold">
+            Unlock Your $10 Seer Balance
+          </h3>
+          <div className="my-8 flex items-center justify-center">
+            <div className="border-purple h-8 w-8 animate-spin rounded-full border-b-2"></div>
           </div>
           <div className="text-secondaryText text-sm">
             Checking eligibility...
@@ -85,26 +113,32 @@ export default function SeerStatusCard({ status, onActionClick, isLoading = fals
   }
 
   return (
-    <div className="lg:w-[391px] p-6 lg:p-8 bg-whiteBackground rounded-[30px] border-t-[1px] border-t-[#BE75FF] lg:border-t-0 lg:border-l-[1px] lg:border-l-[#BE75FF]">
+    <div className="bg-whiteBackground rounded-[30px] border-t-[1px] border-t-[#BE75FF] p-6 lg:w-[391px] lg:border-l-[1px] lg:border-t-0 lg:border-l-[#BE75FF] lg:p-8">
       <div className="text-center">
-        <p className="text-purple text-sm font-medium mb-1">Reward</p>
+        <p className="text-purple mb-1 text-sm font-medium">Reward</p>
         <h3 className="text-primaryText text-xl font-semibold">Seer Credits</h3>
       </div>
 
-      {status != "disconnected" ? <div className="flex items-center justify-center m-2">
-        <Image
-          src="/logo/seers-credit-logo.svg"
-          alt="Seer Credits"
-          width={64}
-          height={64}
-        />
-      </div> : <div className='h-[48px]'></div>}
+      {status != "disconnected" ? (
+        <div className="m-2 flex items-center justify-center">
+          <Image
+            src="/logo/seers-credit-logo.svg"
+            alt="Seer Credits"
+            width={64}
+            height={64}
+          />
+        </div>
+      ) : (
+        <div className="h-[48px]"></div>
+      )}
 
       <div className="text-center">
         <div className="mb-2">
-          <div className="flex items-center justify-center mb-1">
+          <div className="mb-1 flex items-center justify-center">
             {icon}
-            <span className={`${textColor} text-sm font-medium ml-1`}>{label}</span>
+            <span className={`${textColor} ml-1 text-sm font-medium`}>
+              {label}
+            </span>
           </div>
           {status === "eligible" ? (
             <span className={`${textColor} text-sm font-medium`}>{text}</span>
@@ -114,7 +148,7 @@ export default function SeerStatusCard({ status, onActionClick, isLoading = fals
         </div>
       </div>
 
-      <div className="mt-6 flex justify-center w-full">
+      <div className="mt-6 flex w-full justify-center">
         <ActionButton
           onClick={onActionClick}
           label={buttonLabel}
@@ -125,4 +159,3 @@ export default function SeerStatusCard({ status, onActionClick, isLoading = fals
     </div>
   );
 }
-

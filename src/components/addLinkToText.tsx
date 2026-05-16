@@ -1,8 +1,9 @@
-import React from 'react';
+import React from "react";
 
 export const addLinkToText = (text: string): React.ReactNode[] => {
   const nodes: React.ReactNode[] = [];
-  const formatRegex = /(\[([^\]]+)\]\((https?:\/\/[^\s)]+)\))|(\*\*([^*]+)\*\*)|(~~([^~]+)~~)/g;
+  const formatRegex =
+    /(\[([^\]]+)\]\((https?:\/\/[^\s)]+)\))|(\*\*([^*]+)\*\*)|(~~([^~]+)~~)/g;
   let lastIndex = 0;
   let match: RegExpExecArray | null;
   let nodeKey = 0;
@@ -25,10 +26,10 @@ export const addLinkToText = (text: string): React.ReactNode[] => {
           href={url}
           target="_blank"
           rel="noopener noreferrer"
-          className="text-orange cursor-pointer underline decoration-text-orange"
+          className="text-orange decoration-text-orange cursor-pointer underline"
         >
           {label}
-        </a>
+        </a>,
       );
     }
     // Check if it's bold **text**
@@ -37,16 +38,20 @@ export const addLinkToText = (text: string): React.ReactNode[] => {
       nodes.push(
         <strong key={`bold-${nodeKey++}`} className="font-semibold">
           {boldText}
-        </strong>
+        </strong>,
       );
     }
     // Check if it's purple ~~text~~
     else if (match[6]) {
       const purpleText = match[7];
       nodes.push(
-        <span key={`purple-${nodeKey++}`} className="font-semibold" style={{ color: '#511279' }}>
+        <span
+          key={`purple-${nodeKey++}`}
+          className="font-semibold"
+          style={{ color: "#511279" }}
+        >
           {purpleText}
-        </span>
+        </span>,
       );
     }
 
@@ -63,8 +68,11 @@ export const addLinkToText = (text: string): React.ReactNode[] => {
 };
 
 // Helper function to process text and preserve newlines as <br /> elements
-const processTextWithNewlines = (text: string, keyPrefix: string): React.ReactNode[] => {
-  const lines = text.split('\n');
+const processTextWithNewlines = (
+  text: string,
+  keyPrefix: string,
+): React.ReactNode[] => {
+  const lines = text.split("\n");
   return lines.flatMap((line, lineIdx) => {
     const elements: React.ReactNode[] = [];
     if (line) {

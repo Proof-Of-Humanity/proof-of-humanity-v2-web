@@ -11,18 +11,15 @@ interface RenewProps {
   claimer: Address;
 }
 
-export default function Renew({
-  pohId,
-  claimer,
-}: RenewProps) {
+export default function Renew({ pohId, claimer }: RenewProps) {
   const web3Loaded = useWeb3Loaded();
   const { address } = useAccount();
 
   if (!web3Loaded || claimer !== address?.toLowerCase()) return null;
 
   return (
-    <Link 
-      className="btn-main mb-4 mt-6" 
+    <Link
+      className="btn-main mb-4 mt-6"
       href={`/${prettifyId(pohId)}/claim`}
       target="_blank"
       rel="noopener noreferrer"

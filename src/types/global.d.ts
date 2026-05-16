@@ -9,6 +9,9 @@ interface Window {
   };
 }
 
+type ArrayElement<ArrayType extends readonly unknown[]> =
+  ArrayType extends readonly (infer ElementType)[] ? ElementType : never;
+
 declare module "*.svg" {
   const content: React.FC<React.SVGAttributes<SVGElement>>;
   export default content;

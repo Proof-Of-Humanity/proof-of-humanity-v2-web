@@ -80,8 +80,8 @@ export default async function ProfileSummarySection({
                       resolutionTime:
                         "lastStatusChange" in mainCardRequest
                           ? mainCardRequest.lastStatusChange ||
-                          mainCardRequest.creationTime ||
-                          0
+                            mainCardRequest.creationTime ||
+                            0
                           : 0,
                       evidenceGroup: {
                         evidence:
@@ -100,7 +100,7 @@ export default async function ProfileSummarySection({
                   pageState === "TRANSFER_PENDING"
                     ? RequestStatus.RESOLVED_CLAIM
                     : profileState.latestWinningRequest?.requestStatus ||
-                    RequestStatus.RESOLVED_CLAIM
+                      RequestStatus.RESOLVED_CLAIM
                 }
               />
             </div>

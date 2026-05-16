@@ -1,0 +1,20 @@
+{
+  "$schema": "https://unpkg.com/knip@6/schema.json",
+  "entry": ["netlify/functions/**/*.{ts,js}", "codegen.yml"],
+  "project": [
+    "src/**/*.{ts,tsx,js,jsx}",
+    "netlify/functions/**/*.{ts,js}",
+    "*.config.{js,ts}",
+    ".*rc.js",
+    "*.config.js",
+    "!src/generated/**",
+    "!src/contracts/deployments/**/abi.ts"
+  ],
+  "ignoreExportsUsedInFile": true,
+  "ignoreDependencies": [
+    "@svgr/webpack",
+    "eslint",
+    "eslint-config-next",
+    "eslint-config-prettier"
+  ]
+}

@@ -71,8 +71,7 @@ export default function Form({
 }: FormProps) {
   const params = useParams();
   const { address, isConnected } = useAccount();
-  const initiatingAddress: MutableRefObject<typeof address> =
-    useRef(undefined);
+  const initiatingAddress: MutableRefObject<typeof address> = useRef(undefined);
   const chainId = useChainId() as SupportedChainId;
 
   const { uploadFile: uploadToIPFS } = useAtlasProvider();
@@ -137,7 +136,9 @@ export default function Form({
       onFail() {
         state$.uri.set("");
         loading.stop();
-        toast.error("Transaction preparation failed. You may have insufficient funds or are on the wrong network.");
+        toast.error(
+          "Transaction preparation failed. You may have insufficient funds or are on the wrong network.",
+        );
       },
       onReady(fire) {
         fire();
@@ -174,7 +175,6 @@ export default function Form({
         uploadToIPFS(photoFile, Roles.Photo),
         uploadToIPFS(videoFile, Roles.IdentificationVideo),
       ]);
-
 
       if (!photoUri || !videoUri) {
         toast.error("Failed to upload media.");
@@ -219,7 +219,7 @@ export default function Form({
       let registrationUri: string | null;
       registrationUri = await uploadToIPFS(
         registrationTextFile,
-        Roles.Evidence
+        Roles.Evidence,
       );
       if (!registrationUri) {
         toast.error("Failed to upload registration.");
@@ -228,9 +228,10 @@ export default function Form({
       }
 
       state$.uri.set(registrationUri);
-
     } catch (error) {
-      toast.error(`Failed to upload registration : ${error instanceof Error ? error.message : "Unknown error"}`);
+      toast.error(
+        `Failed to upload registration : ${error instanceof Error ? error.message : "Unknown error"}`,
+      );
       loading.stop();
       return;
     }
@@ -242,9 +243,7 @@ export default function Form({
       if (!currentTotalCost) return;
       const selfFundedWei = BigInt(parseEther(selfFunded$.get().toString()));
       const funded =
-        selfFundedWei > currentTotalCost
-          ? currentTotalCost
-          : selfFundedWei;
+        selfFundedWei > currentTotalCost ? currentTotalCost : selfFundedWei;
       loading.start("Submitting...");
       if (renewal)
         prepareRenewHumanity({
@@ -327,7 +326,7 @@ export default function Form({
       ) {
         redirect(`/${address}`, RedirectType.replace);
       } else if (!address) {
-        redirect('/', RedirectType.replace);
+        redirect("/", RedirectType.replace);
       }
     }
   }, [address, initiatingAddress, renewal]);
@@ -338,7 +337,8 @@ export default function Form({
       hasPastVerifiedClaim ||
       !address ||
       state.pohId.toLowerCase() === address.toLowerCase()
-    ) return;
+    )
+      return;
     redirect(`/${address}/claim`, RedirectType.replace);
   }, [renewal, hasPastVerifiedClaim, address, state.pohId]);
 
@@ -429,7 +429,9 @@ export default function Form({
           [Step.finalized]: () => (
             <Finalized
               requiredVouches={contractData[chainId].requiredNumberOfVouches}
-              challengePeriodDuration={Number(contractData[chainId].challengePeriodDuration)}
+              challengePeriodDuration={Number(
+                contractData[chainId].challengePeriodDuration,
+              )}
               pohId={params.pohid as string}
             />
           ),

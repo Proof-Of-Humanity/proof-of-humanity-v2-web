@@ -1,12 +1,12 @@
 import Image from "next/image";
 import { Suspense } from "react";
 import { machinifyId, prettifyId } from "utils/identifier";
-import { TimelineHistorySectionSkeleton } from "./[chain]/[request]/TimelineSection";
-import ProfileActionsLoading from "./ProfileActionsLoading";
-import ProfileActionsSection from "./ProfileActionsSection";
-import ProfileSummaryLoading from "./ProfileSummaryLoading";
-import ProfileSummarySection from "./ProfileSummarySection";
-import ProfileTimelineSection from "./ProfileTimelineSection";
+import { TimelineHistorySectionSkeleton } from "../[chain]/[request]/TimelineSection";
+import ProfileActionsLoading from "../ProfileActionsLoading";
+import ProfileActionsSection from "../ProfileActionsSection";
+import ProfileSummaryLoading from "../ProfileSummaryLoading";
+import ProfileSummarySection from "../ProfileSummarySection";
+import ProfileTimelineSection from "../ProfileTimelineSection";
 
 interface PageProps {
   params: Promise<{ pohid: string }>;

@@ -20,9 +20,9 @@ const Checklist: React.FC<ChecklistProps> = ({ title, items, warning }) => {
         <WarningIcon className="mr-1" />
         <h3 className="text-orange text-xl font-semibold">{title}</h3>
       </div>
-      
+
       {warning && (
-        <p className="text-red-500 mb-6 text-center text-sm font-medium">
+        <p className="mb-6 text-center text-sm font-medium text-red-500">
           {warning}
         </p>
       )}
@@ -35,7 +35,9 @@ const Checklist: React.FC<ChecklistProps> = ({ title, items, warning }) => {
             ) : (
               <CircleCancel className="mt-0.5 h-5 w-5 flex-shrink-0 fill-red-500" />
             )}
-            <span className="text-primaryText text-sm leading-relaxed font-medium">{item.text}</span>
+            <span className="text-primaryText text-sm font-medium leading-relaxed">
+              {item.text}
+            </span>
           </div>
         ))}
       </div>
@@ -44,4 +46,3 @@ const Checklist: React.FC<ChecklistProps> = ({ title, items, warning }) => {
 };
 
 export default Checklist;
-

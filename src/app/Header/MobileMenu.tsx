@@ -43,7 +43,10 @@ const MobileMenu = forwardRef(
         className="header-background absolute left-0 right-0 top-16 z-10 w-full p-4 shadow-lg md:hidden"
       >
         <nav className="flex flex-col items-center gap-y-4 text-center">
-          <Link href="/" className={`text-lg ${pathname === "/" ? "font-bold" : ""}`}>
+          <Link
+            href="/"
+            className={`text-lg ${pathname === "/" ? "font-bold" : ""}`}
+          >
             Profiles
           </Link>
           <RegisterLink
@@ -59,8 +62,8 @@ const MobileMenu = forwardRef(
           >
             Policy
           </Link>
-          <Link 
-            href="/app" 
+          <Link
+            href="/app"
             className={`text-lg ${pathname.startsWith("/app") ? "font-bold" : ""}`}
           >
             Rewards
