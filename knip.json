@@ -1,27 +1,13 @@
 {
-  "$schema": "https://unpkg.com/knip@latest/schema.json",
-  "entry": [
-    "next.config.js",
-    "src/app/**/{page,layout,loading,error,not-found,route}.{ts,tsx}",
-    "src/middleware.ts",
-    "netlify/functions/**/*.{ts,js}",
-    "codegen.yml",
-    ".eslintrc.js",
-    "lint-staged.config.js"
-  ],
+  "$schema": "https://unpkg.com/knip@6/schema.json",
+  "entry": ["netlify/functions/**/*.{ts,js}", "codegen.yml"],
   "project": [
     "src/**/*.{ts,tsx,js,jsx}",
     "netlify/functions/**/*.{ts,js}",
     "*.config.{js,ts}",
-    ".eslintrc.js",
-    "lint-staged.config.js"
-  ],
-  "ignore": [
-    ".next/**",
-    "node_modules/**",
-    "src/generated/**",
-    "src/contracts/deployments/**/abi.ts",
-    "next-env.d.ts"
-  ],
-  "ignoreDependencies": ["@netlify/plugin-nextjs"]
+    ".*rc.js",
+    "*.config.js",
+    "!src/generated/**",
+    "!src/contracts/deployments/**/abi.ts"
+  ]
 }
