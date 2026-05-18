@@ -94,7 +94,11 @@ function Item({ index, item, isPending }: ItemInterface) {
   const description = evidence?.description || item.description;
 
   return (
-    <div className={`mt-4 flex flex-col${isPending ? "opacity-70" : ""}`}>
+    <div
+      className={
+        isPending ? "mt-4 flex flex-col opacity-70" : "mt-4 flex flex-col"
+      }
+    >
       <div className="paper relative px-8 py-4">
         <span className="absolute left-3 text-sm text-slate-500">
           {romanize(index + 1)}
@@ -370,17 +374,22 @@ export default function Evidence({
         </>
       )}
 
-      {effective.evidenceList.map((item, i) => (
-        <Item key={item.id} index={i} item={item} isPending={false} />
-      ))}
       {pendingAction === "evidence" && pendingEvidenceItem && (
         <Item
           key={pendingEvidenceItem.id}
-          index={effective.evidenceList.length}
+          index={0}
           item={pendingEvidenceItem}
           isPending
         />
       )}
+      {effective.evidenceList.map((item, i) => (
+        <Item
+          key={item.id}
+          index={pendingEvidenceItem ? i + 1 : i}
+          item={item}
+          isPending={false}
+        />
+      ))}
     </Accordion>
   );
 }
