@@ -29,6 +29,7 @@ const REFRESH_INTERVAL_MS = 2000;
 
 interface RequestOptimisticContextValue {
   base: RequestOptimisticBase;
+  overlay: RequestOptimisticOverlay | null;
   effective: RequestOptimisticBase;
   pendingAction: RequestPendingAction | null;
   pendingEvidenceItem: OptimisticEvidenceItem | null;
@@ -109,6 +110,14 @@ const mergeRequest = (
   evidenceList: base.evidenceList,
 });
 
+const mergeBase = (
+  parentBase: RequestOptimisticBase,
+  base: RequestOptimisticBase,
+): RequestOptimisticBase => ({
+  ...parentBase,
+  ...base,
+});
+
 const getInitialRequestState = (
   scopedStorageKey?: string,
 ): RequestOptimisticState => {
@@ -136,12 +145,24 @@ export function RequestOptimisticProvider({
   account?: string;
   children: ReactNode;
 }) {
+  const parentContext = useContext(RequestOptimisticContext);
   const { address } = useAccount();
   const normalizedAccount = (account ?? address)?.toLowerCase();
   const scopedStorageKey =
     storageKey && normalizedAccount
       ? `${storageKey}:${normalizedAccount}`
       : undefined;
+
+  if (parentContext) {
+    return (
+      <NestedRequestOptimisticProvider
+        parentContext={parentContext}
+        base={base}
+      >
+        {children}
+      </NestedRequestOptimisticProvider>
+    );
+  }
 
   return (
     <RequestOptimisticProviderInner
@@ -152,6 +173,39 @@ export function RequestOptimisticProvider({
     >
       {children}
     </RequestOptimisticProviderInner>
+  );
+}
+
+function NestedRequestOptimisticProvider({
+  parentContext,
+  base,
+  children,
+}: {
+  parentContext: RequestOptimisticContextValue;
+  base: RequestOptimisticBase;
+  children: ReactNode;
+}) {
+  const mergedBase = useMemo(
+    () => mergeBase(parentContext.base, base),
+    [parentContext.base, base],
+  );
+  const effective = useMemo(
+    () => mergeRequest(mergedBase, parentContext.overlay),
+    [mergedBase, parentContext.overlay],
+  );
+  const value = useMemo(
+    () => ({
+      ...parentContext,
+      base: mergedBase,
+      effective,
+    }),
+    [parentContext, mergedBase, effective],
+  );
+
+  return (
+    <RequestOptimisticContext.Provider value={value}>
+      {children}
+    </RequestOptimisticContext.Provider>
   );
 }
 
@@ -179,7 +233,7 @@ function RequestOptimisticProviderInner({
       pendingAction: null,
     });
     clearOptimisticState(scopedStorageKey);
-  }, [overlay, pendingAction, scopedStorageKey]);
+  }, [scopedStorageKey]);
 
   const applyAction = useCallback(
     (action: RequestPendingAction, patch: RequestOptimisticOverlay) => {
@@ -194,7 +248,7 @@ function RequestOptimisticProviderInner({
         ttlMs: OVERLAY_TTL_MS,
       });
     },
-    [base, scopedStorageKey],
+    [scopedStorageKey],
   );
 
   const effective = useMemo(() => mergeRequest(base, overlay), [base, overlay]);
@@ -240,6 +294,7 @@ function RequestOptimisticProviderInner({
   const value = useMemo(
     () => ({
       base,
+      overlay,
       effective,
       pendingAction,
       pendingEvidenceItem,
@@ -248,6 +303,7 @@ function RequestOptimisticProviderInner({
     }),
     [
       base,
+      overlay,
       effective,
       pendingAction,
       pendingEvidenceItem,

@@ -147,11 +147,21 @@ export interface OffChainVouch {
   create_at: string;
 }
 
+/**
+ * @notice Fetches a request directly from the subgraph without enrichment.
+ * @dev Request-page identity enrichment is handled explicitly in the route,
+ * so this keeps the raw subgraph shape available without `sanitizeRequest`.
+ */
+export const getRequestDataRaw = cache(
+  async (chainId: SupportedChainId, pohId: Hash, index: number) => {
+    return (await sdk[chainId]["Request"]({ id: genRequestId(pohId, index) }))
+      .request;
+  },
+);
+
 export const getRequestData = cache(
   async (chainId: SupportedChainId, pohId: Hash, index: number) => {
-    const out = (
-      await sdk[chainId]["Request"]({ id: genRequestId(pohId, index) })
-    ).request;
+    const out = await getRequestDataRaw(chainId, pohId, index);
     return await sanitizeRequest(out, chainId, pohId);
   },
 );

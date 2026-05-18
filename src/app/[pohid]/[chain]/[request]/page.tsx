@@ -1,16 +1,6 @@
-import Arrow from "components/Arrow";
-import Attachment from "components/Attachment";
-import ChainLogo from "components/ChainLogo";
-import ExternalLink from "components/ExternalLink";
-import Identicon from "components/Identicon";
-import Label from "components/Label";
-import Previewed from "components/Previewed";
-import TimeAgo from "components/TimeAgo";
-import VideoThumbnail from "components/VideoThumbnail";
 import Vouch from "components/Vouch";
 import {
   SupportedChainId,
-  explorerLink,
   paramToChain,
   supportedChains,
   legacyChain,
@@ -18,23 +8,27 @@ import {
 import { getClaimerData } from "data/claimer";
 import { getContractData } from "data/contract";
 import { getArbitrationCost } from "data/costs";
+import { getHumanityEvents } from "data/humanityEvents";
 import {
   OffChainVouch,
   getOffChainVouches,
-  getRequestData,
+  getRequestDataRaw,
 } from "data/request";
 import { getRequestTimelineData } from "data/requestTimeline";
 import { ValidVouch, isValidOnChainVouch, isValidVouch } from "data/vouch";
-import { ClaimerQuery, Vouch as VouchQuery } from "generated/graphql";
-import Image from "next/image";
-import Link from "next/link";
-import { redirect } from "next/navigation";
+import {
+  ClaimerQuery,
+  RequestQuery,
+  Vouch as VouchQuery,
+} from "generated/graphql";
 import { Suspense } from "react";
 import { EvidenceFile, MetaEvidenceFile, RegistrationFile } from "types/docs";
 import { machinifyId, prettifyId } from "utils/identifier";
-import { ipfs, ipfsFetch } from "utils/ipfs";
+import { ipfsFetch } from "utils/ipfs";
 import type { Address } from "viem";
 import { RequestOptimisticProvider } from "optimistic/request";
+import type { RequestOptimisticBase } from "optimistic/types";
+import { getRequestIdentity } from "data/requestIdentityData";
 import ActionBar from "./ActionBar";
 import Evidence from "./Evidence";
 import OptimisticVouchIndicator from "./OptimisticVouchIndicator";
@@ -44,11 +38,68 @@ import {
   TimelineHistorySection,
   TimelineHistorySectionSkeleton,
 } from "./TimelineSection";
-import DocumentIcon from "components/DocumentIcon";
 import { getStatus } from "utils/status";
+import RequestIdentityCard from "./RequestIdentityCard";
+import type { RequestPageRequest } from "./RequestIdentityCard.types";
 
 interface PageProps {
   params: Promise<{ pohid: string; chain: string; request: string }>;
+}
+
+/**
+ * @notice Waits for resolved identity evidence and renders the evidence section.
+ * @dev Uses a nested provider to swap in identity evidence while sharing the
+ * parent request optimistic state, polling, and reconciliation.
+ */
+async function RequestEvidenceSection({
+  arbitrationInfo,
+  chainId,
+  humanityEventsPromise,
+  optimisticBase,
+  pohId,
+  request,
+  requestIndex,
+}: {
+  arbitrationInfo: NonNullable<RequestQuery["request"]>["arbitratorHistory"];
+  chainId: SupportedChainId;
+  humanityEventsPromise: ReturnType<typeof getHumanityEvents>;
+  optimisticBase: RequestOptimisticBase;
+  pohId: `0x${string}`;
+  request: RequestPageRequest;
+  requestIndex: number;
+}) {
+  const humanityEvents = await humanityEventsPromise;
+  const identity = await getRequestIdentity({
+    humanityEvents,
+    pohId,
+    chainId,
+    request,
+  });
+  const evidenceList = identity.evidenceGroup.evidence.map((item, index) => ({
+    id: item.id ?? `${request.id}-identity-${index}`,
+    uri: item.uri,
+    creationTime: Number(
+      item.creationTime || request.lastStatusChange || request.creationTime,
+    ),
+    submitter: (item.submitter ||
+      identity.requester ||
+      request.requester) as Address,
+  }));
+
+  return (
+    <RequestOptimisticProvider
+      base={{
+        ...optimisticBase,
+        evidenceList,
+      }}
+    >
+      <Evidence
+        pohId={pohId}
+        requestIndex={requestIndex}
+        arbitrationInfo={arbitrationInfo}
+      />
+    </RequestOptimisticProvider>
+  );
 }
 
 export default async function Request({ params }: PageProps) {
@@ -60,11 +111,10 @@ export default async function Request({ params }: PageProps) {
   const pohId = machinifyId(pohid)!;
 
   const [request, contractData] = await Promise.all([
-    getRequestData(chain.id, pohId, +requestParam),
+    getRequestDataRaw(chain.id, pohId, +requestParam),
     getContractData(chain.id),
   ]);
   if (!request) return <span>Error occured</span>;
-  if (request.status.id === "transferring") redirect(`/${prettifyId(pohId)}`);
   if (
     chain.id === legacyChain.id &&
     request.status.id === "vouching" &&
@@ -78,30 +128,7 @@ export default async function Request({ params }: PageProps) {
     contractData.arbitrationInfo.extraData,
   );
   const requestStatus = getStatus(request, contractData);
-  const sourceWinningEvidence =
-    requestStatus === "TRANSFERRED" || requestStatus === "TRANSFERRING"
-      ? request.humanity.winnerClaim.at(0)?.evidenceGroup.evidence
-      : undefined;
-  const displayEvidence =
-    sourceWinningEvidence && sourceWinningEvidence.length > 0
-      ? sourceWinningEvidence
-      : request.evidenceGroup.evidence;
-  const displayEvidenceList =
-    sourceWinningEvidence && sourceWinningEvidence.length > 0
-      ? sourceWinningEvidence.map((item, index) => ({
-          id: `${request.id}-winner-claim-${index}`,
-          uri: item.uri,
-          creationTime: Number(
-            request.lastStatusChange || request.creationTime,
-          ),
-          submitter: request.requester as Address,
-        }))
-      : request.evidenceGroup.evidence.map((item) => ({
-          id: item.id,
-          uri: item.uri,
-          creationTime: Number(item.creationTime),
-          submitter: item.submitter as Address,
-        }));
+  const humanityEventsPromise = getHumanityEvents(pohId);
 
   let onChainVouches: Array<Address> = [];
   const fetchedOffChainVouches: OffChainVouch[] = await getOffChainVouches(
@@ -128,48 +155,6 @@ export default async function Request({ params }: PageProps) {
     // For any other request status there are registered vouches for this request
     onChainVouches = request.vouches.map((v) => v.voucher.id as Address);
   }
-
-  let registrationFile: RegistrationFile | null;
-  let revocationFile: EvidenceFile | null = null;
-
-  if (request.revocation) {
-    const [registrationEvidence, revocationEvidence] = await Promise.all([
-      !!request.registrationEvidenceRevokedReq
-        ? ipfsFetch<EvidenceFile>(request.registrationEvidenceRevokedReq)
-        : request.humanity.winnerClaim.length > 0 &&
-            request.humanity.winnerClaim.at(0)!.evidenceGroup.evidence.length >
-              0
-          ? ipfsFetch<EvidenceFile>(
-              request.humanity.winnerClaim.at(0)!.evidenceGroup.evidence.at(-1)!
-                .uri,
-            )
-          : null,
-      ipfsFetch<EvidenceFile>(request.evidenceGroup.evidence.at(-1)!.uri),
-    ]);
-
-    revocationFile = revocationEvidence;
-    registrationFile =
-      registrationEvidence && registrationEvidence.fileURI
-        ? await ipfsFetch<RegistrationFile>(registrationEvidence.fileURI)
-        : null;
-  } else {
-    const registrationEvidence =
-      displayEvidence.length > 0
-        ? await ipfsFetch<EvidenceFile>(displayEvidence.at(-1)!.uri)
-        : null;
-
-    registrationFile =
-      registrationEvidence && registrationEvidence.fileURI
-        ? await ipfsFetch<RegistrationFile>(registrationEvidence.fileURI)
-        : null;
-  }
-
-  const displayedClaimerId =
-    request.revocation && request.humanity.registration?.claimer.id
-      ? (request.humanity.registration.claimer.id as Address)
-      : (request.claimer.id as Address);
-  const displayedClaimerName =
-    registrationFile?.name || request.claimer.name || "";
 
   interface VouchData {
     voucher: Address | undefined;
@@ -302,6 +287,7 @@ export default async function Request({ params }: PageProps) {
     chain.id,
     request,
     fetchedOffChainVouches,
+    humanityEventsPromise,
     contractData.humanityLifespan,
   );
   const funded =
@@ -309,6 +295,7 @@ export default async function Request({ params }: PageProps) {
       ? BigInt(request.challenges[0]?.rounds[0]?.requesterFund.amount ?? 0)
       : 0n;
   const currentChallenge = request.challenges.at(-1);
+  const requestStorageKey = `request:${pohId}:${chain.id}:${request.index}`;
   const optimisticBase = {
     status: request.status.id,
     requestStatus,
@@ -318,9 +305,14 @@ export default async function Request({ params }: PageProps) {
     validVouches,
     onChainVouches,
     offChainVouches,
-    evidenceList: displayEvidenceList,
+    evidenceList: request.evidenceGroup.evidence.map((item) => ({
+      id: item.id,
+      uri: item.uri,
+      creationTime: Number(item.creationTime),
+      submitter: item.submitter as Address,
+    })),
     revocation: request.revocation,
-  };
+  } satisfies RequestOptimisticBase;
 
   //const policyUpdate = request.arbitratorHistory.updateTime;
 
@@ -336,107 +328,33 @@ export default async function Request({ params }: PageProps) {
     !request.revocation && Number(request.humanity.nbPendingRequests ?? 0) > 1;
 
   return (
-    <RequestOptimisticProvider
-      base={optimisticBase}
-      storageKey={`request:${pohId}:${chain.id}:${request.index}`}
-    >
-      <div className="content mx-auto flex w-[92vw] max-w-[1500px] flex-col justify-center font-semibold sm:w-[84vw] md:w-[76vw]">
-        <ActionBar
-          arbitrationCost={arbitrationCost}
-          index={request.index}
-          requester={request.requester}
-          contractData={contractData}
-          pohId={pohId}
-          revocation={request.revocation}
-          currentChallenge={currentChallenge}
-          arbitrationHistory={request.arbitratorHistory}
-          humanityExpirationTime={request.expirationTime}
-          usedReasons={usedReasons}
-          humanityClaimed={humanityClaimed}
-          anotherClaimPending={anotherClaimPending}
-        />
-        <div className="border-stroke bg-whiteBackground mb-6 rounded border shadow">
-          {request.revocation && revocationFile && (
-            <div className="bg-primaryBackground p-4">
-              <div className="relative">
-                <div className="text-primaryText flex flex-col items-center gap-2 text-center md:flex-row md:justify-between md:text-left">
-                  Revocation requested - {revocationFile.name}
-                  {revocationFile.fileURI && (
-                    <Attachment uri={revocationFile.fileURI} />
-                  )}
-                </div>
-                <p className="text-primaryText text-center md:text-left">
-                  {revocationFile.description}
-                </p>
-              </div>
-              <div className="flex flex-wrap items-center justify-center text-center text-sm font-normal md:justify-start md:text-left">
-                <span className="text-secondaryText mr-2">Requested by</span>
-                <Identicon diameter={16} address={request.requester} />
-                <ExternalLink
-                  className="ml-1 flex flex-wrap break-words break-all text-blue-500 underline underline-offset-2"
-                  href={explorerLink(request.requester, chain)}
-                >
-                  {request.requester}
-                </ExternalLink>
-              </div>
-            </div>
-          )}
-
-          <div className="flex flex-col md:flex-row">
-            <div className="background border-stroke hidden w-2/5 flex-col items-stretch justify-between border-r px-8 pt-8 md:flex">
-              <div className="flex flex-col items-center">
-                {registrationFile && (
-                  <Previewed
-                    uri={ipfs(registrationFile.photo)}
-                    trigger={
-                      <Image
-                        className="h-32 w-32 cursor-pointer rounded-full bg-cover bg-center bg-no-repeat object-cover"
-                        alt="image"
-                        src={ipfs(registrationFile.photo)}
-                        width={144}
-                        height={144}
-                        unoptimized={true} //Skips cache
-                      />
-                    }
-                  />
-                )}
-
-                <span className="text-primaryText mb-12 mt-4 text-2xl">
-                  {displayedClaimerName}
-                </span>
-
-                <span className="text-secondaryText text-sm font-light">
-                  {registrationFile ? registrationFile.bio : ""}
-                </span>
-              </div>
-
-              <Label className="text-orange mb-8">
-                Last update: <TimeAgo time={request.lastStatusChange} />
-              </Label>
-            </div>
-
-            <div className="flex w-full flex-col p-[24px] lg:p-[32px]">
-              <div className="mb-8 flex flex-col-reverse items-center justify-between md:flex-row md:items-stretch">
-                <div className="flex w-full flex-col items-center md:w-auto md:flex-row md:items-center md:justify-start">
-                  <Identicon diameter={24} address={displayedClaimerId} />
-                  <ExternalLink
-                    className="mt-1 text-center font-semibold text-slate-400 hover:text-slate-600 md:ml-2 md:mt-0 md:text-left"
-                    href={explorerLink(displayedClaimerId, chain)}
-                  >
-                    {displayedClaimerId.slice(0, 20)}
-                    <wbr />
-                    {displayedClaimerId.slice(20)}
-                  </ExternalLink>
-                </div>
-                <span className="text-primaryText mb-2 flex items-center justify-center md:mb-0 md:justify-start">
-                  <ChainLogo
-                    chainId={chain.id}
-                    className="fill-primaryText m-1 h-4 w-4"
-                  />
-                  {chain.name}
-                </span>
-              </div>
-              <div className="mb-4 h-1 w-full border-b"></div>
+    <>
+      <RequestOptimisticProvider
+        base={optimisticBase}
+        storageKey={requestStorageKey}
+      >
+        <div className="content mx-auto flex w-[92vw] max-w-[1500px] flex-col justify-center font-semibold sm:w-[84vw] md:w-[76vw]">
+          <ActionBar
+            arbitrationCost={arbitrationCost}
+            index={request.index}
+            requester={request.requester}
+            contractData={contractData}
+            pohId={pohId}
+            revocation={request.revocation}
+            currentChallenge={currentChallenge}
+            arbitrationHistory={request.arbitratorHistory}
+            humanityExpirationTime={request.expirationTime}
+            usedReasons={usedReasons}
+            humanityClaimed={humanityClaimed}
+            anotherClaimPending={anotherClaimPending}
+          />
+          <RequestIdentityCard
+            chain={chain}
+            humanityEventsPromise={humanityEventsPromise}
+            policyLink={policyLink}
+            pohId={pohId}
+            request={request}
+            requestInfo={
               <div className="mb-2 flex flex-col-reverse items-center justify-center md:flex-row md:items-stretch md:justify-between">
                 <Suspense fallback={<RequestInfoSectionSkeleton />}>
                   <RequestInfoSection
@@ -445,168 +363,100 @@ export default async function Request({ params }: PageProps) {
                   />
                 </Suspense>
               </div>
-              <div className="text-orange mb-8 flex flex-wrap justify-center gap-x-[8px] gap-y-[8px] font-medium md:justify-start">
-                <Link
-                  className="text-orange flex flex-row flex-wrap justify-center gap-x-[8px] text-center font-semibold hover:text-orange-500 md:justify-start"
-                  href={`/${prettifyId(pohId)}`}
-                >
-                  <Image
-                    alt="poh id"
-                    src="/logo/pohid.svg"
-                    height={24}
-                    width={24}
-                  />
-                  {prettifyId(pohId).slice(0, 20)}
-                  <wbr />
-                  {prettifyId(pohId).slice(20)} <span>- Open ID</span> <Arrow />
-                </Link>
-              </div>
-
-              <div className="flex flex-col items-center md:hidden">
-                {registrationFile && (
-                  <Previewed
-                    uri={ipfs(registrationFile.photo)}
-                    trigger={
-                      <Image
-                        className="h-32 w-32 cursor-pointer rounded-full object-cover"
-                        alt="image"
-                        src={ipfs(registrationFile.photo)}
-                        width={144}
-                        height={144}
-                        unoptimized={true} //Skips cache
-                      />
-                    }
-                  />
-                )}
-
-                <span className="text-primaryText mb-[16px] mt-4 text-2xl">
-                  {displayedClaimerName}
-                </span>
-
-                <span className="text-secondaryText mb-[32px] text-sm font-light">
-                  {registrationFile ? registrationFile.bio : ""}
-                </span>
-              </div>
-
-              {registrationFile && (
-                <>
-                  <Previewed
-                    isVideo
-                    uri={ipfs(registrationFile.video)}
-                    trigger={
-                      <VideoThumbnail
-                        className="w-full cursor-pointer rounded"
-                        src={ipfs(registrationFile.video)}
-                      />
-                    }
-                  />
-                  <span className="text-secondaryText mt-1 text-center text-sm md:text-left">
-                    Tap video to preview fullscreen
+            }
+            vouchedFor={
+              vourchesForData.find((v) => v) ? (
+                <div className="text-secondaryText mt-8 flex flex-col items-center text-center md:items-start md:text-left">
+                  This PoHID vouched for
+                  <div className="flex flex-wrap justify-center gap-2 md:justify-start">
+                    {vourchesForData.map(async (vouch, idx) => {
+                      const vouchLocal = await Promise.resolve(vouch);
+                      if (vouchLocal.pohId === undefined) return null;
+                      return (
+                        <Vouch
+                          key={`${vouchLocal.pohId}-${idx}`}
+                          isActive={true}
+                          reason={undefined}
+                          name={vouchLocal.name}
+                          photo={vouchLocal.photo}
+                          idx={idx}
+                          href={`/${prettifyId(vouchLocal.pohId!)}`}
+                          pohId={vouchLocal.pohId}
+                          address={vouchLocal.pohId}
+                          isOnChain={vouchLocal.isOnChain}
+                          reducedTooltip={true}
+                        />
+                      );
+                    })}
+                  </div>
+                </div>
+              ) : null
+            }
+            vouchers={
+              vouchersData.find((v) => v) ? (
+                <div className="text-secondaryText mt-8 flex flex-col items-center text-center md:items-start md:text-left">
+                  <span className="flex items-center">
+                    {request.status.id === "vouching"
+                      ? "Available vouches for this PoHID"
+                      : "Vouched for this request"}
+                    {request.status.id === "vouching" && (
+                      <OptimisticVouchIndicator />
+                    )}
                   </span>
-                </>
-              )}
-
-              <div className="flex w-full flex-wrap justify-center gap-2 md:flex-row md:items-center md:justify-between">
-                {policyLink && (
-                  <div className="flex w-full flex-col items-center font-normal md:flex-row md:items-end md:justify-end">
-                    <Link
-                      href={`/attachment?url=${ipfs(policyLink)}`}
-                      className="text-primaryText ml-0 flex items-center justify-center md:ml-2"
-                    >
-                      <DocumentIcon className="fill-orange h-6 w-6" />
-                      <div className="text-primaryText group relative flex py-[8px]">
-                        Relevant Policy
-                      </div>
-                    </Link>
+                  <div className="flex flex-wrap justify-center gap-2 md:justify-start">
+                    {vouchersData.map(async (vouch, idx) => {
+                      const vouchLocal = await Promise.resolve(vouch);
+                      return (
+                        <Vouch
+                          key={`${vouchLocal.voucher ?? vouchLocal.pohId}-${idx}`}
+                          isActive={
+                            request.status.id === "vouching"
+                              ? vouchLocal.vouchStatus?.isValid
+                              : true
+                          }
+                          reason={
+                            request.status.id === "vouching"
+                              ? vouchLocal.vouchStatus?.reason
+                              : undefined
+                          }
+                          name={vouchLocal.name}
+                          photo={vouchLocal.photo}
+                          idx={idx}
+                          href={`/${prettifyId(vouchLocal.pohId!)}`}
+                          pohId={vouchLocal.pohId}
+                          address={vouchLocal.voucher}
+                          isOnChain={vouchLocal.isOnChain}
+                          reducedTooltip={request.status.id !== "vouching"}
+                        />
+                      );
+                    })}
                   </div>
-                )}
-                {vourchesForData.find((v) => v) && (
-                  <div className="text-secondaryText mt-8 flex flex-col items-center text-center md:items-start md:text-left">
-                    This PoHID vouched for
-                    <div className="flex flex-wrap justify-center gap-2 md:justify-start">
-                      {vourchesForData.map(async (vouch, idx) => {
-                        const vouchLocal = await Promise.resolve(vouch);
-                        if (vouchLocal.pohId === undefined) return null;
-                        return (
-                          <Vouch
-                            key={`${vouchLocal.pohId}-${idx}`}
-                            isActive={true}
-                            reason={undefined}
-                            name={vouchLocal.name}
-                            photo={vouchLocal.photo}
-                            idx={idx}
-                            href={`/${prettifyId(vouchLocal.pohId!)}`}
-                            pohId={vouchLocal.pohId}
-                            address={vouchLocal.pohId}
-                            isOnChain={vouchLocal.isOnChain}
-                            reducedTooltip={true}
-                          />
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
-              </div>
-              <div className="flex w-full flex-wrap justify-center gap-2 md:flex-row md:items-center md:justify-between">
-                {vouchersData.find((v) => v) && (
-                  <div className="text-secondaryText mt-8 flex flex-col items-center text-center md:items-start md:text-left">
-                    <span className="flex items-center">
-                      {request.status.id === "vouching"
-                        ? "Available vouches for this PoHID"
-                        : "Vouched for this request"}
-                      {request.status.id === "vouching" && (
-                        <OptimisticVouchIndicator />
-                      )}
-                    </span>
-                    <div className="flex flex-wrap justify-center gap-2 md:justify-start">
-                      {vouchersData.map(async (vouch, idx) => {
-                        const vouchLocal = await Promise.resolve(vouch);
-                        return (
-                          <Vouch
-                            key={`${vouchLocal.voucher ?? vouchLocal.pohId}-${idx}`}
-                            isActive={
-                              request.status.id === "vouching"
-                                ? vouchLocal.vouchStatus?.isValid
-                                : true
-                            }
-                            reason={
-                              request.status.id === "vouching"
-                                ? vouchLocal.vouchStatus?.reason
-                                : undefined
-                            }
-                            name={vouchLocal.name}
-                            photo={vouchLocal.photo}
-                            idx={idx}
-                            href={`/${prettifyId(vouchLocal.pohId!)}`}
-                            pohId={vouchLocal.pohId}
-                            address={vouchLocal.voucher}
-                            isOnChain={vouchLocal.isOnChain}
-                            reducedTooltip={request.status.id !== "vouching"}
-                          />
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
-              </div>
+                </div>
+              ) : null
+            }
+            timeline={
               <Suspense fallback={<TimelineHistorySectionSkeleton />}>
                 <TimelineHistorySection
                   timelineDataPromise={timelineDataPromise}
                 />
               </Suspense>
-              <Label className="text-orange mb-8 text-center md:hidden">
-                Last update: <TimeAgo time={request.lastStatusChange} />
-              </Label>
-            </div>
-          </div>
+            }
+          />
         </div>
-
-        <Evidence
-          pohId={pohId}
-          requestIndex={request.index}
-          arbitrationInfo={request.arbitratorHistory}
-        />
+      </RequestOptimisticProvider>
+      <div className="content mx-auto flex w-[92vw] max-w-[1500px] flex-col justify-center font-semibold sm:w-[84vw] md:w-[76vw]">
+        <Suspense fallback={null}>
+          <RequestEvidenceSection
+            arbitrationInfo={request.arbitratorHistory}
+            chainId={chain.id}
+            humanityEventsPromise={humanityEventsPromise}
+            optimisticBase={optimisticBase}
+            pohId={pohId}
+            request={request}
+            requestIndex={request.index}
+          />
+        </Suspense>
       </div>
-    </RequestOptimisticProvider>
+    </>
   );
 }

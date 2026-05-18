@@ -3516,6 +3516,14 @@ export type MeQueryVariables = Exact<{
 
 export type MeQuery = { __typename?: 'Query', claimer?: { __typename?: 'Claimer', registration?: { __typename?: 'Registration', id: any, expirationTime: any } | null, currentRequest?: { __typename?: 'Request', index: any, status: { __typename?: 'Status', id: string }, humanity: { __typename?: 'Humanity', id: any } } | null } | null };
 
+export type LatestIdentityRequestQueryVariables = Exact<{
+  humanityId: Scalars['Bytes'];
+  latestBefore: Scalars['BigInt'];
+}>;
+
+
+export type LatestIdentityRequestQuery = { __typename?: 'Query', requests: Array<{ __typename?: 'Request', index: any, inTransferHash?: any | null, lastStatusChange: any, claimer: { __typename?: 'Claimer', id: any, name?: string | null }, evidenceGroup: { __typename?: 'EvidenceGroup', evidence: Array<{ __typename?: 'Evidence', uri: string }> } }> };
+
 export type ProfileHumanityQueryVariables = Exact<{
   id: Scalars['ID'];
   humanityId: Scalars['Bytes'];
@@ -3601,7 +3609,7 @@ export const WinnerClaimFragmentDoc = gql`
     index
     resolutionTime
     evidenceGroup {
-      evidence(orderBy: creationTime, orderDirection: desc, first: 1) {
+      evidence(orderBy: creationTime, orderDirection: asc, first: 1) {
         uri
       }
     }
@@ -3842,6 +3850,29 @@ export const MeDocument = gql`
       }
       humanity {
         id
+      }
+    }
+  }
+}
+    `;
+export const LatestIdentityRequestDocument = gql`
+    query LatestIdentityRequest($humanityId: Bytes!, $latestBefore: BigInt!) {
+  requests(
+    first: 1
+    orderBy: lastStatusChange
+    orderDirection: desc
+    where: {humanity_: {id: $humanityId}, winnerParty_: {id: "requester"}, revocation: false, lastStatusChange_lte: $latestBefore}
+  ) {
+    index
+    inTransferHash
+    lastStatusChange
+    claimer {
+      id
+      name
+    }
+    evidenceGroup {
+      evidence(orderBy: creationTime, orderDirection: desc, first: 1) {
+        uri
       }
     }
   }
@@ -4161,6 +4192,9 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     },
     Me(variables: MeQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<MeQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<MeQuery>(MeDocument, variables, { ...requestHeaders, ...wrappedRequestHeaders }), 'Me', 'query', variables);
+    },
+    LatestIdentityRequest(variables: LatestIdentityRequestQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<LatestIdentityRequestQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<LatestIdentityRequestQuery>(LatestIdentityRequestDocument, variables, { ...requestHeaders, ...wrappedRequestHeaders }), 'LatestIdentityRequest', 'query', variables);
     },
     ProfileHumanity(variables: ProfileHumanityQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<ProfileHumanityQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<ProfileHumanityQuery>(ProfileHumanityDocument, variables, { ...requestHeaders, ...wrappedRequestHeaders }), 'ProfileHumanity', 'query', variables);

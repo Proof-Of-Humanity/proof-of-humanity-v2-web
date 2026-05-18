@@ -1,0 +1,26 @@
+query LatestIdentityRequest($humanityId: Bytes!, $latestBefore: BigInt!) {
+  requests(
+    first: 1
+    orderBy: lastStatusChange
+    orderDirection: desc
+    where: {
+      humanity_: { id: $humanityId }
+      winnerParty_: { id: "requester" }
+      revocation: false
+      lastStatusChange_lte: $latestBefore
+    }
+  ) {
+    index
+    inTransferHash
+    lastStatusChange
+    claimer {
+      id
+      name
+    }
+    evidenceGroup {
+      evidence(orderBy: creationTime, orderDirection: asc, first: 1) {
+        uri
+      }
+    }
+  }
+}

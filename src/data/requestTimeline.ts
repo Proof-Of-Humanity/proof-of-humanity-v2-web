@@ -1,10 +1,8 @@
 import { SupportedChainId, idToChain, supportedChains } from "config/chains";
 import {
   HumanityEventRecord,
-  getHumanityEvents,
   getTimelineRequestNode,
 } from "data/humanityEvents";
-import { getHumanityData } from "data/humanity";
 import { OffChainVouch } from "data/request";
 import { HumanityQuery, RequestQuery } from "generated/graphql";
 import { Hash } from "viem";
@@ -233,9 +231,10 @@ const getProfileRequestTimelineItem = (
 const createEventTimelineItems = async (
   pohId: Hash,
   currentRequest: CurrentRequestWithChain,
+  humanityEvents: HumanityEventRecord[],
   humanityLifespan?: string,
 ): Promise<TimelineItem[]> => {
-  const events = await getHumanityEvents(pohId);
+  const events = humanityEvents;
   if (!events.length) return [];
 
   const currentNode: LineageRequestNode = {
@@ -520,16 +519,20 @@ export const getRequestTimelineData = async (
   chainId: SupportedChainId,
   request: CurrentRequest,
   offChainVouches: OffChainVouch[],
+  humanityEventsPromise: Promise<HumanityEventRecord[]>,
   humanityLifespan?: string,
 ) => {
   const currentRequest: CurrentRequestWithChain = {
     ...request,
     chainId,
   };
-  const [humanity, eventTimelineItems] = await Promise.all([
-    getHumanityData(pohId),
-    createEventTimelineItems(pohId, currentRequest, humanityLifespan),
-  ]);
+  const humanityEvents = await humanityEventsPromise;
+  const eventTimelineItems = await createEventTimelineItems(
+    pohId,
+    currentRequest,
+    humanityEvents,
+    humanityLifespan,
+  );
   const resolvedOffChainVouchTimelineItems =
     await createOffChainVouchTimelineItems(
       currentRequest,
@@ -539,9 +542,8 @@ export const getRequestTimelineData = async (
   const requestCounts = supportedChains.reduce(
     (acc, chain) => ({
       ...acc,
-      [chain.id]: (humanity[chain.id].humanity?.requests ?? []).filter(
-        (request) => !isTransferArtifactRequest(request),
-      ).length,
+      [chain.id]:
+        chain.id === chainId ? Number(request.humanity.nbRequests) : 0,
     }),
     {} as Record<SupportedChainId, number>,
   );
