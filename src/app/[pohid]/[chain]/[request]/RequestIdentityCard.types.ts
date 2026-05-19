@@ -1,48 +1,46 @@
-import type { SupportedChainId, paramToChain } from "config/chains";
-import type { HumanityEventRecord } from "data/humanityEvents";
+import type { paramToChain } from "config/chains";
 import type { RequestQuery } from "generated/graphql";
 import type { ReactNode } from "react";
 import type { EvidenceFile, RegistrationFile } from "types/docs";
-import type { Address } from "viem";
 
 export type RequestPageRequest = NonNullable<RequestQuery["request"]>;
 
 export type RequestChain = NonNullable<ReturnType<typeof paramToChain>>;
 
-export type IdentityEvidence = {
+export type RequestIdentityEvidence = {
   id?: string;
   uri: string;
   creationTime?: number | string;
   submitter?: string;
 };
 
-export type IdentitySourceRequest = {
-  chainId: SupportedChainId;
+export type RequestIdentitySource = {
   claimer: {
     id: string;
     name?: string | null;
   };
-  creationTime?: number | string;
+  creationTime: number | string;
   evidenceGroup: {
-    evidence: IdentityEvidence[];
+    evidence: RequestIdentityEvidence[];
   };
-  inTransferHash?: string | null;
-  index: number | string;
   lastStatusChange: number | string;
-  requester?: string;
+  requester: string;
 };
 
-export type RequestIdentityViewData = {
-  displayedClaimerId: Address;
-  identityClaimerName: string;
+export type RequestEvidenceSource = {
+  evidence: RequestIdentityEvidence[];
+  requester: string;
+};
+
+export type RequestIdentityFiles = {
   registrationFilePromise: Promise<RegistrationFile | null>;
   revocationFilePromise: Promise<EvidenceFile | null>;
 };
 
 export type RequestIdentityCardProps = {
   chain: RequestChain;
-  humanityEventsPromise: Promise<HumanityEventRecord[]>;
-  policyLink: string | null;
+  identity: RequestIdentitySource;
+  policyMetaEvidenceUri: string;
   pohId: `0x${string}`;
   request: RequestPageRequest;
   requestInfo: ReactNode;

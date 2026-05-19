@@ -208,7 +208,9 @@ export const getProfilePageData = cache(async (pohId: `0x${string}`) => {
   const latestWinningRequest = profileState.latestWinningRequest;
   const winningRequestChainId = latestWinningRequest?.chainId;
   const showsWinningRequestCard =
-    pageState === "CLAIMED" || pageState === "TRANSFER_PENDING";
+    pageState === "CLAIMED" ||
+    pageState === "TRANSFER_PENDING" ||
+    pageState === "PUNISHED_VOUCH";
   const homeChainId =
     pageState === "TRANSFER_PENDING" && winningRequestChainId
       ? (getForeignChain(winningRequestChainId) as SupportedChainId)

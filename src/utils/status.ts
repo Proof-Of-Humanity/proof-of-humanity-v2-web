@@ -9,6 +9,7 @@ export enum RequestStatus {
   DISPUTED_REVOCATION = "DISPUTED_REVOCATION",
   RESOLVED_CLAIM = "RESOLVED_CLAIM",
   RESOLVED_REVOCATION = "RESOLVED_REVOCATION",
+  PUNISHED_VOUCH = "PUNISHED_VOUCH",
   REJECTED_REVOCATION = "REJECTED_REVOCATION",
   REJECTED = "REJECTED",
   EXPIRED = "EXPIRED",
@@ -104,6 +105,12 @@ const STATUS_CONFIG: Record<RequestStatus, StatusConfig> = {
       winnerParty_: { id: "requester" },
     },
   },
+  [RequestStatus.PUNISHED_VOUCH]: {
+    baseLabel: "Punished",
+    tooltip: "Profile removed because it vouched for a punished profile.",
+    color: STATUS_COLORS.removed,
+    filter: {} as Request_Filter,
+  },
   [RequestStatus.REJECTED_REVOCATION]: {
     baseLabel: "Removal Rejected",
     tooltip: "Revocation request lost; profile remains verified.",
@@ -187,7 +194,11 @@ export const getRequestStatusFilter = (
  */
 export const STATUS_FILTER_OPTIONS = Object.values(RequestStatus).filter(
   (status) =>
-    ![RequestStatus.TRANSFERRING, RequestStatus.TRANSFERRED].includes(status),
+    ![
+      RequestStatus.PUNISHED_VOUCH,
+      RequestStatus.TRANSFERRING,
+      RequestStatus.TRANSFERRED,
+    ].includes(status),
 );
 
 const isRejectedRequest = (request: RawRequestData): boolean => {

@@ -113,9 +113,9 @@ export const getRequestsInitData = async () => {
 export const getFilteredRequestsInitData = async (
   filtered: Record<SupportedChainId, RequestsQuery["requests"]> | undefined,
 ) => {
-  var all: Record<SupportedChainId, RequestsQuery["requests"]> =
+  const all: Record<SupportedChainId, RequestsQuery["requests"]> =
     await _getPagedRequests();
-  var out: Record<SupportedChainId, RequestsQuery["requests"]> = filtered
+  const out: Record<SupportedChainId, RequestsQuery["requests"]> = filtered
     ? filtered
     : all;
   return await sanitizeHeadRequests(all, out);
@@ -148,20 +148,24 @@ export interface OffChainVouch {
 }
 
 /**
- * @notice Fetches a request directly from the subgraph without enrichment.
- * @dev Request-page identity enrichment is handled explicitly in the route,
- * so this keeps the raw subgraph shape available without `sanitizeRequest`.
+ * @notice Fetches the request-page subgraph payload.
+ * @dev The `Request` query already includes `humanity.winnerClaim`, which is
+ * the identity source used by the request page.
  */
-export const getRequestDataRaw = cache(
+export const getRequestPageData = cache(
   async (chainId: SupportedChainId, pohId: Hash, index: number) => {
-    return (await sdk[chainId]["Request"]({ id: genRequestId(pohId, index) }))
-      .request;
+    return (
+      await sdk[chainId]["Request"]({
+        id: genRequestId(pohId, index),
+        humanityId: pohId,
+      })
+    ).request;
   },
 );
 
 export const getRequestData = cache(
   async (chainId: SupportedChainId, pohId: Hash, index: number) => {
-    const out = await getRequestDataRaw(chainId, pohId, index);
+    const out = await getRequestPageData(chainId, pohId, index);
     return await sanitizeRequest(out, chainId, pohId);
   },
 );

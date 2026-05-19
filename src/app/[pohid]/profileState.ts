@@ -5,6 +5,7 @@ import { RequestStatus } from "utils/status";
 export type ProfilePageState =
   | "CLAIMED"
   | "TRANSFER_PENDING"
+  | "PUNISHED_VOUCH"
   | "REMOVED"
   | "NOT_CLAIMED";
 
@@ -50,6 +51,15 @@ const isRequestExpired = (
 ) =>
   Number(request?.expirationTime || 0) > 0 &&
   Number(request?.expirationTime || 0) < nowSeconds;
+
+const hasPunishedVouch = (request: ProfileStateRequest) =>
+  Boolean(
+    (
+      request as ProfileStateRequest & {
+        punishedVouchSourceRequest?: unknown;
+      }
+    ).punishedVouchSourceRequest,
+  );
 
 const sortByLatestTimestamp = (
   requestA: ProfileStateRequest,
@@ -158,9 +168,11 @@ export function deriveProfileState<TRequest extends ProfileStateRequest>({
     nowSeconds,
     getForeignChain,
   });
-  const pageState: ProfilePageState = hasPendingTransfer
-    ? "TRANSFER_PENDING"
-    : "CLAIMED";
+  const pageState: ProfilePageState = hasPunishedVouch(latestWinningRequest)
+    ? "PUNISHED_VOUCH"
+    : hasPendingTransfer
+      ? "TRANSFER_PENDING"
+      : "CLAIMED";
   const timelineRequests = sortedNonTransferRequests.filter(
     (request) =>
       request.chainId !== latestWinningRequest.chainId ||

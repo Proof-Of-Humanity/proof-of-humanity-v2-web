@@ -87,6 +87,8 @@ export const sanitizeRequest = async (
     let homeChainId = tROut.homeChainId;
     let transferringRequest = tROut.transferringRequest;
 
+    if (!transferringRequest) return request;
+
     if (
       request?.revocation &&
       request?.humanity.winnerClaim &&
@@ -96,13 +98,20 @@ export const sanitizeRequest = async (
       request.claimer.name = transferringRequest?.claimer.name;
       if (request?.humanity.winnerClaim.length == 0) {
         request.humanity.winnerClaim.push({
+          claimer: transferringRequest.claimer,
+          creationTime: transferringRequest.creationTime,
           evidenceGroup: {
             evidence: [
-              { uri: transferringRequest?.evidenceGroup.evidence.at(-1)?.uri! },
+              {
+                uri:
+                  transferringRequest.evidenceGroup.evidence.at(-1)?.uri ?? "",
+              },
             ],
           },
-          index: transferringRequest?.index,
-          resolutionTime: transferringRequest?.lastStatusChange,
+          index: transferringRequest.index,
+          lastStatusChange: transferringRequest.lastStatusChange,
+          requester: transferringRequest.requester,
+          resolutionTime: transferringRequest.lastStatusChange,
         });
       } else {
         request.humanity.winnerClaim[0]!.evidenceGroup.evidence =
@@ -115,6 +124,7 @@ export const sanitizeRequest = async (
       let transferringRequestComplete = (
         await sdk[homeChainId]["Request"]({
           id: genRequestId(pohId, Number(transferringRequest!.index)),
+          humanityId: pohId,
         })
       ).request;
       if (!transferringRequestComplete) {
@@ -518,7 +528,11 @@ export const sanitizeClaimerData = async (
           voucherEvidenceChain.id
         ].claimer!.registration!.humanity.winnerClaim = [
           {
+            claimer: lastTransf.transferringRequest.claimer,
+            creationTime: lastTransf.transferringRequest.creationTime,
             index: lastTransf?.transferringRequest?.index,
+            lastStatusChange: lastTransf.transferringRequest.lastStatusChange,
+            requester: lastTransf.transferringRequest.requester,
             resolutionTime: lastTransf?.transferringRequest?.lastStatusChange,
             evidenceGroup: lastTransf?.transferringRequest?.evidenceGroup,
           },
@@ -559,10 +573,17 @@ export const sanitizeClaimerData = async (
             if (evidence) {
               out[voucherEvidenceChain.id].claimer!["registration"] = {
                 humanity: {
-                  id: id,
+                  id,
                   winnerClaim: [
                     {
+                      claimer: {
+                        id,
+                        name: out[voucherEvidenceChain.id].claimer?.name,
+                      },
+                      creationTime: 0,
                       index: 0,
+                      lastStatusChange: 0,
+                      requester: id,
                       resolutionTime: 0,
                       evidenceGroup: evidence,
                     },

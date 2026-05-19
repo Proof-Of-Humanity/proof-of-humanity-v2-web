@@ -1,7 +1,9 @@
 import ExternalLink from "components/ExternalLink";
+import PunishedVouchNotice from "components/PunishedVouchNotice";
 import Card from "components/Request/Card";
 import TimeAgo from "components/TimeAgo";
 import { explorerLink } from "config/chains";
+import { getPunishedVouchInfo } from "data/punishedVouch";
 import Link from "next/link";
 import { shortenAddress } from "utils/address";
 import { type Hash } from "viem";
@@ -32,7 +34,13 @@ export default async function ProfileSummarySection({
     } = await getProfilePageData(pohId);
 
     const showsWinningRequestCard =
-      pageState === "CLAIMED" || pageState === "TRANSFER_PENDING";
+      pageState === "CLAIMED" ||
+      pageState === "TRANSFER_PENDING" ||
+      pageState === "PUNISHED_VOUCH";
+    const punishedVouchInfo =
+      pageState === "PUNISHED_VOUCH" && mainCardRequest
+        ? getPunishedVouchInfo(mainCardRequest, mainCardRequest.chainId)
+        : null;
 
     return (
       <>
@@ -65,6 +73,15 @@ export default async function ProfileSummarySection({
 
         {showsWinningRequestCard && mainCardRequest ? (
           <>
+            {punishedVouchInfo ? (
+              <div className="mb-3 mt-4 w-full max-w-xl px-6">
+                <PunishedVouchNotice
+                  info={punishedVouchInfo}
+                  surface="profile"
+                />
+              </div>
+            ) : null}
+
             <div className="mb-3 mt-4 flex items-center justify-center">
               <Card
                 chainId={mainCardRequest.chainId}
@@ -76,7 +93,14 @@ export default async function ProfileSummarySection({
                     humanity[mainCardRequest.chainId]?.humanity?.registration,
                   winnerClaim: [
                     {
+                      claimer: mainCardRequest.identityClaimer,
+                      creationTime: mainCardRequest.creationTime,
                       index: mainCardRequest.index,
+                      lastStatusChange:
+                        "lastStatusChange" in mainCardRequest
+                          ? mainCardRequest.lastStatusChange
+                          : 0,
+                      requester: mainCardRequest.identityRequester,
                       resolutionTime:
                         "lastStatusChange" in mainCardRequest
                           ? mainCardRequest.lastStatusChange ||
@@ -97,15 +121,28 @@ export default async function ProfileSummarySection({
                   mainCardRequest.identityRegistrationEvidenceRevokedReq
                 }
                 requestStatus={
-                  pageState === "TRANSFER_PENDING"
-                    ? RequestStatus.RESOLVED_CLAIM
-                    : profileState.latestWinningRequest?.requestStatus ||
-                      RequestStatus.RESOLVED_CLAIM
+                  pageState === "PUNISHED_VOUCH"
+                    ? RequestStatus.PUNISHED_VOUCH
+                    : pageState === "TRANSFER_PENDING"
+                      ? RequestStatus.RESOLVED_CLAIM
+                      : profileState.latestWinningRequest?.requestStatus ||
+                        RequestStatus.RESOLVED_CLAIM
                 }
               />
             </div>
 
-            {canShowRenewSection && claimedHomeChain && claimedRegistration ? (
+            {pageState === "PUNISHED_VOUCH" ? (
+              <Link
+                className="btn-main mb-6"
+                href={`/${pohId}/claim`}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Claim humanity
+              </Link>
+            ) : canShowRenewSection &&
+              claimedHomeChain &&
+              claimedRegistration ? (
               canRenew ? (
                 <Renew claimer={claimedRegistration.claimer.id} pohId={pohId} />
               ) : (

@@ -1,4 +1,4 @@
-query Request($id: ID!) {
+query Request($id: ID!, $humanityId: Bytes!) {
   request(id: $id) {
     id
     status {
@@ -15,6 +15,16 @@ query Request($id: ID!) {
     creationTime
     lastStatusChange
     inTransferHash
+    punishedVouchSourceRequest {
+      humanity {
+        id
+      }
+      index
+    }
+    punishedVouchReason {
+      id
+    }
+    punishedVouchTimestamp
     vouches {
       voucher {
         id
@@ -36,7 +46,7 @@ query Request($id: ID!) {
     claimer {
       id
       name
-      vouchesReceived {
+      vouchesReceived(where: { humanity_: { id: $humanityId } }) {
         from {
           id
           registration {

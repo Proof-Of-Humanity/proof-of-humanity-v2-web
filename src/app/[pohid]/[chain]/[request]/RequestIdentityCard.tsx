@@ -12,18 +12,64 @@ import { explorerLink } from "config/chains";
 import Image from "next/image";
 import Link from "next/link";
 import { Suspense, type ReactNode } from "react";
-import type { RegistrationFile } from "types/docs";
+import type {
+  EvidenceFile,
+  MetaEvidenceFile,
+  RegistrationFile,
+} from "types/docs";
 import { prettifyId } from "utils/identifier";
-import { ipfs } from "utils/ipfs";
-import { getRequestIdentityViewData } from "data/requestIdentityData";
+import { ipfs, ipfsFetch } from "utils/ipfs";
+import type { Address } from "viem";
 import type {
   RequestChain,
   RequestIdentityCardProps,
-  RequestIdentityViewData,
+  RequestIdentityEvidence,
+  RequestIdentityFiles,
+  RequestIdentitySource,
   RequestPageRequest,
 } from "./RequestIdentityCard.types";
 
-export { getRequestIdentityViewData };
+/**
+ * @notice Returns the original evidence URI from a request evidence list.
+ * @dev Request evidence is fetched newest-first except winnerClaim, which only
+ * requests the first registration evidence, so `at(-1)` works for both shapes.
+ */
+function getInitialEvidenceUri(evidence: RequestIdentityEvidence[]) {
+  return evidence.at(-1)?.uri ?? null;
+}
+
+/**
+ * @notice Starts the IPFS file requests needed by identity UI.
+ * @dev Registration media comes from the identity source; revocation details
+ * come from the current revocation request.
+ */
+function getIdentityFiles({
+  identity,
+  request,
+}: {
+  identity: RequestIdentitySource;
+  request: RequestPageRequest;
+}): RequestIdentityFiles {
+  const registrationUri = getInitialEvidenceUri(
+    identity.evidenceGroup.evidence,
+  );
+  const revocationUri = request.revocation
+    ? getInitialEvidenceUri(request.evidenceGroup.evidence)
+    : null;
+
+  return {
+    registrationFilePromise: registrationUri
+      ? ipfsFetch<EvidenceFile>(registrationUri).then((evidence) =>
+          evidence?.fileURI
+            ? ipfsFetch<RegistrationFile>(evidence.fileURI)
+            : null,
+        )
+      : Promise.resolve(null),
+    revocationFilePromise: revocationUri
+      ? ipfsFetch<EvidenceFile>(revocationUri)
+      : Promise.resolve(null),
+  };
+}
 
 /**
  * @notice Waits for identity data and renders the revocation evidence banner.
@@ -32,15 +78,14 @@ export { getRequestIdentityViewData };
  */
 export async function RevocationBanner({
   chain,
-  identityViewDataPromise,
+  identityFiles,
   request,
 }: {
   chain: RequestChain;
-  identityViewDataPromise: Promise<RequestIdentityViewData>;
+  identityFiles: RequestIdentityFiles;
   request: RequestPageRequest;
 }) {
-  const { revocationFilePromise } = await identityViewDataPromise;
-  const revocationFile = await revocationFilePromise;
+  const revocationFile = await identityFiles.revocationFilePromise;
 
   if (!request.revocation || !revocationFile) return null;
 
@@ -116,16 +161,17 @@ function ProfileSummary({
  * not blocked by profile-media fetching.
  */
 export async function DesktopProfileAside({
-  identityViewDataPromise,
+  identity,
+  identityFiles,
   request,
 }: {
-  identityViewDataPromise: Promise<RequestIdentityViewData>;
+  identity: RequestIdentitySource;
+  identityFiles: RequestIdentityFiles;
   request: RequestPageRequest;
 }) {
-  const { identityClaimerName, registrationFilePromise } =
-    await identityViewDataPromise;
-  const registrationFile = await registrationFilePromise;
-  const displayedClaimerName = registrationFile?.name || identityClaimerName;
+  const registrationFile = await identityFiles.registrationFilePromise;
+  const displayedClaimerName =
+    registrationFile?.name || identity.claimer.name || "";
 
   return (
     <div className="background border-stroke hidden w-2/5 flex-col items-stretch justify-between border-r px-8 pt-8 md:flex">
@@ -151,12 +197,12 @@ export async function DesktopProfileAside({
  */
 export async function IdentityHeader({
   chain,
-  identityViewDataPromise,
+  identity,
 }: {
   chain: RequestChain;
-  identityViewDataPromise: Promise<RequestIdentityViewData>;
+  identity: RequestIdentitySource;
 }) {
-  const { displayedClaimerId } = await identityViewDataPromise;
+  const displayedClaimerId = identity.claimer.id as Address;
 
   return (
     <div className="mb-8 flex flex-col-reverse items-center justify-between md:flex-row md:items-stretch">
@@ -183,34 +229,58 @@ export async function IdentityHeader({
 }
 
 /**
+ * @notice Fetches meta-evidence and renders the request policy link.
+ * @dev Returns null when the meta-evidence file is unavailable or has no file
+ * URI, allowing the rest of the identity card to stream without this request.
+ */
+export async function PolicyLink({
+  metaEvidenceUri,
+}: {
+  metaEvidenceUri: string;
+}) {
+  try {
+    const policyLink = (await ipfsFetch<MetaEvidenceFile>(metaEvidenceUri))
+      .fileURI;
+
+    if (!policyLink) return null;
+
+    return (
+      <div className="flex w-full flex-col items-center font-normal md:flex-row md:items-end md:justify-end">
+        <Link
+          href={`/attachment?url=${ipfs(policyLink)}`}
+          className="text-primaryText ml-0 flex items-center justify-center md:ml-2"
+        >
+          <DocumentIcon className="fill-orange h-6 w-6" />
+          <div className="text-primaryText group relative flex py-[8px]">
+            Relevant Policy
+          </div>
+        </Link>
+      </div>
+    );
+  } catch {
+    return null;
+  }
+}
+
+/**
  * @notice Renders the policy link and vouch slots below the registration video.
  * @dev Keeps caller-provided vouch UI composed into the identity card.
  */
 export function RequestRelatedActions({
-  policyLink,
+  policyMetaEvidenceUri,
   vouchedFor,
   vouchers,
 }: {
-  policyLink: string | null;
+  policyMetaEvidenceUri: string;
   vouchedFor: ReactNode;
   vouchers: ReactNode;
 }) {
   return (
     <>
       <div className="flex w-full flex-wrap justify-center gap-2 md:flex-row md:items-center md:justify-between">
-        {policyLink && (
-          <div className="flex w-full flex-col items-center font-normal md:flex-row md:items-end md:justify-end">
-            <Link
-              href={`/attachment?url=${ipfs(policyLink)}`}
-              className="text-primaryText ml-0 flex items-center justify-center md:ml-2"
-            >
-              <DocumentIcon className="fill-orange h-6 w-6" />
-              <div className="text-primaryText group relative flex py-[8px]">
-                Relevant Policy
-              </div>
-            </Link>
-          </div>
-        )}
+        <Suspense fallback={null}>
+          <PolicyLink metaEvidenceUri={policyMetaEvidenceUri} />
+        </Suspense>
         {vouchedFor}
       </div>
       <div className="flex w-full flex-wrap justify-center gap-2 md:flex-row md:items-center md:justify-between">
@@ -225,14 +295,15 @@ export function RequestRelatedActions({
  * @dev Desktop profile media is handled by `DesktopProfileAside`.
  */
 export async function MobileIdentityMedia({
-  identityViewDataPromise,
+  identity,
+  identityFiles,
 }: {
-  identityViewDataPromise: Promise<RequestIdentityViewData>;
+  identity: RequestIdentitySource;
+  identityFiles: RequestIdentityFiles;
 }) {
-  const { identityClaimerName, registrationFilePromise } =
-    await identityViewDataPromise;
-  const registrationFile = await registrationFilePromise;
-  const displayedClaimerName = registrationFile?.name || identityClaimerName;
+  const registrationFile = await identityFiles.registrationFilePromise;
+  const displayedClaimerName =
+    registrationFile?.name || identity.claimer.name || "";
 
   return (
     <>
@@ -272,8 +343,8 @@ export async function MobileIdentityMedia({
  */
 export default function RequestIdentityCard({
   chain,
-  humanityEventsPromise,
-  policyLink,
+  identity,
+  policyMetaEvidenceUri,
   pohId,
   request,
   requestInfo,
@@ -281,12 +352,10 @@ export default function RequestIdentityCard({
   vouchedFor,
   vouchers,
 }: RequestIdentityCardProps) {
-  const identityViewDataPromise = getRequestIdentityViewData(
-    chain.id,
-    humanityEventsPromise,
-    pohId,
+  const identityFiles = getIdentityFiles({
+    identity,
     request,
-  );
+  });
   const prettyPohId = prettifyId(pohId);
 
   return (
@@ -294,7 +363,7 @@ export default function RequestIdentityCard({
       <Suspense fallback={null}>
         <RevocationBanner
           chain={chain}
-          identityViewDataPromise={identityViewDataPromise}
+          identityFiles={identityFiles}
           request={request}
         />
       </Suspense>
@@ -306,17 +375,15 @@ export default function RequestIdentityCard({
           }
         >
           <DesktopProfileAside
-            identityViewDataPromise={identityViewDataPromise}
+            identity={identity}
+            identityFiles={identityFiles}
             request={request}
           />
         </Suspense>
 
         <div className="flex w-full flex-col p-[24px] lg:p-[32px]">
           <Suspense fallback={<div className="mb-8 h-8" />}>
-            <IdentityHeader
-              chain={chain}
-              identityViewDataPromise={identityViewDataPromise}
-            />
+            <IdentityHeader chain={chain} identity={identity} />
           </Suspense>
           <div className="mb-4 h-1 w-full border-b"></div>
           {requestInfo}
@@ -338,11 +405,12 @@ export default function RequestIdentityCard({
           </div>
           <Suspense fallback={null}>
             <MobileIdentityMedia
-              identityViewDataPromise={identityViewDataPromise}
+              identity={identity}
+              identityFiles={identityFiles}
             />
           </Suspense>
           <RequestRelatedActions
-            policyLink={policyLink}
+            policyMetaEvidenceUri={policyMetaEvidenceUri}
             vouchedFor={vouchedFor}
             vouchers={vouchers}
           />
