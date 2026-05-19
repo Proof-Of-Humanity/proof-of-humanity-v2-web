@@ -52,15 +52,6 @@ const isRequestExpired = (
   Number(request?.expirationTime || 0) > 0 &&
   Number(request?.expirationTime || 0) < nowSeconds;
 
-const hasPunishedVouch = (request: ProfileStateRequest) =>
-  Boolean(
-    (
-      request as ProfileStateRequest & {
-        punishedVouchSourceRequest?: unknown;
-      }
-    ).punishedVouchSourceRequest,
-  );
-
 const sortByLatestTimestamp = (
   requestA: ProfileStateRequest,
   requestB: ProfileStateRequest,
@@ -144,6 +135,7 @@ export function deriveProfileState<TRequest extends ProfileStateRequest>({
       (request) =>
         [
           RequestStatus.RESOLVED_CLAIM,
+          RequestStatus.PUNISHED_VOUCH,
           RequestStatus.TRANSFERRING,
           RequestStatus.TRANSFERRED,
         ].includes(request.requestStatus) &&
@@ -168,16 +160,20 @@ export function deriveProfileState<TRequest extends ProfileStateRequest>({
     nowSeconds,
     getForeignChain,
   });
-  const pageState: ProfilePageState = hasPunishedVouch(latestWinningRequest)
-    ? "PUNISHED_VOUCH"
-    : hasPendingTransfer
-      ? "TRANSFER_PENDING"
-      : "CLAIMED";
-  const timelineRequests = sortedNonTransferRequests.filter(
-    (request) =>
-      request.chainId !== latestWinningRequest.chainId ||
-      request.index !== latestWinningRequest.index,
-  );
+  const pageState: ProfilePageState =
+    latestWinningRequest.punishedVouchSourceRequest
+      ? "PUNISHED_VOUCH"
+      : hasPendingTransfer
+        ? "TRANSFER_PENDING"
+        : "CLAIMED";
+  const timelineRequests =
+    pageState === "PUNISHED_VOUCH"
+      ? sortedNonTransferRequests
+      : sortedNonTransferRequests.filter(
+          (request) =>
+            request.chainId !== latestWinningRequest.chainId ||
+            request.index !== latestWinningRequest.index,
+        );
   const pendingRevocation = timelineRequests.some((request) =>
     [
       RequestStatus.PENDING_REVOCATION,

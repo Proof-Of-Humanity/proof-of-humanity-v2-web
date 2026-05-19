@@ -87,6 +87,18 @@ export interface RequestVouchData {
 
 const normalizeAddress = (value: string) => value.toLowerCase();
 
+const uniqueAddresses = (addresses: Address[]) => {
+  const seen = new Set<string>();
+
+  return addresses.filter((address) => {
+    const normalized = normalizeAddress(address);
+    if (seen.has(normalized)) return false;
+
+    seen.add(normalized);
+    return true;
+  });
+};
+
 /**
  * @notice Builds all voucher state needed by the request page.
  * @dev During vouching, onchain candidates come from received vouches minus
@@ -103,21 +115,36 @@ export const getRequestVouchData = cache(
       offChainVouches.map((vouch) => normalizeAddress(vouch.voucher)),
     );
     const receivedVouches = request.claimer.vouchesReceived;
-    const onChainVouches = isVouching
-      ? receivedVouches
-          .map((vouch) => vouch.from.id as Address)
-          .filter(
-            (voucher) => !offChainVoucherSet.has(normalizeAddress(voucher)),
-          )
-      : request.vouches.map((vouch) => vouch.voucher.id as Address);
+    const onChainVouches = uniqueAddresses(
+      isVouching
+        ? receivedVouches
+            .map((vouch) => vouch.from.id as Address)
+            .filter(
+              (voucher) => !offChainVoucherSet.has(normalizeAddress(voucher)),
+            )
+        : request.vouches.map((vouch) => vouch.voucher.id as Address),
+    );
     const receivedVouchByVoucher = new Map(
       receivedVouches.map((vouch) => [
         normalizeAddress(vouch.from.id),
         vouch as VouchQuery,
       ]),
     );
+    const onChainVoucherSet = new Set(onChainVouches.map(normalizeAddress));
+    const uniqueOffChainVouches = offChainVouches.filter(
+      (vouch, index, allVouches) => {
+        const normalized = normalizeAddress(vouch.voucher);
+
+        return (
+          !onChainVoucherSet.has(normalized) &&
+          allVouches.findIndex(
+            (item) => normalizeAddress(item.voucher) === normalized,
+          ) === index
+        );
+      },
+    );
     const offChainStatusItems = await Promise.all(
-      offChainVouches.map(async (vouch) => ({
+      uniqueOffChainVouches.map(async (vouch) => ({
         voucher: vouch.voucher,
         isOnChain: false,
         vouchStatus: await isValidVouch(

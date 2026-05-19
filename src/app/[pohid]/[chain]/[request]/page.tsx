@@ -2,12 +2,11 @@ import { paramToChain, legacyChain } from "config/chains";
 import { getContractData } from "data/contract";
 import { getArbitrationCost } from "data/costs";
 import { getHumanityEvents } from "data/humanityEvents";
-import { getPunishedVouchInfo } from "data/punishedVouch";
 import { getOffChainVouches, getRequestPageData } from "data/request";
 import { getRequestTimelineData } from "data/requestTimeline";
 import { getRequestVouchData } from "data/vouch";
 import { Suspense } from "react";
-import { machinifyId } from "utils/identifier";
+import { machinifyId, prettifyId } from "utils/identifier";
 import type { Address } from "viem";
 import { RequestOptimisticProvider } from "optimistic/request";
 import type { RequestOptimisticBase } from "optimistic/types";
@@ -26,7 +25,7 @@ import {
   RequestVouchSectionSkeleton,
   VouchedForSection,
 } from "./RequestVouchSection";
-import PunishedVouchNotice from "components/PunishedVouchNotice";
+import RequestPunishedVouchNotice from "components/RequestPunishedVouchNotice";
 
 interface PageProps {
   params: Promise<{ pohid: string; chain: string; request: string }>;
@@ -74,7 +73,16 @@ export default async function Request({ params }: PageProps) {
     contractData.arbitrationInfo.extraData,
   );
   const requestStatus = getStatus(request, contractData);
-  const punishedVouchInfo = getPunishedVouchInfo(request, chain.id);
+  const punishedVouchSource = request.punishedVouchSourceRequest;
+  const punishedVouchSourceHref = punishedVouchSource
+    ? `/${prettifyId(
+        punishedVouchSource.humanity.id,
+      )}/${chain.name.toLowerCase()}/${punishedVouchSource.index}`
+    : null;
+  const punishedVouchReason =
+    request.punishedVouchReason?.id === "identityTheft"
+      ? "Identity Theft"
+      : "Sybil Attack";
   const humanityEventsPromise = getHumanityEvents(pohId);
 
   const offChainVouches = await getOffChainVouches(
@@ -161,11 +169,12 @@ export default async function Request({ params }: PageProps) {
               humanityClaimed={humanityClaimed}
               anotherClaimPending={anotherClaimPending}
             />
-            {punishedVouchInfo ? (
+            {punishedVouchSourceHref ? (
               <div className="mb-4 w-full">
-                <PunishedVouchNotice
-                  info={punishedVouchInfo}
-                  surface="request"
+                <RequestPunishedVouchNotice
+                  reason={punishedVouchReason}
+                  sourceRequestHref={punishedVouchSourceHref}
+                  timestamp={request.punishedVouchTimestamp}
                 />
               </div>
             ) : null}

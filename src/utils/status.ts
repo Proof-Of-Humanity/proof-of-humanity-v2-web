@@ -106,7 +106,7 @@ const STATUS_CONFIG: Record<RequestStatus, StatusConfig> = {
     },
   },
   [RequestStatus.PUNISHED_VOUCH]: {
-    baseLabel: "Punished",
+    baseLabel: "Removed",
     tooltip: "Profile removed because it vouched for a punished profile.",
     color: STATUS_COLORS.removed,
     filter: {} as Request_Filter,
@@ -297,6 +297,7 @@ export interface RawRequestData {
   status: { id: string };
   revocation: boolean;
   winnerParty?: { id: string } | null;
+  punishedVouchSourceRequest?: unknown;
   index: number;
   creationTime: number | string;
   expirationTime?: number | string;
@@ -311,6 +312,10 @@ export const getStatus = (
   request: RawRequestData,
   contractData?: { humanityLifespan?: string | number },
 ): RequestStatus => {
+  if (request.punishedVouchSourceRequest) {
+    return RequestStatus.PUNISHED_VOUCH;
+  }
+
   const expired = isRequestExpired(
     {
       status: request.status,

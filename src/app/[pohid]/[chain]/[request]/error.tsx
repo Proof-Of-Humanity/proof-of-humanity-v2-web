@@ -15,7 +15,7 @@ export default function RequestError({
 
   return (
     <div className="content mx-auto flex w-[92vw] max-w-[1500px] flex-col justify-center font-semibold sm:w-[84vw] md:w-[76vw]">
-      <div className="border-stroke bg-whiteBackground mb-6 rounded border px-6 py-10 text-center shadow sm:px-8">
+      <div className="border-stroke bg-whiteBackground mb-6 flex flex-col items-center rounded border px-6 py-10 text-center shadow sm:px-8">
         <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-red-500/10 text-lg font-semibold text-red-400">
           !
         </div>

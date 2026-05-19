@@ -4,14 +4,14 @@ import {
   getTimelineRequestNode,
 } from "data/humanityEvents";
 import { OffChainVouch } from "data/request";
-import { HumanityQuery, RequestQuery } from "generated/graphql";
+import { ProfileHumanityQuery, RequestQuery } from "generated/graphql";
 import { Hash } from "viem";
 import { prettifyId } from "utils/identifier";
 import { getStatus, RequestStatus } from "utils/status";
 
 type CurrentRequest = NonNullable<RequestQuery["request"]>;
 type ProfileRequest = ArrayElement<
-  NonNullable<HumanityQuery["humanity"]>["requests"]
+  NonNullable<ProfileHumanityQuery["humanity"]>["requests"]
 >;
 type RequestWithChain = ProfileRequest & {
   chainId: SupportedChainId;
@@ -109,9 +109,29 @@ const getProfileRequestTimelineItem = (
       index: Number(request.index),
       creationTime: request.creationTime,
       expirationTime: request.expirationTime,
+      punishedVouchSourceRequest: request.punishedVouchSourceRequest,
     });
 
   switch (requestStatus) {
+    case RequestStatus.PUNISHED_VOUCH:
+    case RequestStatus.RESOLVED_REVOCATION: {
+      const timestamp = Number(
+        requestStatus === RequestStatus.PUNISHED_VOUCH
+          ? request.punishedVouchTimestamp
+          : request.lastStatusChange || request.creationTime,
+      );
+      if (!Number.isFinite(timestamp) || timestamp <= 0) return null;
+
+      return {
+        id: requestTimelineId,
+        kind: "removed",
+        title: "Removed",
+        timestamp,
+        chainId: request.chainId,
+        href: requestHref,
+        requestIndex: Number(request.index),
+      };
+    }
     case RequestStatus.VOUCHING:
       return {
         id: requestTimelineId,
@@ -160,17 +180,6 @@ const getProfileRequestTimelineItem = (
         id: requestTimelineId,
         kind: "verified",
         title: "Verified human",
-        timestamp:
-          Number(request.lastStatusChange) || Number(request.creationTime),
-        chainId: request.chainId,
-        href: requestHref,
-        requestIndex: Number(request.index),
-      };
-    case RequestStatus.RESOLVED_REVOCATION:
-      return {
-        id: requestTimelineId,
-        kind: "removed",
-        title: "Removed",
         timestamp:
           Number(request.lastStatusChange) || Number(request.creationTime),
         chainId: request.chainId,
@@ -310,6 +319,7 @@ const createEventTimelineItems = async (
       index: currentRequestIndex,
       creationTime: currentRequest.creationTime,
       expirationTime: currentRequest.expirationTime,
+      punishedVouchSourceRequest: currentRequest.punishedVouchSourceRequest,
     },
     { humanityLifespan },
   );
