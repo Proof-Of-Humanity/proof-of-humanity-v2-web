@@ -81,7 +81,7 @@
     "wagmi": "2.16.0"
   },
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev --turbo",
     "build": "next build",
     "start": "next start",
     "gql": "DOTENV_CONFIG_PATH=.env.local graphql-codegen --config codegen.yml",

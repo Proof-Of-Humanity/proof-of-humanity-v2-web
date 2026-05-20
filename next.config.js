@@ -4,6 +4,14 @@ const nextConfig = {
     // Tree-shake barrel imports for heavy libs (Next 15-safe, opt-in).
     optimizePackageImports: ["wagmi", "viem"],
   },
+  turbopack: {
+    rules: {
+      "*.svg": {
+        loaders: ["@svgr/webpack"],
+        as: "*.js",
+      },
+    },
+  },
   async headers() {
     return [
       {

@@ -334,6 +334,7 @@ export enum Challenge_OrderBy {
   RequestIndex = 'request__index',
   RequestLastStatusChange = 'request__lastStatusChange',
   RequestNbChallenges = 'request__nbChallenges',
+  RequestPunishedVouchTimestamp = 'request__punishedVouchTimestamp',
   RequestRegistrationEvidenceRevokedReq = 'request__registrationEvidenceRevokedReq',
   RequestRequester = 'request__requester',
   RequestResolutionTime = 'request__resolutionTime',
@@ -620,6 +621,7 @@ export enum Claimer_OrderBy {
   CurrentRequestIndex = 'currentRequest__index',
   CurrentRequestLastStatusChange = 'currentRequest__lastStatusChange',
   CurrentRequestNbChallenges = 'currentRequest__nbChallenges',
+  CurrentRequestPunishedVouchTimestamp = 'currentRequest__punishedVouchTimestamp',
   CurrentRequestRegistrationEvidenceRevokedReq = 'currentRequest__registrationEvidenceRevokedReq',
   CurrentRequestRequester = 'currentRequest__requester',
   CurrentRequestResolutionTime = 'currentRequest__resolutionTime',
@@ -990,6 +992,7 @@ export enum EvidenceGroup_OrderBy {
   RequestIndex = 'request__index',
   RequestLastStatusChange = 'request__lastStatusChange',
   RequestNbChallenges = 'request__nbChallenges',
+  RequestPunishedVouchTimestamp = 'request__punishedVouchTimestamp',
   RequestRegistrationEvidenceRevokedReq = 'request__registrationEvidenceRevokedReq',
   RequestRequester = 'request__requester',
   RequestResolutionTime = 'request__resolutionTime',
@@ -1556,6 +1559,23 @@ export enum InUpdate_OrderBy {
   TxHash = 'txHash'
 }
 
+/**
+ * The severity level of a log entry.
+ * Log levels are ordered from most to least severe: CRITICAL > ERROR > WARNING > INFO > DEBUG
+ */
+export enum LogLevel {
+  /** Critical errors that require immediate attention */
+  Critical = 'CRITICAL',
+  /** Detailed diagnostic information for debugging */
+  Debug = 'DEBUG',
+  /** Error conditions that indicate a failure */
+  Error = 'ERROR',
+  /** Informational messages about normal operations */
+  Info = 'INFO',
+  /** Warning conditions that may require attention */
+  Warning = 'WARNING'
+}
+
 /** Defines the order direction, either ascending or descending */
 export enum OrderDirection {
   Asc = 'asc',
@@ -1760,6 +1780,8 @@ export enum Party_OrderBy {
 
 export type Query = {
   __typename?: 'Query';
+  /** Query execution logs emitted by the subgraph during indexing. Results are sorted by timestamp in descending order (newest first). */
+  _logs: Array<_Log_>;
   /** Access to subgraph metadata */
   _meta?: Maybe<_Meta_>;
   arbitratorHistories: Array<ArbitratorHistory>;
@@ -1821,6 +1843,17 @@ export type Query = {
   vouchInProcess?: Maybe<VouchInProcess>;
   vouchInProcesses: Array<VouchInProcess>;
   vouches: Array<Vouch>;
+};
+
+
+export type Query_LogsArgs = {
+  first?: InputMaybe<Scalars['Int']>;
+  from?: InputMaybe<Scalars['String']>;
+  level?: InputMaybe<LogLevel>;
+  orderDirection?: InputMaybe<OrderDirection>;
+  search?: InputMaybe<Scalars['String']>;
+  skip?: InputMaybe<Scalars['Int']>;
+  to?: InputMaybe<Scalars['String']>;
 };
 
 
@@ -2516,6 +2549,9 @@ export type Request = {
   index: Scalars['BigInt'];
   lastStatusChange: Scalars['BigInt'];
   nbChallenges: Scalars['BigInt'];
+  punishedVouchReason?: Maybe<Reason>;
+  punishedVouchSourceRequest?: Maybe<Request>;
+  punishedVouchTimestamp?: Maybe<Scalars['BigInt']>;
   registrationEvidenceRevokedReq: Scalars['String'];
   requester: Scalars['Bytes'];
   resolutionTime: Scalars['BigInt'];
@@ -2706,6 +2742,56 @@ export type Request_Filter = {
   nbChallenges_not?: InputMaybe<Scalars['BigInt']>;
   nbChallenges_not_in?: InputMaybe<Array<Scalars['BigInt']>>;
   or?: InputMaybe<Array<InputMaybe<Request_Filter>>>;
+  punishedVouchReason?: InputMaybe<Scalars['String']>;
+  punishedVouchReason_?: InputMaybe<Reason_Filter>;
+  punishedVouchReason_contains?: InputMaybe<Scalars['String']>;
+  punishedVouchReason_contains_nocase?: InputMaybe<Scalars['String']>;
+  punishedVouchReason_ends_with?: InputMaybe<Scalars['String']>;
+  punishedVouchReason_ends_with_nocase?: InputMaybe<Scalars['String']>;
+  punishedVouchReason_gt?: InputMaybe<Scalars['String']>;
+  punishedVouchReason_gte?: InputMaybe<Scalars['String']>;
+  punishedVouchReason_in?: InputMaybe<Array<Scalars['String']>>;
+  punishedVouchReason_lt?: InputMaybe<Scalars['String']>;
+  punishedVouchReason_lte?: InputMaybe<Scalars['String']>;
+  punishedVouchReason_not?: InputMaybe<Scalars['String']>;
+  punishedVouchReason_not_contains?: InputMaybe<Scalars['String']>;
+  punishedVouchReason_not_contains_nocase?: InputMaybe<Scalars['String']>;
+  punishedVouchReason_not_ends_with?: InputMaybe<Scalars['String']>;
+  punishedVouchReason_not_ends_with_nocase?: InputMaybe<Scalars['String']>;
+  punishedVouchReason_not_in?: InputMaybe<Array<Scalars['String']>>;
+  punishedVouchReason_not_starts_with?: InputMaybe<Scalars['String']>;
+  punishedVouchReason_not_starts_with_nocase?: InputMaybe<Scalars['String']>;
+  punishedVouchReason_starts_with?: InputMaybe<Scalars['String']>;
+  punishedVouchReason_starts_with_nocase?: InputMaybe<Scalars['String']>;
+  punishedVouchSourceRequest?: InputMaybe<Scalars['String']>;
+  punishedVouchSourceRequest_?: InputMaybe<Request_Filter>;
+  punishedVouchSourceRequest_contains?: InputMaybe<Scalars['String']>;
+  punishedVouchSourceRequest_contains_nocase?: InputMaybe<Scalars['String']>;
+  punishedVouchSourceRequest_ends_with?: InputMaybe<Scalars['String']>;
+  punishedVouchSourceRequest_ends_with_nocase?: InputMaybe<Scalars['String']>;
+  punishedVouchSourceRequest_gt?: InputMaybe<Scalars['String']>;
+  punishedVouchSourceRequest_gte?: InputMaybe<Scalars['String']>;
+  punishedVouchSourceRequest_in?: InputMaybe<Array<Scalars['String']>>;
+  punishedVouchSourceRequest_lt?: InputMaybe<Scalars['String']>;
+  punishedVouchSourceRequest_lte?: InputMaybe<Scalars['String']>;
+  punishedVouchSourceRequest_not?: InputMaybe<Scalars['String']>;
+  punishedVouchSourceRequest_not_contains?: InputMaybe<Scalars['String']>;
+  punishedVouchSourceRequest_not_contains_nocase?: InputMaybe<Scalars['String']>;
+  punishedVouchSourceRequest_not_ends_with?: InputMaybe<Scalars['String']>;
+  punishedVouchSourceRequest_not_ends_with_nocase?: InputMaybe<Scalars['String']>;
+  punishedVouchSourceRequest_not_in?: InputMaybe<Array<Scalars['String']>>;
+  punishedVouchSourceRequest_not_starts_with?: InputMaybe<Scalars['String']>;
+  punishedVouchSourceRequest_not_starts_with_nocase?: InputMaybe<Scalars['String']>;
+  punishedVouchSourceRequest_starts_with?: InputMaybe<Scalars['String']>;
+  punishedVouchSourceRequest_starts_with_nocase?: InputMaybe<Scalars['String']>;
+  punishedVouchTimestamp?: InputMaybe<Scalars['BigInt']>;
+  punishedVouchTimestamp_gt?: InputMaybe<Scalars['BigInt']>;
+  punishedVouchTimestamp_gte?: InputMaybe<Scalars['BigInt']>;
+  punishedVouchTimestamp_in?: InputMaybe<Array<Scalars['BigInt']>>;
+  punishedVouchTimestamp_lt?: InputMaybe<Scalars['BigInt']>;
+  punishedVouchTimestamp_lte?: InputMaybe<Scalars['BigInt']>;
+  punishedVouchTimestamp_not?: InputMaybe<Scalars['BigInt']>;
+  punishedVouchTimestamp_not_in?: InputMaybe<Array<Scalars['BigInt']>>;
   registrationEvidenceRevokedReq?: InputMaybe<Scalars['String']>;
   registrationEvidenceRevokedReq_contains?: InputMaybe<Scalars['String']>;
   registrationEvidenceRevokedReq_contains_nocase?: InputMaybe<Scalars['String']>;
@@ -2849,6 +2935,24 @@ export enum Request_OrderBy {
   Index = 'index',
   LastStatusChange = 'lastStatusChange',
   NbChallenges = 'nbChallenges',
+  PunishedVouchReason = 'punishedVouchReason',
+  PunishedVouchReasonCount = 'punishedVouchReason__count',
+  PunishedVouchReasonId = 'punishedVouchReason__id',
+  PunishedVouchSourceRequest = 'punishedVouchSourceRequest',
+  PunishedVouchSourceRequestChallengePeriodEnd = 'punishedVouchSourceRequest__challengePeriodEnd',
+  PunishedVouchSourceRequestCreationTime = 'punishedVouchSourceRequest__creationTime',
+  PunishedVouchSourceRequestExpirationTime = 'punishedVouchSourceRequest__expirationTime',
+  PunishedVouchSourceRequestId = 'punishedVouchSourceRequest__id',
+  PunishedVouchSourceRequestInTransferHash = 'punishedVouchSourceRequest__inTransferHash',
+  PunishedVouchSourceRequestIndex = 'punishedVouchSourceRequest__index',
+  PunishedVouchSourceRequestLastStatusChange = 'punishedVouchSourceRequest__lastStatusChange',
+  PunishedVouchSourceRequestNbChallenges = 'punishedVouchSourceRequest__nbChallenges',
+  PunishedVouchSourceRequestPunishedVouchTimestamp = 'punishedVouchSourceRequest__punishedVouchTimestamp',
+  PunishedVouchSourceRequestRegistrationEvidenceRevokedReq = 'punishedVouchSourceRequest__registrationEvidenceRevokedReq',
+  PunishedVouchSourceRequestRequester = 'punishedVouchSourceRequest__requester',
+  PunishedVouchSourceRequestResolutionTime = 'punishedVouchSourceRequest__resolutionTime',
+  PunishedVouchSourceRequestRevocation = 'punishedVouchSourceRequest__revocation',
+  PunishedVouchTimestamp = 'punishedVouchTimestamp',
   RegistrationEvidenceRevokedReq = 'registrationEvidenceRevokedReq',
   Requester = 'requester',
   ResolutionTime = 'resolutionTime',
@@ -3293,6 +3397,7 @@ export enum VouchInProcess_OrderBy {
   RequestIndex = 'request__index',
   RequestLastStatusChange = 'request__lastStatusChange',
   RequestNbChallenges = 'request__nbChallenges',
+  RequestPunishedVouchTimestamp = 'request__punishedVouchTimestamp',
   RequestRegistrationEvidenceRevokedReq = 'request__registrationEvidenceRevokedReq',
   RequestRequester = 'request__requester',
   RequestResolutionTime = 'request__resolutionTime',
@@ -3425,6 +3530,54 @@ export type _Block_ = {
   timestamp?: Maybe<Scalars['Int']>;
 };
 
+/**
+ * A key-value pair of additional data associated with a log entry.
+ * These correspond to arguments passed to the log function in the subgraph code.
+ */
+export type _LogArgument_ = {
+  __typename?: '_LogArgument_';
+  /** The parameter name */
+  key: Scalars['String'];
+  /** The parameter value, serialized as a string */
+  value: Scalars['String'];
+};
+
+/**
+ * Source code location metadata for a log entry.
+ * Indicates where in the subgraph's AssemblyScript code the log statement was executed.
+ */
+export type _LogMeta_ = {
+  __typename?: '_LogMeta_';
+  /** The column number in the source file */
+  column: Scalars['Int'];
+  /** The line number in the source file */
+  line: Scalars['Int'];
+  /** The module or file path where the log was emitted */
+  module: Scalars['String'];
+};
+
+/**
+ * A log entry emitted by a subgraph during indexing.
+ * Logs can be generated by the subgraph's AssemblyScript code using the `log.*` functions.
+ */
+export type _Log_ = {
+  __typename?: '_Log_';
+  /** Additional structured data passed to the log function as key-value pairs */
+  arguments: Array<_LogArgument_>;
+  /** Unique identifier for this log entry */
+  id: Scalars['String'];
+  /** The severity level of the log entry */
+  level: LogLevel;
+  /** Metadata about the source location in the subgraph code where the log was emitted */
+  meta: _LogMeta_;
+  /** The deployment hash of the subgraph that emitted this log */
+  subgraphId: Scalars['String'];
+  /** The log message text */
+  text: Scalars['String'];
+  /** The timestamp when the log was emitted, in RFC3339 format (e.g., '2024-01-15T10:30:00Z') */
+  timestamp: Scalars['String'];
+};
+
 /** The type for the top-level _meta field */
 export type _Meta_ = {
   __typename?: '_Meta_';
@@ -3481,7 +3634,7 @@ export type ClaimerQueryVariables = Exact<{
 }>;
 
 
-export type ClaimerQuery = { __typename?: 'Query', claimer?: { __typename?: 'Claimer', id: any, name?: string | null, registration?: { __typename?: 'Registration', humanity: { __typename?: 'Humanity', id: any, winnerClaim: Array<{ __typename?: 'Request', index: any, resolutionTime: any, evidenceGroup: { __typename?: 'EvidenceGroup', evidence: Array<{ __typename?: 'Evidence', uri: string }> } }> } } | null } | null };
+export type ClaimerQuery = { __typename?: 'Query', claimer?: { __typename?: 'Claimer', id: any, name?: string | null, registration?: { __typename?: 'Registration', humanity: { __typename?: 'Humanity', id: any, winnerClaim: Array<{ __typename?: 'Request', creationTime: any, index: any, lastStatusChange: any, requester: any, resolutionTime: any, claimer: { __typename?: 'Claimer', id: any, name?: string | null }, evidenceGroup: { __typename?: 'EvidenceGroup', evidence: Array<{ __typename?: 'Evidence', uri: string }> } }> } } | null } | null };
 
 export type ContractQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -3500,7 +3653,7 @@ export type HumanityQueryVariables = Exact<{
 }>;
 
 
-export type HumanityQuery = { __typename?: 'Query', humanity?: { __typename?: 'Humanity', nbRequests: any, nbLegacyRequests: any, registration?: { __typename?: 'Registration', expirationTime: any, claimer: { __typename?: 'Claimer', id: any, name?: string | null } } | null, requests: Array<{ __typename?: 'Request', id: any, creationTime: any, lastStatusChange: any, index: any, revocation: boolean, expirationTime?: any | null, registrationEvidenceRevokedReq: string, requester: any, status: { __typename?: 'Status', id: string }, claimer: { __typename?: 'Claimer', id: any, name?: string | null }, winnerParty?: { __typename?: 'Party', id: string } | null, evidenceGroup: { __typename?: 'EvidenceGroup', evidence: Array<{ __typename?: 'Evidence', id: any, uri: string, creationTime: any, submitter: any }> } }>, winnerClaim: Array<{ __typename?: 'Request', index: any, resolutionTime: any, evidenceGroup: { __typename?: 'EvidenceGroup', evidence: Array<{ __typename?: 'Evidence', uri: string }> } }> } | null, crossChainRegistration?: { __typename?: 'CrossChainRegistration', expirationTime: any, lastReceivedTransferTimestamp: any, claimer: { __typename?: 'Claimer', id: any } } | null, outTransfer?: { __typename?: 'OutTransfer', foreignProxy: any, transferHash: any, transferTimestamp: any } | null };
+export type HumanityQuery = { __typename?: 'Query', humanity?: { __typename?: 'Humanity', nbRequests: any, nbLegacyRequests: any, registration?: { __typename?: 'Registration', expirationTime: any, claimer: { __typename?: 'Claimer', id: any, name?: string | null } } | null, requests: Array<{ __typename?: 'Request', id: any, creationTime: any, lastStatusChange: any, index: any, revocation: boolean, expirationTime?: any | null, registrationEvidenceRevokedReq: string, requester: any, status: { __typename?: 'Status', id: string }, claimer: { __typename?: 'Claimer', id: any, name?: string | null }, winnerParty?: { __typename?: 'Party', id: string } | null, evidenceGroup: { __typename?: 'EvidenceGroup', evidence: Array<{ __typename?: 'Evidence', id: any, uri: string, creationTime: any, submitter: any }> } }>, winnerClaim: Array<{ __typename?: 'Request', creationTime: any, index: any, lastStatusChange: any, requester: any, resolutionTime: any, claimer: { __typename?: 'Claimer', id: any, name?: string | null }, evidenceGroup: { __typename?: 'EvidenceGroup', evidence: Array<{ __typename?: 'Evidence', uri: string }> } }> } | null, crossChainRegistration?: { __typename?: 'CrossChainRegistration', expirationTime: any, lastReceivedTransferTimestamp: any, claimer: { __typename?: 'Claimer', id: any } } | null, outTransfer?: { __typename?: 'OutTransfer', foreignProxy: any, transferHash: any, transferTimestamp: any } | null };
 
 export type HumanityEventsQueryVariables = Exact<{
   humanityId: Scalars['Bytes'];
@@ -3508,6 +3661,14 @@ export type HumanityEventsQueryVariables = Exact<{
 
 
 export type HumanityEventsQuery = { __typename?: 'Query', humanityEvents: Array<{ __typename?: 'HumanityEvent', id: string, timestamp: any, type: HumanityEventType, requestIndex?: any | null, transferHash?: any | null, voucher?: any | null, disputeId?: any | null, appealRound?: any | null, revocation?: boolean | null }> };
+
+export type HistoricalWinnerClaimQueryVariables = Exact<{
+  humanityId: Scalars['Bytes'];
+  lastStatusChange: Scalars['BigInt'];
+}>;
+
+
+export type HistoricalWinnerClaimQuery = { __typename?: 'Query', requests: Array<{ __typename?: 'Request', creationTime: any, index: any, lastStatusChange: any, requester: any, resolutionTime: any, claimer: { __typename?: 'Claimer', id: any, name?: string | null }, evidenceGroup: { __typename?: 'EvidenceGroup', evidence: Array<{ __typename?: 'Evidence', uri: string }> } }> };
 
 export type MeQueryVariables = Exact<{
   id: Scalars['ID'];
@@ -3522,7 +3683,7 @@ export type ProfileHumanityQueryVariables = Exact<{
 }>;
 
 
-export type ProfileHumanityQuery = { __typename?: 'Query', humanity?: { __typename?: 'Humanity', registration?: { __typename?: 'Registration', expirationTime: any, claimer: { __typename?: 'Claimer', id: any, name?: string | null } } | null, requests: Array<{ __typename?: 'Request', id: any, creationTime: any, lastStatusChange: any, index: any, revocation: boolean, expirationTime?: any | null, registrationEvidenceRevokedReq: string, requester: any, status: { __typename?: 'Status', id: string }, claimer: { __typename?: 'Claimer', id: any, name?: string | null }, winnerParty?: { __typename?: 'Party', id: string } | null, evidenceGroup: { __typename?: 'EvidenceGroup', evidence: Array<{ __typename?: 'Evidence', uri: string }> } }> } | null, crossChainRegistration?: { __typename?: 'CrossChainRegistration', expirationTime: any, lastReceivedTransferTimestamp: any, claimer: { __typename?: 'Claimer', id: any } } | null, outTransfer?: { __typename?: 'OutTransfer', foreignProxy: any, transferHash: any, txHash: any, logIndex: any, transferTimestamp: any } | null, inTransfers: Array<{ __typename?: 'InTransfer', id: any }> };
+export type ProfileHumanityQuery = { __typename?: 'Query', humanity?: { __typename?: 'Humanity', registration?: { __typename?: 'Registration', expirationTime: any, claimer: { __typename?: 'Claimer', id: any, name?: string | null } } | null, requests: Array<{ __typename?: 'Request', id: any, creationTime: any, lastStatusChange: any, index: any, revocation: boolean, expirationTime?: any | null, registrationEvidenceRevokedReq: string, requester: any, punishedVouchTimestamp?: any | null, status: { __typename?: 'Status', id: string }, claimer: { __typename?: 'Claimer', id: any, name?: string | null }, winnerParty?: { __typename?: 'Party', id: string } | null, punishedVouchSourceRequest?: { __typename?: 'Request', index: any, humanity: { __typename?: 'Humanity', id: any } } | null, punishedVouchReason?: { __typename?: 'Reason', id: string } | null, evidenceGroup: { __typename?: 'EvidenceGroup', evidence: Array<{ __typename?: 'Evidence', uri: string }> } }> } | null, crossChainRegistration?: { __typename?: 'CrossChainRegistration', expirationTime: any, lastReceivedTransferTimestamp: any, claimer: { __typename?: 'Claimer', id: any } } | null, outTransfer?: { __typename?: 'OutTransfer', foreignProxy: any, transferHash: any, txHash: any, logIndex: any, transferTimestamp: any } | null, inTransfers: Array<{ __typename?: 'InTransfer', id: any }> };
 
 export type ProfileRequestQueryVariables = Exact<{
   id: Scalars['ID'];
@@ -3540,10 +3701,11 @@ export type RegistrationQuery = { __typename?: 'Query', registration?: { __typen
 
 export type RequestQueryVariables = Exact<{
   id: Scalars['ID'];
+  humanityId: Scalars['Bytes'];
 }>;
 
 
-export type RequestQuery = { __typename?: 'Query', request?: { __typename?: 'Request', id: any, index: any, expirationTime?: any | null, revocation: boolean, registrationEvidenceRevokedReq: string, requester: any, creationTime: any, lastStatusChange: any, inTransferHash?: any | null, status: { __typename?: 'Status', id: string }, winnerParty?: { __typename?: 'Party', id: string } | null, vouches: Array<{ __typename?: 'VouchInProcess', voucher: { __typename?: 'Humanity', id: any } }>, humanity: { __typename?: 'Humanity', id: any, nbRequests: any, nbPendingRequests: any, nbLegacyRequests: any, registration?: { __typename?: 'Registration', expirationTime: any, claimer: { __typename?: 'Claimer', id: any } } | null, winnerClaim: Array<{ __typename?: 'Request', index: any, resolutionTime: any, evidenceGroup: { __typename?: 'EvidenceGroup', evidence: Array<{ __typename?: 'Evidence', uri: string }> } }> }, claimer: { __typename?: 'Claimer', id: any, name?: string | null, vouchesReceived: Array<{ __typename?: 'Vouch', from: { __typename?: 'Claimer', id: any, registration?: { __typename?: 'Registration', expirationTime: any, humanity: { __typename?: 'Humanity', vouching: boolean } } | null }, humanity: { __typename?: 'Humanity', id: any } }>, vouches: Array<{ __typename?: 'Vouch', for: { __typename?: 'Claimer', id: any, name?: string | null } }> }, evidenceGroup: { __typename?: 'EvidenceGroup', evidence: Array<{ __typename?: 'Evidence', id: any, uri: string, creationTime: any, submitter: any }> }, challenges: Array<{ __typename?: 'Challenge', id: any, creationTime: any, disputeId: any, nbRounds: any, reason: { __typename?: 'Reason', id: string }, challenger?: { __typename?: 'Challenger', id: any } | null, rounds: Array<{ __typename?: 'Round', creationTime: any, index: any, requesterFund: { __typename?: 'RequesterFund', amount: any }, challengerFund?: { __typename?: 'ChallengerFund', amount: any } | null }> }>, arbitratorHistory: { __typename?: 'ArbitratorHistory', updateTime: any, registrationMeta: string, id: string, arbitrator: any, extraData: any } } | null };
+export type RequestQuery = { __typename?: 'Query', request?: { __typename?: 'Request', id: any, index: any, expirationTime?: any | null, revocation: boolean, registrationEvidenceRevokedReq: string, requester: any, creationTime: any, lastStatusChange: any, inTransferHash?: any | null, punishedVouchTimestamp?: any | null, status: { __typename?: 'Status', id: string }, winnerParty?: { __typename?: 'Party', id: string } | null, punishedVouchSourceRequest?: { __typename?: 'Request', index: any, humanity: { __typename?: 'Humanity', id: any } } | null, punishedVouchReason?: { __typename?: 'Reason', id: string } | null, vouches: Array<{ __typename?: 'VouchInProcess', voucher: { __typename?: 'Humanity', id: any } }>, humanity: { __typename?: 'Humanity', id: any, nbRequests: any, nbPendingRequests: any, nbLegacyRequests: any, registration?: { __typename?: 'Registration', expirationTime: any, claimer: { __typename?: 'Claimer', id: any } } | null, winnerClaim: Array<{ __typename?: 'Request', creationTime: any, index: any, lastStatusChange: any, requester: any, resolutionTime: any, claimer: { __typename?: 'Claimer', id: any, name?: string | null }, evidenceGroup: { __typename?: 'EvidenceGroup', evidence: Array<{ __typename?: 'Evidence', uri: string }> } }> }, claimer: { __typename?: 'Claimer', id: any, name?: string | null, vouchesReceived: Array<{ __typename?: 'Vouch', from: { __typename?: 'Claimer', id: any, registration?: { __typename?: 'Registration', expirationTime: any, humanity: { __typename?: 'Humanity', vouching: boolean } } | null }, humanity: { __typename?: 'Humanity', id: any } }>, vouches: Array<{ __typename?: 'Vouch', for: { __typename?: 'Claimer', id: any, name?: string | null } }> }, evidenceGroup: { __typename?: 'EvidenceGroup', evidence: Array<{ __typename?: 'Evidence', id: any, uri: string, creationTime: any, submitter: any }> }, challenges: Array<{ __typename?: 'Challenge', id: any, creationTime: any, disputeId: any, nbRounds: any, reason: { __typename?: 'Reason', id: string }, challenger?: { __typename?: 'Challenger', id: any } | null, rounds: Array<{ __typename?: 'Round', creationTime: any, index: any, requesterFund: { __typename?: 'RequesterFund', amount: any }, challengerFund?: { __typename?: 'ChallengerFund', amount: any } | null }> }>, arbitratorHistory: { __typename?: 'ArbitratorHistory', updateTime: any, registrationMeta: string, id: string, arbitrator: any, extraData: any } } | null };
 
 export type RequestTimelineNodeQueryVariables = Exact<{
   id: Scalars['ID'];
@@ -3559,7 +3721,7 @@ export type RequestsQueryVariables = Exact<{
 }>;
 
 
-export type RequestsQuery = { __typename?: 'Query', requests: Array<{ __typename?: 'Request', id: any, index: any, revocation: boolean, registrationEvidenceRevokedReq: string, creationTime: any, expirationTime?: any | null, lastStatusChange: any, requester: any, winnerParty?: { __typename?: 'Party', id: string } | null, status: { __typename?: 'Status', id: string }, claimer: { __typename?: 'Claimer', id: any, name?: string | null }, humanity: { __typename?: 'Humanity', id: any, nbRequests: any, nbLegacyRequests: any, registration?: { __typename?: 'Registration', expirationTime: any, claimer: { __typename?: 'Claimer', id: any } } | null, winnerClaim: Array<{ __typename?: 'Request', index: any, resolutionTime: any, evidenceGroup: { __typename?: 'EvidenceGroup', evidence: Array<{ __typename?: 'Evidence', uri: string }> } }> }, evidenceGroup: { __typename?: 'EvidenceGroup', evidence: Array<{ __typename?: 'Evidence', uri: string }> } }> };
+export type RequestsQuery = { __typename?: 'Query', requests: Array<{ __typename?: 'Request', id: any, index: any, revocation: boolean, registrationEvidenceRevokedReq: string, creationTime: any, expirationTime?: any | null, lastStatusChange: any, requester: any, winnerParty?: { __typename?: 'Party', id: string } | null, status: { __typename?: 'Status', id: string }, claimer: { __typename?: 'Claimer', id: any, name?: string | null }, humanity: { __typename?: 'Humanity', id: any, nbRequests: any, nbLegacyRequests: any, registration?: { __typename?: 'Registration', expirationTime: any, claimer: { __typename?: 'Claimer', id: any } } | null, winnerClaim: Array<{ __typename?: 'Request', creationTime: any, index: any, lastStatusChange: any, requester: any, resolutionTime: any, claimer: { __typename?: 'Claimer', id: any, name?: string | null }, evidenceGroup: { __typename?: 'EvidenceGroup', evidence: Array<{ __typename?: 'Evidence', uri: string }> } }> }, evidenceGroup: { __typename?: 'EvidenceGroup', evidence: Array<{ __typename?: 'Evidence', uri: string }> } }> };
 
 export type RewardClaimQueryVariables = Exact<{
   id: Scalars['ID'];
@@ -3589,19 +3751,27 @@ export type HumanityVouchQueryVariables = Exact<{
 
 export type HumanityVouchQuery = { __typename?: 'Query', humanity?: { __typename?: 'Humanity', vouching: boolean, registration?: { __typename?: 'Registration', expirationTime: any } | null } | null };
 
-export type WinnerClaimFragment = { __typename?: 'Humanity', winnerClaim: Array<{ __typename?: 'Request', index: any, resolutionTime: any, evidenceGroup: { __typename?: 'EvidenceGroup', evidence: Array<{ __typename?: 'Evidence', uri: string }> } }> };
+export type WinnerClaimFragment = { __typename?: 'Humanity', winnerClaim: Array<{ __typename?: 'Request', creationTime: any, index: any, lastStatusChange: any, requester: any, resolutionTime: any, claimer: { __typename?: 'Claimer', id: any, name?: string | null }, evidenceGroup: { __typename?: 'EvidenceGroup', evidence: Array<{ __typename?: 'Evidence', uri: string }> } }> };
 
 export const WinnerClaimFragmentDoc = gql`
     fragment winnerClaim on Humanity {
   winnerClaim: requests(
-    where: {or: [{revocation: false, status: "resolved", winnerParty: "requester"}, {revocation: false, status: "transferring", winnerParty: "requester"}]}
-    orderBy: resolutionTime
+    where: {revocation: false, winnerParty: "requester", status_in: ["resolved", "transferred"], evidenceGroup_: {length_gt: 0}}
+    first: 1
+    orderBy: lastStatusChange
     orderDirection: desc
   ) {
+    claimer {
+      id
+      name
+    }
+    creationTime
     index
+    lastStatusChange
+    requester
     resolutionTime
     evidenceGroup {
-      evidence(orderBy: creationTime, orderDirection: desc, first: 1) {
+      evidence(orderBy: creationTime, orderDirection: asc, first: 1) {
         uri
       }
     }
@@ -3803,8 +3973,6 @@ export const HumanityDocument = gql`
   outTransfer(id: $id) {
     foreignProxy
     transferHash
-    txHash
-    logIndex
     transferTimestamp
   }
 }
@@ -3825,6 +3993,31 @@ export const HumanityEventsDocument = gql`
     disputeId
     appealRound
     revocation
+  }
+}
+    `;
+export const HistoricalWinnerClaimDocument = gql`
+    query HistoricalWinnerClaim($humanityId: Bytes!, $lastStatusChange: BigInt!) {
+  requests(
+    where: {humanity_: {id: $humanityId}, revocation: false, winnerParty: "requester", status_in: ["resolved", "transferred"], evidenceGroup_: {length_gt: 0}, lastStatusChange_lte: $lastStatusChange}
+    first: 1
+    orderBy: lastStatusChange
+    orderDirection: desc
+  ) {
+    claimer {
+      id
+      name
+    }
+    creationTime
+    index
+    lastStatusChange
+    requester
+    resolutionTime
+    evidenceGroup {
+      evidence(orderBy: creationTime, orderDirection: asc, first: 1) {
+        uri
+      }
+    }
   }
 }
     `;
@@ -3876,6 +4069,16 @@ export const ProfileHumanityDocument = gql`
       expirationTime
       registrationEvidenceRevokedReq
       requester
+      punishedVouchSourceRequest {
+        humanity {
+          id
+        }
+        index
+      }
+      punishedVouchReason {
+        id
+      }
+      punishedVouchTimestamp
       evidenceGroup {
         evidence(orderBy: creationTime, orderDirection: desc, first: 1) {
           uri
@@ -3933,7 +4136,7 @@ export const RegistrationDocument = gql`
 }
     `;
 export const RequestDocument = gql`
-    query Request($id: ID!) {
+    query Request($id: ID!, $humanityId: Bytes!) {
   request(id: $id) {
     id
     status {
@@ -3950,6 +4153,16 @@ export const RequestDocument = gql`
     creationTime
     lastStatusChange
     inTransferHash
+    punishedVouchSourceRequest {
+      humanity {
+        id
+      }
+      index
+    }
+    punishedVouchReason {
+      id
+    }
+    punishedVouchTimestamp
     vouches {
       voucher {
         id
@@ -3971,7 +4184,7 @@ export const RequestDocument = gql`
     claimer {
       id
       name
-      vouchesReceived {
+      vouchesReceived(where: {humanity_: {id: $humanityId}}) {
         from {
           id
           registration {
@@ -4158,6 +4371,9 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     },
     HumanityEvents(variables: HumanityEventsQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<HumanityEventsQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<HumanityEventsQuery>(HumanityEventsDocument, variables, { ...requestHeaders, ...wrappedRequestHeaders }), 'HumanityEvents', 'query', variables);
+    },
+    HistoricalWinnerClaim(variables: HistoricalWinnerClaimQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<HistoricalWinnerClaimQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<HistoricalWinnerClaimQuery>(HistoricalWinnerClaimDocument, variables, { ...requestHeaders, ...wrappedRequestHeaders }), 'HistoricalWinnerClaim', 'query', variables);
     },
     Me(variables: MeQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<MeQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<MeQuery>(MeDocument, variables, { ...requestHeaders, ...wrappedRequestHeaders }), 'Me', 'query', variables);
