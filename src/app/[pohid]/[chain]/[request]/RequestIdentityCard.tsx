@@ -59,14 +59,16 @@ function getIdentityFiles({
 
   return {
     registrationFilePromise: registrationUri
-      ? ipfsFetch<EvidenceFile>(registrationUri).then((evidence) =>
-          evidence?.fileURI
-            ? ipfsFetch<RegistrationFile>(evidence.fileURI)
-            : null,
-        )
+      ? ipfsFetch<EvidenceFile>(registrationUri)
+          .then((evidence) =>
+            evidence?.fileURI
+              ? ipfsFetch<RegistrationFile>(evidence.fileURI)
+              : null,
+          )
+          .catch(() => null)
       : Promise.resolve(null),
     revocationFilePromise: revocationUri
-      ? ipfsFetch<EvidenceFile>(revocationUri)
+      ? ipfsFetch<EvidenceFile>(revocationUri).catch(() => null)
       : Promise.resolve(null),
   };
 }

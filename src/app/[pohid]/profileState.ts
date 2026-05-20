@@ -141,7 +141,8 @@ export function deriveProfileState<TRequest extends ProfileStateRequest>({
         ].includes(request.requestStatus) &&
         isRequesterWinner(request) &&
         !request.revocation &&
-        !isRequestExpired(request, nowSeconds),
+        (request.requestStatus === RequestStatus.PUNISHED_VOUCH ||
+          !isRequestExpired(request, nowSeconds)),
     )
     .sort(sortByLatestTimestamp)[0];
 

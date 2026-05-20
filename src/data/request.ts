@@ -165,7 +165,7 @@ export const getRequestPageData = cache(
 
 export const getHistoricalWinnerClaim = cache(
   async (pohId: Hash, lastStatusChange: string | number) => {
-    const results = await Promise.all(
+    const results = await Promise.allSettled(
       supportedChains.map((chain) =>
         sdk[chain.id].HistoricalWinnerClaim({
           humanityId: pohId,
@@ -173,15 +173,15 @@ export const getHistoricalWinnerClaim = cache(
         }),
       ),
     );
+    const requests = results.flatMap((result) =>
+      result.status === "fulfilled" ? result.value.requests : [],
+    );
 
     return (
-      results
-        .flatMap((result) => result.requests)
-        .sort(
-          (requestA, requestB) =>
-            Number(requestB.lastStatusChange) -
-            Number(requestA.lastStatusChange),
-        )[0] ?? null
+      requests.sort(
+        (requestA, requestB) =>
+          Number(requestB.lastStatusChange) - Number(requestA.lastStatusChange),
+      )[0] ?? null
     );
   },
 );
@@ -189,7 +189,11 @@ export const getHistoricalWinnerClaim = cache(
 export const getRequestData = cache(
   async (chainId: SupportedChainId, pohId: Hash, index: number) => {
     const out = await getRequestPageData(chainId, pohId, index);
-    return await sanitizeRequest(out, chainId, pohId);
+    return await sanitizeRequest(
+      out ? structuredClone(out) : out,
+      chainId,
+      pohId,
+    );
   },
 );
 

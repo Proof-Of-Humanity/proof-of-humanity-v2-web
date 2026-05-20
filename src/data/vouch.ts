@@ -111,8 +111,9 @@ export const getRequestVouchData = cache(
     offChainVouches: OffChainVouch[],
   ): Promise<RequestVouchData> => {
     const isVouching = request.status.id === "vouching";
+    const activeOffChainVouches = isVouching ? offChainVouches : [];
     const offChainVoucherSet = new Set(
-      offChainVouches.map((vouch) => normalizeAddress(vouch.voucher)),
+      activeOffChainVouches.map((vouch) => normalizeAddress(vouch.voucher)),
     );
     const receivedVouches = request.claimer.vouchesReceived;
     const onChainVouches = uniqueAddresses(
@@ -131,7 +132,7 @@ export const getRequestVouchData = cache(
       ]),
     );
     const onChainVoucherSet = new Set(onChainVouches.map(normalizeAddress));
-    const uniqueOffChainVouches = offChainVouches.filter(
+    const uniqueOffChainVouches = activeOffChainVouches.filter(
       (vouch, index, allVouches) => {
         const normalized = normalizeAddress(vouch.voucher);
 
@@ -154,15 +155,19 @@ export const getRequestVouchData = cache(
         ),
       })),
     );
-    const onChainStatusItems = onChainVouches.map((voucher) => {
-      const vouch = receivedVouchByVoucher.get(normalizeAddress(voucher));
+    const onChainStatusItems = await Promise.all(
+      onChainVouches.map(async (voucher) => {
+        const vouch = receivedVouchByVoucher.get(normalizeAddress(voucher));
 
-      return {
-        voucher,
-        isOnChain: true,
-        vouchStatus: vouch ? isValidOnChainVouch(vouch) : undefined,
-      };
-    });
+        return {
+          voucher,
+          isOnChain: true,
+          vouchStatus: vouch
+            ? isValidOnChainVouch(vouch)
+            : await isValidVouch(chainId, voucher, undefined),
+        };
+      }),
+    );
     const statusItems = [...offChainStatusItems, ...onChainStatusItems];
 
     return {
@@ -186,7 +191,8 @@ const getVouchProfile = (
   const relevantChain =
     supportedChains.find(
       (chain) =>
-        rawClaimer[chain.id].claimer?.registration?.humanity.winnerClaim,
+        (rawClaimer[chain.id].claimer?.registration?.humanity.winnerClaim
+          ?.length ?? 0) > 0,
     ) ?? fallbackChain;
   const claimer = rawClaimer[relevantChain.id].claimer;
   const pohId = claimer?.registration?.humanity.id ?? claimer?.id;
