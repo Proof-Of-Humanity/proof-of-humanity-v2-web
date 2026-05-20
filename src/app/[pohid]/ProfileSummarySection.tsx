@@ -1,9 +1,11 @@
 import ExternalLink from "components/ExternalLink";
+import NewTabIcon from "components/NewTabIcon";
 import Card from "components/Request/Card";
 import TimeAgo from "components/TimeAgo";
-import { explorerLink } from "config/chains";
+import { explorerLink, idToChain } from "config/chains";
 import Link from "next/link";
 import { shortenAddress } from "utils/address";
+import { prettifyId } from "utils/identifier";
 import { type Hash } from "viem";
 import { RequestStatus } from "utils/status";
 
@@ -27,12 +29,32 @@ export default async function ProfileSummarySection({
       claimedRegistration,
       claimedHomeChain,
       mainCardRequest,
+      latestWinningRequest,
       canShowRenewSection,
       canRenew,
     } = await getProfilePageData(pohId);
 
     const showsWinningRequestCard =
       pageState === "CLAIMED" || pageState === "TRANSFER_PENDING";
+    const punishedVouchSourceRequest =
+      pageState === "PUNISHED_VOUCH"
+        ? latestWinningRequest?.punishedVouchSourceRequest
+        : null;
+    const punishedVouchChain = latestWinningRequest
+      ? idToChain(latestWinningRequest.chainId)
+      : null;
+    const punishedVouchSourceHref =
+      punishedVouchSourceRequest && punishedVouchChain
+        ? `/${prettifyId(
+            punishedVouchSourceRequest.humanity.id,
+          )}/${punishedVouchChain.name.toLowerCase()}/${
+            punishedVouchSourceRequest.index
+          }`
+        : null;
+    const punishedVouchReason =
+      latestWinningRequest?.punishedVouchReason?.id === "identityTheft"
+        ? "Identity Theft"
+        : "Sybil Attack";
 
     return (
       <>
@@ -76,7 +98,14 @@ export default async function ProfileSummarySection({
                     humanity[mainCardRequest.chainId]?.humanity?.registration,
                   winnerClaim: [
                     {
+                      claimer: mainCardRequest.identityClaimer,
+                      creationTime: mainCardRequest.creationTime,
                       index: mainCardRequest.index,
+                      lastStatusChange:
+                        "lastStatusChange" in mainCardRequest
+                          ? mainCardRequest.lastStatusChange
+                          : 0,
+                      requester: mainCardRequest.identityRequester,
                       resolutionTime:
                         "lastStatusChange" in mainCardRequest
                           ? mainCardRequest.lastStatusChange ||
@@ -123,10 +152,25 @@ export default async function ProfileSummarySection({
           </>
         ) : (
           <>
-            <span className="text-orange mb-6">
-              {pageState === "REMOVED" ? "Removed" : "Not claimed"}
-            </span>
-            {pageState === "NOT_CLAIMED" || pageState === "REMOVED" ? (
+            {punishedVouchSourceHref && latestWinningRequest ? (
+              <p className="text-secondaryText mb-6 max-w-xl px-6 text-center text-sm font-normal leading-6">
+                This profile was removed for aiding {punishedVouchReason}.{" "}
+                <Link
+                  className="group/source-request text-orange inline-flex items-center gap-1 font-semibold transition-opacity hover:opacity-80"
+                  href={punishedVouchSourceHref}
+                >
+                  View source request
+                  <NewTabIcon className="h-4 w-4 fill-current transition-transform duration-200 group-hover/source-request:-translate-y-0.5 group-hover/source-request:translate-x-0.5" />
+                </Link>
+              </p>
+            ) : (
+              <span className="text-orange mb-6">
+                {pageState === "REMOVED" ? "Removed" : "Not claimed"}
+              </span>
+            )}
+            {pageState === "NOT_CLAIMED" ||
+            pageState === "REMOVED" ||
+            pageState === "PUNISHED_VOUCH" ? (
               <Link
                 className="btn-main mb-6"
                 href={`/${pohId}/claim`}

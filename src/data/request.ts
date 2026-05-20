@@ -113,9 +113,9 @@ export const getRequestsInitData = async () => {
 export const getFilteredRequestsInitData = async (
   filtered: Record<SupportedChainId, RequestsQuery["requests"]> | undefined,
 ) => {
-  var all: Record<SupportedChainId, RequestsQuery["requests"]> =
+  const all: Record<SupportedChainId, RequestsQuery["requests"]> =
     await _getPagedRequests();
-  var out: Record<SupportedChainId, RequestsQuery["requests"]> = filtered
+  const out: Record<SupportedChainId, RequestsQuery["requests"]> = filtered
     ? filtered
     : all;
   return await sanitizeHeadRequests(all, out);
@@ -147,12 +147,53 @@ export interface OffChainVouch {
   create_at: string;
 }
 
+/**
+ * @notice Fetches the request-page subgraph payload.
+ * @dev The `Request` query already includes `humanity.winnerClaim`, which is
+ * the identity source used by the request page.
+ */
+export const getRequestPageData = cache(
+  async (chainId: SupportedChainId, pohId: Hash, index: number) => {
+    return (
+      await sdk[chainId]["Request"]({
+        id: genRequestId(pohId, index),
+        humanityId: pohId,
+      })
+    ).request;
+  },
+);
+
+export const getHistoricalWinnerClaim = cache(
+  async (pohId: Hash, lastStatusChange: string | number) => {
+    const results = await Promise.allSettled(
+      supportedChains.map((chain) =>
+        sdk[chain.id].HistoricalWinnerClaim({
+          humanityId: pohId,
+          lastStatusChange: String(lastStatusChange),
+        }),
+      ),
+    );
+    const requests = results.flatMap((result) =>
+      result.status === "fulfilled" ? result.value.requests : [],
+    );
+
+    return (
+      requests.sort(
+        (requestA, requestB) =>
+          Number(requestB.lastStatusChange) - Number(requestA.lastStatusChange),
+      )[0] ?? null
+    );
+  },
+);
+
 export const getRequestData = cache(
   async (chainId: SupportedChainId, pohId: Hash, index: number) => {
-    const out = (
-      await sdk[chainId]["Request"]({ id: genRequestId(pohId, index) })
-    ).request;
-    return await sanitizeRequest(out, chainId, pohId);
+    const out = await getRequestPageData(chainId, pohId, index);
+    return await sanitizeRequest(
+      out ? structuredClone(out) : out,
+      chainId,
+      pohId,
+    );
   },
 );
 

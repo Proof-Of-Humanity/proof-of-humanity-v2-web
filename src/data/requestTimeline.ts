@@ -1,19 +1,17 @@
 import { SupportedChainId, idToChain, supportedChains } from "config/chains";
 import {
   HumanityEventRecord,
-  getHumanityEvents,
   getTimelineRequestNode,
 } from "data/humanityEvents";
-import { getHumanityData } from "data/humanity";
 import { OffChainVouch } from "data/request";
-import { HumanityQuery, RequestQuery } from "generated/graphql";
+import { ProfileHumanityQuery, RequestQuery } from "generated/graphql";
 import { Hash } from "viem";
 import { prettifyId } from "utils/identifier";
 import { getStatus, RequestStatus } from "utils/status";
 
 type CurrentRequest = NonNullable<RequestQuery["request"]>;
 type ProfileRequest = ArrayElement<
-  NonNullable<HumanityQuery["humanity"]>["requests"]
+  NonNullable<ProfileHumanityQuery["humanity"]>["requests"]
 >;
 type RequestWithChain = ProfileRequest & {
   chainId: SupportedChainId;
@@ -111,9 +109,29 @@ const getProfileRequestTimelineItem = (
       index: Number(request.index),
       creationTime: request.creationTime,
       expirationTime: request.expirationTime,
+      punishedVouchSourceRequest: request.punishedVouchSourceRequest,
     });
 
   switch (requestStatus) {
+    case RequestStatus.PUNISHED_VOUCH:
+    case RequestStatus.RESOLVED_REVOCATION: {
+      const timestamp = Number(
+        requestStatus === RequestStatus.PUNISHED_VOUCH
+          ? request.punishedVouchTimestamp
+          : request.lastStatusChange || request.creationTime,
+      );
+      if (!Number.isFinite(timestamp) || timestamp <= 0) return null;
+
+      return {
+        id: requestTimelineId,
+        kind: "removed",
+        title: "Removed",
+        timestamp,
+        chainId: request.chainId,
+        href: requestHref,
+        requestIndex: Number(request.index),
+      };
+    }
     case RequestStatus.VOUCHING:
       return {
         id: requestTimelineId,
@@ -162,17 +180,6 @@ const getProfileRequestTimelineItem = (
         id: requestTimelineId,
         kind: "verified",
         title: "Verified human",
-        timestamp:
-          Number(request.lastStatusChange) || Number(request.creationTime),
-        chainId: request.chainId,
-        href: requestHref,
-        requestIndex: Number(request.index),
-      };
-    case RequestStatus.RESOLVED_REVOCATION:
-      return {
-        id: requestTimelineId,
-        kind: "removed",
-        title: "Removed",
         timestamp:
           Number(request.lastStatusChange) || Number(request.creationTime),
         chainId: request.chainId,
@@ -233,9 +240,10 @@ const getProfileRequestTimelineItem = (
 const createEventTimelineItems = async (
   pohId: Hash,
   currentRequest: CurrentRequestWithChain,
+  humanityEvents: HumanityEventRecord[],
   humanityLifespan?: string,
 ): Promise<TimelineItem[]> => {
-  const events = await getHumanityEvents(pohId);
+  const events = humanityEvents;
   if (!events.length) return [];
 
   const currentNode: LineageRequestNode = {
@@ -311,6 +319,7 @@ const createEventTimelineItems = async (
       index: currentRequestIndex,
       creationTime: currentRequest.creationTime,
       expirationTime: currentRequest.expirationTime,
+      punishedVouchSourceRequest: currentRequest.punishedVouchSourceRequest,
     },
     { humanityLifespan },
   );
@@ -520,16 +529,20 @@ export const getRequestTimelineData = async (
   chainId: SupportedChainId,
   request: CurrentRequest,
   offChainVouches: OffChainVouch[],
+  humanityEventsPromise: Promise<HumanityEventRecord[]>,
   humanityLifespan?: string,
 ) => {
   const currentRequest: CurrentRequestWithChain = {
     ...request,
     chainId,
   };
-  const [humanity, eventTimelineItems] = await Promise.all([
-    getHumanityData(pohId),
-    createEventTimelineItems(pohId, currentRequest, humanityLifespan),
-  ]);
+  const humanityEvents = await humanityEventsPromise;
+  const eventTimelineItems = await createEventTimelineItems(
+    pohId,
+    currentRequest,
+    humanityEvents,
+    humanityLifespan,
+  );
   const resolvedOffChainVouchTimelineItems =
     await createOffChainVouchTimelineItems(
       currentRequest,
@@ -539,9 +552,8 @@ export const getRequestTimelineData = async (
   const requestCounts = supportedChains.reduce(
     (acc, chain) => ({
       ...acc,
-      [chain.id]: (humanity[chain.id].humanity?.requests ?? []).filter(
-        (request) => !isTransferArtifactRequest(request),
-      ).length,
+      [chain.id]:
+        chain.id === chainId ? Number(request.humanity.nbRequests) : 0,
     }),
     {} as Record<SupportedChainId, number>,
   );

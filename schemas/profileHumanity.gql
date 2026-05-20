@@ -26,6 +26,16 @@ query ProfileHumanity($id: ID!, $humanityId: Bytes!) {
       expirationTime
       registrationEvidenceRevokedReq
       requester
+      punishedVouchSourceRequest {
+        humanity {
+          id
+        }
+        index
+      }
+      punishedVouchReason {
+        id
+      }
+      punishedVouchTimestamp
       evidenceGroup {
         evidence(orderBy: creationTime, orderDirection: desc, first: 1) {
           uri
