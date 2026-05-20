@@ -1,7 +1,7 @@
 import Link from "next/link";
 
+import NewTabIcon from "components/NewTabIcon";
 import TimeAgo from "components/TimeAgo";
-import NewTabIcon from "icons/NewTab.svg";
 
 type RequestPunishedVouchNoticeProps = {
   reason: string;

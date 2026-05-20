@@ -1,8 +1,8 @@
 import ExternalLink from "components/ExternalLink";
+import NewTabIcon from "components/NewTabIcon";
 import Card from "components/Request/Card";
 import TimeAgo from "components/TimeAgo";
 import { explorerLink, idToChain } from "config/chains";
-import NewTabIcon from "icons/NewTab.svg";
 import Link from "next/link";
 import { shortenAddress } from "utils/address";
 import { prettifyId } from "utils/identifier";
