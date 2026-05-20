@@ -1,0 +1,30 @@
+query HistoricalWinnerClaim($humanityId: Bytes!, $lastStatusChange: BigInt!) {
+  requests(
+    where: {
+      humanity_: { id: $humanityId }
+      revocation: false
+      winnerParty: "requester"
+      status_in: ["resolved", "transferred"]
+      evidenceGroup_: { length_gt: 0 }
+      lastStatusChange_lte: $lastStatusChange
+    }
+    first: 1
+    orderBy: lastStatusChange
+    orderDirection: desc
+  ) {
+    claimer {
+      id
+      name
+    }
+    creationTime
+    index
+    lastStatusChange
+    requester
+    resolutionTime
+    evidenceGroup {
+      evidence(orderBy: creationTime, orderDirection: asc, first: 1) {
+        uri
+      }
+    }
+  }
+}

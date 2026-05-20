@@ -3662,6 +3662,14 @@ export type HumanityEventsQueryVariables = Exact<{
 
 export type HumanityEventsQuery = { __typename?: 'Query', humanityEvents: Array<{ __typename?: 'HumanityEvent', id: string, timestamp: any, type: HumanityEventType, requestIndex?: any | null, transferHash?: any | null, voucher?: any | null, disputeId?: any | null, appealRound?: any | null, revocation?: boolean | null }> };
 
+export type HistoricalWinnerClaimQueryVariables = Exact<{
+  humanityId: Scalars['Bytes'];
+  lastStatusChange: Scalars['BigInt'];
+}>;
+
+
+export type HistoricalWinnerClaimQuery = { __typename?: 'Query', requests: Array<{ __typename?: 'Request', creationTime: any, index: any, lastStatusChange: any, requester: any, resolutionTime: any, claimer: { __typename?: 'Claimer', id: any, name?: string | null }, evidenceGroup: { __typename?: 'EvidenceGroup', evidence: Array<{ __typename?: 'Evidence', uri: string }> } }> };
+
 export type MeQueryVariables = Exact<{
   id: Scalars['ID'];
 }>;
@@ -3985,6 +3993,31 @@ export const HumanityEventsDocument = gql`
     disputeId
     appealRound
     revocation
+  }
+}
+    `;
+export const HistoricalWinnerClaimDocument = gql`
+    query HistoricalWinnerClaim($humanityId: Bytes!, $lastStatusChange: BigInt!) {
+  requests(
+    where: {humanity_: {id: $humanityId}, revocation: false, winnerParty: "requester", status_in: ["resolved", "transferred"], evidenceGroup_: {length_gt: 0}, lastStatusChange_lte: $lastStatusChange}
+    first: 1
+    orderBy: lastStatusChange
+    orderDirection: desc
+  ) {
+    claimer {
+      id
+      name
+    }
+    creationTime
+    index
+    lastStatusChange
+    requester
+    resolutionTime
+    evidenceGroup {
+      evidence(orderBy: creationTime, orderDirection: asc, first: 1) {
+        uri
+      }
+    }
   }
 }
     `;
@@ -4338,6 +4371,9 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     },
     HumanityEvents(variables: HumanityEventsQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<HumanityEventsQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<HumanityEventsQuery>(HumanityEventsDocument, variables, { ...requestHeaders, ...wrappedRequestHeaders }), 'HumanityEvents', 'query', variables);
+    },
+    HistoricalWinnerClaim(variables: HistoricalWinnerClaimQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<HistoricalWinnerClaimQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<HistoricalWinnerClaimQuery>(HistoricalWinnerClaimDocument, variables, { ...requestHeaders, ...wrappedRequestHeaders }), 'HistoricalWinnerClaim', 'query', variables);
     },
     Me(variables: MeQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<MeQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<MeQuery>(MeDocument, variables, { ...requestHeaders, ...wrappedRequestHeaders }), 'Me', 'query', variables);

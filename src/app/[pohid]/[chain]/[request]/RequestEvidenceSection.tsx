@@ -9,9 +9,9 @@ import type {
 
 /**
  * @notice Resolves and renders the request evidence section.
- * @dev Non-revocation requests display winner-claim evidence, while
- * revocations display their own evidence. The nested optimistic provider only
- * overrides `evidenceList` and reuses the parent optimistic state.
+ * @dev The caller chooses whether this is current-request evidence or
+ * historical identity evidence. The nested optimistic provider only overrides
+ * `evidenceList` and reuses the parent optimistic state.
  */
 export default async function RequestEvidenceSection({
   arbitrationInfo,

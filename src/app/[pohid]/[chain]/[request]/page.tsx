@@ -2,7 +2,11 @@ import { paramToChain, legacyChain } from "config/chains";
 import { getContractData } from "data/contract";
 import { getArbitrationCost } from "data/costs";
 import { getHumanityEvents } from "data/humanityEvents";
-import { getOffChainVouches, getRequestPageData } from "data/request";
+import {
+  getHistoricalWinnerClaim,
+  getOffChainVouches,
+  getRequestPageData,
+} from "data/request";
 import { getRequestTimelineData } from "data/requestTimeline";
 import { getRequestVouchData } from "data/vouch";
 import { Suspense } from "react";
@@ -45,8 +49,12 @@ export default async function Request({ params }: PageProps) {
   ]);
   if (!fetchedRequest) return <span>Error occured</span>;
 
-  const identitySource =
-    fetchedRequest.humanity.winnerClaim.at(0) || fetchedRequest;
+  const needsHistoricalIdentity =
+    fetchedRequest.revocation || Number(fetchedRequest.index) <= -100;
+  const historicalIdentity = needsHistoricalIdentity
+    ? await getHistoricalWinnerClaim(pohId, fetchedRequest.lastStatusChange)
+    : null;
+  const identitySource = historicalIdentity || fetchedRequest;
   const identity = {
     claimer: identitySource.claimer,
     creationTime: identitySource.creationTime,

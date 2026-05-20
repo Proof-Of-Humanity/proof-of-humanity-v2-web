@@ -163,6 +163,29 @@ export const getRequestPageData = cache(
   },
 );
 
+export const getHistoricalWinnerClaim = cache(
+  async (pohId: Hash, lastStatusChange: string | number) => {
+    const results = await Promise.all(
+      supportedChains.map((chain) =>
+        sdk[chain.id].HistoricalWinnerClaim({
+          humanityId: pohId,
+          lastStatusChange: String(lastStatusChange),
+        }),
+      ),
+    );
+
+    return (
+      results
+        .flatMap((result) => result.requests)
+        .sort(
+          (requestA, requestB) =>
+            Number(requestB.lastStatusChange) -
+            Number(requestA.lastStatusChange),
+        )[0] ?? null
+    );
+  },
+);
+
 export const getRequestData = cache(
   async (chainId: SupportedChainId, pohId: Hash, index: number) => {
     const out = await getRequestPageData(chainId, pohId, index);
