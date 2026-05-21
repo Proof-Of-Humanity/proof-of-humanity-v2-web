@@ -1,3 +1,5 @@
+import { twMerge } from "tailwind-merge";
+
 interface VideoThumbnailProps {
   src: string;
   className?: string;
@@ -12,7 +14,10 @@ export default function VideoThumbnail({
 
   return (
     <video
-      className={className}
+      className={twMerge(
+        "aspect-video w-full bg-black object-contain",
+        className,
+      )}
       src={videoSrc}
       preload="metadata"
       playsInline

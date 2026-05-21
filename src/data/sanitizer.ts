@@ -66,7 +66,7 @@ export const sanitizeRequest = async (
   if (
     (request?.revocation &&
       request?.humanity.winnerClaim &&
-      (request?.humanity.winnerClaim.length == 0 ||
+      (request?.humanity.winnerClaim.length === 0 ||
         request?.humanity.winnerClaim[0]?.index <= -100)) ||
     (request &&
       (!request.evidenceGroup ||
@@ -84,21 +84,21 @@ export const sanitizeRequest = async (
       {} as Record<SupportedChainId, HumanityQuery>,
     );
 
-    let tROut = getTransferringRequest(out, chainId, request);
+    const tROut = getTransferringRequest(out, chainId, request);
     if (!tROut?.transferringRequest) return request;
-    let homeChainId = tROut.homeChainId;
-    let transferringRequest = tROut.transferringRequest;
+    const homeChainId = tROut.homeChainId;
+    const transferringRequest = tROut.transferringRequest;
 
     if (!transferringRequest) return request;
 
     if (
       request?.revocation &&
       request?.humanity.winnerClaim &&
-      (request?.humanity.winnerClaim.length == 0 ||
+      (request?.humanity.winnerClaim.length === 0 ||
         request?.humanity.winnerClaim[0]?.index <= -100)
     ) {
       request.claimer.name = transferringRequest?.claimer.name;
-      if (request?.humanity.winnerClaim.length == 0) {
+      if (request?.humanity.winnerClaim.length === 0) {
         request.humanity.winnerClaim.push({
           claimer: transferringRequest.claimer,
           creationTime: transferringRequest.creationTime,
@@ -123,15 +123,12 @@ export const sanitizeRequest = async (
     }
 
     if (request.index <= -100) {
-      let transferringRequestComplete = await sdk[homeChainId]["Request"]({
-        id: genRequestId(pohId, Number(transferringRequest!.index)),
-        humanityId: pohId,
-      })
-        .then((res) => res.request)
-        .catch((err) => {
-          console.error(`Subgraph query failed on chain ${homeChainId}:`, err);
-          return null;
-        });
+      const transferringRequestComplete = (
+        await sdk[homeChainId]["Request"]({
+          id: genRequestId(pohId, Number(transferringRequest!.index)),
+          humanityId: pohId,
+        })
+      ).request;
       if (!transferringRequestComplete) {
         request.claimer.name = transferringRequest?.claimer.name;
         request.evidenceGroup = transferringRequest?.evidenceGroup as any;
@@ -172,24 +169,24 @@ export const sanitizeHumanityRequests = async (
         !request.evidenceGroup.evidence ||
         request.evidenceGroup.evidence.length === 0 ||
         !request.claimer.name ||
-        (request.revocation && request.registrationEvidenceRevokedReq == ""))
+        (request.revocation && request.registrationEvidenceRevokedReq === ""))
     );
   };
 
   for (const chain of supportedChains) {
-    let localIncompleteReqs = out[chain.id].humanity?.requests
+    const localIncompleteReqs = out[chain.id].humanity?.requests
       .filter((req) => isIncompleteRequest(req as any))
       .sort((req1, req2) => req2.creationTime - req1.creationTime);
 
     if (localIncompleteReqs) {
       for (let i = 0; i < localIncompleteReqs.length; i++) {
         try {
-          let tROut = getTransferringRequest(
+          const tROut = getTransferringRequest(
             out,
             chain.id,
             localIncompleteReqs[i] as any,
           );
-          let transferringReq = tROut?.transferringRequest;
+          const transferringReq = tROut?.transferringRequest;
           completeRequest(
             localIncompleteReqs[i] as Request,
             transferringReq as any,
@@ -198,12 +195,12 @@ export const sanitizeHumanityRequests = async (
       }
     }
 
-    let winnerClaim = out[chain.id].humanity?.winnerClaim[0];
+    const winnerClaim = out[chain.id].humanity?.winnerClaim[0];
     if (
       !winnerClaim?.evidenceGroup.evidence[0] ||
       !winnerClaim?.evidenceGroup.evidence[0].uri
     ) {
-      let winnerReq = out[chain.id].humanity?.requests.find(
+      const winnerReq = out[chain.id].humanity?.requests.find(
         (req) => req.index === winnerClaim?.index,
       );
       if (winnerReq && winnerReq.evidenceGroup.evidence.length > 0) {
@@ -234,15 +231,15 @@ export const getTransferringRequest = (
     transferredNumber = -100 - request.index;
   } else if (request.index < 0) {
     // legacy profile
-    let homeChainId = chainId;
-    var transferringRequest: any | undefined = out[
+    const homeChainId = chainId;
+    const transferringRequest: any | undefined = out[
       chainId
     ].humanity?.requests.filter((req) => {
-      return req.index == String(Number(request.index) + 1);
+      return req.index === String(Number(request.index) + 1);
     })[0]; // looks for the first legacy register of the profile
     return { homeChainId, transferringRequest };
   } else {
-    var orderedBridgedRequests = out[chainId].humanity?.requests
+    const orderedBridgedRequests = out[chainId].humanity?.requests
       .filter(
         (req) => req.index <= -100 && req.creationTime < request.creationTime,
       )
@@ -252,17 +249,17 @@ export const getTransferringRequest = (
           req1.creationTime -
           (request.creationTime - req2.creationTime),
       );
-    var bridgedRequest = orderedBridgedRequests?.at(0);
+    const bridgedRequest = orderedBridgedRequests?.at(0);
     if (!bridgedRequest) return;
     transferredNumber = -100 - bridgedRequest.index;
   }
 
-  var transferringRequest: any | undefined;
-  let homeChainId: SupportedChainId = getForeignChain(chainId);
-  var orderedTransferringRequests: any | undefined = out[
+  let transferringRequest: any | undefined;
+  const homeChainId: SupportedChainId = getForeignChain(chainId);
+  const orderedTransferringRequests: any | undefined = out[
     homeChainId
   ].humanity?.requests
-    .filter((req) => req.status.id == "transferred") // || req.status.id == "transferring"))
+    .filter((req) => req.status.id === "transferred") // || req.status.id == "transferring"))
     .sort((req1, req2) => req1.creationTime - req2.creationTime);
 
   if (orderedTransferringRequests && orderedTransferringRequests.length > 0) {
@@ -275,17 +272,15 @@ export const getTransferringRequest = (
   }
   if (!transferringRequest) {
     // Cases of failed transferring
-    var transferringRequest: any | undefined = out[chainId].humanity?.requests
-      .filter((req) => req.status.id == "transferring")
+    transferringRequest = out[chainId].humanity?.requests
+      .filter((req) => req.status.id === "transferring")
       .sort((req1, req2) => req2.creationTime - req1.creationTime)
       .at(0);
   }
   if (!transferringRequest) {
     // Cases of failed transferring (being double-transferred before)
-    var transferringRequest: any | undefined = out[
-      homeChainId
-    ].humanity?.requests
-      .filter((req) => req.status.id == "transferring")
+    transferringRequest = out[homeChainId].humanity?.requests
+      .filter((req) => req.status.id === "transferring")
       .sort((req1, req2) => req2.creationTime - req1.creationTime)
       .at(0);
   }
@@ -324,7 +319,7 @@ const completeRequest = (request: Request, transferringRequest: Request) => {
   if (
     request &&
     request.revocation &&
-    request.registrationEvidenceRevokedReq == ""
+    request.registrationEvidenceRevokedReq === ""
   ) {
     request.registrationEvidenceRevokedReq =
       transferringRequest.evidenceGroup.evidence[0]?.uri ?? "";
@@ -341,7 +336,7 @@ export const getProfileLastTransferringRequest = cache(
       (acc, chain, i) => ({ ...acc, [chain.id]: res[i] }),
       {} as Record<SupportedChainId, HumanityQuery>,
     );
-    let lastTReq = out[chainId].humanity?.requests
+    const lastTReq = out[chainId].humanity?.requests
       .filter((req) => req.index < 100)
       .sort((req1, req2) => req2.creationTime - req1.creationTime)
       .at(0);
@@ -375,7 +370,7 @@ export const sanitizeHeadRequests = async (
                 .length === 0)) ||
           (!!req.humanity &&
             !!req.humanity.winnerClaim &&
-            req.humanity.winnerClaim.length == 0)
+            req.humanity.winnerClaim.length === 0)
         );
       });
     const foreignChainId =
@@ -385,7 +380,7 @@ export const sanitizeHeadRequests = async (
     if (incompleteRequests) {
       incompleteRequests.map(async (req) => {
         const pohId = req.humanity.id;
-        var transferringRequest;
+        let transferringRequest;
         if (
           foreignChainId &&
           all[foreignChainId].length > 0 &&
@@ -396,7 +391,7 @@ export const sanitizeHeadRequests = async (
             .filter(
               (req) =>
                 req.humanity.id === pohId &&
-                req.status.id == "transferred" &&
+                req.status.id === "transferred" &&
                 !!req.evidenceGroup.evidence.at(0),
             ) // || req.status.id == "transferring")))
             .sort((req1, req2) => req2.creationTime - req1.creationTime)
@@ -406,7 +401,7 @@ export const sanitizeHeadRequests = async (
               .filter(
                 (req) =>
                   req.humanity.id === pohId &&
-                  req.status.id == "transferred" &&
+                  req.status.id === "transferred" &&
                   !!req.evidenceGroup.evidence.at(0),
               ) // || req.status.id == "transferring")))
               .sort((req1, req2) => req2.creationTime - req1.creationTime)
@@ -417,7 +412,7 @@ export const sanitizeHeadRequests = async (
             transferringRequest = all[foreignChainId]
               .filter(
                 (req) =>
-                  req.humanity.id === pohId && req.status.id == "transferring",
+                  req.humanity.id === pohId && req.status.id === "transferring",
               )
               .sort((req1, req2) => req2.creationTime - req1.creationTime)
               .at(0);
@@ -427,7 +422,7 @@ export const sanitizeHeadRequests = async (
             transferringRequest = all[chain.id]
               .filter(
                 (req) =>
-                  req.humanity.id === pohId && req.status.id == "transferring",
+                  req.humanity.id === pohId && req.status.id === "transferring",
               )
               .sort((req1, req2) => req2.creationTime - req1.creationTime)
               .at(0);
@@ -443,7 +438,10 @@ export const sanitizeHeadRequests = async (
         } */
         req.claimer.name = transferringRequest?.claimer.name;
         if (req.revocation) {
-          if (req.registrationEvidenceRevokedReq == "" && transferringRequest) {
+          if (
+            req.registrationEvidenceRevokedReq === "" &&
+            transferringRequest
+          ) {
             req.registrationEvidenceRevokedReq =
               transferringRequest.evidenceGroup.evidence[0]?.uri ?? "";
           }
@@ -494,7 +492,7 @@ export const sanitizeClaimerData = async (
   if (voucherEvidenceChain) {
     const isClaimerIncomplete =
       out[voucherEvidenceChain.id].claimer!.registration!.humanity.winnerClaim
-        .length == 0 ||
+        .length === 0 ||
       (out[voucherEvidenceChain.id].claimer!.registration!.humanity.winnerClaim
         .length > 0 &&
         out[
@@ -516,7 +514,7 @@ export const sanitizeClaimerData = async (
             )
           : null;
 
-      let registrationFile =
+      const registrationFile =
         registrationEvidence && registrationEvidence.fileURI
           ? await ipfsFetch<RegistrationFile>(registrationEvidence.fileURI)
           : null;

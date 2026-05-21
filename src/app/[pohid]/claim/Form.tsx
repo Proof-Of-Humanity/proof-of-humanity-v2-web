@@ -303,14 +303,8 @@ function FormContent({
         photo: photoUri,
         video: videoUri,
       });
-      let fileURI =
-        uploadCache.current.file?.json === fileJson
-          ? uploadCache.current.file.uri
-          : await uploadToIPFS(
-              new File([fileJson], "file", { type: "text/plain" }),
-              Roles.Evidence,
-            );
-      if (fileURI) uploadCache.current.file = { json: fileJson, uri: fileURI };
+
+      const fileURI = await uploadToIPFS(fileTextFile, Roles.Evidence);
 
       if (!fileURI) {
         toast.error("Failed to upload media metadata.");
@@ -323,22 +317,20 @@ function FormContent({
       const registrationJson = JSON.stringify({
         name: "Registration",
         fileURI,
-      });
-      const registrationUri =
-        uploadCache.current.registration?.fileURI === fileURI
-          ? uploadCache.current.registration.uri
-          : await uploadToIPFS(
-              new File([registrationJson], "registration", {
-                type: "text/plain",
-              }),
-              Roles.Evidence,
-            );
-      if (registrationUri)
-        uploadCache.current.registration = {
-          fileURI,
-          uri: registrationUri,
-        };
+      };
 
+      const registrationTextFile = new File(
+        [JSON.stringify(registrationJson)],
+        "registration",
+        {
+          type: "text/plain",
+        },
+      );
+
+      const registrationUri = await uploadToIPFS(
+        registrationTextFile,
+        Roles.Evidence,
+      );
       if (!registrationUri) {
         toast.error("Failed to upload registration.");
         loading.stop();
@@ -477,7 +469,7 @@ function FormContent({
                     className={cn(
                       "centered h-6 whitespace-nowrap rounded-full text-sm",
                       {
-                        "w-6 border border-slate-200 font-bold text-slate-400":
+                        "border-stroke text-secondaryText w-6 border font-bold":
                           step < i,
                         "gradient px-2 font-bold uppercase text-white":
                           step === i,
@@ -498,7 +490,7 @@ function FormContent({
                   <div
                     className={cn(
                       "h-px w-full",
-                      step > i ? "gradient" : "bg-slate-200",
+                      step > i ? "gradient" : "bg-grey",
                     )}
                   />
                 )}

@@ -478,14 +478,14 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
       {/* ── S3: Processing with raw preview ── */}
       {isProcessing && (
         <div className="mt-4 flex flex-col items-center">
-          <div className="relative inline-block max-w-full overflow-hidden rounded-lg bg-black">
+          <div className="relative inline-block max-w-full overflow-hidden rounded-2xl bg-black">
             <video
               src={rawPreviewUri!}
               className="mx-auto max-h-72 w-auto max-w-full object-contain opacity-60 sm:max-h-64"
               muted
               playsInline
             />
-            <div className="absolute inset-0 flex flex-col items-center justify-center rounded-lg bg-black/40">
+            <div className="absolute inset-0 flex flex-col items-center justify-center rounded-2xl bg-black/40">
               <Image
                 alt="loading"
                 src="/logo/poh-white.svg"
@@ -508,7 +508,7 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
             isVideo
             uri={video.uri}
             trigger={
-              <div className="inline-block max-w-full overflow-hidden rounded-lg bg-black">
+              <div className="inline-block max-w-full overflow-hidden rounded-2xl bg-black">
                 <video
                   className="mx-auto max-h-72 w-auto max-w-full cursor-pointer object-contain sm:max-h-64"
                   src={`${video.uri}#t=0.001`}
@@ -532,18 +532,20 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
               {videoQualityWarnings.length > 0 && (
                 <div className="mx-auto w-full max-w-lg">
                   <div className="mb-2 flex justify-center">
-                    <span className="bg-status-challenged/15 rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-[#D98A1F]">
+                    <span className="bg-status-challenged/15 rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-[#D98A1F] dark:text-[#FFC979]">
                       Warnings
                     </span>
                   </div>
-                  <ul className="flex flex-col items-center gap-2 text-center text-sm text-[#D98A1F]">
+                  <ul className="flex flex-col items-center gap-2 text-center text-sm text-[#D98A1F] dark:text-[#FFC979]">
                     {videoQualityWarnings.map((warningMessage, idx) => (
                       <li
                         key={`accepted-warning-${idx}`}
                         className="flex items-start justify-center gap-2"
                       >
-                        <span className="mt-[7px] h-1.5 w-1.5 shrink-0 rounded-full bg-black" />
-                        <span className="text-[#D98A1F]">{warningMessage}</span>
+                        <span className="mt-[7px] h-1.5 w-1.5 shrink-0 rounded-full bg-[#D98A1F] dark:bg-[#FFC979]" />
+                        <span className="text-[#D98A1F] dark:text-[#FFC979]">
+                          {warningMessage}
+                        </span>
                       </li>
                     ))}
                   </ul>
@@ -560,7 +562,7 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
       {/* ── S6: Error with preview ── */}
       {hasError && (
         <div className="flex flex-col items-center">
-          <div className="inline-block max-w-full overflow-hidden rounded-lg bg-black">
+          <div className="inline-block max-w-full overflow-hidden rounded-2xl bg-black">
             <video
               src={rawPreviewUri!}
               controls
@@ -587,7 +589,7 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
                       key={`error-${idx}`}
                       className="flex items-start justify-center gap-2"
                     >
-                      <span className="mt-[7px] h-1.5 w-1.5 shrink-0 rounded-full bg-black" />
+                      <span className="mt-[7px] h-1.5 w-1.5 shrink-0 rounded-full bg-[#D98A1F] dark:bg-[#FFC979]" />
                       <span className="text-status-rejected">
                         {errorMessage}
                       </span>
@@ -605,18 +607,20 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
                 }
               >
                 <div className="mb-2 flex justify-center">
-                  <span className="bg-status-challenged/15 rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-[#D98A1F]">
+                  <span className="bg-status-challenged/15 rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-[#D98A1F] dark:text-[#FFC979]">
                     Warnings
                   </span>
                 </div>
-                <ul className="mx-auto flex w-full max-w-lg flex-col items-center gap-2 text-center text-sm text-[#D98A1F]">
+                <ul className="mx-auto flex w-full max-w-lg flex-col items-center gap-2 text-center text-sm text-[#D98A1F] dark:text-[#FFC979]">
                   {videoQualityWarnings.map((warningMessage, idx) => (
                     <li
                       key={`warning-${idx}`}
                       className="flex items-start justify-center gap-2"
                     >
-                      <span className="mt-[7px] h-1.5 w-1.5 shrink-0 rounded-full bg-black" />
-                      <span className="text-[#D98A1F]">{warningMessage}</span>
+                      <span className="mt-[7px] h-1.5 w-1.5 shrink-0 rounded-full bg-[#D98A1F] dark:bg-[#FFC979]" />
+                      <span className="text-[#D98A1F] dark:text-[#FFC979]">
+                        {warningMessage}
+                      </span>
                     </li>
                   ))}
                 </ul>
@@ -633,7 +637,7 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
         isPreparing ||
         hasError) && (
         <button
-          className="centered text-orange mt-4 text-lg font-semibold uppercase disabled:opacity-50"
+          className="centered text-orange mt-4 text-lg font-semibold normal-case disabled:opacity-50"
           onClick={() => retakeVideo()}
           disabled={recording}
         >

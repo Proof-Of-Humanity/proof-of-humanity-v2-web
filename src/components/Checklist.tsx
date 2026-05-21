@@ -15,7 +15,7 @@ interface ChecklistProps {
 
 const Checklist: React.FC<ChecklistProps> = ({ title, items, warning }) => {
   return (
-    <div className="bg-whiteBackground mt-4 w-full rounded-lg border border-slate-200 p-6 shadow-sm">
+    <div className="bg-whiteBackground border-stroke mt-4 w-full rounded-2xl border p-6 shadow-sm">
       <div className="mb-3 flex items-center justify-center">
         <WarningIcon className="mr-1" />
         <h3 className="text-orange text-xl font-semibold">{title}</h3>

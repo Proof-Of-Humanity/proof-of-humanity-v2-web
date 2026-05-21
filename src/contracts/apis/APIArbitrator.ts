@@ -56,7 +56,7 @@ export class APIArbitrator {
         address: this.address,
         abi: KlerosLiquid.abi,
         functionName: func,
-        args: args,
+        args,
       })
       .catch(() => {
         throw new Error({

@@ -386,7 +386,7 @@ export default function ClaimSection({
         {renderActionButton()}
         <ExternalLink
           href="https://kleros.notion.site/poh-airdrop-faqs"
-          className="mt-4 flex items-center justify-center gap-1 text-sm text-[#9c7ceb] hover:cursor-pointer hover:text-[#7c5cdb]"
+          className="text-purple mt-4 flex items-center justify-center gap-1 text-sm hover:cursor-pointer hover:opacity-80"
         >
           <span>Trouble claiming?</span>
           <span className="flex items-center gap-1">

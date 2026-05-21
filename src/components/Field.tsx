@@ -20,14 +20,15 @@ function Field({ label, textarea = false, className, ...props }: FieldProps) {
     <div className="flex w-full flex-col">
       {label && <Label>{label}</Label>}
       <div
-        className={cn("bordered w-full", {
-          "ring-theme/60 ring-2 ring-offset-2": focused,
-        })}
+        className={cn(
+          "bg-whiteBackground border-stroke w-full overflow-hidden rounded-input border shadow-inset transition duration-200 ease-premium",
+          focused ? "border-orange" : "",
+        )}
       >
         {textarea ? (
           <textarea
             className={cn(
-              "bg-whiteBackgroundWithOpacity text-primaryText block w-full rounded-sm border-none px-4 py-2 font-medium bg-blend-lighten transition ease-in-out",
+              "text-primaryText block w-full border-none bg-transparent px-4 py-2.5 font-medium transition ease-in-out",
               "focus:ring-0",
               className,
             )}
@@ -36,8 +37,8 @@ function Field({ label, textarea = false, className, ...props }: FieldProps) {
         ) : (
           <input
             className={cn(
-              "bg-whiteBackgroundWithOpacity text-primaryText block w-full rounded-sm border-none px-4 py-2 font-medium bg-blend-overlay",
-              "focus-visible:outline-none",
+              "text-primaryText block w-full border-none bg-transparent px-4 py-2.5 font-medium",
+              "focus:ring-0 focus-visible:outline-none",
               className,
             )}
             onFocus={() => setFocused(true)}

@@ -213,7 +213,7 @@ export async function IdentityHeader({
       <div className="flex w-full flex-col items-center md:w-auto md:flex-row md:items-center md:justify-start">
         <Identicon diameter={24} address={displayedClaimerId} />
         <ExternalLink
-          className="mt-1 text-center font-semibold text-slate-400 hover:text-slate-600 md:ml-2 md:mt-0 md:text-left"
+          className="text-secondaryText hover:text-primaryText mt-1 text-center font-semibold md:ml-2 md:mt-0 md:text-left"
           href={explorerLink(displayedClaimerId, chain)}
         >
           {displayedClaimerId.slice(0, 20)}
@@ -329,8 +329,8 @@ export async function MobileIdentityMedia({
             uri={videoUrl}
             trigger={
               <VideoThumbnail
-                className="w-full cursor-pointer rounded"
-                src={videoUrl}
+                className="w-full cursor-pointer rounded-2xl"
+                src={ipfs(registrationFile.video)}
               />
             }
           />
@@ -366,7 +366,7 @@ export default function RequestIdentityCard({
   const prettyPohId = prettifyId(pohId);
 
   return (
-    <div className="border-stroke bg-whiteBackground mb-1 rounded border shadow">
+    <div className="border-stroke bg-whiteBackground mb-1 rounded-card border shadow-soft-inset">
       <Suspense fallback={null}>
         <RevocationBanner
           chain={chain}

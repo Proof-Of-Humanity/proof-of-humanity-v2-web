@@ -101,7 +101,7 @@ export default function SubgraphsStatus() {
     <div
       role="status"
       aria-live="polite"
-      className="bg-lightOrange border-orange sticky top-0 z-30 w-full border-b shadow-sm"
+      className="bg-orange sticky top-0 z-30 w-full px-4 py-2 text-center text-white shadow"
     >
       <div className="mx-auto max-w-7xl px-4 py-3 text-center sm:px-6">
         <h2 className="text-orange m-0 flex items-center justify-center gap-2 text-sm font-semibold leading-6">

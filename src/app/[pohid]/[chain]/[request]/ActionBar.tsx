@@ -4,6 +4,7 @@ import { enableReactUse } from "@legendapp/state/config/enableReactUse";
 import ExternalLink from "components/ExternalLink";
 import TimeAgo from "components/TimeAgo";
 import ActionButton from "components/ActionButton";
+import StatusBadge from "components/Request/StatusBadge";
 import usePoHWrite from "contracts/hooks/usePoHWrite";
 import { ContractData } from "data/contract";
 import { getMyData } from "data/user";
@@ -347,7 +348,7 @@ export default function ActionBar({
   const statusColor = getStatusColor(effectiveRequestStatus);
 
   return (
-    <div className="paper border-stroke bg-whiteBackground text-primaryText flex flex-col rounded">
+    <div className="paper border-stroke bg-whiteBackground text-primaryText flex flex-col">
       {(lockClaimed || (anotherClaimPending && !effectiveRevocation)) && (
         <div className="border-stroke flex flex-col gap-2 border-b px-[24px] py-[14px]">
           {lockClaimed && (
@@ -375,12 +376,12 @@ export default function ActionBar({
       )}
       <div className="flex flex-col items-center justify-between gap-[12px] px-[24px] py-[24px] md:flex-row lg:gap-[20px]">
         <div className="flex items-center">
-          <span className="mr-4">Status</span>
-          <span
-            className={`rounded-full px-3 py-1 text-white bg-status-${statusColor} whitespace-nowrap`}
-          >
-            {getStatusLabel(effectiveRequestStatus, "actionBar")}
-          </span>
+          <span className="text-secondaryText mr-4">Status</span>
+          <StatusBadge
+            color={statusColor}
+            label={getStatusLabel(effectiveRequestStatus, "actionBar")}
+            large
+          />
         </div>
         <div className="flex w-full flex-col justify-between gap-[12px] font-normal md:flex-row md:items-center">
           {web3Loaded &&
@@ -389,7 +390,7 @@ export default function ActionBar({
               action === ActionType.FUND) && (
               <>
                 <div className="flex justify-center gap-6 md:justify-start">
-                  <span className="text-center text-slate-400 md:text-left">
+                  <span className="text-secondaryText text-center md:text-left">
                     {effectiveValidVouches <
                       contractData.requiredNumberOfVouches && (
                       <>
@@ -541,7 +542,7 @@ export default function ActionBar({
 
           {web3Loaded && action === ActionType.ADVANCE && (
             <>
-              <span className="text-center text-slate-400 md:text-left">
+              <span className="text-secondaryText text-center md:text-left">
                 Ready to advance
               </span>
 
@@ -617,7 +618,7 @@ export default function ActionBar({
           )}
           {action === ActionType.EXECUTE && (
             <>
-              <span className="text-center text-slate-400 md:text-left">
+              <span className="text-secondaryText text-center md:text-left">
                 Ready to finalize.
               </span>
               <div className="flex flex-col items-center justify-between gap-4 font-normal md:flex-row md:items-center">
@@ -650,7 +651,7 @@ export default function ActionBar({
 
           {action === ActionType.CHALLENGE && (
             <>
-              <div className="text-center text-slate-400 md:text-left">
+              <div className="text-secondaryText text-center md:text-left">
                 Challenge period end:{" "}
                 <TimeAgo
                   time={
@@ -675,7 +676,7 @@ export default function ActionBar({
 
           {action === ActionType.DISPUTED && (
             <>
-              <span className="text-center text-slate-400 md:text-left">
+              <span className="text-secondaryText text-center md:text-left">
                 {pendingAction === "challenge"
                   ? "Challenge confirmed onchain. Waiting for indexed dispute details"
                   : "The request was challenged"}
@@ -714,7 +715,7 @@ export default function ActionBar({
 
                   <ExternalLink
                     href={`https://klerosboard.com/${chain.id}/cases/${currentChallenge.disputeId}`}
-                    className="btn-main gradient h-[48px] w-auto items-center justify-center whitespace-nowrap rounded p-2"
+                    className="btn-main gradient h-[48px] w-auto items-center justify-center whitespace-nowrap px-5 py-2.5"
                   >
                     View case #{currentChallenge.disputeId}
                   </ExternalLink>

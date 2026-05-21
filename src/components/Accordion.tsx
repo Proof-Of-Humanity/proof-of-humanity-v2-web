@@ -33,16 +33,16 @@ const Accordion: React.FC<AccordionProps> = ({
   };
 
   return (
-    <div className={cn("flex flex-col text-black", className)}>
+    <div className={cn("text-primaryText flex flex-col", className)}>
       <div
-        className="paper flex cursor-pointer justify-between overflow-hidden p-4 font-bold"
+        className="paper flex cursor-pointer justify-between p-5 font-bold transition duration-200 ease-premium"
         onClick={handleToggle}
       >
         <span>{title}</span>
         {open ? (
-          <MinusIcon className="h-4 w-4 fill-black" />
+          <MinusIcon className="fill-orange h-4 w-4" />
         ) : (
-          <PlusIcon className="h-4 w-4 fill-black" />
+          <PlusIcon className="fill-orange h-4 w-4" />
         )}
       </div>
       {open && children}

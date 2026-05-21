@@ -40,6 +40,13 @@ createAppKit({
   defaultNetwork: gnosis,
   projectId,
   metadata,
+  themeMode: "dark",
+  themeVariables: {
+    "--w3m-accent": "#FF8A66",
+    "--w3m-color-mix": "#17141F",
+    "--w3m-color-mix-strength": 12,
+    "--w3m-border-radius-master": "3px",
+  },
   features: {
     analytics: true,
   },
