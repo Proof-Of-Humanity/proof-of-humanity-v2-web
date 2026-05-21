@@ -17,13 +17,13 @@ export interface ActionButtonProps {
 
 const buttonStyles = {
   primary:
-    "flex items-center justify-center gradient rounded-sm font-medium text-white",
+    "flex items-center justify-center gradient rounded-btn font-medium text-white enabled:hover:brightness-110",
   secondary:
-    "flex items-center justify-center border-2 border-theme text-orange rounded-sm font-semibold",
+    "flex items-center justify-center border-2 border-theme text-orange rounded-btn font-semibold enabled:hover:bg-white/5",
 };
 
 const buttonBaseClass =
-  "w-full md:w-auto normal-case disabled:opacity-50 disabled:cursor-not-allowed px-5 py-2";
+  "w-full md:w-auto normal-case disabled:opacity-50 disabled:cursor-not-allowed min-h-[44px] px-6 py-2.5 transition duration-200 ease-premium";
 
 const ActionButton = React.forwardRef<HTMLButtonElement, ActionButtonProps>(
   (

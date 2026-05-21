@@ -48,7 +48,7 @@ export class APIPoH {
         address: this.address,
         abi: getContractInfo("ProofOfHumanity", this.chainId).abi,
         functionName: func,
-        args: args,
+        args,
       })
       .catch(() => {
         throw new Error({

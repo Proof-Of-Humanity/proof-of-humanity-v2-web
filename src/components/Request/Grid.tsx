@@ -43,7 +43,7 @@ import Loading from "components/Loading";
 enableReactUse();
 
 const REQUESTS_BATCH_SIZE = 12;
-var humanityLifespanAllChains: Record<SupportedChainId, string>;
+let humanityLifespanAllChains: Record<SupportedChainId, string>;
 
 export type RequestsQueryItem = ArrayElement<RequestsQuery["requests"]>;
 
@@ -71,7 +71,7 @@ const sortRequests = (request: RequestInterface[]): RequestInterface[] => {
   pohIdGrouped.forEach((val, key) => {
     val.sort((req1, req2) => req2.lastStatusChange - req1.lastStatusChange);
   });
-  let requestsOut: RequestInterface[] = new Array<RequestInterface>();
+  const requestsOut: RequestInterface[] = new Array<RequestInterface>();
   pohIdGrouped.forEach((val, key) => {
     // We keep only the head request of each pohIdGrouped array which is the one representing the current status of the personhood
     const latestRequest = val[0];
@@ -282,8 +282,8 @@ function RequestsGrid() {
       <SubgraphsStatus />
       <div className="my-4 flex flex-col gap-2 py-2 sm:flex-row sm:gap-1 md:gap-2">
         <input
-          className="border-stroke text-primaryText bg-whiteBackground w-full rounded border p-2 md:mr-2"
-          placeholder="Search (case sensitive)"
+          className="border-stroke text-primaryText bg-whiteBackground focus:border-orange w-full rounded-input border p-3 shadow-inset outline-none transition duration-200 ease-premium md:mr-2"
+          placeholder="Search by name or address…"
           onChange={(e) => setSearchQuery(e.target.value)}
         />
         <Dropdown
@@ -341,7 +341,7 @@ function RequestsGrid() {
         </Dropdown>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4">
+      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4">
         {requests.map((request, i) => (
           <Card
             key={i}

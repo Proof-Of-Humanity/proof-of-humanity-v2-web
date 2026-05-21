@@ -84,7 +84,7 @@ const Modal: React.FC<ModalProps> = ({
             className={cn(
               "modal-shell fixed left-1/2 top-1/2 z-30 w-4/5 md:w-3/5 xl:w-2/5",
               {
-                "bg-whiteBackground border-stroke overflow-clip rounded border":
+                "bg-whiteBackground border-stroke overflow-clip rounded-card border shadow-soft":
                   formal,
                 "modal-shell-open": isVisible,
               },
@@ -92,7 +92,7 @@ const Modal: React.FC<ModalProps> = ({
             )}
           >
             {header && (
-              <div className="gradient py-2 text-center font-semibold uppercase text-white">
+              <div className="bg-gradient-to-r from-[#FF8A66] to-[#F36D9D] py-2.5 text-center font-semibold uppercase tracking-wide text-white">
                 {header}
               </div>
             )}

@@ -192,8 +192,7 @@ export default function Form({
         type: "text/plain",
       });
 
-      let fileURI: string | null;
-      fileURI = await uploadToIPFS(fileTextFile, Roles.Evidence);
+      const fileURI = await uploadToIPFS(fileTextFile, Roles.Evidence);
 
       if (!fileURI) {
         toast.error("Failed to upload media metadata.");
@@ -205,7 +204,7 @@ export default function Form({
 
       const registrationJson = {
         name: "Registration",
-        fileURI: fileURI,
+        fileURI,
       };
 
       const registrationTextFile = new File(
@@ -216,8 +215,7 @@ export default function Form({
         },
       );
 
-      let registrationUri: string | null;
-      registrationUri = await uploadToIPFS(
+      const registrationUri = await uploadToIPFS(
         registrationTextFile,
         Roles.Evidence,
       );
@@ -367,7 +365,7 @@ export default function Form({
                     className={cn(
                       "centered h-6 whitespace-nowrap rounded-full text-sm",
                       {
-                        "w-6 border border-slate-200 font-bold text-slate-400":
+                        "border-stroke text-secondaryText w-6 border font-bold":
                           step < i,
                         "gradient px-2 font-bold uppercase text-white":
                           step === i,
@@ -384,7 +382,7 @@ export default function Form({
                   <div
                     className={cn(
                       "h-px w-full",
-                      step > i ? "gradient" : "bg-slate-200",
+                      step > i ? "gradient" : "bg-grey",
                     )}
                   />
                 )}

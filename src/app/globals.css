@@ -28,11 +28,11 @@
   }
 
   .divider {
-    @apply h-0.5 w-full rounded;
+    @apply h-px w-full rounded-full bg-[#342B45];
   }
 
   .checkbox {
-    @apply border-orange bg-lightOrange h-6 w-6 rounded-sm border;
+    @apply border-orange bg-lightOrange h-6 w-6 rounded-md border;
   }
 
   .radio {
@@ -44,15 +44,15 @@
   }
 
   .btn-main {
-    @apply centered gradient w-full rounded-sm p-2 font-medium uppercase text-white disabled:opacity-40 md:w-auto;
+    @apply centered gradient min-h-[44px] w-full rounded-btn px-5 py-2.5 font-medium normal-case text-white transition duration-200 ease-premium hover:brightness-110 disabled:opacity-40 md:w-auto;
   }
 
   .btn-sec {
-    @apply centered border-theme text-orange w-full rounded-sm border-2 p-2 font-semibold uppercase disabled:opacity-40 md:w-auto;
+    @apply centered border-theme text-orange min-h-[44px] w-full rounded-btn border-2 px-5 py-2.5 font-semibold normal-case transition duration-200 ease-premium hover:bg-white/5 disabled:opacity-40 md:w-auto;
   }
 
   .backdrop {
-    @apply fixed left-0 top-0 z-10 flex h-screen w-full items-center justify-center bg-slate-800/30 backdrop-blur;
+    @apply fixed left-0 top-0 z-10 flex h-screen w-full items-center justify-center bg-black/50 backdrop-blur-sm;
   }
 
   .modal-backdrop {
@@ -87,15 +87,15 @@
   }
 
   .content {
-    @apply mx-auto mb-16 mt-8 w-11/12 sm:mt-12 sm:w-5/6 lg:w-3/5;
+    @apply mx-auto mb-24 mt-10 w-11/12 sm:mt-16 sm:w-5/6 lg:w-3/5;
   }
 
   .content-wide {
-    @apply mx-auto mb-16 mt-8 w-11/12 sm:mt-12 sm:w-5/6 lg:w-4/5;
+    @apply mx-auto mb-24 mt-10 w-11/12 sm:mt-16 sm:w-5/6 lg:w-4/5;
   }
 
   .paper {
-    @apply bg-whiteBackground border-stroke text-primaryText rounded border shadow;
+    @apply bg-whiteBackground border-stroke text-primaryText rounded-card border shadow-soft-inset;
   }
 
   /* Custom classes for success states to ensure dark mode compatibility */
@@ -167,7 +167,7 @@
   }
 
   .dark .header-background {
-    background: theme("colors.dark.whiteBackground");
+    background: #17141f;
   }
 
   .border-theme {
@@ -489,7 +489,7 @@
   }
 
   .divider {
-    @apply h-0.5 w-full rounded;
+    @apply h-px w-full rounded-full bg-[#342B45];
   }
 
   .slider-thumb::-webkit-slider-thumb {
@@ -509,16 +509,11 @@
   }
 
   .gradient {
-    background: linear-gradient(
-      150deg,
-      #ff9966 33%,
-      #ff9571,
-      #ff917c,
-      #ff8e87,
-      #ff8d93,
-      #ff8c9e,
-      #ff8ca9 95%
-    );
+    background: theme("colors.light.theme");
+  }
+
+  .dark .gradient {
+    background: theme("colors.dark.theme");
   }
 
   .scrollbar::-webkit-scrollbar {
@@ -551,11 +546,11 @@
   }
 
   .dark .scrollbar::-webkit-scrollbar-track {
-    @apply rounded-full bg-slate-700;
+    @apply rounded-full bg-[#1B1724];
   }
 
   .dark .scrollbar::-webkit-scrollbar-thumb {
-    @apply rounded-full bg-slate-500;
+    @apply rounded-full bg-[#3A3348];
   }
 }
 

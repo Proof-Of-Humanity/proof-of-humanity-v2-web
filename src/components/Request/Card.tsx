@@ -19,6 +19,7 @@ import {
 import { prettifyId } from "utils/identifier";
 import { ipfs } from "utils/ipfs";
 import { RequestsQueryItem } from "./Grid";
+import StatusBadge from "./StatusBadge";
 import InfoIcon from "icons/info.svg";
 
 interface ContentProps {
@@ -49,8 +50,8 @@ const LoadingFallback: React.FC = () => (
 const ErrorFallback: React.FC<{ claimer?: { name?: string | null } }> = ({
   claimer,
 }) => (
-  <div className="h-84 flex animate-pulse flex-col items-center bg-white p-2">
-    <div className="mx-auto mb-2 h-32 w-32 rounded-full bg-slate-200" />
+  <div className="h-84 bg-whiteBackground flex animate-pulse flex-col items-center p-2">
+    <div className="bg-grey mx-auto mb-2 h-32 w-32 rounded-full" />
     <span className="font-semibold">{claimer?.name}</span>
     <span>Some error occurred...</span>
   </div>
@@ -77,7 +78,7 @@ const Content = ({
     suspense: true,
   });
 
-  let name =
+  const name =
     data && claimer.name && data.name !== claimer.name
       ? `${data?.name} (aka ${claimer.name})`
       : claimer.name
@@ -128,25 +129,21 @@ function Card({
   return (
     <Link
       href={`/${prettifyId(pohId)}/${chain.name.toLowerCase()}/${index}`}
-      className="h-84 border-stroke bg-whiteBackground wiggle cursor-pointer flex-col rounded border shadow-sm transition duration-150 ease-out hover:z-10 hover:scale-105 hover:shadow-xl"
+      className="h-84 border-stroke bg-whiteBackground hover:border-orange relative cursor-pointer flex-col rounded-card border shadow-soft-inset transition duration-200 ease-premium hover:z-10 hover:-translate-y-[3px]"
     >
-      <div className="justify-between font-light">
-        <div className={`h-1 w-full bg-status-${statusColor} rounded-t`} />
-        <div className="centered p-2 font-medium">
-          <span className={`text-status-${statusColor}`}>
-            {getStatusLabel(requestStatus)}
-          </span>
-          <div className="group relative ml-2 flex items-center">
-            <InfoIcon
-              className={`h-4 w-4 stroke-current stroke-2 text-status-${statusColor}`}
-            />
-            {tooltip && (
-              <span className="pointer-events-none absolute bottom-full left-1/2 z-50 mb-2 w-max max-w-[200px] -translate-x-1/2 whitespace-normal rounded-md bg-neutral-700 px-3 py-2 text-center text-sm text-white opacity-0 transition-opacity group-hover:opacity-100">
-                {tooltip}
-                <span className="absolute left-1/2 top-full h-0 w-0 -translate-x-1/2 border-x-[5px] border-t-[5px] border-x-transparent border-t-neutral-700" />
-              </span>
-            )}
-          </div>
+      <div className="flex items-center justify-between p-3 font-medium">
+        <StatusBadge
+          color={statusColor}
+          label={getStatusLabel(requestStatus)}
+        />
+        <div className="group relative flex items-center">
+          <InfoIcon className="text-secondaryText h-4 w-4 stroke-current stroke-2" />
+          {tooltip && (
+            <span className="pointer-events-none absolute bottom-full left-1/2 z-50 mb-2 w-max max-w-[200px] -translate-x-1/2 whitespace-normal rounded-md bg-neutral-700 px-3 py-2 text-center text-sm text-white opacity-0 transition-opacity group-hover:opacity-100">
+              {tooltip}
+              <span className="absolute left-1/2 top-full h-0 w-0 -translate-x-1/2 border-x-[5px] border-t-[5px] border-x-transparent border-t-neutral-700" />
+            </span>
+          )}
         </div>
       </div>
 

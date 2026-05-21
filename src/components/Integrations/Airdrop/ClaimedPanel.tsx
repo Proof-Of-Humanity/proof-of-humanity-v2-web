@@ -140,7 +140,7 @@ export default function ClaimedPanel({
         </div>
       )}
 
-      <div className="border-stroke mb-3 rounded-lg border p-3 text-left">
+      <div className="border-stroke mb-3 rounded-2xl border p-3 text-left">
         <div className="flex items-center gap-1">
           <CheckCircleIcon
             width={22}
@@ -184,7 +184,7 @@ export default function ClaimedPanel({
       </div>
       {!isVerified ? (
         /* State 0: Not signed in */
-        <div className="border-stroke mb-4 rounded-lg border p-3 text-left">
+        <div className="border-stroke mb-4 rounded-2xl border p-3 text-left">
           <div className="mb-3 flex items-start gap-2">
             <WarningCircle16Icon
               width={16}
@@ -205,12 +205,12 @@ export default function ClaimedPanel({
         </div>
       ) : isFetchingUser ? (
         /* State 1: Loading */
-        <div className="border-stroke mb-4 flex items-center justify-center rounded-lg border p-3">
+        <div className="border-stroke mb-4 flex items-center justify-center rounded-2xl border p-3">
           <div className="border-purple h-5 w-5 animate-spin rounded-full border-b-2" />
         </div>
       ) : showForm ? (
         /* State 2 & 5: No email / Editing */
-        <div className="border-stroke mb-4 rounded-lg border p-3 text-left">
+        <div className="border-stroke mb-4 rounded-2xl border p-3 text-left">
           <div className="mb-2 flex items-start gap-2">
             <WarningCircle16Icon
               width={16}
@@ -250,7 +250,7 @@ export default function ClaimedPanel({
             />
             <AuthGuard
               signInButtonProps={{
-                className: "px-4 py-1.5 text-sm whitespace-nowrap",
+                className: "px-5 py-2.5 text-sm whitespace-nowrap",
               }}
             >
               <ActionButton
@@ -264,7 +264,7 @@ export default function ClaimedPanel({
                 }
                 isLoading={isBusy}
                 variant="primary"
-                className="whitespace-nowrap px-4 py-1.5 text-sm"
+                className="whitespace-nowrap px-5 py-2.5 text-sm"
               />
             </AuthGuard>
           </div>
@@ -293,7 +293,7 @@ export default function ClaimedPanel({
         </div>
       ) : alertsPending ? (
         /* State 3: Email set but unverified */
-        <div className="bg-lightOrange border-orange mb-4 rounded-lg border p-3 text-left">
+        <div className="bg-lightOrange border-orange mb-4 rounded-2xl border p-3 text-left">
           <div className="flex items-start gap-2">
             <WarningCircle16Icon
               width={22}
@@ -340,7 +340,7 @@ export default function ClaimedPanel({
         </div>
       ) : (
         /* State 4: Email verified */
-        <div className="box-success mb-4 rounded-lg p-3 text-left">
+        <div className="box-success mb-4 rounded-2xl p-3 text-left">
           <div className="flex items-start gap-2">
             <CheckCircleIcon
               width={22}
@@ -384,7 +384,7 @@ export default function ClaimedPanel({
 
       <ExternalLink
         href="https://kleros.notion.site/poh-airdrop-faqs"
-        className="text-purple mt-3 flex items-center justify-center gap-1 text-sm transition hover:text-[#7c5cdb]"
+        className="text-purple mt-3 flex items-center justify-center gap-1 text-sm transition hover:opacity-80"
       >
         <span>Trouble claiming?</span>
         <span className="flex items-center gap-1">

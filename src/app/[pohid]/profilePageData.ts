@@ -231,7 +231,7 @@ export const getProfilePageData = cache(async (pohId: `0x${string}`) => {
         )
       : 0n;
 
-  let selectedMainCardRequest: DisplayRequest | undefined =
+  const selectedMainCardRequest: DisplayRequest | undefined =
     showsWinningRequestCard ? profileState.latestWinningRequest : undefined;
   const canShowRenewSection =
     !!claimedRegistration && !profileState.pendingRevocation;
@@ -253,7 +253,7 @@ export const getProfilePageData = cache(async (pohId: `0x${string}`) => {
       ) || undefined
     : undefined;
 
-  let headerRequest: DisplayRequest | undefined = showsWinningRequestCard
+  const headerRequest: DisplayRequest | undefined = showsWinningRequestCard
     ? latestWinningRequest
     : profileState.latestNonTransferRequest;
   let mainCardRequest: EnrichedDisplayRequest | undefined;

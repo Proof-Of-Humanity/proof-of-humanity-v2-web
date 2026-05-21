@@ -5,6 +5,12 @@ import { useSearchParams } from "next/navigation";
 import { sepolia } from "viem/chains";
 import ExternalLink from "components/ExternalLink";
 import RegisterLink from "./RegisterLink";
+import { prettifyId } from "utils/identifier";
+
+const navLink = (active: boolean) =>
+  `whitespace-nowrap text-base font-semibold transition-colors duration-200 ${
+    active ? "text-white" : "text-white/70 hover:text-white"
+  }`;
 
 interface DesktopNavigationProps {
   web3Loaded: boolean;
@@ -30,14 +36,21 @@ const DesktopNavigation = ({
   const searchParams = useSearchParams();
   const currentUrl = searchParams.get("url");
 
+  const registerActive = me?.pohId
+    ? pathname === `/${prettifyId(me.pohId)}`
+    : pathname.includes("/claim");
+
   return (
-    <div className="my-2 hidden gap-x-8 whitespace-nowrap md:flex">
+    <div className="my-2 hidden items-center gap-x-8 whitespace-nowrap md:flex">
       {web3Loaded && chain.id === sepolia.id && (
-        <ExternalLink href="https://docs.scroll.io/en/user-guide/faucet/">
+        <ExternalLink
+          href="https://docs.scroll.io/en/user-guide/faucet/"
+          className={navLink(false)}
+        >
           Faucet
         </ExternalLink>
       )}
-      <Link href="/" className={`${pathname === "/" ? "font-bold" : ""}`}>
+      <Link href="/" className={navLink(pathname === "/")}>
         Profiles
       </Link>
       <RegisterLink
@@ -45,18 +58,15 @@ const DesktopNavigation = ({
         address={address}
         pendingRegisterIntent={pendingRegisterIntent}
         setPendingRegisterIntent={setPendingRegisterIntent}
-        className={`${pathname.includes("/claim") ? "font-bold" : ""}`}
+        className={navLink(registerActive)}
       />
       <Link
         href={`/attachment?url=${encodeURIComponent(policy)}`}
-        className={`${currentUrl?.includes(policy) ? "font-bold" : ""}`}
+        className={navLink(!!currentUrl?.includes(policy))}
       >
         Policy
       </Link>
-      <Link
-        href="/app"
-        className={`${pathname.startsWith("/app") ? "font-bold" : ""}`}
-      >
+      <Link href="/app" className={navLink(pathname.startsWith("/app"))}>
         Rewards
       </Link>
     </div>

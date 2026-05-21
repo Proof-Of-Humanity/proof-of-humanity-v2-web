@@ -32,7 +32,9 @@ async function Profile({ params }: PageProps) {
           </div>
         </div>
         <div className="flex flex-col items-center">
-          <span className="text-xs text-slate-400">POH ID</span>
+          <span className="text-secondaryText text-xs uppercase tracking-[0.12em]">
+            POH ID
+          </span>
           <span className="mb-4 text-center text-xl font-semibold">
             {prettifyId(pohId).slice(0, 20)}
             <wbr />

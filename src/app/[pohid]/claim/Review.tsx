@@ -91,7 +91,7 @@ function Review({
       </span>
 
       {/* Warning callout */}
-      <div className="border-orange bg-lightOrange mb-6 flex justify-center rounded-lg border px-4 py-4 text-center transition-colors duration-200 hover:bg-[#fbe9e9]">
+      <div className="border-orange bg-lightOrange mb-6 flex justify-center rounded-2xl border px-4 py-4 text-center transition-opacity duration-200 hover:opacity-90">
         <div className="flex max-w-2xl flex-col items-center">
           <InfoIcon className="text-status-rejected h-7 w-7 stroke-current stroke-2" />
           <div className="mt-2">
@@ -111,7 +111,7 @@ function Review({
       </div>
 
       {/* Registration Policy card */}
-      <div className="border-stroke bg-whiteBackground hover:bg-primaryBackground group mb-6 flex flex-col items-center gap-4 rounded-lg border px-4 py-4 text-center transition-colors duration-200 sm:flex-row sm:justify-between sm:py-3 sm:text-left">
+      <div className="border-stroke bg-whiteBackground hover:bg-primaryBackground group mb-6 flex flex-col items-center gap-4 rounded-2xl border px-4 py-4 text-center transition-colors duration-200 sm:flex-row sm:justify-between sm:py-3 sm:text-left">
         <div className="group/policy-icon flex items-center gap-3">
           <DocumentIcon className="fill-orange text-orange h-6 w-6 transition-transform duration-200 group-hover/policy-icon:scale-105" />
           <div>
@@ -249,7 +249,7 @@ function Review({
             )}
             <ExternalLink
               href={jumperUrl}
-              className="cursor-pointer py-1 text-sm font-semibold normal-case text-purple-600 transition-all hover:text-purple-500 hover:underline sm:ml-auto"
+              className="text-purple cursor-pointer py-1 text-sm font-semibold normal-case transition-all hover:underline hover:opacity-80 sm:ml-auto"
             >
               Need {currentChain.nativeCurrency.symbol}? bridge to{" "}
               {currentChain.name} →
@@ -285,7 +285,7 @@ function Review({
                   }
                   className={`font-semibold underline underline-offset-2 ${
                     submitForFree
-                      ? "cursor-not-allowed text-slate-400"
+                      ? "text-secondaryText cursor-not-allowed"
                       : "text-orange cursor-pointer"
                   }`}
                 >
@@ -298,7 +298,7 @@ function Review({
               <>
                 <span className="hidden xl:block">•</span>
                 <span
-                  className="inline-flex cursor-pointer items-center py-1 text-sm font-semibold text-purple-600 transition-all hover:text-purple-500 hover:underline"
+                  className="text-purple inline-flex cursor-pointer items-center py-1 text-sm font-semibold transition-all hover:underline hover:opacity-80"
                   onClick={() => switchChain?.({ chainId: foreignChainId })}
                 >
                   Switch to {foreignChain.name} for a smaller deposit (
@@ -324,7 +324,7 @@ function Review({
             />
             <span
               className={`relative mt-0.5 h-7 w-12 shrink-0 rounded-full transition-colors sm:mt-0 ${
-                submitForFree ? "bg-orange" : "bg-slate-200"
+                submitForFree ? "bg-orange" : "bg-grey"
               }`}
             >
               <span

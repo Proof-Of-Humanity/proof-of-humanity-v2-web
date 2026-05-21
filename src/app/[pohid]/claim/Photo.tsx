@@ -230,7 +230,7 @@ function Photo({ advance, photo$ }: PhotoProps) {
           <div className="centered mx-12 mb-4">
             <ZoomIcon className="fill-theme mr-2 h-6 w-6" />
             <input
-              className="slider-thumb h-0.5 w-full appearance-none bg-slate-200"
+              className="slider-thumb bg-grey h-0.5 w-full appearance-none"
               type="range"
               min={1}
               max={maxZoom}
@@ -240,7 +240,7 @@ function Photo({ advance, photo$ }: PhotoProps) {
             />
           </div>
 
-          <div className="relative mb-2 h-96 w-full bg-slate-200">
+          <div className="bg-grey relative mb-2 h-96 w-full">
             <Cropper
               image={originalPhoto?.uri}
               crop={crop}
@@ -317,7 +317,7 @@ function Photo({ advance, photo$ }: PhotoProps) {
 
       {(showCamera || !!originalPhoto || !!photo) && (
         <button
-          className="centered text-orange mt-4 text-lg font-semibold uppercase"
+          className="centered text-orange mt-4 text-lg font-semibold normal-case"
           onClick={retakePhoto}
         >
           <ResetIcon className="fill-orange mr-2 h-6 w-6" />

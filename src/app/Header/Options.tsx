@@ -1,36 +1,12 @@
 import Image from "next/image";
-import React, { useEffect, useState } from "react";
+import React from "react";
 import ExternalLink from "components/ExternalLink";
 import Popover from "components/Popover";
 import SettingsPopover from "./SettingsPopover";
 import { useAccount } from "wagmi";
 
 const Options: React.FC = () => {
-  const [isDarkMode, setIsDarkMode] = useState<boolean>(false);
   const { isConnected } = useAccount();
-
-  useEffect(() => {
-    const savedTheme = localStorage.getItem("theme");
-    if (savedTheme === "dark") {
-      document.documentElement.classList.add("dark");
-      setIsDarkMode(true);
-    } else {
-      document.documentElement.classList.remove("dark");
-      setIsDarkMode(false);
-    }
-  }, []);
-
-  const toggleTheme = () => {
-    if (isDarkMode) {
-      document.documentElement.classList.remove("dark");
-      localStorage.setItem("theme", "light");
-      setIsDarkMode(false);
-    } else {
-      document.documentElement.classList.add("dark");
-      localStorage.setItem("theme", "dark");
-      setIsDarkMode(true);
-    }
-  };
 
   return (
     <div className="mt-[16px] flex flex-row items-center md:mt-0">
@@ -77,15 +53,6 @@ const Options: React.FC = () => {
           </ExternalLink>
         </div>
       </Popover>
-
-      <Image
-        alt="toggle theme"
-        onClick={toggleTheme}
-        className="ml-2 cursor-pointer"
-        src={isDarkMode ? "/logo/light-icon.svg" : "/logo/night-icon.svg"}
-        height={16}
-        width={16}
-      />
     </div>
   );
 };

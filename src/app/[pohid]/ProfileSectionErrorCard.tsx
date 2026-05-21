@@ -18,7 +18,7 @@ export default function ProfileSectionErrorCard({
       <div className="text-secondaryText text-xs font-semibold uppercase tracking-[0.08em]">
         {section}
       </div>
-      <div className="border-stroke bg-whiteBackground mt-3 w-full rounded-lg border px-5 py-6 text-center sm:px-6">
+      <div className="border-stroke bg-whiteBackground mt-3 w-full rounded-2xl border px-5 py-6 text-center sm:px-6">
         <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-full bg-red-500/10 text-base font-semibold text-red-400">
           !
         </div>

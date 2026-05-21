@@ -13,7 +13,7 @@ const Attachment: React.FC<AttachmentProps> = ({ uri }) => {
 
   return (
     <Link href={`/attachment?url=${encodeURIComponent(ipfsUri)}`}>
-      <AttachmentIcon className="h-4 w-4 fill-black" />
+      <AttachmentIcon className="fill-primaryText h-4 w-4" />
     </Link>
   );
 };
