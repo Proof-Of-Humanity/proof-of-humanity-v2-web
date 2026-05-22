@@ -195,7 +195,7 @@ export default function PendingRelaySection({
   return (
     <>
       <button
-        className="m-4 border-2 border-blue-500 p-2 font-bold text-blue-500"
+        className="border-orange text-orange m-4 rounded-full border px-4 py-2 text-sm font-semibold transition duration-200 ease-premium hover:bg-white/5"
         onClick={() => setIsModalOpen(true)}
       >
         ⏳ Pending relay

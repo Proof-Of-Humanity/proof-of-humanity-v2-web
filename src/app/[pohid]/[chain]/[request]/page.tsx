@@ -253,7 +253,7 @@ export default async function Request({ params }: PageProps) {
               anotherClaimPending={anotherClaimPending}
             />
             {punishedVouchSourceHref ? (
-              <div className="mb-4 w-full">
+              <div className="w-full">
                 <RequestPunishedVouchNotice
                   reason={punishedVouchReason}
                   sourceRequestHref={punishedVouchSourceHref}

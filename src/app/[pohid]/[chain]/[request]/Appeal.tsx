@@ -27,9 +27,12 @@ import { useMemo, useRef, useState } from "react";
 import { toast } from "react-toastify";
 import { RequestStatus } from "utils/status";
 import { formatEth } from "utils/misc";
-import { Address, parseEther } from "viem";
+import { Address } from "viem";
 import { useAccount, useBalance, useChainId } from "wagmi";
 import { useRouter } from "next/navigation";
+
+const toWeiBigInt = (amount: bigint | string | number | null | undefined) =>
+  BigInt(amount ?? 0);
 
 interface SideFundingProps {
   side: SideEnum;
@@ -145,7 +148,7 @@ const SideFunding: React.FC<SideFundingProps> = ({
           errorRef.current = true;
         },
       }),
-      [loading],
+      [loading, onSuccess],
     ),
   );
 
@@ -255,7 +258,7 @@ const Appeal: React.FC<AppealProps> = ({
 
   useEffectOnce(() => {
     const formatCurrentRuling = (currentRuling: SideEnum) => {
-      var text = "Undecided";
+      let text = "Undecided";
       switch (currentRuling) {
         case SideEnum.claimer:
           text = "Claimer wins";
@@ -311,11 +314,13 @@ const Appeal: React.FC<AppealProps> = ({
           Number(currentChallenge.nbRounds) + 1 ===
           currentChallenge.rounds.length;
         const claimerFunds = isPartiallyFunded
-          ? currentChallenge.rounds.at(-1)?.requesterFund.amount
+          ? toWeiBigInt(currentChallenge.rounds.at(-1)?.requesterFund.amount)
           : 0n;
         const challengerFunds = isPartiallyFunded
           ? currentChallenge.rounds.at(-1)?.challengerFund
-            ? currentChallenge.rounds.at(-1)?.challengerFund?.amount
+            ? toWeiBigInt(
+                currentChallenge.rounds.at(-1)?.challengerFund?.amount,
+              )
             : 0n
           : 0n;
         setClaimerFunds(claimerFunds);
@@ -369,6 +374,7 @@ const Appeal: React.FC<AppealProps> = ({
     };
     getAppealData();
   });
+
   return disputeStatus === DisputeStatusEnum.Appealable &&
     !error &&
     !loading ? (
@@ -377,7 +383,7 @@ const Appeal: React.FC<AppealProps> = ({
         <button
           onClick={() => setAppealModalOpen(true)}
           disabled={externalDisabled || isReconciling}
-          className="btn-sec w-[150px] rounded py-2 md:w-auto"
+          className="btn-sec w-[150px] px-5 py-2.5 md:w-auto"
         >
           <span className="flex-inline flex flex-wrap items-center whitespace-nowrap md:flex-nowrap">
             Appeal (ends&nbsp;
@@ -402,7 +408,7 @@ const Appeal: React.FC<AppealProps> = ({
             Appeal the decision: {formatedCurrentRuling}
           </h1>
           <div className="gradient-border relative overflow-hidden">
-            <div className="absolute inset-0 bg-gradient-to-r from-[#FF9966] to-[#FF8CA9]"></div>
+            <div className="bg-orange absolute inset-0"></div>
             <div className="absolute inset-0 border-2 border-solid border-transparent"></div>
             <div className="mb-1"></div>
           </div>

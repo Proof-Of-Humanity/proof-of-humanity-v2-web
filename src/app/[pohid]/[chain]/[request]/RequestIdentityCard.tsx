@@ -5,6 +5,7 @@ import DocumentIcon from "components/DocumentIcon";
 import ExternalLink from "components/ExternalLink";
 import Identicon from "components/Identicon";
 import Label from "components/Label";
+import LoadableImage from "components/LoadableImage";
 import Previewed from "components/Previewed";
 import TimeAgo from "components/TimeAgo";
 import VideoThumbnail from "components/VideoThumbnail";
@@ -142,13 +143,11 @@ function ProfileSummary({
         <Previewed
           uri={photoUrl}
           trigger={
-            <Image
+            <LoadableImage
               className="h-32 w-32 cursor-pointer rounded-full object-cover md:bg-cover md:bg-center md:bg-no-repeat"
               alt="image"
-              src={photoUrl}
-              width={144}
-              height={144}
-              unoptimized={true} //Skips cache
+              fallbackLabel="Profile photo unavailable"
+              src={ipfs(registrationFile.photo)}
             />
           }
         />

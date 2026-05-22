@@ -16,7 +16,7 @@ export default function Info({ nbRequests, label }: InfoProps) {
   return (
     <>
       <span
-        className="flex cursor-pointer gap-x-[4px] text-slate-500 hover:text-slate-700"
+        className="text-secondaryText hover:text-primaryText flex cursor-pointer gap-x-[4px] transition-colors duration-200"
         onClick={() => setIsOpen(true)}
       >
         {label}&nbsp;

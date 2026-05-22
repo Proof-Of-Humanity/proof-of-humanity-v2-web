@@ -121,7 +121,10 @@ export default function UpdateStateSection({
   if (sectionState === "pending") {
     return (
       <div className="group relative">
-        <button className="text-sky-500" disabled>
+        <button
+          className="text-secondaryText rounded-full px-3.5 py-1.5 text-sm font-semibold opacity-70"
+          disabled
+        >
           Update state
         </button>
         <span className="pointer-events-none absolute bottom-full left-1/2 z-10 mb-2 w-max -translate-x-1/2 rounded-md bg-neutral-700 px-3 py-2 text-center text-sm text-white opacity-0 transition-opacity group-hover:opacity-100">
@@ -136,7 +139,7 @@ export default function UpdateStateSection({
     <>
       <div className="group relative">
         <button
-          className="text-sky-500"
+          className="text-orange rounded-full px-3.5 py-1.5 text-sm font-semibold transition duration-200 ease-premium hover:bg-white/5"
           disabled={isReconciling}
           onClick={() => setIsUpdateModalOpen(true)}
         >
@@ -225,9 +228,7 @@ export default function UpdateStateSection({
                           {chain.id === homeChain.id ? (
                             <span>Home chain</span>
                           ) : crossChainReg ? (
-                            <span
-                              className={isExpired ? "text-orange-500" : ""}
-                            >
+                            <span className={isExpired ? "text-orange" : ""}>
                               {isExpired ? "Expired " : "Expires "}
                               {timeAgo(crossChainReg.expirationTime)}
                             </span>

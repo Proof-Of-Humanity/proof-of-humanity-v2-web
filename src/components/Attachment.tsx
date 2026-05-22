@@ -11,7 +11,10 @@ const Attachment: React.FC<AttachmentProps> = ({ uri }) => {
   if (!uri) return null;
 
   return (
-    <Link href={`/attachment?url=${encodeURIComponent(ipfsUri)}`}>
+    <Link
+      className="inline-flex h-8 w-8 shrink-0 items-center justify-center"
+      href={`/attachment?url=${encodeURIComponent(ipfsUri)}`}
+    >
       <AttachmentIcon className="fill-primaryText h-4 w-4" />
     </Link>
   );

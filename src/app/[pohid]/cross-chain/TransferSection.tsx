@@ -127,7 +127,10 @@ export default function TransferSection({
   if (sectionState === "pending") {
     return (
       <div className="group relative">
-        <button className="text-sky-500" disabled>
+        <button
+          className="text-secondaryText rounded-full px-3.5 py-1.5 text-sm font-semibold opacity-70"
+          disabled
+        >
           Transfer
         </button>
         <span className="pointer-events-none absolute bottom-full left-1/2 z-10 mb-2 w-max -translate-x-1/2 rounded-md bg-neutral-700 px-3 py-2 text-center text-sm text-white opacity-0 transition-opacity group-hover:opacity-100">
@@ -150,7 +153,7 @@ export default function TransferSection({
     <>
       <div className="group relative">
         <button
-          className="text-sky-500"
+          className="text-orange rounded-full px-3.5 py-1.5 text-sm font-semibold transition duration-200 ease-premium hover:bg-white/5"
           disabled={isReconciling}
           onClick={() => setIsTransferModalOpen(true)}
         >

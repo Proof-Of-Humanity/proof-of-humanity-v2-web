@@ -17,7 +17,7 @@ export default function RequestPunishedVouchNotice({
   const punishedAt = timestamp ? Number(timestamp) : null;
 
   return (
-    <div className="border-stroke bg-whiteBackground mb-1 rounded border shadow">
+    <div className="border-stroke bg-whiteBackground mb-1 rounded-card border shadow-soft-inset">
       <div className="flex flex-col gap-4 px-[24px] py-[18px] sm:flex-row sm:items-start lg:px-[32px]">
         <div className="border-status-removed/30 bg-status-removed/10 text-status-removed flex h-10 w-10 shrink-0 items-center justify-center rounded-full border text-lg font-bold">
           !

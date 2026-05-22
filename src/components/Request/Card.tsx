@@ -1,12 +1,11 @@
 "use client";
 
+import cn from "classnames";
 import { SupportedChainId, idToChain } from "config/chains";
 import Link from "next/link";
-import Image from "next/image";
-import { Suspense } from "react";
 import { Address, Hash } from "viem";
 import ChainLogo from "components/ChainLogo";
-import ErrorBoundary from "components/ErrorBoundary";
+import LoadableImage from "components/LoadableImage";
 import { WinnerClaimFragment } from "generated/graphql";
 import useIPFS from "hooks/useIPFS";
 import { EvidenceFile, RegistrationFile } from "types/docs";
@@ -30,6 +29,7 @@ interface ContentProps {
   evidence: RequestsQueryItem["evidenceGroup"]["evidence"];
   claimer: RequestsQueryItem["claimer"];
   requester: Address;
+  enableMediaParallax?: boolean;
   humanity: {
     id: Hash;
     registration?: { claimer: { id: Address } } | null;
@@ -39,24 +39,33 @@ interface ContentProps {
 interface CardInterface extends ContentProps {
   index: number;
   requestStatus: RequestStatus;
+  aspectRatio?: "wide" | "square";
 }
 
-const LoadingFallback: React.FC = () => (
-  <div className="h-84 bg-whiteBackground flex flex-col items-center p-2">
-    <div className="bg-grey mx-auto mb-2 h-32 w-32 animate-pulse rounded-full" />
-    <div className="bg-grey h-4 w-1/2 animate-pulse rounded" />
-  </div>
-);
+const getEvidenceUri = ({
+  evidence,
+  humanity,
+  registrationEvidenceRevokedReq,
+  revocation,
+}: Pick<
+  ContentProps,
+  "evidence" | "humanity" | "registrationEvidenceRevokedReq" | "revocation"
+>) =>
+  revocation
+    ? registrationEvidenceRevokedReq ||
+      humanity.winnerClaim.at(0)?.evidenceGroup.evidence.at(-1)?.uri
+    : evidence.at(-1)?.uri;
 
-const ErrorFallback: React.FC<{ claimer?: { name?: string | null } }> = ({
-  claimer,
-}) => (
-  <div className="h-84 bg-whiteBackground flex animate-pulse flex-col items-center p-2">
-    <div className="bg-grey mx-auto mb-2 h-32 w-32 rounded-full" />
-    <span className="font-semibold">{claimer?.name}</span>
-    <span>Some error occurred...</span>
-  </div>
-);
+const getDisplayName = (
+  data: RegistrationFile | undefined,
+  claimerName?: string | null,
+) => {
+  if (data?.name && claimerName && data.name !== claimerName) {
+    return `${data.name} (aka ${claimerName})`;
+  }
+
+  return claimerName || data?.name || "";
+};
 
 const Content = ({
   chainId,
@@ -66,57 +75,59 @@ const Content = ({
   evidence,
   requester,
   claimer,
+  enableMediaParallax = false,
 }: ContentProps) => {
-  const [evidenceURI] = useIPFS<EvidenceFile>(
-    revocation
-      ? !!registrationEvidenceRevokedReq
-        ? registrationEvidenceRevokedReq
-        : humanity.winnerClaim.at(0)?.evidenceGroup.evidence.at(-1)?.uri
-      : evidence.at(-1)?.uri,
-    { suspense: true },
-  );
-  const [data] = useIPFS<RegistrationFile>(evidenceURI?.fileURI, {
-    suspense: true,
+  const evidenceUri = getEvidenceUri({
+    evidence,
+    humanity,
+    registrationEvidenceRevokedReq,
+    revocation,
   });
+  const [evidenceFile, evidenceError] = useIPFS<EvidenceFile>(evidenceUri);
+  const [data, dataError] = useIPFS<RegistrationFile>(evidenceFile?.fileURI);
 
-  const name =
-    data && claimer.name && data.name !== claimer.name
-      ? `${data?.name} (aka ${claimer.name})`
-      : claimer.name
-        ? claimer.name
-        : data && data.name
-          ? data.name
-          : "";
+  const name = getDisplayName(data, claimer.name);
   const displayedClaimerId =
     revocation && humanity.registration?.claimer.id
       ? humanity.registration.claimer.id
       : requester;
   const photoUrl = safeIpfsUrl(data?.photo);
 
+  const photo = data?.photo ? ipfs(data.photo) : null;
+  const isMediaLoading =
+    Boolean(evidenceUri && !evidenceFile && !evidenceError) ||
+    Boolean(evidenceFile?.fileURI && !data && !dataError);
+
   return (
-    <div className="flex h-full flex-col items-center p-3">
-      {photoUrl ? (
-        <Image
-          alt="Profile photo"
-          className="h-32 w-32 rounded-full object-cover"
-          src={photoUrl}
-          width={128}
-          height={128}
-          unoptimized={true}
+    <>
+      {photo ? (
+        <LoadableImage
+          alt={name || "Profile photo"}
+          className={cn(
+            "absolute w-full object-cover",
+            enableMediaParallax
+              ? "request-card-media"
+              : "inset-0 h-full transition-transform duration-200 ease-premium group-hover:scale-105",
+          )}
+          fallbackLabel="Profile photo unavailable"
+          src={photo}
         />
+      ) : isMediaLoading ? (
+        <div className="bg-grey absolute inset-0 animate-pulse" />
       ) : (
-        <div className="h-32 w-32 rounded-full bg-slate-200" />
+        <div className="bg-grey absolute inset-0" />
       )}
-      <span className="text-primaryText my-2 truncate font-semibold">
-        {name}
-      </span>
-      <div className="grid grid-cols-3 items-center">
-        <ChainLogo chainId={chainId} className="fill-primaryText h-4 w-4" />
-        <span className="text-secondaryText">
+      <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/25 to-transparent" />
+      <div className="absolute inset-x-0 bottom-0 z-10 p-4">
+        <div className="truncate text-lg font-bold text-white">
+          {name || shortenAddress(displayedClaimerId)}
+        </div>
+        <div className="mt-0.5 flex items-center gap-1.5 text-sm text-white/75">
+          <ChainLogo chainId={chainId} className="h-4 w-4 fill-current" />
           {shortenAddress(displayedClaimerId)}
-        </span>
+        </div>
       </div>
-    </div>
+    </>
   );
 };
 
@@ -130,49 +141,51 @@ function Card({
   evidence,
   humanity,
   requestStatus,
+  aspectRatio = "square",
+  enableMediaParallax,
 }: CardInterface) {
   const pohId = humanity.id;
   const statusColor = getStatusColor(requestStatus);
   const tooltip = getStatusTooltip(requestStatus);
 
-  const chain = idToChain(chainId)!;
+  const chain = idToChain(chainId);
+
+  if (!chain) return null;
+
   return (
     <Link
       href={`/${prettifyId(pohId)}/${chain.name.toLowerCase()}/${index}`}
-      className="h-84 border-stroke bg-whiteBackground hover:border-orange relative cursor-pointer flex-col rounded-card border shadow-soft-inset transition duration-200 ease-premium hover:z-10 hover:-translate-y-[3px]"
+      className={`border-stroke group relative block hover:border-peach ${
+        aspectRatio === "square" ? "aspect-square" : "aspect-[5/4]"
+      } w-full cursor-pointer rounded-card border shadow-soft-inset transition duration-200 ease-premium hover:z-10 hover:-translate-y-[3px]`}
     >
-      <div className="flex items-center justify-between p-3 font-medium">
+      <div className="absolute inset-0 overflow-hidden rounded-card">
+        <Content
+          chainId={chainId}
+          claimer={claimer}
+          evidence={evidence}
+          enableMediaParallax={enableMediaParallax}
+          humanity={humanity}
+          requester={requester}
+          revocation={revocation}
+          registrationEvidenceRevokedReq={registrationEvidenceRevokedReq}
+        />
+      </div>
+
+      <div className="absolute inset-x-0 top-0 z-20 flex items-start justify-between p-3 font-medium">
         <StatusBadge
           color={statusColor}
           label={getStatusLabel(requestStatus)}
         />
-        <div className="group relative flex items-center">
-          <InfoIcon className="text-secondaryText h-4 w-4 stroke-current stroke-2" />
+        <div className="group/info relative flex h-8 w-8 items-center justify-center rounded-full border border-white/20 bg-black/45 shadow-sm backdrop-blur-sm">
+          <InfoIcon className="h-4 w-4 stroke-current stroke-2 text-white drop-shadow-md" />
           {tooltip && (
-            <span className="pointer-events-none absolute bottom-full left-1/2 z-50 mb-2 w-max max-w-[200px] -translate-x-1/2 whitespace-normal rounded-md bg-neutral-700 px-3 py-2 text-center text-sm text-white opacity-0 transition-opacity group-hover:opacity-100">
+            <span className="pointer-events-none absolute bottom-full right-0 z-50 mb-2 w-max max-w-[200px] whitespace-normal rounded-md bg-neutral-700 px-3 py-2 text-center text-sm text-white opacity-0 transition-opacity group-hover/info:opacity-100">
               {tooltip}
-              <span className="absolute left-1/2 top-full h-0 w-0 -translate-x-1/2 border-x-[5px] border-t-[5px] border-x-transparent border-t-neutral-700" />
             </span>
           )}
         </div>
       </div>
-
-      <ErrorBoundary
-        fallback={<ErrorFallback claimer={claimer} />}
-        resetSwitch={evidence.at(0)?.uri}
-      >
-        <Suspense fallback={<LoadingFallback />}>
-          <Content
-            chainId={chainId}
-            claimer={claimer}
-            evidence={evidence}
-            humanity={humanity}
-            requester={requester}
-            revocation={revocation}
-            registrationEvidenceRevokedReq={registrationEvidenceRevokedReq}
-          />
-        </Suspense>
-      </ErrorBoundary>
     </Link>
   );
 }
