@@ -8,8 +8,10 @@ import RegisterLink from "./RegisterLink";
 import { prettifyId } from "utils/identifier";
 
 const navLink = (active: boolean) =>
-  `whitespace-nowrap text-lg font-semibold transition-colors duration-200 ${
-    active ? "text-white" : "text-white/70 hover:text-white"
+  `relative whitespace-nowrap py-2 text-lg font-semibold transition-colors duration-200 after:absolute after:inset-x-0 after:-bottom-0.5 after:h-px after:origin-center after:rounded-full after:bg-peach after:shadow-[0_0_12px_rgba(255,176,138,0.45)] after:transition-transform after:duration-200 ${
+    active
+      ? "text-orange after:scale-x-100"
+      : "text-white/70 after:scale-x-0 hover:text-white"
   }`;
 
 interface DesktopNavigationProps {

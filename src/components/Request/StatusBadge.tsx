@@ -16,7 +16,7 @@ const StatusBadge: React.FC<StatusBadgeProps> = ({
 }) => (
   <span
     className={twMerge(
-      "bg-grey border-stroke inline-flex items-center whitespace-nowrap rounded-full border font-semibold shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]",
+      "inline-flex items-center whitespace-nowrap rounded-full border border-white/[0.08] bg-[#2F333D]/85 font-semibold shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] backdrop-blur-sm",
       large ? "gap-3 px-5 py-2.5 text-base" : "gap-2.5 px-3.5 py-1.5 text-xs",
       className,
     )}

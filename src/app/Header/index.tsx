@@ -55,7 +55,7 @@ export default function Header({ policy }: IHeader) {
   }, [menuOpen]);
 
   return (
-    <header className="header-background relative flex h-16 w-full items-center justify-between px-6 pb-2 pt-2 text-lg text-white shadow-soft md:h-16 md:px-8">
+    <header className="header-background relative flex h-16 w-full items-center justify-between border-b border-white/[0.08] px-6 pb-2 pt-2 text-lg text-white md:h-16 md:px-8">
       <Link href="/" className="flex w-[156px] items-center">
         <Image
           alt="proof of humanity logo"
@@ -69,8 +69,8 @@ export default function Header({ policy }: IHeader) {
         {showRewardsCta ? (
           <Link
             href="/app"
-            className={`rounded-full border border-white/50 px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/15 ${
-              pathname.startsWith("/app") ? "bg-white/20" : ""
+            className={`hover:border-orange rounded-full border border-white/[0.08] bg-[#2F333D] px-4 py-2 text-sm font-semibold text-white transition ${
+              pathname.startsWith("/app") ? "text-orange" : ""
             }`}
           >
             Rewards
@@ -81,8 +81,8 @@ export default function Header({ policy }: IHeader) {
             address={address}
             pendingRegisterIntent={pendingRegisterIntent}
             setPendingRegisterIntent={setPendingRegisterIntent}
-            className={`rounded-full border border-white/50 px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/15 ${
-              pathname.includes("/claim") ? "bg-white/20" : ""
+            className={`hover:border-orange rounded-full border border-white/[0.08] bg-[#2F333D] px-4 py-2 text-sm font-semibold text-white transition ${
+              pathname.includes("/claim") ? "text-orange" : ""
             }`}
           />
         ) : null}

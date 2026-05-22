@@ -21,9 +21,9 @@ export default function LoadingSkeleton() {
   return (
     <div aria-label="Loading profiles" className="animate-pulse">
       <div className="my-4 flex flex-col gap-2 py-2 sm:flex-row sm:gap-1 md:gap-2">
-        <div className="h-12 w-full rounded-input border border-[rgba(255,255,255,0.08)] bg-[#17141F]" />
-        <div className="h-12 w-full rounded-input border border-[rgba(255,255,255,0.08)] bg-[#17141F] sm:w-36" />
-        <div className="h-12 w-full rounded-input border border-[rgba(255,255,255,0.08)] bg-[#17141F] sm:w-32" />
+        <div className="h-12 w-full rounded-input border border-[rgba(255,255,255,0.08)] bg-[#272A33]" />
+        <div className="h-12 w-full rounded-input border border-[rgba(255,255,255,0.08)] bg-[#272A33] sm:w-36" />
+        <div className="h-12 w-full rounded-input border border-[rgba(255,255,255,0.08)] bg-[#272A33] sm:w-32" />
       </div>
 
       <div className="request-grid">

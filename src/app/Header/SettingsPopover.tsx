@@ -42,23 +42,18 @@ const SettingsPopover: React.FC = () => {
     <div className="flex h-5 items-center">
       <Popover
         trigger={
-          <span
+          <button
             onClick={toggleSettingsPopover}
-            className="relative mx-2 inline-flex h-5 w-5 cursor-pointer items-center justify-center"
+            className="hover:border-orange ml-2 flex h-9 w-9 items-center justify-center rounded-full border border-white/[0.08] bg-[#2F333D] shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] transition duration-200 ease-premium"
+            aria-label="Open settings"
           >
             <Image
-              alt="notifications"
-              src="/logo/notifications.svg"
-              height={20}
-              width={20}
+              alt="settings"
+              src="/logo/settings.svg"
+              height={15}
+              width={15}
             />
-            {showUnreadDot && (
-              <span
-                aria-hidden="true"
-                className="bg-status-removed absolute -right-1 -top-1 h-2.5 w-2.5 rounded-full border-2 border-white"
-              />
-            )}
-          </span>
+          </button>
         }
         open={isOpen}
         onClose={closeAndDiscardChanges}
@@ -111,7 +106,7 @@ const SettingsPopover: React.FC = () => {
                               onChange={(e) => setEmail(e.target.value)}
                               placeholder="Email"
                               autoFocus
-                              className={`text-primaryText w-full bg-[#17141F] text-base
+                              className={`text-primaryText w-full bg-[#272A33] text-base
                                  rounded-input border px-4 py-2 font-medium
                                   focus:outline-none focus:ring-0 rounded-r-none transition duration-200 ease-premium min-h-[44px] ${
                                 !isEmailValid && email.trim() !== ""
