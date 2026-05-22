@@ -35,14 +35,14 @@ const Accordion: React.FC<AccordionProps> = ({
   return (
     <div className={cn("text-primaryText flex flex-col", className)}>
       <div
-        className="paper flex cursor-pointer justify-between p-5 font-bold transition duration-200 ease-premium"
+        className="paper flex cursor-pointer items-center justify-between gap-4 p-5 font-bold transition duration-200 ease-premium"
         onClick={handleToggle}
       >
-        <span>{title}</span>
+        <span className="min-w-0 flex-1 leading-snug">{title}</span>
         {open ? (
-          <MinusIcon className="fill-orange h-4 w-4" />
+          <MinusIcon className="fill-orange h-4 w-4 shrink-0" />
         ) : (
-          <PlusIcon className="fill-orange h-4 w-4" />
+          <PlusIcon className="fill-orange h-4 w-4 shrink-0" />
         )}
       </div>
       {open && children}

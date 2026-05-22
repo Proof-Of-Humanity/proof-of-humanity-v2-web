@@ -363,7 +363,7 @@ export default function Form({
                 <div className="m-1 flex items-center">
                   <div
                     className={cn(
-                      "centered h-6 whitespace-nowrap rounded-full text-sm",
+                      "centered h-6 whitespace-nowrap rounded-full text-sm leading-none",
                       {
                         "border-stroke text-secondaryText w-6 border font-bold":
                           step < i,

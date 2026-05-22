@@ -8,7 +8,7 @@ import RegisterLink from "./RegisterLink";
 import { prettifyId } from "utils/identifier";
 
 const navLink = (active: boolean) =>
-  `whitespace-nowrap text-base font-semibold transition-colors duration-200 ${
+  `whitespace-nowrap text-lg font-semibold transition-colors duration-200 ${
     active ? "text-white" : "text-white/70 hover:text-white"
   }`;
 

@@ -92,7 +92,7 @@ const Modal: React.FC<ModalProps> = ({
             )}
           >
             {header && (
-              <div className="bg-gradient-to-r from-[#FF8A66] to-[#F36D9D] py-2.5 text-center font-semibold uppercase tracking-wide text-white">
+              <div className="bg-orange py-2.5 text-center font-semibold uppercase tracking-wide text-white">
                 {header}
               </div>
             )}

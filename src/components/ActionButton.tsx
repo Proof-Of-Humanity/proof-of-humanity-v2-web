@@ -17,9 +17,9 @@ export interface ActionButtonProps {
 
 const buttonStyles = {
   primary:
-    "flex items-center justify-center gradient rounded-btn font-medium text-white enabled:hover:brightness-110",
+    "flex items-center justify-center bg-orange rounded-btn font-medium text-white enabled:hover:bg-peach",
   secondary:
-    "flex items-center justify-center border-2 border-theme text-orange rounded-btn font-semibold enabled:hover:bg-white/5",
+    "flex items-center justify-center border-2 border-orange text-orange rounded-btn font-semibold enabled:hover:border-peach enabled:hover:bg-peach/10",
 };
 
 const buttonBaseClass =

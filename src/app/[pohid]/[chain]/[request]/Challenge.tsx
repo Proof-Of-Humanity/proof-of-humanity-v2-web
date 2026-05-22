@@ -84,7 +84,7 @@ const ReasonCard: React.FC<ReasonCardInterface> = ({
   return (
     <div
       className={cn(
-        "cursor-pointer rounded-sm bg-slate-200 p-0.5 text-lg uppercase text-black transition-all duration-200",
+        "bg-grey text-primaryText cursor-pointer rounded-xl p-0.5 text-[10px] leading-tight transition-all duration-200 sm:text-sm sm:leading-normal",
         isUsed
           ? "cursor-not-allowed opacity-50 grayscale"
           : isSelected
@@ -93,11 +93,11 @@ const ReasonCard: React.FC<ReasonCardInterface> = ({
       )}
       onClick={() => !isUsed && current.set(reason)}
     >
-      <div className="flex h-full flex-col rounded-sm bg-white p-4 text-center">
+      <div className="bg-whiteBackground flex h-full flex-col rounded-[10px] p-1.5 text-center sm:p-3">
         <Image
           width={500}
           height={200}
-          className="object-cover"
+          className="h-8 w-full object-contain sm:h-auto sm:object-cover"
           alt={reason}
           src={reasonToImage[reason]}
         />
@@ -269,7 +269,7 @@ export default function Challenge({
       >
         <div className="flex flex-col flex-wrap items-center p-4">
           <ALink className="flex" href={ipfs(arbitrationInfo.policy)}>
-            <DocumentIcon className="fill-theme h-6 w-6" />
+            <DocumentIcon className="fill-orange h-6 w-6" />
             <strong className="text-orange mr-1 font-semibold">
               Registration Policy
             </strong>
@@ -284,7 +284,7 @@ export default function Challenge({
           {!revocation && (
             <>
               <Label>Select challenging reason</Label>
-              <div className="grid w-full grid-cols-2 gap-2 lg:grid-cols-4">
+              <div className="grid w-full grid-cols-4 gap-2 sm:gap-3">
                 {reasonCards.map((card) => (
                   <ReasonCard
                     key={card.reason}

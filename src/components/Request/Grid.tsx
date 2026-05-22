@@ -21,7 +21,7 @@ import {
   getRequestsInitData,
   getRequestsLoadingPromises,
 } from "data/request";
-import { useEffect, useState } from "react";
+import { type PointerEvent, useEffect, useState } from "react";
 import ChainLogo from "components/ChainLogo";
 import DropdownItem from "components/Dropdown/Item";
 import Dropdown from "components/Dropdown/Menu";
@@ -38,7 +38,7 @@ import {
 
 import Card from "./Card";
 import SubgraphsStatus from "./SubgraphsStatus";
-import Loading from "components/Loading";
+import LoadingSkeleton from "./LoadingSkeleton";
 
 enableReactUse();
 
@@ -151,6 +151,104 @@ const filter$ = observable<RequestFilter>({
   cursor: 1,
 });
 
+const updateCardHoverParallax = (event: PointerEvent<HTMLDivElement>) => {
+  const rect = event.currentTarget.getBoundingClientRect();
+  const x = ((event.clientX - rect.left) / rect.width - 0.5) * -18;
+  const y = ((event.clientY - rect.top) / rect.height - 0.5) * -8;
+
+  event.currentTarget.style.setProperty(
+    "--request-card-hover-x",
+    `${x.toFixed(2)}px`,
+  );
+  event.currentTarget.style.setProperty(
+    "--request-card-hover-y",
+    `${y.toFixed(2)}px`,
+  );
+};
+
+const resetCardHoverParallax = (event: PointerEvent<HTMLDivElement>) => {
+  event.currentTarget.style.removeProperty("--request-card-hover-x");
+  event.currentTarget.style.removeProperty("--request-card-hover-y");
+};
+
+function RequestFilters({
+  filter,
+  selectedChain,
+  onSearchChange,
+}: {
+  filter: RequestFilter;
+  selectedChain: SupportedChain | null;
+  onSearchChange: (value: string) => void;
+}) {
+  return (
+    <div className="my-4 flex flex-col gap-2 py-2 sm:flex-row sm:gap-1 md:gap-2">
+      <input
+        className="border-stroke text-primaryText bg-whiteBackground focus:border-orange w-full rounded-input border p-3 shadow-inset outline-none transition duration-200 ease-premium md:mr-2"
+        placeholder="Search by name or address…"
+        onChange={(e) => onSearchChange(e.target.value)}
+      />
+      <Dropdown
+        title={
+          filter.status === RequestStatus.ALL
+            ? "Status"
+            : getStatusLabel(filter.status)
+        }
+      >
+        {STATUS_FILTER_OPTIONS.map((status) => (
+          <DropdownItem
+            key={status}
+            icon={
+              <div
+                className={cn(
+                  "dot mr-2",
+                  status === RequestStatus.ALL
+                    ? "bg-white"
+                    : `bg-status-${getStatusColor(status)}`,
+                )}
+              />
+            }
+            selected={filter.status === status}
+            onSelect={() => filter$.assign({ status, cursor: 1 })}
+            name={getStatusLabel(status)}
+          />
+        ))}
+      </Dropdown>
+      <Dropdown title={selectedChain?.name ?? "Chain"}>
+        <DropdownItem
+          selected={!filter.chainId}
+          onSelect={() => filter$.assign({ chainId: 0, cursor: 1 })}
+          name="All"
+        />
+        {supportedChains.map((chain) => (
+          <DropdownItem
+            icon={
+              <ChainLogo
+                chainId={chain.id}
+                className="fill-primaryText mr-1 h-4 w-4"
+              />
+            }
+            key={chain.id}
+            selected={filter.chainId === chain.id}
+            onSelect={() => filter$.assign({ chainId: chain.id, cursor: 1 })}
+            name={chain.name}
+          />
+        ))}
+      </Dropdown>
+    </div>
+  );
+}
+
+function LoadMoreButton() {
+  return (
+    <button
+      className="btn-main gradient my-8 px-8 py-4 md:mx-auto"
+      onClick={() => filter$.cursor.set((c) => c + 1)}
+    >
+      Load More
+    </button>
+  );
+}
+
 function RequestsGrid() {
   const filter = filter$.use();
   const chainStacks$ = useObservable(
@@ -178,6 +276,10 @@ function RequestsGrid() {
   const [pending, loadingType] = loading.use();
 
   const [searchQuery, setSearchQuery] = useState("");
+  const selectedChain = filter.chainId
+    ? idToChain(filter.chainId as SupportedChainId)
+    : null;
+
   useEffect(() => {
     const timer = setTimeout(
       () => filter$.assign({ search: searchQuery, cursor: 1 }),
@@ -188,7 +290,10 @@ function RequestsGrid() {
 
   useMountOnce(() => {
     (async () => {
-      const contractData = await Promise.resolve(getContractDataAllChains());
+      const [contractData, requestsData] = await Promise.all([
+        getContractDataAllChains(),
+        getRequestsInitData(),
+      ]);
       humanityLifespanAllChains = Object.keys(contractData).reduce(
         (acc, chainId) => {
           acc[Number(chainId) as SupportedChainId] =
@@ -198,14 +303,9 @@ function RequestsGrid() {
         {} as Record<SupportedChainId, string>,
       );
 
-      chainStacks$.set(await getRequestsInitData());
+      chainStacks$.set(requestsData);
       loading.stop();
     })();
-
-    /* (async () => {
-      chainStacks$.set(await getRequestsInitData());
-      loading.stop();
-    })(); */
 
     filter$.onChange(
       async ({
@@ -275,99 +375,45 @@ function RequestsGrid() {
     );
   });
 
-  if (pending && loadingType === "init") return <Loading />;
+  if (pending && loadingType === "init") return <LoadingSkeleton />;
 
   return (
     <>
       <SubgraphsStatus />
-      <div className="my-4 flex flex-col gap-2 py-2 sm:flex-row sm:gap-1 md:gap-2">
-        <input
-          className="border-stroke text-primaryText bg-whiteBackground focus:border-orange w-full rounded-input border p-3 shadow-inset outline-none transition duration-200 ease-premium md:mr-2"
-          placeholder="Search by name or address…"
-          onChange={(e) => setSearchQuery(e.target.value)}
-        />
-        <Dropdown
-          title={
-            filter.status === RequestStatus.ALL
-              ? "Status"
-              : getStatusLabel(filter.status)
-          }
-        >
-          {STATUS_FILTER_OPTIONS.map((status) => (
-            <DropdownItem
-              key={status}
-              icon={
-                <div
-                  className={cn(
-                    "dot mr-2",
-                    status === RequestStatus.ALL
-                      ? "bg-white"
-                      : `bg-status-${getStatusColor(status)}`,
-                  )}
-                />
-              }
-              selected={filter.status === status}
-              onSelect={() => filter$.assign({ status, cursor: 1 })}
-              name={getStatusLabel(status)}
-            />
-          ))}
-        </Dropdown>
-        <Dropdown
-          title={
-            filter.chainId
-              ? idToChain(filter.chainId as SupportedChainId)!.name
-              : "Chain"
-          }
-        >
-          <DropdownItem
-            selected={!filter.chainId}
-            onSelect={() => filter$.assign({ chainId: 0, cursor: 1 })}
-            name="All"
-          />
-          {supportedChains.map((chain) => (
-            <DropdownItem
-              icon={
-                <ChainLogo
-                  chainId={chain.id}
-                  className="fill-primaryText mr-1 h-4 w-4"
-                />
-              }
-              key={chain.id}
-              selected={filter.chainId === chain.id}
-              onSelect={() => filter$.assign({ chainId: chain.id, cursor: 1 })}
-              name={chain.name}
-            />
-          ))}
-        </Dropdown>
-      </div>
+      <RequestFilters
+        filter={filter}
+        selectedChain={selectedChain}
+        onSearchChange={setSearchQuery}
+      />
 
-      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4">
+      <div className="request-grid">
         {requests.map((request, i) => (
-          <Card
+          <div
             key={i}
-            chainId={request.chainId}
-            index={request.index}
-            humanity={request.humanity}
-            requester={request.requester}
-            claimer={request.claimer}
-            requestStatus={request.requestStatus}
-            revocation={request.revocation}
-            registrationEvidenceRevokedReq={
-              request.registrationEvidenceRevokedReq
-            }
-            evidence={request.evidenceGroup.evidence}
-          />
+            className="request-card-parallax"
+            onPointerMove={updateCardHoverParallax}
+            onPointerLeave={resetCardHoverParallax}
+          >
+            <Card
+              aspectRatio="wide"
+              chainId={request.chainId}
+              index={request.index}
+              humanity={request.humanity}
+              requester={request.requester}
+              claimer={request.claimer}
+              requestStatus={request.requestStatus}
+              revocation={request.revocation}
+              registrationEvidenceRevokedReq={
+                request.registrationEvidenceRevokedReq
+              }
+              evidence={request.evidenceGroup.evidence}
+              enableMediaParallax
+            />
+          </div>
         ))}
       </div>
 
-      {!pending && (
-        <button
-          className="btn-main gradient my-8 px-8 py-4 md:mx-auto"
-          onClick={() => filter$.cursor.set((c) => c + 1)}
-        >
-          Load More
-        </button>
-      )}
+      {!pending && <LoadMoreButton />}
     </>
   );
 }

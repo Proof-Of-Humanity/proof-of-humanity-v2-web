@@ -31,8 +31,12 @@ const sanitize = (res: MeQuery[]) => {
 };
 
 export const getMyData = async (account: string) => {
+  // Subgraph claimer entity ids are stored lowercase, while wagmi returns a
+  // checksummed (mixed-case) address. Lowercase before the id lookup, otherwise
+  // `claimer(id:)` misses and the user appears unregistered.
+  const id = account.toLowerCase();
   const res = await Promise.all(
-    supportedChains.map((chain) => sdk[chain.id].Me({ id: account })),
+    supportedChains.map((chain) => sdk[chain.id].Me({ id })),
   );
   sanitize(res);
   const homeChain = supportedChains.find((_, i) => {

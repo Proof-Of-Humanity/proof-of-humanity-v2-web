@@ -56,10 +56,6 @@ export default function Header({ policy }: IHeader) {
 
   return (
     <header className="header-background relative flex h-16 w-full items-center justify-between px-6 pb-2 pt-2 text-lg text-white shadow-soft md:h-16 md:px-8">
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-[#FF8A66]/50 to-transparent"
-      />
       <Link href="/" className="flex w-[156px] items-center">
         <Image
           alt="proof of humanity logo"

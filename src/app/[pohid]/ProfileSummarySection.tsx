@@ -1,6 +1,7 @@
 import ExternalLink from "components/ExternalLink";
 import NewTabIcon from "components/NewTabIcon";
 import Card from "components/Request/Card";
+import RequestCardParallax from "components/Request/RequestCardParallax";
 import TimeAgo from "components/TimeAgo";
 import { explorerLink, idToChain } from "config/chains";
 import Link from "next/link";
@@ -88,50 +89,53 @@ export default async function ProfileSummarySection({
         {showsWinningRequestCard && mainCardRequest ? (
           <>
             <div className="mb-3 mt-4 flex items-center justify-center">
-              <Card
-                chainId={mainCardRequest.chainId}
-                claimer={mainCardRequest.identityClaimer}
-                evidence={mainCardRequest.identityEvidenceGroup.evidence}
-                humanity={{
-                  id: pohId,
-                  registration:
-                    humanity[mainCardRequest.chainId]?.humanity?.registration,
-                  winnerClaim: [
-                    {
-                      claimer: mainCardRequest.identityClaimer,
-                      creationTime: mainCardRequest.creationTime,
-                      index: mainCardRequest.index,
-                      lastStatusChange:
-                        "lastStatusChange" in mainCardRequest
-                          ? mainCardRequest.lastStatusChange
-                          : 0,
-                      requester: mainCardRequest.identityRequester,
-                      resolutionTime:
-                        "lastStatusChange" in mainCardRequest
-                          ? mainCardRequest.lastStatusChange ||
-                            mainCardRequest.creationTime ||
-                            0
-                          : 0,
-                      evidenceGroup: {
-                        evidence:
-                          mainCardRequest.identityEvidenceGroup.evidence,
+              <RequestCardParallax className="w-80 max-w-full">
+                <Card
+                  enableMediaParallax
+                  chainId={mainCardRequest.chainId}
+                  claimer={mainCardRequest.identityClaimer}
+                  evidence={mainCardRequest.identityEvidenceGroup.evidence}
+                  humanity={{
+                    id: pohId,
+                    registration:
+                      humanity[mainCardRequest.chainId]?.humanity?.registration,
+                    winnerClaim: [
+                      {
+                        claimer: mainCardRequest.identityClaimer,
+                        creationTime: mainCardRequest.creationTime,
+                        index: mainCardRequest.index,
+                        lastStatusChange:
+                          "lastStatusChange" in mainCardRequest
+                            ? mainCardRequest.lastStatusChange
+                            : 0,
+                        requester: mainCardRequest.identityRequester,
+                        resolutionTime:
+                          "lastStatusChange" in mainCardRequest
+                            ? mainCardRequest.lastStatusChange ||
+                              mainCardRequest.creationTime ||
+                              0
+                            : 0,
+                        evidenceGroup: {
+                          evidence:
+                            mainCardRequest.identityEvidenceGroup.evidence,
+                        },
                       },
-                    },
-                  ],
-                }}
-                index={mainCardRequest.index}
-                requester={mainCardRequest.identityRequester}
-                revocation={mainCardRequest.revocation}
-                registrationEvidenceRevokedReq={
-                  mainCardRequest.identityRegistrationEvidenceRevokedReq
-                }
-                requestStatus={
-                  pageState === "TRANSFER_PENDING"
-                    ? RequestStatus.RESOLVED_CLAIM
-                    : profileState.latestWinningRequest?.requestStatus ||
-                      RequestStatus.RESOLVED_CLAIM
-                }
-              />
+                    ],
+                  }}
+                  index={mainCardRequest.index}
+                  requester={mainCardRequest.identityRequester}
+                  revocation={mainCardRequest.revocation}
+                  registrationEvidenceRevokedReq={
+                    mainCardRequest.identityRegistrationEvidenceRevokedReq
+                  }
+                  requestStatus={
+                    pageState === "TRANSFER_PENDING"
+                      ? RequestStatus.RESOLVED_CLAIM
+                      : profileState.latestWinningRequest?.requestStatus ||
+                        RequestStatus.RESOLVED_CLAIM
+                  }
+                />
+              </RequestCardParallax>
             </div>
 
             {canShowRenewSection && claimedHomeChain && claimedRegistration ? (
