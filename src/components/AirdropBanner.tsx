@@ -10,7 +10,7 @@ export default function AirdropBanner() {
   if (!isVisible) return null;
 
   return (
-    <div className="bg-orange relative w-full border-b border-peach/50">
+    <div className="relative w-full border-b border-peach/50 bg-[linear-gradient(90deg,#FF7A5F_0%,#FF9A6A_100%)]">
       <div className="flex items-center px-4 py-3 sm:px-6">
         <Link
           href="/app/pnk-airdrop"

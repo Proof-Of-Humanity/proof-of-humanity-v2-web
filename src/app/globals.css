@@ -28,7 +28,7 @@
   }
 
   .divider {
-    @apply h-px w-full rounded-full bg-[#342B45];
+    @apply h-px w-full rounded-full bg-[#3A3E48];
   }
 
   .checkbox {
@@ -44,11 +44,19 @@
   }
 
   .btn-main {
-    @apply centered bg-orange min-h-[44px] w-full rounded-btn px-5 py-2.5 font-medium normal-case text-white transition duration-200 ease-premium hover:bg-peach disabled:opacity-40 md:w-auto;
+    @apply centered min-h-[44px] w-full rounded-btn px-5 py-2.5 font-medium normal-case text-white transition duration-200 ease-premium disabled:opacity-40 md:w-auto;
   }
 
   .btn-sec {
-    @apply centered border-orange text-orange min-h-[44px] w-full rounded-btn border-2 px-5 py-2.5 font-semibold normal-case transition duration-200 ease-premium hover:border-peach hover:bg-peach/10 disabled:opacity-40 md:w-auto;
+    @apply centered min-h-[44px] w-full rounded-btn border px-5 py-2.5 font-semibold normal-case transition duration-200 ease-premium disabled:opacity-40 md:w-auto;
+    background: #2f333d;
+    border-color: rgba(255, 138, 102, 0.32);
+    color: #ffb08a;
+  }
+
+  .btn-sec:hover {
+    background: rgba(255, 138, 102, 0.08);
+    border-color: rgba(255, 176, 138, 0.48);
   }
 
   .backdrop {
@@ -144,8 +152,99 @@
       scale(1.03);
   }
 
+  .request-card-shell {
+    border-color: rgba(255, 255, 255, 0.08);
+    box-shadow:
+      0 20px 50px rgba(0, 0, 0, 0.28),
+      inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  }
+
+  .request-card-shell:hover {
+    border-color: rgba(255, 138, 102, 0.32);
+    box-shadow:
+      0 28px 70px rgba(0, 0, 0, 0.34),
+      0 0 0 1px rgba(255, 138, 102, 0.08),
+      inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  }
+
+  .request-card-overlay {
+    background: linear-gradient(
+      180deg,
+      rgba(0, 0, 0, 0.06) 0%,
+      rgba(0, 0, 0, 0.18) 45%,
+      rgba(0, 0, 0, 0.76) 100%
+    );
+  }
+
+  .flat-control {
+    background: #272a33;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.04),
+      0 12px 30px rgba(0, 0, 0, 0.22);
+  }
+
+  .flat-control:focus-within,
+  .flat-control:focus {
+    border-color: rgba(255, 138, 102, 0.45);
+    box-shadow:
+      0 0 0 3px rgba(255, 138, 102, 0.1),
+      0 12px 30px rgba(0, 0, 0, 0.24);
+  }
+
   .paper {
-    @apply bg-whiteBackground border-stroke text-primaryText rounded-card border shadow-soft-inset;
+    @apply text-primaryText rounded-card border;
+    background: #292d35;
+    border-color: rgba(255, 255, 255, 0.08);
+    box-shadow:
+      0 20px 50px rgba(0, 0, 0, 0.28),
+      inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    transition:
+      border-color 180ms ease-out,
+      box-shadow 180ms ease-out,
+      transform 180ms ease-out;
+  }
+
+  .interactive-surface:hover {
+    transform: translateY(-3px);
+    border-color: rgba(255, 138, 102, 0.32);
+    box-shadow:
+      0 28px 70px rgba(0, 0, 0, 0.34),
+      0 0 0 1px rgba(255, 138, 102, 0.08),
+      inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  }
+
+  .reward-surface {
+    @apply rounded-card border;
+    background: linear-gradient(
+      180deg,
+      theme("colors.dark.grey") 0%,
+      theme("colors.dark.whiteBackground") 100%
+    );
+    border-color: rgba(255, 255, 255, 0.08);
+    box-shadow:
+      0 20px 50px rgba(0, 0, 0, 0.28),
+      inset 0 1px 0 rgba(255, 255, 255, 0.04);
+    transition:
+      border-color 180ms ease-out,
+      box-shadow 180ms ease-out,
+      transform 180ms ease-out;
+  }
+
+  .reward-surface:hover {
+    transform: translateY(-3px);
+    border-color: rgba(255, 138, 102, 0.32);
+    box-shadow:
+      0 28px 70px rgba(0, 0, 0, 0.34),
+      0 0 0 1px rgba(255, 138, 102, 0.08),
+      inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  }
+
+  .pill-tag {
+    @apply inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold;
+    background: rgba(255, 138, 102, 0.12);
+    color: theme("colors.peach");
+    border: 1px solid rgba(255, 138, 102, 0.22);
   }
 
   /* Custom classes for success states to ensure dark mode compatibility */
@@ -217,7 +316,7 @@
   }
 
   .dark .header-background {
-    background: #17141f;
+    background: #20232b;
   }
 
   .border-theme {
@@ -262,6 +361,14 @@
 
   .dark .text-secondaryText {
     color: theme("colors.dark.secondaryText");
+  }
+
+  .text-mutedText {
+    color: theme("colors.light.secondaryText");
+  }
+
+  .dark .text-mutedText {
+    color: theme("colors.dark.mutedText");
   }
 
   .text-orange {
@@ -427,7 +534,13 @@
   }
 
   .dark .bg-primaryBackground {
-    background-color: theme("colors.dark.primaryBackground");
+    background:
+      radial-gradient(
+        circle at top left,
+        rgba(255, 138, 102, 0.06),
+        transparent 28%
+      ),
+      linear-gradient(180deg, #20232b 0%, #1e2129 100%);
   }
 
   .bg-orange {
@@ -547,11 +660,17 @@
   }
 
   .btn-main {
-    background-color: #ff9966;
+    background: linear-gradient(90deg, #ff7a5f 0%, #ff9a6a 100%);
+    box-shadow: 0 10px 24px rgba(255, 122, 95, 0.1);
+  }
+
+  .dark .btn-main {
+    background: linear-gradient(90deg, #ff7a5f 0%, #ff9a6a 100%);
+    box-shadow: 0 10px 24px rgba(255, 122, 95, 0.1);
   }
 
   .divider {
-    @apply h-px w-full rounded-full bg-[#342B45];
+    @apply h-px w-full rounded-full bg-[#3A3E48];
   }
 
   .slider-thumb::-webkit-slider-thumb {
@@ -600,7 +719,7 @@
   }
 
   .scrollbar::-webkit-scrollbar-thumb {
-    @apply rounded-full bg-[#ff8ca9];
+    @apply rounded-full bg-[#FF9A6A];
   }
 
   .dark .scrollbar::-webkit-scrollbar {
@@ -608,11 +727,11 @@
   }
 
   .dark .scrollbar::-webkit-scrollbar-track {
-    @apply rounded-full bg-[#1B1724];
+    @apply rounded-full bg-[#20232B];
   }
 
   .dark .scrollbar::-webkit-scrollbar-thumb {
-    @apply rounded-full bg-[#3A3348];
+    @apply rounded-full bg-[#3A3E48];
   }
 }
 

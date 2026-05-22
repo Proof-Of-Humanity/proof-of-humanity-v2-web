@@ -14,7 +14,7 @@ function Field({ label, textarea = false, className, ...props }: FieldProps) {
       {label && <Label>{label}</Label>}
       <div
         className={cn(
-          "focus-within:border-orange w-full overflow-hidden rounded-input border border-[rgba(255,255,255,0.08)] bg-[#17141F] transition duration-200 ease-premium",
+          "flat-control w-full overflow-hidden rounded-input transition duration-200 ease-premium",
         )}
       >
         {textarea ? (

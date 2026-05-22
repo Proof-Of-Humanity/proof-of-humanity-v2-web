@@ -168,15 +168,18 @@ const SettingsPopover: React.FC = () => {
     <div>
       <Popover
         trigger={
-          <span onClick={toggleSettingsPopover} className="cursor-pointer">
+          <button
+            onClick={toggleSettingsPopover}
+            className="hover:border-orange ml-2 flex h-9 w-9 items-center justify-center rounded-full border border-white/[0.08] bg-[#2F333D] shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] transition duration-200 ease-premium"
+            aria-label="Open settings"
+          >
             <Image
               alt="settings"
-              className="mx-2"
               src="/logo/settings.svg"
-              height={16}
-              width={16}
+              height={15}
+              width={15}
             />
-          </span>
+          </button>
         }
         open={isOpen}
         onClose={onPopoverClose}
@@ -237,7 +240,7 @@ const SettingsPopover: React.FC = () => {
                               onChange={(e) => setEmail(e.target.value)}
                               placeholder="Email"
                               autoFocus
-                              className={`text-primaryText w-full bg-[#17141F] text-base
+                              className={`text-primaryText w-full bg-[#272A33] text-base
                                  rounded-input border px-4 py-2 font-medium
                                   focus:outline-none focus:ring-0 rounded-r-none transition duration-200 ease-premium min-h-[44px] ${
                                 !isEmailValid && email.trim() !== ""

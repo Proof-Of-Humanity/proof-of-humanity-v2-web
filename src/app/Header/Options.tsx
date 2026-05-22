@@ -11,19 +11,23 @@ const Options: React.FC = () => {
   return (
     <div className="mt-[16px] flex flex-row items-center md:mt-0">
       {isConnected && <SettingsPopover />}
-      <ExternalLink href="https://snapshot.org/#/poh.eth/">
-        <Image alt="snapshot" src="/logo/snapshot.svg" height={16} width={16} />
+      <ExternalLink
+        href="https://snapshot.org/#/poh.eth/"
+        className="hover:border-orange ml-2 flex h-9 w-9 items-center justify-center rounded-full border border-white/[0.08] bg-[#2F333D] shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] transition duration-200 ease-premium"
+      >
+        <Image alt="snapshot" src="/logo/snapshot.svg" height={15} width={15} />
       </ExternalLink>
 
       <Popover
         trigger={
-          <Image
-            alt="question"
-            className="ml-2 cursor-pointer"
-            src={"/logo/question.svg"}
-            height={16}
-            width={16}
-          />
+          <button className="hover:border-orange ml-2 flex h-9 w-9 items-center justify-center rounded-full border border-white/[0.08] bg-[#2F333D] shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] transition duration-200 ease-premium">
+            <Image
+              alt="question"
+              src={"/logo/question.svg"}
+              height={15}
+              width={15}
+            />
+          </button>
         }
       >
         <div className="grid h-fit grid-cols-1 gap-2 p-2">

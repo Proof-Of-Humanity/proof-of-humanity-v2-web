@@ -116,7 +116,7 @@ const Content = ({
       ) : (
         <div className="bg-grey absolute inset-0" />
       )}
-      <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/25 to-transparent" />
+      <div className="request-card-overlay absolute inset-0" />
       <div className="absolute inset-x-0 bottom-0 z-10 p-4">
         <div className="truncate text-lg font-bold text-white">
           {name || shortenAddress(displayedClaimerId)}
@@ -154,9 +154,9 @@ function Card({
   return (
     <Link
       href={`/${prettifyId(pohId)}/${chain.name.toLowerCase()}/${index}`}
-      className={`border-stroke group relative block hover:border-peach ${
+      className={`request-card-shell group relative block ${
         aspectRatio === "square" ? "aspect-square" : "aspect-[5/4]"
-      } w-full cursor-pointer rounded-card border shadow-soft-inset transition duration-200 ease-premium hover:z-10 hover:-translate-y-[3px]`}
+      } w-full cursor-pointer rounded-card border transition duration-200 ease-premium hover:z-10 hover:-translate-y-[3px]`}
     >
       <div className="absolute inset-0 overflow-hidden rounded-card">
         <Content
@@ -176,7 +176,7 @@ function Card({
           color={statusColor}
           label={getStatusLabel(requestStatus)}
         />
-        <div className="group/info relative flex h-8 w-8 items-center justify-center rounded-full border border-white/20 bg-black/45 shadow-sm backdrop-blur-sm">
+        <div className="group/info relative flex h-8 w-8 items-center justify-center rounded-full border border-white/[0.08] bg-[#2F333D]/85 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] backdrop-blur-sm">
           <InfoIcon className="h-4 w-4 stroke-current stroke-2 text-white drop-shadow-md" />
           {tooltip && (
             <span className="pointer-events-none absolute bottom-full right-0 z-50 mb-2 w-max max-w-[200px] whitespace-normal rounded-md bg-neutral-700 px-3 py-2 text-center text-sm text-white opacity-0 transition-opacity group-hover/info:opacity-100">
