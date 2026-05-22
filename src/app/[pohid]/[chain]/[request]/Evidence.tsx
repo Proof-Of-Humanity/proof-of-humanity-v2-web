@@ -101,34 +101,42 @@ function Item({ index, item, isPending }: ItemInterface) {
         isPending ? "mt-4 flex flex-col opacity-70" : "mt-4 flex flex-col"
       }
     >
-      <div className="paper relative px-8 py-4">
-        <span className="text-secondaryText absolute left-3 top-1/2 -translate-y-1/2 text-sm">
+      <div className="paper grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-4 px-5 py-4">
+        <span className="text-secondaryText flex h-8 min-w-8 items-center justify-center text-sm">
           {romanize(index + 1)}
         </span>
-        {isPending && (
-          <span className="text-orange absolute right-3 top-2 animate-pulse text-xs font-medium">
-            Pending
-          </span>
-        )}
-        <div className="flex min-h-8 items-center justify-between gap-4 text-xl font-bold">
-          <span className="min-w-0 flex-1 leading-snug">{title}</span>
+        <div className="min-w-0 self-center">
+          <div className="flex min-h-8 items-center gap-3 text-xl font-bold">
+            <span className="min-w-0 flex-1 leading-snug">{title}</span>
+            {isPending && (
+              <span className="text-orange bg-orange/10 shrink-0 animate-pulse rounded-full px-2.5 py-1 text-xs font-medium">
+                Pending
+              </span>
+            )}
+          </div>
+          <p className="break-word mt-1 break-words text-sm leading-relaxed md:text-base">
+            {description}
+          </p>
+        </div>
+        <div className="flex min-h-8 items-center justify-center">
           {ipfsUri && <Attachment uri={ipfsUri} />}
         </div>
-        <p className="break-word mt-1 break-words">{description}</p>
       </div>
-      <div className="flex items-center px-4 py-2">
+      <div className="flex min-h-12 items-center px-5 py-2">
         <Identicon diameter={32} address={item.submitter} />
-        <div className="text-primaryText flex min-h-8 flex-col justify-center pl-2">
-          <span>
+        <div className="text-primaryText flex min-h-8 flex-col justify-center pl-2 text-sm">
+          <span className="leading-snug">
             submitted by{" "}
             <ExternalLink
-              className="text-blue-500 underline underline-offset-2"
+              className="text-orange underline underline-offset-2"
               href={explorerLink(item.submitter, chain)}
             >
               {shortenAddress(item.submitter)}
             </ExternalLink>
           </span>
-          <TimeAgo time={item.creationTime} />
+          <span className="text-secondaryText leading-snug">
+            <TimeAgo time={item.creationTime} />
+          </span>
         </div>
       </div>
     </div>

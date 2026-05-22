@@ -1,7 +1,6 @@
 import ExternalLink from "components/ExternalLink";
 import NewTabIcon from "components/NewTabIcon";
 import Card from "components/Request/Card";
-import RequestCardParallax from "components/Request/RequestCardParallax";
 import TimeAgo from "components/TimeAgo";
 import { explorerLink, idToChain } from "config/chains";
 import Link from "next/link";
@@ -89,9 +88,8 @@ export default async function ProfileSummarySection({
         {showsWinningRequestCard && mainCardRequest ? (
           <>
             <div className="mb-3 mt-4 flex items-center justify-center">
-              <RequestCardParallax className="w-80 max-w-full">
+              <div className="w-80 max-w-full">
                 <Card
-                  enableMediaParallax
                   chainId={mainCardRequest.chainId}
                   claimer={mainCardRequest.identityClaimer}
                   evidence={mainCardRequest.identityEvidenceGroup.evidence}
@@ -135,7 +133,7 @@ export default async function ProfileSummarySection({
                         RequestStatus.RESOLVED_CLAIM
                   }
                 />
-              </RequestCardParallax>
+              </div>
             </div>
 
             {canShowRenewSection && claimedHomeChain && claimedRegistration ? (

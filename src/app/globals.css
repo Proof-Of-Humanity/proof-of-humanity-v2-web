@@ -127,10 +127,7 @@
     height: calc(100% + 32px);
     transform: translate3d(
         var(--request-card-hover-x, 0px),
-        calc(
-          var(--request-card-media-offset, 0px) +
-            var(--request-card-hover-y, 0px)
-        ),
+        var(--request-card-hover-y, 0px),
         0
       )
       scale(1.02);
@@ -141,10 +138,7 @@
   .request-card-parallax:hover .request-card-media {
     transform: translate3d(
         var(--request-card-hover-x, 0px),
-        calc(
-          var(--request-card-media-offset, 0px) +
-            var(--request-card-hover-y, 0px)
-        ),
+        var(--request-card-hover-y, 0px),
         0
       )
       scale(1.03);
