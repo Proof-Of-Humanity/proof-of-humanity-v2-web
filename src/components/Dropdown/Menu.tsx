@@ -8,7 +8,7 @@ interface DropdownProps {
 const Dropdown: React.FC<DropdownProps> = ({ title, children }) => (
   <Popover
     trigger={
-      <button className="text-primaryText border-stroke bg-whiteBackground hover:border-orange w-full rounded-input border p-3 shadow-inset transition duration-200 ease-premium sm:w-64">
+      <button className="text-primaryText hover:border-orange w-full rounded-input border border-[rgba(255,255,255,0.08)] bg-[#17141F] p-3 transition duration-200 ease-premium sm:w-64">
         {title}
       </button>
     }

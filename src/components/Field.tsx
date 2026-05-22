@@ -1,10 +1,5 @@
 import cn from "classnames";
-import {
-  InputHTMLAttributes,
-  ReactNode,
-  TextareaHTMLAttributes,
-  useState,
-} from "react";
+import { InputHTMLAttributes, TextareaHTMLAttributes } from "react";
 import Label from "./Label";
 
 type FieldProps = TextareaHTMLAttributes<HTMLTextAreaElement> &
@@ -14,15 +9,12 @@ type FieldProps = TextareaHTMLAttributes<HTMLTextAreaElement> &
   };
 
 function Field({ label, textarea = false, className, ...props }: FieldProps) {
-  const [focused, setFocused] = useState(false);
-
   return (
     <div className="flex w-full flex-col">
       {label && <Label>{label}</Label>}
       <div
         className={cn(
-          "bg-whiteBackground border-stroke w-full overflow-hidden rounded-input border shadow-inset transition duration-200 ease-premium",
-          focused ? "border-orange" : "",
+          "focus-within:border-orange w-full overflow-hidden rounded-input border border-[rgba(255,255,255,0.08)] bg-[#17141F] transition duration-200 ease-premium",
         )}
       >
         {textarea ? (
@@ -41,8 +33,6 @@ function Field({ label, textarea = false, className, ...props }: FieldProps) {
               "focus:ring-0 focus-visible:outline-none",
               className,
             )}
-            onFocus={() => setFocused(true)}
-            onBlur={() => setFocused(false)}
             {...props}
           />
         )}

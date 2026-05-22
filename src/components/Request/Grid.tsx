@@ -183,7 +183,7 @@ function RequestFilters({
   return (
     <div className="my-4 flex flex-col gap-2 py-2 sm:flex-row sm:gap-1 md:gap-2">
       <input
-        className="border-stroke text-primaryText bg-whiteBackground focus:border-orange w-full rounded-input border p-3 shadow-inset outline-none transition duration-200 ease-premium md:mr-2"
+        className="text-primaryText focus:border-orange w-full rounded-input border border-[rgba(255,255,255,0.08)] bg-[#17141F] p-3 outline-none transition duration-200 ease-premium md:mr-2"
         placeholder="Search by name or address…"
         onChange={(e) => onSearchChange(e.target.value)}
       />

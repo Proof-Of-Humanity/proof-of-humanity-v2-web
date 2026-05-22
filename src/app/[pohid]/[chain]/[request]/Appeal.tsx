@@ -27,7 +27,7 @@ import { useMemo, useRef, useState } from "react";
 import { toast } from "react-toastify";
 import { RequestStatus } from "utils/status";
 import { formatEth } from "utils/misc";
-import { Address } from "viem";
+import { Address, parseEther } from "viem";
 import { useAccount, useBalance, useChainId } from "wagmi";
 import { useRouter } from "next/navigation";
 
@@ -398,12 +398,13 @@ const Appeal: React.FC<AppealProps> = ({
         )}
       </div>
       <Modal
+        formal
         header={`Appeal case #${disputeId}`}
         open={isAppealModalOpen}
         onClose={() => setAppealModalOpen(false)}
-        className="max-h-[calc(100vh-2rem)] !w-[calc(100vw-2rem)] max-w-[1020px] overflow-y-auto md:!w-[88vw] xl:!w-[1020px]"
+        className="max-h-[calc(100vh-2rem)] !w-[calc(100vw-2rem)] max-w-[1020px] overflow-hidden md:!w-[88vw] xl:!w-[1020px]"
       >
-        <div className="paper w-full px-4 py-6 sm:px-8 lg:px-16 lg:py-8">
+        <div className="text-primaryText max-h-[calc(100vh-5.5rem)] w-full overflow-y-auto px-4 py-6 sm:px-8 lg:px-16 lg:py-8">
           <h1 className="mb-4 text-xl">
             Appeal the decision: {formatedCurrentRuling}
           </h1>
