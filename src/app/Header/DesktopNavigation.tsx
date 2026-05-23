@@ -11,7 +11,7 @@ const navLink = (active: boolean) =>
   `relative whitespace-nowrap py-2 text-lg font-semibold transition-colors duration-200 after:absolute after:inset-x-0 after:-bottom-0.5 after:h-px after:origin-center after:rounded-full after:bg-peach after:shadow-[0_0_12px_rgba(255,176,138,0.45)] after:transition-transform after:duration-200 ${
     active
       ? "text-orange after:scale-x-100"
-      : "text-white/70 after:scale-x-0 hover:text-white"
+      : "text-secondaryText after:scale-x-0 hover:text-primaryText"
   }`;
 
 interface DesktopNavigationProps {

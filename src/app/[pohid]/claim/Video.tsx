@@ -414,7 +414,7 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
 
           <div className="mt-6 flex w-full flex-col items-center">
             <button
-              className="gradient flex w-full max-w-xl items-center justify-center gap-3 rounded-full px-6 py-4 text-lg font-semibold text-white shadow-lg transition hover:opacity-90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+              className="btn-primary !w-full max-w-xl gap-3 px-6 py-4 text-lg"
               onClick={() => setShowCamera(true)}
             >
               <CameraIcon className="h-6 w-6 fill-white" />
@@ -462,7 +462,7 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
       {/* ── S3: Processing ── */}
       {isPreparing && (
         <div className="mt-4 flex flex-col items-center">
-          <button className="btn-main" disabled>
+          <button className="btn-primary" disabled>
             <Image
               alt="loading"
               src="/logo/poh-white.svg"
@@ -553,7 +553,7 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
               )}
             </div>
           )}
-          <button className="btn-main mt-4" onClick={advance}>
+          <button className="btn-primary mt-4" onClick={advance}>
             Next
           </button>
         </div>
@@ -637,7 +637,7 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
         isPreparing ||
         hasError) && (
         <button
-          className="centered text-orange mt-4 text-lg font-semibold normal-case disabled:opacity-50"
+          className="btn-secondary mt-4 gap-2 text-lg disabled:opacity-50"
           onClick={() => retakeVideo()}
           disabled={recording}
         >

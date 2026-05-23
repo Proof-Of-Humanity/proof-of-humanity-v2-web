@@ -240,12 +240,10 @@ const SettingsPopover: React.FC = () => {
                               onChange={(e) => setEmail(e.target.value)}
                               placeholder="Email"
                               autoFocus
-                              className={`text-primaryText w-full bg-[#272A33] text-base
-                                 rounded-input border px-4 py-2 font-medium
-                                  focus:outline-none focus:ring-0 rounded-r-none transition duration-200 ease-premium min-h-[44px] ${
+                              className={`flat-control text-primaryText min-h-[44px] w-full rounded-input rounded-r-none px-4 py-2 text-base font-medium transition duration-200 ease-premium focus:outline-none focus:ring-0 ${
                                 !isEmailValid && email.trim() !== ""
                                   ? "border-red-500 focus:border-red-600"
-                                  : "border-[rgba(255,255,255,0.08)] focus:border-orange"
+                                  : ""
                               }`}
                             />
                           </div>

@@ -9,9 +9,10 @@ import { useAccount } from "wagmi";
 interface RenewProps {
   pohId: Hash;
   claimer: Address;
+  className?: string;
 }
 
-export default function Renew({ pohId, claimer }: RenewProps) {
+export default function Renew({ pohId, claimer, className }: RenewProps) {
   const web3Loaded = useWeb3Loaded();
   const { address } = useAccount();
 
@@ -19,7 +20,7 @@ export default function Renew({ pohId, claimer }: RenewProps) {
 
   return (
     <Link
-      className="btn-main mb-4 mt-6"
+      className={`btn-primary ${className ?? ""}`}
       href={`/${prettifyId(pohId)}/claim`}
       target="_blank"
       rel="noopener noreferrer"

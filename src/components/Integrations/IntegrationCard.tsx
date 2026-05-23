@@ -48,7 +48,7 @@ export default function IntegrationCard({ integration }: IntegrationCardProps) {
         </p>
 
         <button
-          className="btn-main gradient w-full px-5 py-2.5 text-sm dark:hover:bg-opacity-80 sm:w-auto"
+          className="btn-primary w-full px-5 py-2.5 text-sm dark:hover:bg-opacity-80 sm:w-auto"
           aria-label={`Start connecting your ${integration.name}`}
           onClick={handleNavigation}
         >

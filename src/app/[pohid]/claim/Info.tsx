@@ -182,7 +182,7 @@ function Info({ advance, state$ }: InfoProps) {
       </div>
 
       <button
-        className="btn-main"
+        className="btn-primary"
         disabled={!name || !walletNotice || !duplicateNotice}
         onClick={advance}
       >

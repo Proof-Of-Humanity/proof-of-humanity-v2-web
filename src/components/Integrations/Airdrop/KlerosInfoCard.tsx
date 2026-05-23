@@ -1,6 +1,5 @@
 "use client";
 import React, { useState, useEffect, useCallback, useRef } from "react";
-import { createPortal } from "react-dom";
 import Image from "next/image";
 import LeftArrowIcon from "icons/ArrowCircleLeft.svg";
 import RightArrowIcon from "icons/ArrowCircleRight.svg";
@@ -32,7 +31,6 @@ const KlerosInfoCard: React.FC<KlerosInfoCardProps> = ({
 }) => {
   const [animationState, setAnimationState] = useState<AnimationState>("idle");
   const [exitDirection, setExitDirection] = useState<"left" | "right">("left");
-  const [showExitAnimation, setShowExitAnimation] = useState(false);
   const prevSlideIdRef = useRef(slide.id);
 
   useEffect(() => {
@@ -59,11 +57,11 @@ const KlerosInfoCard: React.FC<KlerosInfoCardProps> = ({
     if (animationState !== "idle") return;
 
     if (isLastSlide && onLastSlideComplete) {
-      // Show PoH logo exit animation
-      setShowExitAnimation(true);
+      setExitDirection("left");
+      setAnimationState("exiting");
       setTimeout(() => {
         onLastSlideComplete();
-      }, 1200);
+      }, 200);
     } else if (nextStep) {
       setExitDirection("left");
       setAnimationState("exiting");
@@ -74,9 +72,6 @@ const KlerosInfoCard: React.FC<KlerosInfoCardProps> = ({
   }, [nextStep, isLastSlide, animationState, onNext, onLastSlideComplete]);
 
   const getAnimationClass = () => {
-    if (showExitAnimation) {
-      return "animate-fadeOut";
-    }
     switch (animationState) {
       case "exiting":
         return exitDirection === "left"
@@ -90,27 +85,6 @@ const KlerosInfoCard: React.FC<KlerosInfoCardProps> = ({
         return "";
     }
   };
-
-  // Show PoH logo animation overlay when transitioning to claim page
-  if (showExitAnimation) {
-    return createPortal(
-      <div className="backdrop z-50">
-        <div className="flex flex-col items-center">
-          <Image
-            alt="PoH Logo"
-            className="animate-flip"
-            src="/logo/poh-colored.svg"
-            width={48}
-            height={48}
-          />
-          <p className="mt-6 animate-pulse text-lg font-medium text-white">
-            Loading...
-          </p>
-        </div>
-      </div>,
-      document.body,
-    );
-  }
 
   const animationClass = `transition-all duration-200 ${getAnimationClass()}`;
 
@@ -132,7 +106,7 @@ const KlerosInfoCard: React.FC<KlerosInfoCardProps> = ({
 
   return (
     <div
-      className={`mx-auto flex h-auto w-full max-w-[1095px] flex-col rounded-[30px] border shadow lg:h-[1035px] ${animationClass}`}
+      className={`mx-auto flex h-auto w-full max-w-[1095px] flex-col rounded-[30px] border lg:h-[1035px] ${animationClass}`}
     >
       {/* Image Container - Responsive with fixed aspect ratio */}
       <div className="flex w-full justify-center overflow-hidden rounded-t-[30px]">
@@ -143,7 +117,7 @@ const KlerosInfoCard: React.FC<KlerosInfoCardProps> = ({
               alt={slide.title}
               width={900}
               height={521}
-              className="border-stroke my-4 h-auto max-h-[200px] rounded-xl border shadow sm:my-6 sm:max-h-[300px] md:my-8 md:h-auto md:max-h-[521px]"
+              className="border-stroke my-4 h-auto max-h-[200px] rounded-xl border sm:my-6 sm:max-h-[300px] md:my-8 md:h-auto md:max-h-[521px]"
             />
           )}
         </div>

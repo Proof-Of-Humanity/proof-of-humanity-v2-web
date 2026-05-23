@@ -21,7 +21,7 @@ import {
   getRequestsInitData,
   getRequestsLoadingPromises,
 } from "data/request";
-import { type PointerEvent, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import ChainLogo from "components/ChainLogo";
 import DropdownItem from "components/Dropdown/Item";
 import Dropdown from "components/Dropdown/Menu";
@@ -151,26 +151,6 @@ const filter$ = observable<RequestFilter>({
   cursor: 1,
 });
 
-const updateCardHoverParallax = (event: PointerEvent<HTMLDivElement>) => {
-  const rect = event.currentTarget.getBoundingClientRect();
-  const x = ((event.clientX - rect.left) / rect.width - 0.5) * -18;
-  const y = ((event.clientY - rect.top) / rect.height - 0.5) * -8;
-
-  event.currentTarget.style.setProperty(
-    "--request-card-hover-x",
-    `${x.toFixed(2)}px`,
-  );
-  event.currentTarget.style.setProperty(
-    "--request-card-hover-y",
-    `${y.toFixed(2)}px`,
-  );
-};
-
-const resetCardHoverParallax = (event: PointerEvent<HTMLDivElement>) => {
-  event.currentTarget.style.removeProperty("--request-card-hover-x");
-  event.currentTarget.style.removeProperty("--request-card-hover-y");
-};
-
 function RequestFilters({
   filter,
   selectedChain,
@@ -241,7 +221,7 @@ function RequestFilters({
 function LoadMoreButton() {
   return (
     <button
-      className="btn-main gradient my-8 px-8 py-4 md:mx-auto"
+      className="btn-primary my-8 px-8 py-4 md:mx-auto"
       onClick={() => filter$.cursor.set((c) => c + 1)}
     >
       Load More
@@ -388,28 +368,21 @@ function RequestsGrid() {
 
       <div className="request-grid">
         {requests.map((request, i) => (
-          <div
+          <Card
             key={i}
-            className="request-card-parallax"
-            onPointerMove={updateCardHoverParallax}
-            onPointerLeave={resetCardHoverParallax}
-          >
-            <Card
-              aspectRatio="wide"
-              chainId={request.chainId}
-              index={request.index}
-              humanity={request.humanity}
-              requester={request.requester}
-              claimer={request.claimer}
-              requestStatus={request.requestStatus}
-              revocation={request.revocation}
-              registrationEvidenceRevokedReq={
-                request.registrationEvidenceRevokedReq
-              }
-              evidence={request.evidenceGroup.evidence}
-              enableMediaParallax
-            />
-          </div>
+            aspectRatio="wide"
+            chainId={request.chainId}
+            index={request.index}
+            humanity={request.humanity}
+            requester={request.requester}
+            claimer={request.claimer}
+            requestStatus={request.requestStatus}
+            revocation={request.revocation}
+            registrationEvidenceRevokedReq={
+              request.registrationEvidenceRevokedReq
+            }
+            evidence={request.evidenceGroup.evidence}
+          />
         ))}
       </div>
 

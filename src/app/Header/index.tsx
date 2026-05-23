@@ -87,8 +87,9 @@ export default function Header({ policy }: IHeader) {
           />
         ) : null}
         <button
-          className="block text-white"
+          className="hover:border-orange flex h-9 w-9 items-center justify-center rounded-full border border-white/[0.08] bg-[#2F333D] text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] transition duration-200 ease-premium"
           onClick={() => setMenuOpen(!menuOpen)}
+          aria-label="Toggle navigation"
         >
           <Hamburger />
         </button>

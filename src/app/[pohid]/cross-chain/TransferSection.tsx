@@ -128,7 +128,7 @@ export default function TransferSection({
     return (
       <div className="group relative">
         <button
-          className="text-secondaryText rounded-full px-3.5 py-1.5 text-sm font-semibold opacity-70"
+          className="btn-secondary px-3.5 py-1.5 text-sm opacity-70"
           disabled
         >
           Transfer
@@ -153,7 +153,7 @@ export default function TransferSection({
     <>
       <div className="group relative">
         <button
-          className="text-orange rounded-full px-3.5 py-1.5 text-sm font-semibold transition duration-200 ease-premium hover:bg-white/5"
+          className="btn-secondary px-3.5 py-1.5 text-sm"
           disabled={isReconciling}
           onClick={() => setIsTransferModalOpen(true)}
         >

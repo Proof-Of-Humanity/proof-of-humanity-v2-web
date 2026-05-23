@@ -27,7 +27,7 @@ export default function RequestError({
         </div>
         <button
           type="button"
-          className="btn-main mt-6 px-5 py-2.5 normal-case"
+          className="btn-primary mt-6 px-5 py-2.5 normal-case"
           onClick={reset}
         >
           Try again

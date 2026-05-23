@@ -24,7 +24,7 @@ export const CameraButton: React.FC<CameraButtonInterface> = ({
 }) => (
   <button
     className={cn(
-      "btn-main absolute shrink-0 rounded-full !p-0",
+      "btn-primary absolute shrink-0 rounded-full !p-0",
       secondary
         ? "h-12 w-12 opacity-70"
         : "outline-theme h-16 w-16 outline outline-2 outline-offset-2",

@@ -1,5 +1,6 @@
 "use client";
 import React, { useCallback, useMemo } from "react";
+import Image from "next/image";
 import { useAccount, useChainId, useSwitchChain } from "wagmi";
 import { useAppKit } from "@reown/appkit/react";
 import { getCurrentStake } from "data/airdrop";
@@ -32,10 +33,18 @@ export type EligibilityStatus =
   | "claimed"
   | "error";
 
-function LoadingSpinner() {
+function PnkPulse() {
   return (
     <div className="flex items-center justify-center">
-      <div className="border-purple h-8 w-8 animate-spin rounded-full border-b-2"></div>
+      <div className="border-orange/20 bg-orange/10 rounded-full border p-3 shadow-[0_0_18px_rgba(255,138,102,0.08)]">
+        <Image
+          src="/logo/pnk-token.svg"
+          alt="PNK Token"
+          width={44}
+          height={44}
+          className="animate-pulse"
+        />
+      </div>
     </div>
   );
 }
@@ -44,8 +53,8 @@ function LoadingState() {
   return (
     <div className="bg-whiteBackground rounded-[30px] border-l-[1px] border-l-[#BE75FF] p-6 lg:w-[391px] lg:p-8">
       <div className="text-center">
-        <div className="text-purple mb-6 text-sm font-medium">Loading...</div>
-        <LoadingSpinner />
+        <div className="text-orange mb-6 text-sm font-medium">Loading...</div>
+        <PnkPulse />
         <div className="text-secondaryText mt-6 text-sm">
           Checking eligibility and fetching data...
         </div>

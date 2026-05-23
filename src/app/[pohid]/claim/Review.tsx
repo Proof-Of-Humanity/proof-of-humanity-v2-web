@@ -361,7 +361,7 @@ function Review({
       </div>
       <div className="w-full">
         {loadingMessage ? (
-          <button className="btn-main gap-2 md:w-full" disabled>
+          <button className="btn-primary gap-2 md:w-full" disabled>
             <Image
               alt="loading"
               src="/logo/poh-white.svg"
@@ -372,12 +372,12 @@ function Review({
             {loadingMessage}...
           </button>
         ) : !totalCost ? (
-          <button className="btn-main md:w-full" disabled>
+          <button className="btn-primary md:w-full" disabled>
             Loading deposit...
           </button>
         ) : (
           <AuthGuard signInButtonProps={{ className: "md:w-full" }}>
-            <button className="btn-main md:w-full" onClick={submit}>
+            <button className="btn-primary md:w-full" onClick={submit}>
               Submit
             </button>
           </AuthGuard>
