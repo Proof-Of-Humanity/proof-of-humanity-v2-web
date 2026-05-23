@@ -715,7 +715,7 @@ export default function ActionBar({
 
                   <ExternalLink
                     href={`https://klerosboard.com/${chain.id}/cases/${currentChallenge.disputeId}`}
-                    className="btn-main gradient h-[48px] w-auto items-center justify-center whitespace-nowrap px-5 py-2.5"
+                    className="btn-primary h-[48px] w-auto items-center justify-center whitespace-nowrap px-5 py-2.5"
                   >
                     View case #{currentChallenge.disputeId}
                   </ExternalLink>

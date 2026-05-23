@@ -374,40 +374,8 @@ function Review({
         </div>
       </div>
       <div className="w-full">
-        {registrationComplete && emailStatus === "failed" ? (
-          <div className="text-primaryText mt-1 text-sm">
-            <p className="inline-flex items-center gap-1 font-semibold text-green-500">
-              Your profile was submitted.
-              <svg
-                className="h-4 w-4 shrink-0"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth={2.5}
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M5 13l4 4L19 7"
-                />
-              </svg>
-            </p>
-            <p className="text-secondaryText mt-1">
-              We couldn't save <span className="font-semibold">{email}</span>{" "}
-              for profile notifications. You can retry now or enable
-              notifications later from settings.
-            </p>
-            <div className="mt-3">
-              <button
-                className="btn-main w-full py-3 text-sm font-bold"
-                onClick={retryEmail}
-              >
-                Save email for notifications
-              </button>
-            </div>
-          </div>
-        ) : loadingMessage ? (
-          <button className="btn-main gap-2 md:w-full" disabled>
+        {loadingMessage ? (
+          <button className="btn-primary gap-2 md:w-full" disabled>
             <Image
               alt="loading"
               src="/logo/poh-white.svg"
@@ -418,12 +386,12 @@ function Review({
             {loadingMessage}...
           </button>
         ) : !totalCost ? (
-          <button className="btn-main md:w-full" disabled>
+          <button className="btn-primary md:w-full" disabled>
             Loading deposit...
           </button>
         ) : (
           <AuthGuard signInButtonProps={{ className: "md:w-full" }}>
-            <button className="btn-main md:w-full" onClick={submit}>
+            <button className="btn-primary md:w-full" onClick={submit}>
               Submit
             </button>
           </AuthGuard>

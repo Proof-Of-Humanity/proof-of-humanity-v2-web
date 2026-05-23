@@ -32,7 +32,7 @@ export default function ProfileTimelineError({
             <div className="text-secondaryText mt-3 text-sm leading-6">
               {description}
             </div>
-            <RetryButton className="border-stroke bg-whiteBackground text-primaryText mt-4 inline-flex rounded-full border px-4 py-2 text-sm font-semibold" />
+            <RetryButton className="btn-secondary mt-4 px-4 py-2 text-sm" />
           </div>
         </div>
       </div>

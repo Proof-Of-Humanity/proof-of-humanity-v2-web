@@ -44,7 +44,7 @@ const MobileMenu = forwardRef(
     return (
       <div
         ref={ref}
-        className="header-background absolute left-0 right-0 top-16 z-10 w-full p-4 shadow-lg md:hidden"
+        className="header-background absolute left-0 right-0 top-16 z-10 w-full border-b border-white/[0.08] p-4 md:hidden"
       >
         <nav className="flex flex-col items-center gap-y-4 text-center">
           <Link

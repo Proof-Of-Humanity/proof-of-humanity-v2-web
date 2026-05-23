@@ -178,10 +178,10 @@ export default function Revoke({
 
   if (web3Loaded && !isConnected)
     return (
-      <div className="flex w-full justify-center">
+      <div className="flex justify-center">
         <button
           onClick={() => modal.open({ view: "Connect" })}
-          className="btn-sec mb-4"
+          className="btn-secondary"
         >
           Connect wallet
         </button>
@@ -190,10 +190,10 @@ export default function Revoke({
 
   if (web3Loaded && homeChain.id !== connectedChainId)
     return (
-      <div className="flex w-full justify-center">
+      <div className="flex justify-center">
         <button
           onClick={() => switchChain?.({ chainId: homeChain.id })}
-          className="btn-sec mb-4"
+          className="btn-secondary"
         >
           Connect to {homeChain.name} to revoke
         </button>
@@ -201,9 +201,9 @@ export default function Revoke({
     );
 
   return (
-    <div className="flex w-full flex-col items-center">
+    <div className="flex flex-col items-center">
       {effective.pendingRevocation && (
-        <span className="text-secondaryText mb-4">
+        <span className="text-secondaryText mb-2 text-center">
           {pendingAction === "revoke"
             ? "Removal proposed. Waiting for indexed state."
             : "Removal proposed."}
@@ -213,7 +213,6 @@ export default function Revoke({
         <ActionButton
           onClick={() => setModalOpen(true)}
           label="Revoke"
-          className="mb-4"
           disabled={isReconciling}
           tooltip={isReconciling ? WAITING_FOR_INDEXER_TOOLTIP : undefined}
         />

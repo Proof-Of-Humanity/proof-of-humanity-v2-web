@@ -10,8 +10,8 @@ export default function AirdropBanner() {
   if (!isVisible) return null;
 
   return (
-    <div className="relative w-full border-b border-peach/50 bg-[linear-gradient(90deg,#FF7A5F_0%,#FF9A6A_100%)]">
-      <div className="flex items-center px-4 py-3 sm:px-6">
+    <div className="relative flex min-h-[54px] w-full items-center border-b border-white/10 bg-[linear-gradient(90deg,#FF7A5F_0%,#FF9A6A_100%)]">
+      <div className="flex w-full items-center px-4 sm:px-6">
         <Link
           href="/app/pnk-airdrop"
           className="min-w-0 flex-1 cursor-pointer transition-opacity hover:opacity-90"
@@ -40,7 +40,7 @@ export default function AirdropBanner() {
             e.preventDefault();
             setIsVisible(false);
           }}
-          className="ml-1 flex-shrink-0 p-2 text-white transition-opacity hover:opacity-70"
+          className="ml-2 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full text-white/85 transition hover:bg-white/10 hover:text-white"
           aria-label="Close banner"
         >
           <svg

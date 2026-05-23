@@ -144,7 +144,7 @@ const ProcessStepCard: React.FC<ProcessStepCardProps> = ({
 
   return (
     <div
-      className={`border-stroke flex h-full w-full max-w-[1095px] flex-col overflow-hidden rounded-[30px] border shadow transition-all duration-200 ${getAnimationClass()}`}
+      className={`border-stroke flex h-full w-full max-w-[1095px] flex-col overflow-hidden rounded-[30px] border transition-all duration-200 ${getAnimationClass()}`}
     >
       <div className="bg-whiteBackground flex w-full items-center justify-center overflow-hidden rounded-t-[30px] px-4 py-4 sm:px-6 sm:py-6 md:px-8 md:py-8">
         {/* Use a fixed height container that matches the aspect-video height on large screens to maintain consistency */}
@@ -154,7 +154,7 @@ const ProcessStepCard: React.FC<ProcessStepCardProps> = ({
             alt={step.title}
             fill
             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 1100px"
-            className={`border-stroke rounded-md border shadow transition-opacity duration-300 ${getObjectFitClass()}`}
+            className={`border-stroke rounded-md border transition-opacity duration-300 ${getObjectFitClass()}`}
             priority={currentIndex === 0}
           />
         </div>

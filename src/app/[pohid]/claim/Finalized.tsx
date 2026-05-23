@@ -139,7 +139,7 @@ const Finalized: React.FC<FinalizedProps> = ({
 
       <Link
         href="/"
-        className="btn-main w-full py-3 text-center text-lg font-bold text-white hover:opacity-90"
+        className="btn-primary w-full py-3 text-center text-lg font-bold text-white hover:opacity-90"
       >
         Return to Homepage
       </Link>

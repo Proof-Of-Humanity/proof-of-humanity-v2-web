@@ -30,7 +30,7 @@ export default function ProfileSectionErrorCard({
         </div>
         <RetryButton
           label={retryLabel}
-          className="border-stroke bg-whiteBackground text-primaryText mt-4 inline-flex rounded-full border px-4 py-2 text-sm font-semibold"
+          className="btn-secondary mt-4 px-4 py-2 text-sm"
         />
       </div>
     </div>

@@ -383,7 +383,7 @@ const Appeal: React.FC<AppealProps> = ({
         <button
           onClick={() => setAppealModalOpen(true)}
           disabled={externalDisabled || isReconciling}
-          className="btn-sec w-[150px] px-5 py-2.5 md:w-auto"
+          className="btn-secondary w-[150px] px-5 py-2.5 md:w-auto"
         >
           <span className="flex-inline flex flex-wrap items-center whitespace-nowrap md:flex-nowrap">
             Appeal (ends&nbsp;

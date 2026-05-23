@@ -22,14 +22,14 @@ const CirclesStepCard: React.FC<ProcessStepCardProps> = ({
   onNext,
 }) => {
   return (
-    <div className="flex flex-col rounded-[30px] border shadow">
+    <div className="flex flex-col rounded-[30px] border">
       <div className="flex w-full flex-col items-center justify-center overflow-hidden rounded-t-[30px]">
         <Image
           src={step.image || ""}
           alt={step.title}
           width={900}
           height={521}
-          className="border-stroke mx-4 my-4 h-auto max-h-[200px] rounded-md border object-contain shadow sm:mx-0 sm:my-6 sm:max-h-[300px] md:mb-2 md:mt-8 md:h-auto md:max-h-[521px]"
+          className="border-stroke mx-4 my-4 h-auto max-h-[200px] rounded-md border object-contain sm:mx-0 sm:my-6 sm:max-h-[300px] md:mb-2 md:mt-8 md:h-auto md:max-h-[521px]"
         />
         <p className="text-secondaryText mb-4 px-4 text-sm sm:text-base md:px-6">
           If you're on desktop,

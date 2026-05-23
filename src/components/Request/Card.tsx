@@ -21,6 +21,7 @@ import { safeIpfsUrl } from "utils/ipfs";
 import { RequestsQueryItem } from "./Grid";
 import StatusBadge from "./StatusBadge";
 import InfoIcon from "icons/info.svg";
+import { type PointerEvent } from "react";
 
 interface ContentProps {
   chainId: SupportedChainId;
@@ -65,6 +66,26 @@ const getDisplayName = (
   }
 
   return claimerName || data?.name || "";
+};
+
+const updateCardHoverParallax = (event: PointerEvent<HTMLAnchorElement>) => {
+  const rect = event.currentTarget.getBoundingClientRect();
+  const x = ((event.clientX - rect.left) / rect.width - 0.5) * -18;
+  const y = ((event.clientY - rect.top) / rect.height - 0.5) * -8;
+
+  event.currentTarget.style.setProperty(
+    "--request-card-hover-x",
+    `${x.toFixed(2)}px`,
+  );
+  event.currentTarget.style.setProperty(
+    "--request-card-hover-y",
+    `${y.toFixed(2)}px`,
+  );
+};
+
+const resetCardHoverParallax = (event: PointerEvent<HTMLAnchorElement>) => {
+  event.currentTarget.style.removeProperty("--request-card-hover-x");
+  event.currentTarget.style.removeProperty("--request-card-hover-y");
 };
 
 const Content = ({
@@ -142,7 +163,7 @@ function Card({
   humanity,
   requestStatus,
   aspectRatio = "square",
-  enableMediaParallax,
+  enableMediaParallax = true,
 }: CardInterface) {
   const pohId = humanity.id;
   const statusColor = getStatusColor(requestStatus);
@@ -155,9 +176,13 @@ function Card({
   return (
     <Link
       href={`/${prettifyId(pohId)}/${chain.name.toLowerCase()}/${index}`}
-      className={`request-card-shell group relative block ${
-        aspectRatio === "square" ? "aspect-square" : "aspect-[5/4]"
-      } w-full cursor-pointer rounded-card border transition duration-200 ease-premium hover:z-10 hover:-translate-y-[3px]`}
+      className={cn(
+        "request-card-shell group relative block w-full cursor-pointer rounded-card border transition duration-200 ease-premium hover:z-10 hover:-translate-y-[3px]",
+        aspectRatio === "square" ? "aspect-square" : "aspect-[5/4]",
+        enableMediaParallax && "request-card-parallax",
+      )}
+      onPointerMove={enableMediaParallax ? updateCardHoverParallax : undefined}
+      onPointerLeave={enableMediaParallax ? resetCardHoverParallax : undefined}
     >
       <div className="absolute inset-0 overflow-hidden rounded-card">
         <Content

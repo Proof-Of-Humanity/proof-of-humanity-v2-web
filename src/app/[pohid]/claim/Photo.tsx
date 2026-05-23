@@ -204,7 +204,7 @@ function Photo({ advance, photo$ }: PhotoProps) {
 
           <div className="mt-6 flex w-full flex-col items-center">
             <button
-              className="gradient flex w-full max-w-xl items-center justify-center gap-3 rounded-full px-6 py-4 text-lg font-semibold text-white shadow-lg transition hover:opacity-90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+              className="btn-primary !w-full max-w-xl gap-3 px-6 py-4 text-lg"
               onClick={() => setShowCamera(true)}
             >
               <CameraIcon className="h-6 w-6 fill-white" />
@@ -276,7 +276,7 @@ function Photo({ advance, photo$ }: PhotoProps) {
           </div>
 
           {pending ? (
-            <button className="btn-main">
+            <button className="btn-primary">
               <Image
                 alt="loading"
                 src="/logo/poh-white.svg"
@@ -287,7 +287,7 @@ function Photo({ advance, photo$ }: PhotoProps) {
               {loadingMessage}...
             </button>
           ) : (
-            <button className="btn-main" onClick={onCrop}>
+            <button className="btn-primary" onClick={onCrop}>
               <CheckmarkIcon className="mr-2 h-6 w-6 fill-white" />
               Ready
             </button>
@@ -309,7 +309,7 @@ function Photo({ advance, photo$ }: PhotoProps) {
               />
             }
           />
-          <button className="btn-main mt-4" onClick={advance}>
+          <button className="btn-primary mt-4" onClick={advance}>
             Next
           </button>
         </div>
@@ -317,7 +317,7 @@ function Photo({ advance, photo$ }: PhotoProps) {
 
       {(showCamera || !!originalPhoto || !!photo) && (
         <button
-          className="centered text-orange mt-4 text-lg font-semibold normal-case"
+          className="btn-secondary mt-4 gap-2 text-lg"
           onClick={retakePhoto}
         >
           <ResetIcon className="fill-orange mr-2 h-6 w-6" />

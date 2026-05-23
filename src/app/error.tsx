@@ -20,7 +20,7 @@ export default function Error({
         Something went wrong!
       </h2>
       <button
-        className="btn-main mt-6 px-5 py-2.5 normal-case"
+        className="btn-primary mt-6 px-5 py-2.5 normal-case"
         onClick={
           // Attempt to recover by trying to re-render the segment
           () => reset()
