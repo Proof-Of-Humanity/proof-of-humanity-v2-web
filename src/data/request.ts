@@ -9,7 +9,7 @@ import { sdk } from "config/subgraph";
 import { RequestsQuery } from "generated/graphql";
 import { cache } from "react";
 import { Address, Hash, concat, keccak256, toHex } from "viem";
-import { sanitizeHeadRequests, sanitizeRequest } from "./sanitizer";
+import { sanitizeHeadRequests } from "./sanitizer";
 
 const PROFILES_DISPLAY_REQUIRED_REQS = 12 * 4;
 
@@ -182,17 +182,6 @@ export const getHistoricalWinnerClaim = cache(
         (requestA, requestB) =>
           Number(requestB.lastStatusChange) - Number(requestA.lastStatusChange),
       )[0] ?? null
-    );
-  },
-);
-
-export const getRequestData = cache(
-  async (chainId: SupportedChainId, pohId: Hash, index: number) => {
-    const out = await getRequestPageData(chainId, pohId, index);
-    return await sanitizeRequest(
-      out ? structuredClone(out) : out,
-      chainId,
-      pohId,
     );
   },
 );
