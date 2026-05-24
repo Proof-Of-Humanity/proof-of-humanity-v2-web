@@ -1,21 +1,18 @@
 "use client";
 
 import ChainLogo from "components/ChainLogo";
-import { TimelineItem } from "data/requestTimeline";
+import type { TimelineItem } from "data/requestTimeline";
 import { idToChain } from "config/chains";
 import CheckCircleOutlineIcon from "icons/CheckCircleOutline16.svg";
 import CrossCircleIcon from "icons/CrossCircle16.svg";
 import NewTabIcon from "icons/NewTab.svg";
 import TimelineTransferIcon from "icons/TimelineTransfer.svg";
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
-import ProfileTimelineHeader, {
-  type ProfileTimelineHeaderProps,
-} from "../../ProfileTimelineHeader";
+import { type ReactNode, useEffect, useRef, useState } from "react";
 
 interface TimelineProps {
   items: TimelineItem[];
-  profileHeader?: ProfileTimelineHeaderProps;
+  children?: ReactNode;
 }
 
 const TIMELINE_STYLES: Record<
@@ -111,7 +108,7 @@ const formatter = new Intl.DateTimeFormat("en-US", {
 const ITEM_STEP_MS = 340;
 const ITEM_REVEAL_OFFSET_MS = 150;
 
-export default function Timeline({ items, profileHeader }: TimelineProps) {
+export default function Timeline({ items, children }: TimelineProps) {
   const rootRef = useRef<HTMLDivElement | null>(null);
   const [isVisible, setIsVisible] = useState(false);
 
@@ -144,7 +141,7 @@ export default function Timeline({ items, profileHeader }: TimelineProps) {
       <h2 className="text-primaryText text-xl font-semibold">
         Timeline History
       </h2>
-      {profileHeader ? <ProfileTimelineHeader {...profileHeader} /> : null}
+      {children}
       <div className="mt-6">
         {items.map((item, index) => {
           const styles = TIMELINE_STYLES[item.kind];
