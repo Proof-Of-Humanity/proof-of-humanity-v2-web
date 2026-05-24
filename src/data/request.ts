@@ -9,8 +9,7 @@ import { sdk } from "config/subgraph";
 import { RequestsQuery } from "generated/graphql";
 import { cache } from "react";
 import { Address, Hash, concat, keccak256, toHex } from "viem";
-import { settleChainQueries } from "./chainQuery";
-import { sanitizeHeadRequests, sanitizeRequest } from "./sanitizer";
+import { sanitizeHeadRequests } from "./sanitizer";
 
 const emptyRequests = (): RequestsQuery => ({ requests: [] });
 
@@ -192,23 +191,6 @@ export const getHistoricalWinnerClaim = cache(
         (requestA, requestB) =>
           Number(requestB.lastStatusChange) - Number(requestA.lastStatusChange),
       )[0] ?? null
-    );
-  },
-);
-
-export const getRequestData = cache(
-  async (chainId: SupportedChainId, pohId: Hash, index: number) => {
-    let out: Awaited<ReturnType<typeof getRequestPageData>>;
-    try {
-      out = await getRequestPageData(chainId, pohId, index);
-    } catch (err) {
-      console.error(`Subgraph query failed on chain ${chainId}:`, err);
-      return null;
-    }
-    return await sanitizeRequest(
-      out ? structuredClone(out) : out,
-      chainId,
-      pohId,
     );
   },
 );
