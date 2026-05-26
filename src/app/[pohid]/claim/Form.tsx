@@ -30,9 +30,7 @@ import { toast } from "react-toastify";
 import { machinifyId } from "utils/identifier";
 import { Abi, Hash, parseEther } from "viem";
 import { useAccount, useChainId, useReadContract } from "wagmi";
-import ActionButton from "components/ActionButton";
-import { useSubmitEmail } from "components/Integrations/Airdrop/useSubmitEmail";
-import { isValidEmailAddress } from "utils/validators";
+import ProductReturnsIcon from "icons/ProductReturnsMinor.svg";
 import Connect from "./Connect";
 import Finalized from "./Finalized";
 import InfoStep from "./Info";
@@ -557,20 +555,13 @@ function FormContent({
 
       {(canGoBack || (registrationComplete && emailStatus === "failed")) && (
         <div className="mt-6 flex justify-center">
-          <ActionButton
-            onClick={
-              registrationComplete && emailStatus === "failed"
-                ? skipNotificationEmail
-                : goBack
-            }
-            label={
-              registrationComplete && emailStatus === "failed"
-                ? "Skip for now"
-                : "Back"
-            }
-            variant="secondary"
-            className="w-full max-w-xs"
-          />
+          <button
+            onClick={goBack}
+            className="text-orange flex items-center gap-2 text-lg font-semibold transition hover:text-peach"
+          >
+            <ProductReturnsIcon className="h-6 w-6 fill-current" />
+            Back
+          </button>
         </div>
       )}
     </>

@@ -637,11 +637,11 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
         isPreparing ||
         hasError) && (
         <button
-          className="btn-secondary mt-4 gap-2 text-lg disabled:opacity-50"
+          className="text-orange mt-4 flex items-center gap-2 text-lg font-semibold transition hover:text-peach disabled:opacity-50"
           onClick={() => retakeVideo()}
           disabled={recording}
         >
-          <ResetIcon className="fill-orange mr-2 h-6 w-6" />
+          <ResetIcon className="h-6 w-6 fill-current" />
           {isProcessing || isPreparing
             ? "Cancel"
             : showCamera
