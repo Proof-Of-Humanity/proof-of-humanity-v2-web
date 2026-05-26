@@ -22,7 +22,7 @@ import { toast } from "react-toastify";
 import { machinifyId } from "utils/identifier";
 import { Abi, Hash, parseEther } from "viem";
 import { useAccount, useChainId, useReadContract } from "wagmi";
-import ActionButton from "components/ActionButton";
+import ProductReturnsIcon from "icons/ProductReturnsMinor.svg";
 import Connect from "./Connect";
 import Finalized from "./Finalized";
 import InfoStep from "./Info";
@@ -438,12 +438,13 @@ export default function Form({
 
       {canGoBack && (
         <div className="mt-6 flex justify-center">
-          <ActionButton
+          <button
             onClick={goBack}
-            label="Back"
-            variant="secondary"
-            className="w-full max-w-xs"
-          />
+            className="text-orange flex items-center gap-2 text-lg font-semibold transition hover:text-peach"
+          >
+            <ProductReturnsIcon className="h-6 w-6 fill-current" />
+            Back
+          </button>
         </div>
       )}
     </>
