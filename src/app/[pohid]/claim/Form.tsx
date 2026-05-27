@@ -205,7 +205,7 @@ export default function Form({
 
       const registrationJson = {
         name: "Registration",
-        fileURI: fileURI,
+        fileURI,
       };
 
       const registrationTextFile = new File(

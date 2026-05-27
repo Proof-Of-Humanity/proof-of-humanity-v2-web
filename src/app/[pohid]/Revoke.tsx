@@ -147,8 +147,8 @@ export default function Revoke({
 
       const evidenceJson = {
         name: title,
-        description: description,
-        fileURI: fileURI,
+        description,
+        fileURI,
       };
 
       const evidenceTextFile = new File(
