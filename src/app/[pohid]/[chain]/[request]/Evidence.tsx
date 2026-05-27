@@ -246,8 +246,8 @@ export default function Evidence({
 
       const evidenceJson = {
         name: title,
-        description: description,
-        evidence: evidenceFileURI,
+        description,
+        fileURI: evidenceFileURI,
       };
 
       const evidenceTextFile = new File(
