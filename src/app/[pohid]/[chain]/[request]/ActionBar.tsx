@@ -122,6 +122,7 @@ export default function ActionBar({
   const isReconciling = pendingAction !== null;
   const lockClaimed = humanityClaimed && !effectiveRevocation;
   const claimedTooltip = "This humanity is already claimed";
+  const connectTooltip = "Connect your wallet to continue";
 
   const { didIVouchFor, isVouchOnchain } = useMemo(() => {
     const lowerAddr = address?.toLowerCase();
@@ -588,6 +589,7 @@ export default function ActionBar({
                 <ActionButton
                   disabled={
                     lockClaimed ||
+                    !address ||
                     isReconciling ||
                     isAdvancePrepareError ||
                     userChainId !== chain.id
@@ -598,13 +600,15 @@ export default function ActionBar({
                   tooltip={
                     lockClaimed
                       ? claimedTooltip
-                      : isReconciling
-                        ? "Syncing"
-                        : isAdvancePrepareError
-                          ? "Advance not possible, please try again"
-                          : userChainId !== chain.id
-                            ? `Switch your chain above to ${idToChain(chain.id)?.name || "the correct chain"}`
-                            : undefined
+                      : !address
+                        ? connectTooltip
+                        : isReconciling
+                          ? "Syncing"
+                          : isAdvancePrepareError
+                            ? "Advance not possible, please try again"
+                            : userChainId !== chain.id
+                              ? `Switch your chain above to ${idToChain(chain.id)?.name || "the correct chain"}`
+                              : undefined
                   }
                   className="mb-2 w-auto"
                 />
