@@ -7,6 +7,7 @@ import {
 } from "./types";
 import { SupportedChainId } from "config/chains";
 import {
+  useAccount,
   useChainId,
   useWriteContract,
   useWaitForTransactionReceipt,
@@ -35,6 +36,7 @@ export default function useWagmiWrite<
   F extends WriteFunctionName<C>,
 >(contract: C, functionName: F, effects?: Effects) {
   const chain = useChainParam();
+  const { address } = useAccount();
   const defaultChainId = useChainId() as SupportedChainId;
   const currentChainId = (chain?.id || defaultChainId) as SupportedChainId;
   const contractInfo = getContractInfo(contract, currentChainId);
@@ -78,12 +80,17 @@ export default function useWagmiWrite<
     value?: bigint;
     chainId: number;
   } | null>(null);
+  const preparedRequestRef = useRef<any>();
   const lastPendingHashRef = useRef<Hash | undefined>();
   const lastSuccessHashRef = useRef<Hash | undefined>();
 
   useEffect(() => {
     effectsRef.current = effects;
   }, [effects]);
+
+  useEffect(() => {
+    preparedRequestRef.current = undefined;
+  }, [address, defaultChainId, currentChainId, contractInfo.address]);
 
   const fireWrite = useCallback(
     (request: any) => {
@@ -108,12 +115,14 @@ export default function useWagmiWrite<
     switch (prepareStatus) {
       case "success":
         if (prepared.request && enabled) {
+          preparedRequestRef.current = prepared.request;
           effectsRef.current?.onReady?.(() => fireWrite(prepared.request));
           setEnabled(false);
         }
         break;
       case "error":
         if (enabled) {
+          preparedRequestRef.current = undefined;
           effectsRef.current?.onFail?.(prepareError);
           setEnabled(false);
         }
@@ -166,6 +175,7 @@ export default function useWagmiWrite<
 
   const prepare = useCallback(
     (params: { value?: bigint; args?: WriteArgs<C, F> } = {}) => {
+      preparedRequestRef.current = undefined;
       if (params.value !== undefined) setValue(params.value);
       if (params.args) setArgs(params.args);
       setEnabled(true);
@@ -174,8 +184,9 @@ export default function useWagmiWrite<
   );
 
   const firePrepared = useCallback(() => {
-    if (prepared?.request) {
-      fireWrite(prepared.request);
+    const preparedRequest = preparedRequestRef.current ?? prepared?.request;
+    if (preparedRequest) {
+      fireWrite(preparedRequest);
     }
     setEnabled(false);
   }, [prepared?.request, fireWrite]);
