@@ -54,7 +54,7 @@ const Popover: React.FC<PopoverInterface> = ({
       }}
     >
       <div
-        className={`bg-whiteBackground text-secondaryText shadow-shade-500/50 mt-1 rounded shadow-md ${className || "w-48"}`}
+        className={`bg-whiteBackground border-stroke text-secondaryText mt-1 rounded border shadow-md shadow-slate-500/20 ${className || "w-48"}`}
       >
         {children}
       </div>
