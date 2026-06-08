@@ -23,9 +23,10 @@ const SettingsPopover: React.FC = () => {
     showVerificationNotice,
     canResend,
     isBusy,
+    isResending,
     minutesUntilUpdateable,
     resendVerification,
-    isSaving,
+    isSavingEmail,
     isSaveDisabled,
     cooldownTooltip,
     saveEmail,
@@ -75,7 +76,8 @@ const SettingsPopover: React.FC = () => {
                 {showVerificationNotice && (
                   <EmailVerificationNotice
                     canResend={canResend}
-                    isBusy={isBusy}
+                    disabled={isBusy}
+                    isResending={isResending}
                     minutesUntilUpdateable={minutesUntilUpdateable}
                     onResend={resendVerification}
                   />
@@ -84,7 +86,7 @@ const SettingsPopover: React.FC = () => {
 
               <ActionButton
                 onClick={saveEmail}
-                isLoading={isSaving}
+                isLoading={isSavingEmail}
                 disabled={isSaveDisabled}
                 label="Save"
                 fullWidth

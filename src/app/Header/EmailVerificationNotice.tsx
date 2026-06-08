@@ -4,14 +4,18 @@ import InfoIcon from "icons/info.svg";
 interface EmailVerificationNoticeProps {
   /** True when the resend cooldown has elapsed and resending is allowed. */
   canResend: boolean;
-  isBusy: boolean;
+  /** Disables the resend button while any account action is in flight. */
+  disabled: boolean;
+  /** True only while a resend request is actually in progress. */
+  isResending: boolean;
   minutesUntilUpdateable: number;
   onResend: () => void;
 }
 
 const EmailVerificationNotice: React.FC<EmailVerificationNoticeProps> = ({
   canResend,
-  isBusy,
+  disabled,
+  isResending,
   minutesUntilUpdateable,
   onResend,
 }) => (
@@ -26,10 +30,10 @@ const EmailVerificationNotice: React.FC<EmailVerificationNoticeProps> = ({
       {canResend ? (
         <button
           onClick={onResend}
-          disabled={isBusy}
+          disabled={disabled}
           className="text-orange underline transition-colors duration-200 hover:text-orange-600 disabled:cursor-not-allowed disabled:opacity-50"
         >
-          {isBusy ? "Sending..." : "Resend"}
+          {isResending ? "Sending..." : "Resend"}
         </button>
       ) : (
         <span className="text-secondaryText">

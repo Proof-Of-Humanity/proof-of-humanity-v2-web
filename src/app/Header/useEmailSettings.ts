@@ -66,7 +66,11 @@ export const useEmailSettings = () => {
       )
     : 0;
 
-  const { mutate: submitEmail, isPending: isSubmitting } = useSubmitEmail({
+  const {
+    mutate: submitEmail,
+    isPending: isSubmitting,
+    variables: submitVariables,
+  } = useSubmitEmail({
     onSuccess: () => closeSettingsPopover(),
   });
 
@@ -77,7 +81,10 @@ export const useEmailSettings = () => {
     isDeletingUser,
     isFetchingUser,
   ].some(Boolean);
-  const isSaving = [isSubmitting, isUpdatingUser, isAddingUser].some(Boolean);
+
+  const isResend = Boolean(submitVariables?.isResend);
+  const isResending = isSubmitting && isResend;
+  const isSavingEmail = isSubmitting && !isResend;
 
   // Save is enabled only when the user has typed a different, valid email and
   // we're not mid-request or inside the post-update cooldown window. This single
@@ -91,9 +98,9 @@ export const useEmailSettings = () => {
     Boolean(validFutureUpdateDate);
 
   const showEmailError = !isEmailValid && trimmedEmail !== "";
-  const hasVerifiedEmail =
-    Boolean(savedEmail) && Boolean(user?.isEmailVerified);
-  const showVerificationNotice = Boolean(savedEmail) && !user?.isEmailVerified;
+  const isEmailVerified = Boolean(user?.isEmailVerified);
+  const hasVerifiedEmail = Boolean(savedEmail) && isEmailVerified;
+  const showVerificationNotice = Boolean(savedEmail) && !isEmailVerified;
 
   const cooldownTooltip = validFutureUpdateDate
     ? `You can update email in ${minutesUntilUpdateable} ${
@@ -132,7 +139,7 @@ export const useEmailSettings = () => {
     try {
       const deleted = await deleteUser();
       if (!deleted) throw new Error("Failed to unsubscribe");
-      toast.success("You have been unsubscribed from Kleros notifications.");
+      toast.success("You have been unsubscribed from PoH notifications.");
       setIsUnsubscribeModalOpen(false);
       closeSettingsPopover();
     } catch {
@@ -157,10 +164,11 @@ export const useEmailSettings = () => {
     showVerificationNotice,
     canResend: !validFutureUpdateDate,
     isBusy,
+    isResending,
     minutesUntilUpdateable,
     resendVerification,
     // save button
-    isSaving,
+    isSavingEmail,
     isSaveDisabled,
     cooldownTooltip,
     saveEmail,
