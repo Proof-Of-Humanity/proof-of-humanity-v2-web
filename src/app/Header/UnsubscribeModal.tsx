@@ -35,7 +35,7 @@ const UnsubscribeModal: React.FC<UnsubscribeModalProps> = ({
           className="flex-shrink-0 [&_path]:fill-red-600"
         />
         <p>
-          This action will unsubcribe you from <strong>ALL</strong> kleros
+          This action will unsubscribe you from <strong>ALL</strong> kleros
           products.
         </p>
       </div>

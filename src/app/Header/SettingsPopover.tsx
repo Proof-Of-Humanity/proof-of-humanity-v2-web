@@ -43,11 +43,11 @@ const SettingsPopover: React.FC = () => {
         trigger={
           <span onClick={toggleSettingsPopover} className="cursor-pointer">
             <Image
-              alt="settings"
+              alt="notifications"
               className="mx-2"
-              src="/logo/settings.svg"
-              height={16}
-              width={16}
+              src="/logo/notifications.svg"
+              height={20}
+              width={20}
             />
           </span>
         }
@@ -57,7 +57,9 @@ const SettingsPopover: React.FC = () => {
       >
         <div className="p-4">
           <div className="mb-4 text-center">
-            <h2 className="text-primaryText text-xl font-semibold">Settings</h2>
+            <h2 className="text-primaryText text-xl font-semibold">
+              Notifications
+            </h2>
           </div>
 
           {!isVerified ? (
