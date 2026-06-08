@@ -1,10 +1,8 @@
 import { useMutation } from "@tanstack/react-query";
 import { toast } from "react-toastify";
 import { useAccount } from "wagmi";
-import { type Products, useAtlasProvider } from "@kleros/kleros-app";
+import { useAtlasProvider } from "@kleros/kleros-app";
 import { getEmailFlowErrorMessage } from "utils/emailFlowErrors";
-
-const POH_SIGNUP_PRODUCT = "PohV2" as Products;
 
 interface UseSubmitEmailOptions {
   onSuccess?: (
@@ -42,25 +40,16 @@ export function useSubmitEmail(options?: UseSubmitEmailOptions) {
           // If not verified, we allow falling through to updateEmail to trigger a resend/update
         }
 
-        const updated = await updateEmail(
-          { newEmail: trimmedEmail },
-          POH_SIGNUP_PRODUCT,
-        );
+        const updated = await updateEmail({ newEmail: trimmedEmail });
         if (!updated) throw new Error("Failed to update email");
         return true;
       }
 
       try {
-        const added = await addUser(
-          { email: trimmedEmail },
-          POH_SIGNUP_PRODUCT,
-        );
+        const added = await addUser({ email: trimmedEmail });
         if (!added) throw new Error("Failed to save email");
       } catch {
-        const updated = await updateEmail(
-          { newEmail: trimmedEmail },
-          POH_SIGNUP_PRODUCT,
-        );
+        const updated = await updateEmail({ newEmail: trimmedEmail });
         if (!updated) throw new Error("Failed to update email");
       }
       return true;
