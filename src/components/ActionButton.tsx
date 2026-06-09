@@ -13,6 +13,9 @@ export interface ActionButtonProps {
   className?: string;
   variant?: ActionButtonVariant;
   tooltip?: string;
+  /** Make the tooltip wrapper span the full width so a `w-full` button isn't
+   * collapsed to content width by the default `md:w-fit` wrapper. */
+  fullWidth?: boolean;
 }
 
 const buttonStyles = {
@@ -36,6 +39,7 @@ const ActionButton = React.forwardRef<HTMLButtonElement, ActionButtonProps>(
       className = "",
       variant = "primary",
       tooltip,
+      fullWidth = false,
     },
     ref,
   ) => {
@@ -45,7 +49,10 @@ const ActionButton = React.forwardRef<HTMLButtonElement, ActionButtonProps>(
       className,
     );
 
-    const mergedWrapperClasses = "relative group w-full md:w-fit";
+    const mergedWrapperClasses = twMerge(
+      "relative group w-full md:w-fit",
+      fullWidth && "md:w-full",
+    );
 
     const buttonContent = (
       <>
