@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Ref, forwardRef } from "react";
+import { attachmentHref } from "utils/ipfs";
 import Options from "./Options";
 import RegisterLink from "./RegisterLink";
 import WalletSection from "./WalletSection";
@@ -36,6 +37,7 @@ const MobileMenu = forwardRef(
   ) => {
     const searchParams = useSearchParams();
     const currentUrl = searchParams.get("url");
+    const policyHref = attachmentHref(policy);
 
     return (
       <div
@@ -56,12 +58,14 @@ const MobileMenu = forwardRef(
             setPendingRegisterIntent={setPendingRegisterIntent}
             className={`text-lg ${pathname.includes("/claim") ? "font-bold" : ""}`}
           />
-          <Link
-            href={`/attachment?url=${policy}`}
-            className={`text-lg ${currentUrl?.includes(policy) ? "font-bold" : ""}`}
-          >
-            Policy
-          </Link>
+          {policyHref && (
+            <Link
+              href={policyHref}
+              className={`text-lg ${currentUrl?.includes(policy) ? "font-bold" : ""}`}
+            >
+              Policy
+            </Link>
+          )}
           <Link
             href="/app"
             className={`text-lg ${pathname.startsWith("/app") ? "font-bold" : ""}`}

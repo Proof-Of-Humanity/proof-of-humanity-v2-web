@@ -1,10 +1,28 @@
 import React from "react";
 import DocViewer, { DocViewerRenderers } from "@cyntler/react-doc-viewer";
 import { IS_MOBILE } from "utils/media";
+import HtmlRenderer from "./Viewers/HtmlViewer";
+import MarkdownRenderer from "./Viewers/MarkdownViewer";
 
 import "@cyntler/react-doc-viewer/dist/index.css";
 
-import MarkdownRenderer from "./Viewers/MarkdownViewer";
+const SAFE_FILE_TYPES = new Set<string>([
+  "pdf",
+  "application/pdf",
+  "jpg",
+  "jpeg",
+  "image/jpg",
+  "image/jpeg",
+  "png",
+  "image/png",
+  "webp",
+  "image/webp",
+  "video/mp4",
+]);
+
+const SafeDocViewerRenderers = DocViewerRenderers.filter((renderer) =>
+  renderer.fileTypes.some((fileType: string) => SAFE_FILE_TYPES.has(fileType)),
+).concat(MarkdownRenderer, HtmlRenderer);
 
 /**
  * @description this viewer supports loading multiple files, it can load urls, local files, etc
@@ -18,7 +36,7 @@ const FileViewer: React.FC<{ url: string }> = ({ url }) => {
     <div className="text-primaryText">
       <DocViewer
         documents={docs}
-        pluginRenderers={[...DocViewerRenderers, MarkdownRenderer]}
+        pluginRenderers={SafeDocViewerRenderers}
         config={{
           header: {
             disableHeader: true,

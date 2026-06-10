@@ -17,7 +17,7 @@ import {
   RequestStatus,
 } from "utils/status";
 import { prettifyId } from "utils/identifier";
-import { ipfs } from "utils/ipfs";
+import { safeIpfs } from "utils/ipfs";
 import { RequestsQueryItem } from "./Grid";
 import InfoIcon from "icons/info.svg";
 
@@ -89,12 +89,15 @@ const Content = ({
     revocation && humanity.registration?.claimer.id
       ? humanity.registration.claimer.id
       : requester;
+  const photoUrl = safeIpfs(data?.photo);
 
   return (
     <div className="flex h-full flex-col items-center p-3">
       <div
         className={"h-32 w-32 rounded-full bg-cover bg-center bg-no-repeat"}
-        style={{ backgroundImage: `url('${ipfs(data?.photo!)}')` }}
+        style={
+          photoUrl ? { backgroundImage: `url('${photoUrl}')` } : undefined
+        }
       />
       <span className="text-primaryText my-2 truncate font-semibold">
         {name}
