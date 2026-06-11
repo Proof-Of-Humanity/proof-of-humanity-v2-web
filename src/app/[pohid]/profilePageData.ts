@@ -167,7 +167,8 @@ export type ProfilePageData = {
   claimedHomeChain: NonNullable<ReturnType<typeof idToChain>> | null;
   mainCardRequest?: EnrichedDisplayRequest;
   canShowRenewSection: boolean;
-  canRenew: boolean;
+  canRenew: boolean | null;
+  renewalAvailableAt?: number;
   crossChainState: CrossChainState;
   crossChainGatewayId?: `0x${string}`;
   lastTransferTimestamp?: number;
@@ -238,11 +239,17 @@ export const getProfilePageData = cache(async (pohId: `0x${string}`) => {
     showsWinningRequestCard ? profileState.latestWinningRequest : undefined;
   const canShowRenewSection =
     !!claimedRegistration && !profileState.pendingRevocation;
+  const renewalAvailableAt =
+    claimedRegistration && claimedHomeChainContractData
+      ? Number(claimedRegistration.expirationTime) -
+        Number(claimedHomeChainContractData.renewalPeriodDuration)
+      : undefined;
   const canRenew =
-    canShowRenewSection &&
-    !!homeChain &&
-    Number(claimedRegistration?.expirationTime || 0) - nowSeconds <
-      Number(contractData[homeChain.id]?.renewalPeriodDuration || 0);
+    canShowRenewSection && renewalAvailableAt !== undefined
+      ? renewalAvailableAt < nowSeconds
+      : canShowRenewSection
+        ? null
+        : false;
   const crossChainState = deriveCrossChainState({
     pageState,
     pendingRevocation: profileState.pendingRevocation,
@@ -317,6 +324,7 @@ export const getProfilePageData = cache(async (pohId: `0x${string}`) => {
     mainCardRequest,
     canShowRenewSection,
     canRenew,
+    renewalAvailableAt,
     crossChainState,
     crossChainGatewayId,
     lastTransferTimestamp,
