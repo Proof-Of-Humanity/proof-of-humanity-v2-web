@@ -18,12 +18,7 @@ import type {
   RegistrationFile,
 } from "types/docs";
 import { prettifyId } from "utils/identifier";
-import {
-  attachmentHref,
-  getIpfsUrl,
-  ipfsFetch,
-  safeAttachmentUrl,
-} from "utils/ipfs";
+import { getIpfsUrl, ipfsFetch, safeAttachmentUrl } from "utils/ipfs";
 import type { Address } from "viem";
 import type {
   RequestChain,
@@ -251,10 +246,10 @@ export async function PolicyLink({
     const policyLink = (await ipfsFetch<MetaEvidenceFile>(metaEvidenceUri))
       .fileURI;
 
-    if (!policyLink) return null;
-    const href = attachmentHref(safeAttachmentUrl(policyLink));
+    const url = safeAttachmentUrl(policyLink);
 
-    if (!href) return null;
+    if (!url) return null;
+    const href = `/attachment?url=${encodeURIComponent(url)}`;
 
     return (
       <div className="flex w-full flex-col items-center font-normal md:flex-row md:items-end md:justify-end">

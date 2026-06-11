@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { sepolia } from "viem/chains";
 import ExternalLink from "components/ExternalLink";
-import { attachmentHref } from "utils/ipfs";
+import { safeAttachmentUrl } from "utils/ipfs";
 import RegisterLink from "./RegisterLink";
 
 interface DesktopNavigationProps {
@@ -30,7 +30,9 @@ const DesktopNavigation = ({
 }: DesktopNavigationProps) => {
   const searchParams = useSearchParams();
   const currentUrl = searchParams.get("url");
-  const policyHref = attachmentHref(policy);
+  const policyUrl = safeAttachmentUrl(policy);
+  const policyHref =
+    policyUrl && `/attachment?url=${encodeURIComponent(policyUrl)}`;
 
   return (
     <div className="my-2 hidden gap-x-8 whitespace-nowrap md:flex">
