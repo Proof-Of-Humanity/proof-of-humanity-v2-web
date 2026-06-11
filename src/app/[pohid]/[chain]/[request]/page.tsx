@@ -66,8 +66,10 @@ export default async function Request({ params }: PageProps) {
     );
     // With every subgraph down there is no degraded view worth rendering, so
     // surface a real error; a single dead chain degrades to a partial view
-    // built from the live chains' records.
-    if (!(await isAnySubgraphAlive()))
+    // built from the live chains' records. Contract data can also fail via
+    // RPC or IPFS, which says nothing about subgraph health, so the probe
+    // only runs when the request query (pure subgraph) itself failed.
+    if (requestResult.status === "rejected" && !(await isAnySubgraphAlive()))
       throw new SubgraphUnavailableError(reasons);
     return <DegradedRequestPage chain={chain} pohId={pohId} />;
   }

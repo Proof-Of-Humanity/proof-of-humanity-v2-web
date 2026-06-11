@@ -31,7 +31,10 @@ export default async function RootLayout({ children }: RootLayoutProps) {
   const policy = await getContractData(defaultChain.id)
     .then((contractData) => contractData.arbitrationInfo.policy)
     .catch((err) => {
-      console.error("Failed to load policy from subgraph:", err);
+      console.error(
+        "Failed to load layout policy (subgraph, RPC, or IPFS):",
+        err,
+      );
       return "";
     });
 

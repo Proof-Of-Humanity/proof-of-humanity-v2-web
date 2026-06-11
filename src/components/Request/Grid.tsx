@@ -300,7 +300,7 @@ function RequestsGrid() {
           Unable to load profiles right now.
         </span>
         <span className="text-secondaryText text-sm">
-          The subgraphs appear to be unavailable. Please try again later.
+          Our data services appear to be unavailable. Please try again later.
         </span>
       </div>
     );
