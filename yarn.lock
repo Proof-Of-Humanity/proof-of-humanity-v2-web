@@ -2134,10 +2134,10 @@
     "@jridgewell/resolve-uri" "^3.1.0"
     "@jridgewell/sourcemap-codec" "^1.4.14"
 
-"@kleros/kleros-app@^2.1.0":
-  version "2.1.1"
-  resolved "https://registry.yarnpkg.com/@kleros/kleros-app/-/kleros-app-2.1.1.tgz#624d292758ae576ef82d561ed973371e3b1af3c6"
-  integrity sha512-VQqCTh4lJ/mtSfJv9NyIwCQn2Ym7ycCA3lUK3r2G6or/DnX+0ZKX713mf6JI5/wTRu0fOXL+e+yqJBjWylbXMg==
+"@kleros/kleros-app@3.0.1":
+  version "3.0.1"
+  resolved "https://registry.yarnpkg.com/@kleros/kleros-app/-/kleros-app-3.0.1.tgz#1daf9d4313933fffeab76b0729c2d45871c390d0"
+  integrity sha512-q+sI9q/DaQfLbHKfZ17/U27gX17NE6oqJ8UAWE9WUOuYQsdUL9NjfTjUuCvYkix7i7r1L7g6GGBjypwMd06a+A==
   dependencies:
     jose "^5.9.6"
 

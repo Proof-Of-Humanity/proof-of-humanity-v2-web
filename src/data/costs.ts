@@ -23,21 +23,29 @@ export const getArbitrationCost = cache(
 );
 
 export const getTotalCosts = cache(
-  async (contractData: Record<SupportedChainId, ContractData>) => {
+  async (contractData: Record<SupportedChainId, ContractData | null>) => {
     const res = await Promise.all(
-      supportedChains.map(
-        async (chain) =>
-          ((await getArbitrationCost(
-            chain,
-            contractData[chain.id].arbitrationInfo.arbitrator,
-            contractData[chain.id].arbitrationInfo.extraData,
-          )) as bigint) + BigInt(contractData[chain.id].baseDeposit),
-      ),
+      supportedChains.map(async (chain): Promise<bigint | null> => {
+        const data = contractData[chain.id];
+        if (!data) return null;
+        try {
+          return (
+            ((await getArbitrationCost(
+              chain,
+              data.arbitrationInfo.arbitrator,
+              data.arbitrationInfo.extraData,
+            )) as bigint) + BigInt(data.baseDeposit)
+          );
+        } catch (err) {
+          console.error(`Arbitration cost fetch failed on ${chain.name}:`, err);
+          return null;
+        }
+      }),
     );
 
     return supportedChains.reduce(
-      (acc, chain, i) => ({ ...acc, [chain.id]: res[i] }),
-      {} as Record<SupportedChainId, bigint>,
+      (acc, chain, i) => ({ ...acc, [chain.id]: res[i] ?? null }),
+      {} as Record<SupportedChainId, bigint | null>,
     );
   },
 );

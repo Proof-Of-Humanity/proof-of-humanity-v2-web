@@ -55,7 +55,7 @@ export interface SubmissionState {
 }
 
 export interface FormProps {
-  contractData: Record<SupportedChainId, ContractData>;
+  contractData: Record<SupportedChainId, ContractData | null>;
   fallbackTotalCosts: Record<SupportedChainId, string>;
   renewal?: RegistrationQuery["registration"] & {
     chain: SupportedChain;
@@ -63,7 +63,25 @@ export interface FormProps {
   hasPastVerifiedClaim?: boolean;
 }
 
-export default function Form({
+export default function Form(props: FormProps) {
+  const chainId = useChainId() as SupportedChainId;
+
+  if (!props.contractData[chainId])
+    return (
+      <span className="text-primaryText m-auto flex flex-col items-center gap-2 py-16 text-center">
+        <span className="font-semibold">
+          Registration data for this network is currently unavailable.
+        </span>
+        <span className="text-secondaryText text-sm">
+          Please switch to another network or try again later.
+        </span>
+      </span>
+    );
+
+  return <FormContent {...props} />;
+}
+
+function FormContent({
   contractData,
   fallbackTotalCosts,
   renewal,
@@ -75,7 +93,9 @@ export default function Form({
   const chainId = useChainId() as SupportedChainId;
 
   const { uploadFile: uploadToIPFS } = useAtlasProvider();
-  const currentContractData = contractData[chainId];
+  // Non-null: the Form wrapper only renders this component when the
+  // connected chain's contract data is available.
+  const currentContractData = contractData[chainId]!;
   const currentBaseDeposit = BigInt(currentContractData.baseDeposit);
   const syncedFundingChainId = useRef<SupportedChainId | null>(null);
 
@@ -418,7 +438,7 @@ export default function Form({
               totalCost={currentTotalCost}
               contractData={contractData}
               state$={state$}
-              arbitrationInfo={contractData[chainId].arbitrationInfo}
+              arbitrationInfo={currentContractData.arbitrationInfo}
               media$={media$}
               selfFunded$={selfFunded$}
               submitForFree$={submitForFree$}
@@ -428,9 +448,9 @@ export default function Form({
           ),
           [Step.finalized]: () => (
             <Finalized
-              requiredVouches={contractData[chainId].requiredNumberOfVouches}
+              requiredVouches={currentContractData.requiredNumberOfVouches}
               challengePeriodDuration={Number(
-                contractData[chainId].challengePeriodDuration,
+                currentContractData.challengePeriodDuration,
               )}
               pohId={params.pohid as string}
             />

@@ -1,6 +1,12 @@
 "use client";
 
-import React, { createContext, useContext, useState } from "react";
+import React, {
+  createContext,
+  useCallback,
+  useContext,
+  useMemo,
+  useState,
+} from "react";
 
 interface SettingsPopoverContextType {
   isOpen: boolean;
@@ -32,16 +38,22 @@ export const SettingsPopoverProvider: React.FC<
 > = ({ children }) => {
   const [isOpen, setIsOpen] = useState(false);
 
-  const openSettingsPopover = () => setIsOpen(true);
-  const closeSettingsPopover = () => setIsOpen(false);
-  const toggleSettingsPopover = () => setIsOpen(!isOpen);
+  const openSettingsPopover = useCallback(() => setIsOpen(true), []);
+  const closeSettingsPopover = useCallback(() => setIsOpen(false), []);
+  const toggleSettingsPopover = useCallback(
+    () => setIsOpen((prev) => !prev),
+    [],
+  );
 
-  const value = {
-    isOpen,
-    openSettingsPopover,
-    closeSettingsPopover,
-    toggleSettingsPopover,
-  };
+  const value = useMemo(
+    () => ({
+      isOpen,
+      openSettingsPopover,
+      closeSettingsPopover,
+      toggleSettingsPopover,
+    }),
+    [isOpen, openSettingsPopover, closeSettingsPopover, toggleSettingsPopover],
+  );
 
   return (
     <SettingsPopoverContext.Provider value={value}>

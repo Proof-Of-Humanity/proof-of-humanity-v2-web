@@ -23,7 +23,6 @@ export default async function ProfileSummarySection({
   try {
     const {
       humanity,
-      contractData,
       profileState,
       pageState,
       claimedRegistration,
@@ -32,6 +31,7 @@ export default async function ProfileSummarySection({
       latestWinningRequest,
       canShowRenewSection,
       canRenew,
+      renewalAvailableAt,
     } = await getProfilePageData(pohId);
 
     const showsWinningRequestCard =
@@ -137,15 +137,13 @@ export default async function ProfileSummarySection({
             {canShowRenewSection && claimedHomeChain && claimedRegistration ? (
               canRenew ? (
                 <Renew claimer={claimedRegistration.claimer.id} pohId={pohId} />
+              ) : renewalAvailableAt !== undefined ? (
+                <span className="text-secondaryText mb-4">
+                  Renewal available <TimeAgo time={renewalAvailableAt} />
+                </span>
               ) : (
                 <span className="text-secondaryText mb-4">
-                  Renewal available{" "}
-                  <TimeAgo
-                    time={
-                      +claimedRegistration.expirationTime -
-                      +contractData[claimedHomeChain.id].renewalPeriodDuration
-                    }
-                  />
+                  Renewal timing is temporarily unavailable.
                 </span>
               )
             ) : null}

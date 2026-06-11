@@ -32,13 +32,17 @@ export default async function Claim({ params }: PageProps) {
   const registrationChain = supportedChains.find(
     (chain) => registrationData[chain.id],
   );
+  const registrationContractData = registrationChain
+    ? contractData[registrationChain.id]
+    : null;
   const isRenewal =
     registrationChain &&
+    registrationContractData &&
     +registrationData[registrationChain.id]!.expirationTime -
       Date.now() / 1000 <
-      +contractData[registrationChain.id].renewalPeriodDuration;
+      +registrationContractData.renewalPeriodDuration;
 
-  if (registrationChain && !isRenewal) {
+  if (registrationChain && registrationContractData && !isRenewal) {
     redirect(`/${pohid}`, RedirectType.replace);
   }
 
@@ -48,6 +52,20 @@ export default async function Claim({ params }: PageProps) {
 
   const totalCosts = await getTotalCosts(contractData);
 
+  if (registrationChain && !registrationContractData) {
+    return (
+      <div className="content paper flex flex-col items-center px-4 py-12 text-center sm:px-8 lg:px-10">
+        <span className="text-primaryText text-lg font-semibold">
+          Renewal data is temporarily unavailable.
+        </span>
+        <span className="text-secondaryText mt-2 max-w-xl text-sm leading-6">
+          We couldn&apos;t load the contract data needed to check whether this
+          active registration can be renewed. Please try again later.
+        </span>
+      </div>
+    );
+  }
+
   return (
     <div className="content paper flex flex-col px-4 py-4 sm:px-8 sm:py-6 lg:px-10 lg:py-6">
       <FormLoader
@@ -55,7 +73,7 @@ export default async function Claim({ params }: PageProps) {
         fallbackTotalCosts={supportedChains.reduce(
           (acc, chain) => ({
             ...acc,
-            [chain.id]: totalCosts[chain.id].toString(),
+            [chain.id]: totalCosts[chain.id]?.toString() ?? "",
           }),
           {} as Record<(typeof supportedChains)[number]["id"], string>,
         )}

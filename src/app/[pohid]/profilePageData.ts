@@ -167,7 +167,8 @@ export type ProfilePageData = {
   claimedHomeChain: NonNullable<ReturnType<typeof idToChain>> | null;
   mainCardRequest?: EnrichedDisplayRequest;
   canShowRenewSection: boolean;
-  canRenew: boolean;
+  canRenew: boolean | null;
+  renewalAvailableAt?: number;
   crossChainState: CrossChainState;
   crossChainGatewayId?: `0x${string}`;
   lastTransferTimestamp?: number;
@@ -222,12 +223,15 @@ export const getProfilePageData = cache(async (pohId: `0x${string}`) => {
       : undefined;
   const claimedHomeChain = claimedRegistration && homeChain ? homeChain : null;
 
+  const claimedHomeChainContractData = claimedHomeChain
+    ? contractData[claimedHomeChain.id]
+    : null;
   const arbitrationCost =
-    claimedHomeChain && claimedRegistration
+    claimedHomeChain && claimedRegistration && claimedHomeChainContractData
       ? await getArbitrationCost(
           claimedHomeChain,
-          contractData[claimedHomeChain.id].arbitrationInfo.arbitrator,
-          contractData[claimedHomeChain.id].arbitrationInfo.extraData,
+          claimedHomeChainContractData.arbitrationInfo.arbitrator,
+          claimedHomeChainContractData.arbitrationInfo.extraData,
         )
       : 0n;
 
@@ -235,11 +239,17 @@ export const getProfilePageData = cache(async (pohId: `0x${string}`) => {
     showsWinningRequestCard ? profileState.latestWinningRequest : undefined;
   const canShowRenewSection =
     !!claimedRegistration && !profileState.pendingRevocation;
+  const renewalAvailableAt =
+    claimedRegistration && claimedHomeChainContractData
+      ? Number(claimedRegistration.expirationTime) -
+        Number(claimedHomeChainContractData.renewalPeriodDuration)
+      : undefined;
   const canRenew =
-    canShowRenewSection &&
-    !!homeChain &&
-    Number(claimedRegistration?.expirationTime || 0) - nowSeconds <
-      Number(contractData[homeChain.id]?.renewalPeriodDuration || 0);
+    canShowRenewSection && renewalAvailableAt !== undefined
+      ? renewalAvailableAt < nowSeconds
+      : canShowRenewSection
+        ? null
+        : false;
   const crossChainState = deriveCrossChainState({
     pageState,
     pendingRevocation: profileState.pendingRevocation,
@@ -277,14 +287,14 @@ export const getProfilePageData = cache(async (pohId: `0x${string}`) => {
     });
   }
 
-  const crossChainGatewayId = homeChain
-    ? contractData[homeChain.id].gateways[
-        contractData[homeChain.id].gateways.length - 1
-      ]?.id
+  const homeChainContractData = homeChain ? contractData[homeChain.id] : null;
+  const crossChainGatewayId = homeChainContractData
+    ? homeChainContractData.gateways[homeChainContractData.gateways.length - 1]
+        ?.id
     : undefined;
   const transferCooldownEndsAt =
-    homeChain && lastTransferTimestamp
-      ? lastTransferTimestamp + contractData[homeChain.id].transferCooldown
+    homeChainContractData && lastTransferTimestamp
+      ? lastTransferTimestamp + homeChainContractData.transferCooldown
       : undefined;
   const crossChainProps =
     homeChain && crossChainState.canShowCrossChain
@@ -314,6 +324,7 @@ export const getProfilePageData = cache(async (pohId: `0x${string}`) => {
     mainCardRequest,
     canShowRenewSection,
     canRenew,
+    renewalAvailableAt,
     crossChainState,
     crossChainGatewayId,
     lastTransferTimestamp,
