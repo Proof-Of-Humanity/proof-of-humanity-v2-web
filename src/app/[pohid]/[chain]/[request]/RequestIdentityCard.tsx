@@ -18,7 +18,7 @@ import type {
   RegistrationFile,
 } from "types/docs";
 import { prettifyId } from "utils/identifier";
-import { getIpfsUrl, ipfsFetch, safeAttachmentUrl } from "utils/ipfs";
+import { ipfsFetch, safeIpfsUrl } from "utils/ipfs";
 import type { Address } from "viem";
 import type {
   RequestChain,
@@ -134,7 +134,7 @@ function ProfileSummary({
   bioClassName: string;
   nameClassName: string;
 }) {
-  const photoUrl = getIpfsUrl(registrationFile?.photo);
+  const photoUrl = safeIpfsUrl(registrationFile?.photo);
 
   return (
     <>
@@ -246,7 +246,7 @@ export async function PolicyLink({
     const policyLink = (await ipfsFetch<MetaEvidenceFile>(metaEvidenceUri))
       .fileURI;
 
-    const url = safeAttachmentUrl(policyLink);
+    const url = safeIpfsUrl(policyLink);
 
     if (!url) return null;
     const href = `/attachment?url=${encodeURIComponent(url)}`;
@@ -311,7 +311,7 @@ export async function MobileIdentityMedia({
   const registrationFile = await identityFiles.registrationFilePromise;
   const displayedClaimerName =
     registrationFile?.name || identity.claimer.name || "";
-  const videoUrl = getIpfsUrl(registrationFile?.video);
+  const videoUrl = safeIpfsUrl(registrationFile?.video);
 
   return (
     <>

@@ -5,7 +5,7 @@ import useIPFS from "hooks/useIPFS";
 import { Suspense } from "react";
 import { EvidenceFile, RegistrationFile } from "types/docs";
 import { shortenAddress } from "utils/address";
-import { getIpfsUrl } from "utils/ipfs";
+import { safeIpfsUrl } from "utils/ipfs";
 import { Address } from "viem";
 
 export interface ProfileTimelineHeaderProps {
@@ -32,7 +32,7 @@ function HeaderContent({
     data && claimer.name && data.name !== claimer.name
       ? `${data.name} (aka ${claimer.name})`
       : claimer.name || data?.name || "";
-  const photoUrl = getIpfsUrl(data?.photo);
+  const photoUrl = safeIpfsUrl(data?.photo);
 
   return (
     <div className="mb-6 flex items-center gap-3">

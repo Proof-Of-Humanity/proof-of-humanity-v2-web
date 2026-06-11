@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { sepolia } from "viem/chains";
 import ExternalLink from "components/ExternalLink";
-import { safeAttachmentUrl } from "utils/ipfs";
+import { safeIpfsUrl } from "utils/ipfs";
 import RegisterLink from "./RegisterLink";
 
 interface DesktopNavigationProps {
@@ -30,7 +30,7 @@ const DesktopNavigation = ({
 }: DesktopNavigationProps) => {
   const searchParams = useSearchParams();
   const currentUrl = searchParams.get("url");
-  const policyUrl = safeAttachmentUrl(policy);
+  const policyUrl = safeIpfsUrl(policy);
   const policyHref =
     policyUrl && `/attachment?url=${encodeURIComponent(policyUrl)}`;
 

@@ -17,7 +17,7 @@ import {
   RequestStatus,
 } from "utils/status";
 import { prettifyId } from "utils/identifier";
-import { getIpfsUrl } from "utils/ipfs";
+import { safeIpfsUrl } from "utils/ipfs";
 import { RequestsQueryItem } from "./Grid";
 import InfoIcon from "icons/info.svg";
 
@@ -89,7 +89,7 @@ const Content = ({
     revocation && humanity.registration?.claimer.id
       ? humanity.registration.claimer.id
       : requester;
-  const photoUrl = getIpfsUrl(data?.photo);
+  const photoUrl = safeIpfsUrl(data?.photo);
 
   return (
     <div className="flex h-full flex-col items-center p-3">

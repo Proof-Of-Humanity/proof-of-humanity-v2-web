@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Ref, forwardRef } from "react";
-import { safeAttachmentUrl } from "utils/ipfs";
+import { safeIpfsUrl } from "utils/ipfs";
 import Options from "./Options";
 import RegisterLink from "./RegisterLink";
 import WalletSection from "./WalletSection";
@@ -37,7 +37,7 @@ const MobileMenu = forwardRef(
   ) => {
     const searchParams = useSearchParams();
     const currentUrl = searchParams.get("url");
-    const policyUrl = safeAttachmentUrl(policy);
+    const policyUrl = safeIpfsUrl(policy);
     const policyHref =
       policyUrl && `/attachment?url=${encodeURIComponent(policyUrl)}`;
 
