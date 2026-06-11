@@ -159,22 +159,18 @@ export interface OffChainVouch {
 /**
  * @notice Fetches the request-page subgraph payload.
  * @dev The `Request` query already includes `humanity.winnerClaim`, which is
- * the identity source used by the request page.
+ * the identity source used by the request page. Rejects when the chain's
+ * subgraph is unreachable so callers can distinguish an outage (rejection)
+ * from a request that does not exist (`null`).
  */
 export const getRequestPageData = cache(
-  async (chainId: SupportedChainId, pohId: Hash, index: number) => {
-    try {
-      return (
-        await sdk[chainId]["Request"]({
-          id: genRequestId(pohId, index),
-          humanityId: pohId,
-        })
-      ).request;
-    } catch (err) {
-      console.error(`Subgraph query failed on chain ${chainId}:`, err);
-      return null;
-    }
-  },
+  async (chainId: SupportedChainId, pohId: Hash, index: number) =>
+    (
+      await sdk[chainId]["Request"]({
+        id: genRequestId(pohId, index),
+        humanityId: pohId,
+      })
+    ).request,
 );
 
 export const getHistoricalWinnerClaim = cache(
@@ -202,7 +198,13 @@ export const getHistoricalWinnerClaim = cache(
 
 export const getRequestData = cache(
   async (chainId: SupportedChainId, pohId: Hash, index: number) => {
-    const out = await getRequestPageData(chainId, pohId, index);
+    let out: Awaited<ReturnType<typeof getRequestPageData>>;
+    try {
+      out = await getRequestPageData(chainId, pohId, index);
+    } catch (err) {
+      console.error(`Subgraph query failed on chain ${chainId}:`, err);
+      return null;
+    }
     return await sanitizeRequest(
       out ? structuredClone(out) : out,
       chainId,

@@ -1,4 +1,5 @@
 import { SupportedChain, supportedChains } from "config/chains";
+import { subgraph_url } from "config/subgraph";
 
 /**
  * Thrown by `settleChainQueries` when *every* supported chain's query fails.
@@ -50,4 +51,31 @@ export const settleChainQueries = async <T>(
     const result = results[i]!;
     return result.status === "fulfilled" ? result.value : fallback(chain);
   });
+};
+
+const META_QUERY = `query { _meta { block { number } } }`;
+
+/**
+ * Cheap liveness probe across every supported chain's subgraph. Used by
+ * chain-scoped pages to decide between a per-chain "data unavailable" state
+ * (some other chain is still alive) and a full `SubgraphUnavailableError`.
+ */
+export const isAnySubgraphAlive = async (): Promise<boolean> => {
+  const results = await Promise.allSettled(
+    supportedChains.map(async (chain) => {
+      const res = await fetch(subgraph_url[chain.id], {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ query: META_QUERY }),
+        cache: "no-store",
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const json = (await res.json()) as {
+        data?: { _meta?: { block?: { number?: number } } };
+      };
+      if (!json.data?._meta) throw new Error("No _meta in response");
+    }),
+  );
+
+  return results.some((result) => result.status === "fulfilled");
 };
