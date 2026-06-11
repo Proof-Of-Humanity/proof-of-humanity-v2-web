@@ -143,7 +143,10 @@ export default async function ProfileSummarySection({
                   <TimeAgo
                     time={
                       +claimedRegistration.expirationTime -
-                      +contractData[claimedHomeChain.id].renewalPeriodDuration
+                      +(
+                        contractData[claimedHomeChain.id]
+                          ?.renewalPeriodDuration ?? 0
+                      )
                     }
                   />
                 </span>

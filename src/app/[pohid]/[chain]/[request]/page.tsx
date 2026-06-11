@@ -1,4 +1,5 @@
 import { paramToChain, legacyChain } from "config/chains";
+import { SubgraphUnavailableError, isAnySubgraphAlive } from "data/chainQuery";
 import { getContractData } from "data/contract";
 import { getArbitrationCost } from "data/costs";
 import { getHumanityEvents } from "data/humanityEvents";
@@ -30,6 +31,8 @@ import {
   VouchedForSection,
 } from "./RequestVouchSection";
 import RequestPunishedVouchNotice from "components/RequestPunishedVouchNotice";
+import DegradedRequestPage from "./DegradedRequestPage";
+import { RequestNotFoundCard } from "./RequestErrorState";
 
 interface PageProps {
   params: Promise<{ pohid: string; chain: string; request: string }>;
@@ -43,11 +46,37 @@ export default async function Request({ params }: PageProps) {
 
   const pohId = machinifyId(pohid)!;
 
-  const [fetchedRequest, contractData] = await Promise.all([
+  const [requestResult, contractResult] = await Promise.allSettled([
     getRequestPageData(chain.id, pohId, +requestParam),
     getContractData(chain.id),
   ]);
-  if (!fetchedRequest) return <span>Error occured</span>;
+
+  if (
+    requestResult.status === "rejected" ||
+    contractResult.status === "rejected"
+  ) {
+    const reasons = [requestResult, contractResult]
+      .filter(
+        (result): result is PromiseRejectedResult =>
+          result.status === "rejected",
+      )
+      .map((result) => result.reason);
+    reasons.forEach((reason) =>
+      console.error(`Request page data failed on ${chain.name}:`, reason),
+    );
+    // With every subgraph down there is no degraded view worth rendering, so
+    // surface a real error; a single dead chain degrades to a partial view
+    // built from the live chains' records. Contract data can also fail via
+    // RPC or IPFS, which says nothing about subgraph health, so the probe
+    // only runs when the request query (pure subgraph) itself failed.
+    if (requestResult.status === "rejected" && !(await isAnySubgraphAlive()))
+      throw new SubgraphUnavailableError(reasons);
+    return <DegradedRequestPage chain={chain} pohId={pohId} />;
+  }
+
+  const fetchedRequest = requestResult.value;
+  const contractData = contractResult.value;
+  if (!fetchedRequest) return <RequestNotFoundCard chainName={chain.name} />;
 
   const needsHistoricalIdentity =
     fetchedRequest.revocation || Number(fetchedRequest.index) <= -100;
@@ -73,7 +102,7 @@ export default async function Request({ params }: PageProps) {
     request.status.id === "vouching" &&
     Number(request.index) <= -1
   )
-    return <span>Request not found</span>;
+    return <RequestNotFoundCard chainName={chain.name} />;
 
   const arbitrationCost = await getArbitrationCost(
     chain,

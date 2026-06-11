@@ -1,4 +1,4 @@
-import { SupportedChainId, supportedChains } from "config/chains";
+import { SupportedChainId } from "config/chains";
 import { sdk } from "config/subgraph";
 import {
   HumanityEventType,
@@ -7,6 +7,7 @@ import {
 } from "generated/graphql";
 import { cache } from "react";
 import { Hash } from "viem";
+import { settleChainQueries } from "./chainQuery";
 import { genRequestId } from "./request";
 
 export interface HumanityEventRecord {
@@ -68,10 +69,9 @@ const getHumanityEventsForChain = async (
 };
 
 export const getHumanityEvents = cache(async (humanityId: Hash) => {
-  const results = await Promise.all(
-    supportedChains.map((chain) =>
-      getHumanityEventsForChain(chain.id, humanityId),
-    ),
+  const results = await settleChainQueries(
+    (chain) => getHumanityEventsForChain(chain.id, humanityId),
+    (): HumanityEventRecord[] => [],
   );
 
   const flattened = results
@@ -83,12 +83,17 @@ export const getHumanityEvents = cache(async (humanityId: Hash) => {
 
 export const getTimelineRequestNode = cache(
   async (chainId: SupportedChainId, humanityId: Hash, index: number) => {
-    const response = await sdk[chainId].RequestTimelineNode({
-      id: genRequestId(humanityId, index),
-    });
+    try {
+      const response = await sdk[chainId].RequestTimelineNode({
+        id: genRequestId(humanityId, index),
+      });
 
-    if (!response.request) return null;
+      if (!response.request) return null;
 
-    return toTimelineRequestNode(chainId, response.request);
+      return toTimelineRequestNode(chainId, response.request);
+    } catch (err) {
+      console.error(`Subgraph query failed on chain ${chainId}:`, err);
+      return null;
+    }
   },
 );

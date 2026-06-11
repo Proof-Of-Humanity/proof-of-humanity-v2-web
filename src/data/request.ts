@@ -9,7 +9,10 @@ import { sdk } from "config/subgraph";
 import { RequestsQuery } from "generated/graphql";
 import { cache } from "react";
 import { Address, Hash, concat, keccak256, toHex } from "viem";
+import { settleChainQueries } from "./chainQuery";
 import { sanitizeHeadRequests, sanitizeRequest } from "./sanitizer";
+
+const emptyRequests = (): RequestsQuery => ({ requests: [] });
 
 const PROFILES_DISPLAY_REQUIRED_REQS = 12 * 4;
 
@@ -34,15 +37,15 @@ const completeCrossChains = async (
     {} as Record<SupportedChainId, RequestsQuery["requests"]>,
   );
 
-  const res = await Promise.all(
-    supportedChains.map((chain) =>
+  const res = await settleChainQueries(
+    (chain) =>
       sdk[chain.id].Requests({
         where: {
           humanity_: { id_in: humIds[getForeignChain(chain.id)] },
         },
         first: PROFILES_DISPLAY_REQUIRED_REQS,
       }),
-    ),
+    emptyRequests,
   );
 
   const outPlus = supportedChains.reduce(
@@ -61,12 +64,12 @@ const completeCrossChains = async (
 };
 
 const _getPagedRequests = async () => {
-  const res = await Promise.all(
-    supportedChains.map((chain) =>
+  const res = await settleChainQueries(
+    (chain) =>
       sdk[chain.id].Requests({
         first: PROFILES_DISPLAY_REQUIRED_REQS,
       }),
-    ),
+    emptyRequests,
   );
   const out = supportedChains.reduce(
     (acc, chain, i) => ({
@@ -88,13 +91,19 @@ export const getRequestsLoadingPromises = async (
   where: any,
   skipNumber: number,
 ): Promise<RequestsQuery> => {
-  const result = await sdk[chainId].Requests({
-    where: {
-      ...where,
-    },
-    first: PROFILES_DISPLAY_REQUIRED_REQS,
-    skip: skipNumber,
-  });
+  let result: RequestsQuery;
+  try {
+    result = await sdk[chainId].Requests({
+      where: {
+        ...where,
+      },
+      first: PROFILES_DISPLAY_REQUIRED_REQS,
+      skip: skipNumber,
+    });
+  } catch (err) {
+    console.error(`Subgraph query failed on chain ${chainId}:`, err);
+    return emptyRequests();
+  }
 
   // Manually filter out legacy vouching requests (index <= -1) for legacy chain
   if (chainId === legacyChain.id) {
@@ -150,17 +159,18 @@ export interface OffChainVouch {
 /**
  * @notice Fetches the request-page subgraph payload.
  * @dev The `Request` query already includes `humanity.winnerClaim`, which is
- * the identity source used by the request page.
+ * the identity source used by the request page. Rejects when the chain's
+ * subgraph is unreachable so callers can distinguish an outage (rejection)
+ * from a request that does not exist (`null`).
  */
 export const getRequestPageData = cache(
-  async (chainId: SupportedChainId, pohId: Hash, index: number) => {
-    return (
+  async (chainId: SupportedChainId, pohId: Hash, index: number) =>
+    (
       await sdk[chainId]["Request"]({
         id: genRequestId(pohId, index),
         humanityId: pohId,
       })
-    ).request;
-  },
+    ).request,
 );
 
 export const getHistoricalWinnerClaim = cache(
@@ -188,7 +198,13 @@ export const getHistoricalWinnerClaim = cache(
 
 export const getRequestData = cache(
   async (chainId: SupportedChainId, pohId: Hash, index: number) => {
-    const out = await getRequestPageData(chainId, pohId, index);
+    let out: Awaited<ReturnType<typeof getRequestPageData>>;
+    try {
+      out = await getRequestPageData(chainId, pohId, index);
+    } catch (err) {
+      console.error(`Subgraph query failed on chain ${chainId}:`, err);
+      return null;
+    }
     return await sanitizeRequest(
       out ? structuredClone(out) : out,
       chainId,
