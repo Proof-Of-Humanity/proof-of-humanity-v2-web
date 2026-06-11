@@ -5,13 +5,13 @@ import Image from "next/image";
 import { useSearchParams } from "next/navigation";
 import React, { Suspense } from "react";
 import FileViewer from "components/FileViewer";
-import { isAllowedIpfsGatewayUrl } from "utils/ipfs";
+import { safeAttachmentUrl } from "utils/ipfs";
 import Header from "./Header";
 
 const AttachmentDisplay: React.FC = () => {
   const searchParams = useSearchParams();
   const rawUrl = searchParams.get("url");
-  const url = rawUrl && isAllowedIpfsGatewayUrl(rawUrl) ? rawUrl : null;
+  const url = safeAttachmentUrl(rawUrl);
 
   return (
     <div className="bg-primaryBackground mx-auto w-[96vw] max-w-[1500px] px-6 py-8 md:w-[80vw]">
