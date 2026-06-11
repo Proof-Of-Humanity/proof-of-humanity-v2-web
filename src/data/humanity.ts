@@ -3,11 +3,13 @@ import { sdk } from "config/subgraph";
 import { HumanityQuery } from "generated/graphql";
 import { cache } from "react";
 import { Hash } from "viem";
+import { settleChainQueries } from "./chainQuery";
 import { sanitizeHumanityRequests } from "./sanitizer";
 
 export const getHumanityData = cache(async (pohId: Hash) => {
-  const res = await Promise.all(
-    supportedChains.map((chain) => sdk[chain.id].Humanity({ id: pohId })),
+  const res = await settleChainQueries(
+    (chain) => sdk[chain.id].Humanity({ id: pohId }),
+    (): HumanityQuery => ({ humanity: null }),
   );
   const legacyChainIndex = supportedChains.findIndex(
     (c) => c.id === legacyChain.id,

@@ -48,16 +48,18 @@ export default async function ProfileActionsSection({
           base={baseSnapshot}
           storageKey={`profile:${pohId}`}
         >
-          {claimedRegistration && claimedHomeChain ? (
+          {claimedRegistration &&
+          claimedHomeChain &&
+          contractData[claimedHomeChain.id] ? (
             <Revoke
               pohId={pohId}
               arbitrationInfo={
-                contractData[claimedHomeChain.id].arbitrationInfo!
+                contractData[claimedHomeChain.id]!.arbitrationInfo!
               }
               homeChain={claimedHomeChain}
               cost={
                 arbitrationCost +
-                BigInt(contractData[claimedHomeChain.id].baseDeposit)
+                BigInt(contractData[claimedHomeChain.id]!.baseDeposit)
               }
             />
           ) : null}

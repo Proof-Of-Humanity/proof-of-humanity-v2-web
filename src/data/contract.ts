@@ -5,6 +5,7 @@ import { cache } from "react";
 import { MetaEvidenceFile } from "types/docs";
 import { ipfsFetch } from "utils/ipfs";
 import { createPublicClient, http } from "viem";
+import { settleChainQueries } from "./chainQuery";
 
 export const getContractData = cache(async (chainId: SupportedChainId) => {
   const publicClient = createPublicClient({
@@ -42,12 +43,13 @@ export const getContractData = cache(async (chainId: SupportedChainId) => {
 export type ContractData = Awaited<ReturnType<Awaited<typeof getContractData>>>;
 
 export const getContractDataAllChains = cache(async () => {
-  const res = await Promise.all(
-    supportedChains.map((chain) => getContractData(chain.id)),
+  const res = await settleChainQueries<ContractData | null>(
+    (chain) => getContractData(chain.id),
+    () => null,
   );
 
   return supportedChains.reduce(
-    (acc, chain, i) => ({ ...acc, [chain.id]: res[i] }),
-    {} as Record<SupportedChainId, ContractData>,
+    (acc, chain, i) => ({ ...acc, [chain.id]: res[i] ?? null }),
+    {} as Record<SupportedChainId, ContractData | null>,
   );
 });

@@ -15,6 +15,7 @@ import { cache } from "react";
 import { EvidenceFile, RegistrationFile } from "types/docs";
 import { ipfsFetch } from "utils/ipfs";
 import { Address, Hash } from "viem";
+import { settleChainQueries } from "./chainQuery";
 import { getHumanityData } from "./humanity";
 import { genRequestId } from "./request";
 
@@ -74,8 +75,9 @@ export const sanitizeRequest = async (
         !request.claimer.name ||
         (!hasReg && !request.revocation)))
   ) {
-    const res = await Promise.all(
-      supportedChains.map((chain) => sdk[chain.id].Humanity({ id: pohId })),
+    const res = await settleChainQueries(
+      (chain) => sdk[chain.id].Humanity({ id: pohId }),
+      (): HumanityQuery => ({ humanity: null }),
     );
     const out = supportedChains.reduce(
       (acc, chain, i) => ({ ...acc, [chain.id]: res[i] }),
@@ -121,12 +123,15 @@ export const sanitizeRequest = async (
     }
 
     if (request.index <= -100) {
-      let transferringRequestComplete = (
-        await sdk[homeChainId]["Request"]({
-          id: genRequestId(pohId, Number(transferringRequest!.index)),
-          humanityId: pohId,
-        })
-      ).request;
+      let transferringRequestComplete = await sdk[homeChainId]["Request"]({
+        id: genRequestId(pohId, Number(transferringRequest!.index)),
+        humanityId: pohId,
+      })
+        .then((res) => res.request)
+        .catch((err) => {
+          console.error(`Subgraph query failed on chain ${homeChainId}:`, err);
+          return null;
+        });
       if (!transferringRequestComplete) {
         request.claimer.name = transferringRequest?.claimer.name;
         request.evidenceGroup = transferringRequest?.evidenceGroup as any;
@@ -328,8 +333,9 @@ const completeRequest = (request: Request, transferringRequest: Request) => {
 
 export const getProfileLastTransferringRequest = cache(
   async (chainId: SupportedChainId, pohId: Hash) => {
-    const res = await Promise.all(
-      supportedChains.map((chain) => sdk[chain.id].Humanity({ id: pohId })),
+    const res = await settleChainQueries(
+      (chain) => sdk[chain.id].Humanity({ id: pohId }),
+      (): HumanityQuery => ({ humanity: null }),
     );
     const out = supportedChains.reduce(
       (acc, chain, i) => ({ ...acc, [chain.id]: res[i] }),
