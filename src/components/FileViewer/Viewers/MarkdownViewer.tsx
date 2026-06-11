@@ -45,7 +45,7 @@ const rehypePlugins = [
         "ul",
       ],
       attributes: {
-        a: ["href", "title", "target", "rel"],
+        a: ["href", "title"],
         img: ["src", "alt", "title", "width", "height"],
         input: ["type", "checked", "disabled"],
         td: ["colspan", "rowspan"],
@@ -76,9 +76,9 @@ const MarkdownRenderer: DocRenderer = ({ mainState: { currentDocument } }) => {
           a: ({ node, ...props }) => (
             <a
               className="text-base"
+              {...props}
               rel="noopener noreferrer"
               target="_blank"
-              {...props}
             />
           ),
           code: ({ node, ...props }) => (
