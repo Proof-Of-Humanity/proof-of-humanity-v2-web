@@ -3,15 +3,16 @@ import { sdk } from "config/subgraph";
 import { ProfileHumanityQuery } from "generated/graphql";
 import { cache } from "react";
 import { Hash } from "viem";
+import { settleChainQueries } from "./chainQuery";
 
 export const getProfileData = cache(async (pohId: Hash) => {
-  const responses = await Promise.all(
-    supportedChains.map((chain) =>
+  const responses = await settleChainQueries(
+    (chain) =>
       sdk[chain.id].ProfileHumanity({
         id: pohId,
         humanityId: pohId,
       }),
-    ),
+    (): ProfileHumanityQuery => ({ humanity: null, inTransfers: [] }),
   );
 
   const data = supportedChains.reduce(

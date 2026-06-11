@@ -3,9 +3,10 @@
 import { useEffect, useState } from "react";
 import { supportedChains } from "config/chains";
 import { subgraph_url } from "config/subgraph";
+import WarningIcon from "icons/WarningCircle16.svg";
 
 type SubgraphHealth = {
-  name: string;
+  chainName: string;
   url: string;
   ok: boolean;
   hasIndexingErrors: boolean;
@@ -16,7 +17,7 @@ const META_QUERY = `query { _meta { hasIndexingErrors block { number } } }`;
 const REFRESH_INTERVAL_MS = 60_000;
 
 async function probeSubgraph(
-  name: string,
+  chainName: string,
   url: string,
 ): Promise<SubgraphHealth> {
   try {
@@ -28,7 +29,7 @@ async function probeSubgraph(
     });
     if (!res.ok) {
       return {
-        name,
+        chainName,
         url,
         ok: false,
         hasIndexingErrors: false,
@@ -42,7 +43,7 @@ async function probeSubgraph(
     const hasIndexingErrors = Boolean(json.data?._meta?.hasIndexingErrors);
     const unreachable = !json.data?._meta;
     return {
-      name,
+      chainName,
       url,
       ok: !hasIndexingErrors && !unreachable,
       hasIndexingErrors,
@@ -50,13 +51,18 @@ async function probeSubgraph(
     };
   } catch {
     return {
-      name,
+      chainName,
       url,
       ok: false,
       hasIndexingErrors: false,
       unreachable: true,
     };
   }
+}
+
+function formatChainList(names: string[]) {
+  if (names.length <= 1) return names[0] ?? "";
+  return `${names.slice(0, -1).join(", ")} and ${names[names.length - 1]}`;
 }
 
 export default function SubgraphsStatus() {
@@ -66,13 +72,13 @@ export default function SubgraphsStatus() {
     let cancelled = false;
 
     const targets = supportedChains.map((chain) => ({
-      name: `Subgraph on ${chain.name}`,
+      chainName: chain.name,
       url: subgraph_url[chain.id],
     }));
 
     const run = async () => {
       const results = await Promise.all(
-        targets.map((t) => probeSubgraph(t.name, t.url)),
+        targets.map((t) => probeSubgraph(t.chainName, t.url)),
       );
       if (cancelled) return;
       setUnhealthy(results.filter((r) => !r.ok));
@@ -88,26 +94,30 @@ export default function SubgraphsStatus() {
 
   if (unhealthy.length === 0) return null;
 
+  const chainNames = unhealthy.map((s) => s.chainName);
+  const chainList = formatChainList(chainNames);
+
   return (
     <div
       role="status"
       aria-live="polite"
-      className="sticky top-0 z-30 w-full bg-gradient-to-r from-[#ff9966] to-[#ff8ca9] px-4 py-2 text-center text-white shadow"
+      className="bg-lightOrange border-orange sticky top-0 z-30 w-full border-b shadow-sm"
     >
-      <h2 className="m-0 text-sm font-semibold leading-6 sm:text-base">
-        {unhealthy.length === 1
-          ? `${unhealthy[0]?.name ?? "Subgraph"} is degraded`
-          : `${unhealthy.length} subgraphs are degraded`}
-      </h2>
-      <p className="m-0 text-xs opacity-90 sm:text-sm">
-        {unhealthy
-          .map((s) =>
-            s.unreachable
-              ? `${s.name}: unreachable`
-              : `${s.name}: indexing errors`,
-          )
-          .join(" · ")}
-      </p>
+      <div className="mx-auto max-w-7xl px-4 py-3 text-center sm:px-6">
+        <h2 className="text-orange m-0 flex items-center justify-center gap-2 text-sm font-semibold leading-6">
+          <WarningIcon className="h-4 w-4 shrink-0" />
+          {chainNames.length === 1
+            ? `Data for ${chainList} may be incomplete or out of date`
+            : "Some data may be incomplete or out of date"}
+        </h2>
+        <p className="text-secondaryText m-0 text-xs leading-5 sm:text-sm">
+          We&apos;re having trouble syncing data from {chainList}. Profiles and
+          requests on{" "}
+          {chainNames.length === 1 ? "this network" : "these networks"} may be
+          missing or show outdated information. Nothing on chain is affected
+          please check back in a few minutes.
+        </p>
+      </div>
     </div>
   );
 }

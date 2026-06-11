@@ -222,12 +222,15 @@ export const getProfilePageData = cache(async (pohId: `0x${string}`) => {
       : undefined;
   const claimedHomeChain = claimedRegistration && homeChain ? homeChain : null;
 
+  const claimedHomeChainContractData = claimedHomeChain
+    ? contractData[claimedHomeChain.id]
+    : null;
   const arbitrationCost =
-    claimedHomeChain && claimedRegistration
+    claimedHomeChain && claimedRegistration && claimedHomeChainContractData
       ? await getArbitrationCost(
           claimedHomeChain,
-          contractData[claimedHomeChain.id].arbitrationInfo.arbitrator,
-          contractData[claimedHomeChain.id].arbitrationInfo.extraData,
+          claimedHomeChainContractData.arbitrationInfo.arbitrator,
+          claimedHomeChainContractData.arbitrationInfo.extraData,
         )
       : 0n;
 
@@ -277,14 +280,14 @@ export const getProfilePageData = cache(async (pohId: `0x${string}`) => {
     });
   }
 
-  const crossChainGatewayId = homeChain
-    ? contractData[homeChain.id].gateways[
-        contractData[homeChain.id].gateways.length - 1
-      ]?.id
+  const homeChainContractData = homeChain ? contractData[homeChain.id] : null;
+  const crossChainGatewayId = homeChainContractData
+    ? homeChainContractData.gateways[homeChainContractData.gateways.length - 1]
+        ?.id
     : undefined;
   const transferCooldownEndsAt =
-    homeChain && lastTransferTimestamp
-      ? lastTransferTimestamp + contractData[homeChain.id].transferCooldown
+    homeChainContractData && lastTransferTimestamp
+      ? lastTransferTimestamp + homeChainContractData.transferCooldown
       : undefined;
   const crossChainProps =
     homeChain && crossChainState.canShowCrossChain

@@ -36,7 +36,7 @@ export default async function Claim({ params }: PageProps) {
     registrationChain &&
     +registrationData[registrationChain.id]!.expirationTime -
       Date.now() / 1000 <
-      +contractData[registrationChain.id].renewalPeriodDuration;
+      +(contractData[registrationChain.id]?.renewalPeriodDuration ?? 0);
 
   if (registrationChain && !isRenewal) {
     redirect(`/${pohid}`, RedirectType.replace);
@@ -55,7 +55,7 @@ export default async function Claim({ params }: PageProps) {
         fallbackTotalCosts={supportedChains.reduce(
           (acc, chain) => ({
             ...acc,
-            [chain.id]: totalCosts[chain.id].toString(),
+            [chain.id]: totalCosts[chain.id]?.toString() ?? "",
           }),
           {} as Record<(typeof supportedChains)[number]["id"], string>,
         )}
