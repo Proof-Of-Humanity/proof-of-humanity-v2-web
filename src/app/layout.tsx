@@ -4,7 +4,6 @@ import { getContractData } from "data/contract";
 import { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "react-toastify/dist/ReactToastify.css";
-import { ipfs } from "utils/ipfs";
 import Footer from "./Footer";
 import Header from "./Header/index";
 import Toastify from "./Toastify";
@@ -51,7 +50,7 @@ export default async function RootLayout({ children }: RootLayoutProps) {
             <HashBasedRedirectHandler />
             <SubgraphsStatus />
             <AirdropBanner />
-            <Header policy={policy ? ipfs(policy) : ""} />
+            <Header policy={policy} />
             <main className="flex-grow">{children}</main>
             <Footer />
             <Toastify />

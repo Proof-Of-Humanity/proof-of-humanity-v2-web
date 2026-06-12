@@ -61,7 +61,7 @@ const MobileMenu = forwardRef(
           {policyHref && (
             <Link
               href={policyHref}
-              className={`text-lg ${currentUrl?.includes(policy) ? "font-bold" : ""}`}
+              className={`text-lg ${currentUrl === policy ? "font-bold" : ""}`}
             >
               Policy
             </Link>

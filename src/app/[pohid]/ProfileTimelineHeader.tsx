@@ -2,6 +2,7 @@
 
 import ErrorBoundary from "components/ErrorBoundary";
 import useIPFS from "hooks/useIPFS";
+import Image from "next/image";
 import { Suspense } from "react";
 import { EvidenceFile, RegistrationFile } from "types/docs";
 import { shortenAddress } from "utils/address";
@@ -36,10 +37,18 @@ function HeaderContent({
 
   return (
     <div className="mb-6 flex items-center gap-3">
-      <div
-        className="-ml-1 h-12 w-12 shrink-0 rounded-full bg-slate-200 bg-cover bg-center bg-no-repeat"
-        style={photoUrl ? { backgroundImage: `url('${photoUrl}')` } : undefined}
-      />
+      {photoUrl ? (
+        <Image
+          alt="Profile photo"
+          className="-ml-1 h-12 w-12 shrink-0 rounded-full object-cover"
+          src={photoUrl}
+          width={48}
+          height={48}
+          unoptimized={true}
+        />
+      ) : (
+        <div className="-ml-1 h-12 w-12 shrink-0 rounded-full bg-slate-200" />
+      )}
       <div className="min-w-0">
         <div className="text-primaryText flex items-center gap-2 text-sm font-medium">
           <span className="truncate">{name || "Unknown"}</span>
