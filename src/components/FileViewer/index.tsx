@@ -17,10 +17,6 @@ const SAFE_FILE_TYPES = new Set<string>([
   "webp",
   "image/webp",
   "video/mp4",
-  "htm",
-  "html",
-  "text/htm",
-  "text/html",
 ]);
 
 const SafeDocViewerRenderers = DocViewerRenderers.filter((renderer) =>

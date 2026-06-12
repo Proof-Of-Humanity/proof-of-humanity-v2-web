@@ -21,7 +21,9 @@ const AttachmentDisplay: React.FC = () => {
           <p className="text-primaryText text-center">
             This attachment URL is not supported.
           </p>
-        ) : url ? (
+        ) : null}
+
+        {url ? (
           <>
             <a
               href={url}
