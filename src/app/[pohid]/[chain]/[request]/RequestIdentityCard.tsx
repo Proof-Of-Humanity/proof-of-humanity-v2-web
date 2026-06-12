@@ -246,10 +246,8 @@ export async function PolicyLink({
     const policyLink = (await ipfsFetch<MetaEvidenceFile>(metaEvidenceUri))
       .fileURI;
 
-    const url = safeIpfsUrl(policyLink);
-
-    if (!url) return null;
-    const href = `/attachment?url=${encodeURIComponent(url)}`;
+    if (!policyLink) return null;
+    const href = `/attachment?url=${encodeURIComponent(policyLink)}`;
 
     return (
       <div className="flex w-full flex-col items-center font-normal md:flex-row md:items-end md:justify-end">

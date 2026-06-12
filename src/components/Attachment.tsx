@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { safeIpfsUrl } from "utils/ipfs";
 import AttachmentIcon from "icons/AttachmentMajor.svg";
 
 interface AttachmentProps {
@@ -9,12 +8,10 @@ interface AttachmentProps {
 }
 
 const Attachment: React.FC<AttachmentProps> = ({ uri }) => {
-  const url = safeIpfsUrl(uri);
-
-  if (!url) return null;
+  if (!uri) return null;
 
   return (
-    <Link href={`/attachment?url=${encodeURIComponent(url)}`}>
+    <Link href={`/attachment?url=${encodeURIComponent(uri)}`}>
       <AttachmentIcon className="h-4 w-4 fill-black" />
     </Link>
   );

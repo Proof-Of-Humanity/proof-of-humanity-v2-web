@@ -4,7 +4,6 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { sepolia } from "viem/chains";
 import ExternalLink from "components/ExternalLink";
-import { safeIpfsUrl } from "utils/ipfs";
 import RegisterLink from "./RegisterLink";
 
 interface DesktopNavigationProps {
@@ -30,9 +29,7 @@ const DesktopNavigation = ({
 }: DesktopNavigationProps) => {
   const searchParams = useSearchParams();
   const currentUrl = searchParams.get("url");
-  const policyUrl = safeIpfsUrl(policy);
-  const policyHref =
-    policyUrl && `/attachment?url=${encodeURIComponent(policyUrl)}`;
+  const policyHref = policy && `/attachment?url=${encodeURIComponent(policy)}`;
 
   return (
     <div className="my-2 hidden gap-x-8 whitespace-nowrap md:flex">
@@ -54,7 +51,7 @@ const DesktopNavigation = ({
       {policyHref && (
         <Link
           href={policyHref}
-          className={`${currentUrl?.includes(policy) ? "font-bold" : ""}`}
+          className={`${currentUrl === policy ? "font-bold" : ""}`}
         >
           Policy
         </Link>
