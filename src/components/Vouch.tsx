@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import { ipfs } from "utils/ipfs";
+import { safeIpfsUrl } from "utils/ipfs";
 import Identicon from "./Identicon";
 
 interface VouchingTooltipProps {
@@ -40,14 +40,16 @@ const Vouch: React.FC<VouchingTooltipProps> = ({
         left-1/2 -translate-x-1/2 translate-y-full m-4 mx-auto p-[8px] z-10 \
         not-italic font-normal leading-[normal] outline-black outline-color: #E5E5E5 \
         ${reducedTooltip ? "" : "w-[219px] h-[72px]"}`;
+  const photoUrl = safeIpfsUrl(photo);
+
   return (
     <Link key={key} href={pohId && href}>
       <div className="group relative flex">
-        {photo ? (
+        {photoUrl ? (
           <Image
             className={avatarClassName}
             alt="image"
-            src={ipfs(photo)}
+            src={photoUrl}
             width={64}
             height={64}
             unoptimized={true} //Skips cache
