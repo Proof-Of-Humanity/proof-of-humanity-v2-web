@@ -5,6 +5,7 @@ import { useState } from "react";
 interface ImageProps {
   uri: string;
   isVideo?: boolean;
+  openVideoInNewTabOnError?: boolean;
   trigger: JSX.Element | ((isOpen: boolean) => JSX.Element);
 }
 
@@ -12,10 +13,33 @@ export default function Previewed({
   uri,
   trigger,
   isVideo = false,
+  openVideoInNewTabOnError = false,
 }: ImageProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const [videoFailed, setVideoFailed] = useState(false);
   const triggerElement =
     typeof trigger === "function" ? trigger(isOpen) : trigger;
+  const shouldOpenVideoInNewTab =
+    isVideo && openVideoInNewTabOnError && videoFailed;
+
+  const openVideoInNewTab = () => {
+    window.open(uri, "_blank", "noopener,noreferrer");
+  };
+
+  const handleOpen = () => {
+    if (shouldOpenVideoInNewTab) {
+      openVideoInNewTab();
+      return;
+    }
+
+    setIsOpen(true);
+  };
+
+  const handleVideoError = () => {
+    if (!isVideo || !openVideoInNewTabOnError) return;
+    setIsOpen(false);
+    setVideoFailed(true);
+  };
 
   return (
     <>
@@ -23,13 +47,14 @@ export default function Previewed({
         className="inline-flex"
         role="button"
         tabIndex={0}
-        onClick={() => setIsOpen(true)}
+        onClick={handleOpen}
         onKeyDown={(event) => {
           if (event.key === "Enter" || event.key === " ") {
             event.preventDefault();
-            setIsOpen(true);
+            handleOpen();
           }
         }}
+        onErrorCapture={handleVideoError}
       >
         {triggerElement}
       </span>
@@ -47,6 +72,7 @@ export default function Previewed({
               webkit-playsinline=""
               onClick={(event) => event.stopPropagation()}
               onEnded={() => setIsOpen(false)}
+              onError={handleVideoError}
             />
           ) : (
             <img
