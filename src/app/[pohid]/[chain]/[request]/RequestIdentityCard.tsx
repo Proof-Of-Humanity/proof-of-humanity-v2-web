@@ -325,6 +325,7 @@ export async function MobileIdentityMedia({
         <>
           <Previewed
             isVideo
+            openVideoInNewTabOnError
             uri={videoUrl}
             trigger={
               <VideoThumbnail
