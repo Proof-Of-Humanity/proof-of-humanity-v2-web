@@ -2,6 +2,7 @@
 
 import { SupportedChainId, idToChain } from "config/chains";
 import Link from "next/link";
+import Image from "next/image";
 import { Suspense } from "react";
 import { Address, Hash } from "viem";
 import ChainLogo from "components/ChainLogo";
@@ -17,7 +18,7 @@ import {
   RequestStatus,
 } from "utils/status";
 import { prettifyId } from "utils/identifier";
-import { ipfs } from "utils/ipfs";
+import { safeIpfsUrl } from "utils/ipfs";
 import { RequestsQueryItem } from "./Grid";
 import InfoIcon from "icons/info.svg";
 
@@ -77,7 +78,7 @@ const Content = ({
     suspense: true,
   });
 
-  let name =
+  const name =
     data && claimer.name && data.name !== claimer.name
       ? `${data?.name} (aka ${claimer.name})`
       : claimer.name
@@ -89,13 +90,22 @@ const Content = ({
     revocation && humanity.registration?.claimer.id
       ? humanity.registration.claimer.id
       : requester;
+  const photoUrl = safeIpfsUrl(data?.photo);
 
   return (
     <div className="flex h-full flex-col items-center p-3">
-      <div
-        className={"h-32 w-32 rounded-full bg-cover bg-center bg-no-repeat"}
-        style={{ backgroundImage: `url('${ipfs(data?.photo!)}')` }}
-      />
+      {photoUrl ? (
+        <Image
+          alt="Profile photo"
+          className="h-32 w-32 rounded-full object-cover"
+          src={photoUrl}
+          width={128}
+          height={128}
+          unoptimized={true}
+        />
+      ) : (
+        <div className="h-32 w-32 rounded-full bg-slate-200" />
+      )}
       <span className="text-primaryText my-2 truncate font-semibold">
         {name}
       </span>

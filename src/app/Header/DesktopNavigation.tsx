@@ -29,6 +29,7 @@ const DesktopNavigation = ({
 }: DesktopNavigationProps) => {
   const searchParams = useSearchParams();
   const currentUrl = searchParams.get("url");
+  const policyHref = policy && `/attachment?url=${encodeURIComponent(policy)}`;
 
   return (
     <div className="my-2 hidden gap-x-8 whitespace-nowrap md:flex">
@@ -47,12 +48,14 @@ const DesktopNavigation = ({
         setPendingRegisterIntent={setPendingRegisterIntent}
         className={`${pathname.includes("/claim") ? "font-bold" : ""}`}
       />
-      <Link
-        href={`/attachment?url=${encodeURIComponent(policy)}`}
-        className={`${currentUrl?.includes(policy) ? "font-bold" : ""}`}
-      >
-        Policy
-      </Link>
+      {policyHref && (
+        <Link
+          href={policyHref}
+          className={`${currentUrl === policy ? "font-bold" : ""}`}
+        >
+          Policy
+        </Link>
+      )}
       <Link
         href="/app"
         className={`${pathname.startsWith("/app") ? "font-bold" : ""}`}
