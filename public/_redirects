@@ -1,2 +1,5 @@
+# Temporary PR 423 preview redirect for testing this Netlify rule.
+https://deploy-preview-423--proof-of-humanity-v2.netlify.app/* https://v2.poh.id/:splat 302!
+
 # Redirect v2.poh.id to the canonical Proof of Humanity domain.
 https://v2.poh.id/* https://proofofhumanity.id/:splat 301!
