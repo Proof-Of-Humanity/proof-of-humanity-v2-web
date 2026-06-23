@@ -1,0 +1,2 @@
+# Redirect v2.poh.id to the canonical Proof of Humanity domain.
+https://v2.poh.id/* https://proofofhumanity.id/:splat 301!
