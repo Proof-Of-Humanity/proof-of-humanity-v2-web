@@ -162,7 +162,7 @@ const KlerosInfoCard: React.FC<KlerosInfoCardProps> = ({
             height={32}
             className={`${previousStep && !isAnimating ? "cursor-pointer opacity-100 hover:scale-110" : "pointer-events-none cursor-not-allowed opacity-[0.12]"}`}
             onClick={handlePrevious}
-            onKeyDown={(e: React.KeyboardEvent<HTMLButtonElement>) =>
+            onKeyDown={(e: React.KeyboardEvent<SVGElement>) =>
               previousStep &&
               !isAnimating &&
               e.key === "Enter" &&
@@ -177,7 +177,7 @@ const KlerosInfoCard: React.FC<KlerosInfoCardProps> = ({
             height={32}
             className={`${(nextStep || isLastSlide) && !isAnimating ? "cursor-pointer opacity-100 hover:scale-110" : "pointer-events-none cursor-not-allowed opacity-[0.12]"}`}
             onClick={handleNext}
-            onKeyDown={(e: React.KeyboardEvent<HTMLButtonElement>) =>
+            onKeyDown={(e: React.KeyboardEvent<SVGElement>) =>
               (nextStep || isLastSlide) &&
               !isAnimating &&
               e.key === "Enter" &&

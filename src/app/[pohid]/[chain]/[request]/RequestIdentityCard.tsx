@@ -5,7 +5,6 @@ import DocumentIcon from "components/DocumentIcon";
 import ExternalLink from "components/ExternalLink";
 import Identicon from "components/Identicon";
 import Label from "components/Label";
-import LoadableImage from "components/LoadableImage";
 import Previewed from "components/Previewed";
 import TimeAgo from "components/TimeAgo";
 import VideoThumbnail from "components/VideoThumbnail";
@@ -19,7 +18,7 @@ import type {
   RegistrationFile,
 } from "types/docs";
 import { prettifyId } from "utils/identifier";
-import { ipfs, ipfsFetch } from "utils/ipfs";
+import { ipfsFetch, safeIpfsUrl } from "utils/ipfs";
 import type { Address } from "viem";
 import type {
   RequestChain,
@@ -135,17 +134,21 @@ function ProfileSummary({
   bioClassName: string;
   nameClassName: string;
 }) {
+  const photoUrl = safeIpfsUrl(registrationFile?.photo);
+
   return (
     <>
-      {registrationFile && (
+      {registrationFile && photoUrl && (
         <Previewed
-          uri={ipfs(registrationFile.photo)}
+          uri={photoUrl}
           trigger={
-            <LoadableImage
+            <Image
               className="h-32 w-32 cursor-pointer rounded-full object-cover md:bg-cover md:bg-center md:bg-no-repeat"
               alt="image"
-              fallbackLabel="Profile photo unavailable"
-              src={ipfs(registrationFile.photo)}
+              src={photoUrl}
+              width={144}
+              height={144}
+              unoptimized={true} //Skips cache
             />
           }
         />
@@ -244,11 +247,12 @@ export async function PolicyLink({
       .fileURI;
 
     if (!policyLink) return null;
+    const href = `/attachment?url=${encodeURIComponent(policyLink)}`;
 
     return (
       <div className="flex w-full flex-col items-center font-normal md:flex-row md:items-end md:justify-end">
         <Link
-          href={`/attachment?url=${ipfs(policyLink)}`}
+          href={href}
           className="text-primaryText ml-0 flex items-center justify-center md:ml-2"
         >
           <DocumentIcon className="fill-orange h-6 w-6" />
@@ -305,6 +309,7 @@ export async function MobileIdentityMedia({
   const registrationFile = await identityFiles.registrationFilePromise;
   const displayedClaimerName =
     registrationFile?.name || identity.claimer.name || "";
+  const videoUrl = safeIpfsUrl(registrationFile?.video);
 
   return (
     <>
@@ -316,15 +321,16 @@ export async function MobileIdentityMedia({
           bioClassName="text-secondaryText mb-[32px] text-sm font-light"
         />
       </div>
-      {registrationFile && (
+      {registrationFile && videoUrl && (
         <>
           <Previewed
             isVideo
-            uri={ipfs(registrationFile.video)}
+            openVideoInNewTabOnError
+            uri={videoUrl}
             trigger={
               <VideoThumbnail
                 className="w-full cursor-pointer rounded-2xl"
-                src={ipfs(registrationFile.video)}
+                src={videoUrl}
               />
             }
           />

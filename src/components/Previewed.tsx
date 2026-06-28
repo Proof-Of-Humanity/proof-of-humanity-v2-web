@@ -1,11 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import LoadableImage from "./LoadableImage";
 
 interface ImageProps {
   uri: string;
   isVideo?: boolean;
+  openVideoInNewTabOnError?: boolean;
   trigger: JSX.Element | ((isOpen: boolean) => JSX.Element);
 }
 
@@ -13,16 +13,32 @@ export default function Previewed({
   uri,
   trigger,
   isVideo = false,
+  openVideoInNewTabOnError = false,
 }: ImageProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const [isVideoLoading, setIsVideoLoading] = useState(true);
-  const [hasVideoError, setHasVideoError] = useState(false);
+  const [videoFailed, setVideoFailed] = useState(false);
   const triggerElement =
     typeof trigger === "function" ? trigger(isOpen) : trigger;
-  const openPreview = () => {
-    setIsVideoLoading(true);
-    setHasVideoError(false);
+  const shouldOpenVideoInNewTab =
+    isVideo && openVideoInNewTabOnError && videoFailed;
+
+  const openVideoInNewTab = () => {
+    window.open(uri, "_blank", "noopener,noreferrer");
+  };
+
+  const handleOpen = () => {
+    if (shouldOpenVideoInNewTab) {
+      openVideoInNewTab();
+      return;
+    }
+
     setIsOpen(true);
+  };
+
+  const handleVideoError = () => {
+    if (!isVideo || !openVideoInNewTabOnError) return;
+    setIsOpen(false);
+    setVideoFailed(true);
   };
 
   return (
@@ -31,13 +47,14 @@ export default function Previewed({
         className="inline-flex"
         role="button"
         tabIndex={0}
-        onClick={openPreview}
+        onClick={handleOpen}
         onKeyDown={(event) => {
           if (event.key === "Enter" || event.key === " ") {
             event.preventDefault();
-            openPreview();
+            handleOpen();
           }
         }}
+        onErrorCapture={handleVideoError}
       >
         {triggerElement}
       </span>
@@ -47,43 +64,23 @@ export default function Previewed({
           onClick={() => setIsOpen(false)}
         >
           {isVideo ? (
-            <div
-              className="relative max-h-[90vh] max-w-[90vw] overflow-hidden rounded bg-black"
+            <video
+              className="max-h-[90vh] max-w-[90vw] rounded bg-black"
+              src={uri}
+              controls
+              playsInline
+              webkit-playsinline=""
               onClick={(event) => event.stopPropagation()}
-            >
-              {isVideoLoading && !hasVideoError ? (
-                <div className="bg-grey flex aspect-video w-[min(90vw,900px)] animate-pulse items-center justify-center" />
-              ) : null}
-              {hasVideoError ? (
-                <div className="bg-grey text-secondaryText flex aspect-video w-[min(90vw,900px)] items-center justify-center p-4 text-center text-sm">
-                  Video unavailable
-                </div>
-              ) : null}
-              <video
-                className={`max-h-[90vh] max-w-[90vw] rounded bg-black ${
-                  isVideoLoading || hasVideoError ? "hidden" : ""
-                }`}
-                src={uri}
-                controls
-                playsInline
-                webkit-playsinline=""
-                onLoadedData={() => setIsVideoLoading(false)}
-                onError={() => {
-                  setIsVideoLoading(false);
-                  setHasVideoError(true);
-                }}
-                onEnded={() => setIsOpen(false)}
-              />
-            </div>
+              onEnded={() => setIsOpen(false)}
+              onError={handleVideoError}
+            />
           ) : (
-            <div onClick={(event) => event.stopPropagation()}>
-              <LoadableImage
-                alt="Preview"
-                className="max-h-[90vh] max-w-[90vw] object-contain"
-                fallbackLabel="Image unavailable"
-                src={uri}
-              />
-            </div>
+            <img
+              alt="Preview"
+              className="max-h-[90vh] max-w-[90vw] object-contain"
+              src={uri}
+              onClick={(event) => event.stopPropagation()}
+            />
           )}
         </div>
       )}

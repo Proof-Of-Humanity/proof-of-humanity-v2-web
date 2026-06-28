@@ -1,4 +1,4 @@
-import { type DocRenderer } from "@cyntler/react-doc-viewer";
+import { type DocRenderer, textFileLoader } from "@cyntler/react-doc-viewer";
 import React from "react";
 import ReactMarkdown from "react-markdown";
 
@@ -7,30 +7,37 @@ import ReactMarkdown from "react-markdown";
  */
 const MarkdownRenderer: DocRenderer = ({ mainState: { currentDocument } }) => {
   if (!currentDocument) return null;
-  const base64String = (currentDocument.fileData as string).split(",")[1];
-  if (!base64String) return null;
-
-  // Decode the base64 string
-  const decodedData = atob(base64String);
+  const markdown =
+    typeof currentDocument.fileData === "string"
+      ? currentDocument.fileData
+      : "";
 
   return (
     <div id="md-renderer" className="p-4">
       <ReactMarkdown
         className="bg-white"
         components={{
-          a: ({ node, ...props }) => <a className="text-base" {...props} />,
+          a: ({ node, ...props }) => (
+            <a
+              className="text-base"
+              {...props}
+              rel="noopener noreferrer"
+              target="_blank"
+            />
+          ),
           code: ({ node, ...props }) => (
             <code className="text-secondary" {...props} />
           ),
         }}
       >
-        {decodedData}
+        {markdown}
       </ReactMarkdown>
     </div>
   );
 };
 
-MarkdownRenderer.fileTypes = ["md", "text/plain"];
+MarkdownRenderer.fileTypes = ["md", "markdown", "text/markdown", "text/plain"];
 MarkdownRenderer.weight = 1;
+MarkdownRenderer.fileLoader = textFileLoader;
 
 export default MarkdownRenderer;

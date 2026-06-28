@@ -1,4 +1,5 @@
 import { paramToChain, legacyChain } from "config/chains";
+import { SubgraphUnavailableError, isAnySubgraphAlive } from "data/chainQuery";
 import { getContractData } from "data/contract";
 import { getArbitrationCost } from "data/costs";
 import { getHumanityEvents } from "data/humanityEvents";
@@ -30,6 +31,15 @@ import {
   VouchedForSection,
 } from "./RequestVouchSection";
 import RequestPunishedVouchNotice from "components/RequestPunishedVouchNotice";
+import DegradedRequestPage from "./DegradedRequestPage";
+import { RequestNotFoundCard } from "./RequestErrorState";
+
+const ContractMetadataUnavailableNotice = () => (
+  <div className="bg-lightOrange border-orange text-secondaryText mb-4 rounded border px-4 py-3 text-center text-sm font-normal leading-6">
+    Contract metadata is temporarily unavailable, so request status and actions
+    are hidden for now. The request data below may still be useful.
+  </div>
+);
 
 interface PageProps {
   params: Promise<{ pohid: string; chain: string; request: string }>;
@@ -43,11 +53,26 @@ export default async function Request({ params }: PageProps) {
 
   const pohId = machinifyId(pohid)!;
 
-  const [fetchedRequest, contractData] = await Promise.all([
+  const [requestResult, contractResult] = await Promise.allSettled([
     getRequestPageData(chain.id, pohId, +requestParam),
     getContractData(chain.id),
   ]);
-  if (!fetchedRequest) return <span>Error occured</span>;
+
+  if (requestResult.status === "rejected") {
+    console.error(
+      `Request page data failed on ${chain.name}:`,
+      requestResult.reason,
+    );
+    // With every subgraph down there is no degraded view worth rendering, so
+    // surface a real error; a single dead chain degrades to a partial view
+    // built from the live chains' records.
+    if (!(await isAnySubgraphAlive()))
+      throw new SubgraphUnavailableError([requestResult.reason]);
+    return <DegradedRequestPage chain={chain} pohId={pohId} />;
+  }
+
+  const fetchedRequest = requestResult.value;
+  if (!fetchedRequest) return <RequestNotFoundCard chainName={chain.name} />;
 
   const needsHistoricalIdentity =
     fetchedRequest.revocation || Number(fetchedRequest.index) <= -100;
@@ -73,8 +98,69 @@ export default async function Request({ params }: PageProps) {
     request.status.id === "vouching" &&
     Number(request.index) <= -1
   )
-    return <span>Request not found</span>;
+    return <RequestNotFoundCard chainName={chain.name} />;
 
+  const offChainVouches = await getOffChainVouches(
+    chain.id,
+    request.claimer.id,
+    pohId,
+  );
+  const vouchDataPromise = getRequestVouchData(
+    chain.id,
+    request,
+    offChainVouches,
+  );
+
+  if (contractResult.status === "rejected") {
+    console.error(
+      `Request contract metadata failed on ${chain.name}:`,
+      contractResult.reason,
+    );
+    return (
+      <div className="content mx-auto flex w-[92vw] max-w-[1500px] flex-col justify-center font-semibold sm:w-[84vw] md:w-[76vw]">
+        <ContractMetadataUnavailableNotice />
+        <RequestIdentityCard
+          chain={chain}
+          identity={identity}
+          policyMetaEvidenceUri={request.arbitratorHistory.registrationMeta}
+          pohId={pohId}
+          request={request}
+          requestInfo={null}
+          vouchedFor={
+            <Suspense
+              fallback={
+                <RequestVouchSectionSkeleton title="This PoHID vouched for" />
+              }
+            >
+              <VouchedForSection chain={chain} request={request} />
+            </Suspense>
+          }
+          vouchers={
+            <Suspense
+              fallback={
+                <RequestVouchSectionSkeleton
+                  title={
+                    request.status.id === "vouching"
+                      ? "Available vouches for this PoHID"
+                      : "Vouched for this request"
+                  }
+                />
+              }
+            >
+              <RequestVouchersSection
+                chain={chain}
+                request={request}
+                vouchDataPromise={vouchDataPromise}
+              />
+            </Suspense>
+          }
+          timeline={null}
+        />
+      </div>
+    );
+  }
+
+  const contractData = contractResult.value;
   const arbitrationCost = await getArbitrationCost(
     chain,
     contractData.arbitrationInfo.arbitrator,
@@ -92,17 +178,6 @@ export default async function Request({ params }: PageProps) {
       ? "Identity Theft"
       : "Sybil Attack";
   const humanityEventsPromise = getHumanityEvents(pohId);
-
-  const offChainVouches = await getOffChainVouches(
-    chain.id,
-    request.claimer.id,
-    pohId,
-  );
-  const vouchDataPromise = getRequestVouchData(
-    chain.id,
-    request,
-    offChainVouches,
-  );
   const { onChainVouches, validVouches } = await vouchDataPromise;
   // Extract used reasons from existing challenges
 

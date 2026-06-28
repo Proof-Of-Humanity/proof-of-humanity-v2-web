@@ -37,6 +37,7 @@ const DesktopNavigation = ({
 }: DesktopNavigationProps) => {
   const searchParams = useSearchParams();
   const currentUrl = searchParams.get("url");
+  const policyHref = policy && `/attachment?url=${encodeURIComponent(policy)}`;
 
   const registerActive = me?.pohId
     ? pathname === `/${prettifyId(me.pohId)}`
@@ -62,12 +63,11 @@ const DesktopNavigation = ({
         setPendingRegisterIntent={setPendingRegisterIntent}
         className={navLink(registerActive)}
       />
-      <Link
-        href={`/attachment?url=${encodeURIComponent(policy)}`}
-        className={navLink(!!currentUrl?.includes(policy))}
-      >
-        Policy
-      </Link>
+      {policyHref && (
+        <Link href={policyHref} className={navLink(currentUrl === policy)}>
+          Policy
+        </Link>
+      )}
       <Link href="/app" className={navLink(pathname.startsWith("/app"))}>
         Rewards
       </Link>

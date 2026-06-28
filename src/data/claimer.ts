@@ -3,6 +3,7 @@ import { sdk } from "config/subgraph";
 import { ClaimerQuery } from "generated/graphql";
 import { cache } from "react";
 import { Address } from "viem";
+import { settleChainQueries } from "./chainQuery";
 import { sanitizeClaimerData } from "./sanitizer";
 
 // This fixes an error in the legacy subgraph were registration has not
@@ -29,8 +30,9 @@ const sanitizeRegistration = (res: Record<SupportedChainId, ClaimerQuery>) => {
 
 export const getClaimerData = cache(async (id: Address) => {
   const normalizedId = String(id).toLowerCase();
-  const res = await Promise.all(
-    supportedChains.map((chain) => sdk[chain.id].Claimer({ id: normalizedId })),
+  const res = await settleChainQueries(
+    (chain) => sdk[chain.id].Claimer({ id: normalizedId }),
+    (): ClaimerQuery => ({ claimer: null }),
   );
 
   const out = supportedChains.reduce(

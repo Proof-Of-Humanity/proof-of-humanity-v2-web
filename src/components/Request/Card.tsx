@@ -17,7 +17,7 @@ import {
   RequestStatus,
 } from "utils/status";
 import { prettifyId } from "utils/identifier";
-import { ipfs } from "utils/ipfs";
+import { safeIpfsUrl } from "utils/ipfs";
 import { RequestsQueryItem } from "./Grid";
 import StatusBadge from "./StatusBadge";
 import InfoIcon from "icons/info.svg";
@@ -113,7 +113,7 @@ const Content = ({
       ? humanity.registration.claimer.id
       : requester;
 
-  const photo = data?.photo ? ipfs(data.photo) : null;
+  const photo = safeIpfsUrl(data?.photo) ?? null;
   const isMediaLoading =
     Boolean(evidenceUri && !evidenceFile && !evidenceError) ||
     Boolean(evidenceFile?.fileURI && !data && !dataError);

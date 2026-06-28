@@ -83,7 +83,7 @@ interface ItemInterface {
 }
 
 function Item({ index, item, isPending }: ItemInterface) {
-  const chain = useChainParam();
+  const chain = useChainParam()!;
   const [evidence] = useIPFS<EvidenceFile>(item.uri);
   const ipfsUri = evidence?.fileURI
     ? evidence?.fileURI
@@ -93,50 +93,40 @@ function Item({ index, item, isPending }: ItemInterface) {
   const title = evidence?.name || item.name;
   const description = evidence?.description || item.description;
 
-  if (!chain) return null;
-
   return (
     <div
       className={
         isPending ? "mt-4 flex flex-col opacity-70" : "mt-4 flex flex-col"
       }
     >
-      <div className="paper grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-4 px-5 py-4">
-        <span className="text-secondaryText flex h-8 min-w-8 items-center justify-center text-sm">
+      <div className="paper relative px-8 py-4">
+        <span className="absolute left-3 text-sm text-slate-500">
           {romanize(index + 1)}
         </span>
-        <div className="min-w-0 self-center">
-          <div className="flex min-h-8 items-center gap-3 text-xl font-bold">
-            <span className="min-w-0 flex-1 leading-snug">{title}</span>
-            {isPending && (
-              <span className="text-orange bg-orange/10 shrink-0 animate-pulse rounded-full px-2.5 py-1 text-xs font-medium">
-                Pending
-              </span>
-            )}
-          </div>
-          <p className="break-word mt-1 break-words text-sm leading-relaxed md:text-base">
-            {description}
-          </p>
-        </div>
-        <div className="flex min-h-8 items-center justify-center">
+        {isPending && (
+          <span className="absolute right-3 top-2 animate-pulse text-xs font-medium text-orange-400">
+            Pending
+          </span>
+        )}
+        <div className="flex justify-between text-xl font-bold">
+          {title}
           {ipfsUri && <Attachment uri={ipfsUri} />}
         </div>
+        <p className="break-word break-words">{description}</p>
       </div>
-      <div className="flex min-h-12 items-center px-5 py-2">
+      <div className="flex items-center px-4 py-2">
         <Identicon diameter={32} address={item.submitter} />
-        <div className="text-primaryText flex min-h-8 flex-col justify-center pl-2 text-sm">
-          <span className="leading-snug">
+        <div className="text-primaryText flex flex-col pl-2">
+          <span>
             submitted by{" "}
             <ExternalLink
-              className="text-orange underline underline-offset-2"
+              className="text-blue-500 underline underline-offset-2"
               href={explorerLink(item.submitter, chain)}
             >
               {shortenAddress(item.submitter)}
             </ExternalLink>
           </span>
-          <span className="text-secondaryText leading-snug">
-            <TimeAgo time={item.creationTime} />
-          </span>
+          <TimeAgo time={item.creationTime} />
         </div>
       </div>
     </div>
@@ -157,7 +147,7 @@ export default function Evidence({
   const { effective, pendingAction, pendingEvidenceItem, applyAction } =
     useRequestOptimistic();
   const isReconciling = pendingAction !== null;
-  const chainReq = useChainParam();
+  const chainReq = useChainParam()!;
   const chainId = useChainId();
   const { address } = useAccount();
   const { data: policy } = useSWR(
@@ -266,7 +256,7 @@ export default function Evidence({
       const evidenceJson = {
         name: title,
         description,
-        evidence: evidenceFileURI,
+        fileURI: evidenceFileURI,
       };
 
       const evidenceTextFile = new File(
@@ -304,8 +294,6 @@ export default function Evidence({
 
     return () => unsubscribe();
   }, [pohId, prepare, requestIndex, state$]);
-
-  if (!chainReq) return null;
 
   const isEvidenceDisabled = chainReq.id !== chainId;
 

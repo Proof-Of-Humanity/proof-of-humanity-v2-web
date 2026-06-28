@@ -27,7 +27,7 @@ import { MediaState, SubmissionState } from "./Form";
 
 interface ReviewProps {
   arbitrationInfo: ContractData["arbitrationInfo"];
-  contractData: Record<SupportedChainId, ContractData>;
+  contractData: Record<SupportedChainId, ContractData | null>;
   totalCost: bigint | null;
   selfFunded$: ObservablePrimitiveBaseFns<number>;
   submitForFree$: ObservablePrimitiveBaseFns<boolean>;
@@ -63,18 +63,20 @@ function Review({
 
   const foreignChainId = getForeignChain(chainId);
   const foreignChain = idToChain(foreignChainId)!;
+  // May be null when the foreign chain's subgraph is down; the cost
+  // comparison is simply skipped in that case.
   const foreignContractData = contractData[foreignChainId];
-  const foreignBaseDeposit = BigInt(foreignContractData.baseDeposit);
   const { data: foreignArbitrationCost } = useReadContract({
-    address: foreignContractData.arbitrationInfo.arbitrator as `0x${string}`,
+    address: foreignContractData?.arbitrationInfo.arbitrator as `0x${string}`,
     abi: getContractInfo("KlerosLiquid", foreignChainId).abi as Abi,
     functionName: "arbitrationCost",
-    args: [foreignContractData.arbitrationInfo.extraData as Hash],
+    args: [foreignContractData?.arbitrationInfo.extraData as Hash],
     chainId: foreignChainId,
+    query: { enabled: !!foreignContractData },
   });
   const foreignCost =
-    typeof foreignArbitrationCost === "bigint"
-      ? foreignBaseDeposit + foreignArbitrationCost
+    foreignContractData && typeof foreignArbitrationCost === "bigint"
+      ? BigInt(foreignContractData.baseDeposit) + foreignArbitrationCost
       : null;
   const totalCostLabel = totalCost ? formatEther(totalCost) : "Loading...";
 

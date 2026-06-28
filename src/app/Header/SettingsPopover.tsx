@@ -2,306 +2,126 @@ import React from "react";
 import Image from "next/image";
 import Popover from "components/Popover";
 import ActionButton from "components/ActionButton";
-import AuthGuard from "components/AuthGuard";
-// import InfoIcon from "icons/info.svg";
-// import { formatRelativeTime } from "utils/time";
-import { useSettingsPopover } from "context/SettingsPopoverContext";
-import { useDisconnect } from "wagmi";
-
-// Basic email validation regex
-// const EMAIL_REGEX = /^\S+@\S+\.\S+$/;
-
-// enum EditMode {
-//   VIEW = 'view',
-//   EDIT = 'edit'
-// }
+import SignInButton from "components/SignInButton";
+import EmailField from "./EmailField";
+import EmailVerificationNotice from "./EmailVerificationNotice";
+import UnsubscribeModal from "./UnsubscribeModal";
+import { useEmailSettings } from "./useEmailSettings";
 
 const SettingsPopover: React.FC = () => {
-  // const [email, setEmail] = useState<string>("");
-  // const [editMode, setEditMode] = useState<EditMode>(EditMode.VIEW);
-  // const [transientStatus, setTransientStatus] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null);
-
-  // const isEmailValid = useMemo(() => EMAIL_REGEX.test(email), [email]);
-  const { isOpen, closeSettingsPopover, toggleSettingsPopover } =
-    useSettingsPopover();
-  const { disconnect } = useDisconnect();
-
-  // const {
-  //   isUpdatingUser,
-  //   isAddingUser,
-  //   user,
-  //   addUser,
-  //   updateEmail: updateUserEmail,
-  // } = useAtlasProvider();
-
-  // useEffect(() => {
-  //   if (user) {
-  //     if (user.email) {
-  //       setEmail(user.email);
-  //       setEditMode(EditMode.VIEW);
-  //     } else {
-  //       setEditMode(EditMode.EDIT);
-  //       setEmail("");
-  //     }
-  //   } else {
-  //     setEditMode(EditMode.VIEW);
-  //   }
-  // }, [user]);
-
-  // const validFutureUpdateDate = useMemo(() => {
-  //   if (user?.email && user.emailUpdateableAt) {
-  //     const updateableAt = new Date(user.emailUpdateableAt);
-  //     if (!isNaN(updateableAt.getTime()) && updateableAt > new Date()) {
-  //       return updateableAt;
-  //     }
-  //   }
-  //   return null;
-  // }, [user?.email, user?.emailUpdateableAt]);
-
-  // const handleCancelEdit = () => {
-  //   setEmail(user?.email || "");
-  //   setEditMode(EditMode.VIEW);
-  //   closeSettingsPopover();
-  // };
-
-  // const handleSaveEmail = async () => {
-  //   const trimmedEmail = email.trim();
-
-  //   const handleSuccess = (message: string) => {
-  //     toast.success(message);
-  //     setEditMode(EditMode.VIEW);
-  //     closeSettingsPopover();
-  //   };
-
-  //   try {
-  //     let success;
-  //     if (user?.email) {
-  //       success = await updateUserEmail({ newEmail: trimmedEmail });
-  //       if (success) {
-  //         handleSuccess("Email updated successfully. Please check your inbox for verification.");
-  //       } else {
-  //         toast.error("Failed to update email");
-  //       }
-  //     } else {
-  //       success = await addUser({ email: trimmedEmail });
-  //       if (success) {
-  //         handleSuccess("Email saved successfully. Please check your inbox for verification.");
-  //       } else {
-  //         toast.error("Failed to save email");
-  //       }
-  //     }
-  //   } catch (error) {
-  //     console.error("Error processing email:", error);
-  //     const errorMessage = user?.email ? "Failed to update email" : "Failed to save email";
-  //     setTransientStatus({ message: errorMessage, type: 'error' });
-  //     toast.error(errorMessage);
-  //   }
-  // };
-
-  const handleDisconnect = () => {
-    disconnect();
-    closeSettingsPopover();
-  };
-
-  // const handleKeyDown = (e: React.KeyboardEvent) => {
-  //   if (editMode === EditMode.EDIT) {
-  //     if (e.key === 'Enter') {
-  //       e.preventDefault();
-  //       handleSaveEmail();
-  //     } else if (e.key === 'Escape') {
-  //       e.preventDefault();
-  //       handleCancelEdit();
-  //     }
-  //   }
-  // };
-
-  // const getActionButtonProps = (): { label: string; isDisabled: boolean } => {
-  //   if (editMode === EditMode.EDIT) {
-  //     const label = isAddingUser || isUpdatingUser ? "" : user?.email ? "Update" : "Save";
-  //     const isDisabled =
-  //       !email.trim() ||
-  //       !isEmailValid ||
-  //       isUpdatingUser ||
-  //       isAddingUser ||
-  //       user?.email === email;
-  //     return { label, isDisabled };
-  //   } else {
-  //     const label = "Edit";
-  //     const isDisabled = !!validFutureUpdateDate;
-  //     return { label, isDisabled };
-  //   }
-  // };
-
-  const onPopoverClose = () => {
-    closeSettingsPopover();
-    // if (editMode === EditMode.EDIT) {
-    //   handleCancelEdit();
-    // }
-    // setTransientStatus(null);
-  };
-
-  // const handleResendVerification = async () => {
-  //   if (!user?.email) return;
-
-  //   try {
-  //     const success = await updateUserEmail({ newEmail: user.email });
-  //     if (success) {
-  //       toast.success("Verification email sent successfully. Please check your inbox.");
-  //       setTransientStatus({ message: "Verification email sent", type: 'success' });
-  //     } else {
-  //       toast.error("Failed to resend verification email");
-  //       setTransientStatus({ message: "Failed to resend verification email", type: 'error' });
-  //     }
-  //   } catch (error) {
-  //     console.error("Error resending verification email:", error);
-  //     toast.error("Failed to resend verification email");
-  //     setTransientStatus({ message: "Failed to resend verification email", type: 'error' });
-  //   }
-  // };
-
-  // let editButtonTooltip = undefined;
-  // if (validFutureUpdateDate) {
-  //   editButtonTooltip = `You can update email ${formatRelativeTime(validFutureUpdateDate)}`;
-  // }
+  const {
+    isOpen,
+    toggleSettingsPopover,
+    closeAndDiscardChanges,
+    isVerified,
+    email,
+    setEmail,
+    showEmailError,
+    hasSavedEmail,
+    hasVerifiedEmail,
+    handleKeyDown,
+    showVerificationNotice,
+    canResend,
+    isBusy,
+    isResending,
+    minutesUntilUpdateable,
+    resendVerification,
+    isSavingEmail,
+    isSaveDisabled,
+    cooldownTooltip,
+    saveEmail,
+    isUnsubscribeModalOpen,
+    openUnsubscribeModal,
+    closeUnsubscribeModal,
+    confirmUnsubscribe,
+    isDeleting,
+  } = useEmailSettings();
 
   return (
     <div>
       <Popover
         trigger={
           <button
+            type="button"
             onClick={toggleSettingsPopover}
             className="hover:border-orange ml-2 flex h-9 w-9 items-center justify-center rounded-full border border-white/[0.08] bg-[#2F333D] shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] transition duration-200 ease-premium"
-            aria-label="Open settings"
+            aria-label="Open notification settings"
           >
             <Image
-              alt="settings"
-              src="/logo/settings.svg"
-              height={15}
-              width={15}
+              alt="notifications"
+              src="/logo/notifications.svg"
+              height={18}
+              width={18}
             />
           </button>
         }
         open={isOpen}
-        onClose={onPopoverClose}
-        className="fixed left-1/2 top-1/2 w-[calc(100vw-2rem)] max-w-[26rem] -translate-x-1/2 -translate-y-1/2 sm:relative sm:left-auto sm:top-auto sm:w-[26rem] sm:max-w-none sm:transform-none"
+        onClose={closeAndDiscardChanges}
+        className="fixed left-1/2 top-1/2 w-[calc(100vw-2rem)] max-w-[22rem] -translate-x-1/2 -translate-y-1/2 sm:relative sm:left-auto sm:top-auto sm:w-[22rem] sm:max-w-none sm:transform-none"
       >
-        <div className="p-4 sm:p-6">
-          <div className="mb-6 text-center">
-            <h2 className="text-primaryText text-xl font-semibold">Settings</h2>
-          </div>
-          <div className="mb-6 flex w-full justify-center">
-            <AuthGuard>
-              <ActionButton
-                onClick={handleDisconnect}
-                label="Disconnect"
-                className="px-5 py-2"
-                ariaLabel="Disconnect wallet"
-              />
-            </AuthGuard>
+        <div className="p-4">
+          <div className="mb-4 text-center">
+            <h2 className="text-primaryText text-xl font-semibold">
+              Notifications
+            </h2>
           </div>
 
-          {/* EMAIL FUNCTIONALITY - COMMENTED OUT UNTIL BACKEND IS IMPLEMENTED */}
-          {/* {isVerified && (
-            <div>
-              <span className="block text-sm ml-1 text-primaryText mb-3">
-              Add/Update your email address
-              </span>
-              <div className="space-y-3">
-                {(() => {
-                  switch (editMode) {
-                    case EditMode.VIEW:
-                      if (user?.email) {
-                        const buttonState = getActionButtonProps();
-                        return (
-                          <div className="flex flex-col sm:flex-row items-stretch sm:items-center sm:justify-between gap-2 sm:gap-0">
-                            <div className="flex items-center flex-grow">
-                              <span className="px-4 py-2 text-primaryText w-full sm:w-auto text-center sm:text-left break-all">{user.email}</span>
-                            </div>
-                            <ActionButton
-                              onClick={() => setEditMode(EditMode.EDIT)}
-                              label={buttonState.label}
-                              disabled={buttonState.isDisabled}
-                              className={`w-full sm:w-auto px-6 normal-case text-base min-h-[44px] transition-colors duration-200`}
-                              ariaLabel={editButtonTooltip || `${buttonState.label} email address ${user.email}`}
-                              tooltip={editButtonTooltip}
-                            />
-                          </div>
-                        );
-                      }
-                    case EditMode.EDIT:
-                      const buttonState = getActionButtonProps();
-                      return (
-                        <div className="flex flex-col sm:flex-row">
-                          <div className="flex-1 mb-2 sm:mb-0 sm:mr-0">
-                            <input
-                              type="email"
-                              value={email}
-                              onKeyDown={handleKeyDown}
-                              onChange={(e) => setEmail(e.target.value)}
-                              placeholder="Email"
-                              autoFocus
-                              className={`flat-control text-primaryText min-h-[44px] w-full rounded-input rounded-r-none px-4 py-2 text-base font-medium transition duration-200 ease-premium focus:outline-none focus:ring-0 ${
-                                !isEmailValid && email.trim() !== ""
-                                  ? "border-red-500 focus:border-red-600"
-                                  : ""
-                              }`}
-                            />
-                          </div>
-                          <ActionButton
-                            onClick={handleSaveEmail}
-                            isLoading={(isUpdatingUser || isAddingUser)}
-                            disabled={buttonState.isDisabled}
-                            label={buttonState.label}
-                            className="w-full sm:w-auto px-6 normal-case text-base rounded-l-none min-h-[44px] transition-colors duration-200"
-                            ariaLabel={`${buttonState.label} email address`}
-                          />
-                        </div>
-                      );
-                    default:
-                      return null;
-                  }
-                })()}
-                
-                {(() => {
-                  if (transientStatus) {
-                    let textColor = 'text-blue-600';
-                    if (transientStatus.type === 'success') textColor = 'text-green-600';
-                    if (transientStatus.type === 'error') textColor = 'text-red-600';
-                    return (
-                      <div className={`mt-3 text-sm m-1 ${textColor} animate-fadeIn`} role="alert">
-                        <p>{transientStatus.message}</p>
-                      </div>
-                    );
-                  } else if (user?.email && !user.isEmailVerified) {
-                    return (
-                      <div className="text-sm text-secondaryText animate-fadeIn flex flex-col sm:flex-row gap-1 items-center sm:items-stretch text-center sm:text-left" role="alert">
-                        <InfoIcon className="sm:h-4 h-8 sm:w-4 w-8 stroke-orange-400 shrink-0 mt-1" />
-                        <span>We sent you a verification email. Please, verify it.
-                        Didn't receive the email?{" "}
-                          {!validFutureUpdateDate ? (
-                            <button
-                              onClick={handleResendVerification}
-                              disabled={isUpdatingUser}
-                              className="text-orange hover:text-orange-600 underline disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
-                            >
-                              {isUpdatingUser ? "Sending..." : "Resend"}
-                            </button>
-                          ) : (
-                            <span className="text-secondaryText">
-                              Please wait {formatRelativeTime(validFutureUpdateDate)} before resending
-                            </span>
-                          )}
-                        </span>
-                      </div>
-                    );
-                  }
-                  return null;
-                })()}
+          {!isVerified ? (
+            <SignInButton className="min-h-[44px] w-full px-6 text-base normal-case transition-colors duration-200 md:w-full" />
+          ) : (
+            <div className="space-y-3 text-center">
+              <div className="flex flex-col items-center">
+                <EmailField
+                  value={email}
+                  isInvalid={showEmailError}
+                  autoFocus={!hasSavedEmail}
+                  onChange={setEmail}
+                  onKeyDown={handleKeyDown}
+                />
+
+                {showVerificationNotice && (
+                  <EmailVerificationNotice
+                    canResend={canResend}
+                    disabled={isBusy}
+                    isResending={isResending}
+                    minutesUntilUpdateable={minutesUntilUpdateable}
+                    onResend={resendVerification}
+                  />
+                )}
               </div>
+
+              <ActionButton
+                onClick={saveEmail}
+                isLoading={isSavingEmail}
+                disabled={isSaveDisabled}
+                label="Save"
+                fullWidth
+                className="min-h-[44px] w-full px-6 text-base normal-case transition-colors duration-200 md:w-full"
+                ariaLabel={cooldownTooltip || "Save email address"}
+                tooltip={cooldownTooltip}
+              />
+
+              {hasVerifiedEmail && (
+                <ActionButton
+                  onClick={openUnsubscribeModal}
+                  label="Unsubscribe"
+                  disabled={isBusy}
+                  variant="secondary"
+                  className="min-h-[44px] w-full px-6 text-base normal-case transition-colors duration-200 md:w-full"
+                  ariaLabel="Unsubscribe from Kleros notifications"
+                />
+              )}
             </div>
-          )} */}
+          )}
         </div>
       </Popover>
+
+      <UnsubscribeModal
+        open={isUnsubscribeModalOpen}
+        isDeleting={isDeleting}
+        onClose={closeUnsubscribeModal}
+        onConfirm={confirmUnsubscribe}
+      />
     </div>
   );
 };

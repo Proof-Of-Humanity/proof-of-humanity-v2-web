@@ -1,6 +1,11 @@
 {
   "$schema": "https://unpkg.com/knip@6/schema.json",
-  "entry": ["netlify/functions/**/*.{ts,js}", "codegen.yml"],
+  "entry": [
+    "src/app/**/{page,layout,route,loading,error,not-found,template,default}.{ts,tsx,js,jsx}",
+    "src/middleware.{ts,js}",
+    "netlify/functions/**/*.{ts,js}",
+    "codegen.yml"
+  ],
   "project": [
     "src/**/*.{ts,tsx,js,jsx}",
     "netlify/functions/**/*.{ts,js}",
@@ -11,10 +16,17 @@
     "!src/contracts/deployments/**/abi.ts"
   ],
   "ignoreExportsUsedInFile": true,
+  "ignoreIssues": {
+    "src/generated/**": ["exports", "types", "enumMembers"],
+    "src/contracts/deployments/**/abi.ts": ["exports", "types", "enumMembers"]
+  },
   "ignoreDependencies": [
+    "@ffmpeg/core-mt",
     "@svgr/webpack",
+    "dotenv",
     "eslint",
     "eslint-config-next",
-    "eslint-config-prettier"
+    "eslint-config-prettier",
+    "pino-pretty"
   ]
 }

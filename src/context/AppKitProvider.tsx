@@ -8,7 +8,7 @@ import React, { useEffect, useState, type ReactNode } from "react";
 import { WagmiProvider } from "wagmi";
 import { supportedChains } from "../config/chains";
 import AutoSwitchNetwork from "components/AutoSwitchNetwork";
-import { Products } from "@kleros/kleros-app";
+import { IpfsProduct, SignupProduct } from "@kleros/kleros-app";
 import dynamic from "next/dynamic";
 
 const DynamicAtlasProvider = dynamic(
@@ -71,7 +71,8 @@ export default function AppKitProvider({ children }: AppKitProviderProps) {
         <DynamicAtlasProvider
           config={{
             uri: process.env.ATLAS_URI,
-            product: Products.ProofOfHumanity,
+            signupProduct: SignupProduct.PohV2,
+            ipfsProduct: IpfsProduct.ProofOfHumanity,
             wagmiConfig: wagmiAdapter.wagmiConfig,
           }}
         >

@@ -37,6 +37,8 @@ const MobileMenu = forwardRef(
   ) => {
     const searchParams = useSearchParams();
     const currentUrl = searchParams.get("url");
+    const policyHref =
+      policy && `/attachment?url=${encodeURIComponent(policy)}`;
     const registerActive = me?.pohId
       ? pathname === `/${prettifyId(me.pohId)}`
       : pathname.includes("/claim");
@@ -60,12 +62,14 @@ const MobileMenu = forwardRef(
             setPendingRegisterIntent={setPendingRegisterIntent}
             className={`text-lg ${registerActive ? "font-bold" : ""}`}
           />
-          <Link
-            href={`/attachment?url=${policy}`}
-            className={`text-lg ${currentUrl?.includes(policy) ? "font-bold" : ""}`}
-          >
-            Policy
-          </Link>
+          {policyHref && (
+            <Link
+              href={policyHref}
+              className={`text-lg ${currentUrl === policy ? "font-bold" : ""}`}
+            >
+              Policy
+            </Link>
+          )}
           <Link
             href="/app"
             className={`text-lg ${pathname.startsWith("/app") ? "font-bold" : ""}`}

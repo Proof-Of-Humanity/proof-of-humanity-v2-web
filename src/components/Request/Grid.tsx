@@ -37,13 +37,12 @@ import {
 } from "utils/status";
 
 import Card from "./Card";
-import SubgraphsStatus from "./SubgraphsStatus";
 import LoadingSkeleton from "./LoadingSkeleton";
 
 enableReactUse();
 
 const REQUESTS_BATCH_SIZE = 12;
-let humanityLifespanAllChains: Record<SupportedChainId, string>;
+let humanityLifespanAllChains: Record<SupportedChainId, string | undefined>;
 
 export type RequestsQueryItem = ArrayElement<RequestsQuery["requests"]>;
 
@@ -255,6 +254,7 @@ function RequestsGrid() {
   const loading = useLoading(true, "init");
   const [pending, loadingType] = loading.use();
 
+  const [loadError, setLoadError] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const selectedChain = filter.chainId
     ? idToChain(filter.chainId as SupportedChainId)
@@ -270,21 +270,29 @@ function RequestsGrid() {
 
   useMountOnce(() => {
     (async () => {
-      const [contractData, requestsData] = await Promise.all([
-        getContractDataAllChains(),
-        getRequestsInitData(),
-      ]);
-      humanityLifespanAllChains = Object.keys(contractData).reduce(
-        (acc, chainId) => {
-          acc[Number(chainId) as SupportedChainId] =
-            contractData[Number(chainId) as SupportedChainId].humanityLifespan;
-          return acc;
-        },
-        {} as Record<SupportedChainId, string>,
-      );
+      try {
+        const [contractData, requestsData] = await Promise.all([
+          getContractDataAllChains(),
+          getRequestsInitData(),
+        ]);
+        humanityLifespanAllChains = Object.keys(contractData).reduce(
+          (acc, chainId) => {
+            acc[Number(chainId) as SupportedChainId] =
+              contractData[
+                Number(chainId) as SupportedChainId
+              ]?.humanityLifespan;
+            return acc;
+          },
+          {} as Record<SupportedChainId, string | undefined>,
+        );
 
-      chainStacks$.set(requestsData);
-      loading.stop();
+        chainStacks$.set(requestsData);
+      } catch (err) {
+        console.error("Failed to load requests:", err);
+        setLoadError(true);
+      } finally {
+        loading.stop();
+      }
     })();
 
     filter$.onChange(
@@ -293,73 +301,93 @@ function RequestsGrid() {
         getPrevious,
       }) => {
         loading.start();
-        const loadContinued = cursor > getPrevious().cursor;
-        const fetchChains: SupportedChain[] = [];
-        const fetchPromises: Promise<RequestsQuery>[] = [];
+        setLoadError(false);
+        try {
+          const loadContinued = cursor > getPrevious().cursor;
+          const fetchChains: SupportedChain[] = [];
+          const fetchPromises: Promise<RequestsQuery>[] = [];
 
-        const chainStacks = filterChainStacksForChain(
-          chainStacks$.get(),
-          chainFilter,
-        );
-
-        for (const chain of supportedChains) {
-          if (chainFilter && chainFilter !== chain.id) continue;
-
-          const displayedForChain = chainStacks[chain.id].length;
-
-          if (
-            !loadContinued ||
-            displayedForChain + REQUESTS_BATCH_SIZE >=
-              chainStacks[chain.id].length
-          ) {
-            const where: any = {
-              ...getRequestStatusFilter(status),
-              ...(search ? { claimer_: { name_contains: search } } : {}),
-            };
-
-            const skipNumber = loadContinued ? chainStacks[chain.id].length : 0;
-
-            const promises = getRequestsLoadingPromises(
-              chain.id,
-              where,
-              skipNumber,
-            );
-
-            fetchChains.push(chain);
-            fetchPromises.push(promises);
-          }
-        }
-
-        if (!fetchChains.length) {
-          chainStacks$.set(chainStacks);
-        } else {
-          const res = await Promise.all(fetchPromises);
-          chainStacks$.set(
-            await getFilteredRequestsInitData(
-              fetchChains.reduce(
-                (acc, chain, i) => ({
-                  ...acc,
-                  [chain.id]: [
-                    ...(loadContinued ? chainStacks[chain.id] : []),
-                    ...(res[i]?.requests ?? []),
-                  ],
-                }),
-                chainStacks,
-              ),
-            ),
+          const chainStacks = filterChainStacksForChain(
+            chainStacks$.get(),
+            chainFilter,
           );
-        }
 
-        loading.stop();
+          for (const chain of supportedChains) {
+            if (chainFilter && chainFilter !== chain.id) continue;
+
+            const displayedForChain = chainStacks[chain.id].length;
+
+            if (
+              !loadContinued ||
+              displayedForChain + REQUESTS_BATCH_SIZE >=
+                chainStacks[chain.id].length
+            ) {
+              const where: any = {
+                ...getRequestStatusFilter(status),
+                ...(search ? { claimer_: { name_contains: search } } : {}),
+              };
+
+              const skipNumber = loadContinued
+                ? chainStacks[chain.id].length
+                : 0;
+
+              const promises = getRequestsLoadingPromises(
+                chain.id,
+                where,
+                skipNumber,
+              );
+
+              fetchChains.push(chain);
+              fetchPromises.push(promises);
+            }
+          }
+
+          if (!fetchChains.length) {
+            chainStacks$.set(chainStacks);
+          } else {
+            const res = await Promise.all(fetchPromises);
+            chainStacks$.set(
+              await getFilteredRequestsInitData(
+                fetchChains.reduce(
+                  (acc, chain, i) => ({
+                    ...acc,
+                    [chain.id]: [
+                      ...(loadContinued ? chainStacks[chain.id] : []),
+                      ...(res[i]?.requests ?? []),
+                    ],
+                  }),
+                  chainStacks,
+                ),
+              ),
+            );
+          }
+        } catch (err) {
+          console.error("Failed to load requests:", err);
+          setLoadError(true);
+        } finally {
+          loading.stop();
+        }
       },
     );
   });
 
   if (pending && loadingType === "init") return <LoadingSkeleton />;
 
+  if (loadError && requests.length === 0) {
+    return (
+      <div className="text-primaryText flex flex-col items-center gap-2 py-16 text-center">
+        <span className="font-semibold">
+          Unable to load profiles right now.
+        </span>
+        <span className="text-secondaryText text-sm">
+          Our data services appear to be unavailable. Please try again later.
+        </span>
+      </div>
+    );
+  }
+
   return (
     <>
-      <SubgraphsStatus />
       <RequestFilters
         filter={filter}
         selectedChain={selectedChain}

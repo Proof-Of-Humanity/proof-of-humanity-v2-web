@@ -3,6 +3,7 @@
 import { useSearchParams, useRouter } from "next/navigation";
 import { useAtlasProvider } from "@kleros/kleros-app";
 import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
 
 import CheckCircle from "icons/CheckCircleMajor.svg";
 import WarningCircle from "icons/WarningCircleMajor.svg";
@@ -43,9 +44,10 @@ const ConfirmEmailPage: React.FC = () => {
   const searchParams = useSearchParams();
   const router = useRouter();
   const { confirmEmail } = useAtlasProvider();
-
-  const address = searchParams.get("address");
-  const token = searchParams.get("token");
+  const [{ address, token }] = useState(() => ({
+    address: searchParams.get("address"),
+    token: searchParams.get("token"),
+  }));
 
   const { data, isPending, isError, error, refetch } = useQuery({
     queryKey: ["confirmEmail", address, token],
@@ -53,7 +55,12 @@ const ConfirmEmailPage: React.FC = () => {
       if (!address || !token) {
         throw new Error("Missing address or token");
       }
-      return confirmEmail({ address, token });
+
+      try {
+        return await confirmEmail({ address, token });
+      } finally {
+        router.replace("/confirm-email", { scroll: false });
+      }
     },
     enabled: !!address && !!token,
     staleTime: Infinity,
@@ -143,7 +150,11 @@ const ConfirmEmailPage: React.FC = () => {
       icon: MinusCircleMinor,
       largeIcon: MinusCircle,
       onClick: () => {
-        window.open("https://t.me/proofhumanity", "_blank");
+        window.open(
+          "https://t.me/proofhumanity",
+          "_blank",
+          "noopener,noreferrer",
+        );
       },
     },
     error: {

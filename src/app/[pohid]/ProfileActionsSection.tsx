@@ -5,8 +5,7 @@ import { type Hash } from "viem";
 import CrossChain from "./cross-chain/CrossChain";
 import CrossChainLoading from "./cross-chain/CrossChainLoading";
 import ProfileSectionPlaceholderError from "./ProfileSectionPlaceholderError";
-import { getProfileBaseData } from "./profilePageData";
-import Renew from "./Renew";
+import { getProfilePageData } from "./profilePageData";
 import Revoke from "./Revoke";
 
 interface ProfileActionsSectionProps {
@@ -23,77 +22,71 @@ export default async function ProfileActionsSection({
       pageState,
       humanity,
       claimedRegistration,
-      homeChain,
+      claimedHomeChain,
+      arbitrationCost,
+      crossChainProps,
+      crossChainGatewayId,
+      crossChainState,
+      winningRequestChainId,
       lastTransferTimestamp,
-      pendingRevocation,
-      canRenew,
-    } = await getProfileBaseData(pohId);
-
-    const homeChainContractData = homeChain ? contractData[homeChain.id] : null;
-    const canHaveCrossChainActions =
-      !!homeChainContractData &&
-      ["CLAIMED", "TRANSFER_PENDING", "REMOVED"].includes(pageState);
-    const latestWinningRequestTimestamp = latestWinningRequest
-      ? Number(
-          latestWinningRequest.lastStatusChange ||
-            latestWinningRequest.creationTime ||
-            0,
-        ) || undefined
-      : undefined;
+      profileState,
+    } = await getProfilePageData(pohId);
 
     const baseSnapshot = {
       winningStatus: latestWinningRequest?.status.id,
       lastTransferTimestamp,
-      pendingRevocation,
+      pendingRevocation: profileState.pendingRevocation,
       hasPendingTransferRelay: pageState === "TRANSFER_PENDING",
     };
 
-    if (!claimedRegistration && !canHaveCrossChainActions) {
+    if (!claimedRegistration && !crossChainProps) {
       return null;
     }
-
     return (
       <div className="mt-4 w-full self-stretch">
         <ProfileOptimisticProvider
           base={baseSnapshot}
           storageKey={`profile:${pohId}`}
         >
-          <div className="flex w-full flex-col items-center gap-4">
-            {claimedRegistration && homeChain && homeChainContractData ? (
-              <div className="flex flex-wrap items-center justify-center gap-3">
-                {canRenew ? (
-                  <Renew
-                    claimer={claimedRegistration.claimer.id}
-                    pohId={pohId}
-                  />
-                ) : null}
-                <Suspense fallback={null}>
-                  <Revoke
-                    pohId={pohId}
-                    arbitrationInfo={homeChainContractData.arbitrationInfo}
-                    baseDeposit={homeChainContractData.baseDeposit}
-                    homeChain={homeChain}
-                  />
-                </Suspense>
-              </div>
-            ) : null}
+          {claimedRegistration &&
+          claimedHomeChain &&
+          contractData[claimedHomeChain.id] ? (
+            <Revoke
+              pohId={pohId}
+              arbitrationInfo={
+                contractData[claimedHomeChain.id]!.arbitrationInfo!
+              }
+              homeChain={claimedHomeChain}
+              cost={
+                arbitrationCost +
+                BigInt(contractData[claimedHomeChain.id]!.baseDeposit)
+              }
+            />
+          ) : null}
 
-            {canHaveCrossChainActions && homeChain && homeChainContractData ? (
-              <Suspense fallback={<CrossChainLoading />}>
-                <CrossChain
-                  homeChain={homeChain}
-                  homeChainContractData={homeChainContractData}
-                  pageState={pageState}
-                  pendingRevocation={pendingRevocation}
-                  pohId={pohId}
-                  humanity={humanity}
-                  winningRequestChainId={latestWinningRequest?.chainId}
-                  latestWinningRequestTimestamp={latestWinningRequestTimestamp}
-                  lastTransferTimestamp={lastTransferTimestamp}
-                />
-              </Suspense>
-            ) : null}
-          </div>
+          {crossChainProps ? (
+            <Suspense fallback={<CrossChainLoading />}>
+              <CrossChain
+                homeChain={crossChainProps.homeChain}
+                pageState={pageState}
+                pohId={pohId}
+                humanity={humanity}
+                gatewayId={crossChainGatewayId}
+                winningRequestChainId={winningRequestChainId}
+                latestWinningRequestTimestamp={
+                  latestWinningRequest
+                    ? Number(
+                        latestWinningRequest.lastStatusChange ||
+                          latestWinningRequest.creationTime ||
+                          0,
+                      ) || undefined
+                    : undefined
+                }
+                crossChainState={crossChainState}
+                transferCooldownEndsAt={crossChainProps.transferCooldownEndsAt}
+              />
+            </Suspense>
+          ) : null}
         </ProfileOptimisticProvider>
       </div>
     );

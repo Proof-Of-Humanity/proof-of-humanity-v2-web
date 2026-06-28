@@ -185,7 +185,7 @@ const ProcessStepCard: React.FC<ProcessStepCardProps> = ({
             height={32}
             className={`transition-all duration-200 ${previousStep && !isAnimating ? "cursor-pointer opacity-100 hover:scale-110" : "pointer-events-none cursor-not-allowed opacity-50"}`}
             onClick={handlePrevious}
-            onKeyDown={(e: React.KeyboardEvent<HTMLButtonElement>) =>
+            onKeyDown={(e: React.KeyboardEvent<SVGElement>) =>
               previousStep &&
               !isAnimating &&
               (e.key === "Enter" || e.key === " " || e.key === "Spacebar") &&
@@ -201,7 +201,7 @@ const ProcessStepCard: React.FC<ProcessStepCardProps> = ({
             height={32}
             className={`ml-2 transition-all duration-200 ${(nextStep || isLastSlide) && !isAnimating ? "cursor-pointer opacity-100 hover:scale-110" : "pointer-events-none cursor-not-allowed opacity-50"}`}
             onClick={handleNext}
-            onKeyDown={(e: React.KeyboardEvent<HTMLButtonElement>) =>
+            onKeyDown={(e: React.KeyboardEvent<SVGElement>) =>
               (nextStep || isLastSlide) &&
               !isAnimating &&
               (e.key === "Enter" || e.key === " " || e.key === "Spacebar") &&

@@ -4,7 +4,6 @@ import {
   getForeignChain,
 } from "config/chains";
 import ChainLogo from "components/ChainLogo";
-import type { ContractData } from "data/contract";
 import { sdk } from "config/subgraph";
 import type { ProfileHumanityQuery } from "generated/graphql";
 import { type Hash, TransactionReceiptNotFoundError } from "viem";
@@ -16,7 +15,7 @@ import {
   RelayDataUnavailableError,
 } from "../errors";
 import { getBridgeStrategy } from "./bridgeStrategies";
-import { deriveCrossChainState, type CrossChainState } from "./crossChainState";
+import type { CrossChainState } from "./crossChainState";
 import CrossChainError from "./CrossChainError";
 import CrossChainStatusStrip from "./CrossChainStatusStrip";
 import PendingRelaySection from "./PendingRelaySection";
@@ -34,20 +33,16 @@ type PendingRelayDescriptor = {
   transferTimestamp?: number;
 };
 
-type PendingUpdateRelayError =
-  | RelayDataUnavailableError
-  | CrossChainStatusUnavailableError;
-
 interface CrossChainProps {
   humanity: Record<SupportedChainId, ProfileHumanityQuery>;
   homeChain: SupportedChain;
-  homeChainContractData: ContractData;
-  pendingRevocation: boolean;
   pohId: Hash;
+  gatewayId?: `0x${string}`;
   winningRequestChainId?: SupportedChainId;
   latestWinningRequestTimestamp?: number;
-  lastTransferTimestamp?: number;
   pageState: ProfilePageState;
+  crossChainState: CrossChainState;
+  transferCooldownEndsAt?: number;
 }
 
 const getPendingUpdateStatusMessage = (
@@ -125,56 +120,7 @@ async function decodeTransferRelayPayload({
   return outboundBridgeMessage.encodedData;
 }
 
-async function resolvePendingTransferRelay({
-  humanity,
-  homeChain,
-  pohId,
-  winningRequestChainId,
-}: {
-  humanity: Record<SupportedChainId, ProfileHumanityQuery>;
-  homeChain: SupportedChain;
-  pohId: Hash;
-  winningRequestChainId?: SupportedChainId;
-}): Promise<PendingRelayDescriptor> {
-  if (!winningRequestChainId) {
-    throw new RelayDataUnavailableError(
-      "Pending transfer source chain could not be loaded.",
-    );
-  }
-
-  const sourceChainId = winningRequestChainId;
-  const lastTransfer = humanity[sourceChainId]?.outTransfer;
-
-  if (!lastTransfer) {
-    throw new RelayDataUnavailableError(
-      "Pending transfer details could not be loaded.",
-    );
-  }
-
-  const destinationChainId = homeChain.id as SupportedChainId;
-  const relayMode = getBridgeStrategy(
-    sourceChainId,
-    destinationChainId,
-  ).relayMode;
-  const pendingTransferRelay: PendingRelayDescriptor = {
-    relayMode,
-    sourceChainId,
-    destinationChainId,
-    transferTimestamp: Number(lastTransfer.transferTimestamp),
-  };
-
-  if (relayMode !== RELAY_MODE_WAIT_ONLY) {
-    pendingTransferRelay.encodedData = await decodeTransferRelayPayload({
-      lastTransfer,
-      sourceChainId,
-      humanityId: pohId,
-    });
-  }
-
-  return pendingTransferRelay;
-}
-
-async function resolvePendingUpdateRelay({
+export async function resolvePendingUpdateRelay({
   homeChain,
   pohId,
   latestWinningRequestTimestamp,
@@ -182,7 +128,9 @@ async function resolvePendingUpdateRelay({
   homeChain: SupportedChain;
   pohId: Hash;
   latestWinningRequestTimestamp?: number;
-}): Promise<PendingRelayDescriptor | null> {
+}): Promise<{
+  pendingUpdateRelay: PendingRelayDescriptor | null;
+}> {
   const sourceChainId = homeChain.id as SupportedChainId;
   const destinationChainId = getForeignChain(sourceChainId) as SupportedChainId;
   const sourceUpdates = await sdk[sourceChainId].CrossChainUpdates({
@@ -192,7 +140,9 @@ async function resolvePendingUpdateRelay({
   const latestOutUpdate = sourceUpdates.outUpdates[0];
 
   if (!latestOutUpdate) {
-    return null;
+    return {
+      pendingUpdateRelay: null,
+    };
   }
 
   const outboundUpdateTimestamp = Number(latestOutUpdate.timestamp || 0);
@@ -201,7 +151,9 @@ async function resolvePendingUpdateRelay({
     latestWinningRequestTimestamp &&
     outboundUpdateTimestamp < latestWinningRequestTimestamp
   ) {
-    return null;
+    return {
+      pendingUpdateRelay: null,
+    };
   }
 
   const pendingUpdateRelay: PendingRelayDescriptor = {
@@ -216,7 +168,9 @@ async function resolvePendingUpdateRelay({
   });
 
   if (!sourceReceipt) {
-    return pendingUpdateRelay;
+    return {
+      pendingUpdateRelay,
+    };
   }
 
   const destinationUpdates = await sdk[destinationChainId].CrossChainUpdates({
@@ -239,7 +193,9 @@ async function resolvePendingUpdateRelay({
   pendingUpdateRelay.encodedData = sourceMessageInfo.encodedData;
 
   if (!latestInUpdate) {
-    return pendingUpdateRelay;
+    return {
+      pendingUpdateRelay,
+    };
   }
 
   const destinationReceipt = await getTransactionReceiptIfIndexed({
@@ -248,7 +204,9 @@ async function resolvePendingUpdateRelay({
   });
 
   if (!destinationReceipt) {
-    return pendingUpdateRelay;
+    return {
+      pendingUpdateRelay,
+    };
   }
 
   const updateAlreadyRelayed = hasRelayedMessage({
@@ -258,192 +216,152 @@ async function resolvePendingUpdateRelay({
   });
 
   if (updateAlreadyRelayed) {
-    return null;
-  }
-
-  return pendingUpdateRelay;
-}
-
-async function resolvePendingUpdateRelayState({
-  canUpdate,
-  homeChain,
-  pohId,
-  latestWinningRequestTimestamp,
-}: {
-  canUpdate: boolean;
-  homeChain: SupportedChain;
-  pohId: Hash;
-  latestWinningRequestTimestamp?: number;
-}): Promise<{
-  error?: PendingUpdateRelayError;
-  pendingUpdateRelay: PendingRelayDescriptor | null;
-}> {
-  if (!canUpdate) {
     return {
       pendingUpdateRelay: null,
     };
   }
 
-  try {
-    return {
-      pendingUpdateRelay: await resolvePendingUpdateRelay({
-        homeChain,
-        pohId,
-        latestWinningRequestTimestamp,
-      }),
-    };
-  } catch (error) {
-    return {
-      error:
-        error instanceof RelayDataUnavailableError
-          ? error
-          : new CrossChainStatusUnavailableError(
-              "Pending relay status could not be loaded.",
-            ),
-      pendingUpdateRelay: null,
-    };
-  }
-}
-
-function CrossChainActions({
-  crossChainState,
-  gatewayId,
-  homeChain,
-  humanity,
-  pendingTransferRelay,
-  pendingUpdateError,
-  pendingUpdateRelay,
-  pohId,
-  transferClaimer,
-  transferCooldownEndsAt,
-}: {
-  crossChainState: CrossChainState;
-  gatewayId?: `0x${string}`;
-  homeChain: SupportedChain;
-  humanity: Record<SupportedChainId, ProfileHumanityQuery>;
-  pendingTransferRelay: PendingRelayDescriptor | null;
-  pendingUpdateError?: PendingUpdateRelayError;
-  pendingUpdateRelay: PendingRelayDescriptor | null;
-  pohId: Hash;
-  transferClaimer?: string;
-  transferCooldownEndsAt?: number;
-}) {
-  if (pendingTransferRelay) {
-    return (
-      <PendingRelaySection
-        mode="transfer"
-        relayMode={pendingTransferRelay.relayMode}
-        sourceChainId={pendingTransferRelay.sourceChainId}
-        destinationChainId={pendingTransferRelay.destinationChainId}
-        encodedData={pendingTransferRelay.encodedData}
-        transferTimestamp={pendingTransferRelay.transferTimestamp}
-      />
-    );
-  }
-
-  if (pendingUpdateRelay) {
-    return (
-      <PendingRelaySection
-        mode="update"
-        relayMode={pendingUpdateRelay.relayMode}
-        sourceChainId={pendingUpdateRelay.sourceChainId}
-        destinationChainId={pendingUpdateRelay.destinationChainId}
-        encodedData={pendingUpdateRelay.encodedData}
-        transferTimestamp={pendingUpdateRelay.transferTimestamp}
-      />
-    );
-  }
-
-  const pendingUpdateStatusMessage =
-    getPendingUpdateStatusMessage(pendingUpdateError);
-
-  return (
-    <>
-      {gatewayId && crossChainState.canTransfer && transferClaimer ? (
-        <TransferSection
-          claimer={transferClaimer as `0x${string}`}
-          homeChain={homeChain}
-          gatewayId={gatewayId}
-          transferCooldownEndsAt={transferCooldownEndsAt}
-        />
-      ) : null}
-      {gatewayId && crossChainState.canUpdate && !pendingUpdateError ? (
-        <UpdateStateSection
-          humanity={humanity}
-          homeChain={homeChain}
-          gatewayId={gatewayId}
-          pohId={pohId}
-        />
-      ) : null}
-      {pendingUpdateError ? (
-        <div className="mt-4 w-full min-w-0 sm:ml-4 sm:mt-0 sm:flex-1">
-          <CrossChainStatusStrip
-            title={pendingUpdateStatusMessage?.title ?? ""}
-            description={[
-              pendingUpdateStatusMessage?.description,
-              pendingUpdateStatusMessage?.nextStep,
-            ]
-              .filter(Boolean)
-              .join(" ")}
-          />
-        </div>
-      ) : null}
-    </>
-  );
+  return {
+    pendingUpdateRelay,
+  };
 }
 
 export default async function CrossChain({
   humanity,
   homeChain,
-  homeChainContractData,
-  pendingRevocation,
   pohId,
+  gatewayId,
   winningRequestChainId,
   latestWinningRequestTimestamp,
-  lastTransferTimestamp,
   pageState,
+  crossChainState,
+  transferCooldownEndsAt,
 }: CrossChainProps) {
   try {
-    const crossChainState = deriveCrossChainState({
-      pageState,
-      pendingRevocation,
-      hasHomeChain: true,
-    });
-
-    if (!crossChainState.canShowCrossChain) {
-      return null;
-    }
-
-    const gatewayId =
-      homeChainContractData.gateways[homeChainContractData.gateways.length - 1]
-        ?.id;
-    const transferCooldownEndsAt = lastTransferTimestamp
-      ? lastTransferTimestamp + homeChainContractData.transferCooldown
-      : undefined;
     let pendingTransferRelay: PendingRelayDescriptor | null = null;
+    let pendingUpdateRelayStatus: {
+      pendingUpdateRelay: PendingRelayDescriptor | null;
+    } = {
+      pendingUpdateRelay: null,
+    };
+    let pendingUpdateError:
+      | RelayDataUnavailableError
+      | CrossChainStatusUnavailableError
+      | undefined;
     const transferClaimer =
       humanity[homeChain.id]?.humanity?.registration?.claimer.id;
 
     if (pageState === "TRANSFER_PENDING") {
-      pendingTransferRelay = await resolvePendingTransferRelay({
-        humanity,
-        homeChain,
-        pohId,
-        winningRequestChainId,
-      });
+      const sourceChainId = winningRequestChainId!;
+      const lastTransfer = humanity[sourceChainId]!.outTransfer!;
+      const transferTimestamp = Number(lastTransfer.transferTimestamp);
+      const destinationChainId = homeChain.id as SupportedChainId;
+      const relayMode = getBridgeStrategy(
+        sourceChainId,
+        destinationChainId,
+      ).relayMode;
+
+      pendingTransferRelay = {
+        relayMode,
+        sourceChainId,
+        destinationChainId,
+        transferTimestamp,
+      };
+
+      if (relayMode !== RELAY_MODE_WAIT_ONLY) {
+        pendingTransferRelay.encodedData = await decodeTransferRelayPayload({
+          lastTransfer,
+          sourceChainId,
+          humanityId: pohId,
+        });
+      }
     }
 
-    const pendingUpdateRelay = await resolvePendingUpdateRelayState({
-      canUpdate: crossChainState.canUpdate,
-      homeChain,
-      pohId,
-      latestWinningRequestTimestamp,
-    });
+    if (crossChainState.canUpdate) {
+      try {
+        pendingUpdateRelayStatus = await resolvePendingUpdateRelay({
+          homeChain,
+          pohId,
+          latestWinningRequestTimestamp,
+        });
+      } catch (error) {
+        pendingUpdateError =
+          error instanceof RelayDataUnavailableError
+            ? error
+            : new CrossChainStatusUnavailableError(
+                "Pending relay status could not be loaded.",
+              );
+      }
+    }
+
+    const pendingUpdateStatusMessage =
+      getPendingUpdateStatusMessage(pendingUpdateError);
+    let crossChainActions: React.ReactNode;
+
+    if (pendingTransferRelay) {
+      crossChainActions = (
+        <PendingRelaySection
+          mode="transfer"
+          relayMode={pendingTransferRelay.relayMode}
+          sourceChainId={pendingTransferRelay.sourceChainId}
+          destinationChainId={pendingTransferRelay.destinationChainId}
+          encodedData={pendingTransferRelay.encodedData}
+          transferTimestamp={pendingTransferRelay.transferTimestamp}
+        />
+      );
+    } else if (pendingUpdateRelayStatus.pendingUpdateRelay) {
+      const pendingUpdateRelay = pendingUpdateRelayStatus.pendingUpdateRelay;
+
+      crossChainActions = (
+        <PendingRelaySection
+          mode="update"
+          relayMode={pendingUpdateRelay.relayMode}
+          sourceChainId={pendingUpdateRelay.sourceChainId}
+          destinationChainId={pendingUpdateRelay.destinationChainId}
+          encodedData={pendingUpdateRelay.encodedData}
+          transferTimestamp={pendingUpdateRelay.transferTimestamp}
+        />
+      );
+    } else {
+      crossChainActions = (
+        <>
+          {gatewayId && crossChainState.canTransfer && transferClaimer ? (
+            <TransferSection
+              claimer={transferClaimer as `0x${string}`}
+              homeChain={homeChain}
+              gatewayId={gatewayId as `0x${string}`}
+              transferCooldownEndsAt={transferCooldownEndsAt}
+            />
+          ) : null}
+          {gatewayId && crossChainState.canUpdate && !pendingUpdateError ? (
+            <UpdateStateSection
+              humanity={humanity}
+              homeChain={homeChain}
+              gatewayId={gatewayId as `0x${string}`}
+              pohId={pohId}
+            />
+          ) : null}
+          {pendingUpdateError ? (
+            <div className="mt-4 w-full min-w-0 sm:ml-4 sm:mt-0 sm:flex-1">
+              <CrossChainStatusStrip
+                title={pendingUpdateStatusMessage?.title ?? ""}
+                description={[
+                  pendingUpdateStatusMessage?.description,
+                  pendingUpdateStatusMessage?.nextStep,
+                ]
+                  .filter(Boolean)
+                  .join(" ")}
+              />
+            </div>
+          ) : null}
+        </>
+      );
+    }
 
     return (
       <ProfileOptimisticProvider
         base={{
-          hasPendingUpdateRelay: !!pendingUpdateRelay.pendingUpdateRelay,
+          hasPendingUpdateRelay: !!pendingUpdateRelayStatus.pendingUpdateRelay,
         }}
       >
         <div className="flex w-full flex-col items-center border-t p-4 sm:flex-row sm:items-center sm:justify-between">
@@ -458,18 +376,7 @@ export default async function CrossChain({
             </span>
           </div>
 
-          <CrossChainActions
-            crossChainState={crossChainState}
-            gatewayId={gatewayId}
-            homeChain={homeChain}
-            humanity={humanity}
-            pendingTransferRelay={pendingTransferRelay}
-            pendingUpdateError={pendingUpdateRelay.error}
-            pendingUpdateRelay={pendingUpdateRelay.pendingUpdateRelay}
-            pohId={pohId}
-            transferClaimer={transferClaimer}
-            transferCooldownEndsAt={transferCooldownEndsAt}
-          />
+          {crossChainActions}
         </div>
       </ProfileOptimisticProvider>
     );
