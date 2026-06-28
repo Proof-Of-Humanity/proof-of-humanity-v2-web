@@ -204,7 +204,7 @@ function Photo({ advance, photo$ }: PhotoProps) {
 
           <div className="mt-6 flex w-full flex-col items-center">
             <button
-              className="gradient flex w-full max-w-xl items-center justify-center gap-3 rounded-full px-6 py-4 text-lg font-semibold text-white shadow-lg transition hover:opacity-90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+              className="btn-primary !w-full max-w-xl gap-3 px-6 py-4 text-lg"
               onClick={() => setShowCamera(true)}
             >
               <CameraIcon className="h-6 w-6 fill-white" />
@@ -230,7 +230,7 @@ function Photo({ advance, photo$ }: PhotoProps) {
           <div className="centered mx-12 mb-4">
             <ZoomIcon className="fill-theme mr-2 h-6 w-6" />
             <input
-              className="slider-thumb h-0.5 w-full appearance-none bg-slate-200"
+              className="slider-thumb bg-grey h-0.5 w-full appearance-none"
               type="range"
               min={1}
               max={maxZoom}
@@ -240,7 +240,7 @@ function Photo({ advance, photo$ }: PhotoProps) {
             />
           </div>
 
-          <div className="relative mb-2 h-96 w-full bg-slate-200">
+          <div className="bg-grey relative mb-2 h-96 w-full">
             <Cropper
               image={originalPhoto?.uri}
               crop={crop}
@@ -276,7 +276,7 @@ function Photo({ advance, photo$ }: PhotoProps) {
           </div>
 
           {pending ? (
-            <button className="btn-main">
+            <button className="btn-primary">
               <Image
                 alt="loading"
                 src="/logo/poh-white.svg"
@@ -287,7 +287,7 @@ function Photo({ advance, photo$ }: PhotoProps) {
               {loadingMessage}...
             </button>
           ) : (
-            <button className="btn-main" onClick={onCrop}>
+            <button className="btn-primary" onClick={onCrop}>
               <CheckmarkIcon className="mr-2 h-6 w-6 fill-white" />
               Ready
             </button>
@@ -309,7 +309,7 @@ function Photo({ advance, photo$ }: PhotoProps) {
               />
             }
           />
-          <button className="btn-main mt-4" onClick={advance}>
+          <button className="btn-primary mt-4" onClick={advance}>
             Next
           </button>
         </div>
@@ -317,10 +317,10 @@ function Photo({ advance, photo$ }: PhotoProps) {
 
       {(showCamera || !!originalPhoto || !!photo) && (
         <button
-          className="centered text-orange mt-4 text-lg font-semibold uppercase"
+          className="text-orange mt-4 flex items-center gap-2 text-lg font-semibold transition hover:text-peach"
           onClick={retakePhoto}
         >
-          <ResetIcon className="fill-orange mr-2 h-6 w-6" />
+          <ResetIcon className="h-6 w-6 fill-current" />
           {showCamera ? "Return" : "Retake"}
         </button>
       )}

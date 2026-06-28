@@ -225,7 +225,16 @@ export default function Evidence({
           closeModal();
         },
       }),
-      [address, applyAction, closeModal, loading],
+      [
+        address,
+        applyAction,
+        closeModal,
+        loading,
+        state$.description,
+        state$.fileURI,
+        state$.name,
+        state$.uri,
+      ],
     ),
   );
 

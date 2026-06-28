@@ -121,7 +121,10 @@ export default function UpdateStateSection({
   if (sectionState === "pending") {
     return (
       <div className="group relative">
-        <button className="text-sky-500" disabled>
+        <button
+          className="btn-secondary px-3.5 py-1.5 text-sm opacity-70"
+          disabled
+        >
           Update state
         </button>
         <span className="pointer-events-none absolute bottom-full left-1/2 z-10 mb-2 w-max -translate-x-1/2 rounded-md bg-neutral-700 px-3 py-2 text-center text-sm text-white opacity-0 transition-opacity group-hover:opacity-100">
@@ -136,7 +139,7 @@ export default function UpdateStateSection({
     <>
       <div className="group relative">
         <button
-          className="text-sky-500"
+          className="btn-secondary px-3.5 py-1.5 text-sm"
           disabled={isReconciling}
           onClick={() => setIsUpdateModalOpen(true)}
         >
@@ -166,7 +169,7 @@ export default function UpdateStateSection({
               </span>
               <div className="mt-4 flex justify-center">
                 <button
-                  className="btn-main"
+                  className="btn-primary"
                   onClick={
                     updateGuardState === "connect-wallet"
                       ? openConnectWallet
@@ -225,9 +228,7 @@ export default function UpdateStateSection({
                           {chain.id === homeChain.id ? (
                             <span>Home chain</span>
                           ) : crossChainReg ? (
-                            <span
-                              className={isExpired ? "text-orange-500" : ""}
-                            >
+                            <span className={isExpired ? "text-orange" : ""}>
                               {isExpired ? "Expired " : "Expires "}
                               {timeAgo(crossChainReg.expirationTime)}
                             </span>
@@ -243,7 +244,7 @@ export default function UpdateStateSection({
                         </div>
                       ) : (
                         <button
-                          className="disabled:text-secondaryText shrink-0 text-blue-500 underline underline-offset-2 disabled:cursor-not-allowed disabled:no-underline"
+                          className="btn-secondary shrink-0 px-3 py-2 text-sm disabled:cursor-not-allowed"
                           disabled={
                             isActionStateLoading(actionState) ||
                             hasUpdateInFlight

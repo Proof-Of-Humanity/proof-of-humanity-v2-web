@@ -43,12 +43,12 @@ export default function IntegrationCard({ integration }: IntegrationCardProps) {
           </div>
         )}
         <h3 className="text-primaryText">{integration.title}</h3>
-        <p className="text-primaryText mb-4 break-words text-sm text-gray-600">
+        <p className="text-primaryText mb-4 break-words text-sm">
           {integration.description}
         </p>
 
         <button
-          className="btn-main gradient w-full px-3 py-2 text-sm dark:hover:bg-opacity-80 sm:w-auto"
+          className="btn-primary w-full px-5 py-2.5 text-sm dark:hover:bg-opacity-80 sm:w-auto"
           aria-label={`Start connecting your ${integration.name}`}
           onClick={handleNavigation}
         >

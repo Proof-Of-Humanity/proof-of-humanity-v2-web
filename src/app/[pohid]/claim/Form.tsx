@@ -22,7 +22,7 @@ import { toast } from "react-toastify";
 import { machinifyId } from "utils/identifier";
 import { Abi, Hash, parseEther } from "viem";
 import { useAccount, useChainId, useReadContract } from "wagmi";
-import ActionButton from "components/ActionButton";
+import ProductReturnsIcon from "icons/ProductReturnsMinor.svg";
 import Connect from "./Connect";
 import Finalized from "./Finalized";
 import InfoStep from "./Info";
@@ -212,8 +212,7 @@ function FormContent({
         type: "text/plain",
       });
 
-      let fileURI: string | null;
-      fileURI = await uploadToIPFS(fileTextFile, Roles.Evidence);
+      const fileURI = await uploadToIPFS(fileTextFile, Roles.Evidence);
 
       if (!fileURI) {
         toast.error("Failed to upload media metadata.");
@@ -236,8 +235,7 @@ function FormContent({
         },
       );
 
-      let registrationUri: string | null;
-      registrationUri = await uploadToIPFS(
+      const registrationUri = await uploadToIPFS(
         registrationTextFile,
         Roles.Evidence,
       );
@@ -385,9 +383,9 @@ function FormContent({
                 <div className="m-1 flex items-center">
                   <div
                     className={cn(
-                      "centered h-6 whitespace-nowrap rounded-full text-sm",
+                      "centered h-6 whitespace-nowrap rounded-full text-sm leading-none",
                       {
-                        "w-6 border border-slate-200 font-bold text-slate-400":
+                        "border-stroke text-secondaryText w-6 border font-bold":
                           step < i,
                         "gradient px-2 font-bold uppercase text-white":
                           step === i,
@@ -404,7 +402,7 @@ function FormContent({
                   <div
                     className={cn(
                       "h-px w-full",
-                      step > i ? "gradient" : "bg-slate-200",
+                      step > i ? "gradient" : "bg-grey",
                     )}
                   />
                 )}
@@ -460,12 +458,13 @@ function FormContent({
 
       {canGoBack && (
         <div className="mt-6 flex justify-center">
-          <ActionButton
+          <button
             onClick={goBack}
-            label="Back"
-            variant="secondary"
-            className="w-full max-w-xs"
-          />
+            className="text-orange flex items-center gap-2 text-lg font-semibold transition hover:text-peach"
+          >
+            <ProductReturnsIcon className="h-6 w-6 fill-current" />
+            Back
+          </button>
         </div>
       )}
     </>

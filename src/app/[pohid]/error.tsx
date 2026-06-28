@@ -39,7 +39,7 @@ export default function Error({
             We couldn&apos;t load this profile right now. Try again in a moment.
           </div>
           <button
-            className="btn-main mt-6 px-4 py-2 normal-case"
+            className="btn-primary mt-6 px-5 py-2.5 normal-case"
             onClick={reset}
           >
             Try again

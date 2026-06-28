@@ -237,7 +237,7 @@ export default async function Request({ params }: PageProps) {
         storageKey={requestStorageKey}
       >
         <>
-          <div className="content mx-auto flex w-[92vw] max-w-[1500px] flex-col justify-center font-semibold sm:w-[84vw] md:w-[76vw]">
+          <div className="content mx-auto !mb-4 flex w-[92vw] max-w-[1500px] flex-col justify-center gap-4 font-semibold sm:w-[84vw] md:w-[76vw]">
             <ActionBar
               arbitrationCost={arbitrationCost}
               index={request.index}
@@ -253,7 +253,7 @@ export default async function Request({ params }: PageProps) {
               anotherClaimPending={anotherClaimPending}
             />
             {punishedVouchSourceHref ? (
-              <div className="mb-4 w-full">
+              <div className="w-full">
                 <RequestPunishedVouchNotice
                   reason={punishedVouchReason}
                   sourceRequestHref={punishedVouchSourceHref}
@@ -314,7 +314,7 @@ export default async function Request({ params }: PageProps) {
               }
             />
           </div>
-          <div className="content mx-auto flex w-[92vw] max-w-[1500px] flex-col justify-center font-semibold sm:w-[84vw] md:w-[76vw]">
+          <div className="content mx-auto !mt-0 flex w-[92vw] max-w-[1500px] flex-col justify-center font-semibold sm:w-[84vw] md:w-[76vw]">
             <Suspense fallback={null}>
               <RequestEvidenceSection
                 arbitrationInfo={request.arbitratorHistory}

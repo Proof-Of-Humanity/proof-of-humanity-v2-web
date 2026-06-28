@@ -21,7 +21,6 @@ interface IHeader {
 
 export default function Header({ policy }: IHeader) {
   const [menuOpen, setMenuOpen] = useState<boolean>(false);
-  const [isDarkMode, setIsDarkMode] = useState<boolean>(false);
   const [pendingRegisterIntent, setPendingRegisterIntent] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const pathname = usePathname();
@@ -36,35 +35,6 @@ export default function Header({ policy }: IHeader) {
   const { data: me } = useSWR(address, getMyData);
   const showRewardsCta = Boolean(isConnected && me?.pohId);
   const showRegisterCta = !me?.pohId;
-
-  const detectTheme = () => {
-    const theme = localStorage.getItem("theme");
-    if (theme === "dark") {
-      document.documentElement.classList.add("dark");
-      setIsDarkMode(true);
-    } else {
-      document.documentElement.classList.remove("dark");
-      setIsDarkMode(false);
-    }
-  };
-
-  useEffect(() => {
-    detectTheme();
-
-    const observer = new MutationObserver(() => {
-      const isDark = document.documentElement.classList.contains("dark");
-      setIsDarkMode(isDark);
-    });
-
-    observer.observe(document.documentElement, {
-      attributes: true,
-      attributeFilter: ["class"],
-    });
-
-    return () => {
-      observer.disconnect();
-    };
-  }, []);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -85,15 +55,11 @@ export default function Header({ policy }: IHeader) {
   }, [menuOpen]);
 
   return (
-    <header className="header-background relative flex h-16 w-full items-center justify-between px-6 pb-2 pt-2 text-lg text-white shadow-sm md:h-16 md:px-8">
+    <header className="header-background relative flex h-16 w-full items-center justify-between border-b border-white/[0.08] px-6 pb-2 pt-2 text-lg text-white md:h-16 md:px-8">
       <Link href="/" className="flex w-[156px] items-center">
         <Image
           alt="proof of humanity logo"
-          src={
-            isDarkMode
-              ? "/logo/poh-text-orange.svg"
-              : "/logo/poh-text-white.svg"
-          }
+          src="/logo/poh-text-orange.svg"
           height={48}
           width={156}
         />
@@ -103,8 +69,8 @@ export default function Header({ policy }: IHeader) {
         {showRewardsCta ? (
           <Link
             href="/app"
-            className={`rounded-full border border-white/50 px-3 py-1 text-sm font-semibold text-white transition hover:bg-white/15 ${
-              pathname.startsWith("/app") ? "bg-white/20" : ""
+            className={`hover:border-orange rounded-full border border-white/[0.08] bg-[#2F333D] px-4 py-2 text-sm font-semibold text-white transition ${
+              pathname.startsWith("/app") ? "text-orange" : ""
             }`}
           >
             Rewards
@@ -115,21 +81,22 @@ export default function Header({ policy }: IHeader) {
             address={address}
             pendingRegisterIntent={pendingRegisterIntent}
             setPendingRegisterIntent={setPendingRegisterIntent}
-            className={`rounded-full border border-white/50 px-3 py-1 text-sm font-semibold text-white transition hover:bg-white/15 ${
-              pathname.includes("/claim") ? "bg-white/20" : ""
+            className={`hover:border-orange rounded-full border border-white/[0.08] bg-[#2F333D] px-4 py-2 text-sm font-semibold text-white transition ${
+              pathname.includes("/claim") ? "text-orange" : ""
             }`}
           />
         ) : null}
         <button
-          className="block text-white"
+          className="hover:border-orange flex h-9 w-9 items-center justify-center rounded-full border border-white/[0.08] bg-[#2F333D] text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] transition duration-200 ease-premium"
           onClick={() => setMenuOpen(!menuOpen)}
+          aria-label="Toggle navigation"
         >
           <Hamburger />
         </button>
       </div>
 
       {chain && (
-        <div className="lg:absolute lg:left-1/2 lg:-translate-x-1/2 lg:transform">
+        <div className="lg:absolute lg:left-1/2 lg:top-1/2 lg:-translate-x-1/2 lg:-translate-y-1/2 lg:transform">
           <DesktopNavigation
             {...{
               address,
@@ -162,7 +129,7 @@ export default function Header({ policy }: IHeader) {
         />
       )}
 
-      <div className="flex flex-row items-center">
+      <div className="flex flex-row items-center gap-3">
         {chain && (
           <div className="hidden md:block">
             <WalletSection {...{ chain, address, isConnected, web3Loaded }} />

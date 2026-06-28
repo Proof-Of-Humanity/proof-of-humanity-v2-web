@@ -44,7 +44,7 @@ export default React.memo(function CirclesIntegration({
   } = useCirclesIntegration();
 
   return (
-    <div className="paper flex w-full flex-col md:w-10/12">
+    <div className="flex w-full flex-col gap-3 md:w-10/12">
       <IntegrationHeader integration={integration} />
 
       <div className="paper flex flex-col items-center justify-center space-y-4 px-4 py-2 md:px-8 md:py-4">

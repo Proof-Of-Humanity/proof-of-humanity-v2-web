@@ -195,7 +195,7 @@ export default function PendingRelaySection({
   return (
     <>
       <button
-        className="m-4 border-2 border-blue-500 p-2 font-bold text-blue-500"
+        className="btn-secondary m-4 px-4 py-2 text-sm"
         onClick={() => setIsModalOpen(true)}
       >
         ⏳ Pending relay
@@ -249,7 +249,7 @@ export default function PendingRelaySection({
                 Connect your wallet to execute the relay.
               </span>
               <div className="mt-4 flex justify-center">
-                <button className="btn-main" onClick={openConnectWallet}>
+                <button className="btn-primary" onClick={openConnectWallet}>
                   Connect wallet
                 </button>
               </div>
@@ -257,7 +257,7 @@ export default function PendingRelaySection({
           ) : relayActionState === "switch-chain" ? (
             <div className="mt-4 flex justify-center">
               <button
-                className="btn-main"
+                className="btn-primary"
                 onClick={() => switchChain({ chainId: destinationChainId })}
               >
                 Switch to {destinationChainName}
@@ -267,7 +267,7 @@ export default function PendingRelaySection({
             relayMode === RELAY_MODE_MANUAL_SIGNATURES &&
             encodedData ? (
             <button
-              className="btn-main mt-4"
+              className="btn-primary mt-4"
               disabled={isActionStateLoading(actionState) || hasRelayInFlight}
               onClick={handleExecuteRelay}
             >

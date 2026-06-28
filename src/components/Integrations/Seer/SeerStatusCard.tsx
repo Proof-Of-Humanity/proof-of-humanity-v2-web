@@ -119,7 +119,7 @@ export default function SeerStatusCard({
         <h3 className="text-primaryText text-xl font-semibold">Seer Credits</h3>
       </div>
 
-      {status != "disconnected" ? (
+      {status !== "disconnected" ? (
         <div className="m-2 flex items-center justify-center">
           <Image
             src="/logo/seers-credit-logo.svg"

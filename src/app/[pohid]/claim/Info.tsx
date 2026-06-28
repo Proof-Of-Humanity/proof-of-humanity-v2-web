@@ -79,7 +79,7 @@ function Info({ advance, state$ }: InfoProps) {
         </div>
 
         <button
-          className="ml-7 mt-2 flex items-center gap-1 text-sm font-normal text-orange-500"
+          className="text-orange ml-7 mt-2 flex items-center gap-1 text-sm font-normal"
           onClick={() => setShowDetails((s) => !s)}
         >
           Details{" "}
@@ -182,7 +182,7 @@ function Info({ advance, state$ }: InfoProps) {
       </div>
 
       <button
-        className="btn-main"
+        className="btn-primary"
         disabled={!name || !walletNotice || !duplicateNotice}
         onClick={advance}
       >

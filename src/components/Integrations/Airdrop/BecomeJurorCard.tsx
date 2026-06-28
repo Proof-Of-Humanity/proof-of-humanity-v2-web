@@ -60,7 +60,7 @@ const BecomeJurorCard: React.FC<BecomeJurorCardProps> = ({
 
   return (
     <div
-      className={`mx-auto flex h-auto w-full max-w-[1095px] flex-col rounded-[30px] border shadow lg:h-[1035px] ${className}`}
+      className={`mx-auto flex h-auto w-full max-w-[1095px] flex-col rounded-[30px] border lg:h-[1035px] ${className}`}
     >
       {/* Image */}
       <div className="flex w-full justify-center overflow-hidden rounded-t-[30px]">
@@ -71,7 +71,7 @@ const BecomeJurorCard: React.FC<BecomeJurorCardProps> = ({
               alt={slide.title}
               width={900}
               height={521}
-              className="my-4 h-auto max-h-[200px] rounded-xl border shadow sm:my-6 sm:max-h-[300px] md:my-8 md:h-auto md:max-h-[521px]"
+              className="my-4 h-auto max-h-[200px] rounded-xl border sm:my-6 sm:max-h-[300px] md:my-8 md:h-auto md:max-h-[521px]"
             />
           )}
         </div>

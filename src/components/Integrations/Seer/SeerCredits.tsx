@@ -144,9 +144,9 @@ export default function SeerCredits({ integration }: SeerCreditsProps) {
 
   return (
     <div className="flex w-full flex-col space-y-8 md:w-10/12">
-      <div className="paper">
+      <div className="flex flex-col gap-3">
         <IntegrationHeader {...{ integration }} />
-        <div className="flex flex-col items-center justify-center space-y-4 px-4 py-2 md:px-8 md:py-4">
+        <div className="paper flex flex-col items-center justify-center space-y-4 px-4 py-2 md:px-8 md:py-4">
           {!slidesCompleted && integration.firstInfoSlide && currentSlide ? (
             <>
               <ExternalLink

@@ -102,7 +102,7 @@ const FundButton: React.FC<FundButtonProps> = ({
   const insufficientFunds = useMemo(() => {
     const available = balanceData?.value ?? 0n;
     return inputAmount > available;
-  }, [inputAmount, balanceData, addedFundInput]);
+  }, [inputAmount, balanceData]);
 
   const exceedsRemaining = inputAmount != null && inputAmount > remainingAmount;
   const isReconciling = pendingAction !== null;

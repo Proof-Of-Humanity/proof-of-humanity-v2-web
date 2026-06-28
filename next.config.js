@@ -1,3 +1,11 @@
+const ipfsGatewayHostname = process.env.REACT_APP_IPFS_GATEWAY;
+
+if (!ipfsGatewayHostname) {
+  throw new Error(
+    "Missing required environment variable: REACT_APP_IPFS_GATEWAY",
+  );
+}
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   experimental: {
@@ -67,7 +75,7 @@ const nextConfig = {
     remotePatterns: [
       {
         protocol: "https",
-        hostname: process.env.REACT_APP_IPFS_GATEWAY,
+        hostname: ipfsGatewayHostname,
         port: "",
         pathname: "/ipfs/**",
       },
