@@ -43,15 +43,16 @@ const SettingsPopover: React.FC = () => {
       <Popover
         trigger={
           <button
+            type="button"
             onClick={toggleSettingsPopover}
             className="hover:border-orange ml-2 flex h-9 w-9 items-center justify-center rounded-full border border-white/[0.08] bg-[#2F333D] shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] transition duration-200 ease-premium"
-            aria-label="Open settings"
+            aria-label="Open notification settings"
           >
             <Image
-              alt="settings"
-              src="/logo/settings.svg"
-              height={15}
-              width={15}
+              alt="notifications"
+              src="/logo/notifications.svg"
+              height={18}
+              width={18}
             />
           </button>
         }

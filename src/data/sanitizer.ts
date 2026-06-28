@@ -25,6 +25,114 @@ import { getHumanityData } from "./humanity";
   Such requests do not receive registration info which is incorporated accordingly by this module.
  */
 
+export const sanitizeRequest = async (
+  request: RequestQuery["request"],
+  chainId: SupportedChainId,
+  pohId: Hash,
+) => {
+  const hasReg = await hasRegistrationEvidence(
+    request?.evidenceGroup?.evidence,
+  );
+
+  if (
+    (request?.revocation &&
+      request?.humanity.winnerClaim &&
+      (request?.humanity.winnerClaim.length === 0 ||
+        request?.humanity.winnerClaim[0]?.index <= -100)) ||
+    (request &&
+      (!request.evidenceGroup ||
+        !request.evidenceGroup.evidence ||
+        request.evidenceGroup.evidence.length === 0 ||
+        !request.claimer.name ||
+        (!hasReg && !request.revocation)))
+  ) {
+    const res = await settleChainQueries(
+      (chain) => sdk[chain.id].Humanity({ id: pohId }),
+      (): HumanityQuery => ({ humanity: null }),
+    );
+    const out = supportedChains.reduce(
+      (acc, chain, i) => ({ ...acc, [chain.id]: res[i] }),
+      {} as Record<SupportedChainId, HumanityQuery>,
+    );
+
+    const tROut = getTransferringRequest(out, chainId, request);
+    if (!tROut?.transferringRequest) return request;
+    const homeChainId = tROut.homeChainId;
+    const transferringRequest = tROut.transferringRequest;
+
+    if (!transferringRequest) return request;
+
+    if (
+      request?.revocation &&
+      request?.humanity.winnerClaim &&
+      (request?.humanity.winnerClaim.length === 0 ||
+        request?.humanity.winnerClaim[0]?.index <= -100)
+    ) {
+      request.claimer.name = transferringRequest?.claimer.name;
+      if (request?.humanity.winnerClaim.length === 0) {
+        request.humanity.winnerClaim.push({
+          claimer: transferringRequest.claimer,
+          creationTime: transferringRequest.creationTime,
+          evidenceGroup: {
+            evidence: [
+              {
+                uri:
+                  transferringRequest.evidenceGroup.evidence.at(-1)?.uri ?? "",
+              },
+            ],
+          },
+          index: transferringRequest.index,
+          lastStatusChange: transferringRequest.lastStatusChange,
+          requester: transferringRequest.requester,
+          resolutionTime: transferringRequest.lastStatusChange,
+        });
+      } else {
+        request.humanity.winnerClaim[0]!.evidenceGroup.evidence =
+          transferringRequest?.evidenceGroup.evidence as any;
+      }
+      return request;
+    }
+
+    if (request.index <= -100) {
+      const transferringRequestComplete = await sdk[homeChainId]["Request"]({
+        id: genRequestId(pohId, Number(transferringRequest!.index)),
+        humanityId: pohId,
+      })
+        .then((res) => res.request)
+        .catch((err) => {
+          console.error(`Subgraph query failed on chain ${homeChainId}:`, err);
+          return null;
+        });
+      if (!transferringRequestComplete) {
+        request.claimer.name = transferringRequest?.claimer.name;
+        request.evidenceGroup = transferringRequest?.evidenceGroup as any;
+        request.humanity.winnerClaim[0]!.evidenceGroup.evidence =
+          transferringRequest?.evidenceGroup.evidence as any;
+      } else {
+        //request.humanity = transferringRequestComplete?.humanity as any;
+        request.claimer.name = transferringRequestComplete?.claimer.name as any;
+        request.evidenceGroup =
+          transferringRequestComplete?.evidenceGroup as any;
+        //request.challenges = transferringRequestComplete?.challenges as any;
+      }
+    } else {
+      if (request && !request.claimer.name) {
+        request.claimer.name = transferringRequest?.claimer.name;
+      }
+
+      if (
+        request &&
+        (!request.evidenceGroup ||
+          !request.evidenceGroup.evidence ||
+          request.evidenceGroup.evidence.length === 0)
+      ) {
+        completeRequest(request as any, transferringRequest as any);
+      }
+    }
+  }
+  return request;
+};
+
 export const sanitizeHumanityRequests = async (
   out: Record<SupportedChainId, HumanityQuery>,
 ) => {

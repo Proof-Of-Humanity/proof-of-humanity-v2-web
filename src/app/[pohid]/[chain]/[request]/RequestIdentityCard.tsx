@@ -329,7 +329,7 @@ export async function MobileIdentityMedia({
             trigger={
               <VideoThumbnail
                 className="w-full cursor-pointer rounded-2xl"
-                src={ipfs(registrationFile.video)}
+                src={videoUrl}
               />
             }
           />

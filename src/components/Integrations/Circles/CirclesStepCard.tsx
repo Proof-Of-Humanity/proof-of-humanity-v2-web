@@ -64,7 +64,7 @@ const CirclesStepCard: React.FC<ProcessStepCardProps> = ({
               height={32}
               className={`${previousStep ? "cursor-pointer opacity-100" : "pointer-events-none cursor-not-allowed opacity-50"}`}
               onClick={onPrevious}
-              onKeyDown={(e: React.KeyboardEvent<HTMLButtonElement>) =>
+              onKeyDown={(e: React.KeyboardEvent<SVGElement>) =>
                 previousStep && e.key === "Enter" && onPrevious()
               }
               aria-label="Previous step"
@@ -76,7 +76,7 @@ const CirclesStepCard: React.FC<ProcessStepCardProps> = ({
               height={32}
               className={`ml-2 ${nextStep ? "cursor-pointer opacity-100" : "pointer-events-none cursor-not-allowed opacity-50"}`}
               onClick={onNext}
-              onKeyDown={(e: React.KeyboardEvent<HTMLButtonElement>) =>
+              onKeyDown={(e: React.KeyboardEvent<SVGElement>) =>
                 nextStep && e.key === "Enter" && onNext()
               }
               aria-label="Next step"

@@ -189,9 +189,6 @@ export default function SubgraphsStatus() {
   const activeStatus = visibleStatuses[activeIndex] ?? visibleStatuses[0];
   if (!activeStatus) return null;
 
-  const chainNames = unhealthy.map((s) => s.chainName);
-  const chainList = formatChainList(chainNames);
-
   return (
     <div
       role="status"

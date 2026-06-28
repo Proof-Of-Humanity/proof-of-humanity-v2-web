@@ -112,7 +112,11 @@ const Content = ({
     revocation && humanity.registration?.claimer.id
       ? humanity.registration.claimer.id
       : requester;
-  const photoUrl = safeIpfsUrl(data?.photo);
+
+  const photo = safeIpfsUrl(data?.photo) ?? null;
+  const isMediaLoading =
+    Boolean(evidenceUri && !evidenceFile && !evidenceError) ||
+    Boolean(evidenceFile?.fileURI && !data && !dataError);
 
   const photo = data?.photo ? ipfs(data.photo) : null;
   const isMediaLoading =

@@ -37,13 +37,12 @@ import {
 } from "utils/status";
 
 import Card from "./Card";
-import SubgraphsStatus from "./SubgraphsStatus";
 import LoadingSkeleton from "./LoadingSkeleton";
 
 enableReactUse();
 
 const REQUESTS_BATCH_SIZE = 12;
-let humanityLifespanAllChains: Record<SupportedChainId, string>;
+let humanityLifespanAllChains: Record<SupportedChainId, string | undefined>;
 
 export type RequestsQueryItem = ArrayElement<RequestsQuery["requests"]>;
 
@@ -271,21 +270,29 @@ function RequestsGrid() {
 
   useMountOnce(() => {
     (async () => {
-      const [contractData, requestsData] = await Promise.all([
-        getContractDataAllChains(),
-        getRequestsInitData(),
-      ]);
-      humanityLifespanAllChains = Object.keys(contractData).reduce(
-        (acc, chainId) => {
-          acc[Number(chainId) as SupportedChainId] =
-            contractData[Number(chainId) as SupportedChainId].humanityLifespan;
-          return acc;
-        },
-        {} as Record<SupportedChainId, string>,
-      );
+      try {
+        const [contractData, requestsData] = await Promise.all([
+          getContractDataAllChains(),
+          getRequestsInitData(),
+        ]);
+        humanityLifespanAllChains = Object.keys(contractData).reduce(
+          (acc, chainId) => {
+            acc[Number(chainId) as SupportedChainId] =
+              contractData[
+                Number(chainId) as SupportedChainId
+              ]?.humanityLifespan;
+            return acc;
+          },
+          {} as Record<SupportedChainId, string | undefined>,
+        );
 
-      chainStacks$.set(requestsData);
-      loading.stop();
+        chainStacks$.set(requestsData);
+      } catch (err) {
+        console.error("Failed to load requests:", err);
+        setLoadError(true);
+      } finally {
+        loading.stop();
+      }
     })();
 
     filter$.onChange(
@@ -366,7 +373,7 @@ function RequestsGrid() {
 
   if (pending && loadingType === "init") return <LoadingSkeleton />;
 
-  if (loadError && requests.length === 0)
+  if (loadError && requests.length === 0) {
     return (
       <div className="text-primaryText flex flex-col items-center gap-2 py-16 text-center">
         <span className="font-semibold">
@@ -377,10 +384,10 @@ function RequestsGrid() {
         </span>
       </div>
     );
+  }
 
   return (
     <>
-      <SubgraphsStatus />
       <RequestFilters
         filter={filter}
         selectedChain={selectedChain}
