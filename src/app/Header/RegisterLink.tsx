@@ -25,7 +25,7 @@ const RegisterLink = ({
   const modal = useAppKit();
   const router = useRouter();
   const { isConnected } = useAccount();
-  const pohId = me?.pohId ?? me?.currentRequest?.humanity?.id;
+  const pohId = me?.pohId;
 
   useEffect(() => {
     if (!pendingRegisterIntent || !isConnected || !address) return;
