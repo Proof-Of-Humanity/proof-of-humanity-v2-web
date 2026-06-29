@@ -25,6 +25,7 @@ const RegisterLink = ({
   const modal = useAppKit();
   const router = useRouter();
   const { isConnected } = useAccount();
+  const pohId = me?.pohId;
 
   useEffect(() => {
     if (!pendingRegisterIntent || !isConnected || !address) return;
@@ -57,9 +58,9 @@ const RegisterLink = ({
     }
   };
 
-  if (me?.pohId) {
+  if (pohId) {
     return (
-      <Link href={`/${prettifyId(me.pohId)}`} className={className}>
+      <Link href={`/${prettifyId(pohId)}`} className={className}>
         PoH ID
       </Link>
     );

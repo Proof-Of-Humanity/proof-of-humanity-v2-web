@@ -1,11 +1,16 @@
 import cn from "classnames";
-import { InputHTMLAttributes, TextareaHTMLAttributes, useState } from "react";
+import {
+  InputHTMLAttributes,
+  ReactNode,
+  TextareaHTMLAttributes,
+  useState,
+} from "react";
 import Label from "./Label";
 
 type FieldProps = TextareaHTMLAttributes<HTMLTextAreaElement> &
   InputHTMLAttributes<HTMLInputElement> & {
     textarea?: boolean;
-    label?: string;
+    label?: ReactNode;
   };
 
 function Field({ label, textarea = false, className, ...props }: FieldProps) {
