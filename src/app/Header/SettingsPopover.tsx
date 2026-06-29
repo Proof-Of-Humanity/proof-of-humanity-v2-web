@@ -36,19 +36,28 @@ const SettingsPopover: React.FC = () => {
     confirmUnsubscribe,
     isDeleting,
   } = useEmailSettings();
+  const showUnreadDot = isVerified && !hasVerifiedEmail;
 
   return (
-    <div>
+    <div className="flex h-5 items-center">
       <Popover
         trigger={
-          <span onClick={toggleSettingsPopover} className="cursor-pointer">
+          <span
+            onClick={toggleSettingsPopover}
+            className="relative mx-2 inline-flex h-5 w-5 cursor-pointer items-center justify-center"
+          >
             <Image
               alt="notifications"
-              className="mx-2"
               src="/logo/notifications.svg"
               height={20}
               width={20}
             />
+            {showUnreadDot && (
+              <span
+                aria-hidden="true"
+                className="bg-status-removed absolute -right-1 -top-1 h-2.5 w-2.5 rounded-full border-2 border-white"
+              />
+            )}
           </span>
         }
         open={isOpen}
@@ -66,6 +75,13 @@ const SettingsPopover: React.FC = () => {
             <SignInButton className="min-h-[44px] w-full px-6 text-base normal-case transition-colors duration-200 md:w-full" />
           ) : (
             <div className="space-y-3 text-center">
+              {!hasVerifiedEmail && (
+                <p className="text-secondaryText text-sm">
+                  Subscribe to get important updates about your profile,
+                  requests and challenges.
+                </p>
+              )}
+
               <div className="flex flex-col items-center">
                 <EmailField
                   value={email}
