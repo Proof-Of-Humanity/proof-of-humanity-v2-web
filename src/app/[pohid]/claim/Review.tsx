@@ -15,6 +15,7 @@ import Image from "next/image";
 import { prettifyId } from "utils/identifier";
 import { ipfs } from "utils/ipfs";
 import { formatEth } from "utils/misc";
+import { isValidEmailAddress } from "utils/validators";
 import { Abi, Hash, formatEther } from "viem";
 import {
   useAccount,
@@ -23,7 +24,7 @@ import {
   useReadContract,
   useSwitchChain,
 } from "wagmi";
-import { MediaState, SubmissionState } from "./Form";
+import { EmailSubmissionStatus, MediaState, SubmissionState } from "./Form";
 
 interface ReviewProps {
   arbitrationInfo: ContractData["arbitrationInfo"];
@@ -35,6 +36,11 @@ interface ReviewProps {
   media$: ObservableObject<MediaState>;
   loadingMessage?: string;
   submit: () => void;
+  registrationComplete?: boolean;
+  email$: ObservablePrimitiveBaseFns<string>;
+  emailStatus?: EmailSubmissionStatus;
+  retryEmail?: () => void;
+  skipEmail?: () => void;
 }
 
 function Review({
@@ -47,10 +53,20 @@ function Review({
   media$,
   loadingMessage,
   submit,
+  registrationComplete = false,
+  email$,
+  emailStatus = "idle",
+  retryEmail,
+  skipEmail,
 }: ReviewProps) {
   const selfFunded = selfFunded$.use();
   const submitForFree = submitForFree$.use();
   const { pohId, name } = state$.use();
+  const email = email$.use();
+  const trimmedEmail = email.trim();
+  // Optional: flag only a non-empty malformed address, never an empty field.
+  const showEmailError =
+    trimmedEmail !== "" && !isValidEmailAddress(trimmedEmail);
   const { photo, video } = media$.use();
   const { address } = useAccount();
   const chainId = useChainId() as SupportedChainId;
@@ -237,6 +253,26 @@ function Review({
         />
         <Field label="Name" value={name} disabled />
         <Field label="Account" value={address} disabled />
+        <Field
+          type="email"
+          label={
+            <>
+              Email{" "}
+              <span className="text-secondaryText text-xs font-normal normal-case">
+                (optional)
+              </span>
+            </>
+          }
+          placeholder="get notified about your profile submission"
+          value={email}
+          disabled={registrationComplete}
+          onChange={(e) => email$.set(e.target.value)}
+        />
+        {showEmailError && (
+          <p className="mt-1 text-sm text-red-500">
+            Please enter a valid email
+          </p>
+        )}
 
         <Label>
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
@@ -362,7 +398,39 @@ function Review({
         </div>
       </div>
       <div className="w-full">
-        {loadingMessage ? (
+        {registrationComplete && emailStatus === "failed" ? (
+          <div className="text-primaryText mt-2 text-sm">
+            <p className="inline-flex items-center gap-1 font-semibold text-green-500">
+              Your profile was submitted.
+              <svg
+                className="h-4 w-4 shrink-0"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2.5}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M5 13l4 4L19 7"
+                />
+              </svg>
+            </p>
+            <p className="text-secondaryText mt-1">
+              We couldn't save <span className="font-semibold">{email}</span>{" "}
+              for profile notifications. You can retry now or enable
+              notifications later from settings.
+            </p>
+            <div className="mt-3">
+              <button
+                className="btn-main w-full py-3 text-sm font-bold"
+                onClick={retryEmail}
+              >
+                Save email for notifications
+              </button>
+            </div>
+          </div>
+        ) : loadingMessage ? (
           <button className="btn-main gap-2 md:w-full" disabled>
             <Image
               alt="loading"
@@ -379,7 +447,11 @@ function Review({
           </button>
         ) : (
           <AuthGuard signInButtonProps={{ className: "md:w-full" }}>
-            <button className="btn-main md:w-full" onClick={submit}>
+            <button
+              className="btn-main md:w-full"
+              onClick={submit}
+              disabled={showEmailError}
+            >
               Submit
             </button>
           </AuthGuard>

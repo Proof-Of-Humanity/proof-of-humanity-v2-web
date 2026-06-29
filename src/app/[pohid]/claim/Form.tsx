@@ -17,12 +17,22 @@ import { ContractData } from "data/contract";
 import { RegistrationQuery } from "generated/graphql";
 import { useLoading } from "hooks/useLoading";
 import { redirect, RedirectType, useParams } from "next/navigation";
-import { Fragment, MutableRefObject, useEffect, useMemo, useRef } from "react";
+import {
+  Fragment,
+  MutableRefObject,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { toast } from "react-toastify";
 import { machinifyId } from "utils/identifier";
 import { Abi, Hash, parseEther } from "viem";
 import { useAccount, useChainId, useReadContract } from "wagmi";
 import ActionButton from "components/ActionButton";
+import { useSubmitEmail } from "components/Integrations/Airdrop/useSubmitEmail";
+import { isValidEmailAddress } from "utils/validators";
 import Connect from "./Connect";
 import Finalized from "./Finalized";
 import InfoStep from "./Info";
@@ -42,6 +52,14 @@ export enum Step {
   review,
   finalized,
 }
+
+export type EmailSubmissionStatus =
+  | "idle"
+  | "saving"
+  | "saved"
+  | "unchanged"
+  | "failed"
+  | "skipped";
 
 export interface MediaState {
   photo: { uri: string; content: Blob } | null;
@@ -93,8 +111,8 @@ function FormContent({
   const chainId = useChainId() as SupportedChainId;
 
   const { uploadFile: uploadToIPFS } = useAtlasProvider();
-  // Non-null: the Form wrapper only renders this component when the
-  // connected chain's contract data is available.
+  // Off-chain notification email opt-in.
+  const { mutateAsync: submitEmail } = useSubmitEmail();
   const currentContractData = contractData[chainId]!;
   const currentBaseDeposit = BigInt(currentContractData.baseDeposit);
   const syncedFundingChainId = useRef<SupportedChainId | null>(null);
@@ -117,6 +135,7 @@ function FormContent({
     uri: "",
   });
   const state = state$.use();
+  const email$ = useObservable("");
   const currentTotalCost =
     typeof currentArbitrationCost === "bigint"
       ? currentBaseDeposit + currentArbitrationCost
@@ -128,15 +147,67 @@ function FormContent({
   const submitForFree = submitForFree$.use();
   const loading = useLoading();
   const [, loadingMessage] = loading.use();
+  const [registrationComplete, setRegistrationComplete] = useState(false);
+  const [emailStatus, setEmailStatus] = useState<EmailSubmissionStatus>("idle");
   const stepHistoryReady = useRef(false);
   const previousStepRef = useRef(Step.info);
   const canGoBack =
-    step > Step.info && step < Step.finalized && !loadingMessage;
+    step > Step.info &&
+    step < Step.finalized &&
+    !loadingMessage &&
+    !registrationComplete;
 
   const goBack = () => {
     if (!canGoBack) return;
     step$.set(step - 1);
   };
+
+  const saveNotificationEmail = useCallback(async () => {
+    const email = email$.peek().trim();
+    if (!email || !isValidEmailAddress(email)) {
+      setEmailStatus(email ? "failed" : "skipped");
+      return false;
+    }
+
+    loading.start("Enabling notifications");
+    setEmailStatus("saving");
+    try {
+      throw new Error("test error");
+      const wasUpdated = await submitEmail({ nextEmail: email });
+      loading.stop();
+      setEmailStatus(wasUpdated ? "saved" : "unchanged");
+      return true;
+    } catch {
+      loading.stop();
+      setEmailStatus("failed");
+      return false;
+    }
+  }, [email$, loading, submitEmail]);
+
+  const finishRegistration = useCallback(async () => {
+    setRegistrationComplete(true);
+    toast.success("Request created");
+
+    const email = email$.peek().trim();
+    if (!email) {
+      setEmailStatus("skipped");
+      step$.set(Step.finalized);
+      return;
+    }
+
+    const emailSaved = await saveNotificationEmail();
+    if (emailSaved) step$.set(Step.finalized);
+  }, [email$, saveNotificationEmail, step$]);
+
+  const retryNotificationEmail = useCallback(async () => {
+    const emailSaved = await saveNotificationEmail();
+    if (emailSaved) step$.set(Step.finalized);
+  }, [saveNotificationEmail, step$]);
+
+  const skipNotificationEmail = useCallback(() => {
+    setEmailStatus("skipped");
+    step$.set(Step.finalized);
+  }, [step$]);
 
   const events = useMemo<Effects>(
     () => ({
@@ -150,8 +221,7 @@ function FormContent({
       },
       onSuccess() {
         loading.stop();
-        step$.set(Step.finalized);
-        toast.success("Request created");
+        finishRegistration();
       },
       onFail() {
         state$.uri.set("");
@@ -164,7 +234,7 @@ function FormContent({
         fire();
       },
     }),
-    [step$, loading, state$],
+    [loading, state$, finishRegistration],
   );
 
   const [prepareClaimHumanity] = usePoHWrite("claimHumanity", events);
@@ -288,14 +358,6 @@ function FormContent({
     state$,
   ]);
 
-  // const steps = useMemo(
-  //   () =>
-  //     renewal
-  //       ? ["Photo", "Video", "Review"]
-  //       : ["Info", "Photo", "Video", "Review"],
-  //   [renewal]
-  // );
-
   useEffectOnce(() => {
     initiatingAddress.current = address;
   });
@@ -392,10 +454,14 @@ function FormContent({
                         "gradient px-2 font-bold uppercase text-white":
                           step === i,
                         "gradient w-6 cursor-pointer font-bold text-white":
-                          step > i,
+                          step > i && !registrationComplete,
+                        "gradient w-6 font-bold text-white":
+                          step > i && registrationComplete,
                       },
                     )}
-                    onClick={() => step > i && step$.set(i)}
+                    onClick={() =>
+                      !registrationComplete && step > i && step$.set(i)
+                    }
                   >
                     {`${i + 1}${step === i ? `. ${item}` : ""}`}
                   </div>
@@ -417,7 +483,11 @@ function FormContent({
       <Switch value={step$}>
         {{
           [Step.info]: () => (
-            <InfoStep advance={() => step$.set(Step.photo)} state$={state$} />
+            <InfoStep
+              advance={() => step$.set(Step.photo)}
+              state$={state$}
+              email$={email$}
+            />
           ),
           [Step.photo]: () => (
             <PhotoStep
@@ -444,6 +514,11 @@ function FormContent({
               submitForFree$={submitForFree$}
               loadingMessage={loadingMessage}
               submit={submit}
+              registrationComplete={registrationComplete}
+              email$={email$}
+              emailStatus={emailStatus}
+              retryEmail={retryNotificationEmail}
+              skipEmail={skipNotificationEmail}
             />
           ),
           [Step.finalized]: () => (
@@ -453,16 +528,26 @@ function FormContent({
                 currentContractData.challengePeriodDuration,
               )}
               pohId={params.pohid as string}
+              email={email$.peek().trim()}
+              emailStatus={emailStatus}
             />
           ),
         }}
       </Switch>
 
-      {canGoBack && (
+      {(canGoBack || (registrationComplete && emailStatus === "failed")) && (
         <div className="mt-6 flex justify-center">
           <ActionButton
-            onClick={goBack}
-            label="Back"
+            onClick={
+              registrationComplete && emailStatus === "failed"
+                ? skipNotificationEmail
+                : goBack
+            }
+            label={
+              registrationComplete && emailStatus === "failed"
+                ? "Skip for now"
+                : "Back"
+            }
             variant="secondary"
             className="w-full max-w-xs"
           />
