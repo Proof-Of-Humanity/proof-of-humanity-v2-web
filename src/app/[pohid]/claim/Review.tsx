@@ -15,7 +15,6 @@ import Image from "next/image";
 import { prettifyId } from "utils/identifier";
 import { ipfs } from "utils/ipfs";
 import { formatEth } from "utils/misc";
-import { isValidEmailAddress } from "utils/validators";
 import { Abi, Hash, formatEther } from "viem";
 import {
   useAccount,
@@ -63,10 +62,6 @@ function Review({
   const submitForFree = submitForFree$.use();
   const { pohId, name } = state$.use();
   const email = email$.use();
-  const trimmedEmail = email.trim();
-  // Optional: flag only a non-empty malformed address, never an empty field.
-  const showEmailError =
-    trimmedEmail !== "" && !isValidEmailAddress(trimmedEmail);
   const { photo, video } = media$.use();
   const { address } = useAccount();
   const chainId = useChainId() as SupportedChainId;
@@ -253,28 +248,9 @@ function Review({
         />
         <Field label="Name" value={name} disabled />
         <Field label="Account" value={address} disabled />
-        <Field
-          type="email"
-          label={
-            <>
-              Email{" "}
-              <span className="text-secondaryText text-xs font-normal normal-case">
-                (optional)
-              </span>
-            </>
-          }
-          placeholder="get notified about your profile submission"
-          value={email}
-          disabled={registrationComplete}
-          onChange={(e) => email$.set(e.target.value)}
-        />
-        {showEmailError && (
-          <p className="mt-1 text-sm text-red-500">
-            Please enter a valid email
-          </p>
-        )}
+        <Field label="Email" value={email} disabled />
 
-        <Label>
+        <Label className="!mt-2">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
             <span>Initial deposit</span>
             {balance && (
@@ -294,7 +270,7 @@ function Review({
             </ExternalLink>
           </div>
         </Label>
-        <div className="txt mb-16 flex flex-col">
+        <div className="txt mb-8 flex flex-col">
           <div
             className={`flex flex-col gap-3 transition-opacity sm:flex-row sm:flex-wrap sm:items-center sm:gap-2 ${
               submitForFree ? "opacity-50" : ""
@@ -347,7 +323,7 @@ function Review({
             )}
           </div>
 
-          <label className="text-primaryText mt-4 flex cursor-pointer items-start gap-3 sm:items-center">
+          <label className="text-primaryText mt-2 flex cursor-pointer items-start gap-3 sm:items-center">
             <input
               type="checkbox"
               checked={submitForFree}
@@ -377,7 +353,7 @@ function Review({
             </span>
           </label>
 
-          <span className="mt-3 text-blue-500">
+          <span className="mt-1 text-blue-500">
             If you don&apos;t fund the deposit now, PoH supporters can cover it
             for you. The deposit is reimbursed after successful registration and
             lost only if the profile is rejected.
@@ -399,7 +375,7 @@ function Review({
       </div>
       <div className="w-full">
         {registrationComplete && emailStatus === "failed" ? (
-          <div className="text-primaryText mt-2 text-sm">
+          <div className="text-primaryText mt-1 text-sm">
             <p className="inline-flex items-center gap-1 font-semibold text-green-500">
               Your profile was submitted.
               <svg
@@ -447,11 +423,7 @@ function Review({
           </button>
         ) : (
           <AuthGuard signInButtonProps={{ className: "md:w-full" }}>
-            <button
-              className="btn-main md:w-full"
-              onClick={submit}
-              disabled={showEmailError}
-            >
+            <button className="btn-main md:w-full" onClick={submit}>
               Submit
             </button>
           </AuthGuard>

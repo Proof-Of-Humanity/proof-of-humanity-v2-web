@@ -172,7 +172,6 @@ function FormContent({
     loading.start("Enabling notifications");
     setEmailStatus("saving");
     try {
-      throw new Error("test error");
       const wasUpdated = await submitEmail({ nextEmail: email });
       loading.stop();
       setEmailStatus(wasUpdated ? "saved" : "unchanged");
