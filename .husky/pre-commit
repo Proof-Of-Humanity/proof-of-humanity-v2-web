@@ -1,1 +1,8 @@
-yarn lint-staged
+if command -v yarn >/dev/null 2>&1; then
+  yarn lint-staged
+elif command -v corepack >/dev/null 2>&1; then
+  corepack yarn lint-staged
+else
+  echo "yarn is required to run lint-staged"
+  exit 1
+fi
