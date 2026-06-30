@@ -8,11 +8,15 @@ const integrations: Record<string, Integration> = {
     description:
       "Join our group on the Gnosis App to start your daily income and unlock exclusive perks!",
     logo: "/images/integrations/circles-logo.png",
-    logoWidth: 164,
+    darkLogo: "/logo/gnosis-app.svg",
+    logoWidth: 185,
     logoHeight: 48,
     isActive: true,
     startPath: "app/circles",
     buttonText: "Start Earning",
+    displayOrder: 2,
+    cardButtonText: "Start Now",
+    statusLabel: "Live",
     firstInfoSlide: [
       {
         id: "start",
@@ -79,6 +83,9 @@ const integrations: Record<string, Integration> = {
     isActive: true,
     startPath: "app/pnk-airdrop",
     buttonText: "Start Now",
+    displayOrder: 1,
+    cardTitle: "Kleros PNK Airdrop",
+    statusLabel: "Live",
     firstInfoSlide: [
       {
         id: "klerosInfo",
@@ -139,6 +146,9 @@ const integrations: Record<string, Integration> = {
     isActive: true,
     startPath: "app/seer-credits",
     buttonText: "Claim $10",
+    displayOrder: 3,
+    cardButtonText: "Start Now",
+    statusLabel: "Live",
     firstInfoSlide: [
       {
         id: "whatIsSeer",
@@ -187,10 +197,10 @@ const integrations: Record<string, Integration> = {
  * Get all available integrations
  */
 export async function getIntegrations(): Promise<Integration[]> {
-  // Filter out inactive integrations
-  return Object.values(integrations).filter(
-    (integration) => integration.isActive,
-  );
+  // Filter out inactive integrations, ordered for the rewards-page cards.
+  return Object.values(integrations)
+    .filter((integration) => integration.isActive)
+    .sort((a, b) => (a.displayOrder ?? 99) - (b.displayOrder ?? 99));
 }
 
 /**

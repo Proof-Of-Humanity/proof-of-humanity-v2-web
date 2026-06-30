@@ -12,6 +12,11 @@ export interface Integration {
   headerTitle?: string;
   headerDescription?: string;
   buttonText: string;
+  // Rewards-page card display overrides (do not affect the integration detail pages).
+  displayOrder?: number;
+  cardTitle?: string;
+  cardButtonText?: string;
+  statusLabel?: string;
   firstInfoSlide?: InfoSlide[];
   secondInfoSlide?: InfoSlide[];
   externalLinks?: ExternalLink[];

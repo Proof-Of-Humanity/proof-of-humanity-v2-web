@@ -3,10 +3,14 @@
 import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { usePathname } from "next/navigation";
 
 export default function AirdropBanner() {
   const [isVisible, setIsVisible] = useState(true);
+  const pathname = usePathname();
 
+  // The rewards page (/app) has its own layout in the design — no top banner.
+  if (pathname?.startsWith("/app")) return null;
   if (!isVisible) return null;
 
   return (

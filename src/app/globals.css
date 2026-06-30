@@ -692,13 +692,7 @@
   }
 
   .dark .bg-primaryBackground {
-    background:
-      radial-gradient(
-        circle at top left,
-        rgba(255, 138, 102, 0.06),
-        transparent 28%
-      ),
-      linear-gradient(180deg, #20232b 0%, #1e2129 100%);
+    background: linear-gradient(180deg, #20232b 0%, #1e2129 100%);
   }
 
   .bg-orange {
