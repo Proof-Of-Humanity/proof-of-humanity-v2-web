@@ -4,32 +4,29 @@ import ExternalLink from "components/ExternalLink";
 import Popover from "components/Popover";
 import SettingsPopover from "./SettingsPopover";
 
-const iconButtonClass =
-  "hover:border-orange ml-2 flex h-9 w-9 items-center justify-center rounded-full border border-white/[0.08] bg-[#2F333D] shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] transition duration-200 ease-premium";
-
 const Options: React.FC = () => (
   <div className="mt-[16px] flex flex-row items-center md:mt-0">
     <SettingsPopover />
     <ExternalLink
       href="https://snapshot.org/#/poh.eth/"
-      className={iconButtonClass}
+      className="ml-2 transition-opacity duration-200 hover:opacity-80"
     >
-      <Image alt="snapshot" src="/logo/snapshot.svg" height={15} width={15} />
+      <Image
+        alt="snapshot"
+        src="/logo/social-snapshot.svg"
+        height={36}
+        width={36}
+      />
     </ExternalLink>
 
     <Popover
       trigger={
         <button
           type="button"
-          className={iconButtonClass}
+          className="ml-2 transition-opacity duration-200 hover:opacity-80"
           aria-label="Open help links"
         >
-          <Image
-            alt="question"
-            src={"/logo/question.svg"}
-            height={15}
-            width={15}
-          />
+          <Image alt="help" src="/logo/social-help.svg" height={36} width={36} />
         </button>
       }
     >
