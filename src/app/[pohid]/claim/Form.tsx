@@ -66,6 +66,11 @@ export interface MediaState {
   video: { uri: string; content: Blob } | null;
 }
 
+type UploadedMediaCache = {
+  content: Blob;
+  uri: string;
+};
+
 export interface SubmissionState {
   pohId: Hash;
   name: string;
@@ -151,6 +156,12 @@ function FormContent({
   const [emailStatus, setEmailStatus] = useState<EmailSubmissionStatus>("idle");
   const stepHistoryReady = useRef(false);
   const previousStepRef = useRef(Step.info);
+  const uploadedMediaRef = useRef<
+    Record<keyof MediaState, UploadedMediaCache | null>
+  >({
+    photo: null,
+    video: null,
+  });
   const canGoBack =
     step > Step.info &&
     step < Step.finalized &&
@@ -247,6 +258,25 @@ function FormContent({
     syncedFundingChainId.current = chainId;
   }, [chainId, currentTotalCost, selfFunded$, submitForFree]);
 
+  const getUploadedMediaUri = async (
+    type: keyof MediaState,
+    mediaItem: NonNullable<MediaState[keyof MediaState]>,
+    role: Roles,
+  ) => {
+    const cached = uploadedMediaRef.current[type];
+    if (cached?.content === mediaItem.content) return cached.uri;
+
+    const uri = await uploadToIPFS(mediaItem.content as File, role);
+    if (uri) {
+      uploadedMediaRef.current[type] = {
+        content: mediaItem.content,
+        uri,
+      };
+    }
+
+    return uri;
+  };
+
   const submit = async () => {
     if (!media.photo || !media.video) return;
     if (!currentTotalCost) {
@@ -257,12 +287,9 @@ function FormContent({
     state$.uri.set("");
     loading.start("Uploading media");
     try {
-      const photoFile = media.photo.content as File;
-      const videoFile = media.video.content as File;
-
       const [photoUri, videoUri] = await Promise.all([
-        uploadToIPFS(photoFile, Roles.Photo),
-        uploadToIPFS(videoFile, Roles.IdentificationVideo),
+        getUploadedMediaUri("photo", media.photo, Roles.Photo),
+        getUploadedMediaUri("video", media.video, Roles.IdentificationVideo),
       ]);
 
       if (!photoUri || !videoUri) {
