@@ -66,11 +66,6 @@ export interface MediaState {
   video: { uri: string; content: Blob } | null;
 }
 
-type UploadedMediaCache = {
-  content: Blob;
-  uri: string;
-};
-
 export interface SubmissionState {
   pohId: Hash;
   name: string;
@@ -156,11 +151,16 @@ function FormContent({
   const [emailStatus, setEmailStatus] = useState<EmailSubmissionStatus>("idle");
   const stepHistoryReady = useRef(false);
   const previousStepRef = useRef(Step.info);
-  const uploadedMediaRef = useRef<
-    Record<keyof MediaState, UploadedMediaCache | null>
-  >({
+  const uploadCache = useRef<{
+    photo: { content: Blob; uri: string } | null;
+    video: { content: Blob; uri: string } | null;
+    file: { json: string; uri: string } | null;
+    registration: { fileURI: string; uri: string } | null;
+  }>({
     photo: null,
     video: null,
+    file: null,
+    registration: null,
   });
   const canGoBack =
     step > Step.info &&
@@ -263,12 +263,12 @@ function FormContent({
     mediaItem: NonNullable<MediaState[keyof MediaState]>,
     role: Roles,
   ) => {
-    const cached = uploadedMediaRef.current[type];
+    const cached = uploadCache.current[type];
     if (cached?.content === mediaItem.content) return cached.uri;
 
     const uri = await uploadToIPFS(mediaItem.content as File, role);
     if (uri) {
-      uploadedMediaRef.current[type] = {
+      uploadCache.current[type] = {
         content: mediaItem.content,
         uri,
       };
@@ -298,18 +298,19 @@ function FormContent({
         return;
       }
 
-      const fileJson = {
+      const fileJson = JSON.stringify({
         name: state.name,
         photo: photoUri,
         video: videoUri,
-      };
-
-      const fileTextFile = new File([JSON.stringify(fileJson)], "file", {
-        type: "text/plain",
       });
-
-      let fileURI: string | null;
-      fileURI = await uploadToIPFS(fileTextFile, Roles.Evidence);
+      let fileURI =
+        uploadCache.current.file?.json === fileJson
+          ? uploadCache.current.file.uri
+          : await uploadToIPFS(
+              new File([fileJson], "file", { type: "text/plain" }),
+              Roles.Evidence,
+            );
+      if (fileURI) uploadCache.current.file = { json: fileJson, uri: fileURI };
 
       if (!fileURI) {
         toast.error("Failed to upload media metadata.");
@@ -319,24 +320,25 @@ function FormContent({
 
       loading.start("Uploading evidence files");
 
-      const registrationJson = {
+      const registrationJson = JSON.stringify({
         name: "Registration",
         fileURI,
-      };
+      });
+      const registrationUri =
+        uploadCache.current.registration?.fileURI === fileURI
+          ? uploadCache.current.registration.uri
+          : await uploadToIPFS(
+              new File([registrationJson], "registration", {
+                type: "text/plain",
+              }),
+              Roles.Evidence,
+            );
+      if (registrationUri)
+        uploadCache.current.registration = {
+          fileURI,
+          uri: registrationUri,
+        };
 
-      const registrationTextFile = new File(
-        [JSON.stringify(registrationJson)],
-        "registration",
-        {
-          type: "text/plain",
-        },
-      );
-
-      let registrationUri: string | null;
-      registrationUri = await uploadToIPFS(
-        registrationTextFile,
-        Roles.Evidence,
-      );
       if (!registrationUri) {
         toast.error("Failed to upload registration.");
         loading.stop();
