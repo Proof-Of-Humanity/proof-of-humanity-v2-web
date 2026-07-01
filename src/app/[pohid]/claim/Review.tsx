@@ -24,7 +24,7 @@ import {
   useReadContract,
   useSwitchChain,
 } from "wagmi";
-import { MediaState, SubmissionState } from "./Form";
+import { EmailSubmissionStatus, MediaState, SubmissionState } from "./Form";
 import type { StoredReferral } from "data/referralAttribution";
 
 interface ReviewProps {
@@ -39,6 +39,11 @@ interface ReviewProps {
   invitedBy?: StoredReferral | null;
   removeReferral?: () => void;
   submit: () => void;
+  registrationComplete?: boolean;
+  email$: ObservablePrimitiveBaseFns<string>;
+  emailStatus?: EmailSubmissionStatus;
+  retryEmail?: () => void;
+  skipEmail?: () => void;
 }
 
 function Review({
@@ -53,10 +58,16 @@ function Review({
   invitedBy,
   removeReferral,
   submit,
+  registrationComplete = false,
+  email$,
+  emailStatus = "idle",
+  retryEmail,
+  skipEmail,
 }: ReviewProps) {
   const selfFunded = selfFunded$.use();
   const submitForFree = submitForFree$.use();
   const { pohId, name } = state$.use();
+  const email = email$.use();
   const { photo, video } = media$.use();
   const { address } = useAccount();
   const chainId = useChainId() as SupportedChainId;
@@ -262,8 +273,9 @@ function Review({
         />
         <Field label="Name" value={name} disabled />
         <Field label="Account" value={address} disabled />
+        <Field label="Email" value={email} disabled />
 
-        <Label>
+        <Label className="!mt-2">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
             <span>Initial deposit</span>
             {balance && (
@@ -283,7 +295,7 @@ function Review({
             </ExternalLink>
           </div>
         </Label>
-        <div className="txt mb-16 flex flex-col">
+        <div className="txt mb-8 flex flex-col">
           <div
             className={`flex flex-col gap-3 transition-opacity sm:flex-row sm:flex-wrap sm:items-center sm:gap-2 ${
               submitForFree ? "opacity-50" : ""
@@ -336,7 +348,7 @@ function Review({
             )}
           </div>
 
-          <label className="text-primaryText mt-4 flex cursor-pointer items-start gap-3 sm:items-center">
+          <label className="text-primaryText mt-2 flex cursor-pointer items-start gap-3 sm:items-center">
             <input
               type="checkbox"
               checked={submitForFree}
@@ -366,7 +378,7 @@ function Review({
             </span>
           </label>
 
-          <span className="mt-3 text-blue-500">
+          <span className="mt-1 text-blue-500">
             If you don&apos;t fund the deposit now, PoH supporters can cover it
             for you. The deposit is reimbursed after successful registration and
             lost only if the profile is rejected.
@@ -387,7 +399,39 @@ function Review({
         </div>
       </div>
       <div className="w-full">
-        {loadingMessage ? (
+        {registrationComplete && emailStatus === "failed" ? (
+          <div className="text-primaryText mt-1 text-sm">
+            <p className="inline-flex items-center gap-1 font-semibold text-green-500">
+              Your profile was submitted.
+              <svg
+                className="h-4 w-4 shrink-0"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2.5}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M5 13l4 4L19 7"
+                />
+              </svg>
+            </p>
+            <p className="text-secondaryText mt-1">
+              We couldn't save <span className="font-semibold">{email}</span>{" "}
+              for profile notifications. You can retry now or enable
+              notifications later from settings.
+            </p>
+            <div className="mt-3">
+              <button
+                className="btn-main w-full py-3 text-sm font-bold"
+                onClick={retryEmail}
+              >
+                Save email for notifications
+              </button>
+            </div>
+          </div>
+        ) : loadingMessage ? (
           <button className="btn-primary gap-2 md:w-full" disabled>
             <Image
               alt="loading"

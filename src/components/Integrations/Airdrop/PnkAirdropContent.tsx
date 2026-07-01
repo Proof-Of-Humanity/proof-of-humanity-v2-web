@@ -147,6 +147,12 @@ export default function PnkAirdropContent({
                     potential rewards.
                   </p>
 
+                  <div className="text-secondaryText border-orange border-l-2 pl-2 text-xs leading-relaxed">
+                    <strong className="text-orange">Important:</strong>{" "}
+                    Unstaking your PNK immediately after the airdrop may make
+                    you ineligible for other Proof of Humanity rewards.
+                  </div>
+
                   <div className="text-secondaryText border-purple border-l-2 pl-2 text-xs">
                     <strong>Note:</strong> Your staked PNK is locked and may be
                     used to vote in disputes. Missing voting deadlines may

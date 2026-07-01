@@ -24,8 +24,18 @@ const sanitize = (res: MeQuery[]) => {
         claimer.claimer.currentRequest = null;
       } else if (res.filter((cl) => cl.claimer?.registration).length > 1) {
         claimer.claimer.registration = null;
-      } else {
+      } else if (
+        claimer.claimer.registration.expirationTime >
+        Date.now() / 1000
+      ) {
+        // Registration is still valid: it represents the live identity, so
+        // drop the in-progress request.
         claimer.claimer.currentRequest = null;
+      } else {
+        // Registration has lapsed while a new request is in progress (a
+        // renewal / re-registration). The active request is the meaningful
+        // state, so keep it and drop the stale registration.
+        claimer.claimer.registration = null;
       }
     }
   });

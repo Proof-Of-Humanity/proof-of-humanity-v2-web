@@ -36,15 +36,16 @@ const SettingsPopover: React.FC = () => {
     confirmUnsubscribe,
     isDeleting,
   } = useEmailSettings();
+  const showUnreadDot = isVerified && !hasVerifiedEmail;
 
   return (
-    <div>
+    <div className="flex h-5 items-center">
       <Popover
         trigger={
           <button
             type="button"
             onClick={toggleSettingsPopover}
-            className="hover:border-orange ml-2 flex h-9 w-9 items-center justify-center rounded-full border border-white/[0.08] bg-[#2F333D] shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] transition duration-200 ease-premium"
+            className="hover:border-orange relative ml-2 flex h-9 w-9 items-center justify-center rounded-full border border-white/[0.08] bg-[#2F333D] shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] transition duration-200 ease-premium"
             aria-label="Open notification settings"
           >
             <Image
@@ -53,6 +54,12 @@ const SettingsPopover: React.FC = () => {
               height={18}
               width={18}
             />
+            {showUnreadDot && (
+              <span
+                aria-hidden="true"
+                className="bg-status-removed absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-full border-2 border-white"
+              />
+            )}
           </button>
         }
         open={isOpen}
@@ -70,6 +77,13 @@ const SettingsPopover: React.FC = () => {
             <SignInButton className="min-h-[44px] w-full px-6 text-base normal-case transition-colors duration-200 md:w-full" />
           ) : (
             <div className="space-y-3 text-center">
+              {!hasVerifiedEmail && (
+                <p className="text-secondaryText text-sm">
+                  Subscribe to get important updates about your profile,
+                  requests and challenges.
+                </p>
+              )}
+
               <div className="flex flex-col items-center">
                 <EmailField
                   value={email}

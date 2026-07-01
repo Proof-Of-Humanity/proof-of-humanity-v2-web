@@ -2,23 +2,30 @@ import Field from "components/Field";
 import { useState } from "react";
 import { useAccount } from "wagmi";
 import { SubmissionState } from "./Form";
-import { ObservableObject } from "@legendapp/state";
+import { ObservableObject, ObservablePrimitiveBaseFns } from "@legendapp/state";
 import ExternalLink from "components/ExternalLink";
 import InvitedByBanner from "components/Integrations/Referral/InvitedByBanner";
 import type { StoredReferral } from "data/referralAttribution";
+import { isValidEmailAddress } from "utils/validators";
 
 interface InfoProps {
   advance: () => void;
   state$: ObservableObject<SubmissionState>;
   invitedBy?: StoredReferral | null;
+  email$: ObservablePrimitiveBaseFns<string>;
 }
 
-function Info({ advance, state$, invitedBy }: InfoProps) {
+function Info({ advance, state$, invitedBy, email$ }: InfoProps) {
   const { address } = useAccount();
   const [walletNotice, setWalletNotice] = useState(false);
   const [duplicateNotice, setDuplicateNotice] = useState(false);
   const [showDetails, setShowDetails] = useState(false);
   const name = state$.name.use();
+  const email = email$.use();
+  const trimmedEmail = email.trim();
+  // Email is optional: only flag an actual malformed entry, never an empty one.
+  const showEmailError =
+    trimmedEmail !== "" && !isValidEmailAddress(trimmedEmail);
 
   return (
     <>
@@ -32,8 +39,8 @@ function Info({ advance, state$, invitedBy }: InfoProps) {
       </div>
 
       <span className="mb-6">
-        Submitting your profile to Proof of Humanity takes 5-10 and requires an
-        Ethereum wallet and a short video.
+        Submitting your profile to Proof of Humanity takes 5-10 minutes and
+        requires an Ethereum wallet and a short video.
       </span>
 
       {invitedBy && (
@@ -53,6 +60,23 @@ function Info({ advance, state$, invitedBy }: InfoProps) {
         value={name}
         onChange={(e) => state$.name.set(e.target.value)}
       />
+      <Field
+        type="email"
+        label={
+          <>
+            Email{" "}
+            <span className="text-secondaryText text-xs font-normal normal-case">
+              (optional)
+            </span>
+          </>
+        }
+        placeholder="get notified about your profile submission"
+        value={email}
+        onChange={(e) => email$.set(e.target.value)}
+      />
+      {showEmailError && (
+        <p className="mt-1 text-sm text-red-500">Please enter a valid email</p>
+      )}
 
       <div className="mb-4 mt-8 flex items-start">
         <input
@@ -196,7 +220,7 @@ function Info({ advance, state$, invitedBy }: InfoProps) {
 
       <button
         className="btn-primary"
-        disabled={!name || !walletNotice || !duplicateNotice}
+        disabled={!name || !walletNotice || !duplicateNotice || showEmailError}
         onClick={advance}
       >
         NEXT
