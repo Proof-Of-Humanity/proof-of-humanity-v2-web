@@ -238,7 +238,7 @@ export default async function ProfileSummarySection({
                 target="_blank"
                 rel="noopener noreferrer"
               >
-                Claim humanity
+                Claim Humanity
               </Link>
             ) : null}
           </>

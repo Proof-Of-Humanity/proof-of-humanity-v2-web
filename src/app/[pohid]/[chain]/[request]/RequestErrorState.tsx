@@ -23,7 +23,7 @@ export function ChainDataUnavailableCard({ chainName }: { chainName: string }) {
         elsewhere in the app may also be incomplete or out of date. Nothing
         on-chain is affected &mdash; please try again in a few minutes.
       </div>
-      <RetryButton className="btn-main mt-6 px-4 py-2 normal-case" />
+      <RetryButton className="btn-primary mt-6 px-4 py-2 normal-case" />
     </CardShell>
   );
 }
