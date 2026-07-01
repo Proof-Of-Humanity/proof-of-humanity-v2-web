@@ -18,8 +18,8 @@ import {
   getReferralAttributionErrorMessage,
   getStoredReferral,
   linkReferralAttribution,
+  type StoredReferral,
 } from "data/referralAttribution";
-import type { StoredReferral } from "data/referralAttribution";
 import { ContractData } from "data/contract";
 import { RegistrationQuery } from "generated/graphql";
 import { useLoading } from "hooks/useLoading";
@@ -140,6 +140,7 @@ function FormContent({
     uri: "",
   });
   const state = state$.use();
+  const refereeHumanityId = state.pohId as `0x${string}`;
   const email$ = useObservable("");
   const currentTotalCost =
     typeof currentArbitrationCost === "bigint"
@@ -152,12 +153,14 @@ function FormContent({
   const submitForFree = submitForFree$.use();
   const loading = useLoading();
   const [, loadingMessage] = loading.use();
-  const storedReferral = useStoredReferral();
+  const storedReferral = useStoredReferral(refereeHumanityId);
   const [attributedReferral, setAttributedReferral] =
     useState<StoredReferral | null>(null);
+  const [registrationComplete, setRegistrationComplete] = useState(false);
+  const [emailStatus, setEmailStatus] = useState<EmailSubmissionStatus>("idle");
+  const referralAttributionInFlightRef = useRef(false);
   const stepHistoryReady = useRef(false);
   const previousStepRef = useRef(Step.info);
-  const referralAttributionInFlightRef = useRef(false);
   const canGoBack =
     step > Step.info && step < Step.finalized && !loadingMessage;
   const visibleReferral = attributedReferral ?? storedReferral;
@@ -244,33 +247,21 @@ function FormContent({
   const [prepareClaimHumanity] = usePoHWrite("claimHumanity", events);
   const [prepareRenewHumanity] = usePoHWrite("renewHumanity", events);
 
-  useEffect(() => {
-    if (!currentTotalCost) return;
-    if (syncedFundingChainId.current === chainId) return;
-
-    selfFunded$.set(submitForFree ? 0 : formatEth(currentTotalCost));
-    syncedFundingChainId.current = chainId;
-  }, [chainId, currentTotalCost, selfFunded$, submitForFree]);
-
   const attemptReferralAttribution = async () => {
-    const referral = getStoredReferral();
+    const referral = getStoredReferral(refereeHumanityId);
     if (!referral) return true;
     if (referralAttributionInFlightRef.current) return false;
 
-    if (
-      referral.referrerHumanityId.toLowerCase() ===
-      state$.pohId.get().toLowerCase()
-    ) {
+    if (referral.referrerHumanityId === refereeHumanityId.toLowerCase()) {
       toast.error("You can't refer yourself. Remove the referral to continue.");
       return false;
     }
 
     referralAttributionInFlightRef.current = true;
-
     try {
       await linkReferralAttribution(referral.referrerHumanityId);
       setAttributedReferral(referral);
-      clearStoredReferral();
+      clearStoredReferral(refereeHumanityId);
       return true;
     } catch (error) {
       toast.error(
@@ -283,15 +274,22 @@ function FormContent({
     }
   };
 
+  useEffect(() => {
+    if (!currentTotalCost) return;
+    if (syncedFundingChainId.current === chainId) return;
+
+    selfFunded$.set(submitForFree ? 0 : formatEth(currentTotalCost));
+    syncedFundingChainId.current = chainId;
+  }, [chainId, currentTotalCost, selfFunded$, submitForFree]);
+
   const submit = async () => {
     if (!media.photo || !media.video) return;
     if (!currentTotalCost) {
       toast.error("Unable to load the deposit amount. Please try again.");
       return;
     }
-
-    // Attribution failures stop registration; the Review step lets the user
-    // remove the referral and submit without attribution.
+    // A failed attribution stops here; Review lets the user remove the referral
+    // and submit again without starting the upload or transaction.
     if (!(await attemptReferralAttribution())) return;
 
     state$.uri.set("");
@@ -545,7 +543,7 @@ function FormContent({
               loadingMessage={loadingMessage}
               invitedBy={visibleReferral}
               removeReferral={() => {
-                clearStoredReferral();
+                clearStoredReferral(refereeHumanityId);
                 setAttributedReferral(null);
               }}
               submit={submit}

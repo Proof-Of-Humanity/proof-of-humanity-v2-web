@@ -3,7 +3,6 @@ import ExternalLink from "components/ExternalLink";
 import Field from "components/Field";
 import Label from "components/Label";
 import AuthGuard from "components/AuthGuard";
-import InvitedByBanner from "components/Integrations/Referral/InvitedByBanner";
 import Previewed from "components/Previewed";
 import TimeAgo from "components/TimeAgo";
 import DocumentIcon from "components/DocumentIcon";
@@ -130,21 +129,23 @@ function Review({
       </div>
 
       {invitedBy && (
-        <div className="mb-6 flex w-full flex-col gap-3">
-          <InvitedByBanner
-            inviterName={invitedBy.name}
-            inviterAddress={invitedBy.referrerHumanityId}
-            inviterPhoto={invitedBy.photo}
-          />
-          {removeReferral && (
-            <button
-              type="button"
-              className="text-secondaryText hover:text-orange self-start text-sm font-semibold transition-colors"
-              onClick={removeReferral}
-            >
-              Remove referral
-            </button>
-          )}
+        <div className="mb-6 w-full">
+          <Label>Referral</Label>
+          <div className="flat-control flex min-h-11 w-full items-center rounded-input px-4 py-2.5">
+            <span className="text-primaryText min-w-0 flex-1 truncate font-medium">
+              Invited by {invitedBy.name}
+            </span>
+            {removeReferral && (
+              <button
+                type="button"
+                aria-label="Remove referral"
+                className="text-secondaryText hover:text-orange ml-3 flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-lg font-semibold leading-none transition-colors"
+                onClick={removeReferral}
+              >
+                x
+              </button>
+            )}
+          </div>
         </div>
       )}
 

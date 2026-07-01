@@ -181,25 +181,65 @@ export default async function ProfileSummarySection({
 
         {showsWinningRequestCard && latestWinningRequest ? (
           <>
-            <Suspense fallback={<ProfileMainCardSkeleton />}>
-              <ProfileMainCard
-                humanity={baseData.humanity}
-                pageState={pageState}
-                pohId={pohId}
-                request={latestWinningRequest}
+            <div className="mb-4 mt-4 flex w-full max-w-xs items-center justify-center sm:max-w-sm">
+              <Card
+                chainId={mainCardRequest.chainId}
+                claimer={mainCardRequest.identityClaimer}
+                evidence={mainCardRequest.identityEvidenceGroup.evidence}
+                humanity={{
+                  id: pohId,
+                  registration:
+                    humanity[mainCardRequest.chainId]?.humanity?.registration,
+                  winnerClaim: [
+                    {
+                      claimer: mainCardRequest.identityClaimer,
+                      creationTime: mainCardRequest.creationTime,
+                      index: mainCardRequest.index,
+                      lastStatusChange:
+                        "lastStatusChange" in mainCardRequest
+                          ? mainCardRequest.lastStatusChange
+                          : 0,
+                      requester: mainCardRequest.identityRequester,
+                      resolutionTime:
+                        "lastStatusChange" in mainCardRequest
+                          ? mainCardRequest.lastStatusChange ||
+                            mainCardRequest.creationTime ||
+                            0
+                          : 0,
+                      evidenceGroup: {
+                        evidence:
+                          mainCardRequest.identityEvidenceGroup.evidence,
+                      },
+                    },
+                  ],
+                }}
+                index={mainCardRequest.index}
+                requester={mainCardRequest.identityRequester}
+                revocation={mainCardRequest.revocation}
+                registrationEvidenceRevokedReq={
+                  mainCardRequest.identityRegistrationEvidenceRevokedReq
+                }
+                requestStatus={
+                  pageState === "TRANSFER_PENDING"
+                    ? RequestStatus.RESOLVED_CLAIM
+                    : profileState.latestWinningRequest?.requestStatus ||
+                      RequestStatus.RESOLVED_CLAIM
+                }
               />
             </Suspense>
 
-            {canShowRenewAvailability ? (
-              <span className="text-secondaryText mb-4">
-                Renewal available{" "}
-                <TimeAgo
-                  time={
-                    +claimedRegistration.expirationTime -
-                    +contractData[homeChain.id].renewalPeriodDuration
-                  }
-                />
-              </span>
+            {canShowRenewSection && claimedHomeChain && claimedRegistration ? (
+              canRenew ? (
+                <Renew claimer={claimedRegistration.claimer.id} pohId={pohId} />
+              ) : renewalAvailableAt !== undefined ? (
+                <span className="text-secondaryText mb-4 mt-2 block text-center">
+                  Renewal available <TimeAgo time={renewalAvailableAt} />
+                </span>
+              ) : (
+                <span className="text-secondaryText mb-4 mt-2 block text-center">
+                  Renewal timing is temporarily unavailable.
+                </span>
+              )
             ) : null}
           </>
         ) : (

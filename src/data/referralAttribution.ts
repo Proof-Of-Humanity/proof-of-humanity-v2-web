@@ -44,6 +44,11 @@ const notifyReferralStorageUpdated = () => {
 const shortHumanityId = (id: `0x${string}`) =>
   `${id.slice(0, 6)}..${id.slice(-4)}`;
 
+const getReferralStorageKey = (refereeHumanityId?: `0x${string}` | null) =>
+  refereeHumanityId
+    ? `${REFERRAL_STORAGE_KEY}.${refereeHumanityId.toLowerCase()}`
+    : REFERRAL_STORAGE_KEY;
+
 const isActiveRegistration = (
   registration?: { expirationTime: unknown } | null,
 ) => {
@@ -73,13 +78,17 @@ const getRegistrationPhoto = async (evidenceUri?: string) => {
 
 /**
  * Reads the first-touch referral from localStorage and drops corrupt values.
+ * Pass a referee id once the claim flow knows who is registering.
  * Returns null on the server, when no referral exists, or when storage is bad.
  */
-export const getStoredReferral = (): StoredReferral | null => {
+export const getStoredReferral = (
+  refereeHumanityId?: `0x${string}` | null,
+): StoredReferral | null => {
   if (typeof window === "undefined") return null;
 
+  const storageKey = getReferralStorageKey(refereeHumanityId);
   try {
-    const rawValue = window.localStorage.getItem(REFERRAL_STORAGE_KEY);
+    const rawValue = window.localStorage.getItem(storageKey);
     if (!rawValue) return null;
 
     const parsed = JSON.parse(rawValue) as Partial<StoredReferral>;
@@ -88,7 +97,7 @@ export const getStoredReferral = (): StoredReferral | null => {
       !parsed.name ||
       !parseReferralHumanityId(parsed.referrerHumanityId)
     ) {
-      window.localStorage.removeItem(REFERRAL_STORAGE_KEY);
+      window.localStorage.removeItem(storageKey);
       return null;
     }
 
@@ -98,21 +107,27 @@ export const getStoredReferral = (): StoredReferral | null => {
       photo: parsed.photo ?? null,
     };
   } catch {
-    window.localStorage.removeItem(REFERRAL_STORAGE_KEY);
+    window.localStorage.removeItem(storageKey);
     return null;
   }
 };
 
 /**
- * Stores a referral only when there is no existing one.
- * This implements the first-touch, no-expiry product rule.
+ * Stores a referral for a specific referee only when none exists for them.
+ * This implements first-touch without sharing refs between same-device users.
  */
-export const storeReferralFirstTouch = (referral: StoredReferral) => {
+export const storeReferralForRefereeFirstTouch = (
+  refereeHumanityId: `0x${string}`,
+  referral: StoredReferral,
+) => {
   if (typeof window === "undefined") return false;
 
-  if (getStoredReferral()) return false;
+  if (getStoredReferral(refereeHumanityId)) return false;
 
-  window.localStorage.setItem(REFERRAL_STORAGE_KEY, JSON.stringify(referral));
+  window.localStorage.setItem(
+    getReferralStorageKey(refereeHumanityId),
+    JSON.stringify(referral),
+  );
   notifyReferralStorageUpdated();
   return true;
 };
@@ -120,9 +135,11 @@ export const storeReferralFirstTouch = (referral: StoredReferral) => {
 /**
  * Clears the local referral after successful attribution or user removal.
  */
-export const clearStoredReferral = () => {
+export const clearStoredReferral = (
+  refereeHumanityId?: `0x${string}` | null,
+) => {
   if (typeof window === "undefined") return;
-  window.localStorage.removeItem(REFERRAL_STORAGE_KEY);
+  window.localStorage.removeItem(getReferralStorageKey(refereeHumanityId));
   notifyReferralStorageUpdated();
 };
 
