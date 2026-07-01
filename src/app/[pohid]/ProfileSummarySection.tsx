@@ -170,12 +170,12 @@ export default async function ProfileSummarySection({
             pageState === "REMOVED" ||
             pageState === "PUNISHED_VOUCH" ? (
               <Link
-                className="btn-main mb-6"
+                className="btn-primary mb-6"
                 href={`/${pohId}/claim`}
                 target="_blank"
                 rel="noopener noreferrer"
               >
-                Claim humanity
+                Claim Humanity
               </Link>
             ) : null}
           </>

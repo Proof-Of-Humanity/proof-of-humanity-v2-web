@@ -424,7 +424,7 @@ function Review({
             </p>
             <div className="mt-3">
               <button
-                className="btn-main w-full py-3 text-sm font-bold"
+                className="btn-primary w-full py-3 text-sm font-bold"
                 onClick={retryEmail}
               >
                 Save email for notifications
