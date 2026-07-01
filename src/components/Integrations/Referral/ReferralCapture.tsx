@@ -1,5 +1,6 @@
 "use client";
 
+import { useAppKit } from "@reown/appkit/react";
 import Identicon from "components/Identicon";
 import Modal from "components/Modal";
 import {
@@ -11,14 +12,21 @@ import {
 import type { StoredReferral } from "data/referralAttribution";
 import ReferralIcon from "icons/Referral.svg";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
+import { useAccount } from "wagmi";
+import { prettifyId } from "utils/identifier";
 import { safeIpfsUrl } from "utils/ipfs";
 
 const ReferralCapture = () => {
+  const modal = useAppKit();
+  const router = useRouter();
+  const { address, isConnected } = useAccount();
   const capturedRef = useRef<string | null>(null);
   const [referral, setReferral] = useState<StoredReferral | null>(null);
   const [open, setOpen] = useState(false);
   const photoUrl = safeIpfsUrl(referral?.photo);
+  const canClaim = isConnected && address;
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -43,6 +51,16 @@ const ReferralCapture = () => {
       })
       .catch(() => undefined);
   }, []);
+
+  const handleCta = () => {
+    if (!canClaim) {
+      modal.open({ view: "Connect" });
+      return;
+    }
+
+    setOpen(false);
+    router.push(`/${prettifyId(address)}/claim`);
+  };
 
   return (
     <Modal
@@ -83,9 +101,9 @@ const ReferralCapture = () => {
       <button
         type="button"
         className="btn-primary mt-6 w-full"
-        onClick={() => setOpen(false)}
+        onClick={handleCta}
       >
-        Continue
+        {canClaim ? "Claim" : "Connect wallet"}
       </button>
     </Modal>
   );
