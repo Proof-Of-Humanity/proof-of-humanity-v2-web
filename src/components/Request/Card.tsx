@@ -196,7 +196,7 @@ function Card({
         />
       </div>
 
-      <div className="absolute inset-x-0 top-0 z-20 flex items-start justify-between p-3 font-medium">
+      <div className="absolute inset-x-0 top-0 z-20 flex flex-wrap items-start justify-between gap-2 p-3 font-medium">
         <StatusBadge
           color={statusColor}
           label={getStatusLabel(requestStatus)}

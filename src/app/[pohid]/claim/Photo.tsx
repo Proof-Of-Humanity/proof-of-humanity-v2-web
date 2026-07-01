@@ -317,7 +317,7 @@ function Photo({ advance, photo$ }: PhotoProps) {
 
       {(showCamera || !!originalPhoto || !!photo) && (
         <button
-          className="text-orange mt-4 flex items-center gap-2 text-lg font-semibold transition hover:text-peach"
+          className="text-orange mx-auto mt-4 flex items-center gap-2 text-lg font-semibold transition hover:text-peach"
           onClick={retakePhoto}
         >
           <ResetIcon className="h-6 w-6 fill-current" />

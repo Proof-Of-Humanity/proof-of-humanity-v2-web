@@ -2,6 +2,8 @@ import { Metadata } from "next";
 import IntegrationsList from "components/Integrations/IntegrationsList";
 import { getIntegrations } from "data/integrations";
 import GiftIcon from "icons/Gift.svg";
+import ReferralCard from "components/Integrations/Referral/ReferralCard";
+import { MOCK_REFERRAL_DATA } from "data/referral";
 
 export const metadata: Metadata = {
   title: "Proof of Humanity V2 - App Integrations",
@@ -28,6 +30,10 @@ export default async function AppPage() {
 
       <div className="mt-4">
         <IntegrationsList integrations={integrations} />
+      </div>
+
+      <div className="mt-8">
+        <ReferralCard data={MOCK_REFERRAL_DATA} />
       </div>
     </div>
   );

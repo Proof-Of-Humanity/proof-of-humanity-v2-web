@@ -87,7 +87,7 @@ export default async function ProfileSummarySection({
 
         {showsWinningRequestCard && mainCardRequest ? (
           <>
-            <div className="mb-3 mt-4 flex items-center justify-center">
+            <div className="mb-4 mt-4 flex w-full max-w-xs items-center justify-center sm:max-w-sm">
               <Card
                 chainId={mainCardRequest.chainId}
                 claimer={mainCardRequest.identityClaimer}
@@ -138,11 +138,11 @@ export default async function ProfileSummarySection({
               canRenew ? (
                 <Renew claimer={claimedRegistration.claimer.id} pohId={pohId} />
               ) : renewalAvailableAt !== undefined ? (
-                <span className="text-secondaryText mb-4">
+                <span className="text-secondaryText mb-4 mt-2 block text-center">
                   Renewal available <TimeAgo time={renewalAvailableAt} />
                 </span>
               ) : (
-                <span className="text-secondaryText mb-4">
+                <span className="text-secondaryText mb-4 mt-2 block text-center">
                   Renewal timing is temporarily unavailable.
                 </span>
               )

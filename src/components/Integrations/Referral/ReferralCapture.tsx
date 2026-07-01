@@ -7,7 +7,7 @@ import {
   getStoredReferral,
   parseReferralHumanityId,
   resolveReferralReferrer,
-  storeReferralFirstTouch,
+  storeReferralForRefereeFirstTouch,
 } from "data/referralAttribution";
 import type { StoredReferral } from "data/referralAttribution";
 import ReferralIcon from "icons/Referral.svg";
@@ -25,17 +25,16 @@ const ReferralCapture = () => {
   const capturedRef = useRef<string | null>(null);
   const [referral, setReferral] = useState<StoredReferral | null>(null);
   const [open, setOpen] = useState(false);
+  const [claimLoading, setClaimLoading] = useState(false);
   const photoUrl = safeIpfsUrl(referral?.photo);
   const canClaim = isConnected && address;
+  const refereeHumanityId = address?.toLowerCase() as `0x${string}` | undefined;
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const rawRef = params.get("ref");
 
-    // Preserve first-touch attribution even if the user lands on a later link.
-    if (!rawRef || capturedRef.current === rawRef || getStoredReferral()) {
-      return;
-    }
+    if (!rawRef || capturedRef.current === rawRef) return;
 
     capturedRef.current = rawRef;
     const referrerHumanityId = parseReferralHumanityId(rawRef);
@@ -44,7 +43,6 @@ const ReferralCapture = () => {
     resolveReferralReferrer(referrerHumanityId)
       .then((resolvedReferral) => {
         if (!resolvedReferral) return;
-        if (!storeReferralFirstTouch(resolvedReferral)) return;
 
         setReferral(resolvedReferral);
         setOpen(true);
@@ -52,13 +50,31 @@ const ReferralCapture = () => {
       .catch(() => undefined);
   }, []);
 
+  useEffect(() => {
+    if (!refereeHumanityId || !referral) return;
+
+    const storedReferral = getStoredReferral(refereeHumanityId);
+    if (storedReferral) {
+      if (
+        storedReferral.referrerHumanityId !== referral.referrerHumanityId ||
+        storedReferral.name !== referral.name ||
+        storedReferral.photo !== referral.photo
+      ) {
+        setReferral(storedReferral);
+      }
+      return;
+    }
+
+    storeReferralForRefereeFirstTouch(refereeHumanityId, referral);
+  }, [refereeHumanityId, referral]);
+
   const handleCta = () => {
     if (!canClaim) {
       modal.open({ view: "Connect" });
       return;
     }
 
-    setOpen(false);
+    setClaimLoading(true);
     router.push(`/${prettifyId(address)}/claim`);
   };
 
@@ -102,8 +118,13 @@ const ReferralCapture = () => {
         type="button"
         className="btn-primary mt-6 w-full"
         onClick={handleCta}
+        disabled={claimLoading}
       >
-        {canClaim ? "Claim" : "Connect wallet"}
+        {claimLoading
+          ? "Opening claim..."
+          : canClaim
+            ? "Claim Humanity"
+            : "Connect wallet & Claim"}
       </button>
     </Modal>
   );

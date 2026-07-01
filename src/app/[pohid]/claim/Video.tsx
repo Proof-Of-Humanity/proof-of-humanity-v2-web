@@ -637,7 +637,7 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
         isPreparing ||
         hasError) && (
         <button
-          className="text-orange mt-4 flex items-center gap-2 text-lg font-semibold transition hover:text-peach disabled:opacity-50"
+          className="text-orange mx-auto mt-4 flex items-center gap-2 text-lg font-semibold transition hover:text-peach disabled:opacity-50"
           onClick={() => retakeVideo()}
           disabled={recording}
         >
