@@ -1,0 +1,23 @@
+query ReferralReferrerProfile($id: ID!) {
+  contracts(first: 1) {
+    humanityLifespan
+  }
+  humanity(id: $id) {
+    id
+    pendingRevocation
+    registration {
+      expirationTime
+      claimer {
+        id
+        name
+      }
+    }
+    requests(first: 1, orderBy: creationTime, orderDirection: desc) {
+      evidenceGroup {
+        evidence(first: 1, orderBy: creationTime, orderDirection: desc) {
+          uri
+        }
+      }
+    }
+  }
+}

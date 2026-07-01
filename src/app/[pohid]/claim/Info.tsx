@@ -4,15 +4,16 @@ import { useAccount } from "wagmi";
 import { SubmissionState } from "./Form";
 import { ObservableObject, ObservablePrimitiveBaseFns } from "@legendapp/state";
 import ExternalLink from "components/ExternalLink";
-import { isValidEmailAddress } from "utils/validators";
+import InvitedByBanner from "components/Integrations/Referral/InvitedByBanner";
+import type { StoredReferral } from "data/referralAttribution";
 
 interface InfoProps {
   advance: () => void;
   state$: ObservableObject<SubmissionState>;
-  email$: ObservablePrimitiveBaseFns<string>;
+  invitedBy?: StoredReferral | null;
 }
 
-function Info({ advance, state$, email$ }: InfoProps) {
+function Info({ advance, state$, invitedBy }: InfoProps) {
   const { address } = useAccount();
   const [walletNotice, setWalletNotice] = useState(false);
   const [duplicateNotice, setDuplicateNotice] = useState(false);
@@ -39,6 +40,16 @@ function Info({ advance, state$, email$ }: InfoProps) {
         Submitting your profile to Proof of Humanity takes 5-10 minutes and
         requires an Ethereum wallet and a short video.
       </span>
+
+      {invitedBy && (
+        <div className="mb-6 w-full">
+          <InvitedByBanner
+            inviterName={invitedBy.name}
+            inviterAddress={invitedBy.referrerHumanityId}
+            inviterPhoto={invitedBy.photo}
+          />
+        </div>
+      )}
 
       <Field label="Connected wallet" value={address} disabled />
       <Field

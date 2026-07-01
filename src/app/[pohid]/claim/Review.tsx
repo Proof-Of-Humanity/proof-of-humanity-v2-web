@@ -3,6 +3,7 @@ import ExternalLink from "components/ExternalLink";
 import Field from "components/Field";
 import Label from "components/Label";
 import AuthGuard from "components/AuthGuard";
+import InvitedByBanner from "components/Integrations/Referral/InvitedByBanner";
 import Previewed from "components/Previewed";
 import TimeAgo from "components/TimeAgo";
 import DocumentIcon from "components/DocumentIcon";
@@ -23,7 +24,8 @@ import {
   useReadContract,
   useSwitchChain,
 } from "wagmi";
-import { EmailSubmissionStatus, MediaState, SubmissionState } from "./Form";
+import { MediaState, SubmissionState } from "./Form";
+import type { StoredReferral } from "data/referralAttribution";
 
 interface ReviewProps {
   arbitrationInfo: ContractData["arbitrationInfo"];
@@ -34,6 +36,8 @@ interface ReviewProps {
   state$: ObservableObject<SubmissionState>;
   media$: ObservableObject<MediaState>;
   loadingMessage?: string;
+  invitedBy?: StoredReferral | null;
+  removeReferral?: () => void;
   submit: () => void;
   registrationComplete?: boolean;
   email$: ObservablePrimitiveBaseFns<string>;
@@ -51,6 +55,8 @@ function Review({
   state$,
   media$,
   loadingMessage,
+  invitedBy,
+  removeReferral,
   submit,
   registrationComplete = false,
   email$,
@@ -122,6 +128,25 @@ function Review({
           </div>
         </div>
       </div>
+
+      {invitedBy && (
+        <div className="mb-6 flex w-full flex-col gap-3">
+          <InvitedByBanner
+            inviterName={invitedBy.name}
+            inviterAddress={invitedBy.referrerHumanityId}
+            inviterPhoto={invitedBy.photo}
+          />
+          {removeReferral && (
+            <button
+              type="button"
+              className="text-secondaryText hover:text-orange self-start text-sm font-semibold transition-colors"
+              onClick={removeReferral}
+            >
+              Remove referral
+            </button>
+          )}
+        </div>
+      )}
 
       {/* Registration Policy card */}
       <div className="border-stroke bg-whiteBackground hover:bg-primaryBackground group mb-6 flex flex-col items-center gap-4 rounded-2xl border px-4 py-4 text-center transition-colors duration-200 sm:flex-row sm:justify-between sm:py-3 sm:text-left">

@@ -13,14 +13,21 @@ import { SupportedChain, SupportedChainId } from "config/chains";
 import { getContractInfo } from "contracts";
 import { Effects } from "contracts/hooks/types";
 import usePoHWrite from "contracts/hooks/usePoHWrite";
+import {
+  clearStoredReferral,
+  getReferralAttributionErrorMessage,
+  getStoredReferral,
+  linkReferralAttribution,
+} from "data/referralAttribution";
+import type { StoredReferral } from "data/referralAttribution";
 import { ContractData } from "data/contract";
 import { RegistrationQuery } from "generated/graphql";
 import { useLoading } from "hooks/useLoading";
+import { useStoredReferral } from "hooks/useStoredReferral";
 import { redirect, RedirectType, useParams } from "next/navigation";
 import {
   Fragment,
   MutableRefObject,
-  useCallback,
   useEffect,
   useMemo,
   useRef,
@@ -145,26 +152,15 @@ function FormContent({
   const submitForFree = submitForFree$.use();
   const loading = useLoading();
   const [, loadingMessage] = loading.use();
-  const [registrationComplete, setRegistrationComplete] = useState(false);
-  const [emailStatus, setEmailStatus] = useState<EmailSubmissionStatus>("idle");
+  const storedReferral = useStoredReferral();
+  const [attributedReferral, setAttributedReferral] =
+    useState<StoredReferral | null>(null);
   const stepHistoryReady = useRef(false);
   const previousStepRef = useRef(Step.info);
-  const uploadCache = useRef<{
-    photo: { content: Blob; uri: string } | null;
-    video: { content: Blob; uri: string } | null;
-    file: { json: string; uri: string } | null;
-    registration: { fileURI: string; uri: string } | null;
-  }>({
-    photo: null,
-    video: null,
-    file: null,
-    registration: null,
-  });
+  const referralAttributionInFlightRef = useRef(false);
   const canGoBack =
-    step > Step.info &&
-    step < Step.finalized &&
-    !loadingMessage &&
-    !registrationComplete;
+    step > Step.info && step < Step.finalized && !loadingMessage;
+  const visibleReferral = attributedReferral ?? storedReferral;
 
   const goBack = () => {
     if (!canGoBack) return;
@@ -256,23 +252,35 @@ function FormContent({
     syncedFundingChainId.current = chainId;
   }, [chainId, currentTotalCost, selfFunded$, submitForFree]);
 
-  const getUploadedMediaUri = async (
-    type: keyof MediaState,
-    mediaItem: NonNullable<MediaState[keyof MediaState]>,
-    role: Roles,
-  ) => {
-    const cached = uploadCache.current[type];
-    if (cached?.content === mediaItem.content) return cached.uri;
+  const attemptReferralAttribution = async () => {
+    const referral = getStoredReferral();
+    if (!referral) return true;
+    if (referralAttributionInFlightRef.current) return false;
 
-    const uri = await uploadToIPFS(mediaItem.content as File, role);
-    if (uri) {
-      uploadCache.current[type] = {
-        content: mediaItem.content,
-        uri,
-      };
+    if (
+      referral.referrerHumanityId.toLowerCase() ===
+      state$.pohId.get().toLowerCase()
+    ) {
+      toast.error("You can't refer yourself. Remove the referral to continue.");
+      return false;
     }
 
-    return uri;
+    referralAttributionInFlightRef.current = true;
+
+    try {
+      await linkReferralAttribution(referral.referrerHumanityId);
+      setAttributedReferral(referral);
+      clearStoredReferral();
+      return true;
+    } catch (error) {
+      toast.error(
+        getReferralAttributionErrorMessage(error) ??
+          "Could not link referral. Remove it to continue without attribution.",
+      );
+      return false;
+    } finally {
+      referralAttributionInFlightRef.current = false;
+    }
   };
 
   const submit = async () => {
@@ -281,6 +289,10 @@ function FormContent({
       toast.error("Unable to load the deposit amount. Please try again.");
       return;
     }
+
+    // Attribution failures stop registration; the Review step lets the user
+    // remove the referral and submit without attribution.
+    if (!(await attemptReferralAttribution())) return;
 
     state$.uri.set("");
     loading.start("Uploading media");
@@ -504,7 +516,7 @@ function FormContent({
             <InfoStep
               advance={() => step$.set(Step.photo)}
               state$={state$}
-              email$={email$}
+              invitedBy={visibleReferral}
             />
           ),
           [Step.photo]: () => (
@@ -531,6 +543,11 @@ function FormContent({
               selfFunded$={selfFunded$}
               submitForFree$={submitForFree$}
               loadingMessage={loadingMessage}
+              invitedBy={visibleReferral}
+              removeReferral={() => {
+                clearStoredReferral();
+                setAttributedReferral(null);
+              }}
               submit={submit}
               registrationComplete={registrationComplete}
               email$={email$}
@@ -546,8 +563,7 @@ function FormContent({
                 currentContractData.challengePeriodDuration,
               )}
               pohId={params.pohid as string}
-              email={email$.peek().trim()}
-              emailStatus={emailStatus}
+              invitedBy={visibleReferral}
             />
           ),
         }}
