@@ -13,11 +13,26 @@ import { SupportedChain, SupportedChainId } from "config/chains";
 import { getContractInfo } from "contracts";
 import { Effects } from "contracts/hooks/types";
 import usePoHWrite from "contracts/hooks/usePoHWrite";
+import {
+  clearStoredReferral,
+  getReferralAttributionErrorMessage,
+  getStoredReferral,
+  linkReferralAttribution,
+} from "data/referralAttribution";
+import type { StoredReferral } from "data/referralAttribution";
 import { ContractData } from "data/contract";
 import { RegistrationQuery } from "generated/graphql";
 import { useLoading } from "hooks/useLoading";
+import { useStoredReferral } from "hooks/useStoredReferral";
 import { redirect, RedirectType, useParams } from "next/navigation";
-import { Fragment, MutableRefObject, useEffect, useMemo, useRef } from "react";
+import {
+  Fragment,
+  MutableRefObject,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { toast } from "react-toastify";
 import { machinifyId } from "utils/identifier";
 import { Abi, Hash, parseEther } from "viem";
@@ -128,10 +143,15 @@ function FormContent({
   const submitForFree = submitForFree$.use();
   const loading = useLoading();
   const [, loadingMessage] = loading.use();
+  const storedReferral = useStoredReferral();
+  const [attributedReferral, setAttributedReferral] =
+    useState<StoredReferral | null>(null);
   const stepHistoryReady = useRef(false);
   const previousStepRef = useRef(Step.info);
+  const referralAttributionInFlightRef = useRef(false);
   const canGoBack =
     step > Step.info && step < Step.finalized && !loadingMessage;
+  const visibleReferral = attributedReferral ?? storedReferral;
 
   const goBack = () => {
     if (!canGoBack) return;
@@ -178,12 +198,47 @@ function FormContent({
     syncedFundingChainId.current = chainId;
   }, [chainId, currentTotalCost, selfFunded$, submitForFree]);
 
+  const attemptReferralAttribution = async () => {
+    const referral = getStoredReferral();
+    if (!referral) return true;
+    if (referralAttributionInFlightRef.current) return false;
+
+    if (
+      referral.referrerHumanityId.toLowerCase() ===
+      state$.pohId.get().toLowerCase()
+    ) {
+      toast.error("You can't refer yourself. Remove the referral to continue.");
+      return false;
+    }
+
+    referralAttributionInFlightRef.current = true;
+
+    try {
+      await linkReferralAttribution(referral.referrerHumanityId);
+      setAttributedReferral(referral);
+      clearStoredReferral();
+      return true;
+    } catch (error) {
+      toast.error(
+        getReferralAttributionErrorMessage(error) ??
+          "Could not link referral. Remove it to continue without attribution.",
+      );
+      return false;
+    } finally {
+      referralAttributionInFlightRef.current = false;
+    }
+  };
+
   const submit = async () => {
     if (!media.photo || !media.video) return;
     if (!currentTotalCost) {
       toast.error("Unable to load the deposit amount. Please try again.");
       return;
     }
+
+    // Attribution failures stop registration; the Review step lets the user
+    // remove the referral and submit without attribution.
+    if (!(await attemptReferralAttribution())) return;
 
     state$.uri.set("");
     loading.start("Uploading media");
@@ -415,7 +470,11 @@ function FormContent({
       <Switch value={step$}>
         {{
           [Step.info]: () => (
-            <InfoStep advance={() => step$.set(Step.photo)} state$={state$} />
+            <InfoStep
+              advance={() => step$.set(Step.photo)}
+              state$={state$}
+              invitedBy={visibleReferral}
+            />
           ),
           [Step.photo]: () => (
             <PhotoStep
@@ -441,6 +500,11 @@ function FormContent({
               selfFunded$={selfFunded$}
               submitForFree$={submitForFree$}
               loadingMessage={loadingMessage}
+              invitedBy={visibleReferral}
+              removeReferral={() => {
+                clearStoredReferral();
+                setAttributedReferral(null);
+              }}
               submit={submit}
             />
           ),
@@ -451,6 +515,7 @@ function FormContent({
                 currentContractData.challengePeriodDuration,
               )}
               pohId={params.pohid as string}
+              invitedBy={visibleReferral}
             />
           ),
         }}

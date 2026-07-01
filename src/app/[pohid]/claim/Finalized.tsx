@@ -1,17 +1,22 @@
 import Link from "next/link";
 import ExternalLink from "components/ExternalLink";
+import InvitedByBanner from "components/Integrations/Referral/InvitedByBanner";
+import type { StoredReferral } from "data/referralAttribution";
 import NewTabIcon from "icons/NewTab.svg";
 
 interface FinalizedProps {
   requiredVouches: number;
   challengePeriodDuration: number;
   pohId: string;
+  // Set when the user registered through a referral link.
+  invitedBy?: StoredReferral | null;
 }
 
 const Finalized: React.FC<FinalizedProps> = ({
   requiredVouches,
   challengePeriodDuration,
   pohId,
+  invitedBy,
 }) => {
   const days = challengePeriodDuration / 86400;
 
@@ -26,6 +31,16 @@ const Finalized: React.FC<FinalizedProps> = ({
           🎉
         </span>
       </div>
+
+      {invitedBy && (
+        <div className="mt-6 w-full max-w-2xl">
+          <InvitedByBanner
+            inviterName={invitedBy.name}
+            inviterAddress={invitedBy.referrerHumanityId}
+            inviterPhoto={invitedBy.photo}
+          />
+        </div>
+      )}
 
       <div className="mt-6 flex items-center text-lg">
         Your profile starts with the status:

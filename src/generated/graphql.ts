@@ -3624,6 +3624,13 @@ export type HumanityIdByClaimerQueryVariables = Exact<{
 
 export type HumanityIdByClaimerQuery = { __typename?: 'Query', registrations: Array<{ __typename?: 'Registration', humanity: { __typename?: 'Humanity', id: any } }>, crossChainRegistrations: Array<{ __typename?: 'CrossChainRegistration', id: any }> };
 
+export type ReferralReferrerProfileQueryVariables = Exact<{
+  id: Scalars['ID'];
+}>;
+
+
+export type ReferralReferrerProfileQuery = { __typename?: 'Query', contracts: Array<{ __typename?: 'Contract', humanityLifespan: any }>, humanity?: { __typename?: 'Humanity', id: any, pendingRevocation: boolean, registration?: { __typename?: 'Registration', expirationTime: any, claimer: { __typename?: 'Claimer', id: any, name?: string | null } } | null, requests: Array<{ __typename?: 'Request', evidenceGroup: { __typename?: 'EvidenceGroup', evidence: Array<{ __typename?: 'Evidence', uri: string }> } }> } | null };
+
 export type RequestsToAdvanceQueryVariables = Exact<{ [key: string]: never; }>;
 
 
@@ -3824,6 +3831,31 @@ export const HumanityIdByClaimerDocument = gql`
     first: 1
   ) {
     id
+  }
+}
+    `;
+export const ReferralReferrerProfileDocument = gql`
+    query ReferralReferrerProfile($id: ID!) {
+  contracts(first: 1) {
+    humanityLifespan
+  }
+  humanity(id: $id) {
+    id
+    pendingRevocation
+    registration {
+      expirationTime
+      claimer {
+        id
+        name
+      }
+    }
+    requests(first: 1, orderBy: creationTime, orderDirection: desc) {
+      evidenceGroup {
+        evidence(first: 1, orderBy: creationTime, orderDirection: desc) {
+          uri
+        }
+      }
+    }
   }
 }
     `;
@@ -4353,6 +4385,9 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     },
     HumanityIdByClaimer(variables: HumanityIdByClaimerQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<HumanityIdByClaimerQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<HumanityIdByClaimerQuery>(HumanityIdByClaimerDocument, variables, { ...requestHeaders, ...wrappedRequestHeaders }), 'HumanityIdByClaimer', 'query', variables);
+    },
+    ReferralReferrerProfile(variables: ReferralReferrerProfileQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<ReferralReferrerProfileQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<ReferralReferrerProfileQuery>(ReferralReferrerProfileDocument, variables, { ...requestHeaders, ...wrappedRequestHeaders }), 'ReferralReferrerProfile', 'query', variables);
     },
     RequestsToAdvance(variables?: RequestsToAdvanceQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<RequestsToAdvanceQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<RequestsToAdvanceQuery>(RequestsToAdvanceDocument, variables, { ...requestHeaders, ...wrappedRequestHeaders }), 'RequestsToAdvance', 'query', variables);

@@ -1,0 +1,7 @@
+mutation LinkReferralAttribution($referrerHumanityId: Address!) {
+  linkReferralAttribution(referrerHumanityId: $referrerHumanityId) {
+    refereeHumanityId
+    referrerHumanityId
+    reviewStatus
+  }
+}

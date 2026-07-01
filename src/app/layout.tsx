@@ -13,6 +13,7 @@ import HashBasedRedirectHandler from "../components/HashBasedRedirectHandler";
 import { SettingsPopoverProvider } from "../context/SettingsPopoverContext";
 import AirdropBanner from "../components/AirdropBanner";
 import SubgraphsStatus from "../components/SubgraphsStatus";
+import ReferralCapture from "../components/Integrations/Referral/ReferralCapture";
 
 export const metadata: Metadata = {
   title: "Proof of Humanity V2",
@@ -48,6 +49,7 @@ export default async function RootLayout({ children }: RootLayoutProps) {
         <AppKitProvider>
           <SettingsPopoverProvider>
             <HashBasedRedirectHandler />
+            <ReferralCapture />
             <SubgraphsStatus />
             <AirdropBanner />
             <Header policy={policy} />
