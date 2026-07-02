@@ -36,7 +36,7 @@ export default function SeerStatusCard({
             />
           ),
           label: "Eligible",
-          text: "Credits worth $10 appear in Seer on the 1st of each month (auto-refill)",
+          text: "Use $10 of Seer Credits now, with potential bonus credits after",
           textColor: "text-green-500",
           buttonLabel: "Start Trading",
         };
@@ -50,7 +50,7 @@ export default function SeerStatusCard({
             />
           ),
           label: "Not eligible:",
-          text: "You need to be a verified human",
+          text: "Register to unlock $10 of Seer Credits",
           textColor: "text-red-500",
           buttonLabel: "Register Now",
         };

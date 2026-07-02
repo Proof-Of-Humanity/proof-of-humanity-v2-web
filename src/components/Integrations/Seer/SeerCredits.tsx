@@ -188,21 +188,21 @@ export default function SeerCredits({ integration }: SeerCreditsProps) {
 
                   <div className="space-y-4">
                     <p className="text-purple text-base font-semibold md:text-lg">
-                      Get monthly Seer Credits to predict, play and earn on
-                      Seer!
+                      Get $10 of Seer Credits when you register, with potential
+                      bonus credits after.
                     </p>
 
                     <div className="text-secondaryText space-y-3 text-sm leading-relaxed">
                       <p>
-                        Seer Credits are monthly rewards given to verified Proof
-                        of Humanity users to use on the Seer Prediction Market
+                        Seer Credits are rewards for registered Proof of
+                        Humanity users to use on the Seer Prediction Market
                         platform.
                       </p>
 
                       <p>
-                        Seer Credits refresh every month, so you'll receive a
-                        new balance automatically. Use them before the month
-                        ends. Unused credits expire when the next cycle begins.
+                        Use your starting credits to take positions in
+                        prediction markets. Bonus credits may be added later,
+                        and unused credits can expire.
                       </p>
                     </div>
                   </div>
