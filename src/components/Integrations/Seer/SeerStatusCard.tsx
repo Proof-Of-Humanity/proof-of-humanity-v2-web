@@ -36,7 +36,7 @@ export default function SeerStatusCard({
             />
           ),
           label: "Eligible",
-          text: "Use $10 of Seer Credits now, with potential bonus credits after",
+          text: "Use $10 of Seer Credits now",
           textColor: "text-green-500",
           buttonLabel: "Start Trading",
         };
