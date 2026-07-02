@@ -129,7 +129,7 @@ const integrations: Record<string, Integration> = {
   "seer-credits": {
     id: "seer-credits",
     name: "Seer Credits",
-    title: "Get $10 of Seer Credits when you register",
+    title: "Get $10 of Seer Credits",
     description:
       "Register on Proof of Humanity to receive $10 of Seer Credits, with potential bonus credits after.",
     logo: "/images/integrations/seer-logo.png",
@@ -162,7 +162,7 @@ const integrations: Record<string, Integration> = {
         id: "howToUse",
         title: "What are Seer Credits?",
         description:
-          "~~Get $10 of Seer Credits when you register, and potentially bonus credits after.~~\n\n• Rewards for **registered Proof of Humanity users** to use on the Seer platform.\n• **Use them like trading funds.** Open/close positions on Seer without spending your own crypto.\n• **They're not tokens.** They're non-transferable, and can't be withdrawn.\n• **Potential bonus credits.** More credits may be added after registration.\n• **Use them before they expire.** Unused credits may not roll over.",
+          "~~Get $10 of Seer Credits when you register.~~\n\n• Rewards for **registered Proof of Humanity users** to use on the Seer platform.\n• **Use them like trading funds.** Open/close positions on Seer without spending your own crypto.\n• **They're not tokens.** They're non-transferable, and can't be withdrawn.\n• **Potential bonus credits.** More credits may be added after registration.\n• **Use them before they expire.** Unused credits may not roll over.",
         image: "/images/integrations/seer-slide3.png",
         imageHeight: 322,
         imageWidth: 901,
