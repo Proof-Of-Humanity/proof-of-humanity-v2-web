@@ -1,11 +1,11 @@
-import { GraphQLClient, RequestOptions } from 'graphql-request';
+import { GraphQLClient } from 'graphql-request';
+import * as Dom from 'graphql-request/dist/types.dom';
 import gql from 'graphql-tag';
 export type Maybe<T> = T | null;
 export type InputMaybe<T> = Maybe<T>;
 export type Exact<T extends { [key: string]: unknown }> = { [K in keyof T]: T[K] };
 export type MakeOptional<T, K extends keyof T> = Omit<T, K> & { [SubKey in K]?: Maybe<T[SubKey]> };
 export type MakeMaybe<T, K extends keyof T> = Omit<T, K> & { [SubKey in K]: Maybe<T[SubKey]> };
-type GraphQLClientRequestHeaders = RequestOptions['requestHeaders'];
 /** All built-in and custom scalars, mapped to their actual values */
 export type Scalars = {
   ID: string;
@@ -16,7 +16,9 @@ export type Scalars = {
   BigDecimal: any;
   BigInt: any;
   Bytes: any;
+  /** 8 bytes signed integer */
   Int8: any;
+  /** A string representation of microseconds UNIX timestamp (16 digits) */
   Timestamp: any;
 };
 
@@ -326,6 +328,7 @@ export enum Challenge_OrderBy {
   ReasonCount = 'reason__count',
   ReasonId = 'reason__id',
   Request = 'request',
+  RequestAdvanceRequesterFunded = 'request__advanceRequesterFunded',
   RequestChallengePeriodEnd = 'request__challengePeriodEnd',
   RequestCreationTime = 'request__creationTime',
   RequestExpirationTime = 'request__expirationTime',
@@ -606,13 +609,34 @@ export type Claimer_Filter = {
   nbVouchesReceived_not?: InputMaybe<Scalars['BigInt']>;
   nbVouchesReceived_not_in?: InputMaybe<Array<Scalars['BigInt']>>;
   or?: InputMaybe<Array<InputMaybe<Claimer_Filter>>>;
+  registration?: InputMaybe<Scalars['String']>;
   registration_?: InputMaybe<Registration_Filter>;
+  registration_contains?: InputMaybe<Scalars['String']>;
+  registration_contains_nocase?: InputMaybe<Scalars['String']>;
+  registration_ends_with?: InputMaybe<Scalars['String']>;
+  registration_ends_with_nocase?: InputMaybe<Scalars['String']>;
+  registration_gt?: InputMaybe<Scalars['String']>;
+  registration_gte?: InputMaybe<Scalars['String']>;
+  registration_in?: InputMaybe<Array<Scalars['String']>>;
+  registration_lt?: InputMaybe<Scalars['String']>;
+  registration_lte?: InputMaybe<Scalars['String']>;
+  registration_not?: InputMaybe<Scalars['String']>;
+  registration_not_contains?: InputMaybe<Scalars['String']>;
+  registration_not_contains_nocase?: InputMaybe<Scalars['String']>;
+  registration_not_ends_with?: InputMaybe<Scalars['String']>;
+  registration_not_ends_with_nocase?: InputMaybe<Scalars['String']>;
+  registration_not_in?: InputMaybe<Array<Scalars['String']>>;
+  registration_not_starts_with?: InputMaybe<Scalars['String']>;
+  registration_not_starts_with_nocase?: InputMaybe<Scalars['String']>;
+  registration_starts_with?: InputMaybe<Scalars['String']>;
+  registration_starts_with_nocase?: InputMaybe<Scalars['String']>;
   vouchesReceived_?: InputMaybe<Vouch_Filter>;
   vouches_?: InputMaybe<Vouch_Filter>;
 };
 
 export enum Claimer_OrderBy {
   CurrentRequest = 'currentRequest',
+  CurrentRequestAdvanceRequesterFunded = 'currentRequest__advanceRequesterFunded',
   CurrentRequestChallengePeriodEnd = 'currentRequest__challengePeriodEnd',
   CurrentRequestCreationTime = 'currentRequest__creationTime',
   CurrentRequestExpirationTime = 'currentRequest__expirationTime',
@@ -744,9 +768,14 @@ export enum Contract_OrderBy {
 export type Contribution = {
   __typename?: 'Contribution';
   amount: Scalars['BigInt'];
+  challenge: Challenge;
   contributor: Scalars['Bytes'];
   fund: Fund;
+  humanity: Humanity;
   id: Scalars['Bytes'];
+  request: Request;
+  round: Round;
+  side: Party;
 };
 
 export type Contribution_Filter = {
@@ -761,6 +790,27 @@ export type Contribution_Filter = {
   amount_not?: InputMaybe<Scalars['BigInt']>;
   amount_not_in?: InputMaybe<Array<Scalars['BigInt']>>;
   and?: InputMaybe<Array<InputMaybe<Contribution_Filter>>>;
+  challenge?: InputMaybe<Scalars['String']>;
+  challenge_?: InputMaybe<Challenge_Filter>;
+  challenge_contains?: InputMaybe<Scalars['String']>;
+  challenge_contains_nocase?: InputMaybe<Scalars['String']>;
+  challenge_ends_with?: InputMaybe<Scalars['String']>;
+  challenge_ends_with_nocase?: InputMaybe<Scalars['String']>;
+  challenge_gt?: InputMaybe<Scalars['String']>;
+  challenge_gte?: InputMaybe<Scalars['String']>;
+  challenge_in?: InputMaybe<Array<Scalars['String']>>;
+  challenge_lt?: InputMaybe<Scalars['String']>;
+  challenge_lte?: InputMaybe<Scalars['String']>;
+  challenge_not?: InputMaybe<Scalars['String']>;
+  challenge_not_contains?: InputMaybe<Scalars['String']>;
+  challenge_not_contains_nocase?: InputMaybe<Scalars['String']>;
+  challenge_not_ends_with?: InputMaybe<Scalars['String']>;
+  challenge_not_ends_with_nocase?: InputMaybe<Scalars['String']>;
+  challenge_not_in?: InputMaybe<Array<Scalars['String']>>;
+  challenge_not_starts_with?: InputMaybe<Scalars['String']>;
+  challenge_not_starts_with_nocase?: InputMaybe<Scalars['String']>;
+  challenge_starts_with?: InputMaybe<Scalars['String']>;
+  challenge_starts_with_nocase?: InputMaybe<Scalars['String']>;
   contributor?: InputMaybe<Scalars['Bytes']>;
   contributor_contains?: InputMaybe<Scalars['Bytes']>;
   contributor_gt?: InputMaybe<Scalars['Bytes']>;
@@ -792,6 +842,27 @@ export type Contribution_Filter = {
   fund_not_starts_with_nocase?: InputMaybe<Scalars['String']>;
   fund_starts_with?: InputMaybe<Scalars['String']>;
   fund_starts_with_nocase?: InputMaybe<Scalars['String']>;
+  humanity?: InputMaybe<Scalars['String']>;
+  humanity_?: InputMaybe<Humanity_Filter>;
+  humanity_contains?: InputMaybe<Scalars['String']>;
+  humanity_contains_nocase?: InputMaybe<Scalars['String']>;
+  humanity_ends_with?: InputMaybe<Scalars['String']>;
+  humanity_ends_with_nocase?: InputMaybe<Scalars['String']>;
+  humanity_gt?: InputMaybe<Scalars['String']>;
+  humanity_gte?: InputMaybe<Scalars['String']>;
+  humanity_in?: InputMaybe<Array<Scalars['String']>>;
+  humanity_lt?: InputMaybe<Scalars['String']>;
+  humanity_lte?: InputMaybe<Scalars['String']>;
+  humanity_not?: InputMaybe<Scalars['String']>;
+  humanity_not_contains?: InputMaybe<Scalars['String']>;
+  humanity_not_contains_nocase?: InputMaybe<Scalars['String']>;
+  humanity_not_ends_with?: InputMaybe<Scalars['String']>;
+  humanity_not_ends_with_nocase?: InputMaybe<Scalars['String']>;
+  humanity_not_in?: InputMaybe<Array<Scalars['String']>>;
+  humanity_not_starts_with?: InputMaybe<Scalars['String']>;
+  humanity_not_starts_with_nocase?: InputMaybe<Scalars['String']>;
+  humanity_starts_with?: InputMaybe<Scalars['String']>;
+  humanity_starts_with_nocase?: InputMaybe<Scalars['String']>;
   id?: InputMaybe<Scalars['Bytes']>;
   id_contains?: InputMaybe<Scalars['Bytes']>;
   id_gt?: InputMaybe<Scalars['Bytes']>;
@@ -803,17 +874,118 @@ export type Contribution_Filter = {
   id_not_contains?: InputMaybe<Scalars['Bytes']>;
   id_not_in?: InputMaybe<Array<Scalars['Bytes']>>;
   or?: InputMaybe<Array<InputMaybe<Contribution_Filter>>>;
+  request?: InputMaybe<Scalars['String']>;
+  request_?: InputMaybe<Request_Filter>;
+  request_contains?: InputMaybe<Scalars['String']>;
+  request_contains_nocase?: InputMaybe<Scalars['String']>;
+  request_ends_with?: InputMaybe<Scalars['String']>;
+  request_ends_with_nocase?: InputMaybe<Scalars['String']>;
+  request_gt?: InputMaybe<Scalars['String']>;
+  request_gte?: InputMaybe<Scalars['String']>;
+  request_in?: InputMaybe<Array<Scalars['String']>>;
+  request_lt?: InputMaybe<Scalars['String']>;
+  request_lte?: InputMaybe<Scalars['String']>;
+  request_not?: InputMaybe<Scalars['String']>;
+  request_not_contains?: InputMaybe<Scalars['String']>;
+  request_not_contains_nocase?: InputMaybe<Scalars['String']>;
+  request_not_ends_with?: InputMaybe<Scalars['String']>;
+  request_not_ends_with_nocase?: InputMaybe<Scalars['String']>;
+  request_not_in?: InputMaybe<Array<Scalars['String']>>;
+  request_not_starts_with?: InputMaybe<Scalars['String']>;
+  request_not_starts_with_nocase?: InputMaybe<Scalars['String']>;
+  request_starts_with?: InputMaybe<Scalars['String']>;
+  request_starts_with_nocase?: InputMaybe<Scalars['String']>;
+  round?: InputMaybe<Scalars['String']>;
+  round_?: InputMaybe<Round_Filter>;
+  round_contains?: InputMaybe<Scalars['String']>;
+  round_contains_nocase?: InputMaybe<Scalars['String']>;
+  round_ends_with?: InputMaybe<Scalars['String']>;
+  round_ends_with_nocase?: InputMaybe<Scalars['String']>;
+  round_gt?: InputMaybe<Scalars['String']>;
+  round_gte?: InputMaybe<Scalars['String']>;
+  round_in?: InputMaybe<Array<Scalars['String']>>;
+  round_lt?: InputMaybe<Scalars['String']>;
+  round_lte?: InputMaybe<Scalars['String']>;
+  round_not?: InputMaybe<Scalars['String']>;
+  round_not_contains?: InputMaybe<Scalars['String']>;
+  round_not_contains_nocase?: InputMaybe<Scalars['String']>;
+  round_not_ends_with?: InputMaybe<Scalars['String']>;
+  round_not_ends_with_nocase?: InputMaybe<Scalars['String']>;
+  round_not_in?: InputMaybe<Array<Scalars['String']>>;
+  round_not_starts_with?: InputMaybe<Scalars['String']>;
+  round_not_starts_with_nocase?: InputMaybe<Scalars['String']>;
+  round_starts_with?: InputMaybe<Scalars['String']>;
+  round_starts_with_nocase?: InputMaybe<Scalars['String']>;
+  side?: InputMaybe<Scalars['String']>;
+  side_?: InputMaybe<Party_Filter>;
+  side_contains?: InputMaybe<Scalars['String']>;
+  side_contains_nocase?: InputMaybe<Scalars['String']>;
+  side_ends_with?: InputMaybe<Scalars['String']>;
+  side_ends_with_nocase?: InputMaybe<Scalars['String']>;
+  side_gt?: InputMaybe<Scalars['String']>;
+  side_gte?: InputMaybe<Scalars['String']>;
+  side_in?: InputMaybe<Array<Scalars['String']>>;
+  side_lt?: InputMaybe<Scalars['String']>;
+  side_lte?: InputMaybe<Scalars['String']>;
+  side_not?: InputMaybe<Scalars['String']>;
+  side_not_contains?: InputMaybe<Scalars['String']>;
+  side_not_contains_nocase?: InputMaybe<Scalars['String']>;
+  side_not_ends_with?: InputMaybe<Scalars['String']>;
+  side_not_ends_with_nocase?: InputMaybe<Scalars['String']>;
+  side_not_in?: InputMaybe<Array<Scalars['String']>>;
+  side_not_starts_with?: InputMaybe<Scalars['String']>;
+  side_not_starts_with_nocase?: InputMaybe<Scalars['String']>;
+  side_starts_with?: InputMaybe<Scalars['String']>;
+  side_starts_with_nocase?: InputMaybe<Scalars['String']>;
 };
 
 export enum Contribution_OrderBy {
   Amount = 'amount',
+  Challenge = 'challenge',
+  ChallengeCreationTime = 'challenge__creationTime',
+  ChallengeDisputeId = 'challenge__disputeId',
+  ChallengeId = 'challenge__id',
+  ChallengeIndex = 'challenge__index',
+  ChallengeNbRounds = 'challenge__nbRounds',
   Contributor = 'contributor',
   Fund = 'fund',
   FundAmount = 'fund__amount',
   FundFeeRewards = 'fund__feeRewards',
   FundId = 'fund__id',
   FundWithdrawn = 'fund__withdrawn',
-  Id = 'id'
+  Humanity = 'humanity',
+  HumanityClaimerName = 'humanity__claimerName',
+  HumanityId = 'humanity__id',
+  HumanityInTransfer = 'humanity__inTransfer',
+  HumanityNbBridgedRequests = 'humanity__nbBridgedRequests',
+  HumanityNbLegacyRequests = 'humanity__nbLegacyRequests',
+  HumanityNbPendingRequests = 'humanity__nbPendingRequests',
+  HumanityNbRequests = 'humanity__nbRequests',
+  HumanityPendingRevocation = 'humanity__pendingRevocation',
+  HumanityVouching = 'humanity__vouching',
+  Id = 'id',
+  Request = 'request',
+  RequestAdvanceRequesterFunded = 'request__advanceRequesterFunded',
+  RequestChallengePeriodEnd = 'request__challengePeriodEnd',
+  RequestCreationTime = 'request__creationTime',
+  RequestExpirationTime = 'request__expirationTime',
+  RequestId = 'request__id',
+  RequestInTransferHash = 'request__inTransferHash',
+  RequestIndex = 'request__index',
+  RequestLastStatusChange = 'request__lastStatusChange',
+  RequestNbChallenges = 'request__nbChallenges',
+  RequestPunishedVouchTimestamp = 'request__punishedVouchTimestamp',
+  RequestRegistrationEvidenceRevokedReq = 'request__registrationEvidenceRevokedReq',
+  RequestRequester = 'request__requester',
+  RequestResolutionTime = 'request__resolutionTime',
+  RequestRevocation = 'request__revocation',
+  Round = 'round',
+  RoundCreationTime = 'round__creationTime',
+  RoundId = 'round__id',
+  RoundIndex = 'round__index',
+  Side = 'side',
+  SideCount = 'side__count',
+  SideId = 'side__id'
 }
 
 export type CrossChainGateway = {
@@ -984,6 +1156,7 @@ export enum EvidenceGroup_OrderBy {
   Id = 'id',
   Length = 'length',
   Request = 'request',
+  RequestAdvanceRequesterFunded = 'request__advanceRequesterFunded',
   RequestChallengePeriodEnd = 'request__challengePeriodEnd',
   RequestCreationTime = 'request__creationTime',
   RequestExpirationTime = 'request__expirationTime',
@@ -2535,6 +2708,7 @@ export enum Registration_OrderBy {
 
 export type Request = {
   __typename?: 'Request';
+  advanceRequesterFunded: Scalars['Boolean'];
   arbitratorHistory: ArbitratorHistory;
   challengePeriodEnd: Scalars['BigInt'];
   challenges: Array<Challenge>;
@@ -2583,6 +2757,10 @@ export type RequestVouchesArgs = {
 export type Request_Filter = {
   /** Filter for the block changed event. */
   _change_block?: InputMaybe<BlockChangedFilter>;
+  advanceRequesterFunded?: InputMaybe<Scalars['Boolean']>;
+  advanceRequesterFunded_in?: InputMaybe<Array<Scalars['Boolean']>>;
+  advanceRequesterFunded_not?: InputMaybe<Scalars['Boolean']>;
+  advanceRequesterFunded_not_in?: InputMaybe<Array<Scalars['Boolean']>>;
   and?: InputMaybe<Array<InputMaybe<Request_Filter>>>;
   arbitratorHistory?: InputMaybe<Scalars['String']>;
   arbitratorHistory_?: InputMaybe<ArbitratorHistory_Filter>;
@@ -2901,6 +3079,7 @@ export type Request_Filter = {
 };
 
 export enum Request_OrderBy {
+  AdvanceRequesterFunded = 'advanceRequesterFunded',
   ArbitratorHistory = 'arbitratorHistory',
   ArbitratorHistoryArbitrator = 'arbitratorHistory__arbitrator',
   ArbitratorHistoryClearingMeta = 'arbitratorHistory__clearingMeta',
@@ -2939,6 +3118,7 @@ export enum Request_OrderBy {
   PunishedVouchReasonCount = 'punishedVouchReason__count',
   PunishedVouchReasonId = 'punishedVouchReason__id',
   PunishedVouchSourceRequest = 'punishedVouchSourceRequest',
+  PunishedVouchSourceRequestAdvanceRequesterFunded = 'punishedVouchSourceRequest__advanceRequesterFunded',
   PunishedVouchSourceRequestChallengePeriodEnd = 'punishedVouchSourceRequest__challengePeriodEnd',
   PunishedVouchSourceRequestCreationTime = 'punishedVouchSourceRequest__creationTime',
   PunishedVouchSourceRequestExpirationTime = 'punishedVouchSourceRequest__expirationTime',
@@ -3389,6 +3569,7 @@ export enum VouchInProcess_OrderBy {
   Id = 'id',
   Processed = 'processed',
   Request = 'request',
+  RequestAdvanceRequesterFunded = 'request__advanceRequesterFunded',
   RequestChallengePeriodEnd = 'request__challengePeriodEnd',
   RequestCreationTime = 'request__creationTime',
   RequestExpirationTime = 'request__expirationTime',
@@ -3624,13 +3805,6 @@ export type HumanityIdByClaimerQueryVariables = Exact<{
 
 export type HumanityIdByClaimerQuery = { __typename?: 'Query', registrations: Array<{ __typename?: 'Registration', humanity: { __typename?: 'Humanity', id: any } }>, crossChainRegistrations: Array<{ __typename?: 'CrossChainRegistration', id: any }> };
 
-export type ReferralReferrerProfileQueryVariables = Exact<{
-  id: Scalars['ID'];
-}>;
-
-
-export type ReferralReferrerProfileQuery = { __typename?: 'Query', contracts: Array<{ __typename?: 'Contract', humanityLifespan: any }>, humanity?: { __typename?: 'Humanity', id: any, pendingRevocation: boolean, registration?: { __typename?: 'Registration', expirationTime: any, claimer: { __typename?: 'Claimer', id: any, name?: string | null } } | null, requests: Array<{ __typename?: 'Request', evidenceGroup: { __typename?: 'EvidenceGroup', evidence: Array<{ __typename?: 'Evidence', uri: string }> } }> } | null };
-
 export type RequestsToAdvanceQueryVariables = Exact<{ [key: string]: never; }>;
 
 
@@ -3655,6 +3829,14 @@ export type CrossChainUpdatesQueryVariables = Exact<{
 
 export type CrossChainUpdatesQuery = { __typename?: 'Query', outUpdates: Array<{ __typename?: 'OutUpdate', id: string, humanityId: any, txHash: any, logIndex: any, timestamp: any }>, inUpdates: Array<{ __typename?: 'InUpdate', id: string, humanityId: any, txHash: any, logIndex: any, timestamp: any }> };
 
+export type HistoricalWinnerClaimQueryVariables = Exact<{
+  humanityId: Scalars['Bytes'];
+  lastStatusChange: Scalars['BigInt'];
+}>;
+
+
+export type HistoricalWinnerClaimQuery = { __typename?: 'Query', requests: Array<{ __typename?: 'Request', creationTime: any, index: any, lastStatusChange: any, requester: any, resolutionTime: any, claimer: { __typename?: 'Claimer', id: any, name?: string | null }, evidenceGroup: { __typename?: 'EvidenceGroup', evidence: Array<{ __typename?: 'Evidence', uri: string }> } }> };
+
 export type HumanityQueryVariables = Exact<{
   id: Scalars['ID'];
 }>;
@@ -3668,14 +3850,6 @@ export type HumanityEventsQueryVariables = Exact<{
 
 
 export type HumanityEventsQuery = { __typename?: 'Query', humanityEvents: Array<{ __typename?: 'HumanityEvent', id: string, timestamp: any, type: HumanityEventType, requestIndex?: any | null, transferHash?: any | null, voucher?: any | null, disputeId?: any | null, appealRound?: any | null, revocation?: boolean | null }> };
-
-export type HistoricalWinnerClaimQueryVariables = Exact<{
-  humanityId: Scalars['Bytes'];
-  lastStatusChange: Scalars['BigInt'];
-}>;
-
-
-export type HistoricalWinnerClaimQuery = { __typename?: 'Query', requests: Array<{ __typename?: 'Request', creationTime: any, index: any, lastStatusChange: any, requester: any, resolutionTime: any, claimer: { __typename?: 'Claimer', id: any, name?: string | null }, evidenceGroup: { __typename?: 'EvidenceGroup', evidence: Array<{ __typename?: 'Evidence', uri: string }> } }> };
 
 export type MeQueryVariables = Exact<{
   id: Scalars['ID'];
@@ -3698,6 +3872,20 @@ export type ProfileRequestQueryVariables = Exact<{
 
 
 export type ProfileRequestQuery = { __typename?: 'Query', request?: { __typename?: 'Request', index: any, inTransferHash?: any | null, revocation: boolean, registrationEvidenceRevokedReq: string, requester: any, claimer: { __typename?: 'Claimer', id: any, name?: string | null }, evidenceGroup: { __typename?: 'EvidenceGroup', evidence: Array<{ __typename?: 'Evidence', uri: string }> } } | null };
+
+export type ReferralReferrerProfileQueryVariables = Exact<{
+  id: Scalars['ID'];
+}>;
+
+
+export type ReferralReferrerProfileQuery = { __typename?: 'Query', contracts: Array<{ __typename?: 'Contract', humanityLifespan: any }>, humanity?: { __typename?: 'Humanity', id: any, pendingRevocation: boolean, registration?: { __typename?: 'Registration', expirationTime: any, claimer: { __typename?: 'Claimer', id: any, name?: string | null } } | null, requests: Array<{ __typename?: 'Request', evidenceGroup: { __typename?: 'EvidenceGroup', evidence: Array<{ __typename?: 'Evidence', uri: string }> } }> } | null };
+
+export type ReferralRefereeProfilesQueryVariables = Exact<{
+  ids?: InputMaybe<Array<Scalars['Bytes']> | Scalars['Bytes']>;
+}>;
+
+
+export type ReferralRefereeProfilesQuery = { __typename?: 'Query', humanities: Array<{ __typename?: 'Humanity', id: any, registration?: { __typename?: 'Registration', expirationTime: any, claimer: { __typename?: 'Claimer', name?: string | null } } | null, claimRequests: Array<{ __typename?: 'Request', status: { __typename?: 'Status', id: string }, claimer: { __typename?: 'Claimer', name?: string | null }, evidenceGroup: { __typename?: 'EvidenceGroup', evidence: Array<{ __typename?: 'Evidence', uri: string }> } }> }> };
 
 export type RegistrationQueryVariables = Exact<{
   id: Scalars['ID'];
@@ -3834,31 +4022,6 @@ export const HumanityIdByClaimerDocument = gql`
   }
 }
     `;
-export const ReferralReferrerProfileDocument = gql`
-    query ReferralReferrerProfile($id: ID!) {
-  contracts(first: 1) {
-    humanityLifespan
-  }
-  humanity(id: $id) {
-    id
-    pendingRevocation
-    registration {
-      expirationTime
-      claimer {
-        id
-        name
-      }
-    }
-    requests(first: 1, orderBy: creationTime, orderDirection: desc) {
-      evidenceGroup {
-        evidence(first: 1, orderBy: creationTime, orderDirection: desc) {
-          uri
-        }
-      }
-    }
-  }
-}
-    `;
 export const RequestsToAdvanceDocument = gql`
     query RequestsToAdvance {
   status(id: "vouching") {
@@ -3953,6 +4116,31 @@ export const CrossChainUpdatesDocument = gql`
   }
 }
     `;
+export const HistoricalWinnerClaimDocument = gql`
+    query HistoricalWinnerClaim($humanityId: Bytes!, $lastStatusChange: BigInt!) {
+  requests(
+    where: {humanity_: {id: $humanityId}, revocation: false, winnerParty: "requester", status_in: ["resolved", "transferred"], evidenceGroup_: {length_gt: 0}, lastStatusChange_lte: $lastStatusChange}
+    first: 1
+    orderBy: lastStatusChange
+    orderDirection: desc
+  ) {
+    claimer {
+      id
+      name
+    }
+    creationTime
+    index
+    lastStatusChange
+    requester
+    resolutionTime
+    evidenceGroup {
+      evidence(orderBy: creationTime, orderDirection: asc, first: 1) {
+        uri
+      }
+    }
+  }
+}
+    `;
 export const HumanityDocument = gql`
     query Humanity($id: ID!) {
   humanity(id: $id) {
@@ -4025,31 +4213,6 @@ export const HumanityEventsDocument = gql`
     disputeId
     appealRound
     revocation
-  }
-}
-    `;
-export const HistoricalWinnerClaimDocument = gql`
-    query HistoricalWinnerClaim($humanityId: Bytes!, $lastStatusChange: BigInt!) {
-  requests(
-    where: {humanity_: {id: $humanityId}, revocation: false, winnerParty: "requester", status_in: ["resolved", "transferred"], evidenceGroup_: {length_gt: 0}, lastStatusChange_lte: $lastStatusChange}
-    first: 1
-    orderBy: lastStatusChange
-    orderDirection: desc
-  ) {
-    claimer {
-      id
-      name
-    }
-    creationTime
-    index
-    lastStatusChange
-    requester
-    resolutionTime
-    evidenceGroup {
-      evidence(orderBy: creationTime, orderDirection: asc, first: 1) {
-        uri
-      }
-    }
   }
 }
     `;
@@ -4152,6 +4315,62 @@ export const ProfileRequestDocument = gql`
     evidenceGroup {
       evidence(orderBy: creationTime, orderDirection: desc, first: 1) {
         uri
+      }
+    }
+  }
+}
+    `;
+export const ReferralReferrerProfileDocument = gql`
+    query ReferralReferrerProfile($id: ID!) {
+  contracts(first: 1) {
+    humanityLifespan
+  }
+  humanity(id: $id) {
+    id
+    pendingRevocation
+    registration {
+      expirationTime
+      claimer {
+        id
+        name
+      }
+    }
+    requests(first: 1, orderBy: creationTime, orderDirection: desc) {
+      evidenceGroup {
+        evidence(first: 1, orderBy: creationTime, orderDirection: desc) {
+          uri
+        }
+      }
+    }
+  }
+}
+    `;
+export const ReferralRefereeProfilesDocument = gql`
+    query ReferralRefereeProfiles($ids: [Bytes!]) {
+  humanities(where: {id_in: $ids}, first: 100) {
+    id
+    registration {
+      expirationTime
+      claimer {
+        name
+      }
+    }
+    claimRequests: requests(
+      first: 1
+      orderBy: creationTime
+      orderDirection: desc
+      where: {revocation: false}
+    ) {
+      status {
+        id
+      }
+      claimer {
+        name
+      }
+      evidenceGroup {
+        evidence(first: 1, orderBy: creationTime, orderDirection: desc) {
+          uri
+        }
       }
     }
   }
@@ -4370,78 +4589,81 @@ export const HumanityVouchDocument = gql`
 }
     `;
 
-export type SdkFunctionWrapper = <T>(action: (requestHeaders?:Record<string, string>) => Promise<T>, operationName: string, operationType?: string, variables?: any) => Promise<T>;
+export type SdkFunctionWrapper = <T>(action: (requestHeaders?:Record<string, string>) => Promise<T>, operationName: string, operationType?: string) => Promise<T>;
 
 
-const defaultWrapper: SdkFunctionWrapper = (action, _operationName, _operationType, _variables) => action();
+const defaultWrapper: SdkFunctionWrapper = (action, _operationName, _operationType) => action();
 
 export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = defaultWrapper) {
   return {
-    GetCirclesAccountsByaddress(variables: GetCirclesAccountsByaddressQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<GetCirclesAccountsByaddressQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<GetCirclesAccountsByaddressQuery>(GetCirclesAccountsByaddressDocument, variables, { ...requestHeaders, ...wrappedRequestHeaders }), 'GetCirclesAccountsByaddress', 'query', variables);
+    GetCirclesAccountsByaddress(variables: GetCirclesAccountsByaddressQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<GetCirclesAccountsByaddressQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<GetCirclesAccountsByaddressQuery>(GetCirclesAccountsByaddressDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'GetCirclesAccountsByaddress', 'query');
     },
-    GetHumanityWithCircleAccountById(variables: GetHumanityWithCircleAccountByIdQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<GetHumanityWithCircleAccountByIdQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<GetHumanityWithCircleAccountByIdQuery>(GetHumanityWithCircleAccountByIdDocument, variables, { ...requestHeaders, ...wrappedRequestHeaders }), 'GetHumanityWithCircleAccountById', 'query', variables);
+    GetHumanityWithCircleAccountById(variables: GetHumanityWithCircleAccountByIdQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<GetHumanityWithCircleAccountByIdQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<GetHumanityWithCircleAccountByIdQuery>(GetHumanityWithCircleAccountByIdDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'GetHumanityWithCircleAccountById', 'query');
     },
-    HumanityIdByClaimer(variables: HumanityIdByClaimerQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<HumanityIdByClaimerQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<HumanityIdByClaimerQuery>(HumanityIdByClaimerDocument, variables, { ...requestHeaders, ...wrappedRequestHeaders }), 'HumanityIdByClaimer', 'query', variables);
+    HumanityIdByClaimer(variables: HumanityIdByClaimerQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<HumanityIdByClaimerQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<HumanityIdByClaimerQuery>(HumanityIdByClaimerDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'HumanityIdByClaimer', 'query');
     },
-    ReferralReferrerProfile(variables: ReferralReferrerProfileQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<ReferralReferrerProfileQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<ReferralReferrerProfileQuery>(ReferralReferrerProfileDocument, variables, { ...requestHeaders, ...wrappedRequestHeaders }), 'ReferralReferrerProfile', 'query', variables);
+    RequestsToAdvance(variables?: RequestsToAdvanceQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<RequestsToAdvanceQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<RequestsToAdvanceQuery>(RequestsToAdvanceDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'RequestsToAdvance', 'query');
     },
-    RequestsToAdvance(variables?: RequestsToAdvanceQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<RequestsToAdvanceQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<RequestsToAdvanceQuery>(RequestsToAdvanceDocument, variables, { ...requestHeaders, ...wrappedRequestHeaders }), 'RequestsToAdvance', 'query', variables);
+    Claimer(variables: ClaimerQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<ClaimerQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<ClaimerQuery>(ClaimerDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'Claimer', 'query');
     },
-    Claimer(variables: ClaimerQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<ClaimerQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<ClaimerQuery>(ClaimerDocument, variables, { ...requestHeaders, ...wrappedRequestHeaders }), 'Claimer', 'query', variables);
+    Contract(variables?: ContractQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<ContractQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<ContractQuery>(ContractDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'Contract', 'query');
     },
-    Contract(variables?: ContractQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<ContractQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<ContractQuery>(ContractDocument, variables, { ...requestHeaders, ...wrappedRequestHeaders }), 'Contract', 'query', variables);
+    CrossChainUpdates(variables: CrossChainUpdatesQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<CrossChainUpdatesQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<CrossChainUpdatesQuery>(CrossChainUpdatesDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'CrossChainUpdates', 'query');
     },
-    CrossChainUpdates(variables: CrossChainUpdatesQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<CrossChainUpdatesQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<CrossChainUpdatesQuery>(CrossChainUpdatesDocument, variables, { ...requestHeaders, ...wrappedRequestHeaders }), 'CrossChainUpdates', 'query', variables);
+    HistoricalWinnerClaim(variables: HistoricalWinnerClaimQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<HistoricalWinnerClaimQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<HistoricalWinnerClaimQuery>(HistoricalWinnerClaimDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'HistoricalWinnerClaim', 'query');
     },
-    Humanity(variables: HumanityQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<HumanityQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<HumanityQuery>(HumanityDocument, variables, { ...requestHeaders, ...wrappedRequestHeaders }), 'Humanity', 'query', variables);
+    Humanity(variables: HumanityQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<HumanityQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<HumanityQuery>(HumanityDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'Humanity', 'query');
     },
-    HumanityEvents(variables: HumanityEventsQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<HumanityEventsQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<HumanityEventsQuery>(HumanityEventsDocument, variables, { ...requestHeaders, ...wrappedRequestHeaders }), 'HumanityEvents', 'query', variables);
+    HumanityEvents(variables: HumanityEventsQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<HumanityEventsQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<HumanityEventsQuery>(HumanityEventsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'HumanityEvents', 'query');
     },
-    HistoricalWinnerClaim(variables: HistoricalWinnerClaimQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<HistoricalWinnerClaimQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<HistoricalWinnerClaimQuery>(HistoricalWinnerClaimDocument, variables, { ...requestHeaders, ...wrappedRequestHeaders }), 'HistoricalWinnerClaim', 'query', variables);
+    Me(variables: MeQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<MeQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<MeQuery>(MeDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'Me', 'query');
     },
-    Me(variables: MeQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<MeQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<MeQuery>(MeDocument, variables, { ...requestHeaders, ...wrappedRequestHeaders }), 'Me', 'query', variables);
+    ProfileHumanity(variables: ProfileHumanityQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<ProfileHumanityQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<ProfileHumanityQuery>(ProfileHumanityDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'ProfileHumanity', 'query');
     },
-    ProfileHumanity(variables: ProfileHumanityQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<ProfileHumanityQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<ProfileHumanityQuery>(ProfileHumanityDocument, variables, { ...requestHeaders, ...wrappedRequestHeaders }), 'ProfileHumanity', 'query', variables);
+    ProfileRequest(variables: ProfileRequestQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<ProfileRequestQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<ProfileRequestQuery>(ProfileRequestDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'ProfileRequest', 'query');
     },
-    ProfileRequest(variables: ProfileRequestQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<ProfileRequestQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<ProfileRequestQuery>(ProfileRequestDocument, variables, { ...requestHeaders, ...wrappedRequestHeaders }), 'ProfileRequest', 'query', variables);
+    ReferralReferrerProfile(variables: ReferralReferrerProfileQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<ReferralReferrerProfileQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<ReferralReferrerProfileQuery>(ReferralReferrerProfileDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'ReferralReferrerProfile', 'query');
     },
-    Registration(variables: RegistrationQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<RegistrationQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<RegistrationQuery>(RegistrationDocument, variables, { ...requestHeaders, ...wrappedRequestHeaders }), 'Registration', 'query', variables);
+    ReferralRefereeProfiles(variables?: ReferralRefereeProfilesQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<ReferralRefereeProfilesQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<ReferralRefereeProfilesQuery>(ReferralRefereeProfilesDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'ReferralRefereeProfiles', 'query');
     },
-    Request(variables: RequestQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<RequestQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<RequestQuery>(RequestDocument, variables, { ...requestHeaders, ...wrappedRequestHeaders }), 'Request', 'query', variables);
+    Registration(variables: RegistrationQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<RegistrationQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<RegistrationQuery>(RegistrationDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'Registration', 'query');
     },
-    RequestTimelineNode(variables: RequestTimelineNodeQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<RequestTimelineNodeQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<RequestTimelineNodeQuery>(RequestTimelineNodeDocument, variables, { ...requestHeaders, ...wrappedRequestHeaders }), 'RequestTimelineNode', 'query', variables);
+    Request(variables: RequestQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<RequestQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<RequestQuery>(RequestDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'Request', 'query');
     },
-    Requests(variables?: RequestsQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<RequestsQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<RequestsQuery>(RequestsDocument, variables, { ...requestHeaders, ...wrappedRequestHeaders }), 'Requests', 'query', variables);
+    RequestTimelineNode(variables: RequestTimelineNodeQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<RequestTimelineNodeQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<RequestTimelineNodeQuery>(RequestTimelineNodeDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'RequestTimelineNode', 'query');
     },
-    RewardClaim(variables: RewardClaimQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<RewardClaimQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<RewardClaimQuery>(RewardClaimDocument, variables, { ...requestHeaders, ...wrappedRequestHeaders }), 'RewardClaim', 'query', variables);
+    Requests(variables?: RequestsQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<RequestsQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<RequestsQuery>(RequestsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'Requests', 'query');
     },
-    IsSynced(variables: IsSyncedQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<IsSyncedQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<IsSyncedQuery>(IsSyncedDocument, variables, { ...requestHeaders, ...wrappedRequestHeaders }), 'IsSynced', 'query', variables);
+    RewardClaim(variables: RewardClaimQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<RewardClaimQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<RewardClaimQuery>(RewardClaimDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'RewardClaim', 'query');
     },
-    Transfer(variables: TransferQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<TransferQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<TransferQuery>(TransferDocument, variables, { ...requestHeaders, ...wrappedRequestHeaders }), 'Transfer', 'query', variables);
+    IsSynced(variables: IsSyncedQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<IsSyncedQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<IsSyncedQuery>(IsSyncedDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'IsSynced', 'query');
     },
-    HumanityVouch(variables: HumanityVouchQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<HumanityVouchQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<HumanityVouchQuery>(HumanityVouchDocument, variables, { ...requestHeaders, ...wrappedRequestHeaders }), 'HumanityVouch', 'query', variables);
+    Transfer(variables: TransferQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<TransferQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<TransferQuery>(TransferDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'Transfer', 'query');
+    },
+    HumanityVouch(variables: HumanityVouchQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<HumanityVouchQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<HumanityVouchQuery>(HumanityVouchDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'HumanityVouch', 'query');
     }
   };
 }

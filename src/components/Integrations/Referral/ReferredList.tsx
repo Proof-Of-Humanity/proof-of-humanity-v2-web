@@ -7,22 +7,23 @@ interface ReferredListProps {
   users: ReferredUser[];
 }
 
+// "Referred to" section. Per the Figma, the whole section (heading, subtitle,
+// rows) is omitted while the user hasn't referred anyone yet.
 const ReferredList: React.FC<ReferredListProps> = ({ users }) => {
-  if (users.length === 0) {
-    return (
-      <div className="border-stroke text-secondaryText mt-2 rounded-input border border-dashed px-4 py-8 text-center text-sm">
-        You haven&apos;t referred anyone yet. Share your referral link to start
-        inviting humans and earning rewards.
-      </div>
-    );
-  }
+  if (users.length === 0) return null;
 
   return (
-    <div className="mt-2 flex flex-col">
-      <h3 className="text-primaryText mb-1 font-semibold">Referred to</h3>
-      {users.map((user) => (
-        <ReferredUserRow key={user.refereeHumanityId} user={user} />
-      ))}
+    <div className="flex flex-col">
+      <h3 className="text-primaryText font-semibold">Referred to</h3>
+      <p className="text-secondaryText mt-1 text-sm">
+        Earn 250 PNK when someone you invite becomes verified on PoH. They get
+        100 PNK too.
+      </p>
+      <div className="mt-2 flex flex-col">
+        {users.map((user) => (
+          <ReferredUserRow key={user.refereeHumanityId} user={user} />
+        ))}
+      </div>
     </div>
   );
 };

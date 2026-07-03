@@ -1,15 +1,22 @@
-import { gnosis } from "viem/chains";
+import { supportedChains } from "config/chains";
+import { sdk } from "config/subgraph";
+import {
+  PohReferralPayoutTransactionStatus,
+  PohReferralReviewStatus,
+  SortByTimeStamp,
+} from "generated/atlas";
 import {
   ReferralData,
+  ReferralPayoutStatus,
+  ReferralReviewStatus,
   ReferralStep,
   ReferredUser,
   ReferredVerification,
 } from "types/referral";
+import { formatUnits } from "viem";
+import { getAuthedAtlasSdk, getRegistrationPhoto } from "./referralAttribution";
 
-// Mock referral data + presentation helpers.
-//
-// TODO(referral-backend): replace MOCK_REFERRAL_DATA with the `PohReferrals` /
-// `PohReferralStats` queries once the referral API is deployed.
+// Referral dashboard data fetching + presentation helpers.
 
 /** Format a PNK amount with thousands separators. */
 export const formatPnk = (amount: number) =>
@@ -62,83 +69,179 @@ export const deriveStep = (user: ReferredUser): ReferralStep => {
   return "started";
 };
 
-export const MOCK_REFERRAL_DATA: ReferralData = {
-  referrerHumanityId: "0xabc1234567890def1234567890abcdef12345678",
-  referralLink:
-    "https://v2.proofofhumanity.id/?ref=0xabc1234567890def1234567890abcdef12345678",
-  humanityFlagged: false,
-  copy: {
-    title: "Referral",
-    heading: "Invite Humans",
-    body: "Earn 250 PNK when someone you invite becomes verified on PoH. Completing 5 successful verified referrals, you get the exclusive Human Connector badge.",
-    shareMessage:
-      "Join Proof of Humanity, the registry of real humans, and claim your rewards:",
-  },
-  stats: {
-    verifiedReferrals: 12,
-    paidRewards: 24000,
-    pendingRewards: 250,
-  },
-  referred: [
-    {
-      refereeHumanityId: "0x66a1d5f3b4e2c1908f7d6e5a4b3c2d1e0f9a8dd6",
-      name: "Tim Wolf",
-      photo: null,
-      chainId: gnosis.id,
-      reviewStatus: "active",
-      payoutStatus: "not-sent",
-      verification: "needs-vouch",
-      refereeFlagged: false,
-      rewardAmount: 250,
-      createdAt: "2026-06-01T10:00:00Z",
+const REVIEW_STATUS: Record<PohReferralReviewStatus, ReferralReviewStatus> = {
+  [PohReferralReviewStatus.Active]: "active",
+  [PohReferralReviewStatus.NeedsReview]: "needs-review",
+  [PohReferralReviewStatus.Approved]: "approved",
+  [PohReferralReviewStatus.Rejected]: "rejected",
+};
+
+const PAYOUT_STATUS: Record<
+  PohReferralPayoutTransactionStatus,
+  ReferralPayoutStatus
+> = {
+  [PohReferralPayoutTransactionStatus.NotSent]: "not-sent",
+  [PohReferralPayoutTransactionStatus.Pending]: "pending",
+  [PohReferralPayoutTransactionStatus.Confirmed]: "confirmed",
+};
+
+/** The referrer's own humanity — the id the invite link carries. */
+const getOwnHumanityId = async (
+  address: `0x${string}`,
+): Promise<`0x${string}` | null> => {
+  const now = Math.ceil(Date.now() / 1000);
+  const results = await Promise.allSettled(
+    supportedChains.map((chain) =>
+      sdk[chain.id].HumanityIdByClaimer({
+        address: address.toLowerCase(),
+        now,
+      }),
+    ),
+  );
+
+  for (const result of results) {
+    if (result.status !== "fulfilled") continue;
+    const id =
+      result.value.registrations[0]?.humanity.id ??
+      result.value.crossChainRegistrations[0]?.id;
+    if (id) return String(id).toLowerCase() as `0x${string}`;
+  }
+  return null;
+};
+
+interface RefereeProfile {
+  name?: string;
+  photo?: string | null;
+  chainId?: number;
+  verification: ReferredVerification;
+}
+
+/**
+ * Resolves referee display profiles from the PoH subgraphs. The referral API
+ * only stores addresses; names, photos and registry status live on-chain.
+ */
+const resolveRefereeProfiles = async (
+  ids: string[],
+): Promise<Map<string, RefereeProfile>> => {
+  const profiles = new Map<string, RefereeProfile & { evidenceUri?: string }>();
+  if (ids.length === 0) return profiles;
+
+  const now = BigInt(Math.floor(Date.now() / 1000));
+  const results = await Promise.allSettled(
+    supportedChains.map(async (chain) => ({
+      chainId: chain.id,
+      data: await sdk[chain.id].ReferralRefereeProfiles({ ids }),
+    })),
+  );
+
+  for (const result of results) {
+    if (result.status !== "fulfilled") continue;
+    const { chainId, data } = result.value;
+
+    for (const humanity of data.humanities) {
+      const id = String(humanity.id).toLowerCase();
+      // Prefer the chain where the referee is actually registered.
+      if (profiles.get(id)?.verification === "verified") continue;
+
+      const registration = humanity.registration;
+      const request = humanity.claimRequests[0];
+      const verification: ReferredVerification =
+        registration && BigInt(registration.expirationTime) > now
+          ? "verified"
+          : request?.status.id === "vouching"
+            ? "needs-vouch"
+            : "in-review";
+
+      profiles.set(id, {
+        name:
+          registration?.claimer.name?.trim() ||
+          request?.claimer.name?.trim() ||
+          undefined,
+        chainId,
+        verification,
+        evidenceUri: request?.evidenceGroup.evidence[0]?.uri,
+      });
+    }
+  }
+
+  await Promise.all(
+    [...profiles.values()].map(async (profile) => {
+      profile.photo = await getRegistrationPhoto(profile.evidenceUri);
+    }),
+  );
+
+  return profiles;
+};
+
+const toPnk = (wei: string) => Number(formatUnits(BigInt(wei), 18));
+
+/**
+ * Loads everything the referral card needs: the signed-in user's referrals
+ * from Atlas, referee profiles from the subgraphs, and stats derived from the
+ * list (the API exposes no stats query).
+ * Returns null when the address has no humanity (nothing to refer with).
+ */
+export const fetchReferralDashboard = async (
+  address: `0x${string}`,
+): Promise<ReferralData | null> => {
+  const humanityId = await getOwnHumanityId(address);
+  if (!humanityId) return null;
+
+  const { humanityFlag, pohReferrals } =
+    await getAuthedAtlasSdk().PohReferralDashboard({
+      // ponytail: one 100-row page — wire real pagination when a referrer exceeds it
+      pagination: { take: 100, sortByTimeStamp: SortByTimeStamp.Desc },
+    });
+
+  const rows = (pohReferrals.items ?? []).map(({ item }) => item);
+  const profiles = await resolveRefereeProfiles(
+    rows.map((row) => row.refereeHumanityId.toLowerCase()),
+  );
+
+  const referred: ReferredUser[] = rows.map((row) => {
+    const refereeHumanityId =
+      row.refereeHumanityId.toLowerCase() as `0x${string}`;
+    const profile = profiles.get(refereeHumanityId);
+    return {
+      refereeHumanityId,
+      name: profile?.name,
+      photo: profile?.photo ?? null,
+      chainId: profile?.chainId,
+      reviewStatus: REVIEW_STATUS[row.reviewStatus],
+      payoutStatus: row.payoutTransaction
+        ? PAYOUT_STATUS[row.payoutTransaction.status]
+        : "not-sent",
+      // Attribution can exist before the referee even starts a claim.
+      verification: profile?.verification ?? "needs-vouch",
+      refereeFlagged: row.refereeFlag?.isFlagged ?? false,
+      rewardAmount: toPnk(row.rewardAmount),
+    };
+  });
+
+  const paidRewards = referred
+    .filter((user) => user.payoutStatus === "confirmed")
+    .reduce((sum, user) => sum + user.rewardAmount, 0);
+  const pendingRewards = referred
+    .filter(
+      (user) =>
+        user.payoutStatus !== "confirmed" &&
+        user.reviewStatus !== "rejected" &&
+        !user.refereeFlagged &&
+        user.verification === "verified",
+    )
+    .reduce((sum, user) => sum + user.rewardAmount, 0);
+
+  return {
+    referrerHumanityId: humanityId,
+    referralLink: `${window.location.origin}/?ref=${humanityId}`,
+    humanityFlagged: humanityFlag,
+    stats: {
+      verifiedReferrals: referred.filter(
+        (user) => user.verification === "verified",
+      ).length,
+      paidRewards,
+      pendingRewards,
     },
-    {
-      refereeHumanityId: "0x66b2e6a4c5d3f2019a8e7d6b5c4d3e2f1a0b8dd6",
-      name: "Luna Boom",
-      photo: null,
-      chainId: gnosis.id,
-      reviewStatus: "active",
-      payoutStatus: "not-sent",
-      verification: "in-review",
-      refereeFlagged: false,
-      rewardAmount: 250,
-      createdAt: "2026-06-03T10:00:00Z",
-    },
-    {
-      refereeHumanityId: "0x66c3f7b5d6e4031ab9f8e7c6d5e4f3a2b1c08dd6",
-      name: "Brigitte",
-      photo: null,
-      chainId: gnosis.id,
-      reviewStatus: "active",
-      payoutStatus: "not-sent",
-      verification: "verified",
-      refereeFlagged: false,
-      rewardAmount: 250,
-      createdAt: "2026-06-05T10:00:00Z",
-    },
-    {
-      refereeHumanityId: "0x66d4a8c6e7f5142bca09f8d7e6f5a4b3c2d18dd6",
-      name: "Alice Block",
-      photo: null,
-      chainId: gnosis.id,
-      reviewStatus: "active",
-      payoutStatus: "pending",
-      verification: "verified",
-      refereeFlagged: false,
-      rewardAmount: 250,
-      createdAt: "2026-06-07T10:00:00Z",
-    },
-    {
-      refereeHumanityId: "0x66e5b9d7f8061253db1a09e8f7a6b5c4d3e28dd6",
-      name: "Ann Cheng",
-      photo: null,
-      chainId: gnosis.id,
-      reviewStatus: "active",
-      payoutStatus: "confirmed",
-      verification: "verified",
-      refereeFlagged: false,
-      rewardAmount: 250,
-      createdAt: "2026-06-09T10:00:00Z",
-    },
-  ],
+    referred,
+  };
 };

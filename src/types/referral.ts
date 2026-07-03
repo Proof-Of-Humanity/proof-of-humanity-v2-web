@@ -1,9 +1,13 @@
 // Referral system types.
 
-/** Admin review axis (TDD `ReferralReviewStatus`). */
-export type ReferralReviewStatus = "active" | "needs-review" | "rejected";
+/** Admin review axis (Atlas `PohReferralReviewStatus`). */
+export type ReferralReviewStatus =
+  | "active"
+  | "needs-review"
+  | "approved"
+  | "rejected";
 
-/** Payout axis (TDD `ReferralPayoutTransactionStatus`). */
+/** Payout axis (Atlas `PohReferralPayoutTransactionStatus`). */
 export type ReferralPayoutStatus = "not-sent" | "pending" | "confirmed";
 
 /** Referee's registry verification, shown as the row badge. */
@@ -11,8 +15,7 @@ export type ReferredVerification = "needs-vouch" | "in-review" | "verified";
 
 /**
  * Presentational funnel step rendered in the Figma stepper. Derived from the
- * referral's payout + verification state via `deriveStep` — never set by hand
- * once the API is wired.
+ * referral's payout + verification state via `deriveStep` — never set by hand.
  */
 export type ReferralStep =
   | "started"
@@ -35,9 +38,8 @@ export interface ReferredUser {
   /** Referee registry status, for the row badge. */
   verification: ReferredVerification;
   refereeFlagged: boolean;
-  /** PNK locked for this referral (display units; API returns wei BigInt). */
+  /** PNK locked for this referral (display units; API returns wei). */
   rewardAmount: number;
-  createdAt: string;
 }
 
 export interface ReferralStats {
@@ -48,14 +50,6 @@ export interface ReferralStats {
   pendingRewards: number;
 }
 
-/** Display copy for the referral card — kept in data so the component is text-free. */
-export interface ReferralCopy {
-  title: string;
-  heading: string;
-  body: string;
-  shareMessage: string;
-}
-
 export interface ReferralData {
   /** Current user's humanity (the referrer) — used for the link-row avatar. */
   referrerHumanityId: `0x${string}`;
@@ -63,7 +57,6 @@ export interface ReferralData {
   referralLink: string;
   /** Whether the current user's humanity is flagged (rewards blocked). */
   humanityFlagged: boolean;
-  copy: ReferralCopy;
   stats: ReferralStats;
   referred: ReferredUser[];
 }

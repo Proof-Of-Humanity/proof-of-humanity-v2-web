@@ -61,9 +61,9 @@ const isActiveRegistration = (
 
 /**
  * Follows registration evidence to the nested claim payload and returns the
- * referrer's profile photo when it can be fetched.
+ * profile photo when it can be fetched.
  */
-const getRegistrationPhoto = async (evidenceUri?: string) => {
+export const getRegistrationPhoto = async (evidenceUri?: string) => {
   if (!evidenceUri) return null;
 
   return ipfsFetch<EvidenceFile>(evidenceUri)
@@ -182,12 +182,10 @@ export const resolveReferralReferrer = async (
 };
 
 /**
- * Links the stored referrer to the signed-in submitter in Atlas.
- * Throws on network/GraphQL errors so submit can stop before registration.
+ * Atlas SDK carrying the signed-in user's session token. Referral operations
+ * are self-scoped server-side, so no ids are passed from the client.
  */
-export const linkReferralAttribution = async (
-  referrerHumanityId: `0x${string}`,
-) => {
+export const getAuthedAtlasSdk = () => {
   if (!process.env.ATLAS_URI) throw new Error("Missing ATLAS_URI");
 
   const token =
@@ -198,8 +196,16 @@ export const linkReferralAttribution = async (
     headers: token ? { authorization: `Bearer ${token}` } : undefined,
   });
 
-  return getAtlasSdk(client).LinkReferralAttribution({ referrerHumanityId });
+  return getAtlasSdk(client);
 };
+
+/**
+ * Links the stored referrer to the signed-in submitter in Atlas.
+ * Throws on network/GraphQL errors so submit can stop before registration.
+ */
+export const linkReferralAttribution = async (
+  referrerHumanityId: `0x${string}`,
+) => getAuthedAtlasSdk().LinkReferralAttribution({ referrerHumanityId });
 
 /**
  * Gets the public Atlas GraphQL message to show when attribution fails.

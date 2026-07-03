@@ -1,5 +1,5 @@
 overwrite: true
-schema: "${ATLAS_URL}/graphql"
+schema: "${ATLAS_URI}/graphql"
 documents: "schemas/atlas/**/*.gql"
 generates:
   ./src/generated/atlas.ts:
