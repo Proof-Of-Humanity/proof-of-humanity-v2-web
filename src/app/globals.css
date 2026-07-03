@@ -388,6 +388,19 @@
     background-color: theme("colors.dark.lightOrange");
   }
 
+  .review-warning-callout {
+    transition: background-color 200ms;
+  }
+
+  .review-warning-callout:hover {
+    background-color: #fbe9e9;
+  }
+
+  .dark .review-warning-callout:hover,
+  [data-theme="dark"] .review-warning-callout:hover {
+    background-color: #5a1368;
+  }
+
   .bg-grey {
     background-color: theme("colors.light.grey");
   }

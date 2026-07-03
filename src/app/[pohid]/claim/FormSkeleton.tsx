@@ -9,7 +9,7 @@ export default function FormSkeleton() {
     <div
       role="status"
       aria-busy="true"
-      aria-label="Loading registration form"
+      aria-label="Loading request form"
       className="pointer-events-none flex animate-pulse flex-col gap-6"
     >
       <div aria-hidden className="flex w-full items-center gap-1">

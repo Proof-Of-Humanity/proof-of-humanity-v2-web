@@ -12,11 +12,12 @@ export default function Connect({
 }: ConnectProps) {
   const { address, isConnected } = useAccount();
   const chainId = useChainId();
+  const isRenewal = !!renewalChain;
 
   return (
     <>
       <div className="my-4 flex w-full flex-col text-2xl font-extralight">
-        <span>Create your</span>
+        <span>{isRenewal ? "Renew your" : "Create your"}</span>
         <span>
           <strong className="font-semibold uppercase">Proof of Humanity</strong>{" "}
           Profile

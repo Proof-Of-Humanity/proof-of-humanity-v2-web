@@ -10,12 +10,13 @@ interface InfoProps {
   advance: () => void;
   state$: ObservableObject<SubmissionState>;
   email$: ObservablePrimitiveBaseFns<string>;
+  isRenewal: boolean;
 }
 
-function Info({ advance, state$, email$ }: InfoProps) {
+function Info({ advance, state$, email$, isRenewal }: InfoProps) {
   const { address } = useAccount();
   const [walletNotice, setWalletNotice] = useState(false);
-  const [duplicateNotice, setDuplicateNotice] = useState(false);
+  const [requestNotice, setRequestNotice] = useState(false);
   const [showDetails, setShowDetails] = useState(false);
   const name = state$.name.use();
   const email = email$.use();
@@ -27,7 +28,7 @@ function Info({ advance, state$, email$ }: InfoProps) {
   return (
     <>
       <div className="my-4 flex w-full flex-col text-2xl font-extralight">
-        <span>Create your</span>
+        <span>{isRenewal ? "Renew your" : "Create your"}</span>
         <span>
           <strong className="font-semibold uppercase">Proof of Humanity</strong>{" "}
           Profile
@@ -36,8 +37,9 @@ function Info({ advance, state$, email$ }: InfoProps) {
       </div>
 
       <span className="mb-6">
-        Submitting your profile to Proof of Humanity takes 5-10 minutes and
-        requires an Ethereum wallet and a short video.
+        {isRenewal
+          ? "Renewing your Proof of Humanity profile takes 5-10 minutes and requires your linked wallet and a short video."
+          : "Submitting your profile to Proof of Humanity takes 5-10 minutes and requires an Ethereum wallet and a short video."}
       </span>
 
       <Field label="Connected wallet" value={address} disabled />
@@ -57,7 +59,7 @@ function Info({ advance, state$, email$ }: InfoProps) {
             </span>
           </>
         }
-        placeholder="get notified about your profile submission"
+        placeholder="get notified about your profile request"
         value={email}
         onChange={(e) => email$.set(e.target.value)}
       />
@@ -65,7 +67,10 @@ function Info({ advance, state$, email$ }: InfoProps) {
         <p className="mt-1 text-sm text-red-500">Please enter a valid email</p>
       )}
 
-      <div className="mb-4 mt-8 flex items-start">
+      <label
+        className="mb-4 mt-8 flex cursor-pointer items-start"
+        htmlFor="wallet-notice"
+      >
         <input
           id="wallet-notice"
           type="checkbox"
@@ -73,34 +78,46 @@ function Info({ advance, state$, email$ }: InfoProps) {
           checked={walletNotice}
           onChange={() => setWalletNotice((c) => !c)}
         />
-        <label className="ml-3 cursor-pointer" htmlFor="notice">
-          I understand this wallet will be irreversibly linked to my real-world
-          identity and I will not use that wallet for any private or sensitive
-          information.
-        </label>
-      </div>
+        <span className="ml-3">
+          {isRenewal
+            ? "I understand this wallet is linked to my real-world identity and I will not use it for any private or sensitive information."
+            : "I understand this wallet will be irreversibly linked to my real-world identity and I will not use that wallet for any private or sensitive information."}
+        </span>
+      </label>
 
       <div className="mb-8 flex flex-col items-start">
-        <div className="flex items-start">
+        <label
+          className="text-primaryText flex cursor-pointer items-start"
+          htmlFor="request-notice"
+        >
           <input
-            id="duplicate-notice"
+            id="request-notice"
             type="checkbox"
             className="checkbox mt-1 cursor-pointer"
-            checked={duplicateNotice}
-            onChange={() => setDuplicateNotice((c) => !c)}
+            checked={requestNotice}
+            onChange={() => setRequestNotice((c) => !c)}
           />
-          <label
-            className="text-primaryText ml-3 cursor-pointer"
-            htmlFor="duplicate-notice"
-          >
-            I'm not currently registered on PoH, and don't have an active
-            profile. I understand that a duplicate submission can be challenged,
-            and my{" "}
-            <span className="font-medium text-red-500">
-              deposit may be lost.
-            </span>
-          </label>
-        </div>
+          <span className="ml-3">
+            {isRenewal ? (
+              <>
+                I understand this renewal request is for my active PoH profile.
+                It can be challenged if the submission is incorrect, and my{" "}
+                <span className="font-medium text-red-500">
+                  deposit may be lost.
+                </span>
+              </>
+            ) : (
+              <>
+                I'm not currently registered on PoH, and don't have an active
+                profile. I understand that a duplicate submission can be
+                challenged, and my{" "}
+                <span className="font-medium text-red-500">
+                  deposit may be lost.
+                </span>
+              </>
+            )}
+          </span>
+        </label>
 
         <button
           className="ml-7 mt-2 flex items-center gap-1 text-sm font-normal text-orange-500"
@@ -207,7 +224,7 @@ function Info({ advance, state$, email$ }: InfoProps) {
 
       <button
         className="btn-main"
-        disabled={!name || !walletNotice || !duplicateNotice || showEmailError}
+        disabled={!name || !walletNotice || !requestNotice || showEmailError}
         onClick={advance}
       >
         NEXT
