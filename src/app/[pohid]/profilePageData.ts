@@ -123,31 +123,13 @@ export const getProfileBaseData = cache(async (pohId: `0x${string}`) => {
       ? humanity[homeChain.id]?.humanity?.registration
       : undefined;
 
-  const claimedHomeChainContractData = claimedHomeChain
-    ? contractData[claimedHomeChain.id]
+  const claimedHomeChainContractData = homeChain
+    ? contractData[homeChain.id]
     : null;
-  const arbitrationCost =
-    claimedHomeChain && claimedRegistration && claimedHomeChainContractData
-      ? await getArbitrationCost(
-          claimedHomeChain,
-          claimedHomeChainContractData.arbitrationInfo.arbitrator,
-          claimedHomeChainContractData.arbitrationInfo.extraData,
-        )
-      : 0n;
-
-  const selectedMainCardRequest: DisplayRequest | undefined =
-    showsWinningRequestCard ? profileState.latestWinningRequest : undefined;
-  const canShowRenewSection =
-    !!claimedRegistration && !profileState.pendingRevocation;
-  const renewalAvailableAt =
-    claimedRegistration && claimedHomeChainContractData
-      ? Number(claimedRegistration.expirationTime) -
-        Number(claimedHomeChainContractData.renewalPeriodDuration)
-      : undefined;
   const canRenew =
-    claimedRegistration && homeChain && !pendingRevocation
+    claimedRegistration && claimedHomeChainContractData && !pendingRevocation
       ? Number(claimedRegistration.expirationTime || 0) - nowSeconds <
-        Number(contractData[homeChain.id]?.renewalPeriodDuration || 0)
+        Number(claimedHomeChainContractData.renewalPeriodDuration || 0)
       : false;
 
   // Transfer cooldown and optimistic state need the chain where the last outgoing
@@ -161,54 +143,6 @@ export const getProfileBaseData = cache(async (pohId: `0x${string}`) => {
     ? Number(
         humanity[transferSourceChainId]?.outTransfer?.transferTimestamp || 0,
       ) || undefined
-    : undefined;
-
-  const headerRequest: DisplayRequest | undefined = showsWinningRequestCard
-    ? latestWinningRequest
-    : profileState.latestNonTransferRequest;
-  let mainCardRequest: EnrichedDisplayRequest | undefined;
-  let enrichedHeaderRequest: EnrichedDisplayRequest | undefined;
-
-  if (selectedMainCardRequest) {
-    const enrichedRequest = await enrichRequest({
-      pohId,
-      request: selectedMainCardRequest,
-      humanityEvents,
-      allRequests,
-    });
-    mainCardRequest = enrichedRequest;
-    enrichedHeaderRequest = enrichedRequest;
-  } else if (headerRequest) {
-    enrichedHeaderRequest = await enrichRequest({
-      pohId,
-      request: headerRequest,
-      humanityEvents,
-      allRequests,
-    });
-  }
-
-  const homeChainContractData = homeChain ? contractData[homeChain.id] : null;
-  const crossChainGatewayId = homeChainContractData
-    ? homeChainContractData.gateways[homeChainContractData.gateways.length - 1]
-        ?.id
-    : undefined;
-  const transferCooldownEndsAt =
-    homeChainContractData && lastTransferTimestamp
-      ? lastTransferTimestamp + homeChainContractData.transferCooldown
-      : undefined;
-  const crossChainProps =
-    homeChain && crossChainState.canShowCrossChain
-      ? {
-          homeChain,
-          transferCooldownEndsAt,
-        }
-      : null;
-  const profileHeader = enrichedHeaderRequest
-    ? {
-        claimer: enrichedHeaderRequest.identityClaimer,
-        evidence: enrichedHeaderRequest.identityEvidenceGroup.evidence,
-        requester: enrichedHeaderRequest.identityRequester,
-      }
     : undefined;
 
   return {
