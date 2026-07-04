@@ -43,16 +43,8 @@ export default function IntegrationCard({ integration }: IntegrationCardProps) {
               />
             </div>
           )}
-          {integration.statusLabel && (
-            <span className="text-status-registered border-status-registered/40 inline-flex shrink-0 items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold">
-              <span className="bg-status-registered h-1.5 w-1.5 rounded-full" />
-              {integration.statusLabel}
-            </span>
-          )}
         </div>
-        <h3 className="text-primaryText font-semibold">
-          {integration.cardTitle || integration.title}
-        </h3>
+        <h3 className="text-primaryText font-semibold">{integration.title}</h3>
         <p className="text-primaryText mb-4 break-words text-sm">
           {integration.description}
         </p>
@@ -62,7 +54,7 @@ export default function IntegrationCard({ integration }: IntegrationCardProps) {
           aria-label={`Start connecting your ${integration.name}`}
           onClick={handleNavigation}
         >
-          {integration.cardButtonText || integration.buttonText}
+          {integration.buttonText}
         </button>
       </div>
     </div>
