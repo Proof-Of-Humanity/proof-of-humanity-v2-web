@@ -23,7 +23,7 @@ import {
   useReadContract,
   useSwitchChain,
 } from "wagmi";
-import { MediaState, SubmissionState } from "./Form";
+import { EmailSubmissionStatus, MediaState, SubmissionState } from "./Form";
 import type { StoredReferral } from "data/referralAttribution";
 
 interface ReviewProps {

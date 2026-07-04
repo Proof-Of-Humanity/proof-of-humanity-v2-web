@@ -6,14 +6,16 @@ import { ObservableObject, ObservablePrimitiveBaseFns } from "@legendapp/state";
 import ExternalLink from "components/ExternalLink";
 import InvitedByBanner from "components/Integrations/Referral/InvitedByBanner";
 import type { StoredReferral } from "data/referralAttribution";
+import { isValidEmailAddress } from "utils/validators";
 
 interface InfoProps {
   advance: () => void;
   state$: ObservableObject<SubmissionState>;
+  email$: ObservablePrimitiveBaseFns<string>;
   invitedBy?: StoredReferral | null;
 }
 
-function Info({ advance, state$, invitedBy }: InfoProps) {
+function Info({ advance, state$, email$, invitedBy }: InfoProps) {
   const { address } = useAccount();
   const [walletNotice, setWalletNotice] = useState(false);
   const [duplicateNotice, setDuplicateNotice] = useState(false);
@@ -218,7 +220,7 @@ function Info({ advance, state$, invitedBy }: InfoProps) {
 
       <button
         className="btn-primary"
-        disabled={!name || !walletNotice || !duplicateNotice}
+        disabled={!name || !walletNotice || !duplicateNotice || showEmailError}
         onClick={advance}
       >
         NEXT

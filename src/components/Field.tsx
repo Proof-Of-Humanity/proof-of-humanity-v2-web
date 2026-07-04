@@ -1,5 +1,5 @@
 import cn from "classnames";
-import { InputHTMLAttributes, TextareaHTMLAttributes } from "react";
+import { InputHTMLAttributes, ReactNode, TextareaHTMLAttributes } from "react";
 import Label from "./Label";
 
 type FieldProps = TextareaHTMLAttributes<HTMLTextAreaElement> &

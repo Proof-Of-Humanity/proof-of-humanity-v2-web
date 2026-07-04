@@ -147,7 +147,7 @@ function ProfileSummary({
               className="h-32 w-32 cursor-pointer rounded-full object-cover md:bg-cover md:bg-center md:bg-no-repeat"
               alt="image"
               fallbackLabel="Profile photo unavailable"
-              src={ipfs(registrationFile.photo)}
+              src={photoUrl}
             />
           }
         />

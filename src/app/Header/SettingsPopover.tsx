@@ -45,15 +45,21 @@ const SettingsPopover: React.FC = () => {
           <button
             type="button"
             onClick={toggleSettingsPopover}
-            className="hover:border-orange ml-2 flex h-9 w-9 items-center justify-center rounded-full border border-white/[0.08] bg-[#2F333D] shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] transition duration-200 ease-premium"
+            className="relative ml-2 flex h-9 w-9 items-center justify-center transition-opacity duration-200 hover:opacity-80"
             aria-label="Open notification settings"
           >
             <Image
               alt="notifications"
               src="/logo/notifications.svg"
-              height={18}
-              width={18}
+              height={36}
+              width={36}
             />
+            {showUnreadDot && (
+              <span
+                aria-hidden="true"
+                className="bg-status-removed absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-full border-2 border-white"
+              />
+            )}
           </button>
         }
         open={isOpen}
@@ -67,103 +73,35 @@ const SettingsPopover: React.FC = () => {
             </h2>
           </div>
 
-          {/* EMAIL FUNCTIONALITY - COMMENTED OUT UNTIL BACKEND IS IMPLEMENTED */}
-          {/* {isVerified && (
-            <div>
-              <span className="block text-sm ml-1 text-primaryText mb-3">
-              Add/Update your email address
-              </span>
-              <div className="space-y-3">
-                {(() => {
-                  switch (editMode) {
-                    case EditMode.VIEW:
-                      if (user?.email) {
-                        const buttonState = getActionButtonProps();
-                        return (
-                          <div className="flex flex-col sm:flex-row items-stretch sm:items-center sm:justify-between gap-2 sm:gap-0">
-                            <div className="flex items-center flex-grow">
-                              <span className="px-4 py-2 text-primaryText w-full sm:w-auto text-center sm:text-left break-all">{user.email}</span>
-                            </div>
-                            <ActionButton
-                              onClick={() => setEditMode(EditMode.EDIT)}
-                              label={buttonState.label}
-                              disabled={buttonState.isDisabled}
-                              className={`w-full sm:w-auto px-6 normal-case text-base min-h-[44px] transition-colors duration-200`}
-                              ariaLabel={editButtonTooltip || `${buttonState.label} email address ${user.email}`}
-                              tooltip={editButtonTooltip}
-                            />
-                          </div>
-                        );
-                      }
-                    case EditMode.EDIT:
-                      const buttonState = getActionButtonProps();
-                      return (
-                        <div className="flex flex-col sm:flex-row">
-                          <div className="flex-1 mb-2 sm:mb-0 sm:mr-0">
-                            <input
-                              type="email"
-                              value={email}
-                              onKeyDown={handleKeyDown}
-                              onChange={(e) => setEmail(e.target.value)}
-                              placeholder="Email"
-                              autoFocus
-                              className={`flat-control text-primaryText min-h-[44px] w-full rounded-input rounded-r-none px-4 py-2 text-base font-medium transition duration-200 ease-premium focus:outline-none focus:ring-0 ${
-                                !isEmailValid && email.trim() !== ""
-                                  ? "border-red-500 focus:border-red-600"
-                                  : ""
-                              }`}
-                            />
-                          </div>
-                          <ActionButton
-                            onClick={handleSaveEmail}
-                            isLoading={(isUpdatingUser || isAddingUser)}
-                            disabled={buttonState.isDisabled}
-                            label={buttonState.label}
-                            className="w-full sm:w-auto px-6 normal-case text-base rounded-l-none min-h-[44px] transition-colors duration-200"
-                            ariaLabel={`${buttonState.label} email address`}
-                          />
-                        </div>
-                      );
-                    default:
-                      return null;
-                  }
-                })()}
-                
-                {(() => {
-                  if (transientStatus) {
-                    let textColor = 'text-blue-600';
-                    if (transientStatus.type === 'success') textColor = 'text-green-600';
-                    if (transientStatus.type === 'error') textColor = 'text-red-600';
-                    return (
-                      <div className={`mt-3 text-sm m-1 ${textColor} animate-fadeIn`} role="alert">
-                        <p>{transientStatus.message}</p>
-                      </div>
-                    );
-                  } else if (user?.email && !user.isEmailVerified) {
-                    return (
-                      <div className="text-sm text-secondaryText animate-fadeIn flex flex-col sm:flex-row gap-1 items-center sm:items-stretch text-center sm:text-left" role="alert">
-                        <InfoIcon className="sm:h-4 h-8 sm:w-4 w-8 stroke-orange-400 shrink-0 mt-1" />
-                        <span>We sent you a verification email. Please, verify it.
-                        Didn't receive the email?{" "}
-                          {!validFutureUpdateDate ? (
-                            <button
-                              onClick={handleResendVerification}
-                              disabled={isUpdatingUser}
-                              className="text-orange hover:text-orange-600 underline disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
-                            >
-                              {isUpdatingUser ? "Sending..." : "Resend"}
-                            </button>
-                          ) : (
-                            <span className="text-secondaryText">
-                              Please wait {formatRelativeTime(validFutureUpdateDate)} before resending
-                            </span>
-                          )}
-                        </span>
-                      </div>
-                    );
-                  }
-                  return null;
-                })()}
+          {!isVerified ? (
+            <SignInButton className="min-h-[44px] w-full px-6 text-base normal-case transition-colors duration-200 md:w-full" />
+          ) : (
+            <div className="space-y-3 text-center">
+              {!hasVerifiedEmail && (
+                <p className="text-secondaryText text-sm">
+                  Subscribe to get important updates about your profile,
+                  requests and challenges.
+                </p>
+              )}
+
+              <div className="flex flex-col items-center">
+                <EmailField
+                  value={email}
+                  isInvalid={showEmailError}
+                  autoFocus={!hasSavedEmail}
+                  onChange={setEmail}
+                  onKeyDown={handleKeyDown}
+                />
+
+                {showVerificationNotice && (
+                  <EmailVerificationNotice
+                    canResend={canResend}
+                    disabled={isBusy}
+                    isResending={isResending}
+                    minutesUntilUpdateable={minutesUntilUpdateable}
+                    onResend={resendVerification}
+                  />
+                )}
               </div>
 
               <ActionButton

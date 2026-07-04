@@ -10,6 +10,9 @@ interface FinalizedProps {
   requiredVouches: number;
   challengePeriodDuration: number;
   pohId: string;
+  /** Notification email captured during the Info step, if any. */
+  email?: string;
+  emailStatus?: EmailSubmissionStatus;
   // Set when the user registered through a referral link.
   invitedBy?: StoredReferral | null;
 }
@@ -18,6 +21,8 @@ const Finalized: React.FC<FinalizedProps> = ({
   requiredVouches,
   challengePeriodDuration,
   pohId,
+  email,
+  emailStatus = "idle",
   invitedBy,
 }) => {
   const days = challengePeriodDuration / 86400;

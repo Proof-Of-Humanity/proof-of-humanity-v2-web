@@ -15,6 +15,7 @@ const integrations: Record<string, Integration> = {
     startPath: "app/circles",
     buttonText: "Start Earning",
     displayOrder: 2,
+    statusLabel: "Live",
     firstInfoSlide: [
       {
         id: "start",
@@ -82,6 +83,7 @@ const integrations: Record<string, Integration> = {
     startPath: "app/pnk-airdrop",
     buttonText: "Start Now",
     displayOrder: 1,
+    statusLabel: "Live",
     firstInfoSlide: [
       {
         id: "klerosInfo",
@@ -143,6 +145,7 @@ const integrations: Record<string, Integration> = {
     startPath: "app/seer-credits",
     buttonText: "Claim $10",
     displayOrder: 3,
+    statusLabel: "Live",
     firstInfoSlide: [
       {
         id: "whatIsSeer",

@@ -9,6 +9,7 @@ import { sdk } from "config/subgraph";
 import { RequestsQuery } from "generated/graphql";
 import { cache } from "react";
 import { Address, Hash, concat, keccak256, toHex } from "viem";
+import { settleChainQueries } from "./chainQuery";
 import { sanitizeHeadRequests } from "./sanitizer";
 
 const emptyRequests = (): RequestsQuery => ({ requests: [] });

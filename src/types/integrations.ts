@@ -13,6 +13,7 @@ export interface Integration {
   headerDescription?: string;
   buttonText: string;
   displayOrder?: number;
+  statusLabel?: string;
   firstInfoSlide?: InfoSlide[];
   secondInfoSlide?: InfoSlide[];
   externalLinks?: ExternalLink[];

@@ -28,6 +28,7 @@ import { redirect, RedirectType, useParams } from "next/navigation";
 import {
   Fragment,
   MutableRefObject,
+  useCallback,
   useEffect,
   useMemo,
   useRef,
@@ -37,7 +38,9 @@ import { toast } from "react-toastify";
 import { machinifyId } from "utils/identifier";
 import { Abi, Hash, parseEther } from "viem";
 import { useAccount, useChainId, useReadContract } from "wagmi";
-import ProductReturnsIcon from "icons/ProductReturnsMinor.svg";
+import ActionButton from "components/ActionButton";
+import { useSubmitEmail } from "components/Integrations/Airdrop/useSubmitEmail";
+import { isValidEmailAddress } from "utils/validators";
 import Connect from "./Connect";
 import Finalized from "./Finalized";
 import InfoStep from "./Info";
@@ -161,8 +164,22 @@ function FormContent({
   const referralAttributionInFlightRef = useRef(false);
   const stepHistoryReady = useRef(false);
   const previousStepRef = useRef(Step.info);
+  const uploadCache = useRef<{
+    photo: { content: Blob; uri: string } | null;
+    video: { content: Blob; uri: string } | null;
+    file: { json: string; uri: string } | null;
+    registration: { fileURI: string; uri: string } | null;
+  }>({
+    photo: null,
+    video: null,
+    file: null,
+    registration: null,
+  });
   const canGoBack =
-    step > Step.info && step < Step.finalized && !loadingMessage;
+    step > Step.info &&
+    step < Step.finalized &&
+    !loadingMessage &&
+    !registrationComplete;
   const visibleReferral = attributedReferral ?? storedReferral;
 
   const goBack = () => {
@@ -282,6 +299,25 @@ function FormContent({
     syncedFundingChainId.current = chainId;
   }, [chainId, currentTotalCost, selfFunded$, submitForFree]);
 
+  const getUploadedMediaUri = async (
+    type: keyof MediaState,
+    mediaItem: NonNullable<MediaState[keyof MediaState]>,
+    role: Roles,
+  ) => {
+    const cached = uploadCache.current[type];
+    if (cached?.content === mediaItem.content) return cached.uri;
+
+    const uri = await uploadToIPFS(mediaItem.content as File, role);
+    if (uri) {
+      uploadCache.current[type] = {
+        content: mediaItem.content,
+        uri,
+      };
+    }
+
+    return uri;
+  };
+
   const submit = async () => {
     if (!media.photo || !media.video) return;
     if (!currentTotalCost) {
@@ -312,7 +348,14 @@ function FormContent({
         video: videoUri,
       });
 
-      const fileURI = await uploadToIPFS(fileTextFile, Roles.Evidence);
+      const fileURI =
+        uploadCache.current.file?.json === fileJson
+          ? uploadCache.current.file.uri
+          : await uploadToIPFS(
+              new File([fileJson], "file", { type: "text/plain" }),
+              Roles.Evidence,
+            );
+      if (fileURI) uploadCache.current.file = { json: fileJson, uri: fileURI };
 
       if (!fileURI) {
         toast.error("Failed to upload media metadata.");
@@ -325,20 +368,21 @@ function FormContent({
       const registrationJson = JSON.stringify({
         name: "Registration",
         fileURI,
-      };
-
-      const registrationTextFile = new File(
-        [JSON.stringify(registrationJson)],
-        "registration",
-        {
-          type: "text/plain",
-        },
-      );
-
-      const registrationUri = await uploadToIPFS(
-        registrationTextFile,
-        Roles.Evidence,
-      );
+      });
+      const registrationUri =
+        uploadCache.current.registration?.fileURI === fileURI
+          ? uploadCache.current.registration.uri
+          : await uploadToIPFS(
+              new File([registrationJson], "registration", {
+                type: "text/plain",
+              }),
+              Roles.Evidence,
+            );
+      if (registrationUri)
+        uploadCache.current.registration = {
+          fileURI,
+          uri: registrationUri,
+        };
       if (!registrationUri) {
         toast.error("Failed to upload registration.");
         loading.stop();
@@ -514,6 +558,7 @@ function FormContent({
             <InfoStep
               advance={() => step$.set(Step.photo)}
               state$={state$}
+              email$={email$}
               invitedBy={visibleReferral}
             />
           ),
@@ -561,6 +606,8 @@ function FormContent({
                 currentContractData.challengePeriodDuration,
               )}
               pohId={params.pohid as string}
+              email={email$.peek().trim()}
+              emailStatus={emailStatus}
               invitedBy={visibleReferral}
             />
           ),
@@ -569,13 +616,20 @@ function FormContent({
 
       {(canGoBack || (registrationComplete && emailStatus === "failed")) && (
         <div className="mt-6 flex justify-center">
-          <button
-            onClick={goBack}
-            className="text-orange flex items-center gap-2 text-lg font-semibold transition hover:text-peach"
-          >
-            <ProductReturnsIcon className="h-6 w-6 fill-current" />
-            Back
-          </button>
+          <ActionButton
+            onClick={
+              registrationComplete && emailStatus === "failed"
+                ? skipNotificationEmail
+                : goBack
+            }
+            label={
+              registrationComplete && emailStatus === "failed"
+                ? "Skip for now"
+                : "Back"
+            }
+            variant="secondary"
+            className="w-full max-w-xs"
+          />
         </div>
       )}
     </>

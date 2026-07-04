@@ -21,10 +21,22 @@ export default function Previewed({
   const [hasVideoError, setHasVideoError] = useState(false);
   const triggerElement =
     typeof trigger === "function" ? trigger(isOpen) : trigger;
+  const shouldOpenVideoInNewTab =
+    isVideo && openVideoInNewTabOnError && hasVideoError;
   const openPreview = () => {
+    if (shouldOpenVideoInNewTab) {
+      window.open(uri, "_blank", "noopener,noreferrer");
+      return;
+    }
+
     setIsVideoLoading(true);
-    setHasVideoError(false);
     setIsOpen(true);
+  };
+  const handleVideoError = () => {
+    if (!isVideo || !openVideoInNewTabOnError) return;
+    setIsVideoLoading(false);
+    setHasVideoError(true);
+    setIsOpen(false);
   };
 
   return (
@@ -71,10 +83,7 @@ export default function Previewed({
                 playsInline
                 webkit-playsinline=""
                 onLoadedData={() => setIsVideoLoading(false)}
-                onError={() => {
-                  setIsVideoLoading(false);
-                  setHasVideoError(true);
-                }}
+                onError={handleVideoError}
                 onEnded={() => setIsOpen(false)}
               />
             </div>

@@ -118,11 +118,6 @@ const Content = ({
     Boolean(evidenceUri && !evidenceFile && !evidenceError) ||
     Boolean(evidenceFile?.fileURI && !data && !dataError);
 
-  const photo = data?.photo ? ipfs(data.photo) : null;
-  const isMediaLoading =
-    Boolean(evidenceUri && !evidenceFile && !evidenceError) ||
-    Boolean(evidenceFile?.fileURI && !data && !dataError);
-
   return (
     <>
       {photo ? (
