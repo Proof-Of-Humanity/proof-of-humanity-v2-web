@@ -80,10 +80,14 @@ module.exports = {
       },
       animation: {
         flip: "flip 5s linear infinite",
-        slideInFromRight: "slideInFromRight 0.3s ease-out forwards",
-        slideInFromLeft: "slideInFromLeft 0.3s ease-out forwards",
-        slideOutLeft: "slideOutLeft 0.25s ease-in forwards",
-        slideOutRight: "slideOutRight 0.25s ease-in forwards",
+        wizardInRight:
+          "wizardInRight 0.35s cubic-bezier(0.22, 0.61, 0.36, 1) forwards",
+        wizardInLeft:
+          "wizardInLeft 0.35s cubic-bezier(0.22, 0.61, 0.36, 1) forwards",
+        wizardOutLeft:
+          "wizardOutLeft 0.18s cubic-bezier(0.22, 0.61, 0.36, 1) forwards",
+        wizardOutRight:
+          "wizardOutRight 0.18s cubic-bezier(0.22, 0.61, 0.36, 1) forwards",
         fadeOut: "fadeOut 0.4s ease-out forwards",
         fadeIn: "fadeIn 0.3s ease-out forwards",
       },
@@ -92,21 +96,22 @@ module.exports = {
           "0%, 100%": { transform: "rotateY(0deg)" },
           "50%": { transform: "rotateY(360deg)" },
         },
-        slideInFromRight: {
-          "0%": { opacity: "0", transform: "translateX(20px)" },
-          "100%": { opacity: "1", transform: "translateX(0)" },
+        // Wizard slide crossfade: short drift + faint scale, premium easing.
+        wizardInRight: {
+          "0%": { opacity: "0", transform: "translateX(12px) scale(0.995)" },
+          "100%": { opacity: "1", transform: "translateX(0) scale(1)" },
         },
-        slideInFromLeft: {
-          "0%": { opacity: "0", transform: "translateX(-20px)" },
-          "100%": { opacity: "1", transform: "translateX(0)" },
+        wizardInLeft: {
+          "0%": { opacity: "0", transform: "translateX(-12px) scale(0.995)" },
+          "100%": { opacity: "1", transform: "translateX(0) scale(1)" },
         },
-        slideOutLeft: {
-          "0%": { opacity: "1", transform: "translateX(0)" },
-          "100%": { opacity: "0", transform: "translateX(-20px)" },
+        wizardOutLeft: {
+          "0%": { opacity: "1", transform: "translateX(0) scale(1)" },
+          "100%": { opacity: "0", transform: "translateX(-12px) scale(0.995)" },
         },
-        slideOutRight: {
-          "0%": { opacity: "1", transform: "translateX(0)" },
-          "100%": { opacity: "0", transform: "translateX(20px)" },
+        wizardOutRight: {
+          "0%": { opacity: "1", transform: "translateX(0) scale(1)" },
+          "100%": { opacity: "0", transform: "translateX(12px) scale(0.995)" },
         },
         fadeOut: {
           "0%": { opacity: "1" },

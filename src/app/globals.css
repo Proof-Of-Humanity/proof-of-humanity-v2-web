@@ -661,6 +661,16 @@
     fill: theme("colors.dark.purple");
   }
 
+  .fill-status-registered {
+    fill: theme("colors.light.status.registered");
+    color: theme("colors.light.status.registered");
+  }
+
+  .dark .fill-status-registered {
+    fill: theme("colors.dark.status.registered");
+    color: theme("colors.dark.status.registered");
+  }
+
   .bg-whiteBackground {
     background-color: theme("colors.light.whiteBackground");
   }

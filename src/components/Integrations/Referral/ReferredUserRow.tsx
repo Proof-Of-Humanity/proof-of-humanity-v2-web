@@ -3,13 +3,16 @@
 import Image from "next/image";
 import Link from "next/link";
 import cn from "classnames";
+import ChainLogo from "components/ChainLogo";
 import Identicon from "components/Identicon";
-import GnosisToken from "icons/GnosisToken.svg";
 import NewTabIcon from "icons/NewTab.svg";
 import NeedsVouchIcon from "icons/NeedsVouch.svg";
 import EyeIcon from "icons/Eye.svg";
 import CheckCircleOutlineIcon from "icons/CheckCircleOutline.svg";
-import { VERIFICATION_META, deriveStep } from "data/referral";
+import WarningIcon from "icons/WarningCircle16.svg";
+import RejectedIcon from "icons/CircleCancelMinor.svg";
+import HourglassIcon from "icons/Hourglass.svg";
+import { VERIFICATION_META, deriveStep, isReferralHalted } from "data/referral";
 import { ReferredUser, ReferredVerification } from "types/referral";
 import { shortenAddress } from "utils/address";
 import { ipfs } from "utils/ipfs";
@@ -24,14 +27,48 @@ const VERIFICATION_ICON: Record<
   ReferredVerification,
   React.FC<React.SVGAttributes<SVGElement>>
 > = {
+  "not-registered": HourglassIcon,
   "needs-vouch": NeedsVouchIcon,
   "in-review": EyeIcon,
   verified: CheckCircleOutlineIcon,
 };
 
-const ReferredUserRow: React.FC<ReferredUserRowProps> = ({ user }) => {
+const getRowStatus = (user: ReferredUser) => {
+  if (user.refereeFlagged)
+    return {
+      label: "Referee Flagged",
+      text: "text-status-rejected",
+      Icon: WarningIcon,
+      description:
+        "Referral rewards are paused while this referred profile is flagged.",
+    };
+
+  if (user.reviewStatus === "rejected")
+    return {
+      label: "Referral Rejected",
+      text: "text-status-rejected",
+      Icon: RejectedIcon,
+      description: "This referral is not eligible for rewards.",
+    };
+
+  if (user.reviewStatus === "needs-review")
+    return {
+      label: "Needs Review",
+      text: "text-status-challenged",
+      Icon: WarningIcon,
+      description: "This referral needs admin review before payout.",
+    };
+
   const status = VERIFICATION_META[user.verification];
-  const StatusIcon = VERIFICATION_ICON[user.verification];
+  return {
+    ...status,
+    Icon: VERIFICATION_ICON[user.verification],
+  };
+};
+
+const ReferredUserRow: React.FC<ReferredUserRowProps> = ({ user }) => {
+  const status = getRowStatus(user);
+  const StatusIcon = status.Icon;
   const displayName = user.name ?? shortenAddress(user.refereeHumanityId);
 
   return (
@@ -56,25 +93,43 @@ const ReferredUserRow: React.FC<ReferredUserRowProps> = ({ user }) => {
             className="text-secondaryText hover:text-primaryText inline-flex items-center gap-1.5 text-sm transition-colors"
             aria-label={`View ${displayName}'s profile`}
           >
-            {user.chainId && <GnosisToken className="h-4 w-4" />}
+            {user.chainId && (
+              <ChainLogo
+                chainId={user.chainId}
+                className="text-secondaryText h-4 w-4 fill-current"
+              />
+            )}
             {shortenAddress(user.refereeHumanityId)}
             <span className="border-stroke flex h-[18px] w-[18px] items-center justify-center rounded-md border">
               <NewTabIcon className="fill-secondaryText h-2.5 w-2.5" />
             </span>
           </Link>
         </div>
-        <ReferralSteps active={deriveStep(user)} />
+        <ReferralSteps
+          active={deriveStep(user)}
+          halted={isReferralHalted(user)}
+        />
       </div>
 
-      <div
-        className={cn(
-          "inline-flex items-center gap-2 text-sm font-semibold",
-          status.text,
+      <div className="shrink-0 sm:max-w-56 sm:text-right">
+        <div
+          className={cn(
+            "inline-flex items-center gap-2 text-sm font-semibold",
+            status.text,
+          )}
+          aria-label={`Status: ${status.label}${
+            status.description ? `. ${status.description}` : ""
+          }`}
+          title={status.description}
+        >
+          <StatusIcon className="h-4 w-4" aria-hidden="true" />
+          {status.label}
+        </div>
+        {status.description && (
+          <p className="text-secondaryText mt-1 text-xs leading-5">
+            {status.description}
+          </p>
         )}
-        aria-label={`Status: ${status.label}`}
-      >
-        <StatusIcon className="h-4 w-4" aria-hidden="true" />
-        {status.label}
       </div>
     </div>
   );

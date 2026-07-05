@@ -51,7 +51,7 @@ function PnkPulse() {
 
 function LoadingState() {
   return (
-    <div className="bg-whiteBackground rounded-[30px] border-l-[1px] border-l-[#BE75FF] p-6 lg:w-[391px] lg:p-8">
+    <div className="bg-whiteBackground rounded-[30px] border-l-[1px] p-6 shadow-[0_0_45px_rgba(255,255,255,0.10)] lg:w-[391px] lg:p-8">
       <div className="text-center">
         <div className="text-orange mb-6 text-sm font-medium">Loading...</div>
         <PnkPulse />
@@ -362,7 +362,7 @@ export default function ClaimSection({
 
   if (eligibilityStatus === "claimed") {
     return (
-      <div className="bg-whiteBackground rounded-[30px] border-t-[1px] border-t-[#BE75FF] p-6 lg:w-[440px] lg:border-l-[1px] lg:border-t-0 lg:border-l-[#BE75FF] lg:p-8">
+      <div className="bg-whiteBackground rounded-[30px] border-t-[1px] border-t-[#BE75FF] p-6 shadow-[0_0_45px_rgba(255,255,255,0.10)] lg:w-[440px] lg:border-l-[1px] lg:border-t-0 lg:border-l-[#BE75FF] lg:p-8">
         <div className="text-center">
           <ClaimedPanel amountPerClaim={amountPerClaim} isTestnet={isTestnet} />
         </div>
@@ -371,7 +371,7 @@ export default function ClaimSection({
   }
 
   return (
-    <div className="bg-whiteBackground rounded-[30px] border-t-[1px] border-t-[#BE75FF] p-6 lg:w-[391px] lg:border-l-[1px] lg:border-t-0 lg:border-l-[#BE75FF] lg:p-8">
+    <div className="bg-whiteBackground rounded-[30px] border-t-[1px] border-t-[#BE75FF] p-6 shadow-[0_0_45px_rgba(255,255,255,0.10)] lg:w-[391px] lg:border-l-[1px] lg:border-t-0 lg:border-l-[#BE75FF] lg:p-8">
       <div className="text-center">
         <div className="text-purple mb-1.5 text-sm font-medium">Reward</div>
         <PnkDisplay amount={amountPerClaim} />

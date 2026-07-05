@@ -1,5 +1,6 @@
 "use client";
 
+import WarningIcon from "icons/WarningCircle16.svg";
 import { shortenReferralLink } from "data/referral";
 import { ReferralData } from "types/referral";
 import CopyButton from "./CopyButton";
@@ -31,6 +32,7 @@ const ReferralCard: React.FC<ReferralCardProps> = ({ data }) => {
           link={link}
           displayValue={shortenReferralLink(link)}
           avatarAddress={data.referrerHumanityId}
+          photo={data.referrerPhoto}
         />
       </div>
 
@@ -39,23 +41,35 @@ const ReferralCard: React.FC<ReferralCardProps> = ({ data }) => {
         <ShareButtons link={link} message={SHARE_MESSAGE} />
       </div>
 
-      {hasReferrals && (
-        <>
-          <div className="mt-5">
-            <ReferralStatsBar stats={data.stats} />
-          </div>
-
-          {data.humanityFlagged && (
-            <p className="text-status-rejected mt-3 text-sm">
-              Your referral rewards are on hold pending a review of your
-              account.
+      {data.humanityFlagged && (
+        <div className="border-status-challenged/30 bg-status-challenged/10 mt-5 flex items-start gap-3 rounded-card border p-4">
+          <WarningIcon className="text-status-challenged mt-0.5 h-5 w-5 shrink-0" />
+          <div>
+            <p className="text-status-challenged text-sm font-semibold">
+              Rewards on hold
             </p>
-          )}
-
-          <div className="mt-6">
-            <ReferredList users={data.referred} />
+            <p className="text-secondaryText mt-1 text-sm">
+              Your profile is under review. Referral payouts are paused until it
+              clears — pending rewards stay reserved and pay out automatically
+              after.
+            </p>
           </div>
-        </>
+        </div>
+      )}
+
+      {data.stats && (
+        <div className="mt-5">
+          <ReferralStatsBar
+            stats={data.stats}
+            rewardsOnHold={data.humanityFlagged}
+          />
+        </div>
+      )}
+
+      {hasReferrals && (
+        <div className="mt-6">
+          <ReferredList users={data.referred} />
+        </div>
       )}
     </>
   );

@@ -1,7 +1,6 @@
 import { useState } from "react";
 import cn from "classnames";
-import MinusIcon from "icons/MinusMinor.svg";
-import PlusIcon from "icons/PlusMinor.svg";
+import ChevronDownIcon from "icons/ChevronDown.svg";
 
 interface AccordionProps {
   className?: string;
@@ -42,11 +41,9 @@ const Accordion: React.FC<AccordionProps> = ({
       >
         <span className="min-w-0 flex-1 leading-snug">{title}</span>
         <span className="bg-orange flex h-8 w-8 shrink-0 items-center justify-center rounded-full">
-          {open ? (
-            <MinusIcon className="h-4 w-4 fill-[#1E2129]" />
-          ) : (
-            <PlusIcon className="h-4 w-4 fill-[#1E2129]" />
-          )}
+          <ChevronDownIcon
+            className={cn("h-4 w-4 text-[#1E2129]", open && "rotate-180")}
+          />
         </span>
       </button>
       {open && <div className="mt-2.5 flex flex-col">{children}</div>}

@@ -17,7 +17,6 @@ const SettingsPopover: React.FC = () => {
     email,
     setEmail,
     showEmailError,
-    hasSavedEmail,
     hasVerifiedEmail,
     handleKeyDown,
     showVerificationNotice,
@@ -88,7 +87,7 @@ const SettingsPopover: React.FC = () => {
                 <EmailField
                   value={email}
                   isInvalid={showEmailError}
-                  autoFocus={!hasSavedEmail}
+                  autoFocus={false}
                   onChange={setEmail}
                   onKeyDown={handleKeyDown}
                 />

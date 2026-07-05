@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import IntegrationHeader from "components/Integrations/IntegrationHeader";
 import ClaimSection from "components/Integrations/Airdrop/ClaimSection";
 import KlerosInfoCard from "components/Integrations/Airdrop/KlerosInfoCard";
@@ -41,21 +41,6 @@ export default function PnkAirdropContent({
     currentSlideIndex >= (integration.firstInfoSlide?.length ?? 0);
   const currentSlide = integration.firstInfoSlide?.[currentSlideIndex];
 
-  // Preload all slide images on component mount
-  useEffect(() => {
-    if (integration.firstInfoSlide) {
-      integration.firstInfoSlide.forEach((slide) => {
-        if (slide.image) {
-          const link = document.createElement("link");
-          link.rel = "preload";
-          link.as = "image";
-          link.href = slide.image;
-          document.head.appendChild(link);
-        }
-      });
-    }
-  }, [integration.firstInfoSlide]);
-
   const {
     data: eligibilityData,
     isLoading: isEligibilityLoading,
@@ -76,14 +61,8 @@ export default function PnkAirdropContent({
           {!slidesCompleted && integration.firstInfoSlide && currentSlide ? (
             <>
               <KlerosInfoCard
-                slide={currentSlide}
-                previousStep={currentSlideIndex > 0}
-                nextStep={
-                  currentSlideIndex < integration.firstInfoSlide.length - 1
-                }
-                isLastSlide={
-                  currentSlideIndex === integration.firstInfoSlide.length - 1
-                }
+                slides={integration.firstInfoSlide}
+                currentIndex={currentSlideIndex}
                 onPrevious={() => setCurrentSlideIndex(currentSlideIndex - 1)}
                 onNext={() => setCurrentSlideIndex(currentSlideIndex + 1)}
                 onLastSlideComplete={() =>
@@ -92,8 +71,8 @@ export default function PnkAirdropContent({
               />
             </>
           ) : (
-            <div className="mx-auto w-full max-w-[1095px] rounded-[30px] bg-gradient-to-br from-[#F9BFCE] to-[#BE75FF] p-[1px]">
-              <div className="bg-primaryBackground flex flex-col rounded-[29px] lg:flex-row">
+            <div className="relative mx-auto w-full max-w-[1095px]">
+              <div className="bg-primaryBackground relative flex flex-col rounded-[30px] lg:flex-row">
                 <div className="flex-1 space-y-2 p-6 lg:p-8">
                   <h2 className="text-primaryText text-2xl font-semibold">
                     Claim & Stake your PNK airdrop
@@ -122,7 +101,7 @@ export default function PnkAirdropContent({
                     spacing="compact"
                     iconWidth={16}
                     iconHeight={16}
-                    iconClassName="flex-shrink-0 fill-purple"
+                    iconClassName="flex-shrink-0 fill-status-registered"
                   />
 
                   <div className="text-purple ml-1 text-xs">
@@ -149,8 +128,8 @@ export default function PnkAirdropContent({
 
                   <div className="text-secondaryText border-orange border-l-2 pl-2 text-xs leading-relaxed">
                     <strong className="text-orange">Important:</strong>{" "}
-                    Unstaking your PNK immediately after the airdrop may make you
-                    ineligible for other Proof of Humanity rewards.
+                    Unstaking your PNK immediately after the airdrop may make
+                    you ineligible for other Proof of Humanity rewards.
                   </div>
 
                   <div className="text-secondaryText border-purple border-l-2 pl-2 text-xs">

@@ -1,5 +1,5 @@
 "use client";
-import { useState, useCallback, useMemo, useEffect } from "react";
+import { useState, useCallback, useMemo } from "react";
 import IntegrationHeader from "components/Integrations/IntegrationHeader";
 import ProcessStepCard from "components/Integrations/ProcessStepCard";
 import SeerStatusCard, { SeerEligibilityStatus } from "./SeerStatusCard";
@@ -25,21 +25,6 @@ type SeerUserData = {
 
 export default function SeerCredits({ integration }: SeerCreditsProps) {
   const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
-
-  // Preload all slide images on component mount
-  useEffect(() => {
-    if (integration.firstInfoSlide) {
-      integration.firstInfoSlide.forEach((slide) => {
-        if (slide.image) {
-          const link = document.createElement("link");
-          link.rel = "preload";
-          link.as = "image";
-          link.href = slide.image;
-          document.head.appendChild(link);
-        }
-      });
-    }
-  }, [integration.firstInfoSlide]);
   const { address, isConnected } = useAccount();
   const chainId = useChainId();
   const modal = useAppKit();
@@ -151,21 +136,13 @@ export default function SeerCredits({ integration }: SeerCreditsProps) {
             <>
               <ExternalLink
                 href="https://seer.pm/"
-                className="text-purple text-md my-4 text-center"
+                className="text-orange text-md my-4 text-center"
               >
                 Learn more about Seer to get started
               </ExternalLink>
               <ProcessStepCard
-                step={currentSlide}
                 allSlides={integration.firstInfoSlide}
                 currentIndex={currentSlideIndex}
-                previousStep={currentSlideIndex > 0}
-                nextStep={
-                  currentSlideIndex < integration.firstInfoSlide.length - 1
-                }
-                isLastSlide={
-                  currentSlideIndex === integration.firstInfoSlide.length - 1
-                }
                 onPrevious={() => setCurrentSlideIndex(currentSlideIndex - 1)}
                 onNext={() => setCurrentSlideIndex(currentSlideIndex + 1)}
                 onLastSlideComplete={() =>
@@ -174,20 +151,20 @@ export default function SeerCredits({ integration }: SeerCreditsProps) {
               />
             </>
           ) : (
-            <div className="mx-auto w-full max-w-[1095px] rounded-[30px] bg-gradient-to-br from-[#F9BFCE] to-[#BE75FF] p-[1px]">
-              <div className="bg-primaryBackground flex flex-col rounded-[29px] lg:flex-row">
+            <div className="relative mx-auto w-full max-w-[1095px]">
+              <div className="border-stroke bg-whiteBackground relative flex flex-col rounded-[30px] border shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] lg:flex-row lg:items-stretch">
                 <div className="flex-1 p-6 lg:p-8">
                   <h2 className="text-primaryText mb-4 text-xl font-semibold md:text-2xl">
                     Claim and use your Seer Credits
                   </h2>
                   <div className="mb-4">
-                    <p className="text-secondaryText mb-2 text-sm">
-                      To qualify, you must be an Included profile.
+                    <p className="text-status-registered mb-2 text-sm">
+                      To qualify, you must be a Verified Human profile.
                     </p>
                   </div>
 
                   <div className="space-y-4">
-                    <p className="text-purple text-base font-semibold md:text-lg">
+                    <p className="text-orange text-base font-semibold md:text-lg">
                       Get $10 of Seer Credits when you register, with potential
                       bonus credits after.
                     </p>

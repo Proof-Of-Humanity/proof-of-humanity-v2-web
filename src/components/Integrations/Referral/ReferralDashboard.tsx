@@ -8,7 +8,7 @@ import ReferralIcon from "icons/Referral.svg";
 import { useAccount } from "wagmi";
 import ReferralCard from "./ReferralCard";
 
-// Static card shell shown in every state (Figma: header of Card-Referral).
+// Static card shell shown in every state (header of Card-Referral).
 const CardShell: React.FC<{ children: React.ReactNode }> = ({ children }) => (
   <div className="paper p-5 md:p-7">
     <div className="text-orange mb-4 flex items-center gap-2">
@@ -82,9 +82,37 @@ const ReferralDashboard = () => {
   if (data === undefined)
     return (
       <CardShell>
-        <div className="mt-5 flex animate-pulse flex-col gap-4">
-          <div className="bg-grey h-6 w-2/3 rounded-full" />
-          <div className="bg-grey h-11 w-48 rounded-full" />
+        <div className="mt-5 flex animate-pulse flex-col">
+          {/* Link row: avatar + "My Referral Link: …" */}
+          <div className="flex items-center gap-2">
+            <div className="bg-grey h-6 w-6 shrink-0 rounded-full" />
+            <div className="bg-grey h-4 w-64 max-w-full rounded-full" />
+          </div>
+          {/* Copy + share actions */}
+          <div className="mt-4 flex items-center gap-4">
+            <div className="bg-grey h-11 w-40 rounded-full" />
+            <div className="bg-grey h-8 w-32 rounded-full" />
+          </div>
+          {/* Stats bar */}
+          <div className="bg-grey mt-5 h-12 w-full rounded-2xl" />
+          {/* Referred rows: avatar + name, stepper line, right-side status */}
+          <div className="mt-6 flex flex-col">
+            {[0, 1].map((row) => (
+              <div
+                key={row}
+                className="flex flex-col gap-3 border-b border-white/10 py-4 last:border-b-0 sm:flex-row sm:items-center sm:justify-between"
+              >
+                <div className="flex flex-col gap-2">
+                  <div className="flex items-center gap-2">
+                    <div className="bg-grey h-6 w-6 shrink-0 rounded-full" />
+                    <div className="bg-grey h-4 w-32 rounded-full" />
+                  </div>
+                  <div className="bg-grey h-5 w-64 max-w-full rounded-full" />
+                </div>
+                <div className="bg-grey h-4 w-28 shrink-0 rounded-full" />
+              </div>
+            ))}
+          </div>
         </div>
       </CardShell>
     );
