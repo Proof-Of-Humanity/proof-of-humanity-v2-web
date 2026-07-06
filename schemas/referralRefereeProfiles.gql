@@ -1,6 +1,7 @@
 query ReferralRefereeProfiles($ids: [Bytes!]) {
   humanities(where: { id_in: $ids }, first: 100) {
     id
+    pendingRevocation
     registration {
       expirationTime
       claimer {
@@ -14,6 +15,9 @@ query ReferralRefereeProfiles($ids: [Bytes!]) {
       where: { revocation: false }
     ) {
       status {
+        id
+      }
+      winnerParty {
         id
       }
       claimer {

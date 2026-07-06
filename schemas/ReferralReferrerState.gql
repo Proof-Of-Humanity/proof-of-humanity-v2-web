@@ -1,0 +1,23 @@
+query ReferralReferrerState($address: String!) {
+  registrations(
+    where: { claimer: $address }
+    orderBy: expirationTime
+    orderDirection: desc
+    first: 1
+  ) {
+    expirationTime
+    humanity {
+      id
+      pendingRevocation
+    }
+  }
+  crossChainRegistrations(
+    where: { claimer: $address }
+    orderBy: expirationTime
+    orderDirection: desc
+    first: 1
+  ) {
+    id
+    expirationTime
+  }
+}

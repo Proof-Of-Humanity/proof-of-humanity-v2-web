@@ -10,6 +10,7 @@ query PohReferralDashboard($pagination: PaginationArgs) {
         rewardAmount
         payoutTransaction {
           status
+          txHash
         }
         refereeFlag {
           isFlagged

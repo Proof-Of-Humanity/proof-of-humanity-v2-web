@@ -1,20 +1,19 @@
-// Referral system types.
-
-/** Admin review axis (Atlas `PohReferralReviewStatus`). */
-export type ReferralReviewStatus =
-  | "active"
-  | "needs-review"
-  | "approved"
-  | "rejected";
-
-/** Payout axis (Atlas `PohReferralPayoutTransactionStatus`). */
-export type ReferralPayoutStatus = "not-sent" | "pending" | "confirmed";
+import {
+  PohReferralPayoutTransactionStatus,
+  PohReferralReviewStatus,
+} from "generated/atlas";
 
 /** Referee's registry verification, shown as the row badge. */
-export type ReferredVerification = "needs-vouch" | "in-review" | "verified";
+export type ReferredVerification =
+  | "not-registered"
+  | "needs-vouch"
+  | "in-review"
+  | "rejected"
+  | "verified"
+  | "revocation-pending";
 
 /**
- * Presentational funnel step rendered in the Figma stepper. Derived from the
+ * Presentational funnel step rendered in the stepper. Derived from the
  * referral's payout + verification state via `deriveStep` — never set by hand.
  */
 export type ReferralStep =
@@ -25,7 +24,7 @@ export type ReferralStep =
   | "paid";
 
 export interface ReferredUser {
-  /** API key — one reward per humanity ever. The API exposes only the address. */
+  /** one reward per humanity ever. The API exposes only the address. */
   refereeHumanityId: `0x${string}`;
   /** Resolved from the humanity profile (not part of the referral API). */
   name?: string;
@@ -33,13 +32,15 @@ export interface ReferredUser {
   photo?: string | null;
   /** Chain the referee's humanity lives on (profile-resolved), for the token icon. */
   chainId?: number;
-  reviewStatus: ReferralReviewStatus;
-  payoutStatus: ReferralPayoutStatus;
+  reviewStatus: PohReferralReviewStatus;
+  payoutStatus: PohReferralPayoutTransactionStatus;
   /** Referee registry status, for the row badge. */
   verification: ReferredVerification;
   refereeFlagged: boolean;
   /** PNK locked for this referral (display units; API returns wei). */
   rewardAmount: number;
+  /** Payout transaction hash once the bot has sent it; null before. */
+  payoutTxHash?: string | null;
 }
 
 export interface ReferralStats {
@@ -53,10 +54,17 @@ export interface ReferralStats {
 export interface ReferralData {
   /** Current user's humanity (the referrer) — used for the link-row avatar. */
   referrerHumanityId: `0x${string}`;
+  /** Referrer's registration photo (IPFS path); null → identicon fallback. */
+  referrerPhoto?: string | null;
   /** Shareable invite URL, `…/?ref=<referrerHumanityId>`. */
   referralLink: string;
   /** Whether the current user's humanity is flagged (rewards blocked). */
   humanityFlagged: boolean;
-  stats: ReferralStats;
+  /** Referrer's own humanity has a revocation request in progress. */
+  referrerPendingRevocation: boolean;
+  /** Referrer's registration lapsed — the invite link won't attribute until renewed. */
+  referrerRegistrationExpired: boolean;
+  /** Server-side aggregates; null when Atlas doesn't return them (bar hidden). */
+  stats: ReferralStats | null;
   referred: ReferredUser[];
 }

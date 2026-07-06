@@ -231,6 +231,20 @@ export type LinkReferralAttributionMutation = {
   };
 };
 
+export type PohReferralStatsQueryVariables = Exact<{
+  [key: string]: never;
+}>;
+
+export type PohReferralStatsQuery = {
+  __typename?: "Query";
+  pohReferralStats: {
+    __typename?: "PohReferralStats";
+    verifiedReferrals: number;
+    paidRewardsAmount: string;
+    pendingRewardsAmount: string;
+  };
+};
+
 export type PohReferralDashboardQueryVariables = Exact<{
   pagination?: InputMaybe<PaginationArgs>;
 }>;
@@ -252,6 +266,7 @@ export type PohReferralDashboardQuery = {
         payoutTransaction?: {
           __typename?: "PohReferralPayoutTransaction";
           status: PohReferralPayoutTransactionStatus;
+          txHash?: string | null;
         } | null;
         refereeFlag?: {
           __typename?: "PohFlaggedHumanity";
@@ -271,6 +286,15 @@ export const LinkReferralAttributionDocument = gql`
     }
   }
 `;
+export const PohReferralStatsDocument = gql`
+  query PohReferralStats {
+    pohReferralStats {
+      verifiedReferrals
+      paidRewardsAmount
+      pendingRewardsAmount
+    }
+  }
+`;
 export const PohReferralDashboardDocument = gql`
   query PohReferralDashboard($pagination: PaginationArgs) {
     humanityFlag
@@ -284,6 +308,7 @@ export const PohReferralDashboardDocument = gql`
           rewardAmount
           payoutTransaction {
             status
+            txHash
           }
           refereeFlag {
             isFlagged
@@ -324,6 +349,21 @@ export function getSdk(
           ),
         "LinkReferralAttribution",
         "mutation",
+      );
+    },
+    PohReferralStats(
+      variables?: PohReferralStatsQueryVariables,
+      requestHeaders?: Dom.RequestInit["headers"],
+    ): Promise<PohReferralStatsQuery> {
+      return withWrapper(
+        (wrappedRequestHeaders) =>
+          client.request<PohReferralStatsQuery>(
+            PohReferralStatsDocument,
+            variables,
+            { ...requestHeaders, ...wrappedRequestHeaders },
+          ),
+        "PohReferralStats",
+        "query",
       );
     },
     PohReferralDashboard(

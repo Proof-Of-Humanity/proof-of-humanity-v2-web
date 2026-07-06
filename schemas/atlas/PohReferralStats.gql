@@ -1,0 +1,7 @@
+query PohReferralStats {
+  pohReferralStats {
+    verifiedReferrals
+    paidRewardsAmount
+    pendingRewardsAmount
+  }
+}
