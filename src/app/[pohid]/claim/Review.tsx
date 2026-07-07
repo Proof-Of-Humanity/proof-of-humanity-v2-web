@@ -250,7 +250,7 @@ function Review({
         />
         <Field label="Name" value={name} disabled />
         <Field label="Account" value={address} disabled />
-        <Field label="Email" value={email} disabled />
+        {email ? <Field label="Email" value={email} disabled /> : null}
 
         <Label className="!mt-2">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
