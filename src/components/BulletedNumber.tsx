@@ -18,7 +18,7 @@ const BulletedNumber: React.FC<BulletedNumberProps> = ({
       </span>
     </div>
   ) : (
-    <div className="relative mt-2 flex h-6 w-6 flex-shrink-0 items-center justify-center overflow-hidden rounded-full bg-gradient-to-r from-[#FF9966] to-[#FF8CA9]">
+    <div className="bg-orange relative mt-2 flex h-6 w-6 flex-shrink-0 items-center justify-center overflow-hidden rounded-full">
       <span className="absolute inset-0 flex items-center justify-center">
         <span className="py-0.25 rounded-full px-0.5 text-sm leading-none text-white">
           {number}

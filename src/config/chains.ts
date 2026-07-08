@@ -46,6 +46,9 @@ function getExplorerUrl(chainId: number): string {
 export const explorerLink = (address: string, chain: SupportedChain) =>
   `https://${getExplorerUrl(chain.id)}/address/${address}`;
 
+export const explorerTxLink = (txHash: string, chainId: number) =>
+  `https://${getExplorerUrl(chainId)}/tx/${txHash}`;
+
 export const supportedChains =
   configSetSelection.chainSet === ChainSet.MAINNETS
     ? supportedChainsMain

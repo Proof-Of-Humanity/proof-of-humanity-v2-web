@@ -19,14 +19,11 @@ export interface ActionButtonProps {
 }
 
 const buttonStyles = {
-  primary:
-    "flex items-center justify-center gradient rounded-sm font-medium text-white",
-  secondary:
-    "flex items-center justify-center border-2 border-theme text-orange rounded-sm font-semibold",
+  primary: "btn-primary",
+  secondary: "btn-secondary",
 };
 
-const buttonBaseClass =
-  "w-full md:w-auto normal-case disabled:opacity-50 disabled:cursor-not-allowed px-5 py-2";
+const buttonBaseClass = "disabled:cursor-not-allowed";
 
 const ActionButton = React.forwardRef<HTMLButtonElement, ActionButtonProps>(
   (

@@ -2,8 +2,6 @@ import { supportedChains, legacyChain } from "config/chains";
 import { sdk } from "config/subgraph";
 import { MeQuery } from "generated/graphql";
 
-import { settleChainQueries } from "./chainQuery";
-
 const isTransferStatus = (statusId?: string | null) =>
   statusId === "transferred" || statusId === "transferring";
 
@@ -44,9 +42,8 @@ const sanitize = (res: MeQuery[]) => {
 
 export const getMyData = async (account: string) => {
   const id = account.toLowerCase();
-  const res = await settleChainQueries<MeQuery>(
-    (chain) => sdk[chain.id].Me({ id }),
-    () => ({ claimer: null }),
+  const res = await Promise.all(
+    supportedChains.map((chain) => sdk[chain.id].Me({ id })),
   );
   sanitize(res);
   const homeChain = supportedChains.find((_, i) => {
