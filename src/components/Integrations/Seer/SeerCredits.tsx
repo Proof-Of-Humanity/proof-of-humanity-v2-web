@@ -1,5 +1,5 @@
 "use client";
-import { useState, useCallback, useMemo, useEffect } from "react";
+import { useState, useCallback, useMemo } from "react";
 import IntegrationHeader from "components/Integrations/IntegrationHeader";
 import ProcessStepCard from "components/Integrations/ProcessStepCard";
 import SeerStatusCard, { SeerEligibilityStatus } from "./SeerStatusCard";
@@ -25,21 +25,6 @@ type SeerUserData = {
 
 export default function SeerCredits({ integration }: SeerCreditsProps) {
   const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
-
-  // Preload all slide images on component mount
-  useEffect(() => {
-    if (integration.firstInfoSlide) {
-      integration.firstInfoSlide.forEach((slide) => {
-        if (slide.image) {
-          const link = document.createElement("link");
-          link.rel = "preload";
-          link.as = "image";
-          link.href = slide.image;
-          document.head.appendChild(link);
-        }
-      });
-    }
-  }, [integration.firstInfoSlide]);
   const { address, isConnected } = useAccount();
   const chainId = useChainId();
   const modal = useAppKit();
@@ -143,81 +128,70 @@ export default function SeerCredits({ integration }: SeerCreditsProps) {
   }, [eligibilityStatus, modal, address]);
 
   return (
-    <div className="flex w-full flex-col space-y-8 md:w-10/12">
-      <div className="paper">
+    <div className="flex w-full max-w-[1200px] flex-col space-y-8 md:w-10/12">
+      <div className="flex flex-col gap-3">
         <IntegrationHeader {...{ integration }} />
-        <div className="flex flex-col items-center justify-center space-y-4 px-4 py-2 md:px-8 md:py-4">
-          {!slidesCompleted && integration.firstInfoSlide && currentSlide ? (
-            <>
-              <ExternalLink
-                href="https://seer.pm/"
-                className="text-purple text-md my-4 text-center"
-              >
-                Learn more about Seer to get started
-              </ExternalLink>
-              <ProcessStepCard
-                step={currentSlide}
-                allSlides={integration.firstInfoSlide}
-                currentIndex={currentSlideIndex}
-                previousStep={currentSlideIndex > 0}
-                nextStep={
-                  currentSlideIndex < integration.firstInfoSlide.length - 1
-                }
-                isLastSlide={
-                  currentSlideIndex === integration.firstInfoSlide.length - 1
-                }
-                onPrevious={() => setCurrentSlideIndex(currentSlideIndex - 1)}
-                onNext={() => setCurrentSlideIndex(currentSlideIndex + 1)}
-                onLastSlideComplete={() =>
-                  setCurrentSlideIndex(currentSlideIndex + 1)
-                }
-              />
-            </>
-          ) : (
-            <div className="mx-auto w-full max-w-[1095px] rounded-[30px] bg-gradient-to-br from-[#F9BFCE] to-[#BE75FF] p-[1px]">
-              <div className="bg-primaryBackground flex flex-col rounded-[29px] lg:flex-row">
-                <div className="flex-1 p-6 lg:p-8">
-                  <h2 className="text-primaryText mb-4 text-xl font-semibold md:text-2xl">
-                    Claim and use your Seer Credits
-                  </h2>
-                  <div className="mb-4">
-                    <p className="text-secondaryText mb-2 text-sm">
-                      To qualify, you must be an Included profile.
-                    </p>
-                  </div>
-
-                  <div className="space-y-4">
-                    <p className="text-purple text-base font-semibold md:text-lg">
-                      Get $10 of Seer Credits when you register, with potential
-                      bonus credits after.
-                    </p>
-
-                    <div className="text-secondaryText space-y-3 text-sm leading-relaxed">
-                      <p>
-                        Seer Credits are rewards for registered Proof of
-                        Humanity users to use on the Seer Prediction Market
-                        platform.
-                      </p>
-
-                      <p>
-                        Use your starting credits to take positions in
-                        prediction markets. Bonus credits may be added later,
-                        and unused credits can expire.
-                      </p>
-                    </div>
-                  </div>
+        {!slidesCompleted && integration.firstInfoSlide && currentSlide ? (
+          <div className="paper flex flex-col items-center justify-center space-y-4 px-4 py-2 md:px-8 md:py-4">
+            <ExternalLink
+              href="https://seer.pm/"
+              className="text-orange text-md my-4 text-center"
+            >
+              Learn more about Seer to get started
+            </ExternalLink>
+            <ProcessStepCard
+              allSlides={integration.firstInfoSlide}
+              currentIndex={currentSlideIndex}
+              onPrevious={() => setCurrentSlideIndex(currentSlideIndex - 1)}
+              onNext={() => setCurrentSlideIndex(currentSlideIndex + 1)}
+              onLastSlideComplete={() =>
+                setCurrentSlideIndex(currentSlideIndex + 1)
+              }
+            />
+          </div>
+        ) : (
+          <div className="relative w-full">
+            <div className="border-stroke bg-whiteBackground relative flex flex-col rounded-[30px] border shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] lg:flex-row lg:items-stretch">
+              <div className="flex-1 p-6 lg:p-8">
+                <h2 className="text-primaryText mb-4 text-xl font-semibold md:text-2xl">
+                  Claim and use your Seer Credits
+                </h2>
+                <div className="mb-4">
+                  <p className="text-status-registered mb-2 text-sm">
+                    To qualify, you must be a Verified Human profile.
+                  </p>
                 </div>
 
-                <SeerStatusCard
-                  status={eligibilityStatus}
-                  onActionClick={handleActionClick}
-                  isLoading={isLoading && isConnected}
-                  address={address}
-                />
+                <div className="space-y-4">
+                  <p className="text-orange text-base font-semibold md:text-lg">
+                    Get $10 of Seer Credits when you register, with potential
+                    bonus credits after.
+                  </p>
+
+                  <div className="text-secondaryText space-y-3 text-sm leading-relaxed">
+                    <p>
+                      Seer Credits are rewards for registered Proof of Humanity
+                      users to use on the Seer Prediction Market platform.
+                    </p>
+
+                    <p>
+                      Use your starting credits to take positions in prediction
+                      markets. Bonus credits may be added later, and unused
+                      credits can expire.
+                    </p>
+                  </div>
+                </div>
               </div>
+
+              <SeerStatusCard
+                status={eligibilityStatus}
+                onActionClick={handleActionClick}
+                isLoading={isLoading && isConnected}
+                address={address}
+              />
             </div>
-          )}
-        </div>
+          </div>
+        )}
       </div>
     </div>
   );

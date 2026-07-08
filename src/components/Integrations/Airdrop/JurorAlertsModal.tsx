@@ -18,11 +18,13 @@ type ModalStep = "warning" | "email";
 interface JurorAlertsModalProps {
   open: boolean;
   onClose: () => void;
+  className?: string;
 }
 
 export default function JurorAlertsModal({
   open,
   onClose,
+  className,
 }: JurorAlertsModalProps) {
   const [step, setStep] = useState<ModalStep>("warning");
   const [acknowledged, setAcknowledged] = useState(false);
@@ -67,20 +69,24 @@ export default function JurorAlertsModal({
   const isBusy = isSubmitting || isAddingUser || isUpdatingUser;
 
   return (
-    <Modal open={open} onClose={handleModalClose}>
+    <Modal
+      open={open}
+      onClose={handleModalClose}
+      className={className}
+    >
       <h2 className="text-primaryText px-4 pt-5 text-left text-2xl font-semibold">
         Action required
       </h2>
       {step === "warning" ? (
-        <div className="p-6">
-          <ul className="mb-6 space-y-3">
-            <li className="flex items-start gap-2">
+        <div className="flex flex-col items-center p-6 text-center">
+          <ul className="mb-6 max-w-sm space-y-3">
+            <li className="flex items-start justify-center gap-2">
               <div className="bg-primaryText mt-2 h-1.5 w-1.5 flex-shrink-0 rounded-full" />
               <span className="text-primaryText text-sm">
                 You&apos;re now staked and may be drawn as a juror.
               </span>
             </li>
-            <li className="flex items-start gap-2">
+            <li className="flex items-start justify-center gap-2">
               <WarningCircle16Icon
                 width={16}
                 height={16}
@@ -100,13 +106,13 @@ export default function JurorAlertsModal({
             className="mb-4 w-full py-3"
           />
 
-          <div className="mb-4 flex items-center gap-3">
+          <div className="mb-4 flex w-full items-center gap-3">
             <div className="border-stroke h-px flex-1 border-t" />
             <span className="text-secondaryText text-xs uppercase">or</span>
             <div className="border-stroke h-px flex-1 border-t" />
           </div>
 
-          <label className="mb-4 flex cursor-pointer items-start gap-2">
+          <label className="mb-4 flex max-w-sm cursor-pointer items-start justify-center gap-2 text-left">
             <input
               type="checkbox"
               checked={acknowledged}
@@ -134,15 +140,15 @@ export default function JurorAlertsModal({
           />
         </div>
       ) : (
-        <div className="p-6">
-          <ul className="mb-6 space-y-3">
-            <li className="flex items-start gap-2">
+        <div className="flex flex-col items-center p-6 text-center">
+          <ul className="mb-6 max-w-sm space-y-3">
+            <li className="flex items-start justify-center gap-2">
               <div className="bg-primaryText mt-2 h-1.5 w-1.5 flex-shrink-0 rounded-full" />
               <span className="text-primaryText text-sm">
                 You&apos;re now staked and may be drawn as a juror.
               </span>
             </li>
-            <li className="flex items-start gap-2">
+            <li className="flex items-start justify-center gap-2">
               <WarningCircle16Icon
                 width={16}
                 height={16}
@@ -155,7 +161,7 @@ export default function JurorAlertsModal({
             </li>
           </ul>
 
-          <div className="mb-2">
+          <div className="mb-2 w-full text-left">
             <label className="text-primaryText mb-2 block text-sm font-semibold">
               Email address
             </label>

@@ -6,7 +6,7 @@ interface CirclesAddressDisplayProps {
 }
 
 export default function CirclesAddressDisplay({
-  walletAddress,
+  walletAddress = "axvwd",
 }: CirclesAddressDisplayProps) {
   if (!walletAddress) return null;
 

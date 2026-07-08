@@ -171,7 +171,6 @@ export default function useCirclesIntegration() {
     loading,
     currentHumanityId,
     writeLink,
-    circlesChain.id,
   ]);
 
   const handleRenewTrust = useCallback(async () => {
@@ -215,7 +214,7 @@ export default function useCirclesIntegration() {
           disabled: false,
         };
       }
-      let disabled = disableButton || !isWalletAddressValid;
+      const disabled = disableButton || !isWalletAddressValid;
       if (humanityStatus === "invalid") {
         return {
           onClick: () =>
@@ -223,7 +222,7 @@ export default function useCirclesIntegration() {
               "Verification required. Become a verified human on PoH, then paste your Circles wallet to link.",
             ),
           label: defaultLabel,
-          disabled: disabled,
+          disabled,
         };
       }
 
@@ -237,6 +236,8 @@ export default function useCirclesIntegration() {
       disableButton,
       isWalletAddressValid,
       humanityStatus,
+      connect,
+      switchChain,
     ],
   );
 

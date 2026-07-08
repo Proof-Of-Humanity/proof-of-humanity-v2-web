@@ -1,8 +1,7 @@
 import { InfoSlide } from "types/integrations";
 import Image from "next/image";
-import RightArrowIcon from "icons/ArrowCircleRight.svg";
-import LeftArrowIcon from "icons/ArrowCircleLeft.svg";
 import { addLinkToText } from "components/addLinkToText";
+import WizardNav from "components/Integrations/WizardNav";
 
 function IntegrationInfoCard({
   step,
@@ -36,32 +35,13 @@ function IntegrationInfoCard({
           )}
         </div>
         {(previousStep || nextStep) && (
-          <div className="mt-4 flex flex-row justify-center md:mr-8 md:justify-end">
-            <LeftArrowIcon
-              width={32}
-              height={32}
-              className={`${previousStep ? "cursor-pointer opacity-100" : "pointer-events-none cursor-not-allowed opacity-50"} mr-2 md:mr-0`}
-              onClick={onPrevious}
-              onKeyDown={(e: React.KeyboardEvent<HTMLButtonElement>) =>
-                previousStep && e.key === "Enter" && onPrevious()
-              }
-              aria-label="Previous step"
-              role="button"
-              tabIndex={previousStep ? 0 : -1}
-            />
-            <RightArrowIcon
-              width={32}
-              height={32}
-              className={`ml-2 ${nextStep ? "cursor-pointer opacity-100" : "pointer-events-none cursor-not-allowed opacity-50"}`}
-              onClick={onNext}
-              onKeyDown={(e: React.KeyboardEvent<HTMLButtonElement>) =>
-                nextStep && e.key === "Enter" && onNext()
-              }
-              aria-label="Next step"
-              role="button"
-              tabIndex={nextStep ? 0 : -1}
-            />
-          </div>
+          <WizardNav
+            previousStep={previousStep}
+            nextStep={nextStep}
+            onPrevious={onPrevious}
+            onNext={onNext}
+            className="mt-4"
+          />
         )}
       </div>
       {/* Right Column: Image */}

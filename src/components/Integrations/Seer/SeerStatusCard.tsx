@@ -32,13 +32,13 @@ export default function SeerStatusCard({
             <CheckCircleIcon
               width={16}
               height={16}
-              className="mr-1 fill-green-500"
+              className="fill-status-registered mr-1"
             />
           ),
-          label: "Eligible",
-          text: "Use $10 of Seer Credits now",
-          textColor: "text-green-500",
-          buttonLabel: "Start Trading",
+          label: "Eligible: Verified Human profile",
+          text: "",
+          textColor: "text-status-registered",
+          buttonLabel: "Go to Seer",
         };
       case "not-eligible":
         return {
@@ -95,14 +95,14 @@ export default function SeerStatusCard({
   // Show loading state
   if (isLoading) {
     return (
-      <div className="bg-whiteBackground rounded-[30px] border-t-[1px] border-t-[#BE75FF] p-6 lg:w-[391px] lg:border-l-[1px] lg:border-t-0 lg:border-l-[#BE75FF] lg:p-8">
+      <div className="border-stroke bg-primaryBackground rounded-[30px] border p-6 shadow-[0_0_45px_rgba(255,255,255,0.10)] lg:w-[391px] lg:p-8">
         <div className="text-center">
-          <p className="text-purple mb-6 text-sm font-medium">Reward</p>
+          <p className="text-orange mb-6 text-sm font-medium">Reward</p>
           <h3 className="text-primaryText mb-6 text-xl font-semibold">
             Unlock Your $10 Seer Balance
           </h3>
           <div className="my-8 flex items-center justify-center">
-            <div className="border-purple h-8 w-8 animate-spin rounded-full border-b-2"></div>
+            <div className="border-orange h-8 w-8 animate-spin rounded-full border-b-2"></div>
           </div>
           <div className="text-secondaryText text-sm">
             Checking eligibility...
@@ -113,13 +113,13 @@ export default function SeerStatusCard({
   }
 
   return (
-    <div className="bg-whiteBackground rounded-[30px] border-t-[1px] border-t-[#BE75FF] p-6 lg:w-[391px] lg:border-l-[1px] lg:border-t-0 lg:border-l-[#BE75FF] lg:p-8">
+    <div className="border-stroke bg-primaryBackground rounded-[30px] border p-6 shadow-[0_0_45px_rgba(255,255,255,0.10)] lg:w-[391px] lg:p-8">
       <div className="text-center">
-        <p className="text-purple mb-1 text-sm font-medium">Reward</p>
+        <p className="text-orange mb-1 text-sm font-medium">Reward</p>
         <h3 className="text-primaryText text-xl font-semibold">Seer Credits</h3>
       </div>
 
-      {status != "disconnected" ? (
+      {status !== "disconnected" ? (
         <div className="m-2 flex items-center justify-center">
           <Image
             src="/logo/seers-credit-logo.svg"
@@ -140,11 +140,12 @@ export default function SeerStatusCard({
               {label}
             </span>
           </div>
-          {status === "eligible" ? (
-            <span className={`${textColor} text-sm font-medium`}>{text}</span>
-          ) : (
-            <p className={`${textColor} text-sm`}>{text}</p>
-          )}
+          {text &&
+            (status === "eligible" ? (
+              <span className={`${textColor} text-sm font-medium`}>{text}</span>
+            ) : (
+              <p className={`${textColor} text-sm`}>{text}</p>
+            ))}
         </div>
       </div>
 

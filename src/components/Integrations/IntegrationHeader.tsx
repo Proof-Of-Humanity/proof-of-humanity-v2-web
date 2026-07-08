@@ -15,7 +15,7 @@ export default function IntegrationHeader({
   const logoHeight = integration.logoHeight || 48;
 
   return (
-    <div className="paper flex flex-col">
+    <div className="border-stroke bg-whiteBackground flex flex-col rounded-card border shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
       <div className="p-4 md:p-6">
         {integration.logo && (
           <div className="mb-4 ml-1">

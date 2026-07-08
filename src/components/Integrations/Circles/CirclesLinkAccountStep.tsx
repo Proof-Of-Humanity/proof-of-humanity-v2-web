@@ -67,17 +67,39 @@ export default function CirclesLinkAccountStep({
       ) : (
         <>
           {linkStatus === "idle" && (
-            <div className="flex w-full flex-col p-4 md:p-6">
-              <Label className="mt-0 normal-case">
+            <div className="flex w-full flex-col px-4 pb-4 pt-2 md:px-6 md:pb-5 md:pt-3">
+              <Label className="-mt-1 mb-1 normal-case">
                 Paste your Gnosis App (Circles) Wallet Address
               </Label>
-              <Field
-                value={walletAddress}
-                onChange={onAddressChange}
-                placeholder="0x..."
-                aria-label="Circles Wallet Address"
-              />
-              <div className="mt-2 flex items-start text-sm">
+              {/* Input with the Link action attached at its right */}
+              <div className="mt-4 flex items-stretch gap-2">
+                <div className="min-w-0 flex-1">
+                  <Field
+                    value={walletAddress}
+                    onChange={onAddressChange}
+                    placeholder="0x..."
+                    aria-label="Circles Wallet Address"
+                  />
+                </div>
+                {(() => {
+                  const { onClick, label, disabled } = getActionButtonProps(
+                    onLinkAccount,
+                    "Link",
+                  );
+                  return (
+                    <ActionButton
+                      onClick={onClick}
+                      label={label}
+                      ariaLabel="Link Circles account"
+                      disabled={disabled}
+                      isLoading={pending}
+                      className="shrink-0 self-center whitespace-nowrap px-8"
+                      variant={label === "Link" ? "primary" : "secondary"}
+                    />
+                  );
+                })()}
+              </div>
+              <div className="mt-8 flex items-start text-sm">
                 <InfoIcon
                   width={16}
                   height={16}
@@ -94,23 +116,6 @@ export default function CirclesLinkAccountStep({
                   .
                 </span>
               </div>
-              {(() => {
-                const { onClick, label, disabled } = getActionButtonProps(
-                  onLinkAccount,
-                  "Link",
-                );
-                return (
-                  <ActionButton
-                    onClick={onClick}
-                    label={label}
-                    ariaLabel="Link Circles account"
-                    disabled={disabled}
-                    isLoading={pending}
-                    className="mt-4 self-start"
-                    variant={label === "Link" ? "primary" : "secondary"}
-                  />
-                );
-              })()}
             </div>
           )}
           {linkStatus === "linked" && (
