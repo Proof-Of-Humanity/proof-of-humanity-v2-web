@@ -10,7 +10,7 @@ import { sanitizeClaimerData } from "./sanitizer";
 // been removed as expected. Once solved the issue at subgraph level this
 // function should be removed
 const sanitizeRegistration = (res: Record<SupportedChainId, ClaimerQuery>) => {
-  var regChain: SupportedChainId | undefined = undefined;
+  let regChain: SupportedChainId | undefined = undefined;
   supportedChains.map((chain) => {
     if (!regChain && res[chain.id].claimer?.registration) regChain = chain.id;
     else if (regChain && res[chain.id].claimer?.registration) {

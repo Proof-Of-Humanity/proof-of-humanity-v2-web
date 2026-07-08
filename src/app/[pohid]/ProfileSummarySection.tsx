@@ -4,38 +4,121 @@ import Card from "components/Request/Card";
 import TimeAgo from "components/TimeAgo";
 import { explorerLink, idToChain } from "config/chains";
 import Link from "next/link";
+import { Suspense } from "react";
 import { shortenAddress } from "utils/address";
 import { prettifyId } from "utils/identifier";
 import { type Hash } from "viem";
 import { RequestStatus } from "utils/status";
 
-import { getProfilePageData } from "./profilePageData";
-import Renew from "./Renew";
+import {
+  getProfileBaseData,
+  getProfileRequestCardData,
+} from "./profilePageData";
 import ProfileSectionErrorCard from "./ProfileSectionErrorCard";
 
 interface ProfileSummarySectionProps {
   pohId: Hash;
 }
 
+type ProfileBaseData = Awaited<ReturnType<typeof getProfileBaseData>>;
+type ProfileMainCardProps = ProfileSummarySectionProps & {
+  humanity: ProfileBaseData["humanity"];
+  pageState: ProfileBaseData["pageState"];
+  request: NonNullable<ProfileBaseData["latestWinningRequest"]>;
+};
+
+function ProfileMainCardSkeleton() {
+  return (
+    <div className="mb-3 mt-4 flex items-center justify-center">
+      <div
+        aria-label="Loading profile card"
+        className="h-96 w-80 max-w-full animate-pulse rounded bg-slate-200"
+      />
+    </div>
+  );
+}
+
+async function ProfileMainCard({
+  humanity,
+  pageState,
+  pohId,
+  request,
+}: ProfileMainCardProps) {
+  try {
+    const mainCardRequest = await getProfileRequestCardData(pohId, request);
+
+    return (
+      <div className="mb-3 mt-4 flex items-center justify-center">
+        <Card
+          chainId={mainCardRequest.chainId}
+          claimer={mainCardRequest.identityClaimer}
+          evidence={mainCardRequest.identityEvidenceGroup.evidence}
+          humanity={{
+            id: pohId,
+            registration:
+              humanity[mainCardRequest.chainId]?.humanity?.registration,
+            winnerClaim: [
+              {
+                claimer: mainCardRequest.identityClaimer,
+                creationTime: mainCardRequest.creationTime,
+                index: mainCardRequest.index,
+                lastStatusChange: mainCardRequest.lastStatusChange,
+                requester: mainCardRequest.identityRequester,
+                resolutionTime:
+                  mainCardRequest.lastStatusChange ||
+                  mainCardRequest.creationTime ||
+                  0,
+                evidenceGroup: {
+                  evidence: mainCardRequest.identityEvidenceGroup.evidence,
+                },
+              },
+            ],
+          }}
+          index={mainCardRequest.index}
+          requester={mainCardRequest.identityRequester}
+          revocation={mainCardRequest.revocation}
+          registrationEvidenceRevokedReq={
+            mainCardRequest.registrationEvidenceRevokedReq
+          }
+          requestStatus={
+            pageState === "TRANSFER_PENDING"
+              ? RequestStatus.RESOLVED_CLAIM
+              : mainCardRequest.requestStatus
+          }
+        />
+      </div>
+    );
+  } catch {
+    return null;
+  }
+}
+
 export default async function ProfileSummarySection({
   pohId,
 }: ProfileSummarySectionProps) {
   try {
+    const baseData = await getProfileBaseData(pohId);
     const {
-      humanity,
-      profileState,
+      contractData,
       pageState,
       claimedRegistration,
-      claimedHomeChain,
-      mainCardRequest,
+      homeChain,
       latestWinningRequest,
-      canShowRenewSection,
+      pendingRevocation,
       canRenew,
-      renewalAvailableAt,
-    } = await getProfilePageData(pohId);
+    } = baseData;
 
     const showsWinningRequestCard =
       pageState === "CLAIMED" || pageState === "TRANSFER_PENDING";
+    const renewalPeriodDuration = homeChain
+      ? contractData[homeChain.id]?.renewalPeriodDuration
+      : undefined;
+    const renewalAvailableAt =
+      claimedRegistration && renewalPeriodDuration !== undefined
+        ? +claimedRegistration.expirationTime - +renewalPeriodDuration
+        : undefined;
+    const canShowRenewAvailability =
+      !!claimedRegistration && !!homeChain && !pendingRevocation && !canRenew;
     const punishedVouchSourceRequest =
       pageState === "PUNISHED_VOUCH"
         ? latestWinningRequest?.punishedVouchSourceRequest
@@ -58,16 +141,13 @@ export default async function ProfileSummarySection({
 
     return (
       <>
-        {claimedRegistration && claimedHomeChain ? (
+        {claimedRegistration && homeChain ? (
           <>
             <div className="mb-2 flex text-emerald-500">
               Claimed by
               <ExternalLink
                 className="ml-2 underline underline-offset-2"
-                href={explorerLink(
-                  claimedRegistration.claimer.id,
-                  claimedHomeChain,
-                )}
+                href={explorerLink(claimedRegistration.claimer.id, homeChain)}
               >
                 {shortenAddress(claimedRegistration.claimer.id)}
               </ExternalLink>
@@ -85,59 +165,19 @@ export default async function ProfileSummarySection({
           <span className="text-secondaryText mb-2">Transfer pending.</span>
         ) : null}
 
-        {showsWinningRequestCard && mainCardRequest ? (
+        {showsWinningRequestCard && latestWinningRequest ? (
           <>
-            <div className="mb-3 mt-4 flex items-center justify-center">
-              <Card
-                chainId={mainCardRequest.chainId}
-                claimer={mainCardRequest.identityClaimer}
-                evidence={mainCardRequest.identityEvidenceGroup.evidence}
-                humanity={{
-                  id: pohId,
-                  registration:
-                    humanity[mainCardRequest.chainId]?.humanity?.registration,
-                  winnerClaim: [
-                    {
-                      claimer: mainCardRequest.identityClaimer,
-                      creationTime: mainCardRequest.creationTime,
-                      index: mainCardRequest.index,
-                      lastStatusChange:
-                        "lastStatusChange" in mainCardRequest
-                          ? mainCardRequest.lastStatusChange
-                          : 0,
-                      requester: mainCardRequest.identityRequester,
-                      resolutionTime:
-                        "lastStatusChange" in mainCardRequest
-                          ? mainCardRequest.lastStatusChange ||
-                            mainCardRequest.creationTime ||
-                            0
-                          : 0,
-                      evidenceGroup: {
-                        evidence:
-                          mainCardRequest.identityEvidenceGroup.evidence,
-                      },
-                    },
-                  ],
-                }}
-                index={mainCardRequest.index}
-                requester={mainCardRequest.identityRequester}
-                revocation={mainCardRequest.revocation}
-                registrationEvidenceRevokedReq={
-                  mainCardRequest.identityRegistrationEvidenceRevokedReq
-                }
-                requestStatus={
-                  pageState === "TRANSFER_PENDING"
-                    ? RequestStatus.RESOLVED_CLAIM
-                    : profileState.latestWinningRequest?.requestStatus ||
-                      RequestStatus.RESOLVED_CLAIM
-                }
+            <Suspense fallback={<ProfileMainCardSkeleton />}>
+              <ProfileMainCard
+                humanity={baseData.humanity}
+                pageState={pageState}
+                pohId={pohId}
+                request={latestWinningRequest}
               />
-            </div>
+            </Suspense>
 
-            {canShowRenewSection && claimedHomeChain && claimedRegistration ? (
-              canRenew ? (
-                <Renew claimer={claimedRegistration.claimer.id} pohId={pohId} />
-              ) : renewalAvailableAt !== undefined ? (
+            {canShowRenewAvailability && claimedRegistration && homeChain ? (
+              renewalAvailableAt !== undefined ? (
                 <span className="text-secondaryText mb-4">
                   Renewal available <TimeAgo time={renewalAvailableAt} />
                 </span>

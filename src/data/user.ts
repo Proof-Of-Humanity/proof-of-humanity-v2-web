@@ -1,6 +1,7 @@
 import { supportedChains, legacyChain } from "config/chains";
 import { sdk } from "config/subgraph";
 import { MeQuery } from "generated/graphql";
+
 import { settleChainQueries } from "./chainQuery";
 
 const isTransferStatus = (statusId?: string | null) =>
@@ -25,7 +26,8 @@ const sanitize = (res: MeQuery[]) => {
       } else if (res.filter((cl) => cl.claimer?.registration).length > 1) {
         claimer.claimer.registration = null;
       } else if (
-        claimer.claimer.registration.expirationTime > Date.now() / 1000
+        claimer.claimer.registration.expirationTime >
+        Date.now() / 1000
       ) {
         // Registration is still valid: it represents the live identity, so
         // drop the in-progress request.
@@ -41,9 +43,10 @@ const sanitize = (res: MeQuery[]) => {
 };
 
 export const getMyData = async (account: string) => {
-  const res = await settleChainQueries(
-    (chain) => sdk[chain.id].Me({ id: account }),
-    (): MeQuery => ({ claimer: null }),
+  const id = account.toLowerCase();
+  const res = await settleChainQueries<MeQuery>(
+    (chain) => sdk[chain.id].Me({ id }),
+    () => ({ claimer: null }),
   );
   sanitize(res);
   const homeChain = supportedChains.find((_, i) => {
