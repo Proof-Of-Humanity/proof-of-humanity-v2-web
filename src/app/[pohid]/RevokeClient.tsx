@@ -208,7 +208,7 @@ export default function RevokeClient({
       <div className="flex justify-center">
         <button
           onClick={() => modal.open({ view: "Connect" })}
-          className="btn-secondary"
+          className="btn-sec"
         >
           Connect wallet
         </button>
@@ -220,7 +220,7 @@ export default function RevokeClient({
       <div className="flex justify-center">
         <button
           onClick={() => switchChain?.({ chainId: homeChain.id })}
-          className="btn-secondary"
+          className="btn-sec"
         >
           Connect to {homeChain.name} to revoke
         </button>
