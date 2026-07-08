@@ -6,7 +6,7 @@ export default function RequestLoadingSkeleton() {
         <div className="bg-grey h-10 w-32 rounded" />
       </div>
 
-      <div className="border-stroke bg-whiteBackground mb-6 overflow-hidden rounded border shadow">
+      <div className="border-stroke bg-whiteBackground mb-6 overflow-hidden rounded-card border shadow-soft-inset">
         <div className="flex animate-pulse flex-col md:flex-row">
           <div className="background border-stroke hidden w-2/5 flex-col items-center border-r px-8 pt-8 md:flex">
             <div className="bg-grey h-32 w-32 rounded-full" />
@@ -49,7 +49,7 @@ export default function RequestLoadingSkeleton() {
         </div>
       </div>
 
-      <div className="border-stroke bg-whiteBackground animate-pulse rounded border p-6 shadow">
+      <div className="border-stroke bg-whiteBackground animate-pulse rounded-card border p-6 shadow-soft-inset">
         <div className="bg-grey h-6 w-32 rounded" />
         <div className="bg-grey mt-4 h-20 w-full rounded" />
       </div>

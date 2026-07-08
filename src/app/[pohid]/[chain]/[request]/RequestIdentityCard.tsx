@@ -5,6 +5,7 @@ import DocumentIcon from "components/DocumentIcon";
 import ExternalLink from "components/ExternalLink";
 import Identicon from "components/Identicon";
 import Label from "components/Label";
+import LoadableImage from "components/LoadableImage";
 import Previewed from "components/Previewed";
 import TimeAgo from "components/TimeAgo";
 import VideoThumbnail from "components/VideoThumbnail";
@@ -142,13 +143,11 @@ function ProfileSummary({
         <Previewed
           uri={photoUrl}
           trigger={
-            <Image
+            <LoadableImage
               className="h-32 w-32 cursor-pointer rounded-full object-cover md:bg-cover md:bg-center md:bg-no-repeat"
               alt="image"
+              fallbackLabel="Profile photo unavailable"
               src={photoUrl}
-              width={144}
-              height={144}
-              unoptimized={true} //Skips cache
             />
           }
         />
@@ -213,7 +212,7 @@ export async function IdentityHeader({
       <div className="flex w-full flex-col items-center md:w-auto md:flex-row md:items-center md:justify-start">
         <Identicon diameter={24} address={displayedClaimerId} />
         <ExternalLink
-          className="mt-1 text-center font-semibold text-slate-400 hover:text-slate-600 md:ml-2 md:mt-0 md:text-left"
+          className="text-secondaryText hover:text-primaryText mt-1 text-center font-semibold md:ml-2 md:mt-0 md:text-left"
           href={explorerLink(displayedClaimerId, chain)}
         >
           {displayedClaimerId.slice(0, 20)}
@@ -329,7 +328,7 @@ export async function MobileIdentityMedia({
             uri={videoUrl}
             trigger={
               <VideoThumbnail
-                className="w-full cursor-pointer rounded"
+                className="w-full cursor-pointer rounded-2xl"
                 src={videoUrl}
               />
             }
@@ -366,7 +365,7 @@ export default function RequestIdentityCard({
   const prettyPohId = prettifyId(pohId);
 
   return (
-    <div className="border-stroke bg-whiteBackground mb-1 rounded border shadow">
+    <div className="border-stroke bg-whiteBackground mb-1 rounded-card border shadow-soft-inset">
       <Suspense fallback={null}>
         <RevocationBanner
           chain={chain}
