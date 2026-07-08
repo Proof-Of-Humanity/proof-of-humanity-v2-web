@@ -210,13 +210,19 @@ function NestedProfileOptimisticProvider({
   base: Partial<ProfileOptimisticBase>;
   children: ReactNode;
 }) {
+  const {
+    base: parentBase,
+    overlay: parentOverlay,
+    pendingAction: parentPendingAction,
+    clearAction: clearParentAction,
+  } = parentContext;
   const mergedBase = useMemo(
-    () => mergeBase(parentContext.base, base),
-    [parentContext.base, base],
+    () => mergeBase(parentBase, base),
+    [parentBase, base],
   );
   const effective = useMemo(
-    () => mergeProfile(mergedBase, parentContext.overlay),
-    [mergedBase, parentContext.overlay],
+    () => mergeProfile(mergedBase, parentOverlay),
+    [mergedBase, parentOverlay],
   );
 
   useEffect(() => {
@@ -226,18 +232,13 @@ function NestedProfileOptimisticProvider({
     // in the waiting-for-indexer state.
     const isReconciled = isProfileActionReconciled(
       mergedBase,
-      parentContext.overlay,
-      parentContext.pendingAction,
+      parentOverlay,
+      parentPendingAction,
     );
     if (!isReconciled) return;
 
-    parentContext.clearAction();
-  }, [
-    mergedBase,
-    parentContext.overlay,
-    parentContext.pendingAction,
-    parentContext.clearAction,
-  ]);
+    clearParentAction();
+  }, [mergedBase, parentOverlay, parentPendingAction, clearParentAction]);
 
   const value = useMemo(
     () => ({
