@@ -9,10 +9,6 @@ import TransferIcon from "icons/Transfer.svg";
 import type { ComponentType, SVGProps } from "react";
 import { getStatusColor, RequestStatus } from "utils/status";
 
-// Figma "States" component set: each state renders its glyph tinted with the
-// status color. Keyed by status color (many statuses share one color and, in
-// the design, one glyph); colors without a dedicated glyph — the removal
-// family, withdrawn, all — fall back to a plain dot, as in the design.
 const STATUS_ICONS: Record<string, ComponentType<SVGProps<SVGSVGElement>>> = {
   vouching: NeedsVouchIcon,
   claim: EyeIcon,
