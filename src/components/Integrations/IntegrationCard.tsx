@@ -20,7 +20,7 @@ export default function IntegrationCard({ integration }: IntegrationCardProps) {
 
   return (
     <div className="paper flex w-full flex-col">
-      <div className="flex flex-1 flex-col p-4 md:p-6">
+      <div className="flex flex-1 flex-col p-5 md:p-7">
         <div className="mb-4 flex items-start justify-between gap-2">
           {integration.logo && (
             <div
