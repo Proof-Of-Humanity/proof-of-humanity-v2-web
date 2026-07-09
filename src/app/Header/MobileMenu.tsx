@@ -6,6 +6,7 @@ import { Ref, forwardRef } from "react";
 import Options from "./Options";
 import RegisterLink from "./RegisterLink";
 import WalletSection from "./WalletSection";
+import { prettifyId } from "utils/identifier";
 
 interface MobileMenuProps {
   policy: string;
@@ -38,11 +39,14 @@ const MobileMenu = forwardRef(
     const currentUrl = searchParams.get("url");
     const policyHref =
       policy && `/attachment?url=${encodeURIComponent(policy)}`;
+    const registerActive = me?.pohId
+      ? pathname === `/${prettifyId(me.pohId)}`
+      : pathname.includes("/claim");
 
     return (
       <div
         ref={ref}
-        className="header-background absolute left-0 right-0 top-16 z-10 w-full p-4 shadow-lg md:hidden"
+        className="header-background absolute left-0 right-0 top-16 z-10 w-full border-b border-white/[0.08] p-4 md:hidden"
       >
         <nav className="flex flex-col items-center gap-y-4 text-center">
           <Link
@@ -56,7 +60,7 @@ const MobileMenu = forwardRef(
             address={address}
             pendingRegisterIntent={pendingRegisterIntent}
             setPendingRegisterIntent={setPendingRegisterIntent}
-            className={`text-lg ${pathname.includes("/claim") ? "font-bold" : ""}`}
+            className={`text-lg ${registerActive ? "font-bold" : ""}`}
           />
           {policyHref && (
             <Link
