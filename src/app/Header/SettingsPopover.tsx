@@ -17,7 +17,6 @@ const SettingsPopover: React.FC = () => {
     email,
     setEmail,
     showEmailError,
-    hasSavedEmail,
     hasVerifiedEmail,
     handleKeyDown,
     showVerificationNotice,
@@ -45,10 +44,9 @@ const SettingsPopover: React.FC = () => {
           <button
             type="button"
             onClick={toggleSettingsPopover}
-            className="relative ml-2 flex h-9 w-9 cursor-pointer items-center justify-center transition-opacity duration-200 hover:opacity-80"
+            className="relative ml-2 flex h-9 w-9 items-center justify-center transition-opacity duration-200 hover:opacity-80"
             aria-label="Open notification settings"
           >
-            {/* notifications.svg is authored at 32×32; 36 matches other header badges */}
             <Image
               alt="notifications"
               src="/logo/notifications.svg"
@@ -89,7 +87,7 @@ const SettingsPopover: React.FC = () => {
                 <EmailField
                   value={email}
                   isInvalid={showEmailError}
-                  autoFocus={!hasSavedEmail}
+                  autoFocus={false}
                   onChange={setEmail}
                   onKeyDown={handleKeyDown}
                 />

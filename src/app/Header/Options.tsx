@@ -4,12 +4,6 @@ import ExternalLink from "components/ExternalLink";
 import Popover from "components/Popover";
 import SettingsPopover from "./SettingsPopover";
 
-/**
- * Header chrome badges are 32×32 assets; render at 36 so the touch target
- * matches neighboring controls while keeping the artwork crisp.
- */
-const HEADER_BADGE_SIZE = 36;
-
 const Options: React.FC = () => (
   <div className="mt-[16px] flex flex-row items-center md:mt-0">
     <SettingsPopover />
@@ -20,8 +14,8 @@ const Options: React.FC = () => (
       <Image
         alt="snapshot"
         src="/logo/social-snapshot.svg"
-        height={HEADER_BADGE_SIZE}
-        width={HEADER_BADGE_SIZE}
+        height={36}
+        width={36}
       />
     </ExternalLink>
 
@@ -35,8 +29,8 @@ const Options: React.FC = () => (
           <Image
             alt="help"
             src="/logo/social-help.svg"
-            height={HEADER_BADGE_SIZE}
-            width={HEADER_BADGE_SIZE}
+            height={36}
+            width={36}
           />
         </button>
       }
@@ -61,7 +55,7 @@ const Options: React.FC = () => (
           Tutorial
         </ExternalLink>
         <ExternalLink href="https://ethereum.org/en/wallets">
-          Crypto Beginner&apos;s Guide
+          Crypto Beginner's Guide
         </ExternalLink>
         <ExternalLink href="https://kleros.gitbook.io/docs/products/proof-of-humanity/poh-faq">
           FAQ

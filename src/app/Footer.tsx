@@ -1,9 +1,6 @@
 import Image from "next/image";
 import ExternalLink from "components/ExternalLink";
 
-/** Circular social badges are authored at 32×32 — render 1:1. */
-const SOCIAL_ICON_SIZE = 32;
-
 const SOCIALS = [
   {
     alt: "snapshot",
@@ -25,10 +22,10 @@ const SOCIALS = [
     src: "/logo/social-telegram.svg",
     href: "https://t.me/proofhumanity",
   },
-] as const;
+];
 
 const Footer: React.FC = () => (
-  <div className="header-background bottom-0 flex w-full flex-wrap items-center justify-center gap-x-4 gap-y-[20px] px-8 py-4 text-lg text-white shadow-sm sm:justify-between sm:gap-x-[240px]">
+  <div className="bg-whiteBackground bottom-0 flex w-full flex-wrap items-center justify-center gap-x-4 gap-y-[20px] border-t border-white/[0.08] px-8 py-4 text-lg text-white sm:justify-between sm:gap-x-[240px]">
     <ExternalLink
       className="flex items-center gap-2 text-sm"
       href="https://kleros.io/"
@@ -44,12 +41,7 @@ const Footer: React.FC = () => (
           href={social.href}
           className="transition-opacity duration-200 hover:opacity-80"
         >
-          <Image
-            alt={social.alt}
-            src={social.src}
-            width={SOCIAL_ICON_SIZE}
-            height={SOCIAL_ICON_SIZE}
-          />
+          <Image alt={social.alt} src={social.src} width={32} height={32} />
         </ExternalLink>
       ))}
     </div>
