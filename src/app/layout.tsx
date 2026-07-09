@@ -38,7 +38,7 @@ export default async function RootLayout({ children }: RootLayoutProps) {
     });
 
   return (
-    <html lang="en">
+    <html lang="en" className="dark" data-theme="dark">
       <body
         className={cn(
           "bg-primaryBackground scrollbar relative flex min-h-screen flex-col",
