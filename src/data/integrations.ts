@@ -208,7 +208,6 @@ const integrations: Record<string, Integration> = {
  * Get all available integrations
  */
 export async function getIntegrations(): Promise<Integration[]> {
-  // Filter out inactive integrations, ordered for the rewards-page cards.
   return Object.values(integrations)
     .filter((integration) => integration.isActive)
     .sort((a, b) => (a.displayOrder ?? 99) - (b.displayOrder ?? 99));

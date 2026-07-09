@@ -44,7 +44,6 @@ const BecomeJurorCard: React.FC<BecomeJurorCardProps> = ({
 
   return (
     <div className={`mx-auto flex w-full max-w-[1095px] flex-col ${className}`}>
-      {/* Screenshot - full-width rounded visual, flat on the card */}
       {slide.image && (
         <div className="mt-4 flex w-full justify-center px-2 sm:px-6 lg:mt-6">
           <Image
@@ -57,10 +56,8 @@ const BecomeJurorCard: React.FC<BecomeJurorCardProps> = ({
         </div>
       )}
 
-      {/* Divider between visual and content */}
       <div className="border-stroke mx-2 mt-6 border-t sm:mx-6 lg:mt-8" />
 
-      {/* Content */}
       <div className="flex flex-1 flex-col px-2 py-5 sm:px-6 lg:py-6">
         <h2 className="text-primaryText mb-3 text-xl font-semibold leading-[1.36] sm:text-2xl lg:mb-4">
           {slide.title}
@@ -74,7 +71,6 @@ const BecomeJurorCard: React.FC<BecomeJurorCardProps> = ({
 
         <div className={`text-primaryText ${textSection}`}>{stakingInfo}</div>
 
-        {/* Vote results */}
         {voteResults.length > 0 && (
           <div className="mb-4 space-y-1">
             {voteResults.map((result, index) => (
@@ -85,12 +81,10 @@ const BecomeJurorCard: React.FC<BecomeJurorCardProps> = ({
           </div>
         )}
 
-        {/* Closing summary line */}
         <div className={`text-secondaryText ${textSection}`}>
           {jurorSummary}
         </div>
 
-        {/* Green-check bullets: takeaway + external links */}
         {bottomBullets.length > 0 && (
           <FeatureList
             items={bottomBullets.map(
@@ -108,7 +102,6 @@ const BecomeJurorCard: React.FC<BecomeJurorCardProps> = ({
           />
         )}
 
-        {/* Navigation - centered Back/Next pills */}
         <WizardNav
           previousStep={previousStep}
           nextStep={nextStep}

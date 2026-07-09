@@ -18,7 +18,6 @@ function IntegrationInfoCard({
 }) {
   return (
     <div className="flex flex-col overflow-hidden rounded-[30px] border md:flex-row">
-      {/* Left Column: Text content and navigation */}
       <div className="bg-primaryBackground order-2 flex w-full flex-col rounded-[30px] p-4 md:order-1 md:w-1/2 md:p-6">
         <div className="mt-4 flex min-h-[150px] flex-col md:mt-8 md:h-80 md:px-8 lg:mt-20">
           <p className="text-primaryText text-xl font-semibold md:text-2xl">
@@ -44,7 +43,6 @@ function IntegrationInfoCard({
           />
         )}
       </div>
-      {/* Right Column: Image */}
       <div className="order-1 flex w-full items-center justify-center md:order-2 md:w-1/2">
         <Image
           src={step.image || ""}

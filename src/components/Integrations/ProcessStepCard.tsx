@@ -17,7 +17,6 @@ export type ProcessStepCardProps = {
 
 type AnimationState = "idle" | "exiting" | "entering";
 
-// Very wide (>2.2) or tall/square (<1.4) images letterbox instead of cropping
 const getObjectFitClass = (slide: InfoSlide, isLast: boolean) => {
   if (slide.imageWidth && slide.imageHeight) {
     const ratio = slide.imageWidth / slide.imageHeight;
@@ -124,12 +123,6 @@ const ProcessStepCard: React.FC<ProcessStepCardProps> = ({
   const isAnimating = animationState !== "idle";
   const animationClass = getAnimationClass();
 
-  /**
-   * All slides render stacked in the same grid cell; only the current one is
-   * visible. The deck's height is therefore the tallest slide's natural
-   * height, and every slide's nav pins to the same baseline via `mt-auto` —
-   * nothing moves between slides, with no hardcoded heights.
-   */
   return (
     <div className="grid w-full max-w-[1095px]">
       {allSlides.map((slide, i) => {
@@ -158,10 +151,8 @@ const ProcessStepCard: React.FC<ProcessStepCardProps> = ({
               </div>
             </div>
 
-            {/* Divider between visual and content */}
             <div className="border-stroke mx-2 mt-6 border-t sm:mx-6 lg:mt-8" />
 
-            {/* Content */}
             <div className="flex flex-1 flex-col px-2 py-5 sm:px-6 lg:py-6">
               <p className="text-primaryText text-xl font-semibold md:text-2xl">
                 {slide.title}
@@ -184,7 +175,6 @@ const ProcessStepCard: React.FC<ProcessStepCardProps> = ({
                   textClassName="text-status-registered text-sm md:text-base"
                 />
               )}
-              {/* Navigation - pinned to the deck's shared baseline */}
               <WizardNav
                 previousStep={i > 0 && !isAnimating}
                 nextStep={!isAnimating}

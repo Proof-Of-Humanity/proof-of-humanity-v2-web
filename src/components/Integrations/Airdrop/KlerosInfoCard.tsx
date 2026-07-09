@@ -88,12 +88,6 @@ const KlerosInfoCard: React.FC<KlerosInfoCardProps> = ({
   const isAnimating = animationState !== "idle";
   const animationClass = getAnimationClass();
 
-  /**
-   * All slides render stacked in the same grid cell; only the current one is
-   * visible. The deck's height is therefore the tallest slide's natural
-   * height, and every slide's nav pins to the same baseline via `mt-auto` —
-   * nothing moves between slides, with no hardcoded heights.
-   */
   return (
     <div className="mx-auto grid w-full max-w-[1095px]">
       {slides.map((slide, i) => {
@@ -124,7 +118,6 @@ const KlerosInfoCard: React.FC<KlerosInfoCardProps> = ({
             aria-hidden={!isCurrent}
             className={cellClass}
           >
-            {/* Screenshot - full-width rounded visual, flat on the card */}
             {slide.image && (
               <div className="mt-4 flex w-full justify-center px-2 sm:px-6 lg:mt-6">
                 <Image
@@ -138,22 +131,17 @@ const KlerosInfoCard: React.FC<KlerosInfoCardProps> = ({
               </div>
             )}
 
-            {/* Divider between visual and content */}
             <div className="border-stroke mx-2 mt-6 border-t sm:mx-6 lg:mt-8" />
 
-            {/* Content */}
             <div className="flex flex-1 flex-col px-2 py-5 sm:px-6 lg:py-6">
-              {/* Title */}
               <h2 className="text-primaryText mb-3 text-xl font-semibold leading-[1.36] sm:text-2xl lg:mb-4">
                 {slide.title}
               </h2>
 
-              {/* Description */}
               <div className="text-secondaryText mb-2 whitespace-pre-line text-sm leading-relaxed sm:text-base">
                 {addLinkToText(slide.description)}
               </div>
 
-              {/* Bullet Points */}
               {slide.bulletPoints && slide.bulletPoints.length > 0 && (
                 <div className="mb-4 mt-4 lg:mb-6">
                   <FeatureList
@@ -173,7 +161,6 @@ const KlerosInfoCard: React.FC<KlerosInfoCardProps> = ({
                 </div>
               )}
 
-              {/* Navigation - pinned to the deck's shared baseline */}
               <WizardNav
                 previousStep={i > 0 && !isAnimating}
                 nextStep={!isAnimating}

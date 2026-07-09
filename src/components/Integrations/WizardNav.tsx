@@ -10,11 +10,6 @@ export interface WizardNavProps {
   className?: string;
 }
 
-/**
- * Centered Back / Next pill navigation used by every integration wizard card
- * (outlined Back, gradient-filled Next). Both buttons always render;
- * an unavailable direction is disabled, never hidden.
- */
 const WizardNav: React.FC<WizardNavProps> = ({
   previousStep,
   nextStep,

@@ -9,7 +9,6 @@ export default function AirdropBanner() {
   const [isVisible, setIsVisible] = useState(true);
   const pathname = usePathname();
 
-  // The rewards page (/app) has its own layout in the design — no top banner.
   if (pathname?.startsWith("/app")) return null;
   if (!isVisible) return null;
 
