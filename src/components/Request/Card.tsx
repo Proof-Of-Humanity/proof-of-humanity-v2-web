@@ -1,13 +1,12 @@
 "use client";
 
+import cn from "classnames";
 import { SupportedChainId, idToChain } from "config/chains";
 import Link from "next/link";
-import Image from "next/image";
-import { Suspense } from "react";
 import { Address, Hash } from "viem";
 import ChainLogo from "components/ChainLogo";
 import ErrorBoundary from "components/ErrorBoundary";
-import StatusIcon from "components/StatusIcon";
+import LoadableImage from "components/LoadableImage";
 import { WinnerClaimFragment } from "generated/graphql";
 import useIPFS from "hooks/useIPFS";
 import { EvidenceFile, RegistrationFile } from "types/docs";
@@ -21,7 +20,9 @@ import {
 import { prettifyId } from "utils/identifier";
 import { safeIpfsUrl } from "utils/ipfs";
 import { RequestsQueryItem } from "./Grid";
+import StatusBadge from "./StatusBadge";
 import InfoIcon from "icons/info.svg";
+import { Suspense, type PointerEvent } from "react";
 
 interface ContentProps {
   chainId: SupportedChainId;
@@ -30,6 +31,7 @@ interface ContentProps {
   evidence: RequestsQueryItem["evidenceGroup"]["evidence"];
   claimer: RequestsQueryItem["claimer"];
   requester: Address;
+  enableMediaParallax?: boolean;
   humanity: {
     id: Hash;
     registration?: { claimer: { id: Address } } | null;
@@ -39,23 +41,73 @@ interface ContentProps {
 interface CardInterface extends ContentProps {
   index: number;
   requestStatus: RequestStatus;
+  aspectRatio?: "wide" | "square";
 }
 
-const LoadingFallback: React.FC = () => (
-  <div className="h-84 bg-whiteBackground flex flex-col items-center p-2">
-    <div className="bg-grey mx-auto mb-2 h-32 w-32 animate-pulse rounded-full" />
-    <div className="bg-grey h-4 w-1/2 animate-pulse rounded" />
-  </div>
+const getEvidenceUri = ({
+  evidence,
+  humanity,
+  registrationEvidenceRevokedReq,
+  revocation,
+}: Pick<
+  ContentProps,
+  "evidence" | "humanity" | "registrationEvidenceRevokedReq" | "revocation"
+>) =>
+  revocation
+    ? registrationEvidenceRevokedReq ||
+      humanity.winnerClaim.at(0)?.evidenceGroup.evidence.at(-1)?.uri
+    : evidence.at(-1)?.uri;
+
+const getDisplayName = (
+  data: RegistrationFile | undefined,
+  claimerName?: string | null,
+) => {
+  if (data?.name && claimerName && data.name !== claimerName) {
+    return `${data.name} (aka ${claimerName})`;
+  }
+
+  return claimerName || data?.name || "";
+};
+
+const updateCardHoverParallax = (event: PointerEvent<HTMLAnchorElement>) => {
+  const rect = event.currentTarget.getBoundingClientRect();
+  const x = ((event.clientX - rect.left) / rect.width - 0.5) * -18;
+  const y = ((event.clientY - rect.top) / rect.height - 0.5) * -8;
+
+  event.currentTarget.style.setProperty(
+    "--request-card-hover-x",
+    `${x.toFixed(2)}px`,
+  );
+  event.currentTarget.style.setProperty(
+    "--request-card-hover-y",
+    `${y.toFixed(2)}px`,
+  );
+};
+
+const resetCardHoverParallax = (event: PointerEvent<HTMLAnchorElement>) => {
+  event.currentTarget.style.removeProperty("--request-card-hover-x");
+  event.currentTarget.style.removeProperty("--request-card-hover-y");
+};
+
+const LoadingFallback = () => (
+  <div className="bg-grey absolute inset-0 animate-pulse" />
 );
 
 const ErrorFallback: React.FC<{ claimer?: { name?: string | null } }> = ({
   claimer,
 }) => (
-  <div className="h-84 flex animate-pulse flex-col items-center bg-white p-2">
-    <div className="mx-auto mb-2 h-32 w-32 rounded-full bg-slate-200" />
-    <span className="font-semibold">{claimer?.name}</span>
-    <span>Some error occurred...</span>
-  </div>
+  <>
+    <div className="bg-grey absolute inset-0" />
+    <div className="request-card-overlay absolute inset-0" />
+    <div className="absolute inset-x-0 bottom-0 z-10 p-4">
+      <div className="truncate text-lg font-bold text-white">
+        {claimer?.name || "Unavailable"}
+      </div>
+      <div className="mt-0.5 text-sm text-white/75">
+        Profile media could not be loaded
+      </div>
+    </div>
+  </>
 );
 
 const Content = ({
@@ -66,57 +118,58 @@ const Content = ({
   evidence,
   requester,
   claimer,
+  enableMediaParallax = false,
 }: ContentProps) => {
-  const [evidenceURI] = useIPFS<EvidenceFile>(
-    revocation
-      ? !!registrationEvidenceRevokedReq
-        ? registrationEvidenceRevokedReq
-        : humanity.winnerClaim.at(0)?.evidenceGroup.evidence.at(-1)?.uri
-      : evidence.at(-1)?.uri,
-    { suspense: true },
-  );
-  const [data] = useIPFS<RegistrationFile>(evidenceURI?.fileURI, {
-    suspense: true,
+  const evidenceUri = getEvidenceUri({
+    evidence,
+    humanity,
+    registrationEvidenceRevokedReq,
+    revocation,
   });
+  const [evidenceFile, evidenceError] = useIPFS<EvidenceFile>(evidenceUri);
+  const [data, dataError] = useIPFS<RegistrationFile>(evidenceFile?.fileURI);
 
-  const name =
-    data && claimer.name && data.name !== claimer.name
-      ? `${data?.name} (aka ${claimer.name})`
-      : claimer.name
-        ? claimer.name
-        : data && data.name
-          ? data.name
-          : "";
+  const name = getDisplayName(data, claimer.name);
   const displayedClaimerId =
     revocation && humanity.registration?.claimer.id
       ? humanity.registration.claimer.id
       : requester;
-  const photoUrl = safeIpfsUrl(data?.photo);
+
+  const photo = safeIpfsUrl(data?.photo) ?? null;
+  const isMediaLoading =
+    Boolean(evidenceUri && !evidenceFile && !evidenceError) ||
+    Boolean(evidenceFile?.fileURI && !data && !dataError);
 
   return (
-    <div className="flex h-full flex-col items-center p-3">
-      {photoUrl ? (
-        <Image
-          alt="Profile photo"
-          className="h-32 w-32 rounded-full object-cover"
-          src={photoUrl}
-          width={128}
-          height={128}
-          unoptimized={true}
+    <>
+      {photo ? (
+        <LoadableImage
+          alt={name || "Profile photo"}
+          className={cn(
+            "absolute w-full object-cover",
+            enableMediaParallax
+              ? "request-card-media"
+              : "inset-0 h-full transition-transform duration-200 ease-premium group-hover:scale-105",
+          )}
+          fallbackLabel="Profile photo unavailable"
+          src={photo}
         />
+      ) : isMediaLoading ? (
+        <div className="bg-grey absolute inset-0 animate-pulse" />
       ) : (
-        <div className="h-32 w-32 rounded-full bg-slate-200" />
+        <div className="bg-grey absolute inset-0" />
       )}
-      <span className="text-primaryText my-2 truncate font-semibold">
-        {name}
-      </span>
-      <div className="grid grid-cols-3 items-center">
-        <ChainLogo chainId={chainId} className="fill-primaryText h-4 w-4" />
-        <span className="text-secondaryText">
+      <div className="request-card-overlay absolute inset-0" />
+      <div className="absolute inset-x-0 bottom-0 z-10 p-4">
+        <div className="truncate text-lg font-bold text-white">
+          {name || shortenAddress(displayedClaimerId)}
+        </div>
+        <div className="mt-0.5 flex items-center gap-1.5 text-sm text-white/75">
+          <ChainLogo chainId={chainId} className="h-4 w-4 fill-current" />
           {shortenAddress(displayedClaimerId)}
-        </span>
+        </div>
       </div>
-    </div>
+    </>
   );
 };
 
@@ -130,53 +183,63 @@ function Card({
   evidence,
   humanity,
   requestStatus,
+  aspectRatio = "square",
+  enableMediaParallax = true,
 }: CardInterface) {
   const pohId = humanity.id;
   const statusColor = getStatusColor(requestStatus);
   const tooltip = getStatusTooltip(requestStatus);
 
-  const chain = idToChain(chainId)!;
+  const chain = idToChain(chainId);
+
+  if (!chain) return null;
+
   return (
     <Link
       href={`/${prettifyId(pohId)}/${chain.name.toLowerCase()}/${index}`}
-      className="request-card-shell h-84 bg-whiteBackground wiggle cursor-pointer flex-col rounded border transition duration-200 ease-premium hover:z-10"
+      className={cn(
+        "request-card-shell group relative block w-full cursor-pointer rounded-card border transition duration-200 ease-premium hover:z-10 hover:-translate-y-[3px]",
+        aspectRatio === "square" ? "aspect-square" : "aspect-[5/4]",
+        enableMediaParallax && "request-card-parallax",
+      )}
+      onPointerMove={enableMediaParallax ? updateCardHoverParallax : undefined}
+      onPointerLeave={enableMediaParallax ? resetCardHoverParallax : undefined}
     >
-      <div className="justify-between font-light">
-        <div className={`h-1 w-full bg-status-${statusColor} rounded-t`} />
-        <div className="centered p-2 font-medium">
-          <StatusIcon status={requestStatus} className="mr-1.5" />
-          <span className={`text-status-${statusColor}`}>
-            {getStatusLabel(requestStatus)}
-          </span>
-          <div className="group relative ml-2 flex items-center">
-            <InfoIcon
-              className={`h-4 w-4 stroke-current stroke-2 text-status-${statusColor}`}
+      <div className="absolute inset-0 overflow-hidden rounded-card">
+        <ErrorBoundary
+          fallback={<ErrorFallback claimer={claimer} />}
+          resetSwitch={evidence.at(0)?.uri}
+        >
+          <Suspense fallback={<LoadingFallback />}>
+            <Content
+              chainId={chainId}
+              claimer={claimer}
+              evidence={evidence}
+              enableMediaParallax={enableMediaParallax}
+              humanity={humanity}
+              requester={requester}
+              revocation={revocation}
+              registrationEvidenceRevokedReq={registrationEvidenceRevokedReq}
             />
-            {tooltip && (
-              <span className="pointer-events-none absolute bottom-full left-1/2 z-50 mb-2 w-max max-w-[200px] -translate-x-1/2 whitespace-normal tooltip-surface text-center text-sm opacity-0 transition-opacity group-hover:opacity-100">
-                {tooltip}
-              </span>
-            )}
-          </div>
-        </div>
+          </Suspense>
+        </ErrorBoundary>
       </div>
 
-      <ErrorBoundary
-        fallback={<ErrorFallback claimer={claimer} />}
-        resetSwitch={evidence.at(0)?.uri}
-      >
-        <Suspense fallback={<LoadingFallback />}>
-          <Content
-            chainId={chainId}
-            claimer={claimer}
-            evidence={evidence}
-            humanity={humanity}
-            requester={requester}
-            revocation={revocation}
-            registrationEvidenceRevokedReq={registrationEvidenceRevokedReq}
-          />
-        </Suspense>
-      </ErrorBoundary>
+      <div className="absolute inset-x-0 top-0 z-20 flex flex-wrap items-start justify-between gap-2 p-3 font-medium">
+        <StatusBadge
+          color={statusColor}
+          label={getStatusLabel(requestStatus)}
+          status={requestStatus}
+        />
+        <div className="group/info relative flex h-8 w-8 items-center justify-center rounded-full border border-white/[0.08] bg-[#2F333D]/85 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] backdrop-blur-sm">
+          <InfoIcon className="h-4 w-4 stroke-current stroke-2 text-white drop-shadow-md" />
+          {tooltip && (
+            <span className="tooltip-surface pointer-events-none absolute bottom-full right-0 z-50 mb-2 w-max max-w-[200px] whitespace-normal text-center text-sm opacity-0 transition-opacity group-hover/info:opacity-100">
+              {tooltip}
+            </span>
+          )}
+        </div>
+      </div>
     </Link>
   );
 }
