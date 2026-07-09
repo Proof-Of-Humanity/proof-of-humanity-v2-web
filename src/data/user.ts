@@ -1,6 +1,7 @@
 import { supportedChains, legacyChain } from "config/chains";
 import { sdk } from "config/subgraph";
 import { MeQuery } from "generated/graphql";
+import { settleChainQueries } from "./chainQuery";
 
 const isTransferStatus = (statusId?: string | null) =>
   statusId === "transferred" || statusId === "transferring";
@@ -41,9 +42,12 @@ const sanitize = (res: MeQuery[]) => {
 };
 
 export const getMyData = async (account: string) => {
+  // Lowercase for subgraph id matching; tolerate partial subgraph outages so
+  // one dead chain does not blank header / action-bar identity.
   const id = account.toLowerCase();
-  const res = await Promise.all(
-    supportedChains.map((chain) => sdk[chain.id].Me({ id })),
+  const res = await settleChainQueries(
+    (chain) => sdk[chain.id].Me({ id }),
+    (): MeQuery => ({ claimer: null }),
   );
   sanitize(res);
   const homeChain = supportedChains.find((_, i) => {
