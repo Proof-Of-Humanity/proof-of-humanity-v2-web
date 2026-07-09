@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useState } from "react";
 import { toast } from "react-toastify";
-import Field from "components/Field";
+import CurrencyField from "components/CurrencyField";
 import Modal from "components/Modal";
 import ActionButton from "components/ActionButton";
 import usePoHWrite from "contracts/hooks/usePoHWrite";
@@ -167,10 +167,9 @@ const FundButton: React.FC<FundButtonProps> = ({
               {chain.nativeCurrency.symbol} Needed
             </span>
           </div>
-          <Field
-            type="number"
-            className="no-spinner"
+          <CurrencyField
             label="Amount funding"
+            symbol={chain.nativeCurrency.symbol}
             step="any"
             min={0}
             max={maxFundAmount}
@@ -187,9 +186,8 @@ const FundButton: React.FC<FundButtonProps> = ({
               className="w-auto"
             />
             {getTooltipMessage() && (
-              <span className="pointer-events-none absolute bottom-full left-1/2 z-10 mb-2 w-max max-w-[240px] -translate-x-1/2 whitespace-normal rounded-md bg-neutral-700 px-3 py-2 text-center text-sm text-white opacity-0 transition-opacity group-hover:opacity-100">
+              <span className="pointer-events-none absolute bottom-full left-1/2 z-10 mb-2 w-max max-w-[240px] -translate-x-1/2 whitespace-normal tooltip-surface text-center text-sm opacity-0 transition-opacity group-hover:opacity-100">
                 {getTooltipMessage()}
-                <span className="absolute left-1/2 top-full h-0 w-0 -translate-x-1/2 border-x-[5px] border-t-[5px] border-x-transparent border-t-neutral-700" />
               </span>
             )}
           </div>

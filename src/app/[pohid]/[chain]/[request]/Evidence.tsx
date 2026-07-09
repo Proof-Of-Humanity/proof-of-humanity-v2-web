@@ -10,7 +10,7 @@ import Identicon from "components/Identicon";
 import Label from "components/Label";
 import Modal from "components/Modal";
 import TimeAgo from "components/TimeAgo";
-import Uploader from "components/Uploader";
+import FileUploadZone from "components/FileUploadZone";
 import { explorerLink, idToChain } from "config/chains";
 import { Effects } from "contracts/hooks/types";
 import usePoHWrite from "contracts/hooks/usePoHWrite";
@@ -299,11 +299,10 @@ export default function Evidence({
               label="Add Evidence"
             />
             {(isReconciling || isEvidenceDisabled) && (
-              <span className="pointer-events-none absolute bottom-full left-1/2 z-10 mb-2 w-max max-w-[240px] -translate-x-1/2 whitespace-normal rounded-md bg-neutral-700 px-3 py-2 text-center text-sm text-white opacity-0 transition-opacity group-hover:opacity-100">
+              <span className="pointer-events-none absolute bottom-full left-1/2 z-10 mb-2 w-max max-w-[240px] -translate-x-1/2 whitespace-normal tooltip-surface text-center text-sm opacity-0 transition-opacity group-hover:opacity-100">
                 {isReconciling
                   ? "Syncing"
                   : `Switch your chain above to ${idToChain(chainReq.id)?.name || "the correct chain"}`}
-                <span className="absolute left-1/2 top-full h-0 w-0 -translate-x-1/2 border-x-[5px] border-t-[5px] border-x-transparent border-t-neutral-700" />
               </span>
             )}
           </div>
@@ -345,20 +344,14 @@ export default function Evidence({
                 onChange={(e) => setDescription(e.target.value)}
               />
               <Label>File</Label>
-              <div className="bordered w-full rounded-sm">
-                <Uploader
-                  className="bg-whiteBackgroundWithOpacity text-primaryText flex w-full justify-center rounded-sm p-2 outline-dotted outline-white"
-                  type="all"
-                  onDrop={(acceptedFiles) => {
-                    const acceptedFile = acceptedFiles[0];
-                    if (acceptedFile) setFile(acceptedFile);
-                  }}
-                >
-                  {file
-                    ? file?.name
-                    : "Drag 'n drop some files here, or click to select files"}
-                </Uploader>
-              </div>
+              <FileUploadZone
+                type="all"
+                fileName={file?.name}
+                onDrop={(acceptedFiles) => {
+                  const acceptedFile = acceptedFiles[0];
+                  if (acceptedFile) setFile(acceptedFile);
+                }}
+              />
               <AuthGuard signInButtonProps={{ className: "mt-12" }}>
                 <ActionButton
                   disabled={pending || isReconciling}

@@ -66,7 +66,7 @@ module.exports = {
       },
       borderRadius: {
         card: "28px",
-        input: "20px",
+        input: "16px",
         btn: "16px",
       },
       boxShadow: {
@@ -126,7 +126,7 @@ module.exports = {
         // },
       },
       fontFamily: {
-        sans: ["Open Sans", ...defaultTheme.fontFamily.sans],
+        sans: ["Inter", ...defaultTheme.fontFamily.sans],
       },
     },
   },

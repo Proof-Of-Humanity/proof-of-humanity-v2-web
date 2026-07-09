@@ -24,6 +24,7 @@ import { useEffect, useState } from "react";
 import ChainLogo from "components/ChainLogo";
 import DropdownItem from "components/Dropdown/Item";
 import Dropdown from "components/Dropdown/Menu";
+import SearchBar from "components/SearchBar";
 import StatusIcon from "components/StatusIcon";
 import { RequestsQuery } from "generated/graphql";
 import { useLoading } from "hooks/useLoading";
@@ -307,11 +308,7 @@ function RequestsGrid() {
   return (
     <>
       <div className="my-4 flex flex-col gap-2 py-2 sm:flex-row sm:gap-1 md:gap-2">
-        <input
-          className="border-stroke text-primaryText bg-whiteBackground w-full rounded border p-2 md:mr-2"
-          placeholder="Search (case sensitive)"
-          onChange={(e) => setSearchQuery(e.target.value)}
-        />
+        <SearchBar className="md:mr-2" onSearch={setSearchQuery} />
         <Dropdown
           title={
             filter.status === RequestStatus.ALL

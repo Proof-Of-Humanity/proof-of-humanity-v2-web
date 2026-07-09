@@ -62,10 +62,9 @@ function Info({ advance, state$, email$, isRenewal }: InfoProps) {
         placeholder="get notified about your profile request"
         value={email}
         onChange={(e) => email$.set(e.target.value)}
+        status={showEmailError ? "error" : undefined}
+        message={showEmailError ? "Please enter a valid email" : undefined}
       />
-      {showEmailError && (
-        <p className="mt-1 text-sm text-red-500">Please enter a valid email</p>
-      )}
 
       <label
         className="mb-4 mt-8 flex cursor-pointer items-start"

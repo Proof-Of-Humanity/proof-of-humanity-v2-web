@@ -1,4 +1,5 @@
 import React from "react";
+import ExternalLinkIcon from "icons/ExternalLink.svg";
 
 export const addLinkToText = (text: string): React.ReactNode[] => {
   const nodes: React.ReactNode[] = [];
@@ -26,9 +27,10 @@ export const addLinkToText = (text: string): React.ReactNode[] => {
           href={url}
           target="_blank"
           rel="noopener noreferrer"
-          className="text-orange decoration-text-orange cursor-pointer underline"
+          className="text-orange decoration-text-orange inline-flex cursor-pointer items-center gap-1 underline"
         >
           {label}
+          <ExternalLinkIcon width={16} height={16} className="flex-shrink-0" />
         </a>,
       );
     }
@@ -41,16 +43,14 @@ export const addLinkToText = (text: string): React.ReactNode[] => {
         </strong>,
       );
     }
-    // Check if it's purple ~~text~~
     else if (match[6]) {
-      const purpleText = match[7];
+      const highlightedText = match[7];
       nodes.push(
         <span
-          key={`purple-${nodeKey++}`}
-          className="font-semibold"
-          style={{ color: "#511279" }}
+          key={`highlight-${nodeKey++}`}
+          className="text-orange font-semibold"
         >
-          {purpleText}
+          {highlightedText}
         </span>,
       );
     }

@@ -1,28 +1,32 @@
 import Image from "next/image";
 import ExternalLink from "components/ExternalLink";
+import SocialGitHubIcon from "icons/SocialGitHub.svg";
+import SocialSnapshotIcon from "icons/SocialSnapshot.svg";
+import SocialTelegramIcon from "icons/SocialTelegram.svg";
+import SocialXIcon from "icons/SocialX.svg";
 
 const SOCIALS = [
   {
     alt: "snapshot",
-    src: "/logo/social-snapshot.svg",
     href: "https://snapshot.org/#/poh.eth/",
+    Icon: SocialSnapshotIcon,
   },
   {
     alt: "github",
-    src: "/logo/social-github.svg",
     href: "https://github.com/proof-of-humanity",
+    Icon: SocialGitHubIcon,
   },
   {
     alt: "x",
-    src: "/logo/social-x.svg",
     href: "https://twitter.com/proofofhumanity",
+    Icon: SocialXIcon,
   },
   {
     alt: "telegram",
-    src: "/logo/social-telegram.svg",
     href: "https://t.me/proofhumanity",
+    Icon: SocialTelegramIcon,
   },
-];
+] as const;
 
 const Footer: React.FC = () => (
   <div className="bg-whiteBackground w-full border-t border-white/[0.08] text-lg text-white">
@@ -40,13 +44,14 @@ const Footer: React.FC = () => (
       </ExternalLink>
 
       <div className="flex items-center gap-3">
-        {SOCIALS.map((social) => (
+        {SOCIALS.map(({ alt, href, Icon }) => (
           <ExternalLink
-            key={social.alt}
-            href={social.href}
-            className="transition-opacity duration-200 hover:opacity-80"
+            key={alt}
+            href={href}
+            className="icon-btn h-9 w-9"
+            aria-label={alt}
           >
-            <Image alt={social.alt} src={social.src} width={32} height={32} />
+            <Icon />
           </ExternalLink>
         ))}
       </div>

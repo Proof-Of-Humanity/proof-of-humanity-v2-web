@@ -1,7 +1,11 @@
 import Link, { LinkProps } from "next/link";
 
 const ExternalLink: React.FC<
-  LinkProps & { className?: string; children: React.ReactNode }
+  LinkProps &
+    React.AnchorHTMLAttributes<HTMLAnchorElement> & {
+      className?: string;
+      children: React.ReactNode;
+    }
 > = ({ children, className, ...props }) => (
   <Link
     className={className}

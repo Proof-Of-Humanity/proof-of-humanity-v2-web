@@ -1,7 +1,8 @@
-import Image from "next/image";
 import React from "react";
 import ExternalLink from "components/ExternalLink";
 import Popover from "components/Popover";
+import SocialHelpIcon from "icons/SocialHelp.svg";
+import SocialSnapshotIcon from "icons/SocialSnapshot.svg";
 import SettingsPopover from "./SettingsPopover";
 
 const Options: React.FC = () => (
@@ -9,29 +10,20 @@ const Options: React.FC = () => (
     <SettingsPopover />
     <ExternalLink
       href="https://snapshot.org/#/poh.eth/"
-      className="ml-2 transition-opacity duration-200 hover:opacity-80"
+      className="icon-btn ml-2 h-9 w-9"
+      aria-label="Snapshot"
     >
-      <Image
-        alt="snapshot"
-        src="/logo/social-snapshot.svg"
-        height={36}
-        width={36}
-      />
+      <SocialSnapshotIcon />
     </ExternalLink>
 
     <Popover
       trigger={
         <button
           type="button"
-          className="ml-2 transition-opacity duration-200 hover:opacity-80"
+          className="icon-btn ml-2 h-9 w-9"
           aria-label="Open help links"
         >
-          <Image
-            alt="help"
-            src="/logo/social-help.svg"
-            height={36}
-            width={36}
-          />
+          <SocialHelpIcon />
         </button>
       }
     >
@@ -55,7 +47,7 @@ const Options: React.FC = () => (
           Tutorial
         </ExternalLink>
         <ExternalLink href="https://ethereum.org/en/wallets">
-          Crypto Beginner's Guide
+          Crypto Beginner&apos;s Guide
         </ExternalLink>
         <ExternalLink href="https://kleros.gitbook.io/docs/products/proof-of-humanity/poh-faq">
           FAQ

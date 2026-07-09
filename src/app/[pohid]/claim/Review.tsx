@@ -2,6 +2,7 @@ import { ObservableObject, ObservablePrimitiveBaseFns } from "@legendapp/state";
 import ExternalLink from "components/ExternalLink";
 import Field from "components/Field";
 import Label from "components/Label";
+import Switch from "components/Switch";
 import AuthGuard from "components/AuthGuard";
 import Previewed from "components/Previewed";
 import TimeAgo from "components/TimeAgo";
@@ -325,35 +326,32 @@ function Review({
             )}
           </div>
 
-          <label className="text-primaryText mt-2 flex cursor-pointer items-start gap-3 sm:items-center">
-            <input
-              type="checkbox"
+          <div className="text-primaryText mt-2 flex items-start gap-3 sm:items-center">
+            <Switch
               checked={submitForFree}
-              onChange={(event) => {
-                const enabled = event.target.checked;
+              onChange={(enabled) => {
                 submitForFree$.set(enabled);
                 selfFunded$.set(
                   enabled ? 0 : totalCost ? formatEth(totalCost) : 0,
                 );
               }}
-              className="sr-only"
+              label="Submit for free"
+              className="mt-0.5 sm:mt-0"
             />
             <span
-              className={`relative mt-0.5 h-7 w-12 shrink-0 rounded-full transition-colors sm:mt-0 ${
-                submitForFree ? "bg-orange" : "bg-slate-200"
-              }`}
+              className="min-w-0 flex-1 cursor-pointer pt-0.5 text-sm font-medium leading-snug sm:flex-none sm:pt-0 sm:text-base sm:leading-normal"
+              onClick={() => {
+                const enabled = !submitForFree;
+                submitForFree$.set(enabled);
+                selfFunded$.set(
+                  enabled ? 0 : totalCost ? formatEth(totalCost) : 0,
+                );
+              }}
             >
-              <span
-                className={`absolute left-1 top-1 h-5 w-5 rounded-full bg-white transition-transform ${
-                  submitForFree ? "translate-x-5" : ""
-                }`}
-              />
-            </span>
-            <span className="min-w-0 flex-1 pt-0.5 text-sm font-medium leading-snug sm:flex-none sm:pt-0 sm:text-base sm:leading-normal">
               Submit for free — let PoH supporters cover your deposit (you only
               pay gas)
             </span>
-          </label>
+          </div>
 
           <span className="mt-1 text-blue-500">
             If you don&apos;t fund the deposit now, PoH supporters can cover it

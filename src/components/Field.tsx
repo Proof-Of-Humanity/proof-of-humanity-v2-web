@@ -1,33 +1,51 @@
 import cn from "classnames";
-import {
-  InputHTMLAttributes,
-  ReactNode,
-  TextareaHTMLAttributes,
-  useState,
-} from "react";
+import { InputHTMLAttributes, ReactNode, TextareaHTMLAttributes } from "react";
 import Label from "./Label";
+
+type FieldStatus = "success" | "warning" | "error";
 
 type FieldProps = TextareaHTMLAttributes<HTMLTextAreaElement> &
   InputHTMLAttributes<HTMLInputElement> & {
     textarea?: boolean;
     label?: ReactNode;
+    status?: FieldStatus;
+    message?: ReactNode;
   };
 
-function Field({ label, textarea = false, className, ...props }: FieldProps) {
-  const [focused, setFocused] = useState(false);
+const statusControl: Record<FieldStatus, string> = {
+  success: "flat-control-success",
+  warning: "flat-control-warning",
+  error: "flat-control-error",
+};
 
+const statusMessage: Record<FieldStatus, string> = {
+  success: "text-status-registered",
+  warning: "text-status-challenged",
+  error: "text-status-rejected",
+};
+
+function Field({
+  label,
+  textarea = false,
+  status,
+  message,
+  className,
+  ...props
+}: FieldProps) {
   return (
     <div className="flex w-full flex-col">
       {label && <Label>{label}</Label>}
       <div
-        className={cn("bordered w-full", {
-          "ring-theme/60 ring-2 ring-offset-2": focused,
-        })}
+        className={cn(
+          "flat-control w-full overflow-hidden rounded-input transition duration-200 ease-premium",
+          status && statusControl[status],
+          !textarea && "min-h-12",
+        )}
       >
         {textarea ? (
           <textarea
             className={cn(
-              "bg-whiteBackgroundWithOpacity text-primaryText block w-full rounded-sm border-none px-4 py-2 font-medium bg-blend-lighten transition ease-in-out",
+              "text-primaryText block w-full border-none bg-transparent px-4 py-3 font-medium transition ease-in-out",
               "focus:ring-0",
               className,
             )}
@@ -36,16 +54,19 @@ function Field({ label, textarea = false, className, ...props }: FieldProps) {
         ) : (
           <input
             className={cn(
-              "bg-whiteBackgroundWithOpacity text-primaryText block w-full rounded-sm border-none px-4 py-2 font-medium bg-blend-overlay",
-              "focus-visible:outline-none",
+              "text-primaryText block min-h-12 w-full border-none bg-transparent px-4 py-3 font-medium",
+              "focus:ring-0 focus-visible:outline-none",
               className,
             )}
-            onFocus={() => setFocused(true)}
-            onBlur={() => setFocused(false)}
             {...props}
           />
         )}
       </div>
+      {status && message && (
+        <span className={cn("mt-1.5 text-xs", statusMessage[status])}>
+          {message}
+        </span>
+      )}
     </div>
   );
 }

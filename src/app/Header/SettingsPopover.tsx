@@ -1,8 +1,8 @@
 import React from "react";
-import Image from "next/image";
 import Popover from "components/Popover";
 import ActionButton from "components/ActionButton";
 import SignInButton from "components/SignInButton";
+import NotificationsIcon from "icons/Notifications.svg";
 import EmailField from "./EmailField";
 import EmailVerificationNotice from "./EmailVerificationNotice";
 import UnsubscribeModal from "./UnsubscribeModal";
@@ -44,15 +44,10 @@ const SettingsPopover: React.FC = () => {
           <button
             type="button"
             onClick={toggleSettingsPopover}
-            className="relative ml-2 flex h-9 w-9 items-center justify-center transition-opacity duration-200 hover:opacity-80"
+            className="icon-btn relative ml-2 h-9 w-9"
             aria-label="Open notification settings"
           >
-            <Image
-              alt="notifications"
-              src="/logo/notifications.svg"
-              height={36}
-              width={36}
-            />
+            <NotificationsIcon />
             {showUnreadDot && (
               <span
                 aria-hidden="true"

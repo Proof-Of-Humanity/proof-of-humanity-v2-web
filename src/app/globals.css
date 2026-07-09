@@ -38,11 +38,26 @@
   }
 
   .checkbox {
-    @apply border-orange h-6 w-6 rounded-md border bg-peach/15;
+    @apply h-6 w-6 rounded-md border;
+    background-color: #292d35;
+    border-color: #ffb08a;
+  }
+
+  .checkbox:checked {
+    background-color: #ffb08a;
+    border-color: #ffb08a;
   }
 
   .radio {
-    @apply border-orange h-6 w-6 rounded-full border bg-peach/15;
+    @apply h-6 w-6 rounded-full border;
+    background-color: #292d35;
+    border-color: #3a3e48;
+  }
+
+  .radio:checked {
+    background-color: #292d35;
+    border-color: #ffb08a;
+    color: #ffb08a;
   }
 
   .bordered {
@@ -51,19 +66,83 @@
 
   .btn-primary,
   .btn-main {
-    @apply centered min-h-[44px] w-full rounded-btn px-5 py-2.5 font-medium normal-case text-white transition duration-200 ease-premium disabled:opacity-40 md:w-auto;
+    @apply centered min-h-[48px] w-full rounded-btn px-8 py-2.5 font-normal normal-case text-white transition duration-200 ease-premium disabled:opacity-40 md:w-auto;
   }
 
   .btn-secondary {
-    @apply centered min-h-[44px] w-full rounded-btn border px-5 py-2.5 font-semibold normal-case transition duration-200 ease-premium disabled:opacity-40 md:w-auto;
-    background: #2f333d;
-    border-color: rgba(255, 138, 102, 0.32);
+    @apply centered min-h-[48px] w-full rounded-btn border px-8 py-2.5 font-normal normal-case transition duration-200 ease-premium disabled:opacity-40 md:w-auto;
+    background: transparent;
+    border-color: #ffb08a;
     color: #ffb08a;
   }
 
-  .btn-secondary:hover {
-    background: rgba(255, 138, 102, 0.08);
-    border-color: rgba(255, 176, 138, 0.48);
+  .btn-secondary:hover,
+  .btn-secondary:active {
+    background: rgba(255, 153, 102, 0.32);
+  }
+
+  .btn-tertiary {
+    @apply centered min-h-[48px] w-full rounded-btn border px-8 py-2.5 font-normal normal-case transition duration-200 ease-premium disabled:opacity-40 md:w-auto;
+    background: #292d35;
+    border-color: #3a3e48;
+    color: #f7f3ef;
+  }
+
+  .btn-tertiary:hover,
+  .btn-tertiary:active {
+    background: #3a3e48;
+  }
+
+  .tooltip-surface {
+    position: relative;
+    @apply rounded-btn border p-4;
+    background: #2f333d;
+    border-color: #3a3e48;
+    color: #f7f3ef;
+  }
+
+  .tooltip-surface::before {
+    position: absolute;
+    top: calc(100% - 5px);
+    left: 50%;
+    width: 10px;
+    height: 10px;
+    content: "";
+    background: #2f333d;
+    border-bottom: 1px solid #3a3e48;
+    border-right: 1px solid #3a3e48;
+    transform: translateX(-50%) rotate(45deg);
+  }
+
+  /* Circle chrome: rest = dark surface + peach glyph; hover = orange fill + white glyph */
+  .icon-btn {
+    @apply flex items-center justify-center rounded-full border transition-colors duration-200;
+    background: #2f333d;
+    border-color: #3a3e48;
+    color: #ffb08a;
+  }
+
+  .icon-btn:hover,
+  .icon-btn:focus-visible {
+    background: #ff9966;
+    border-color: #ff9966;
+    color: #ffffff;
+  }
+
+  .icon-btn svg {
+    @apply h-4 w-4 shrink-0;
+  }
+
+  .btn-primary svg,
+  .btn-secondary svg,
+  .btn-tertiary svg {
+    transition: transform 200ms cubic-bezier(0.22, 0.61, 0.36, 1);
+  }
+
+  .btn-primary:hover svg,
+  .btn-secondary:hover svg,
+  .btn-tertiary:hover svg {
+    transform: translateX(2px);
   }
 
   .backdrop {
@@ -77,6 +156,12 @@
 
   .modal-backdrop-open {
     opacity: 1;
+  }
+
+  .modal-surface {
+    @apply rounded-btn border shadow-soft;
+    background: #1e2129;
+    border-color: #3a3e48;
   }
 
   .modal-shell {
@@ -116,7 +201,7 @@
   }
 
   .request-grid {
-    @apply grid grid-cols-1 gap-4;
+    @apply grid grid-cols-1 gap-6;
   }
 
   @media (min-width: 640px) {
@@ -139,7 +224,7 @@
 
   @media (min-width: 1280px) {
     .request-grid {
-      gap: 1.25rem;
+      gap: 1.5rem;
     }
   }
 
@@ -191,18 +276,33 @@
 
   .flat-control {
     background: #272a33;
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    border: 1px solid #3a3e48;
     box-shadow:
       inset 0 1px 0 rgba(255, 255, 255, 0.04),
       0 12px 30px rgba(0, 0, 0, 0.22);
   }
 
+  .flat-control:hover {
+    background: #2f333d;
+  }
+
+  .flat-control-success {
+    border-color: #79ffdc;
+  }
+
+  .flat-control-warning {
+    border-color: #ffe16b;
+  }
+
+  .flat-control-error {
+    border-color: #f60c6e;
+  }
+
   .flat-control:focus-within,
   .flat-control:focus {
-    border-color: rgba(255, 138, 102, 0.45);
-    box-shadow:
-      0 0 0 3px rgba(255, 138, 102, 0.1),
-      0 12px 30px rgba(0, 0, 0, 0.24);
+    background: #2f333d;
+    border-color: #ffb08a;
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.24);
   }
 
   .status-pill {

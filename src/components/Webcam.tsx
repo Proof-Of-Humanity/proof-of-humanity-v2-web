@@ -24,7 +24,7 @@ export const CameraButton: React.FC<CameraButtonInterface> = ({
 }) => (
   <button
     className={cn(
-      "btn-main absolute rounded-full",
+      "btn-primary absolute shrink-0 rounded-full !p-0",
       secondary
         ? "h-12 w-12 opacity-70"
         : "outline-theme h-16 w-16 outline outline-2 outline-offset-2",
@@ -176,7 +176,7 @@ const Webcam: React.FC<WebcamProps> = ({
               className="left-4 top-4"
               onClick={switchFacingMode}
             >
-              <FlipCameraIcon className="h-8 w-8 fill-white" />
+              <FlipCameraIcon className="h-10 w-10 fill-white" />
             </CameraButton>
           )}
           {!IS_MOBILE && (
@@ -185,7 +185,7 @@ const Webcam: React.FC<WebcamProps> = ({
               className="right-4 top-4"
               onClick={toggleFullscreen}
             >
-              <FullscreenIcon className="h-8 w-8 fill-white" />
+              <FullscreenIcon className="h-10 w-10 fill-white" />
             </CameraButton>
           )}
         </>
