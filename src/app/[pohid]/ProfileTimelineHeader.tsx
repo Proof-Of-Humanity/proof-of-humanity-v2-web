@@ -1,7 +1,7 @@
 "use client";
 
 import ErrorBoundary from "components/ErrorBoundary";
-import useIPFS from "hooks/useIPFS";
+import { useSuspenseIPFS } from "hooks/useIPFS";
 import Image from "next/image";
 import { Suspense } from "react";
 import { EvidenceFile, RegistrationFile } from "types/docs";
@@ -22,12 +22,8 @@ function HeaderContent({
   evidence,
   requester,
 }: ProfileTimelineHeaderProps) {
-  const [evidenceURI] = useIPFS<EvidenceFile>(evidence.at(-1)?.uri, {
-    suspense: true,
-  });
-  const [data] = useIPFS<RegistrationFile>(evidenceURI?.fileURI, {
-    suspense: true,
-  });
+  const [evidenceURI] = useSuspenseIPFS<EvidenceFile>(evidence.at(-1)?.uri);
+  const [data] = useSuspenseIPFS<RegistrationFile>(evidenceURI?.fileURI);
 
   const name =
     data && claimer.name && data.name !== claimer.name
