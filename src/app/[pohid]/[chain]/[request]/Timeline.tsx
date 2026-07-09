@@ -3,12 +3,24 @@
 import ChainLogo from "components/ChainLogo";
 import type { TimelineItem } from "data/requestTimeline";
 import { idToChain } from "config/chains";
-import CheckCircleOutlineIcon from "icons/CheckCircleOutline16.svg";
-import CrossCircleIcon from "icons/CrossCircle16.svg";
+import ChallengeIcon from "icons/Challenge.svg";
+import CheckCircleOutlineIcon from "icons/CheckCircleOutline.svg";
+import CloseCircleOutlineIcon from "icons/CloseCircleOutline.svg";
+import EyeIcon from "icons/Eye.svg";
+import FlagCheckeredIcon from "icons/FlagCheckered.svg";
+import HourglassIcon from "icons/Hourglass.svg";
 import NewTabIcon from "icons/NewTab.svg";
-import TimelineTransferIcon from "icons/TimelineTransfer.svg";
+import TransferIcon from "icons/Transfer.svg";
+import VouchIcon from "icons/Vouch.svg";
 import Link from "next/link";
-import { type ReactNode, useEffect, useRef, useState } from "react";
+import {
+  type ComponentType,
+  type ReactNode,
+  type SVGProps,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 
 interface TimelineProps {
   items: TimelineItem[];
@@ -99,6 +111,28 @@ const TIMELINE_STYLES: Record<
   },
 };
 
+// Figma "timeline-steps": every milestone renders its own icon, colored with
+// the status palette. Kinds without an entry (appeal, withdrawn) keep the
+// plain dot — the design defines no icon for them.
+const TIMELINE_ICONS: Partial<
+  Record<
+    TimelineItem["kind"],
+    { Icon: ComponentType<SVGProps<SVGSVGElement>>; color: string }
+  >
+> = {
+  submitted: { Icon: FlagCheckeredIcon, color: "text-primaryText" },
+  inReview: { Icon: EyeIcon, color: "text-status-claim" },
+  challenged: { Icon: ChallengeIcon, color: "text-status-challenged" },
+  vouchReceived: { Icon: VouchIcon, color: "text-status-vouching" },
+  vouchRemoved: { Icon: CloseCircleOutlineIcon, color: "text-status-removed" },
+  verified: { Icon: CheckCircleOutlineIcon, color: "text-status-registered" },
+  removed: { Icon: CloseCircleOutlineIcon, color: "text-status-removed" },
+  rejected: { Icon: CloseCircleOutlineIcon, color: "text-status-rejected" },
+  expired: { Icon: HourglassIcon, color: "text-secondaryText" },
+  transferred: { Icon: TransferIcon, color: "text-secondaryText" },
+  received: { Icon: TransferIcon, color: "text-secondaryText" },
+};
+
 const formatter = new Intl.DateTimeFormat("en-US", {
   month: "long",
   day: "2-digit",
@@ -145,6 +179,7 @@ export default function Timeline({ items, children }: TimelineProps) {
       <div className="mt-6">
         {items.map((item, index) => {
           const styles = TIMELINE_STYLES[item.kind];
+          const iconSpec = TIMELINE_ICONS[item.kind];
           const isLast = index === items.length - 1;
           const lineDelay = `${index * ITEM_STEP_MS}ms`;
           const itemDelay = `${index * ITEM_STEP_MS + ITEM_REVEAL_OFFSET_MS}ms`;
@@ -154,21 +189,12 @@ export default function Timeline({ items, children }: TimelineProps) {
               <div className="flex w-6 shrink-0 flex-col items-center">
                 <div
                   className={`timeline-dot-shell bg-whiteBackground ${
-                    item.kind === "transferred" ||
-                    item.kind === "verified" ||
-                    item.kind === "rejected"
-                      ? "-mt-0.5 h-5 w-5 border-transparent"
-                      : styles.dot
+                    iconSpec ? "-mt-0.5 h-5 w-5 border-transparent" : styles.dot
                   }`}
                   style={{ animationDelay: itemDelay }}
                 >
-                  {item.kind === "transferred" ? (
-                    <TimelineTransferIcon />
-                  ) : item.kind === "verified" ? (
-                    <CheckCircleOutlineIcon />
-                  ) : item.kind === "rejected" ||
-                    item.kind === "vouchRemoved" ? (
-                    <CrossCircleIcon />
+                  {iconSpec ? (
+                    <iconSpec.Icon className={`h-4 w-4 ${iconSpec.color}`} />
                   ) : (
                     <div className="relative flex h-4 w-4 items-center justify-center">
                       {item.isActive ? (

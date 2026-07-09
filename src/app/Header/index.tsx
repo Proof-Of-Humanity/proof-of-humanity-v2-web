@@ -59,8 +59,8 @@ export default function Header({ policy }: IHeader) {
       <Link href="/" className="flex w-[156px] items-center">
         <Image
           alt="proof of humanity logo"
-          src="/logo/poh-text-orange.svg"
-          height={48}
+          src="/logo/poh.svg"
+          height={40}
           width={156}
         />
       </Link>

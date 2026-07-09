@@ -2,6 +2,7 @@
 
 import { enableReactUse } from "@legendapp/state/config/enableReactUse";
 import ExternalLink from "components/ExternalLink";
+import StatusIcon from "components/StatusIcon";
 import TimeAgo from "components/TimeAgo";
 import ActionButton from "components/ActionButton";
 import usePoHWrite from "contracts/hooks/usePoHWrite";
@@ -377,8 +378,9 @@ export default function ActionBar({
         <div className="flex items-center">
           <span className="mr-4">Status</span>
           <span
-            className={`rounded-full px-3 py-1 text-white bg-status-${statusColor} whitespace-nowrap`}
+            className={`bg-primaryBackground border-stroke inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border px-3 py-1 text-status-${statusColor}`}
           >
+            <StatusIcon status={effectiveRequestStatus} />
             {getStatusLabel(effectiveRequestStatus, "actionBar")}
           </span>
         </div>

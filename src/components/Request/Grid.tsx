@@ -7,7 +7,6 @@ import {
   useObservable,
   useSelector,
 } from "@legendapp/state/react";
-import cn from "classnames";
 import {
   SupportedChain,
   SupportedChainId,
@@ -25,6 +24,7 @@ import { useEffect, useState } from "react";
 import ChainLogo from "components/ChainLogo";
 import DropdownItem from "components/Dropdown/Item";
 import Dropdown from "components/Dropdown/Menu";
+import StatusIcon from "components/StatusIcon";
 import { RequestsQuery } from "generated/graphql";
 import { useLoading } from "hooks/useLoading";
 import {
@@ -33,7 +33,6 @@ import {
   getRequestStatusFilter,
   STATUS_FILTER_OPTIONS,
   getStatusLabel,
-  getStatusColor,
 } from "utils/status";
 
 import Card from "./Card";
@@ -42,7 +41,7 @@ import Loading from "components/Loading";
 enableReactUse();
 
 const REQUESTS_BATCH_SIZE = 12;
-var humanityLifespanAllChains: Record<SupportedChainId, string | undefined>;
+let humanityLifespanAllChains: Record<SupportedChainId, string | undefined>;
 
 export type RequestsQueryItem = ArrayElement<RequestsQuery["requests"]>;
 
@@ -70,7 +69,7 @@ const sortRequests = (request: RequestInterface[]): RequestInterface[] => {
   pohIdGrouped.forEach((val, key) => {
     val.sort((req1, req2) => req2.lastStatusChange - req1.lastStatusChange);
   });
-  let requestsOut: RequestInterface[] = new Array<RequestInterface>();
+  const requestsOut: RequestInterface[] = new Array<RequestInterface>();
   pohIdGrouped.forEach((val, key) => {
     // We keep only the head request of each pohIdGrouped array which is the one representing the current status of the personhood
     const latestRequest = val[0];
@@ -323,16 +322,7 @@ function RequestsGrid() {
           {STATUS_FILTER_OPTIONS.map((status) => (
             <DropdownItem
               key={status}
-              icon={
-                <div
-                  className={cn(
-                    "dot mr-2",
-                    status === RequestStatus.ALL
-                      ? "bg-white"
-                      : `bg-status-${getStatusColor(status)}`,
-                  )}
-                />
-              }
+              icon={<StatusIcon status={status} className="mr-2" />}
               selected={filter.status === status}
               onSelect={() => filter$.assign({ status, cursor: 1 })}
               name={getStatusLabel(status)}
