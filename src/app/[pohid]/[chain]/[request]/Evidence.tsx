@@ -264,10 +264,11 @@ export default function Evidence({
         }
       }
 
+      // ERC-1497 / historical evidence JSON uses fileURI (not "evidence").
       const evidenceJson = {
         name: title,
         description,
-        evidence: evidenceFileURI,
+        fileURI: evidenceFileURI,
       };
 
       const evidenceTextFile = new File(
