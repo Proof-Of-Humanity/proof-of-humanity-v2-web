@@ -117,7 +117,7 @@ export default async function Request({ params }: PageProps) {
       contractResult.reason,
     );
     return (
-      <div className="content mx-auto flex w-[92vw] max-w-[1500px] flex-col justify-center font-semibold sm:w-[84vw] md:w-[76vw]">
+      <div className="content flex flex-col justify-center font-semibold">
         <ContractMetadataUnavailableNotice />
         <RequestIdentityCard
           chain={chain}
@@ -237,7 +237,7 @@ export default async function Request({ params }: PageProps) {
         storageKey={requestStorageKey}
       >
         <>
-          <div className="content mx-auto flex w-[92vw] max-w-[1500px] flex-col justify-center font-semibold sm:w-[84vw] md:w-[76vw]">
+          <div className="content flex flex-col justify-center font-semibold">
             <ActionBar
               arbitrationCost={arbitrationCost}
               index={request.index}
@@ -314,7 +314,7 @@ export default async function Request({ params }: PageProps) {
               }
             />
           </div>
-          <div className="content mx-auto flex w-[92vw] max-w-[1500px] flex-col justify-center font-semibold sm:w-[84vw] md:w-[76vw]">
+          <div className="content flex flex-col justify-center font-semibold">
             <Suspense fallback={null}>
               <RequestEvidenceSection
                 arbitrationInfo={request.arbitratorHistory}

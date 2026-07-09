@@ -1,7 +1,7 @@
 import RetryButton from "app/[pohid]/RetryButton";
 
 const CardShell: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-  <div className="content mx-auto flex w-[92vw] max-w-[1500px] flex-col justify-center font-semibold sm:w-[84vw] md:w-[76vw]">
+  <div className="content flex flex-col justify-center font-semibold">
     <div className="border-stroke bg-whiteBackground mb-6 flex flex-col items-center rounded border px-6 py-10 text-center shadow sm:px-8">
       {children}
     </div>

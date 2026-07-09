@@ -14,7 +14,7 @@ const AttachmentDisplay: React.FC = () => {
   const url = safeIpfsUrl(rawUrl);
 
   return (
-    <div className="bg-primaryBackground mx-auto w-[96vw] max-w-[1500px] px-6 py-8 md:w-[80vw]">
+    <div className="app-container bg-primaryBackground py-8">
       <div className="flex flex-col gap-2">
         <Header />
         {rawUrl && !url ? (

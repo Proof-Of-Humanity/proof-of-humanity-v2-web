@@ -101,12 +101,18 @@
     @apply h-2 w-2 rounded-full;
   }
 
-  .content {
-    @apply mx-auto mb-16 mt-8 w-11/12 sm:mt-12 sm:w-5/6 lg:w-3/5;
+  /* Shared page rhythm (same system as kleros-v2 court / scout): header and
+     footer inners use .app-container; page containers use .content, whose
+     width-based gutters keep the same edges (1304px = 1400px - 2 * 48px)
+     while letting card pages keep their outer margin. Beyond 1400px the
+     content stops growing and stays centered. */
+  .app-container {
+    @apply mx-auto w-full max-w-[1400px] px-4 md:px-8 lg:px-12;
   }
 
+  .content,
   .content-wide {
-    @apply mx-auto mb-16 mt-8 w-11/12 sm:mt-12 sm:w-5/6 lg:w-4/5;
+    @apply mx-auto mb-16 mt-8 w-[calc(100%-2rem)] max-w-[1304px] sm:mt-12 md:w-[calc(100%-4rem)] lg:w-[calc(100%-6rem)];
   }
 
   .request-grid {
@@ -840,7 +846,6 @@
     background: linear-gradient(90deg, #ff7a5f 0%, #ff9a6a 100%);
     box-shadow: 0 10px 24px rgba(255, 122, 95, 0.1);
   }
-
 
   .slider-thumb::-webkit-slider-thumb {
     @apply bg-theme h-4 w-4 cursor-pointer appearance-none rounded-full;
