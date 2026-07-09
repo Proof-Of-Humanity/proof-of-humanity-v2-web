@@ -8,7 +8,9 @@ const integrations: Record<string, Integration> = {
     description:
       "Join our group on the Gnosis App to start your daily income and unlock exclusive perks!",
     logo: "/images/integrations/circles-logo.png",
-    logoWidth: 164,
+    // gnosis-app.svg is 185×48 — keep render size in sync with the asset.
+    darkLogo: "/logo/gnosis-app.svg",
+    logoWidth: 185,
     logoHeight: 48,
     isActive: true,
     startPath: "app/circles",
