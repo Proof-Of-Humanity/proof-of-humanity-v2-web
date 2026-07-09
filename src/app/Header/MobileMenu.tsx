@@ -6,7 +6,7 @@ import { Ref, forwardRef } from "react";
 import Options from "./Options";
 import RegisterLink from "./RegisterLink";
 import WalletSection from "./WalletSection";
-import { prettifyId } from "utils/identifier";
+import { isRegisterActive } from "utils/identifier";
 
 interface MobileMenuProps {
   policy: string;
@@ -39,9 +39,7 @@ const MobileMenu = forwardRef(
     const currentUrl = searchParams.get("url");
     const policyHref =
       policy && `/attachment?url=${encodeURIComponent(policy)}`;
-    const registerActive = me?.pohId
-      ? pathname === `/${prettifyId(me.pohId)}`
-      : pathname.includes("/claim");
+    const registerActive = isRegisterActive(me?.pohId, pathname);
 
     return (
       <div

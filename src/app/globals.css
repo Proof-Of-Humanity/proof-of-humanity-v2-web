@@ -2,7 +2,7 @@
 
 @layer base {
   html {
-    @apply text-black;
+    color: #f7f3ef;
     background: #1e2129;
     overscroll-behavior: none;
   }
@@ -841,15 +841,6 @@
     box-shadow: 0 10px 24px rgba(255, 122, 95, 0.1);
   }
 
-  .dark .btn-primary,
-  .dark .btn-main {
-    background: linear-gradient(90deg, #ff7a5f 0%, #ff9a6a 100%);
-    box-shadow: 0 10px 24px rgba(255, 122, 95, 0.1);
-  }
-
-  .divider {
-    @apply h-px w-full rounded-full bg-[#3A3E48];
-  }
 
   .slider-thumb::-webkit-slider-thumb {
     @apply bg-theme h-4 w-4 cursor-pointer appearance-none rounded-full;
