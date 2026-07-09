@@ -99,11 +99,11 @@ const ErrorFallback: React.FC<{ claimer?: { name?: string | null } }> = ({
   <>
     <div className="bg-grey absolute inset-0" />
     <div className="request-card-overlay absolute inset-0" />
-    <div className="absolute inset-x-0 bottom-0 z-10 p-4">
-      <div className="truncate text-lg font-bold text-white">
+    <div className="absolute inset-x-0 bottom-0 z-10 px-4 pb-[21px]">
+      <div className="truncate text-2xl font-semibold text-white">
         {claimer?.name || "Unavailable"}
       </div>
-      <div className="mt-0.5 text-sm text-white/75">
+      <div className="mt-1 text-sm text-dark-secondaryText">
         Profile media could not be loaded
       </div>
     </div>
@@ -160,11 +160,11 @@ const Content = ({
         <div className="bg-grey absolute inset-0" />
       )}
       <div className="request-card-overlay absolute inset-0" />
-      <div className="absolute inset-x-0 bottom-0 z-10 p-4">
-        <div className="truncate text-lg font-bold text-white">
+      <div className="absolute inset-x-0 bottom-0 z-10 px-4 pb-[21px]">
+        <div className="truncate text-2xl font-semibold text-white">
           {name || shortenAddress(displayedClaimerId)}
         </div>
-        <div className="mt-0.5 flex items-center gap-1.5 text-sm text-white/75">
+        <div className="mt-1 flex items-center gap-1.5 text-sm text-dark-secondaryText">
           <ChainLogo chainId={chainId} className="h-4 w-4 fill-current" />
           {shortenAddress(displayedClaimerId)}
         </div>
@@ -225,16 +225,16 @@ function Card({
         </ErrorBoundary>
       </div>
 
-      <div className="absolute inset-x-0 top-0 z-20 flex flex-wrap items-start justify-between gap-2 p-3 font-medium">
+      <div className="absolute inset-x-0 top-0 z-20 flex flex-wrap items-start justify-between gap-2 px-4 pt-[9px] font-medium">
         <StatusBadge
           color={statusColor}
           label={getStatusLabel(requestStatus)}
           status={requestStatus}
         />
-        <div className="group/info relative flex h-8 w-8 items-center justify-center rounded-full border border-white/[0.08] bg-[#2F333D]/85 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] backdrop-blur-sm">
+        <div className="group/info relative flex h-6 w-6 items-center justify-center rounded-full border border-white/[0.08] bg-[#2F333D]/85 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] backdrop-blur-sm">
           <InfoIcon className="h-4 w-4 stroke-current stroke-2 text-white drop-shadow-md" />
           {tooltip && (
-            <span className="tooltip-surface pointer-events-none absolute bottom-full right-0 z-50 mb-2 w-max max-w-[200px] whitespace-normal text-center text-sm opacity-0 transition-opacity group-hover/info:opacity-100">
+            <span className="tooltip-surface pointer-events-none absolute bottom-full left-1/2 z-50 mb-2 w-max max-w-[200px] -translate-x-1/2 whitespace-normal text-center text-sm opacity-0 transition-opacity group-hover/info:opacity-100">
               {tooltip}
             </span>
           )}
