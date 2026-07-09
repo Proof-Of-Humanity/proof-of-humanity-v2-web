@@ -65,7 +65,7 @@ module.exports = {
         pink: "#FF9A6A",
       },
       borderRadius: {
-        card: "28px",
+        card: "26px",
         input: "16px",
         btn: "16px",
       },

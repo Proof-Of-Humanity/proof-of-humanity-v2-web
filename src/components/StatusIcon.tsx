@@ -1,4 +1,5 @@
 import cn from "classnames";
+import { twMerge } from "tailwind-merge";
 import ChallengeIcon from "icons/Challenge.svg";
 import CheckCircleOutlineIcon from "icons/CheckCircleOutline.svg";
 import CloseCircleOutlineIcon from "icons/CloseCircleOutline.svg";
@@ -31,9 +32,8 @@ export default function StatusIcon({ status, className }: StatusIconProps) {
   if (Icon)
     return (
       <Icon
-        className={cn(
-          "h-3.5 w-3.5 shrink-0",
-          `text-status-${color}`,
+        className={twMerge(
+          cn("h-3.5 w-3.5 shrink-0", `text-status-${color}`),
           className,
         )}
       />
