@@ -56,12 +56,14 @@ export default function Header({ policy }: IHeader) {
 
   return (
     <header className="header-background relative flex h-16 w-full items-center justify-between border-b border-white/[0.08] px-6 pb-2 pt-2 text-lg text-white md:h-16 md:px-8">
-      <Link href="/" className="flex w-[156px] items-center">
+      <Link href="/" className="flex shrink-0 items-center">
         <Image
           alt="proof of humanity logo"
           src="/logo/poh.svg"
-          height={40}
-          width={156}
+          height={48}
+          width={185}
+          className="h-12 w-auto"
+          priority
         />
       </Link>
 
