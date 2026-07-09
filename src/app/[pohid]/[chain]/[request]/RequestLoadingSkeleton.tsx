@@ -1,6 +1,6 @@
 export default function RequestLoadingSkeleton() {
   return (
-    <div className="content mx-auto flex w-[92vw] max-w-[1500px] flex-col justify-center font-semibold sm:w-[84vw] md:w-[76vw]">
+    <div className="content flex flex-col justify-center font-semibold">
       <div className="mb-4 flex animate-pulse flex-wrap items-center justify-center gap-3 md:justify-end">
         <div className="bg-grey h-10 w-28 rounded" />
         <div className="bg-grey h-10 w-32 rounded" />

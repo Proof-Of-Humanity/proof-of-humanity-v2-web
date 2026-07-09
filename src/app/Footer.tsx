@@ -25,29 +25,31 @@ const SOCIALS = [
 ];
 
 const Footer: React.FC = () => (
-  <div className="bg-whiteBackground bottom-0 flex w-full flex-wrap items-center justify-center gap-x-4 gap-y-[20px] border-t border-white/[0.08] px-8 py-4 text-lg text-white sm:justify-between sm:gap-x-[240px]">
-    <ExternalLink
-      className="flex items-center gap-2 text-sm"
-      href="https://kleros.io/"
-    >
-      <Image
-        alt="built by kleros"
-        src="/logo/built-by-kleros.svg"
-        width={153}
-        height={24}
-      />
-    </ExternalLink>
+  <div className="bg-whiteBackground w-full border-t border-white/[0.08] text-lg text-white">
+    <div className="app-container flex flex-wrap items-center justify-center gap-x-4 gap-y-[20px] py-4 sm:justify-between">
+      <ExternalLink
+        className="flex items-center gap-2 text-sm"
+        href="https://kleros.io/"
+      >
+        <Image
+          alt="built by kleros"
+          src="/logo/built-by-kleros.svg"
+          width={153}
+          height={24}
+        />
+      </ExternalLink>
 
-    <div className="flex items-center gap-3">
-      {SOCIALS.map((social) => (
-        <ExternalLink
-          key={social.alt}
-          href={social.href}
-          className="transition-opacity duration-200 hover:opacity-80"
-        >
-          <Image alt={social.alt} src={social.src} width={32} height={32} />
-        </ExternalLink>
-      ))}
+      <div className="flex items-center gap-3">
+        {SOCIALS.map((social) => (
+          <ExternalLink
+            key={social.alt}
+            href={social.href}
+            className="transition-opacity duration-200 hover:opacity-80"
+          >
+            <Image alt={social.alt} src={social.src} width={32} height={32} />
+          </ExternalLink>
+        ))}
+      </div>
     </div>
   </div>
 );

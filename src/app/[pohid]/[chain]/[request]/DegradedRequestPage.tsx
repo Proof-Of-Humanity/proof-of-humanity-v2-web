@@ -29,7 +29,7 @@ export default async function DegradedRequestPage({
   return (
     <>
       {winnerClaim ? (
-        <div className="content mx-auto flex w-[92vw] max-w-[1500px] flex-col justify-center font-semibold sm:w-[84vw] md:w-[76vw]">
+        <div className="content flex flex-col justify-center font-semibold">
           <div className="border-stroke bg-whiteBackground mb-1 rounded border px-[24px] py-[18px] shadow lg:px-[32px]">
             <div className="text-secondaryText mb-4 text-xs font-semibold uppercase tracking-[0.08em]">
               Latest verified identity for this PoH ID

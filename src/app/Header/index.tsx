@@ -55,64 +55,77 @@ export default function Header({ policy }: IHeader) {
   }, [menuOpen]);
 
   return (
-    <header className="header-background relative flex h-16 w-full items-center justify-between border-b border-white/[0.08] px-6 pb-2 pt-2 text-lg text-white md:h-16 md:px-8">
-      <Link href="/" className="flex shrink-0 items-center">
-        <Image
-          alt="proof of humanity logo"
-          src="/logo/poh.svg"
-          height={48}
-          width={185}
-          className="h-12 w-auto"
-          priority
-        />
-      </Link>
+    <header className="header-background relative w-full border-b border-white/[0.08] text-lg text-white">
+      <div className="app-container relative flex h-16 items-center justify-between pb-2 pt-2">
+        <Link href="/" className="flex shrink-0 items-center">
+          <Image
+            alt="proof of humanity logo"
+            src="/logo/poh.svg"
+            height={48}
+            width={185}
+            className="h-12 w-auto"
+            priority
+          />
+        </Link>
 
-      <div className="ml-auto flex items-center gap-2 md:hidden">
-        {showRewardsCta ? (
-          <Link
-            href="/app"
-            className={`hover:border-orange rounded-full border border-white/[0.08] bg-[#2F333D] px-4 py-2 text-sm font-semibold text-white transition ${
-              pathname.startsWith("/app") ? "text-orange" : ""
-            }`}
+        <div className="ml-auto flex items-center gap-2 md:hidden">
+          {showRewardsCta ? (
+            <Link
+              href="/app"
+              className={`hover:border-orange rounded-full border border-white/[0.08] bg-[#2F333D] px-4 py-2 text-sm font-semibold text-white transition ${
+                pathname.startsWith("/app") ? "text-orange" : ""
+              }`}
+            >
+              Rewards
+            </Link>
+          ) : showRegisterCta ? (
+            <RegisterLink
+              me={me}
+              address={address}
+              pendingRegisterIntent={pendingRegisterIntent}
+              setPendingRegisterIntent={setPendingRegisterIntent}
+              className={`hover:border-orange rounded-full border border-white/[0.08] bg-[#2F333D] px-4 py-2 text-sm font-semibold text-white transition ${
+                pathname.includes("/claim") ? "text-orange" : ""
+              }`}
+            />
+          ) : null}
+          <button
+            className="hover:border-orange flex h-9 w-9 items-center justify-center rounded-full border border-white/[0.08] bg-[#2F333D] text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] transition duration-200 ease-premium"
+            onClick={() => setMenuOpen(!menuOpen)}
+            aria-label="Toggle navigation"
           >
-            Rewards
-          </Link>
-        ) : showRegisterCta ? (
-          <RegisterLink
-            me={me}
-            address={address}
-            pendingRegisterIntent={pendingRegisterIntent}
-            setPendingRegisterIntent={setPendingRegisterIntent}
-            className={`hover:border-orange rounded-full border border-white/[0.08] bg-[#2F333D] px-4 py-2 text-sm font-semibold text-white transition ${
-              pathname.includes("/claim") ? "text-orange" : ""
-            }`}
-          />
-        ) : null}
-        <button
-          className="hover:border-orange flex h-9 w-9 items-center justify-center rounded-full border border-white/[0.08] bg-[#2F333D] text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] transition duration-200 ease-premium"
-          onClick={() => setMenuOpen(!menuOpen)}
-          aria-label="Toggle navigation"
-        >
-          <Hamburger />
-        </button>
-      </div>
-
-      {chain && (
-        <div className="lg:absolute lg:left-1/2 lg:top-1/2 lg:-translate-x-1/2 lg:-translate-y-1/2 lg:transform">
-          <DesktopNavigation
-            {...{
-              address,
-              me,
-              policy,
-              pathname,
-              chain,
-              web3Loaded,
-              pendingRegisterIntent,
-              setPendingRegisterIntent,
-            }}
-          />
+            <Hamburger />
+          </button>
         </div>
-      )}
+
+        {chain && (
+          <div className="lg:absolute lg:left-1/2 lg:top-1/2 lg:-translate-x-1/2 lg:-translate-y-1/2 lg:transform">
+            <DesktopNavigation
+              {...{
+                address,
+                me,
+                policy,
+                pathname,
+                chain,
+                web3Loaded,
+                pendingRegisterIntent,
+                setPendingRegisterIntent,
+              }}
+            />
+          </div>
+        )}
+
+        <div className="flex flex-row items-center gap-3">
+          {chain && (
+            <div className="hidden md:block">
+              <WalletSection {...{ chain, address, isConnected, web3Loaded }} />
+            </div>
+          )}
+          <div className="hidden md:block">
+            <Options />
+          </div>
+        </div>
+      </div>
 
       {menuOpen && chain && (
         <MobileMenu
@@ -130,17 +143,6 @@ export default function Header({ policy }: IHeader) {
           }}
         />
       )}
-
-      <div className="flex flex-row items-center gap-3">
-        {chain && (
-          <div className="hidden md:block">
-            <WalletSection {...{ chain, address, isConnected, web3Loaded }} />
-          </div>
-        )}
-        <div className="hidden md:block">
-          <Options />
-        </div>
-      </div>
     </header>
   );
 }
