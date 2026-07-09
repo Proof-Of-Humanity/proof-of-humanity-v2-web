@@ -111,9 +111,6 @@ const TIMELINE_STYLES: Record<
   },
 };
 
-// Figma "timeline-steps": every milestone renders its own icon, colored with
-// the status palette. Kinds without an entry (appeal, withdrawn) keep the
-// plain dot — the design defines no icon for them.
 const TIMELINE_ICONS: Partial<
   Record<
     TimelineItem["kind"],
