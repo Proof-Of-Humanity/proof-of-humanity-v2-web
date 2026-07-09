@@ -1,4 +1,5 @@
 import Link, { LinkProps } from "next/link";
+import { twMerge } from "tailwind-merge";
 
 const ExternalLink: React.FC<
   LinkProps &
@@ -8,7 +9,11 @@ const ExternalLink: React.FC<
     }
 > = ({ children, className, ...props }) => (
   <Link
-    className={className}
+    className={twMerge(
+      // Kill browser default blue link/hover unless caller overrides.
+      "text-primaryText hover:text-orange transition-colors duration-200",
+      className,
+    )}
     rel="noopener noreferrer"
     target="_blank"
     {...props}

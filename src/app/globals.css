@@ -114,19 +114,20 @@
     transform: translateX(-50%) rotate(45deg);
   }
 
-  /* Circle chrome: rest = dark surface + peach glyph; hover = orange fill + white glyph */
+  /* Circle chrome: rest = dark surface + peach glyph; hover = orange fill + white glyph.
+     !important so ExternalLink's default hover:text-orange does not reintroduce link blue/orange on the glyph. */
   .icon-btn {
     @apply flex items-center justify-center rounded-full border transition-colors duration-200;
     background: #2f333d;
     border-color: #3a3e48;
-    color: #ffb08a;
+    color: #ffb08a !important;
   }
 
   .icon-btn:hover,
   .icon-btn:focus-visible {
     background: #ff9966;
     border-color: #ff9966;
-    color: #ffffff;
+    color: #ffffff !important;
   }
 
   .icon-btn svg {
@@ -259,11 +260,8 @@
   }
 
   .request-card-shell:hover {
-    border-color: rgba(255, 138, 102, 0.32);
-    box-shadow:
-      0 28px 70px rgba(0, 0, 0, 0.34),
-      0 0 0 1px rgba(255, 138, 102, 0.08),
-      inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    border-color: #ffb08a;
+    box-shadow: 3px 9px 12px rgba(255, 153, 102, 0.12);
   }
 
   .request-card-overlay {
