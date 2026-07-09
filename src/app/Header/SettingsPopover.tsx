@@ -39,26 +39,29 @@ const SettingsPopover: React.FC = () => {
   const showUnreadDot = isVerified && !hasVerifiedEmail;
 
   return (
-    <div className="flex h-5 items-center">
+    <div className="flex h-9 items-center">
       <Popover
         trigger={
-          <span
+          <button
+            type="button"
             onClick={toggleSettingsPopover}
-            className="relative mx-2 inline-flex h-5 w-5 cursor-pointer items-center justify-center"
+            className="relative ml-2 flex h-9 w-9 cursor-pointer items-center justify-center transition-opacity duration-200 hover:opacity-80"
+            aria-label="Open notification settings"
           >
+            {/* notifications.svg is authored at 32×32; 36 matches other header badges */}
             <Image
               alt="notifications"
               src="/logo/notifications.svg"
-              height={20}
-              width={20}
+              height={36}
+              width={36}
             />
             {showUnreadDot && (
               <span
                 aria-hidden="true"
-                className="bg-status-removed absolute -right-1 -top-1 h-2.5 w-2.5 rounded-full border-2 border-white"
+                className="bg-status-removed absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-full border-2 border-white"
               />
             )}
-          </span>
+          </button>
         }
         open={isOpen}
         onClose={closeAndDiscardChanges}
