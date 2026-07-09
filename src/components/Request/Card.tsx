@@ -7,6 +7,7 @@ import { Suspense } from "react";
 import { Address, Hash } from "viem";
 import ChainLogo from "components/ChainLogo";
 import ErrorBoundary from "components/ErrorBoundary";
+import StatusIcon from "components/StatusIcon";
 import { WinnerClaimFragment } from "generated/graphql";
 import useIPFS from "hooks/useIPFS";
 import { EvidenceFile, RegistrationFile } from "types/docs";
@@ -143,6 +144,7 @@ function Card({
       <div className="justify-between font-light">
         <div className={`h-1 w-full bg-status-${statusColor} rounded-t`} />
         <div className="centered p-2 font-medium">
+          <StatusIcon status={requestStatus} className="mr-1.5" />
           <span className={`text-status-${statusColor}`}>
             {getStatusLabel(requestStatus)}
           </span>

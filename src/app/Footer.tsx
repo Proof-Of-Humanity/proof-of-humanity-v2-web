@@ -30,8 +30,12 @@ const Footer: React.FC = () => (
       className="flex items-center gap-2 text-sm"
       href="https://kleros.io/"
     >
-      BUILT BY{" "}
-      <Image alt="kleros" src="/logo/kleros.svg" width={96} height={24} />
+      <Image
+        alt="built by kleros"
+        src="/logo/built-by-kleros.svg"
+        width={153}
+        height={24}
+      />
     </ExternalLink>
 
     <div className="flex items-center gap-3">
