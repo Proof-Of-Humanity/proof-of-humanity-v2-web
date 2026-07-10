@@ -40,6 +40,7 @@ interface ReviewProps {
   emailStatus?: EmailSubmissionStatus;
   retryEmail?: () => void;
   skipEmail?: () => void;
+  isRenewal: boolean;
 }
 
 function Review({
@@ -57,6 +58,7 @@ function Review({
   emailStatus = "idle",
   retryEmail,
   skipEmail,
+  isRenewal,
 }: ReviewProps) {
   const selfFunded = selfFunded$.use();
   const submitForFree = submitForFree$.use();
@@ -99,12 +101,12 @@ function Review({
   return (
     <>
       <span className="text-primaryText my-4 flex w-full flex-col text-2xl font-bold">
-        Finalize your registration
+        {isRenewal ? "Finalize your renewal" : "Finalize your registration"}
         <div className="divider mt-4 w-2/3" />
       </span>
 
       {/* Warning callout */}
-      <div className="border-orange bg-lightOrange mb-6 flex justify-center rounded-lg border px-4 py-4 text-center transition-colors duration-200 hover:bg-[#fbe9e9]">
+      <div className="review-warning-callout border-orange bg-lightOrange mb-6 flex justify-center rounded-lg border px-4 py-4 text-center">
         <div className="flex max-w-2xl flex-col items-center">
           <InfoIcon className="text-status-rejected h-7 w-7 stroke-current stroke-2" />
           <div className="mt-2">
@@ -248,11 +250,11 @@ function Review({
         />
         <Field label="Name" value={name} disabled />
         <Field label="Account" value={address} disabled />
-        <Field label="Email" value={email} disabled />
+        {email ? <Field label="Email" value={email} disabled /> : null}
 
         <Label className="!mt-2">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
-            <span>Initial deposit</span>
+            <span>{isRenewal ? "Deposit" : "Initial deposit"}</span>
             {balance && (
               <span className="text-primaryText text-sm normal-case sm:text-base">
                 Your balance:{" "}
@@ -355,10 +357,11 @@ function Review({
 
           <span className="mt-1 text-blue-500">
             If you don&apos;t fund the deposit now, PoH supporters can cover it
-            for you. The deposit is reimbursed after successful registration and
-            lost only if the profile is rejected.
+            for you. The deposit is reimbursed after successful{" "}
+            {isRenewal ? "renewal" : "registration"} and lost only if the
+            profile is rejected.
           </span>
-          {pohId.toLowerCase() !== address?.toLowerCase() ? (
+          {!isRenewal && pohId.toLowerCase() !== address?.toLowerCase() ? (
             <span className="text-orange mt-2">
               <span className="font-semibold underline">Beware</span>: Your PoH
               ID differs from the wallet address connected to your account. If

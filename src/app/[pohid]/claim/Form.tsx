@@ -88,7 +88,7 @@ export default function Form(props: FormProps) {
     return (
       <span className="text-primaryText m-auto flex flex-col items-center gap-2 py-16 text-center">
         <span className="font-semibold">
-          Registration data for this network is currently unavailable.
+          Request data for this network is currently unavailable.
         </span>
         <span className="text-secondaryText text-sm">
           Please switch to another network or try again later.
@@ -115,6 +115,7 @@ function FormContent({
   const { mutateAsync: submitEmail } = useSubmitEmail();
   const currentContractData = contractData[chainId]!;
   const currentBaseDeposit = BigInt(currentContractData.baseDeposit);
+  const isRenewal = !!renewal;
   const syncedFundingChainId = useRef<SupportedChainId | null>(null);
 
   const { data: currentArbitrationCost } = useReadContract({
@@ -284,6 +285,7 @@ function FormContent({
       return;
     }
 
+    const requestType = isRenewal ? "renewal" : "registration";
     state$.uri.set("");
     loading.start("Uploading media");
     try {
@@ -303,7 +305,7 @@ function FormContent({
         photo: photoUri,
         video: videoUri,
       });
-      let fileURI =
+      const fileURI =
         uploadCache.current.file?.json === fileJson
           ? uploadCache.current.file.uri
           : await uploadToIPFS(
@@ -340,7 +342,7 @@ function FormContent({
         };
 
       if (!registrationUri) {
-        toast.error("Failed to upload registration.");
+        toast.error(`Failed to upload ${requestType}.`);
         loading.stop();
         return;
       }
@@ -348,7 +350,7 @@ function FormContent({
       state$.uri.set(registrationUri);
     } catch (error) {
       toast.error(
-        `Failed to upload registration : ${error instanceof Error ? error.message : "Unknown error"}`,
+        `Failed to upload ${requestType}: ${error instanceof Error ? error.message : "Unknown error"}`,
       );
       loading.stop();
       return;
@@ -515,6 +517,7 @@ function FormContent({
               advance={() => step$.set(Step.photo)}
               state$={state$}
               email$={email$}
+              isRenewal={isRenewal}
             />
           ),
           [Step.photo]: () => (
@@ -547,6 +550,7 @@ function FormContent({
               emailStatus={emailStatus}
               retryEmail={retryNotificationEmail}
               skipEmail={skipNotificationEmail}
+              isRenewal={isRenewal}
             />
           ),
           [Step.finalized]: () => (
@@ -558,6 +562,7 @@ function FormContent({
               pohId={params.pohid as string}
               email={email$.peek().trim()}
               emailStatus={emailStatus}
+              isRenewal={isRenewal}
             />
           ),
         }}
