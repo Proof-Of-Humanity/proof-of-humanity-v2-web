@@ -11,6 +11,7 @@ interface FinalizedProps {
   /** Notification email captured during the Info step, if any. */
   email?: string;
   emailStatus?: EmailSubmissionStatus;
+  isRenewal: boolean;
 }
 
 const Finalized: React.FC<FinalizedProps> = ({
@@ -19,6 +20,7 @@ const Finalized: React.FC<FinalizedProps> = ({
   pohId,
   email,
   emailStatus = "idle",
+  isRenewal,
 }) => {
   const days = challengePeriodDuration / 86400;
 
@@ -79,41 +81,53 @@ const Finalized: React.FC<FinalizedProps> = ({
       <span className="text-primaryText font-bold">Fund Deposit:</span> Submit
       your full security deposit (if not done already).{" "}
       <span className="text-secondaryText text-sm">
-        Fully refunded once you attain the 'Verified Human' status, or slashed
-        if your profile is 'Rejected' due to failure to follow our submission
-        policy.
+        Fully refunded after the request succeeds, or slashed if your profile is
+        'Rejected' due to failure to follow our submission policy.
       </span>
     </div>,
     <div className="text-secondaryText">
       <span className="text-primaryText font-bold">Wait {days} Days:</span> Once
       the above steps are done, a security timer starts.
     </div>,
-    <div className="text-secondaryText">
-      <span className="text-primaryText font-bold">Claim:</span> Return to your
-      profile to register it, and claim your airdrop{" "}
-      <Link
-        href={`/app/pnk-airdrop`}
-        className="text-orange font-semibold hover:text-orange-400"
-      >
-        here.
-      </Link>
-    </div>,
+    isRenewal ? (
+      <div className="text-secondaryText">
+        <span className="text-primaryText font-bold">Complete Renewal:</span>{" "}
+        Return to your profile after the timer ends to finalize the renewal.
+      </div>
+    ) : (
+      <div className="text-secondaryText">
+        <span className="text-primaryText font-bold">Claim:</span> Return to
+        your profile to register it, and claim your airdrop{" "}
+        <Link
+          href={`/app/pnk-airdrop`}
+          className="text-orange font-semibold hover:text-orange-400"
+        >
+          here.
+        </Link>
+      </div>
+    ),
   );
 
   return (
     <div className="text-primaryText my-8 flex w-full flex-col items-center">
       <div className="text-center text-2xl font-normal">
-        <span>
-          🎉 Welcome to
-          <strong className="ml-2 font-semibold uppercase">
-            Proof of Humanity
-          </strong>
-          🎉
-        </span>
+        {isRenewal ? (
+          <span>Renewal request submitted</span>
+        ) : (
+          <span>
+            🎉 Welcome to
+            <strong className="ml-2 font-semibold uppercase">
+              Proof of Humanity
+            </strong>
+            🎉
+          </span>
+        )}
       </div>
 
       <div className="mt-6 flex items-center text-lg">
-        Your profile starts with the status:
+        {isRenewal
+          ? "Your renewal request starts with the status:"
+          : "Your profile starts with the status:"}
         <span className="bg-status-vouching ml-2 rounded-full px-3 py-1 text-base font-semibold text-white">
           Needs Vouch
         </span>

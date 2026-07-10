@@ -4,8 +4,7 @@ import { getClaimerData } from "data/claimer";
 import { OffChainVouch } from "data/request";
 import type { ClaimerQuery, Vouch as VouchQuery } from "generated/graphql";
 import { cache } from "react";
-import { EvidenceFile, RegistrationFile } from "types/docs";
-import { ipfsFetch } from "utils/ipfs";
+import { getRegistrationPhoto } from "data/evidence";
 import { Address, Hash } from "viem";
 import type {
   RequestChain,
@@ -213,18 +212,8 @@ const getVouchProfile = (
  * @dev Returns undefined when the profile evidence or registration file cannot
  * be loaded, preserving the identicon fallback.
  */
-const getVouchPhoto = async (evidenceUri: string | undefined) => {
-  if (!evidenceUri) return undefined;
-
-  try {
-    const evidence = await ipfsFetch<EvidenceFile>(evidenceUri);
-    if (!evidence?.fileURI) return undefined;
-
-    return (await ipfsFetch<RegistrationFile>(evidence.fileURI)).photo;
-  } catch {
-    return undefined;
-  }
-};
+const getVouchPhoto = async (evidenceUri: string | undefined) =>
+  (await getRegistrationPhoto(evidenceUri)) ?? undefined;
 
 /**
  * @notice Builds one display-ready voucher avatar item.

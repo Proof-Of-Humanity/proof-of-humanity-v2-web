@@ -23,7 +23,7 @@ export default function ClaimError({
           Claim page unavailable
         </div>
         <div className="text-secondaryText mt-3 text-sm leading-6 sm:text-base">
-          We couldn&apos;t load the registration form right now. Try again in a
+          We couldn&apos;t load the request form right now. Try again in a
           moment.
         </div>
         <button
