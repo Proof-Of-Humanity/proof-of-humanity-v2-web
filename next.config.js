@@ -48,11 +48,35 @@ const nextConfig = {
         fs: false,
       };
     }
-    config.module.rules.push({
-      test: /\.svg$/i,
-      issuer: /\.[jt]sx?$/,
-      use: ["@svgr/webpack"],
-    });
+
+    // Next treats .svg as a static asset by default. Exclude it from that
+    // pipeline and run SVGR so `import Icon from "*.svg"` yields a component.
+    // See https://react-svgr.com/docs/next/
+    const fileLoaderRule = config.module.rules.find(
+      (rule) => rule.test instanceof RegExp && rule.test.test(".svg"),
+    );
+
+    if (fileLoaderRule) {
+      config.module.rules.push({
+        ...fileLoaderRule,
+        test: /\.svg$/i,
+        resourceQuery: /url/, // *.svg?url
+      });
+      config.module.rules.push({
+        test: /\.svg$/i,
+        issuer: fileLoaderRule.issuer,
+        resourceQuery: {
+          not: [...(fileLoaderRule.resourceQuery?.not || []), /url/],
+        },
+        use: ["@svgr/webpack"],
+      });
+      fileLoaderRule.exclude = /\.svg$/i;
+    } else {
+      config.module.rules.push({
+        test: /\.svg$/i,
+        use: ["@svgr/webpack"],
+      });
+    }
 
     return config;
   },
