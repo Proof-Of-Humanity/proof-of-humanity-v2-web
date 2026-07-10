@@ -2,6 +2,7 @@
 
 import { twMerge } from "tailwind-merge";
 import { useState } from "react";
+import MediaFallback from "./MediaFallback";
 
 interface VideoThumbnailProps {
   src: string;
@@ -25,12 +26,14 @@ export default function VideoThumbnail({
       )}
     >
       {isLoading && !hasError ? (
-        <div className="bg-grey absolute inset-0 animate-pulse" />
+        <MediaFallback className="absolute inset-0" />
       ) : null}
       {hasError ? (
-        <div className="bg-grey text-secondaryText absolute inset-0 flex items-center justify-center p-4 text-center text-sm">
-          Video unavailable
-        </div>
+        <MediaFallback
+          error
+          label="Video unavailable"
+          className="absolute inset-0"
+        />
       ) : null}
       <video
         className={twMerge(

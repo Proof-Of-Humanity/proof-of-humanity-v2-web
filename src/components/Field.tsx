@@ -2,7 +2,7 @@ import cn from "classnames";
 import { InputHTMLAttributes, ReactNode, TextareaHTMLAttributes } from "react";
 import Label from "./Label";
 
-type FieldStatus = "success" | "warning" | "error";
+type FieldStatus = "error";
 
 type FieldProps = TextareaHTMLAttributes<HTMLTextAreaElement> &
   InputHTMLAttributes<HTMLInputElement> & {
@@ -13,14 +13,10 @@ type FieldProps = TextareaHTMLAttributes<HTMLTextAreaElement> &
   };
 
 const statusControl: Record<FieldStatus, string> = {
-  success: "flat-control-success",
-  warning: "flat-control-warning",
   error: "flat-control-error",
 };
 
 const statusMessage: Record<FieldStatus, string> = {
-  success: "text-status-registered",
-  warning: "text-status-challenged",
   error: "text-status-rejected",
 };
 

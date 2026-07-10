@@ -161,10 +161,10 @@ export default function SubgraphsStatus() {
     return () => clearInterval(id);
   }, [visibleStatuses.length]);
 
-  if (visibleStatuses.length === 0) return null;
+  const [firstStatus] = visibleStatuses;
+  if (!firstStatus) return null;
 
-  const activeStatus = visibleStatuses[activeIndex] ?? visibleStatuses[0];
-  if (!activeStatus) return null;
+  const activeStatus = visibleStatuses[activeIndex] ?? firstStatus;
 
   return (
     <div

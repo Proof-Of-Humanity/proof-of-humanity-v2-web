@@ -2,7 +2,6 @@
 import React from "react";
 import Image from "next/image";
 import { Integration } from "types/integrations";
-import { useIsDarkMode } from "hooks/useDarkMode";
 
 interface IntegrationHeaderProps {
   integration: Integration;
@@ -11,9 +10,7 @@ interface IntegrationHeaderProps {
 export default function IntegrationHeader({
   integration,
 }: IntegrationHeaderProps) {
-  const isDark = useIsDarkMode();
-  const src =
-    isDark && integration.darkLogo ? integration.darkLogo : integration.logo;
+  const src = integration.darkLogo || integration.logo;
   const logoWidth = integration.logoWidth || 164;
   const logoHeight = integration.logoHeight || 48;
 

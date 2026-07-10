@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import LoadableImage from "./LoadableImage";
+import MediaFallback from "./MediaFallback";
 
 interface ImageProps {
   uri: string;
@@ -67,12 +68,14 @@ export default function Previewed({
               onClick={(event) => event.stopPropagation()}
             >
               {isVideoLoading && !hasVideoError ? (
-                <div className="bg-grey flex aspect-video w-[min(90vw,900px)] animate-pulse items-center justify-center" />
+                <MediaFallback className="aspect-video w-[min(90vw,900px)]" />
               ) : null}
               {hasVideoError ? (
-                <div className="bg-grey text-secondaryText flex aspect-video w-[min(90vw,900px)] items-center justify-center p-4 text-center text-sm">
-                  Video unavailable
-                </div>
+                <MediaFallback
+                  error
+                  label="Video unavailable"
+                  className="aspect-video w-[min(90vw,900px)]"
+                />
               ) : null}
               <video
                 className={`max-h-[90vh] max-w-[90vw] rounded bg-black ${
@@ -92,7 +95,6 @@ export default function Previewed({
               <LoadableImage
                 alt="Preview"
                 className="max-h-[90vh] max-w-[90vw] object-contain"
-                fallbackLabel="Image unavailable"
                 src={uri}
               />
             </div>

@@ -3,6 +3,7 @@
 /* eslint-disable @next/next/no-img-element */
 import { useEffect, useRef, useState } from "react";
 import { twMerge } from "tailwind-merge";
+import MediaFallback from "./MediaFallback";
 
 interface LoadableImageProps {
   src: string;
@@ -35,18 +36,9 @@ export default function LoadableImage({
 
   return (
     <>
-      {isLoading && !hasError ? (
-        <div className={twMerge("bg-grey animate-pulse", className)} />
-      ) : null}
+      {isLoading && !hasError ? <MediaFallback className={className} /> : null}
       {hasError ? (
-        <div
-          className={twMerge(
-            "bg-grey text-secondaryText flex items-center justify-center p-4 text-center text-sm",
-            className,
-          )}
-        >
-          {fallbackLabel}
-        </div>
+        <MediaFallback error label={fallbackLabel} className={className} />
       ) : null}
       <img
         ref={imageRef}

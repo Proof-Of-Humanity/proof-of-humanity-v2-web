@@ -7,6 +7,7 @@ import { Address, Hash } from "viem";
 import ChainLogo from "components/ChainLogo";
 import ErrorBoundary from "components/ErrorBoundary";
 import LoadableImage from "components/LoadableImage";
+import MediaFallback from "components/MediaFallback";
 import { WinnerClaimFragment } from "generated/graphql";
 import useIPFS from "hooks/useIPFS";
 import { EvidenceFile, RegistrationFile } from "types/docs";
@@ -19,10 +20,11 @@ import {
 } from "utils/status";
 import { prettifyId } from "utils/identifier";
 import { safeIpfsUrl } from "utils/ipfs";
+import { getDisplayName } from "utils/name";
 import { RequestsQueryItem } from "./Grid";
 import StatusBadge from "./StatusBadge";
 import InfoIcon from "icons/info.svg";
-import { Suspense, type PointerEvent } from "react";
+import type { PointerEvent } from "react";
 
 interface ContentProps {
   chainId: SupportedChainId;
@@ -58,17 +60,6 @@ const getEvidenceUri = ({
       humanity.winnerClaim.at(0)?.evidenceGroup.evidence.at(-1)?.uri
     : evidence.at(-1)?.uri;
 
-const getDisplayName = (
-  data: RegistrationFile | undefined,
-  claimerName?: string | null,
-) => {
-  if (data?.name && claimerName && data.name !== claimerName) {
-    return `${data.name} (aka ${claimerName})`;
-  }
-
-  return claimerName || data?.name || "";
-};
-
 const updateCardHoverParallax = (event: PointerEvent<HTMLAnchorElement>) => {
   const rect = event.currentTarget.getBoundingClientRect();
   const x = ((event.clientX - rect.left) / rect.width - 0.5) * -18;
@@ -88,10 +79,6 @@ const resetCardHoverParallax = (event: PointerEvent<HTMLAnchorElement>) => {
   event.currentTarget.style.removeProperty("--request-card-hover-x");
   event.currentTarget.style.removeProperty("--request-card-hover-y");
 };
-
-const LoadingFallback = () => (
-  <div className="bg-grey absolute inset-0 animate-pulse" />
-);
 
 const ErrorFallback: React.FC<{ claimer?: { name?: string | null } }> = ({
   claimer,
@@ -155,7 +142,7 @@ const Content = ({
           src={photo}
         />
       ) : isMediaLoading ? (
-        <div className="bg-grey absolute inset-0 animate-pulse" />
+        <MediaFallback className="absolute inset-0" />
       ) : (
         <div className="bg-grey absolute inset-0" />
       )}
@@ -210,18 +197,16 @@ function Card({
           fallback={<ErrorFallback claimer={claimer} />}
           resetSwitch={evidence.at(0)?.uri}
         >
-          <Suspense fallback={<LoadingFallback />}>
-            <Content
-              chainId={chainId}
-              claimer={claimer}
-              evidence={evidence}
-              enableMediaParallax={enableMediaParallax}
-              humanity={humanity}
-              requester={requester}
-              revocation={revocation}
-              registrationEvidenceRevokedReq={registrationEvidenceRevokedReq}
-            />
-          </Suspense>
+          <Content
+            chainId={chainId}
+            claimer={claimer}
+            evidence={evidence}
+            enableMediaParallax={enableMediaParallax}
+            humanity={humanity}
+            requester={requester}
+            revocation={revocation}
+            registrationEvidenceRevokedReq={registrationEvidenceRevokedReq}
+          />
         </ErrorBoundary>
       </div>
 

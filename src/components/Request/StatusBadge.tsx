@@ -1,4 +1,3 @@
-import cn from "classnames";
 import { twMerge } from "tailwind-merge";
 import StatusIcon from "components/StatusIcon";
 import type { RequestStatus } from "utils/status";
@@ -6,7 +5,7 @@ import type { RequestStatus } from "utils/status";
 interface StatusBadgeProps {
   color: string;
   label: string;
-  status?: RequestStatus;
+  status: RequestStatus;
   large?: boolean;
   className?: string;
 }
@@ -27,30 +26,7 @@ const StatusBadge: React.FC<StatusBadgeProps> = ({
       className,
     )}
   >
-    {status !== undefined ? (
-      <StatusIcon status={status} className={large ? "h-4 w-4" : "h-3 w-3"} />
-    ) : (
-      <span
-        className={cn(
-          "relative flex shrink-0 items-center justify-center",
-          large ? "h-2.5 w-2.5" : "h-2 w-2",
-          `text-status-${color}`,
-        )}
-      >
-        <span
-          className={cn(
-            "absolute rounded-full bg-current opacity-30 blur-[3px]",
-            large ? "h-4 w-4" : "h-3.5 w-3.5",
-          )}
-        />
-        <span
-          className={cn(
-            "relative rounded-full bg-current",
-            large ? "h-2.5 w-2.5" : "h-2 w-2",
-          )}
-        />
-      </span>
-    )}
+    <StatusIcon status={status} className={large ? "h-4 w-4" : "h-3 w-3"} />
     <span className={`text-status-${color}`}>{label}</span>
   </span>
 );

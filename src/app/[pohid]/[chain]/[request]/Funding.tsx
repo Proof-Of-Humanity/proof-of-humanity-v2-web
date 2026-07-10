@@ -102,7 +102,7 @@ const FundButton: React.FC<FundButtonProps> = ({
   const insufficientFunds = useMemo(() => {
     const available = balanceData?.value ?? 0n;
     return inputAmount > available;
-  }, [inputAmount, balanceData, addedFundInput]);
+  }, [inputAmount, balanceData]);
 
   const exceedsRemaining = inputAmount != null && inputAmount > remainingAmount;
   const isReconciling = pendingAction !== null;
@@ -177,19 +177,15 @@ const FundButton: React.FC<FundButtonProps> = ({
             onChange={(e) => setAddedFundInput(e.target.value)}
             disabled={isLoading}
           />
-          <div className="group relative mt-6 flex justify-center">
+          <div className="mt-6 flex justify-center">
             <ActionButton
               disabled={isDisabled}
               isLoading={isLoading}
               onClick={handleSubmit}
               label={loadingMessage || "Fund request"}
-              className="w-auto"
+              className="mx-auto w-auto"
+              tooltip={getTooltipMessage()}
             />
-            {getTooltipMessage() && (
-              <span className="pointer-events-none absolute bottom-full left-1/2 z-10 mb-2 w-max max-w-[240px] -translate-x-1/2 whitespace-normal tooltip-surface text-center text-sm opacity-0 transition-opacity group-hover:opacity-100">
-                {getTooltipMessage()}
-              </span>
-            )}
           </div>
         </div>
       </Modal>

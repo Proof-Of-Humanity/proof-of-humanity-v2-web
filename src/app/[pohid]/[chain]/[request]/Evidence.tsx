@@ -225,7 +225,16 @@ export default function Evidence({
           closeModal();
         },
       }),
-      [address, applyAction, closeModal, loading],
+      [
+        address,
+        applyAction,
+        closeModal,
+        loading,
+        state$.description,
+        state$.fileURI,
+        state$.name,
+        state$.uri,
+      ],
     ),
   );
 
@@ -292,19 +301,19 @@ export default function Evidence({
     <Accordion title="Evidence">
       {requestIndex >= 0 && (
         <>
-          <div className="group relative mr-2 mt-4 self-end">
+          <div className="mr-2 mt-4 self-end">
             <ActionButton
               disabled={isReconciling || isEvidenceDisabled}
               onClick={() => setModalOpen(true)}
               label="Add Evidence"
-            />
-            {(isReconciling || isEvidenceDisabled) && (
-              <span className="pointer-events-none absolute bottom-full left-1/2 z-10 mb-2 w-max max-w-[240px] -translate-x-1/2 whitespace-normal tooltip-surface text-center text-sm opacity-0 transition-opacity group-hover:opacity-100">
-                {isReconciling
+              tooltip={
+                isReconciling
                   ? "Syncing"
-                  : `Switch your chain above to ${idToChain(chainReq.id)?.name || "the correct chain"}`}
-              </span>
-            )}
+                  : isEvidenceDisabled
+                    ? `Switch your chain above to ${idToChain(chainReq.id)?.name || "the correct chain"}`
+                    : undefined
+              }
+            />
           </div>
           <Modal
             formal

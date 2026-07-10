@@ -32,7 +32,7 @@ function ProfileMainCardSkeleton() {
     <div className="mb-3 mt-4 flex items-center justify-center">
       <div
         aria-label="Loading profile card"
-        className="h-96 w-80 max-w-full animate-pulse rounded bg-slate-200"
+        className="aspect-square w-80 max-w-full animate-pulse rounded-card bg-slate-200"
       />
     </div>
   );
@@ -49,43 +49,45 @@ async function ProfileMainCard({
 
     return (
       <div className="mb-3 mt-4 flex items-center justify-center">
-        <Card
-          chainId={mainCardRequest.chainId}
-          claimer={mainCardRequest.identityClaimer}
-          evidence={mainCardRequest.identityEvidenceGroup.evidence}
-          humanity={{
-            id: pohId,
-            registration:
-              humanity[mainCardRequest.chainId]?.humanity?.registration,
-            winnerClaim: [
-              {
-                claimer: mainCardRequest.identityClaimer,
-                creationTime: mainCardRequest.creationTime,
-                index: mainCardRequest.index,
-                lastStatusChange: mainCardRequest.lastStatusChange,
-                requester: mainCardRequest.identityRequester,
-                resolutionTime:
-                  mainCardRequest.lastStatusChange ||
-                  mainCardRequest.creationTime ||
-                  0,
-                evidenceGroup: {
-                  evidence: mainCardRequest.identityEvidenceGroup.evidence,
+        <div className="w-80 max-w-full">
+          <Card
+            chainId={mainCardRequest.chainId}
+            claimer={mainCardRequest.identityClaimer}
+            evidence={mainCardRequest.identityEvidenceGroup.evidence}
+            humanity={{
+              id: pohId,
+              registration:
+                humanity[mainCardRequest.chainId]?.humanity?.registration,
+              winnerClaim: [
+                {
+                  claimer: mainCardRequest.identityClaimer,
+                  creationTime: mainCardRequest.creationTime,
+                  index: mainCardRequest.index,
+                  lastStatusChange: mainCardRequest.lastStatusChange,
+                  requester: mainCardRequest.identityRequester,
+                  resolutionTime:
+                    mainCardRequest.lastStatusChange ||
+                    mainCardRequest.creationTime ||
+                    0,
+                  evidenceGroup: {
+                    evidence: mainCardRequest.identityEvidenceGroup.evidence,
+                  },
                 },
-              },
-            ],
-          }}
-          index={mainCardRequest.index}
-          requester={mainCardRequest.identityRequester}
-          revocation={mainCardRequest.revocation}
-          registrationEvidenceRevokedReq={
-            mainCardRequest.registrationEvidenceRevokedReq
-          }
-          requestStatus={
-            pageState === "TRANSFER_PENDING"
-              ? RequestStatus.RESOLVED_CLAIM
-              : mainCardRequest.requestStatus
-          }
-        />
+              ],
+            }}
+            index={mainCardRequest.index}
+            requester={mainCardRequest.identityRequester}
+            revocation={mainCardRequest.revocation}
+            registrationEvidenceRevokedReq={
+              mainCardRequest.registrationEvidenceRevokedReq
+            }
+            requestStatus={
+              pageState === "TRANSFER_PENDING"
+                ? RequestStatus.RESOLVED_CLAIM
+                : mainCardRequest.requestStatus
+            }
+          />
+        </div>
       </div>
     );
   } catch {
