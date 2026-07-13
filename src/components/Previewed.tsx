@@ -34,10 +34,12 @@ export default function Previewed({
     setIsOpen(true);
   };
   const handleVideoError = () => {
-    if (!isVideo || !openVideoInNewTabOnError) return;
+    if (!isVideo) return;
     setIsVideoLoading(false);
     setHasVideoError(true);
-    setIsOpen(false);
+    if (openVideoInNewTabOnError) {
+      setIsOpen(false);
+    }
   };
 
   return (

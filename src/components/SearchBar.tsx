@@ -4,7 +4,10 @@ import cn from "classnames";
 import { InputHTMLAttributes } from "react";
 import SearchIcon from "icons/SearchMajor.svg";
 
-type SearchBarProps = Omit<InputHTMLAttributes<HTMLInputElement>, "onChange"> & {
+type SearchBarProps = Omit<
+  InputHTMLAttributes<HTMLInputElement>,
+  "onChange"
+> & {
   onSearch: (value: string) => void;
   className?: string;
 };
@@ -17,10 +20,11 @@ function SearchBar({ onSearch, className, ...props }: SearchBarProps) {
         className,
       )}
     >
-      <SearchIcon className="text-peach h-5 w-5 shrink-0 fill-current" />
+      <SearchIcon className="h-5 w-5 shrink-0 fill-current text-peach" />
       <input
         className="text-primaryText placeholder:text-secondaryText w-full border-none bg-transparent text-base outline-none focus:ring-0"
         placeholder="Search by name"
+        aria-label="Search"
         onChange={(e) => onSearch(e.target.value)}
         {...props}
       />

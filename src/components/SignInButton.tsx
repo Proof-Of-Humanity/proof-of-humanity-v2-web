@@ -19,7 +19,11 @@ const SignInButton: React.FC<SignInButtonProps> = ({
 
   const handleSignIn = async () => {
     if (!isConnected) {
-      await modal.open({ view: "Connect" });
+      try {
+        await modal.open({ view: "Connect" });
+      } catch {
+        // Modal dismissed or failed to open; no action needed.
+      }
       return;
     }
 

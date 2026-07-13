@@ -4,13 +4,17 @@ import Label from "./Label";
 
 type FieldStatus = "error";
 
-type FieldProps = TextareaHTMLAttributes<HTMLTextAreaElement> &
-  InputHTMLAttributes<HTMLInputElement> & {
-    textarea?: boolean;
-    label?: ReactNode;
-    status?: FieldStatus;
-    message?: ReactNode;
-  };
+type FieldCommonProps = {
+  label?: ReactNode;
+  status?: FieldStatus;
+  message?: ReactNode;
+};
+
+type FieldProps =
+  | (InputHTMLAttributes<HTMLInputElement> &
+      FieldCommonProps & { textarea?: false })
+  | (TextareaHTMLAttributes<HTMLTextAreaElement> &
+      FieldCommonProps & { textarea: true });
 
 const statusControl: Record<FieldStatus, string> = {
   error: "flat-control-error",
@@ -45,7 +49,7 @@ function Field({
               "focus:ring-0",
               className,
             )}
-            {...props}
+            {...(props as TextareaHTMLAttributes<HTMLTextAreaElement>)}
           />
         ) : (
           <input
@@ -54,7 +58,7 @@ function Field({
               "focus:ring-0 focus-visible:outline-none",
               className,
             )}
-            {...props}
+            {...(props as InputHTMLAttributes<HTMLInputElement>)}
           />
         )}
       </div>

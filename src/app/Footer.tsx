@@ -7,22 +7,22 @@ import SocialXIcon from "icons/SocialX.svg";
 
 const SOCIALS = [
   {
-    alt: "snapshot",
+    alt: "Snapshot",
     href: "https://snapshot.org/#/poh.eth/",
     Icon: SocialSnapshotIcon,
   },
   {
-    alt: "github",
+    alt: "GitHub",
     href: "https://github.com/proof-of-humanity",
     Icon: SocialGitHubIcon,
   },
   {
-    alt: "x",
+    alt: "X",
     href: "https://twitter.com/proofofhumanity",
     Icon: SocialXIcon,
   },
   {
-    alt: "telegram",
+    alt: "Telegram",
     href: "https://t.me/proofhumanity",
     Icon: SocialTelegramIcon,
   },

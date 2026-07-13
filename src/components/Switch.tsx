@@ -14,14 +14,12 @@ function Switch({ checked, onChange, label, className, small }: SwitchProps) {
       type="button"
       role="switch"
       aria-checked={checked}
-      aria-label={label}
+      aria-label={label ?? "Toggle"}
       onClick={() => onChange(!checked)}
       className={cn(
         "relative shrink-0 rounded-full border transition-colors duration-200 ease-premium",
         small ? "h-4 w-8" : "h-6 w-12",
-        checked
-          ? "border-[#FFB08A] bg-[#FFB08A]"
-          : "border-[#3A3E48] bg-[#292D35]",
+        checked ? "border-peach bg-peach" : "border-[#3A3E48] bg-[#292D35]",
         className,
       )}
     >

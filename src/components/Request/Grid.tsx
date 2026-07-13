@@ -356,9 +356,9 @@ function RequestsGrid() {
       </div>
 
       <div className="request-grid">
-        {requests.map((request, i) => (
+        {requests.map((request) => (
           <Card
-            key={i}
+            key={`${request.chainId}-${request.humanity.id}-${request.index}`}
             aspectRatio="wide"
             chainId={request.chainId}
             index={request.index}

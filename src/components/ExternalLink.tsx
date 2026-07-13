@@ -14,9 +14,9 @@ const ExternalLink: React.FC<
       "text-primaryText hover:text-orange transition-colors duration-200",
       className,
     )}
+    {...props}
     rel="noopener noreferrer"
     target="_blank"
-    {...props}
   >
     {children}
   </Link>

@@ -9,6 +9,7 @@ import { useEffect, useRef, useState } from "react";
 import useSWR from "swr";
 import { useAccount, useChainId, useConfig } from "wagmi";
 import useWeb3Loaded from "hooks/useWeb3Loaded";
+import { isRegisterActive } from "utils/identifier";
 import DesktopNavigation from "./DesktopNavigation";
 import MobileMenu from "./MobileMenu";
 import Options from "./Options";
@@ -85,7 +86,7 @@ export default function Header({ policy }: IHeader) {
               pendingRegisterIntent={pendingRegisterIntent}
               setPendingRegisterIntent={setPendingRegisterIntent}
               className={`hover:border-orange rounded-full border border-white/[0.08] bg-[#2F333D] px-4 py-2 text-sm font-semibold text-white transition ${
-                pathname.includes("/claim") ? "text-orange" : ""
+                isRegisterActive(me?.pohId, pathname) ? "text-orange" : ""
               }`}
             />
           ) : null}

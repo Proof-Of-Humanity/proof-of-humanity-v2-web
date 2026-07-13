@@ -63,6 +63,11 @@ function Review({
 }: ReviewProps) {
   const selfFunded = selfFunded$.use();
   const submitForFree = submitForFree$.use();
+
+  const toggleSubmitForFree = (enabled: boolean) => {
+    submitForFree$.set(enabled);
+    selfFunded$.set(enabled ? 0 : totalCost ? formatEth(totalCost) : 0);
+  };
   const { pohId, name } = state$.use();
   const email = email$.use();
   const { photo, video } = media$.use();
@@ -329,24 +334,13 @@ function Review({
           <div className="text-primaryText mt-2 flex items-start gap-3 sm:items-center">
             <Switch
               checked={submitForFree}
-              onChange={(enabled) => {
-                submitForFree$.set(enabled);
-                selfFunded$.set(
-                  enabled ? 0 : totalCost ? formatEth(totalCost) : 0,
-                );
-              }}
+              onChange={toggleSubmitForFree}
               label="Submit for free"
               className="mt-0.5 sm:mt-0"
             />
             <span
               className="min-w-0 flex-1 cursor-pointer pt-0.5 text-sm font-medium leading-snug sm:flex-none sm:pt-0 sm:text-base sm:leading-normal"
-              onClick={() => {
-                const enabled = !submitForFree;
-                submitForFree$.set(enabled);
-                selfFunded$.set(
-                  enabled ? 0 : totalCost ? formatEth(totalCost) : 0,
-                );
-              }}
+              onClick={() => toggleSubmitForFree(!submitForFree)}
             >
               Submit for free — let PoH supporters cover your deposit (you only
               pay gas)

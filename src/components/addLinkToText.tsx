@@ -27,7 +27,7 @@ export const addLinkToText = (text: string): React.ReactNode[] => {
           href={url}
           target="_blank"
           rel="noopener noreferrer"
-          className="text-orange decoration-text-orange inline-flex cursor-pointer items-center gap-1 underline"
+          className="text-orange inline-flex cursor-pointer items-center gap-1 underline"
         >
           {label}
           <ExternalLinkIcon width={16} height={16} className="flex-shrink-0" />
@@ -42,8 +42,7 @@ export const addLinkToText = (text: string): React.ReactNode[] => {
           {boldText}
         </strong>,
       );
-    }
-    else if (match[6]) {
+    } else if (match[6]) {
       const highlightedText = match[7];
       nodes.push(
         <span
