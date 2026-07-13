@@ -12,12 +12,7 @@ import { WinnerClaimFragment } from "generated/graphql";
 import useIPFS from "hooks/useIPFS";
 import { EvidenceFile, RegistrationFile } from "types/docs";
 import { shortenAddress } from "utils/address";
-import {
-  getStatusLabel,
-  getStatusColor,
-  getStatusTooltip,
-  RequestStatus,
-} from "utils/status";
+import { getStatusTooltip, RequestStatus } from "utils/status";
 import { prettifyId } from "utils/identifier";
 import { safeIpfsUrl } from "utils/ipfs";
 import { getDisplayName } from "utils/name";
@@ -174,7 +169,6 @@ function Card({
   enableMediaParallax = true,
 }: CardInterface) {
   const pohId = humanity.id;
-  const statusColor = getStatusColor(requestStatus);
   const tooltip = getStatusTooltip(requestStatus);
 
   const chain = idToChain(chainId);
@@ -211,11 +205,7 @@ function Card({
       </div>
 
       <div className="absolute inset-x-0 top-0 z-20 flex flex-wrap items-start justify-between gap-2 px-4 pt-[9px] font-medium">
-        <StatusBadge
-          color={statusColor}
-          label={getStatusLabel(requestStatus)}
-          status={requestStatus}
-        />
+        <StatusBadge status={requestStatus} />
         <div className="group/info relative flex h-6 w-6 items-center justify-center rounded-full border border-white/[0.08] bg-[#2F333D]/85 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] backdrop-blur-sm">
           <InfoIcon className="h-4 w-4 stroke-current stroke-2 text-white drop-shadow-md" />
           {tooltip && (
