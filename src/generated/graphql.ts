@@ -4080,7 +4080,7 @@ export const ProfileHumanityDocument = gql`
       }
       punishedVouchTimestamp
       evidenceGroup {
-        evidence(orderBy: creationTime, orderDirection: desc, first: 1) {
+        evidence(orderBy: creationTime, orderDirection: asc, first: 1) {
           uri
         }
       }
@@ -4118,7 +4118,7 @@ export const ProfileRequestDocument = gql`
       name
     }
     evidenceGroup {
-      evidence(orderBy: creationTime, orderDirection: desc, first: 1) {
+      evidence(orderBy: creationTime, orderDirection: asc, first: 1) {
         uri
       }
     }
