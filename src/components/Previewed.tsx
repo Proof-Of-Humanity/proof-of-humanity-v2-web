@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import LoadableImage from "./LoadableImage";
+import MediaFallback from "./MediaFallback";
 
 interface ImageProps {
   uri: string;
@@ -16,29 +18,28 @@ export default function Previewed({
   openVideoInNewTabOnError = false,
 }: ImageProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const [videoFailed, setVideoFailed] = useState(false);
+  const [isVideoLoading, setIsVideoLoading] = useState(true);
+  const [hasVideoError, setHasVideoError] = useState(false);
   const triggerElement =
     typeof trigger === "function" ? trigger(isOpen) : trigger;
   const shouldOpenVideoInNewTab =
-    isVideo && openVideoInNewTabOnError && videoFailed;
-
-  const openVideoInNewTab = () => {
-    window.open(uri, "_blank", "noopener,noreferrer");
-  };
-
-  const handleOpen = () => {
+    isVideo && openVideoInNewTabOnError && hasVideoError;
+  const openPreview = () => {
     if (shouldOpenVideoInNewTab) {
-      openVideoInNewTab();
+      window.open(uri, "_blank", "noopener,noreferrer");
       return;
     }
 
+    setIsVideoLoading(true);
     setIsOpen(true);
   };
-
   const handleVideoError = () => {
-    if (!isVideo || !openVideoInNewTabOnError) return;
-    setIsOpen(false);
-    setVideoFailed(true);
+    if (!isVideo) return;
+    setIsVideoLoading(false);
+    setHasVideoError(true);
+    if (openVideoInNewTabOnError) {
+      setIsOpen(false);
+    }
   };
 
   return (
@@ -47,11 +48,11 @@ export default function Previewed({
         className="inline-flex"
         role="button"
         tabIndex={0}
-        onClick={handleOpen}
+        onClick={openPreview}
         onKeyDown={(event) => {
           if (event.key === "Enter" || event.key === " ") {
             event.preventDefault();
-            handleOpen();
+            openPreview();
           }
         }}
         onErrorCapture={handleVideoError}
@@ -64,23 +65,41 @@ export default function Previewed({
           onClick={() => setIsOpen(false)}
         >
           {isVideo ? (
-            <video
-              className="max-h-[90vh] max-w-[90vw] rounded bg-black"
-              src={uri}
-              controls
-              playsInline
-              webkit-playsinline=""
+            <div
+              className="relative max-h-[90vh] max-w-[90vw] overflow-hidden rounded bg-black"
               onClick={(event) => event.stopPropagation()}
-              onEnded={() => setIsOpen(false)}
-              onError={handleVideoError}
-            />
+            >
+              {isVideoLoading && !hasVideoError ? (
+                <MediaFallback className="aspect-video w-[min(90vw,900px)]" />
+              ) : null}
+              {hasVideoError ? (
+                <MediaFallback
+                  error
+                  label="Video unavailable"
+                  className="aspect-video w-[min(90vw,900px)]"
+                />
+              ) : null}
+              <video
+                className={`max-h-[90vh] max-w-[90vw] rounded bg-black ${
+                  isVideoLoading || hasVideoError ? "hidden" : ""
+                }`}
+                src={uri}
+                controls
+                playsInline
+                webkit-playsinline=""
+                onLoadedData={() => setIsVideoLoading(false)}
+                onError={handleVideoError}
+                onEnded={() => setIsOpen(false)}
+              />
+            </div>
           ) : (
-            <img
-              alt="Preview"
-              className="max-h-[90vh] max-w-[90vw] object-contain"
-              src={uri}
-              onClick={(event) => event.stopPropagation()}
-            />
+            <div onClick={(event) => event.stopPropagation()}>
+              <LoadableImage
+                alt="Preview"
+                className="max-h-[90vh] max-w-[90vw] object-contain"
+                src={uri}
+              />
+            </div>
           )}
         </div>
       )}

@@ -24,6 +24,7 @@ import { useEffect, useState } from "react";
 import ChainLogo from "components/ChainLogo";
 import DropdownItem from "components/Dropdown/Item";
 import Dropdown from "components/Dropdown/Menu";
+import SearchBar from "components/SearchBar";
 import StatusIcon from "components/StatusIcon";
 import { RequestsQuery } from "generated/graphql";
 import { useLoading } from "hooks/useLoading";
@@ -307,11 +308,7 @@ function RequestsGrid() {
   return (
     <>
       <div className="my-4 flex flex-col gap-2 py-2 sm:flex-row sm:gap-1 md:gap-2">
-        <input
-          className="border-stroke text-primaryText bg-whiteBackground w-full rounded border p-2 md:mr-2"
-          placeholder="Search (case sensitive)"
-          onChange={(e) => setSearchQuery(e.target.value)}
-        />
+        <SearchBar className="md:mr-2" onSearch={setSearchQuery} />
         <Dropdown
           title={
             filter.status === RequestStatus.ALL
@@ -358,10 +355,11 @@ function RequestsGrid() {
         </Dropdown>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4">
-        {requests.map((request, i) => (
+      <div className="request-grid">
+        {requests.map((request) => (
           <Card
-            key={i}
+            key={`${request.chainId}-${request.humanity.id}-${request.index}`}
+            aspectRatio="wide"
             chainId={request.chainId}
             index={request.index}
             humanity={request.humanity}

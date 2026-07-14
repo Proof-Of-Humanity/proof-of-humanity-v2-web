@@ -65,8 +65,8 @@ module.exports = {
         pink: "#FF9A6A",
       },
       borderRadius: {
-        card: "28px",
-        input: "20px",
+        card: "26px",
+        input: "16px",
         btn: "16px",
       },
       boxShadow: {
@@ -126,7 +126,7 @@ module.exports = {
         // },
       },
       fontFamily: {
-        sans: ["Open Sans", ...defaultTheme.fontFamily.sans],
+        sans: ["Inter", ...defaultTheme.fontFamily.sans],
       },
     },
   },

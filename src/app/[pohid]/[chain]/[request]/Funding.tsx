@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useState } from "react";
 import { toast } from "react-toastify";
-import Field from "components/Field";
+import CurrencyField from "components/CurrencyField";
 import Modal from "components/Modal";
 import ActionButton from "components/ActionButton";
 import usePoHWrite from "contracts/hooks/usePoHWrite";
@@ -102,7 +102,7 @@ const FundButton: React.FC<FundButtonProps> = ({
   const insufficientFunds = useMemo(() => {
     const available = balanceData?.value ?? 0n;
     return inputAmount > available;
-  }, [inputAmount, balanceData, addedFundInput]);
+  }, [inputAmount, balanceData]);
 
   const exceedsRemaining = inputAmount != null && inputAmount > remainingAmount;
   const isReconciling = pendingAction !== null;
@@ -167,10 +167,9 @@ const FundButton: React.FC<FundButtonProps> = ({
               {chain.nativeCurrency.symbol} Needed
             </span>
           </div>
-          <Field
-            type="number"
-            className="no-spinner"
+          <CurrencyField
             label="Amount funding"
+            symbol={chain.nativeCurrency.symbol}
             step="any"
             min={0}
             max={maxFundAmount}
@@ -178,20 +177,15 @@ const FundButton: React.FC<FundButtonProps> = ({
             onChange={(e) => setAddedFundInput(e.target.value)}
             disabled={isLoading}
           />
-          <div className="group relative mt-6 flex justify-center">
+          <div className="mt-6 flex justify-center">
             <ActionButton
               disabled={isDisabled}
               isLoading={isLoading}
               onClick={handleSubmit}
               label={loadingMessage || "Fund request"}
-              className="w-auto"
+              className="mx-auto w-auto"
+              tooltip={getTooltipMessage()}
             />
-            {getTooltipMessage() && (
-              <span className="pointer-events-none absolute bottom-full left-1/2 z-10 mb-2 w-max max-w-[240px] -translate-x-1/2 whitespace-normal rounded-md bg-neutral-700 px-3 py-2 text-center text-sm text-white opacity-0 transition-opacity group-hover:opacity-100">
-                {getTooltipMessage()}
-                <span className="absolute left-1/2 top-full h-0 w-0 -translate-x-1/2 border-x-[5px] border-t-[5px] border-x-transparent border-t-neutral-700" />
-              </span>
-            )}
           </div>
         </div>
       </Modal>

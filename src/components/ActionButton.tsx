@@ -19,14 +19,11 @@ export interface ActionButtonProps {
 }
 
 const buttonStyles = {
-  primary:
-    "flex items-center justify-center gradient rounded-sm font-medium text-white",
-  secondary:
-    "flex items-center justify-center border-2 border-theme text-orange rounded-sm font-semibold",
+  primary: "btn-primary",
+  secondary: "btn-secondary",
 };
 
-const buttonBaseClass =
-  "w-full md:w-auto normal-case disabled:opacity-50 disabled:cursor-not-allowed px-5 py-2";
+const buttonBaseClass = "disabled:cursor-not-allowed";
 
 const ActionButton = React.forwardRef<HTMLButtonElement, ActionButtonProps>(
   (
@@ -87,9 +84,8 @@ const ActionButton = React.forwardRef<HTMLButtonElement, ActionButtonProps>(
       return (
         <div className={mergedWrapperClasses}>
           {button}
-          <span className="pointer-events-none absolute bottom-full left-1/2 z-10 mb-2 w-max -translate-x-1/2 rounded-md bg-neutral-700 px-3 py-2 text-center text-sm text-white opacity-0 transition-opacity group-hover:opacity-100">
+          <span className="tooltip-surface pointer-events-none absolute bottom-full left-1/2 z-10 mb-2 w-max max-w-[240px] -translate-x-1/2 text-center text-sm opacity-0 transition-opacity group-hover:opacity-100">
             {tooltip}
-            <span className="absolute left-1/2 top-full h-0 w-0 -translate-x-1/2 border-x-[5px] border-t-[5px] border-x-transparent border-t-neutral-700" />
           </span>
         </div>
       );

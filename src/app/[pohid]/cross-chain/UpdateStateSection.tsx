@@ -124,9 +124,8 @@ export default function UpdateStateSection({
         <button className="text-sky-500" disabled>
           Update state
         </button>
-        <span className="pointer-events-none absolute bottom-full left-1/2 z-10 mb-2 w-max -translate-x-1/2 rounded-md bg-neutral-700 px-3 py-2 text-center text-sm text-white opacity-0 transition-opacity group-hover:opacity-100">
+        <span className="pointer-events-none absolute bottom-full left-1/2 z-10 mb-2 w-max -translate-x-1/2 tooltip-surface text-center text-sm opacity-0 transition-opacity group-hover:opacity-100">
           {WAITING_FOR_INDEXER_TOOLTIP}
-          <span className="absolute left-1/2 top-full h-0 w-0 -translate-x-1/2 border-x-[5px] border-t-[5px] border-x-transparent border-t-neutral-700" />
         </span>
       </div>
     );
@@ -143,9 +142,8 @@ export default function UpdateStateSection({
           Update state
         </button>
         {isReconciling ? (
-          <span className="pointer-events-none absolute bottom-full left-1/2 z-10 mb-2 w-max -translate-x-1/2 rounded-md bg-neutral-700 px-3 py-2 text-center text-sm text-white opacity-0 transition-opacity group-hover:opacity-100">
+          <span className="pointer-events-none absolute bottom-full left-1/2 z-10 mb-2 w-max -translate-x-1/2 tooltip-surface text-center text-sm opacity-0 transition-opacity group-hover:opacity-100">
             {WAITING_FOR_INDEXER_TOOLTIP}
-            <span className="absolute left-1/2 top-full h-0 w-0 -translate-x-1/2 border-x-[5px] border-t-[5px] border-x-transparent border-t-neutral-700" />
           </span>
         ) : null}
       </div>

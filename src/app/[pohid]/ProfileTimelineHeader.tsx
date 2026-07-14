@@ -1,12 +1,13 @@
 "use client";
 
 import ErrorBoundary from "components/ErrorBoundary";
-import useIPFS from "hooks/useIPFS";
+import { useSuspenseIPFS } from "hooks/useIPFS";
 import Image from "next/image";
 import { Suspense } from "react";
 import { EvidenceFile, RegistrationFile } from "types/docs";
 import { shortenAddress } from "utils/address";
 import { safeIpfsUrl } from "utils/ipfs";
+import { getDisplayName } from "utils/name";
 import { Address } from "viem";
 
 export interface ProfileTimelineHeaderProps {
@@ -22,17 +23,10 @@ function HeaderContent({
   evidence,
   requester,
 }: ProfileTimelineHeaderProps) {
-  const [evidenceURI] = useIPFS<EvidenceFile>(evidence.at(-1)?.uri, {
-    suspense: true,
-  });
-  const [data] = useIPFS<RegistrationFile>(evidenceURI?.fileURI, {
-    suspense: true,
-  });
+  const [evidenceURI] = useSuspenseIPFS<EvidenceFile>(evidence.at(-1)?.uri);
+  const [data] = useSuspenseIPFS<RegistrationFile>(evidenceURI?.fileURI);
 
-  const name =
-    data && claimer.name && data.name !== claimer.name
-      ? `${data.name} (aka ${claimer.name})`
-      : claimer.name || data?.name || "";
+  const name = getDisplayName(data, claimer.name);
   const photoUrl = safeIpfsUrl(data?.photo);
 
   return (

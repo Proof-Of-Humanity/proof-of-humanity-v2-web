@@ -4,7 +4,7 @@ import { useEffectOnce } from "@legendapp/state/react";
 import Arrow from "components/Arrow";
 import BulletedNumber from "components/BulletedNumber";
 import ExternalLink from "components/ExternalLink";
-import Field from "components/Field";
+import CurrencyField from "components/CurrencyField";
 import Identicon from "components/Identicon";
 import Modal from "components/Modal";
 import Progress from "components/Progress";
@@ -159,9 +159,8 @@ const SideFunding: React.FC<SideFundingProps> = ({
         </div>
       </div>
       <div className="flex flex-col gap-2 sm:flex-row sm:gap-1">
-        <Field
-          type="number"
-          className="no-spinner"
+        <CurrencyField
+          symbol={unit}
           step="any"
           min={0}
           max={formatEth(remainingAmount)}
@@ -385,9 +384,8 @@ const Appeal: React.FC<AppealProps> = ({
           </span>
         </button>
         {(externalDisabled || isReconciling) && (
-          <span className="pointer-events-none absolute bottom-full left-1/2 z-10 mb-2 w-max -translate-x-1/2 rounded-md bg-neutral-700 px-3 py-2 text-center text-sm text-white opacity-0 transition-opacity group-hover:opacity-100">
+          <span className="pointer-events-none absolute bottom-full left-1/2 z-10 mb-2 w-max -translate-x-1/2 tooltip-surface text-center text-sm opacity-0 transition-opacity group-hover:opacity-100">
             {externalDisabled ? (externalTooltip ?? "Disabled") : "Syncing"}
-            <span className="absolute left-1/2 top-full h-0 w-0 -translate-x-1/2 border-x-[5px] border-t-[5px] border-x-transparent border-t-neutral-700" />
           </span>
         )}
       </div>
