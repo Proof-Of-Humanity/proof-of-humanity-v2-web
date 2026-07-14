@@ -11,7 +11,7 @@ import { getContractInfo } from "contracts";
 import { SupportedChainId, idToChain, getForeignChain } from "config/chains";
 import { ContractData } from "data/contract";
 import InfoIcon from "icons/info.svg";
-import NewTabIcon from "icons/NewTab.svg";
+import ExternalLinkIcon from "components/ExternalLinkIcon";
 import Image from "next/image";
 import { prettifyId } from "utils/identifier";
 import { ipfs } from "utils/ipfs";
@@ -145,11 +145,11 @@ function Review({
           </div>
         </div>
         <ExternalLink
-          className="group/policy-link text-orange hover:text-orange/80 flex items-center gap-1 text-sm font-medium transition-colors duration-200"
+          className="group/external-link text-orange hover:text-orange/80 flex items-center gap-1 text-sm font-medium transition-colors duration-200"
           href={ipfs(arbitrationInfo.policy)}
         >
           <span>Open the full policy</span>
-          <NewTabIcon className="h-4 w-4 fill-current transition-transform duration-200 group-hover/policy-link:-translate-y-0.5 group-hover/policy-link:translate-x-0.5" />
+          <ExternalLinkIcon />
         </ExternalLink>
       </div>
 

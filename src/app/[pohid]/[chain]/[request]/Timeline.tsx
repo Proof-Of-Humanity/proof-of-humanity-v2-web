@@ -9,7 +9,7 @@ import CloseCircleOutlineIcon from "icons/CloseCircleOutline.svg";
 import EyeIcon from "icons/Eye.svg";
 import FlagCheckeredIcon from "icons/FlagCheckered.svg";
 import HourglassIcon from "icons/Hourglass.svg";
-import NewTabIcon from "icons/NewTab.svg";
+import ExternalLinkIcon from "components/ExternalLinkIcon";
 import TransferIcon from "icons/Transfer.svg";
 import VouchIcon from "icons/Vouch.svg";
 import Link from "next/link";
@@ -21,10 +21,12 @@ import {
   useRef,
   useState,
 } from "react";
+import { twMerge } from "tailwind-merge";
 
 interface TimelineProps {
   items: TimelineItem[];
   children?: ReactNode;
+  className?: string;
 }
 
 const TIMELINE_STYLES: Record<
@@ -139,7 +141,11 @@ const formatter = new Intl.DateTimeFormat("en-US", {
 const ITEM_STEP_MS = 340;
 const ITEM_REVEAL_OFFSET_MS = 150;
 
-export default function Timeline({ items, children }: TimelineProps) {
+export default function Timeline({
+  items,
+  children,
+  className = "",
+}: TimelineProps) {
   const rootRef = useRef<HTMLDivElement | null>(null);
   const [isVisible, setIsVisible] = useState(false);
 
@@ -167,7 +173,11 @@ export default function Timeline({ items, children }: TimelineProps) {
   return (
     <div
       ref={rootRef}
-      className={`timeline-root mt-8 border-t pt-8 ${isVisible ? "timeline-visible" : "timeline-hidden"}`}
+      className={twMerge(
+        "timeline-root mt-8 border-t pt-8",
+        className,
+        isVisible ? "timeline-visible" : "timeline-hidden",
+      )}
     >
       <h2 className="text-primaryText text-xl font-semibold">
         Timeline History
@@ -230,21 +240,21 @@ export default function Timeline({ items, children }: TimelineProps) {
                       href={item.externalHref}
                       target="_blank"
                       rel="noreferrer"
-                      className="group/timeline-link inline-flex items-center gap-1 font-semibold hover:opacity-80"
+                      className="group/external-link inline-flex items-center gap-1 font-semibold hover:opacity-80"
                     >
                       <span className={styles.text}>{item.title}</span>
                       <span className="text-secondaryText inline-flex">
-                        <NewTabIcon className="h-4 w-4 fill-current transition-transform duration-200 group-hover/timeline-link:-translate-y-0.5 group-hover/timeline-link:translate-x-0.5" />
+                        <ExternalLinkIcon />
                       </span>
                     </a>
                   ) : item.href ? (
                     <Link
                       href={item.href}
-                      className="group/timeline-link inline-flex items-center gap-1 font-semibold hover:opacity-80"
+                      className="group/external-link inline-flex items-center gap-1 font-semibold hover:opacity-80"
                     >
                       <span className={styles.text}>{item.title}</span>
                       <span className="text-secondaryText inline-flex">
-                        <NewTabIcon className="h-4 w-4 fill-current transition-transform duration-200 group-hover/timeline-link:-translate-y-0.5 group-hover/timeline-link:translate-x-0.5" />
+                        <ExternalLinkIcon />
                       </span>
                     </Link>
                   ) : (

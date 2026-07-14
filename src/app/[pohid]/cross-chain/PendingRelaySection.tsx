@@ -5,6 +5,8 @@ import { useCallback, useMemo, useState } from "react";
 import { toast } from "react-toastify";
 import { useAccount, useChainId, useSwitchChain } from "wagmi";
 
+import ActionButton from "components/ActionButton";
+import ChainLogo from "components/ChainLogo";
 import Modal from "components/Modal";
 import TimeAgo from "components/TimeAgo";
 import { idToChain, type SupportedChainId } from "config/chains";
@@ -12,7 +14,6 @@ import { getContractInfo } from "contracts";
 import useRelayWrite from "contracts/hooks/useRelayWrite";
 import useActionFeedback, {
   ACTION_STATES,
-  isActionStateError,
   isActionStateLoading,
 } from "hooks/useActionFeedback";
 import { useProfileOptimistic } from "optimistic/profile";
@@ -23,7 +24,21 @@ import {
   RELAY_MODE_WAIT_ONLY,
   type RelayMode,
 } from "./types";
-import ProfileErrorCard from "../ProfileErrorCard";
+import {
+  CROSS_CHAIN_MODAL_CLASS,
+  CrossChainActionTrigger,
+  CrossChainModalHeading,
+} from "./crossChainUi";
+import CheckCircleIcon from "icons/CheckCircleOutline.svg";
+import HourglassIcon from "icons/Hourglass.svg";
+
+function ChainChip({ chainId }: { chainId: SupportedChainId }) {
+  return (
+    <span className="border-stroke bg-whiteBackground flex h-10 w-10 shrink-0 items-center justify-center rounded-full border">
+      <ChainLogo chainId={chainId} className="fill-primaryText h-6 w-6" />
+    </span>
+  );
+}
 
 const buildTransferRelaySuccessPatch = () => ({
   hasPendingTransferRelay: false,
@@ -65,7 +80,6 @@ export default function PendingRelaySection({
       : effective.hasPendingUpdateRelay;
   const {
     actionState,
-    actionMessage,
     setIdle,
     setFeedbackState,
     setUnavailable,
@@ -182,104 +196,127 @@ export default function PendingRelaySection({
         ? "Relay details are still loading. Check back in a moment."
         : "Relay approvals are not ready yet. Wait a bit and try again.";
 
+  const busy = isActionStateLoading(actionState) || hasRelayInFlight;
+  const destStatus = busy
+    ? { label: "Executing…", tone: "text-peach" }
+    : relayActionState === "wait"
+      ? relayMode === RELAY_MODE_WAIT_ONLY
+        ? { label: "Automatic", tone: "text-status-registered" }
+        : { label: "Preparing…", tone: "text-secondaryText" }
+      : { label: "Your turn", tone: "text-peach" };
+
   if (!relayPending) {
+    const isIndexing = pendingAction === relayAction;
     return (
-      <span className="text-secondaryText m-4 font-semibold">
-        {pendingAction === relayAction
-          ? "Relay submitted. Waiting for indexed state."
-          : "Relay complete."}
-      </span>
+      <div className="flex basis-full items-center justify-center gap-2 text-sm">
+        {isIndexing ? (
+          <>
+            <HourglassIcon className="h-4 w-4 shrink-0 animate-pulse text-peach" />
+            <span className="text-secondaryText">
+              Relay submitted · waiting for indexer
+            </span>
+          </>
+        ) : (
+          <>
+            <CheckCircleIcon className="text-status-registered h-4 w-4 shrink-0" />
+            <span className="text-status-registered">Relay complete</span>
+          </>
+        )}
+      </div>
     );
   }
 
   return (
     <>
-      <button
-        className="m-4 border-2 border-blue-500 p-2 font-bold text-blue-500"
+      <CrossChainActionTrigger
+        label="Pending relay"
+        icon={HourglassIcon}
+        iconClassName="animate-pulse"
         onClick={() => setIsModalOpen(true)}
-      >
-        ⏳ Pending relay
-      </button>
+        className="basis-full text-center"
+      />
       <Modal
         formal
+        className={CROSS_CHAIN_MODAL_CLASS}
         open={isModalOpen}
         onClose={closeModal}
-        canClose={!hasRelayInFlight && !isActionStateLoading(actionState)}
-        header={mode === "transfer" ? "Last transfer" : "Pending state update"}
+        canClose={!busy}
       >
-        <div className="flex flex-col p-4">
-          <div className="paper border-stroke bg-whiteBackground mb-4 p-3">
-            <div className="text-secondaryText text-xs font-semibold uppercase tracking-[0.08em]">
-              Relay route
+        <div className="flex flex-col items-center gap-8 p-8 text-center">
+          <CrossChainModalHeading
+            title={
+              mode === "transfer" ? "Transfer relay" : "State update relay"
+            }
+            description={
+              mode === "transfer"
+                ? "Your profile is bridging to another chain."
+                : "Your state update is bridging to another chain."
+            }
+          />
+
+          <div className="flex w-full flex-col gap-5">
+            <div className="flex w-full items-center gap-3">
+              <ChainChip chainId={sourceChainId} />
+              <span className="bg-status-registered h-0.5 flex-1 rounded" />
+              <span className="h-2.5 w-2.5 shrink-0 animate-pulse rounded-full bg-peach" />
+              <span className="h-0 flex-1 border-t border-dashed border-peach" />
+              <ChainChip chainId={destinationChainId} />
             </div>
-            <div className="text-primaryText mt-2 text-sm font-medium">
-              {sourceChainName} ▶ {destinationChainName}
+
+            <div className="flex w-full flex-col gap-2 text-left text-sm">
+              <div className="flex items-center gap-2">
+                <CheckCircleIcon className="text-status-registered h-4 w-4 shrink-0" />
+                <span className="text-primaryText">
+                  Submitted on {sourceChainName}
+                </span>
+                <span className="text-status-registered ml-auto text-xs">
+                  Done
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <HourglassIcon className="h-4 w-4 shrink-0 animate-pulse text-peach" />
+                <span className="text-primaryText">
+                  Awaiting execution on {destinationChainName}
+                </span>
+                <span className={`ml-auto text-xs ${destStatus.tone}`}>
+                  {destStatus.label}
+                </span>
+              </div>
             </div>
-            <div className="text-secondaryText mt-1 text-sm">
-              Mode:{" "}
-              {relayMode === RELAY_MODE_WAIT_ONLY
-                ? "Automatic bridge relay"
-                : "Manual relay with signatures"}
-            </div>
-          </div>
-          {mode === "transfer" && transferTimestamp ? (
-            <TimeAgo className="text-primaryText" time={transferTimestamp} />
-          ) : (
-            <span className="txt text-secondaryText m-2">
-              There is a pending state update that needs to be relayed on{" "}
-              {destinationChainName}.
-            </span>
-          )}
-          {isActionStateLoading(actionState) ? (
-            <div className="paper border-stroke bg-whiteBackground mt-4 px-3 py-2">
-              <span className="text-secondaryText text-sm font-medium">
-                {actionMessage}
+
+            {mode === "transfer" && transferTimestamp ? (
+              <span className="text-secondaryText text-xs">
+                Started <TimeAgo time={transferTimestamp} />
               </span>
-            </div>
-          ) : null}
-          {isActionStateError(actionState) ? (
-            <div className="mt-4">
-              <ProfileErrorCard title={actionMessage ?? ""} />
-            </div>
-          ) : null}
+            ) : null}
+          </div>
 
           {relayActionState === "connect-wallet" ? (
-            <>
-              <span className="txt text-primaryText m-2 text-center">
-                Connect your wallet to execute the relay.
-              </span>
-              <div className="mt-4 flex justify-center">
-                <button className="btn-main" onClick={openConnectWallet}>
-                  Connect wallet
-                </button>
-              </div>
-            </>
+            <ActionButton
+              className="w-[170px] whitespace-nowrap"
+              label="Connect wallet"
+              onClick={openConnectWallet}
+            />
           ) : relayActionState === "switch-chain" ? (
-            <div className="mt-4 flex justify-center">
-              <button
-                className="btn-main"
-                onClick={() => switchChain({ chainId: destinationChainId })}
-              >
-                Switch to {destinationChainName}
-              </button>
-            </div>
+            <ActionButton
+              className="min-w-[170px] whitespace-nowrap"
+              label={`Switch to ${destinationChainName}`}
+              onClick={() => switchChain({ chainId: destinationChainId })}
+            />
           ) : relayActionState === "manual-relay" &&
             relayMode === RELAY_MODE_MANUAL_SIGNATURES &&
             encodedData ? (
-            <button
-              className="btn-main mt-4"
-              disabled={isActionStateLoading(actionState) || hasRelayInFlight}
+            <ActionButton
+              className="w-[170px] whitespace-nowrap"
+              disabled={busy}
+              isLoading={busy}
+              label={busy ? "Relaying…" : "Execute relay"}
               onClick={handleExecuteRelay}
-            >
-              {isActionStateLoading(actionState) || hasRelayInFlight
-                ? "Processing..."
-                : mode === "transfer"
-                  ? "Relay Transferring Profile"
-                  : "Execute relay"}
-            </button>
+            />
           ) : (
-            <div className="paper mt-4 p-4">
-              <span className="txt text-secondaryText">{waitMessage}</span>
+            <div className="border-stroke bg-whiteBackground flex w-full items-center justify-center gap-2 rounded-btn border px-4 py-3">
+              <HourglassIcon className="text-secondaryText h-4 w-4 shrink-0 animate-pulse" />
+              <span className="text-secondaryText text-sm">{waitMessage}</span>
             </div>
           )}
         </div>
