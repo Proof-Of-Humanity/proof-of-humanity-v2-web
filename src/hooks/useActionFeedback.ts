@@ -61,6 +61,17 @@ export const isActionStateError = (state: ControlledActionState) =>
   state === ACTION_STATES.actionUnavailable ||
   state === ACTION_STATES.error;
 
+const DEFAULT_WRITE_ERROR_MESSAGE =
+  "Transaction failed. Check your wallet and try again.";
+
+export const getWriteErrorMessage = (
+  error: unknown,
+  fallbackMessage = DEFAULT_WRITE_ERROR_MESSAGE,
+) =>
+  isWalletRejectedError(error)
+    ? ACTION_STATE_LABELS[ACTION_STATES.walletRejected]
+    : fallbackMessage;
+
 const getActionFeedbackMessage = ({ state, detail }: ActionFeedback) => {
   if (state === ACTION_STATES.idle) {
     return null;
@@ -92,22 +103,13 @@ export default function useActionFeedback() {
   );
 
   const setWriteError = useCallback(
-    (
-      error: unknown,
-      fallbackMessage = "Transaction failed. Check your wallet and try again.",
-    ) => {
-      if (isWalletRejectedError(error)) {
-        setActionFeedback({
-          state: ACTION_STATES.walletRejected,
-        });
-        return ACTION_STATE_LABELS[ACTION_STATES.walletRejected];
-      }
-
-      setActionFeedback({
-        state: ACTION_STATES.error,
-        detail: fallbackMessage,
-      });
-      return fallbackMessage;
+    (error: unknown, fallbackMessage = DEFAULT_WRITE_ERROR_MESSAGE) => {
+      setActionFeedback(
+        isWalletRejectedError(error)
+          ? { state: ACTION_STATES.walletRejected }
+          : { state: ACTION_STATES.error, detail: fallbackMessage },
+      );
+      return getWriteErrorMessage(error, fallbackMessage);
     },
     [],
   );

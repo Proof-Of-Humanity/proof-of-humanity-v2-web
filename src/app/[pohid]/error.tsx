@@ -17,15 +17,14 @@ export default function Error({
   return (
     <div className="content">
       <div className="paper relative mt-24 flex items-center justify-center px-6 pb-10 pt-20">
-        <div className="bordered absolute -top-16 left-1/2 -translate-x-1/2 rounded-full shadow">
-          <div className="bg-whiteBackground h-32 w-32 rounded-full px-6 pt-5">
-            <Image
-              alt="poh id"
-              src="/logo/pohid.svg"
-              height={128}
-              width={128}
-            />
-          </div>
+        <div className="absolute -top-16 left-1/2 h-32 w-32 -translate-x-1/2 rounded-full shadow">
+          <Image
+            alt="poh id"
+            src="/logo/pohid-badge.svg"
+            height={128}
+            width={128}
+            className="h-32 w-32"
+          />
         </div>
 
         <div className="border-stroke bg-whiteBackground flex w-full max-w-2xl flex-col items-center rounded-3xl border px-6 py-8 text-center sm:px-8">
@@ -39,7 +38,7 @@ export default function Error({
             We couldn&apos;t load this profile right now. Try again in a moment.
           </div>
           <button
-            className="btn-main mt-6 px-4 py-2 normal-case"
+            className="btn-primary mt-6 px-5 py-2.5 normal-case"
             onClick={reset}
           >
             Try again

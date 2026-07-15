@@ -10,6 +10,7 @@ import ActionButton from "components/ActionButton";
 import { useRequestOptimistic } from "optimistic/request";
 import type { RequestOptimisticOverlay } from "optimistic/types";
 import { useAccount } from "wagmi";
+import { resolveTxState } from "utils/txState";
 
 enableReactUse();
 
@@ -95,6 +96,16 @@ export default function RemoveVouch({
     prepareRemoveVouch({ args: [requester, pohId] });
   });
 
+  const trigger = resolveTxState([
+    { active: isReconciling, message: "Syncing" },
+    { active: !!disabled, message: tooltip },
+    {
+      active: userChainId !== chain.id,
+      message: `Switch your chain above to ${idToChain(chain.id)?.name || "the correct chain"}`,
+    },
+    { active: status.write === "pending" },
+  ]);
+
   return (
     web3Loaded &&
     (userChainId === chain.id || disabled) && (
@@ -104,20 +115,8 @@ export default function RemoveVouch({
           label="Remove Vouch"
           className="mb-2 w-auto"
           isLoading={status.write === "pending"}
-          disabled={
-            status.write === "pending" ||
-            isReconciling ||
-            disabled ||
-            userChainId !== chain.id
-          }
-          tooltip={
-            isReconciling
-              ? "Syncing"
-              : tooltip ||
-                (userChainId !== chain.id
-                  ? `Switch your chain above to ${idToChain(chain.id)?.name || "the correct chain"}`
-                  : undefined)
-          }
+          disabled={trigger.disabled}
+          tooltip={trigger.tooltip}
         />
       </div>
     )

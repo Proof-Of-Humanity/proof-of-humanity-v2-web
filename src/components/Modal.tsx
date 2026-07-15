@@ -1,6 +1,7 @@
 "use client";
 
 import cn from "classnames";
+import { twMerge } from "tailwind-merge";
 import { useEffect, useState } from "react";
 import { Popup } from "reactjs-popup";
 import type { ComponentType } from "react";
@@ -81,13 +82,15 @@ const Modal: React.FC<ModalProps> = ({
             onClick={handleCloseRequest}
           />
           <div
-            className={cn(
-              "modal-shell fixed left-1/2 top-1/2 z-30 w-4/5 md:w-3/5 xl:w-2/5",
-              {
-                "modal-surface overflow-clip": formal,
-                "modal-shell-open": isVisible,
-              },
-              className,
+            className={twMerge(
+              cn(
+                "modal-shell fixed left-1/2 top-1/2 z-30 w-4/5 md:w-3/5 xl:w-2/5",
+                {
+                  "modal-surface overflow-clip": formal,
+                  "modal-shell-open": isVisible,
+                },
+                className,
+              ),
             )}
           >
             {header && (

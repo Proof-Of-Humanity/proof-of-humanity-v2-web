@@ -5,19 +5,25 @@ import { toast } from "react-toastify";
 import { useAccount, useChainId } from "wagmi";
 
 import ActionButton from "components/ActionButton";
+import ChainLogo from "components/ChainLogo";
 import Modal from "components/Modal";
 import TimeAgo from "components/TimeAgo";
-import { SupportedChainId, type SupportedChain } from "config/chains";
+import {
+  getForeignChain,
+  supportedChains,
+  SupportedChainId,
+  type SupportedChain,
+} from "config/chains";
 import useCCPoHWrite from "contracts/hooks/useCCPoHWrite";
-import useActionFeedback, {
-  ACTION_STATES,
-  isActionStateError,
-  isActionStateLoading,
-  WAITING_FOR_INDEXER_TOOLTIP,
-} from "hooks/useActionFeedback";
+import { getWriteErrorMessage } from "hooks/useActionFeedback";
 import useWeb3Loaded from "hooks/useWeb3Loaded";
 import { useProfileOptimistic } from "optimistic/profile";
-import ProfileErrorCard from "../ProfileErrorCard";
+import TransferIcon from "icons/Transfer.svg";
+import {
+  CROSS_CHAIN_MODAL_CLASS,
+  CrossChainActionTrigger,
+  CrossChainModalHeading,
+} from "./crossChainUi";
 
 const buildTransferSuccessPatch = ({
   previousLastTransferTimestamp,
@@ -47,23 +53,11 @@ export default function TransferSection({
   const [isTransferModalOpen, setIsTransferModalOpen] = useState(false);
   const isReconciling = pendingAction !== null;
   const nowSeconds = Date.now() / 1000;
-  const {
-    actionState,
-    actionMessage,
-    setIdle,
-    setFeedbackState,
-    setUnavailable,
-    setWriteError,
-  } = useActionFeedback();
   const [prepareTransfer, , transferStatus] = useCCPoHWrite(
     "transferHumanity",
     useMemo(
       () => ({
-        onLoading() {
-          setFeedbackState(ACTION_STATES.txPending);
-        },
         onReady(fire: () => void) {
-          setFeedbackState(ACTION_STATES.confirmWallet);
           fire();
         },
         onSuccess() {
@@ -74,26 +68,16 @@ export default function TransferSection({
             }),
           );
           toast.success("Transfer initiated!");
-          setIdle();
           setIsTransferModalOpen(false);
         },
         onError(error) {
-          toast.error(setWriteError(error));
+          toast.error(getWriteErrorMessage(error));
         },
         onFail() {
-          const message = "Transfer is not available right now.";
-          setUnavailable(message);
-          toast.error(message);
+          toast.error("Transfer is not available right now.");
         },
       }),
-      [
-        applyAction,
-        base.lastTransferTimestamp,
-        setFeedbackState,
-        setIdle,
-        setUnavailable,
-        setWriteError,
-      ],
+      [applyAction, base.lastTransferTimestamp],
     ),
   );
 
@@ -101,13 +85,11 @@ export default function TransferSection({
     transferStatus.write === "pending" ||
     (transferStatus.write === "success" &&
       transferStatus.transaction === "pending");
+  const destinationChain = getForeignChain(homeChain.id);
 
   const closeTransferModal = useCallback(() => {
     setIsTransferModalOpen(false);
-    if (!hasTransferInFlight) {
-      setIdle();
-    }
-  }, [hasTransferInFlight, setIdle]);
+  }, []);
 
   const sectionState =
     pendingAction === "transfer"
@@ -126,14 +108,12 @@ export default function TransferSection({
 
   if (sectionState === "pending") {
     return (
-      <div className="group relative">
-        <button className="text-sky-500" disabled>
-          Transfer
-        </button>
-        <span className="pointer-events-none absolute bottom-full left-1/2 z-10 mb-2 w-max -translate-x-1/2 tooltip-surface text-center text-sm opacity-0 transition-opacity group-hover:opacity-100">
-          {WAITING_FOR_INDEXER_TOOLTIP}
-        </span>
-      </div>
+      <CrossChainActionTrigger
+        label="Transfer"
+        icon={TransferIcon}
+        disabled
+        showTooltip
+      />
     );
   }
 
@@ -147,60 +127,64 @@ export default function TransferSection({
 
   return (
     <>
-      <div className="group relative">
-        <button
-          className="text-sky-500"
-          disabled={isReconciling}
-          onClick={() => setIsTransferModalOpen(true)}
-        >
-          Transfer
-        </button>
-        {isReconciling ? (
-          <span className="pointer-events-none absolute bottom-full left-1/2 z-10 mb-2 w-max -translate-x-1/2 tooltip-surface text-center text-sm opacity-0 transition-opacity group-hover:opacity-100">
-            {WAITING_FOR_INDEXER_TOOLTIP}
-          </span>
-        ) : null}
-      </div>
+      <CrossChainActionTrigger
+        label="Transfer"
+        icon={TransferIcon}
+        onClick={() => setIsTransferModalOpen(true)}
+        disabled={isReconciling}
+        showTooltip={isReconciling}
+      />
       <Modal
         formal
+        className={CROSS_CHAIN_MODAL_CLASS}
         open={isTransferModalOpen}
         onClose={closeTransferModal}
-        canClose={!hasTransferInFlight && !isActionStateLoading(actionState)}
-        header="Transfer"
+        canClose={!hasTransferInFlight}
       >
-        <div className="p-4">
-          <span className="txt text-primaryText m-2">
-            Transfer your humanity to another chain. If you use a contract
-            wallet make sure it has the same address on both chains.
-          </span>
-          {isActionStateLoading(actionState) ? (
-            <div className="paper border-stroke bg-whiteBackground mt-4 px-3 py-2">
-              <span className="text-secondaryText text-sm font-medium">
-                {actionMessage}
-              </span>
+        <div className="flex flex-col items-center gap-8 p-8 text-center">
+          <CrossChainModalHeading title="Transfer your POH ID to another chain" />
+          <div className="flex w-full flex-col items-center gap-4">
+            <p className="text-primaryText text-sm">Select new chain below</p>
+            <div className="bg-whiteBackground flex w-full flex-col items-center gap-4 rounded-btn py-4">
+              <div className="flex flex-col items-start gap-4">
+                {supportedChains.map((chain) => {
+                  const isCurrent = chain.id === homeChain.id;
+                  return (
+                    <label
+                      className="text-primaryText flex items-center gap-4 whitespace-nowrap text-sm"
+                      key={chain.id}
+                    >
+                      <input
+                        checked={chain.id === destinationChain}
+                        className="radio h-6 w-6 shrink-0"
+                        disabled={isCurrent}
+                        name="destination-chain"
+                        readOnly
+                        type="radio"
+                      />
+                      <span className="flex items-center gap-2">
+                        <ChainLogo
+                          chainId={chain.id}
+                          className="h-6 w-6 shrink-0 fill-current"
+                        />
+                        {chain.name}
+                        {isCurrent ? (
+                          <span className="text-secondaryText">(current)</span>
+                        ) : null}
+                      </span>
+                    </label>
+                  );
+                })}
+              </div>
             </div>
-          ) : null}
-          {isActionStateError(actionState) ? (
-            <div className="mt-4">
-              <ProfileErrorCard title={actionMessage ?? ""} />
-            </div>
-          ) : null}
-          <div className="mt-4 flex justify-center">
+          </div>
+          <div className="flex justify-center">
             <ActionButton
-              disabled={
-                hasTransferInFlight || isActionStateLoading(actionState)
-              }
-              isLoading={
-                hasTransferInFlight || isActionStateLoading(actionState)
-              }
+              className="w-[170px]"
+              disabled={hasTransferInFlight}
+              isLoading={hasTransferInFlight}
               label={hasTransferInFlight ? "Transferring..." : "Transfer"}
-              onClick={() => {
-                setIdle();
-
-                prepareTransfer({
-                  args: [gatewayId],
-                });
-              }}
+              onClick={() => prepareTransfer({ args: [gatewayId] })}
             />
           </div>
         </div>

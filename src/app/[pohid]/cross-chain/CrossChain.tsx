@@ -446,13 +446,13 @@ export default async function CrossChain({
           hasPendingUpdateRelay: !!pendingUpdateRelay.pendingUpdateRelay,
         }}
       >
-        <div className="flex w-full flex-col items-center border-t p-4 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex flex-col items-center sm:items-start">
-            <span className="text-secondaryText">Home chain</span>
-            <span className="flex items-center font-semibold">
+        <div className="border-stroke flex w-full flex-wrap items-center justify-center gap-x-3 gap-y-4 border-t px-4 py-6">
+          <div className="flex items-center gap-2 text-sm">
+            <span className="text-secondaryText">Home chain:</span>
+            <span className="text-primaryText flex items-center gap-2">
               <ChainLogo
                 chainId={homeChain.id}
-                className="fill-primaryText mr-2 h-4 w-4"
+                className="h-6 w-6 fill-current"
               />
               {homeChain.name}
             </span>

@@ -2,6 +2,7 @@ import { Suspense } from "react";
 import { ProfileOptimisticProvider } from "optimistic/profile";
 import { type Hash } from "viem";
 
+import ActionWalletGate from "./ActionWalletGate";
 import CrossChain from "./cross-chain/CrossChain";
 import CrossChainLoading from "./cross-chain/CrossChainLoading";
 import ProfileSectionPlaceholderError from "./ProfileSectionPlaceholderError";
@@ -60,7 +61,7 @@ export default async function ProfileActionsSection({
         >
           <div className="flex w-full flex-col items-center gap-4">
             {claimedRegistration && homeChain && homeChainContractData ? (
-              <div className="flex flex-wrap items-center justify-center gap-3">
+              <ActionWalletGate homeChain={homeChain}>
                 {canRenew ? (
                   <Renew
                     claimer={claimedRegistration.claimer.id}
@@ -75,7 +76,7 @@ export default async function ProfileActionsSection({
                     homeChain={homeChain}
                   />
                 </Suspense>
-              </div>
+              </ActionWalletGate>
             ) : null}
 
             {canHaveCrossChainActions && homeChain && homeChainContractData ? (
@@ -99,7 +100,7 @@ export default async function ProfileActionsSection({
     );
   } catch {
     return (
-      <div className="mt-8 w-full self-stretch border-t px-4 py-4">
+      <div className="border-stroke mt-8 w-full self-stretch border-t px-4 py-4">
         <ProfileSectionPlaceholderError
           section="Actions"
           title="Actions unavailable"

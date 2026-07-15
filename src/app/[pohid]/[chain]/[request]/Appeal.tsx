@@ -21,6 +21,8 @@ import { APIPoH, StakeMultipliers } from "contracts/apis/APIPoH";
 import usePoHWrite from "contracts/hooks/usePoHWrite";
 import { RequestQuery } from "generated/graphql";
 import { useLoading } from "hooks/useLoading";
+import useEnoughFunds from "hooks/useEnoughFunds";
+import { resolveTxState } from "utils/txState";
 import Image from "next/image";
 import { useRequestOptimistic } from "optimistic/request";
 import { useMemo, useRef, useState } from "react";
@@ -28,7 +30,7 @@ import { toast } from "react-toastify";
 import { RequestStatus } from "utils/status";
 import { formatEth } from "utils/misc";
 import { Address, parseEther } from "viem";
-import { useAccount, useBalance, useChainId } from "wagmi";
+import { useAccount, useChainId } from "wagmi";
 import { useRouter } from "next/navigation";
 
 interface SideFundingProps {
@@ -57,8 +59,7 @@ const SideFunding: React.FC<SideFundingProps> = ({
   disabled = false,
 }) => {
   const userChainId = useChainId();
-  const { isConnected, address } = useAccount();
-  const { data: balanceData } = useBalance({ address, chainId: userChainId });
+  const { isConnected } = useAccount();
   const title = side === SideEnum.claimer ? "Claimer" : "Challenger";
   const shrunkAddress: string =
     requester.substring(0, 6) + " ... " + requester.slice(-4);
@@ -85,40 +86,33 @@ const SideFunding: React.FC<SideFundingProps> = ({
 
   const isInvalidInput = inputAmount === null;
   const isZeroInput = inputAmount === 0n;
-  const insufficientFunds =
-    !isInvalidInput &&
-    balanceData !== undefined &&
-    inputAmount! > balanceData.value;
   const exceedsRemaining = !isInvalidInput && inputAmount! > remainingAmount;
+  const funds = useEnoughFunds({
+    chainId,
+    amount: !isInvalidInput && inputAmount ? inputAmount : undefined,
+  });
 
-  const isDisabled =
-    disabled ||
-    errorRef.current ||
-    loosingSideHasEnd ||
-    userChainId !== chainId ||
-    !isConnected ||
-    !requesterInput ||
-    isInvalidInput ||
-    isZeroInput ||
-    isLoading ||
-    exceedsRemaining ||
-    insufficientFunds;
-
-  const getTooltipMessage = () => {
-    if (disabled) return "Syncing";
-    if (loosingSideHasEnd) return "Appeal time has ended for this side";
-    if (!isConnected) return "Please connect your wallet";
-    if (userChainId !== chainId)
-      return `Switch your chain above to ${idToChain(chainId)?.name || "the correct chain"}`;
-    if (!requesterInput) return "Please enter an amount to fund";
-    if (isInvalidInput) return "Please enter a valid amount";
-    if (isZeroInput) return "Amount must be greater than 0";
-    if (exceedsRemaining)
-      return `Amount exceeds remaining needed (${formatEth(remainingAmount)} ${unit})`;
-    if (insufficientFunds)
-      return `Insufficient balance. You have ${formatEth(balanceData?.value ?? 0n)} ${unit}`;
-    return undefined;
-  };
+  const { disabled: isDisabled, tooltip: submitTooltip } = resolveTxState([
+    { active: disabled, message: "Syncing" },
+    {
+      active: loosingSideHasEnd,
+      message: "Appeal time has ended for this side",
+    },
+    { active: !isConnected, message: "Please connect your wallet" },
+    {
+      active: userChainId !== chainId,
+      message: `Switch your chain above to ${idToChain(chainId)?.name || "the correct chain"}`,
+    },
+    { active: !requesterInput, message: "Please enter an amount to fund" },
+    { active: isInvalidInput, message: "Please enter a valid amount" },
+    { active: isZeroInput, message: "Amount must be greater than 0" },
+    {
+      active: exceedsRemaining,
+      message: `Amount exceeds remaining needed (${formatEth(remainingAmount)} ${unit})`,
+    },
+    { active: funds.isLoading, message: "Checking balance" },
+    { active: funds.insufficient, message: funds.message },
+  ]);
 
   const [prepareFundAppeal] = usePoHWrite(
     "fundAppeal",
@@ -145,7 +139,7 @@ const SideFunding: React.FC<SideFundingProps> = ({
           errorRef.current = true;
         },
       }),
-      [loading],
+      [loading, onSuccess],
     ),
   );
 
@@ -181,7 +175,7 @@ const SideFunding: React.FC<SideFundingProps> = ({
           className="sm:w-auto"
           disabled={isDisabled}
           isLoading={isLoading}
-          tooltip={getTooltipMessage()}
+          tooltip={submitTooltip}
         />
       </div>
       <Progress
@@ -254,7 +248,7 @@ const Appeal: React.FC<AppealProps> = ({
 
   useEffectOnce(() => {
     const formatCurrentRuling = (currentRuling: SideEnum) => {
-      var text = "Undecided";
+      let text = "Undecided";
       switch (currentRuling) {
         case SideEnum.claimer:
           text = "Claimer wins";
@@ -368,6 +362,12 @@ const Appeal: React.FC<AppealProps> = ({
     };
     getAppealData();
   });
+
+  const appealTrigger = resolveTxState([
+    { active: !!externalDisabled, message: externalTooltip ?? "Disabled" },
+    { active: isReconciling, message: "Syncing" },
+  ]);
+
   return disputeStatus === DisputeStatusEnum.Appealable &&
     !error &&
     !loading ? (
@@ -375,7 +375,7 @@ const Appeal: React.FC<AppealProps> = ({
       <div className="group relative w-[150px] md:w-auto">
         <button
           onClick={() => setAppealModalOpen(true)}
-          disabled={externalDisabled || isReconciling}
+          disabled={appealTrigger.disabled}
           className="btn-sec w-[150px] rounded py-2 md:w-auto"
         >
           <span className="flex-inline flex flex-wrap items-center whitespace-nowrap md:flex-nowrap">
@@ -383,9 +383,9 @@ const Appeal: React.FC<AppealProps> = ({
             <TimeAgo time={parseInt(String(period[1]))} />)
           </span>
         </button>
-        {(externalDisabled || isReconciling) && (
-          <span className="pointer-events-none absolute bottom-full left-1/2 z-10 mb-2 w-max -translate-x-1/2 tooltip-surface text-center text-sm opacity-0 transition-opacity group-hover:opacity-100">
-            {externalDisabled ? (externalTooltip ?? "Disabled") : "Syncing"}
+        {appealTrigger.disabled && (
+          <span className="tooltip-surface pointer-events-none absolute bottom-full left-1/2 z-10 mb-2 w-max -translate-x-1/2 text-center text-sm opacity-0 transition-opacity group-hover:opacity-100">
+            {appealTrigger.tooltip}
           </span>
         )}
       </div>

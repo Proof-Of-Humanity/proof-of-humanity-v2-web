@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-import NewTabIcon from "components/NewTabIcon";
+import ExternalLinkIcon from "components/ExternalLinkIcon";
 import TimeAgo from "components/TimeAgo";
 
 type RequestPunishedVouchNoticeProps = {
@@ -36,11 +36,11 @@ export default function RequestPunishedVouchNotice({
           <p className="text-secondaryText mt-1 text-sm font-normal leading-6">
             This profile was removed for aiding {reason}.{" "}
             <Link
-              className="group/source-request text-orange inline-flex items-center gap-1 font-semibold transition-opacity hover:opacity-80"
+              className="group/external-link text-orange inline-flex items-center gap-1 font-semibold transition-opacity hover:opacity-80"
               href={sourceRequestHref}
             >
               View source request
-              <NewTabIcon className="h-4 w-4 fill-current transition-transform duration-200 group-hover/source-request:-translate-y-0.5 group-hover/source-request:translate-x-0.5" />
+              <ExternalLinkIcon />
             </Link>
           </p>
         </div>

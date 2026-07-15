@@ -26,6 +26,7 @@ import { ActionType } from "utils/enums";
 import { Address, Hash, formatEther, hexToSignature } from "viem";
 import { useAccount, useChainId } from "wagmi";
 import { idToChain } from "config/chains";
+import { resolveTxState } from "utils/txState";
 import { useRequestOptimistic } from "optimistic/request";
 import Appeal from "./Appeal";
 import Challenge from "./Challenge";
@@ -236,6 +237,39 @@ export default function ActionBar({
   const isAdvancePrepareError = advanceStatus.prepare === "error";
   const isExecutePrepareError = executeStatus.prepare === "error";
   const isWithdrawPrepareError = withdrawStatus.prepare === "error";
+
+  const wrongChainCheck = {
+    active: userChainId !== chain.id,
+    message: `Switch your chain above to ${idToChain(chain.id)?.name || "the correct chain"}`,
+  };
+  const withdrawTrigger = resolveTxState([
+    { active: isReconciling, message: "Syncing" },
+    {
+      active: isWithdrawPrepareError,
+      message: "Withdraw not possible, please try again",
+    },
+    wrongChainCheck,
+  ]);
+  const advanceTrigger = resolveTxState([
+    { active: lockClaimed, message: claimedTooltip },
+    { active: !address, message: connectTooltip },
+    { active: isReconciling, message: "Syncing" },
+    {
+      active: isAdvancePrepareError,
+      message: "Advance not possible, please try again",
+    },
+    wrongChainCheck,
+  ]);
+  const executeTrigger = resolveTxState([
+    { active: lockClaimed, message: claimedTooltip },
+    { active: !address, message: connectTooltip },
+    { active: isReconciling, message: "Syncing" },
+    {
+      active: isExecutePrepareError,
+      message: "Execute not possible, please try again",
+    },
+    wrongChainCheck,
+  ]);
   const lastAdvancePrepareKeyRef = useRef<string>();
   const lastExecutePrepareKeyRef = useRef<string>();
   const lastWithdrawPrepareKeyRef = useRef<string>();
@@ -438,24 +472,12 @@ export default function ActionBar({
                           />
                         )}
                         <ActionButton
-                          disabled={
-                            isReconciling ||
-                            isWithdrawPrepareError ||
-                            userChainId !== chain.id
-                          }
+                          disabled={withdrawTrigger.disabled}
                           isLoading={isWithdrawLoading}
                           onClick={withdraw}
                           variant="secondary"
                           label={isWithdrawLoading ? "Withdrawing" : "Withdraw"}
-                          tooltip={
-                            isReconciling
-                              ? "Syncing"
-                              : isWithdrawPrepareError
-                                ? "Withdraw not possible, please try again"
-                                : userChainId !== chain.id
-                                  ? `Switch your chain above to ${idToChain(chain.id)?.name || "the correct chain"}`
-                                  : undefined
-                          }
+                          tooltip={withdrawTrigger.tooltip}
                           className="mb-2 w-auto"
                         />
                       </div>
@@ -550,24 +572,12 @@ export default function ActionBar({
               <div className="flex justify-center gap-4 md:justify-start">
                 {requester.toLocaleLowerCase() === address?.toLowerCase() ? (
                   <ActionButton
-                    disabled={
-                      isReconciling ||
-                      isWithdrawPrepareError ||
-                      userChainId !== chain.id
-                    }
+                    disabled={withdrawTrigger.disabled}
                     isLoading={isWithdrawLoading}
                     onClick={withdraw}
                     variant="secondary"
                     label={"Withdraw"}
-                    tooltip={
-                      isReconciling
-                        ? "Syncing"
-                        : isWithdrawPrepareError
-                          ? "Withdraw not possible, please try again"
-                          : userChainId !== chain.id
-                            ? `Switch your chain above to ${idToChain(chain.id)?.name || "the correct chain"}`
-                            : undefined
-                    }
+                    tooltip={withdrawTrigger.tooltip}
                     className="mb-2 w-auto"
                   />
                 ) : !didIVouchFor ? (
@@ -589,29 +599,11 @@ export default function ActionBar({
                   />
                 ) : null}
                 <ActionButton
-                  disabled={
-                    lockClaimed ||
-                    !address ||
-                    isReconciling ||
-                    isAdvancePrepareError ||
-                    userChainId !== chain.id
-                  }
+                  disabled={advanceTrigger.disabled}
                   isLoading={isAdvanceLoading}
                   onClick={advanceFire}
                   label={isAdvanceLoading ? "Advancing" : "Advance"}
-                  tooltip={
-                    lockClaimed
-                      ? claimedTooltip
-                      : !address
-                        ? connectTooltip
-                        : isReconciling
-                          ? "Syncing"
-                          : isAdvancePrepareError
-                            ? "Advance not possible, please try again"
-                            : userChainId !== chain.id
-                              ? `Switch your chain above to ${idToChain(chain.id)?.name || "the correct chain"}`
-                              : undefined
-                  }
+                  tooltip={advanceTrigger.tooltip}
                   className="mb-2 w-auto"
                 />
               </div>
@@ -624,26 +616,11 @@ export default function ActionBar({
               </span>
               <div className="flex flex-col items-center justify-between gap-4 font-normal md:flex-row md:items-center">
                 <ActionButton
-                  disabled={
-                    lockClaimed ||
-                    isReconciling ||
-                    isExecutePrepareError ||
-                    userChainId !== chain.id
-                  }
+                  disabled={executeTrigger.disabled}
                   isLoading={isExecuteLoading}
                   onClick={execute}
                   label={isExecuteLoading ? "Executing" : "Execute"}
-                  tooltip={
-                    lockClaimed
-                      ? claimedTooltip
-                      : isReconciling
-                        ? "Syncing"
-                        : isExecutePrepareError
-                          ? "Execute not possible, please try again"
-                          : userChainId !== chain.id
-                            ? `Switch your chain above to ${idToChain(chain.id)?.name || "the correct chain"}`
-                            : undefined
-                  }
+                  tooltip={executeTrigger.tooltip}
                   className="mb-2 w-auto"
                 />
               </div>
