@@ -19,7 +19,6 @@ import {
   getResolvedRequestStatus,
   getResolvingRequestStatus,
   getStatusColor,
-  getStatusLabel,
   RequestStatus,
 } from "utils/status";
 import { ActionType } from "utils/enums";
@@ -411,12 +410,7 @@ export default function ActionBar({
       <div className="flex flex-col items-center justify-between gap-[12px] px-[24px] py-[24px] md:flex-row lg:gap-[20px]">
         <div className="flex items-center">
           <span className="text-secondaryText mr-4">Status</span>
-          <StatusBadge
-            color={statusColor}
-            label={getStatusLabel(effectiveRequestStatus, "actionBar")}
-            status={effectiveRequestStatus}
-            large
-          />
+          <StatusBadge status={effectiveRequestStatus} />
         </div>
         <div className="flex w-full flex-col justify-between gap-[12px] font-normal md:flex-row md:items-center">
           {web3Loaded &&
