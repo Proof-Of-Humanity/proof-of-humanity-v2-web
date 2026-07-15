@@ -25,7 +25,9 @@ export default function ActionWalletGate({
   const web3Loaded = useWeb3Loaded();
   const { switchChain } = useSwitchChain();
 
-  if (web3Loaded && !isConnected)
+  if (!web3Loaded) return null;
+
+  if (!isConnected)
     return (
       <button
         onClick={() => modal.open({ view: "Connect" })}
@@ -35,7 +37,7 @@ export default function ActionWalletGate({
       </button>
     );
 
-  if (web3Loaded && homeChain.id !== connectedChainId)
+  if (homeChain.id !== connectedChainId)
     return (
       <button
         onClick={() => switchChain?.({ chainId: homeChain.id })}

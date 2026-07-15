@@ -23,10 +23,13 @@ export default function CopyButton({
 
   const handleCopy = useCallback(async () => {
     try {
-      // `navigator.clipboard` is undefined in insecure/unsupported contexts;
-      // optional chaining avoids a synchronous throw, and try/catch handles a
-      // rejected write.
-      await navigator.clipboard?.writeText(value);
+      // `navigator.clipboard` is undefined in insecure/unsupported contexts.
+      // Bail before showing the copied state so we never signal a success that
+      // didn't happen; the catch below still handles a rejected write.
+      if (!navigator.clipboard?.writeText) {
+        throw new Error("Clipboard not supported");
+      }
+      await navigator.clipboard.writeText(value);
       setCopied(true);
       clearTimeout(resetTimer.current);
       resetTimer.current = setTimeout(() => setCopied(false), COPIED_RESET_MS);

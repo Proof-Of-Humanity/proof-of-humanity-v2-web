@@ -259,6 +259,7 @@ export default function Challenge({
       active: !revocation && reason === "none",
       message: "Select a challenging reason",
     },
+    { active: funds.isLoading, message: "Checking balance" },
     { active: funds.insufficient, message: funds.message },
   ]);
 

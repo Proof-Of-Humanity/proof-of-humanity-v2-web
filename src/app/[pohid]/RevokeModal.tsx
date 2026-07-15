@@ -83,9 +83,11 @@ export default function RevokeModal({
           fire();
         },
         onFail() {
+          loading.stop();
           toast.error("Revoke is not available right now.");
         },
         onError(error) {
+          loading.stop();
           toast.error(getWriteErrorMessage(error));
         },
         onSuccess() {

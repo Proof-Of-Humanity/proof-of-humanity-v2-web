@@ -262,6 +262,7 @@ export default function ActionBar({
   ]);
   const executeTrigger = resolveTxState([
     { active: lockClaimed, message: claimedTooltip },
+    { active: !address, message: connectTooltip },
     { active: isReconciling, message: "Syncing" },
     {
       active: isExecutePrepareError,

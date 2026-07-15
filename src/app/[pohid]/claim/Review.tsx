@@ -424,7 +424,7 @@ function Review({
             <button
               className="btn-main md:w-full"
               onClick={submit}
-              disabled={funds.insufficient}
+              disabled={funds.isLoading || funds.insufficient}
             >
               Submit
             </button>

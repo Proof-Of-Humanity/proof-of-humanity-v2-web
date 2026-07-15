@@ -1,3 +1,4 @@
+import { useId } from "react";
 import type { ComponentType, SVGProps } from "react";
 
 import { WAITING_FOR_INDEXER_TOOLTIP } from "hooks/useActionFeedback";
@@ -25,20 +26,30 @@ export function CrossChainActionTrigger({
   className?: string;
   iconClassName?: string;
 }) {
+  const tooltipId = useId();
+
   return (
     <div className={`group relative ${className}`}>
       <button
+        type="button"
         className={`inline-flex items-center gap-2 text-sm text-peach ${
           disabled ? "opacity-70" : "transition-opacity hover:opacity-70"
         }`}
-        disabled={disabled}
-        onClick={onClick}
+        // Use aria-disabled instead of the native attribute so the control stays
+        // focusable and keyboard users can reveal the tooltip explaining why.
+        aria-disabled={disabled || undefined}
+        aria-describedby={showTooltip ? tooltipId : undefined}
+        onClick={disabled ? undefined : onClick}
       >
         {label}
         <Icon className={`h-4 w-4 ${iconClassName}`} />
       </button>
       {showTooltip ? (
-        <span className="tooltip-surface pointer-events-none absolute bottom-full left-1/2 z-10 mb-2 w-max -translate-x-1/2 text-center text-sm opacity-0 transition-opacity group-hover:opacity-100">
+        <span
+          id={tooltipId}
+          role="tooltip"
+          className="tooltip-surface pointer-events-none absolute bottom-full left-1/2 z-10 mb-2 w-max -translate-x-1/2 text-center text-sm opacity-0 transition-opacity group-focus-within:opacity-100 group-hover:opacity-100"
+        >
           {WAITING_FOR_INDEXER_TOOLTIP}
         </span>
       ) : null}

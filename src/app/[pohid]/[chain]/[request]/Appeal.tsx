@@ -94,7 +94,6 @@ const SideFunding: React.FC<SideFundingProps> = ({
 
   const { disabled: isDisabled, tooltip: submitTooltip } = resolveTxState([
     { active: disabled, message: "Syncing" },
-    { active: errorRef.current },
     {
       active: loosingSideHasEnd,
       message: "Appeal time has ended for this side",
@@ -111,6 +110,7 @@ const SideFunding: React.FC<SideFundingProps> = ({
       active: exceedsRemaining,
       message: `Amount exceeds remaining needed (${formatEth(remainingAmount)} ${unit})`,
     },
+    { active: funds.isLoading, message: "Checking balance" },
     { active: funds.insufficient, message: funds.message },
   ]);
 

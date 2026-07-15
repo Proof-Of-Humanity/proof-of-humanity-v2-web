@@ -90,23 +90,34 @@ const FundButton: React.FC<FundButtonProps> = ({
   const remainingAmount = totalCost - funded;
   const maxFundAmount = formatEther(remainingAmount);
 
+  const inputAmount = useMemo(() => {
+    if (!addedFundInput) return 0n;
+    try {
+      const parsed = parseEther(addedFundInput);
+      return parsed < 0n ? 0n : parsed;
+    } catch {
+      return null;
+    }
+  }, [addedFundInput]);
+
+  const isInvalidInput = inputAmount === null;
+  const isNonPositive = !isInvalidInput && inputAmount! <= 0n;
+  const exceedsRemaining = !isInvalidInput && inputAmount! > remainingAmount;
+  const funds = useEnoughFunds({
+    chainId: chain.id,
+    amount: !isInvalidInput && inputAmount ? inputAmount : undefined,
+  });
+  const isReconciling = pendingAction !== null;
+
   const handleSubmit = () => {
-    if (!addedFundInput) return;
+    if (inputAmount === null || inputAmount <= 0n) return;
 
     loading.start("Funding...");
     prepareFund({
-      value: BigInt(parseEther(addedFundInput)),
+      value: inputAmount,
       args: [pohId, BigInt(index)],
     });
   };
-  const inputAmount = parseEther(addedFundInput);
-  const funds = useEnoughFunds({
-    chainId: chain.id,
-    amount: addedFundInput ? inputAmount : undefined,
-  });
-
-  const exceedsRemaining = inputAmount != null && inputAmount > remainingAmount;
-  const isReconciling = pendingAction !== null;
 
   const { disabled: isDisabled, tooltip: submitTooltip } = resolveTxState([
     { active: isReconciling, message: "Syncing" },
@@ -116,10 +127,13 @@ const FundButton: React.FC<FundButtonProps> = ({
       message: `Switch your chain above to ${idToChain(chain.id)?.name || "the correct chain"}`,
     },
     { active: !addedFundInput, message: "Please enter an amount to fund" },
+    { active: isInvalidInput, message: "Please enter a valid amount" },
+    { active: isNonPositive, message: "Amount must be greater than 0" },
     {
       active: exceedsRemaining,
       message: `Amount exceeds remaining needed (${formatEth(remainingAmount)} ${chain.nativeCurrency.symbol})`,
     },
+    { active: funds.isLoading, message: "Checking balance" },
     { active: funds.insufficient, message: funds.message },
     { active: isLoading },
   ]);
