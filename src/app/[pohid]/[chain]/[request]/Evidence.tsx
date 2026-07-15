@@ -31,6 +31,7 @@ import { EvidenceFile, MetaEvidenceFile } from "types/docs";
 import { shortenAddress } from "utils/address";
 import { ipfsFetch, ipfs } from "utils/ipfs";
 import { romanize } from "utils/misc";
+import { resolveTxState } from "utils/txState";
 import { Address, Hash } from "viem";
 import { useAccount, useChainId } from "wagmi";
 import { useAtlasProvider, Roles } from "@kleros/kleros-app";
@@ -297,22 +298,24 @@ export default function Evidence({
 
   const isEvidenceDisabled = chainReq.id !== chainId;
 
+  const evidenceTrigger = resolveTxState([
+    { active: isReconciling, message: "Syncing" },
+    {
+      active: isEvidenceDisabled,
+      message: `Switch your chain above to ${idToChain(chainReq.id)?.name || "the correct chain"}`,
+    },
+  ]);
+
   return (
     <Accordion title="Evidence">
       {requestIndex >= 0 && (
         <>
           <div className="mr-2 mt-4 self-end">
             <ActionButton
-              disabled={isReconciling || isEvidenceDisabled}
+              disabled={evidenceTrigger.disabled}
               onClick={() => setModalOpen(true)}
               label="Add Evidence"
-              tooltip={
-                isReconciling
-                  ? "Syncing"
-                  : isEvidenceDisabled
-                    ? `Switch your chain above to ${idToChain(chainReq.id)?.name || "the correct chain"}`
-                    : undefined
-              }
+              tooltip={evidenceTrigger.tooltip}
             />
           </div>
           <Modal

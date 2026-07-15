@@ -5,6 +5,8 @@ import Label from "components/Label";
 import Modal from "components/Modal";
 import TimeAgo from "components/TimeAgo";
 import { useLoading } from "hooks/useLoading";
+import useEnoughFunds from "hooks/useEnoughFunds";
+import { resolveTxState } from "utils/txState";
 import useChainParam from "hooks/useChainParam";
 import { ipfs } from "utils/ipfs";
 import { formatEth } from "utils/misc";
@@ -244,21 +246,38 @@ export default function Challenge({
     { reason: "sybilAttack" as Reason, text: "Sybil Attack" },
     { reason: "deceased" as Reason, text: "Deceased" },
   ];
+
+  const funds = useEnoughFunds({ chainId: chain.id, amount: arbitrationCost });
+  const { disabled: submitDisabled, tooltip: submitTooltip } = resolveTxState([
+    { active: isReconciling, message: "Syncing" },
+    {
+      active: userChainId !== chain.id,
+      message: `Switch your chain above to ${idToChain(chain.id)?.name || "the correct chain"}`,
+    },
+    { active: !justification, message: "Enter a justification" },
+    {
+      active: !revocation && reason === "none",
+      message: "Select a challenging reason",
+    },
+    { active: funds.insufficient, message: funds.message },
+  ]);
+
+  const trigger = resolveTxState([
+    { active: !!externalDisabled, message: externalTooltip },
+    { active: isReconciling, message: "Syncing" },
+    {
+      active: userChainId !== chain.id,
+      message: `Switch your chain above to ${idToChain(chain.id)?.name || "the correct chain"}`,
+    },
+  ]);
+
   return (
     <>
       <ActionButton
         onClick={() => setIsOpen(true)}
         label="Challenge"
-        disabled={externalDisabled || isReconciling || userChainId !== chain.id}
-        tooltip={
-          externalDisabled
-            ? externalTooltip
-            : isReconciling
-              ? "Syncing"
-              : userChainId !== chain.id
-                ? `Switch your chain above to ${idToChain(chain.id)?.name || "the correct chain"}`
-                : undefined
-        }
+        disabled={trigger.disabled}
+        tooltip={trigger.tooltip}
       />
       <Modal
         formal
@@ -311,23 +330,12 @@ export default function Challenge({
 
           <AuthGuard signInButtonProps={{ className: "mt-12 px-4" }}>
             <ActionButton
-              {...{
-                disabled: !revocation
-                  ? !justification ||
-                    reason === "none" ||
-                    isReconciling ||
-                    userChainId !== chain.id
-                  : !justification || isReconciling || userChainId !== chain.id,
-                className: "mt-12",
-                onClick: submit,
-                isLoading,
-                label: loadingMessage || "Challenge request",
-                tooltip: isReconciling
-                  ? "Syncing"
-                  : userChainId !== chain.id
-                    ? `Switch your chain above to ${idToChain(chain.id)?.name || "the correct chain"}`
-                    : undefined,
-              }}
+              disabled={submitDisabled}
+              className="mt-12"
+              onClick={submit}
+              isLoading={isLoading}
+              label={loadingMessage || "Challenge request"}
+              tooltip={submitTooltip}
             />
           </AuthGuard>
         </div>

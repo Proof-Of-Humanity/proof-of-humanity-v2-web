@@ -11,6 +11,7 @@ import { SupportedChain, idToChain } from "config/chains";
 import ActionButton from "components/ActionButton";
 import { useRequestOptimistic } from "optimistic/request";
 import type { RequestOptimisticOverlay } from "optimistic/types";
+import { resolveTxState } from "utils/txState";
 
 const normalizeAddress = (value: Address) => value.toLowerCase();
 
@@ -218,6 +219,15 @@ export default function Vouch({
     ? false
     : me.expirationTime > Date.now() / 1000;
 
+  const trigger = resolveTxState([
+    { active: !!externalDisabled, message: externalTooltip },
+    { active: isReconciling, message: "Syncing" },
+    {
+      active: userChainId !== chain.id,
+      message: `Switch your chain above to ${idToChain(chain.id)?.name || "the correct chain"}`,
+    },
+  ]);
+
   return (
     web3Loaded &&
     me &&
@@ -229,18 +239,8 @@ export default function Vouch({
           onClick={() => setIsOpen(true)}
           label="Vouch"
           className="mb-2 w-auto"
-          disabled={
-            externalDisabled || isReconciling || userChainId !== chain.id
-          }
-          tooltip={
-            externalDisabled
-              ? externalTooltip
-              : isReconciling
-                ? "Syncing"
-                : userChainId !== chain.id
-                  ? `Switch your chain above to ${idToChain(chain.id)?.name || "the correct chain"}`
-                  : undefined
-          }
+          disabled={trigger.disabled}
+          tooltip={trigger.tooltip}
         />
         <Modal
           formal

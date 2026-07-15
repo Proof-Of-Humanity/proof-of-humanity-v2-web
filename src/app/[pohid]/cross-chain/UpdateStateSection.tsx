@@ -181,10 +181,7 @@ export default function UpdateStateSection({
                           width={40}
                         />
                         <div className="flex shrink-0 items-center">
-                          <ChainLogo
-                            chainId={chain.id}
-                            className="h-6 w-6 fill-current"
-                          />
+                          <ChainLogo chainId={chain.id} className="h-6 w-6" />
                         </div>
                         <span className="truncate text-sm text-peach">
                           {prettifyId(pohId)}

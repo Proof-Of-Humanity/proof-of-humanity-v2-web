@@ -18,12 +18,14 @@ import usePoHWrite from "contracts/hooks/usePoHWrite";
 import type { ContractData } from "data/contract";
 import { uploadEvidence } from "data/uploadEvidence";
 import { getWriteErrorMessage } from "hooks/useActionFeedback";
+import useEnoughFunds from "hooks/useEnoughFunds";
 import { useLoading } from "hooks/useLoading";
 import DocumentIcon from "icons/NoteMajor.svg";
 import { useProfileOptimistic } from "optimistic/profile";
 import type { ProfileOptimisticOverlay } from "optimistic/types";
 import { ipfs } from "utils/ipfs";
 import { formatEth } from "utils/misc";
+import { resolveTxState } from "utils/txState";
 
 import RevokeConsequences from "./RevokeConsequences";
 
@@ -120,6 +122,16 @@ export default function RevokeModal({
     (writeStatus.write === "success" && writeStatus.transaction === "pending");
   const isBusy = pending || hasRevokeInFlight;
   const showTitleError = titleTouched && !title.trim();
+  const funds = useEnoughFunds({ chainId: homeChain.id, amount: cost });
+  const { disabled: disabledByReason, tooltip: disabledReason } =
+    resolveTxState([
+      {
+        active: cost === undefined,
+        message: "Deposit is unavailable right now.",
+      },
+      { active: !title.trim(), message: "Enter a title to continue." },
+      { active: funds.insufficient, message: funds.message },
+    ]);
 
   return (
     <Modal
@@ -155,7 +167,7 @@ export default function RevokeModal({
           }
         />
 
-        <div className="border-stroke flex w-full flex-col gap-1 border-t pt-4">
+        <div className="border-stroke flex w-full flex-col gap-1 border-t pt-2">
           <Field
             label="Title"
             value={title}
@@ -185,11 +197,12 @@ export default function RevokeModal({
 
         <AuthGuard signInButtonProps={{ className: "px-5 py-2" }}>
           <ActionButton
-            disabled={cost === undefined || isBusy || !title.trim()}
+            disabled={disabledByReason || isBusy}
             isLoading={isBusy}
             className="w-[170px]"
             onClick={submit}
             label={loadingMessage || "Revoke"}
+            tooltip={disabledReason}
           />
         </AuthGuard>
       </div>

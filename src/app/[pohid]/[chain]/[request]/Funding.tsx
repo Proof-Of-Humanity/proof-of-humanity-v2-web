@@ -5,10 +5,12 @@ import Modal from "components/Modal";
 import ActionButton from "components/ActionButton";
 import usePoHWrite from "contracts/hooks/usePoHWrite";
 import { useLoading } from "hooks/useLoading";
+import useEnoughFunds from "hooks/useEnoughFunds";
+import { resolveTxState } from "utils/txState";
 import type { RequestOptimisticOverlay } from "optimistic/types";
 import { Hash, formatEther, parseEther } from "viem";
 import useChainParam from "hooks/useChainParam";
-import { useAccount, useBalance, useChainId } from "wagmi";
+import { useAccount, useChainId } from "wagmi";
 import { formatEth } from "utils/misc";
 import { idToChain } from "config/chains";
 import { useRequestOptimistic } from "optimistic/request";
@@ -43,8 +45,7 @@ const FundButton: React.FC<FundButtonProps> = ({
   const userChainId = useChainId();
   const [addedFundInput, setAddedFundInput] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const { isConnected, address } = useAccount();
-  const { data: balanceData } = useBalance({ address, chainId: userChainId });
+  const { isConnected } = useAccount();
   const loading = useLoading();
   const [isLoading, loadingMessage] = loading.use();
   const closeModal = useCallback(() => {
@@ -99,35 +100,38 @@ const FundButton: React.FC<FundButtonProps> = ({
     });
   };
   const inputAmount = parseEther(addedFundInput);
-  const insufficientFunds = useMemo(() => {
-    const available = balanceData?.value ?? 0n;
-    return inputAmount > available;
-  }, [inputAmount, balanceData]);
+  const funds = useEnoughFunds({
+    chainId: chain.id,
+    amount: addedFundInput ? inputAmount : undefined,
+  });
 
   const exceedsRemaining = inputAmount != null && inputAmount > remainingAmount;
   const isReconciling = pendingAction !== null;
 
-  const isDisabled =
-    !isConnected ||
-    !addedFundInput ||
-    isLoading ||
-    isReconciling ||
-    userChainId !== chain.id ||
-    exceedsRemaining ||
-    insufficientFunds;
+  const { disabled: isDisabled, tooltip: submitTooltip } = resolveTxState([
+    { active: isReconciling, message: "Syncing" },
+    { active: !isConnected, message: "Please connect your wallet" },
+    {
+      active: userChainId !== chain.id,
+      message: `Switch your chain above to ${idToChain(chain.id)?.name || "the correct chain"}`,
+    },
+    { active: !addedFundInput, message: "Please enter an amount to fund" },
+    {
+      active: exceedsRemaining,
+      message: `Amount exceeds remaining needed (${formatEth(remainingAmount)} ${chain.nativeCurrency.symbol})`,
+    },
+    { active: funds.insufficient, message: funds.message },
+    { active: isLoading },
+  ]);
 
-  const getTooltipMessage = () => {
-    if (isReconciling) return "Syncing";
-    if (!isConnected) return "Please connect your wallet";
-    if (userChainId !== chain.id)
-      return `Switch your chain above to ${idToChain(chain.id)?.name || "the correct chain"}`;
-    if (!addedFundInput) return "Please enter an amount to fund";
-    if (exceedsRemaining)
-      return `Amount exceeds remaining needed (${formatEth(remainingAmount)} ${chain.nativeCurrency.symbol})`;
-    if (insufficientFunds)
-      return `Insufficient balance. You have ${formatEth(balanceData?.value ?? 0n)} ${chain.nativeCurrency.symbol}`;
-    return undefined;
-  };
+  const trigger = resolveTxState([
+    { active: !!externalDisabled, message: externalTooltip },
+    { active: isReconciling, message: "Syncing" },
+    {
+      active: userChainId !== chain.id,
+      message: `Switch your chain above to ${idToChain(chain.id)?.name || "the correct chain"}`,
+    },
+  ]);
 
   return (
     <>
@@ -135,16 +139,8 @@ const FundButton: React.FC<FundButtonProps> = ({
         onClick={() => setIsModalOpen(true)}
         label="Fund"
         className="mb-2 w-auto"
-        disabled={externalDisabled || isReconciling || userChainId !== chain.id}
-        tooltip={
-          externalDisabled
-            ? externalTooltip
-            : isReconciling
-              ? "Syncing"
-              : userChainId !== chain.id
-                ? `Switch your chain above to ${idToChain(chain.id)?.name || "the correct chain"}`
-                : undefined
-        }
+        disabled={trigger.disabled}
+        tooltip={trigger.tooltip}
       />
       <Modal
         formal
@@ -184,7 +180,7 @@ const FundButton: React.FC<FundButtonProps> = ({
               onClick={handleSubmit}
               label={loadingMessage || "Fund request"}
               className="mx-auto w-auto"
-              tooltip={getTooltipMessage()}
+              tooltip={submitTooltip}
             />
           </div>
         </div>

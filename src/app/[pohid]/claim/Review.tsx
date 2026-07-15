@@ -16,14 +16,9 @@ import Image from "next/image";
 import { prettifyId } from "utils/identifier";
 import { ipfs } from "utils/ipfs";
 import { formatEth } from "utils/misc";
-import { Abi, Hash, formatEther } from "viem";
-import {
-  useAccount,
-  useBalance,
-  useChainId,
-  useReadContract,
-  useSwitchChain,
-} from "wagmi";
+import { Abi, Hash, formatEther, parseEther } from "viem";
+import { useAccount, useChainId, useReadContract, useSwitchChain } from "wagmi";
+import useEnoughFunds from "hooks/useEnoughFunds";
 import { EmailSubmissionStatus, MediaState, SubmissionState } from "./Form";
 
 interface ReviewProps {
@@ -75,7 +70,15 @@ function Review({
   const chainId = useChainId() as SupportedChainId;
   const { switchChain } = useSwitchChain();
 
-  const { data: balance } = useBalance({ address, chainId });
+  let selfFundedWei: bigint | undefined;
+  if (!submitForFree && selfFunded) {
+    try {
+      selfFundedWei = parseEther(selfFunded.toString());
+    } catch {
+      selfFundedWei = undefined;
+    }
+  }
+  const funds = useEnoughFunds({ chainId, amount: selfFundedWei });
 
   const currentChain = idToChain(chainId)!;
   const { nativeCurrency } = currentChain;
@@ -261,11 +264,11 @@ function Review({
         <Label className="!mt-2">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
             <span>{isRenewal ? "Deposit" : "Initial deposit"}</span>
-            {balance && (
+            {funds.balance !== undefined && (
               <span className="text-primaryText text-sm normal-case sm:text-base">
                 Your balance:{" "}
                 <strong>
-                  {formatEth(balance.value)} {nativeCurrency.symbol}
+                  {formatEth(funds.balance)} {nativeCurrency.symbol}
                 </strong>
               </span>
             )}
@@ -418,9 +421,18 @@ function Review({
           </button>
         ) : (
           <AuthGuard signInButtonProps={{ className: "md:w-full" }}>
-            <button className="btn-main md:w-full" onClick={submit}>
+            <button
+              className="btn-main md:w-full"
+              onClick={submit}
+              disabled={funds.insufficient}
+            >
               Submit
             </button>
+            {funds.insufficient && (
+              <p className="text-status-rejected mt-2 text-center text-sm md:text-left">
+                {funds.message}
+              </p>
+            )}
           </AuthGuard>
         )}
       </div>
