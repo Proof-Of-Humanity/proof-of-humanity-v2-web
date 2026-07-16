@@ -90,6 +90,8 @@ module.exports = {
           "wizardOutRight 0.18s cubic-bezier(0.22, 0.61, 0.36, 1) forwards",
         fadeOut: "fadeOut 0.4s ease-out forwards",
         fadeIn: "fadeIn 0.3s ease-out forwards",
+        accordionItemIn:
+          "accordionItemIn 0.6s cubic-bezier(0.22, 0.61, 0.36, 1) both",
       },
       keyframes: {
         flip: {
@@ -119,6 +121,10 @@ module.exports = {
         fadeIn: {
           "0%": { opacity: "0" },
           "100%": { opacity: "1" },
+        },
+        accordionItemIn: {
+          "0%": { opacity: "0", transform: "translateY(12px)" },
+          "100%": { opacity: "1", transform: "translateY(0)" },
         },
         // progress: {
         //   "0%": { transform: "scaleX(1)" },

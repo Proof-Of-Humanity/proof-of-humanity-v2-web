@@ -81,6 +81,7 @@ export default function useWagmiWrite<
     chainId: number;
   } | null>(null);
   const preparedRequestRef = useRef<any>();
+  const writeInFlightRef = useRef(false);
   const lastPendingHashRef = useRef<Hash | undefined>();
   const lastSuccessHashRef = useRef<Hash | undefined>();
 
@@ -94,6 +95,8 @@ export default function useWagmiWrite<
 
   const fireWrite = useCallback(
     (request: any) => {
+      if (writeInFlightRef.current) return;
+      writeInFlightRef.current = true;
       const writeChainId =
         (request?.chain?.id as SupportedChainId | undefined) ?? currentChainId;
       lastWriteRef.current = {
@@ -106,7 +109,9 @@ export default function useWagmiWrite<
         .then((hash) => {
           setSubmittedTx({ hash, chainId: writeChainId });
         })
-        .catch(() => undefined);
+        .catch(() => {
+          writeInFlightRef.current = false;
+        });
     },
     [args, value, currentChainId, writeContractAsync],
   );
@@ -132,6 +137,7 @@ export default function useWagmiWrite<
   useEffect(() => {
     switch (status) {
       case "error":
+        writeInFlightRef.current = false;
         effectsRef.current?.onError?.(writeError);
         setEnabled(false);
     }
@@ -150,6 +156,7 @@ export default function useWagmiWrite<
         break;
       case "success":
         if (lastSuccessHashRef.current !== txHash) {
+          writeInFlightRef.current = false;
           lastSuccessHashRef.current = txHash;
           const ctx: WriteSuccessContext = {
             contract,
@@ -162,6 +169,9 @@ export default function useWagmiWrite<
           };
           effectsRef.current?.onSuccess?.(ctx);
         }
+        break;
+      case "error":
+        writeInFlightRef.current = false;
         break;
     }
   }, [

@@ -88,6 +88,12 @@ export function idToChainAny(id: number): AnySupportedChain | null {
   return idToChainMain(id) ?? idToChainTest(id);
 }
 
+/** Display label for a chain's native currency. */
+export function nativeCurrencyLabel(chainId: number): string {
+  const symbol = idToChain(chainId)?.nativeCurrency.symbol ?? "";
+  return /xdai/i.test(symbol) ? "xDAI" : symbol;
+}
+
 export function paramToChain(param: string): SupportedChain | null {
   if (nameToChain(param)) return nameToChain(param);
   else return idToChain(+param);

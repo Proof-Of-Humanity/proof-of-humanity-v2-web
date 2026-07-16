@@ -7,13 +7,14 @@ import Label from "./Label";
 
 type CurrencyFieldProps = InputHTMLAttributes<HTMLInputElement> & {
   label?: ReactNode;
+  labelClassName?: string;
   /** Native currency symbol deciding the token icon, e.g. "ETH" or "xDAI". */
   symbol?: string;
   /** When set, the token becomes a selector with a caret. */
   onTokenClick?: () => void;
 };
 
-const tokenIcon = (symbol?: string) =>
+export const CurrencyIcon = ({ symbol }: { symbol?: string }) =>
   /dai/i.test(symbol ?? "") ? (
     <XdaiTokenIcon className="h-6 w-6 shrink-0" />
   ) : (
@@ -22,6 +23,7 @@ const tokenIcon = (symbol?: string) =>
 
 function CurrencyField({
   label,
+  labelClassName,
   symbol,
   onTokenClick,
   className,
@@ -29,7 +31,7 @@ function CurrencyField({
 }: CurrencyFieldProps) {
   return (
     <div className="flex w-full flex-col">
-      {label && <Label>{label}</Label>}
+      {label && <Label className={labelClassName}>{label}</Label>}
       <div className="flat-control flex min-h-12 w-full items-center gap-2 rounded-input px-4 transition duration-200 ease-premium">
         <input
           type="number"
@@ -46,11 +48,11 @@ function CurrencyField({
             aria-label="Select currency"
             className="flex shrink-0 items-center gap-1.5"
           >
-            {tokenIcon(symbol)}
-            <CaretDownIcon className="text-peach h-2 w-2 fill-current" />
+            <CurrencyIcon symbol={symbol} />
+            <CaretDownIcon className="h-2 w-2 fill-current text-peach" />
           </button>
         ) : (
-          tokenIcon(symbol)
+          <CurrencyIcon symbol={symbol} />
         )}
       </div>
     </div>

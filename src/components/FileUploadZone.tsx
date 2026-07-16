@@ -13,6 +13,8 @@ interface FileUploadZoneProps {
   footnote?: ReactNode;
   disabled?: boolean;
   className?: string;
+  iconClassName?: string;
+  footnoteIconClassName?: string;
 }
 
 function FileUploadZone({
@@ -23,6 +25,8 @@ function FileUploadZone({
   footnote,
   disabled,
   className,
+  iconClassName = "h-4 w-4",
+  footnoteIconClassName,
 }: FileUploadZoneProps) {
   const uploaded = !!fileName;
 
@@ -41,19 +45,28 @@ function FileUploadZone({
       >
         {uploaded ? (
           <>
-            <CheckCircleOutlineIcon className="h-4 w-4 shrink-0 fill-current" />
+            <CheckCircleOutlineIcon
+              className={cn("shrink-0 fill-current", iconClassName)}
+            />
             <span className="min-w-0 truncate">{fileName}</span>
           </>
         ) : (
           <>
-            <UploadIcon className="h-4 w-4 shrink-0 fill-current" />
+            <UploadIcon
+              className={cn("shrink-0 fill-current", iconClassName)}
+            />
             <span>{placeholder}</span>
           </>
         )}
       </Uploader>
       {footnote && (
         <span className="text-secondaryText mt-2 flex items-center gap-1.5 text-xs">
-          <InfoIcon className="h-3.5 w-3.5 shrink-0 stroke-current" />
+          <InfoIcon
+            className={cn(
+              "h-3.5 w-3.5 shrink-0 stroke-current",
+              footnoteIconClassName,
+            )}
+          />
           {footnote}
         </span>
       )}

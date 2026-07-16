@@ -48,7 +48,7 @@ export function CrossChainActionTrigger({
         <span
           id={tooltipId}
           role="tooltip"
-          className="tooltip-surface pointer-events-none absolute bottom-full left-1/2 z-10 mb-2 w-max -translate-x-1/2 text-center text-sm opacity-0 transition-opacity group-focus-within:opacity-100 group-hover:opacity-100"
+          className="tooltip-surface pointer-events-none absolute bottom-full left-1/2 z-50 mb-2 w-max -translate-x-1/2 text-center text-sm opacity-0 transition-opacity group-focus-within:opacity-100 group-hover:opacity-100"
         >
           {WAITING_FOR_INDEXER_TOOLTIP}
         </span>

@@ -244,7 +244,9 @@ function RequestsGrid() {
             ) {
               const where: any = {
                 ...getRequestStatusFilter(status),
-                ...(search ? { claimer_: { name_contains: search } } : {}),
+                ...(search
+                  ? { claimer_: { name_contains_nocase: search } }
+                  : {}),
               };
 
               const skipNumber = loadContinued

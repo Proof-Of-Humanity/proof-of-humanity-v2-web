@@ -1,8 +1,11 @@
 import { useState, useMemo, useCallback } from "react";
 import ALink from "components/ExternalLink";
-import Field from "components/Field";
-import Label from "components/Label";
-import Modal from "components/Modal";
+import EvidenceFormFields from "components/EvidenceFormFields";
+import RequestModal, {
+  RequestAmountPill,
+  RequestModalHeader,
+  RequestWarning,
+} from "components/RequestModal";
 import TimeAgo from "components/TimeAgo";
 import { useLoading } from "hooks/useLoading";
 import useEnoughFunds from "hooks/useEnoughFunds";
@@ -19,14 +22,16 @@ import { Hash } from "viem";
 import DocumentIcon from "icons/NoteMajor.svg";
 import { ObservablePrimitiveBaseFns } from "@legendapp/state";
 import { ContractData } from "data/contract";
-import { useAtlasProvider, Roles } from "@kleros/kleros-app";
+import { useAtlasProvider } from "@kleros/kleros-app";
 import { toast } from "react-toastify";
 import AuthGuard from "components/AuthGuard";
 import ActionButton from "components/ActionButton";
+import { CurrencyIcon } from "components/CurrencyField";
 import { useChainId } from "wagmi";
-import { idToChain } from "config/chains";
+import { idToChain, nativeCurrencyLabel } from "config/chains";
 import { getDisputedRequestStatus } from "utils/status";
 import { useRequestOptimistic } from "optimistic/request";
+import { uploadEvidence } from "data/uploadEvidence";
 
 type Reason =
   | "none"
@@ -35,30 +40,48 @@ type Reason =
   | "sybilAttack"
   | "deceased";
 
-const reasonToImage: Record<Reason, string> = {
-  none: "",
-  incorrectSubmission: "/reason/incorrect.png",
-  identityTheft: "/reason/duplicate.png",
-  sybilAttack: "/reason/dne.png",
-  deceased: "/reason/deceased.png",
+const reasonToImages: Partial<Record<Reason, string[]>> = {
+  incorrectSubmission: ["/reason/incorrect.png"],
+  sybilAttack: ["/reason/duplicate.png", "/reason/dne.png"],
+  deceased: ["/reason/deceased.png"],
 };
 
-function reasonToIdx(reason: Reason) {
-  switch (reason) {
-    case "none":
-      return 0;
-    case "incorrectSubmission":
-      return 1;
-    case "identityTheft":
-      return 2;
-    case "sybilAttack":
-      return 3;
-    case "deceased":
-      return 4;
-    default:
-      return 0;
-  }
-}
+const REASON_INDEX: Record<Reason, 0 | 1 | 2 | 3 | 4> = {
+  none: 0,
+  incorrectSubmission: 1,
+  identityTheft: 2,
+  sybilAttack: 3,
+  deceased: 4,
+};
+
+const CHALLENGE_REASON_CARDS: {
+  reason: Reason;
+  label: string;
+  description: string;
+}[] = [
+  {
+    reason: "incorrectSubmission",
+    label: "Incorrect Submission",
+    description: "The profile does not follow the submission rules.",
+  },
+  {
+    reason: "identityTheft",
+    label: "Identity Theft",
+    description:
+      "The submitter is trying to claim a Humanity ID that belongs to someone else.",
+  },
+  {
+    reason: "sybilAttack",
+    label: "Sybil Attack",
+    description:
+      "The submitter is already registered, is a duplicate, or does not exist.",
+  },
+  {
+    reason: "deceased",
+    label: "Deceased",
+    description: "The person previously existed but is no longer alive.",
+  },
+];
 
 export const buildChallengeSuccessPatch = (
   revocation: boolean,
@@ -69,46 +92,76 @@ export const buildChallengeSuccessPatch = (
 });
 
 interface ReasonCardInterface {
-  text: string;
+  label: string;
+  description: string;
   reason: Reason;
   current: ObservablePrimitiveBaseFns<Reason>;
   isUsed?: boolean;
 }
 
 const ReasonCard: React.FC<ReasonCardInterface> = ({
-  text,
+  label,
+  description,
   reason,
   current,
   isUsed = false,
 }) => {
   const isSelected = reason === current.get();
+  const images = reasonToImages[reason];
 
   return (
-    <div
+    <button
+      type="button"
+      disabled={isUsed}
+      aria-pressed={isSelected}
       className={cn(
-        "bg-grey text-primaryText cursor-pointer rounded-xl p-0.5 text-[10px] leading-tight transition-all duration-200 sm:text-sm sm:leading-normal",
+        "text-primaryText relative flex min-h-[15.5rem] w-full flex-col overflow-hidden rounded-input border text-center transition-colors duration-200",
         isUsed
-          ? "cursor-not-allowed opacity-50 grayscale"
+          ? "border-stroke bg-whiteBackground cursor-not-allowed opacity-50 grayscale"
           : isSelected
-            ? "gradient font-semibold"
-            : "grayscale hover:grayscale-0",
+            ? "border-primaryText bg-grey"
+            : "hover:border-stroke border-transparent bg-[#292D35]",
       )}
       onClick={() => !isUsed && current.set(reason)}
     >
-      <div className="bg-whiteBackground flex h-full flex-col rounded-[10px] p-1.5 text-center sm:p-3">
-        <Image
-          width={500}
-          height={200}
-          className="h-8 w-full object-contain sm:h-auto sm:object-cover"
-          alt={reason}
-          src={reasonToImage[reason]}
-        />
-        {text}
-        {isUsed && (
-          <span className="mt-1 text-xs text-red-500">Already used</span>
+      <span
+        className={cn(
+          "border-stroke absolute right-2 top-2 z-10 h-4 w-4 rounded-full border",
+          isSelected &&
+            "border-peach bg-peach shadow-[inset_0_0_0_3px_#292D35]",
+        )}
+      />
+      <div className="flex h-[99px] w-full items-center justify-center overflow-hidden bg-[#1E2129]">
+        {images ? (
+          images.map((image) => (
+            <Image
+              key={image}
+              width={156}
+              height={99}
+              className={cn(
+                "h-full object-cover mix-blend-screen [filter:invert(1)_hue-rotate(180deg)]",
+                images.length > 1 ? "w-1/2" : "w-full",
+              )}
+              alt=""
+              src={image}
+            />
+          ))
+        ) : (
+          <span className="text-4xl text-peach" aria-hidden>
+            ID
+          </span>
         )}
       </div>
-    </div>
+      <strong className="mt-4 px-3 text-sm font-semibold">{label}</strong>
+      <span className="text-secondaryText mt-4 px-3 pb-4 text-xs font-normal leading-[normal]">
+        {description}
+      </span>
+      {isUsed && (
+        <span className="text-status-rejected mt-auto pb-3 text-xs">
+          Already used
+        </span>
+      )}
+    </button>
   );
 };
 
@@ -136,22 +189,28 @@ export default function Challenge({
   const { uploadFile } = useAtlasProvider();
   const { pendingAction, applyAction } = useRequestOptimistic();
   const chain = useChainParam()!;
+  const unit = nativeCurrencyLabel(chain.id);
   const userChainId = useChainId();
   const [isOpen, setIsOpen] = useState(false);
   const isReconciling = pendingAction !== null;
+  const defaultReason: Reason = "none";
 
   const loading = useLoading();
   const [isLoading, loadingMessage] = loading.use();
-  const reason$ = useObservable<Reason>("none");
+  const reason$ = useObservable<Reason>(defaultReason);
   const reason = reason$.use();
 
   const [justification, setJustification] = useState("");
+  const [file, setFile] = useState<File | null>(null);
+  const [policyAccepted, setPolicyAccepted] = useState(false);
   const closeModal = useCallback(() => {
     setIsOpen(false);
     setJustification("");
-    reason$.set("none");
+    setFile(null);
+    setPolicyAccepted(false);
+    reason$.set(defaultReason);
     loading.stop();
-  }, [loading, reason$]);
+  }, [defaultReason, loading, reason$]);
 
   const [prepare] = usePoHWrite(
     "challengeRequest",
@@ -182,30 +241,20 @@ export default function Challenge({
   );
 
   const submit = useCallback(async () => {
-    if (revocation === !reason && !justification) return;
+    if (
+      !justification.trim() ||
+      !policyAccepted ||
+      (!revocation && (reason === "none" || usedReasons.includes(reason)))
+    )
+      return;
 
     loading.start("Uploading evidence...");
     try {
-      const evidenceJson = {
+      const { evidenceUri } = await uploadEvidence(uploadFile, {
         name: "Challenge Justification",
         description: justification,
-      };
-
-      const evidenceTextFile = new File(
-        [JSON.stringify(evidenceJson)],
-        "evidence",
-        {
-          type: "text/plain",
-        },
-      );
-
-      const evidenceUri = await uploadFile(evidenceTextFile, Roles.Evidence);
-
-      if (!evidenceUri) {
-        toast.error("Failed to upload evidence.");
-        loading.stop();
-        return;
-      }
+        file,
+      });
 
       loading.start("Challenging...");
       prepare({
@@ -213,13 +262,13 @@ export default function Challenge({
         args: [
           pohId,
           BigInt(requestIndex),
-          reasonToIdx(revocation ? "none" : reason),
+          REASON_INDEX[revocation ? "none" : reason],
           evidenceUri,
         ],
       });
     } catch (error) {
       toast.error(
-        `Failed to upload evidence : ${error instanceof Error ? error.message : "Unknown error"}`,
+        error instanceof Error ? error.message : "Failed to upload evidence.",
       );
       loading.stop();
     }
@@ -227,6 +276,9 @@ export default function Challenge({
     revocation,
     reason,
     justification,
+    file,
+    policyAccepted,
+    usedReasons,
     prepare,
     arbitrationCost,
     pohId,
@@ -239,33 +291,26 @@ export default function Challenge({
     return usedReasons.includes(reason);
   };
 
-  // Define reason cards data
-  const reasonCards = [
-    { reason: "incorrectSubmission" as Reason, text: "Incorrect Submission" },
-    { reason: "identityTheft" as Reason, text: "Identity Theft" },
-    { reason: "sybilAttack" as Reason, text: "Sybil Attack" },
-    { reason: "deceased" as Reason, text: "Deceased" },
-  ];
-
   const funds = useEnoughFunds({ chainId: chain.id, amount: arbitrationCost });
   const { disabled: submitDisabled, tooltip: submitTooltip } = resolveTxState([
-    { active: isReconciling, message: "Syncing" },
+    { active: isReconciling, message: "Waiting for indexer" },
     {
       active: userChainId !== chain.id,
       message: `Switch your chain above to ${idToChain(chain.id)?.name || "the correct chain"}`,
     },
-    { active: !justification, message: "Enter a justification" },
+    { active: !justification.trim(), message: "Enter a justification" },
     {
       active: !revocation && reason === "none",
       message: "Select a challenging reason",
     },
     { active: funds.isLoading, message: "Checking balance" },
+    { active: !policyAccepted, message: "Confirm that you read the Policy" },
     { active: funds.insufficient, message: funds.message },
   ]);
 
   const trigger = resolveTxState([
     { active: !!externalDisabled, message: externalTooltip },
-    { active: isReconciling, message: "Syncing" },
+    { active: isReconciling, message: "Waiting for indexer" },
     {
       active: userChainId !== chain.id,
       message: `Switch your chain above to ${idToChain(chain.id)?.name || "the correct chain"}`,
@@ -280,67 +325,107 @@ export default function Challenge({
         disabled={trigger.disabled}
         tooltip={trigger.tooltip}
       />
-      <Modal
-        formal
-        open={isOpen}
-        onClose={closeModal}
-        canClose={!isLoading}
-        header="Challenge"
-      >
-        <div className="flex flex-col flex-wrap items-center p-4">
-          <ALink className="flex" href={ipfs(arbitrationInfo.policy)}>
-            <DocumentIcon className="fill-orange h-6 w-6" />
-            <strong className="text-orange mr-1 font-semibold">
-              Registration Policy
-            </strong>
-            <span className="text-secondaryText">
-              (at the time of submission)
+      <RequestModal open={isOpen} onClose={closeModal} canClose={!isLoading}>
+        <RequestModalHeader
+          title={
+            <>
+              Challenge <span className="text-peach">this Profile</span>
+            </>
+          }
+          description="In order to challenge this profile you need to deposit:"
+        />
+        <div className="mt-4 flex justify-center">
+          <RequestAmountPill
+            amount={`${formatEth(arbitrationCost)}${unit}`}
+            icon={<CurrencyIcon symbol={unit} />}
+          />
+        </div>
+
+        {!revocation && (
+          <div className="mt-6">
+            <p className="text-secondaryText mb-4 text-center text-sm">
+              Select the challenge type
+            </p>
+            <div className="grid w-full grid-cols-2 gap-3 md:grid-cols-4 md:gap-4">
+              {CHALLENGE_REASON_CARDS.map((card) => (
+                <ReasonCard
+                  key={card.reason}
+                  reason={card.reason}
+                  label={card.label}
+                  description={card.description}
+                  current={reason$}
+                  isUsed={isReasonUsed(card.reason)}
+                />
+              ))}
+            </div>
+          </div>
+        )}
+
+        <EvidenceFormFields
+          hideTitle
+          description={justification}
+          file={file}
+          onDescriptionChange={setJustification}
+          onFileChange={setFile}
+          disabled={isLoading}
+        />
+
+        <RequestWarning>
+          When someone challenges a profile, a case is opened in Kleros Court. A
+          group of random jurors is selected to review the case. They look at
+          the evidence from both sides and vote. The side with the most votes
+          wins the dispute. Deposits, reimbursements, and rewards are
+          distributed according to the final ruling and the contract rules. A
+          losing challenger can lose their deposit. Before challenging, make
+          sure you have read and understood the Policy below.
+        </RequestWarning>
+
+        <div className="mt-4 flex flex-col items-center justify-center gap-4 text-sm md:flex-row">
+          <ALink
+            className="inline-flex items-center gap-2 text-peach"
+            href={ipfs(arbitrationInfo.policy)}
+          >
+            <span>Relevant Policy</span>
+            <DocumentIcon className="h-4 w-4 fill-current" />
+            <span className="text-secondaryText text-xs">
+              (updated <TimeAgo time={arbitrationInfo.updateTime} />)
             </span>
           </ALink>
-          <span className="text-secondaryText text-sm">
-            Updated: <TimeAgo time={arbitrationInfo.updateTime} />
-          </span>
+          <label className="text-secondaryText flex cursor-pointer items-center gap-2 text-xs">
+            <input
+              type="checkbox"
+              className="rounded border-none text-peach focus:ring-peach"
+              checked={policyAccepted}
+              onChange={(event) => setPolicyAccepted(event.target.checked)}
+              disabled={isLoading}
+            />
+            I confirm that I have read the Policy.
+          </label>
+        </div>
 
-          {!revocation && (
-            <>
-              <Label>Select challenging reason</Label>
-              <div className="grid w-full grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-3">
-                {reasonCards.map((card) => (
-                  <ReasonCard
-                    key={card.reason}
-                    reason={card.reason}
-                    text={card.text}
-                    current={reason$}
-                    isUsed={isReasonUsed(card.reason)}
-                  />
-                ))}
-              </div>
-            </>
-          )}
-
-          <Field
-            textarea
-            label="Justification"
-            value={justification}
-            onChange={(e) => setJustification(e.target.value)}
-          />
-
-          <div className="text-primaryText mt-4 text-lg">
-            Deposit: {formatEth(arbitrationCost)} {chain.nativeCurrency.symbol}
-          </div>
-
-          <AuthGuard signInButtonProps={{ className: "mt-12 px-4" }}>
+        <div className="mt-12 flex flex-col items-center justify-center gap-4 sm:flex-row">
+          <AuthGuard signInButtonProps={{ className: "w-full sm:w-[244px]" }}>
             <ActionButton
               disabled={submitDisabled}
-              className="mt-12"
+              className="w-full sm:w-[244px]"
               onClick={submit}
               isLoading={isLoading}
-              label={loadingMessage || "Challenge request"}
+              label={
+                loadingMessage ||
+                `Challenge for ${formatEth(arbitrationCost)}${unit}`
+              }
               tooltip={submitTooltip}
             />
           </AuthGuard>
+          <ActionButton
+            className="w-full sm:w-[170px]"
+            onClick={closeModal}
+            label="Return"
+            disabled={isLoading}
+            variant="secondary"
+          />
         </div>
-      </Modal>
+      </RequestModal>
     </>
   );
 }
