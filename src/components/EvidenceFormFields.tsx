@@ -6,11 +6,13 @@ interface EvidenceFormFieldsProps {
   description: string;
   file: File | null;
   onTitleChange?: (value: string) => void;
+  onTitleBlur?: () => void;
   onDescriptionChange: (value: string) => void;
   onFileChange: (file: File) => void;
   disabled?: boolean;
   titlePlaceholder?: string;
   hideTitle?: boolean;
+  titleError?: boolean;
 }
 
 export default function EvidenceFormFields({
@@ -18,11 +20,13 @@ export default function EvidenceFormFields({
   description,
   file,
   onTitleChange,
+  onTitleBlur,
   onDescriptionChange,
   onFileChange,
   disabled,
   titlePlaceholder = "eg. The profile is legit.",
   hideTitle = false,
+  titleError = false,
 }: EvidenceFormFieldsProps) {
   return (
     <div className="mt-12 flex w-full flex-col gap-4">
@@ -33,6 +37,9 @@ export default function EvidenceFormFields({
           placeholder={titlePlaceholder}
           value={title}
           onChange={(event) => onTitleChange?.(event.target.value)}
+          onBlur={onTitleBlur}
+          status={titleError ? "error" : undefined}
+          message="A title is required"
           disabled={disabled}
         />
       )}
@@ -55,7 +62,7 @@ export default function EvidenceFormFields({
           if (acceptedFile) onFileChange(acceptedFile);
         }}
         placeholder={<span className="sr-only">Upload a file</span>}
-        footnote="You can add a single file here."
+        footnote="Attach supporting file. It will be uploaded to IPFS and included with your evidence."
         footnoteIconClassName="text-status-claim"
         disabled={disabled}
       />

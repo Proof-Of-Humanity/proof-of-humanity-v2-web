@@ -97,7 +97,7 @@ export default function RemoveVouch({
   });
 
   const trigger = resolveTxState([
-    { active: isReconciling, message: "Syncing" },
+    { active: isReconciling, message: "Waiting for indexer" },
     { active: !!disabled, message: tooltip },
     {
       active: userChainId !== chain.id,

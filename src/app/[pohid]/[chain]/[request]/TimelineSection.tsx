@@ -16,7 +16,7 @@ export async function RequestInfoSection({
 }: TimelineSectionProps) {
   const { requestCounts } = await timelineDataPromise;
 
-  return <Info label="POH ID" nbRequests={requestCounts[chainId]} />;
+  return <Info label="What is POH ID?" nbRequests={requestCounts[chainId]} />;
 }
 
 export function RequestInfoSectionSkeleton() {
@@ -28,7 +28,7 @@ export async function TimelineHistorySection({
 }: Pick<TimelineSectionProps, "timelineDataPromise">) {
   const { timelineItems } = await timelineDataPromise;
 
-  return <Timeline items={timelineItems} />;
+  return <Timeline compact items={timelineItems} title="Timeline" />;
 }
 
 export function TimelineHistorySectionSkeleton() {

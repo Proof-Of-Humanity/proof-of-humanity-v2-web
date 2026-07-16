@@ -31,9 +31,9 @@ const hasPohId = (
  */
 export function RequestVouchSectionSkeleton({ title }: { title: string }) {
   return (
-    <div className="text-secondaryText mt-8 flex flex-col items-center text-center md:items-start md:text-left">
+    <div className="text-secondaryText flex flex-col items-center text-center text-xs">
       <span>{title}</span>
-      <div className="mt-2 flex flex-wrap justify-center gap-2 md:justify-start">
+      <div className="mt-2 flex flex-wrap justify-center gap-2">
         {[0, 1, 2].map((index) => (
           <div
             key={index}
@@ -63,9 +63,9 @@ export async function VouchedForSection({
   if (visibleItems.length === 0) return null;
 
   return (
-    <div className="text-secondaryText mt-8 flex flex-col items-center text-center md:items-start md:text-left">
+    <div className="text-secondaryText flex flex-col items-center gap-2 text-center text-xs">
       This PoHID vouched for
-      <div className="flex flex-wrap justify-center gap-2 md:justify-start">
+      <div className="flex flex-wrap justify-center gap-2">
         {visibleItems.map((item, index) => (
           <Vouch
             key={`${item.pohId}-${index}`}
@@ -109,14 +109,12 @@ export async function RequestVouchersSection({
   if (visibleItems.length === 0) return null;
 
   return (
-    <div className="text-secondaryText mt-8 flex flex-col items-center text-center md:items-start md:text-left">
+    <div className="text-secondaryText flex flex-col items-center gap-2 text-center text-xs">
       <span className="flex items-center">
-        {request.status.id === "vouching"
-          ? "Available vouches for this PoHID"
-          : "Vouched for this request"}
+        Vouched by
         {request.status.id === "vouching" && <OptimisticVouchIndicator />}
       </span>
-      <div className="flex flex-wrap justify-center gap-2 md:justify-start">
+      <div className="flex flex-wrap justify-center gap-2">
         {visibleItems.map((item, index) => (
           <Vouch
             key={`${item.voucher ?? item.pohId}-${index}`}
