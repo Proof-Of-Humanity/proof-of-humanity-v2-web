@@ -41,7 +41,7 @@ export default function VideoThumbnail({
           !hasError && !isLoading && "motion-safe:animate-mediaResolve",
         )}
         src={videoSrc}
-        preload="metadata"
+        preload="auto"
         playsInline
         onLoadedData={() => setIsLoading(false)}
         onError={() => setHasError(true)}

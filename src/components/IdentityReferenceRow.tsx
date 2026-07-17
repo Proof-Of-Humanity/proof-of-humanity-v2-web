@@ -75,7 +75,10 @@ export default function IdentityReferenceRow({
         )}
       >
         <span className="min-w-0 break-all leading-5 md:truncate">{value}</span>
-        <CopyButton value={value} />
+        <CopyButton
+          value={value}
+          label={external ? "Copy wallet address" : "Copy POH ID"}
+        />
       </div>
     </div>
   );

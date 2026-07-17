@@ -118,8 +118,8 @@ export default function PendingRelaySection({
         onLoading() {
           setFeedbackState(ACTION_STATES.txPending);
         },
-        onError(error) {
-          toast.error(setWriteError(error));
+        onError(error, errorCtx) {
+          toast.error(setWriteError(error, errorCtx));
         },
         onFail() {
           const message = "Relay cannot be executed right now.";

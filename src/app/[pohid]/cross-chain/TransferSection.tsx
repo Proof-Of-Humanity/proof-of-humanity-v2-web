@@ -70,8 +70,8 @@ export default function TransferSection({
           toast.success("Transfer initiated!");
           setIsTransferModalOpen(false);
         },
-        onError(error) {
-          toast.error(getWriteErrorMessage(error));
+        onError(error, errorCtx) {
+          toast.error(getWriteErrorMessage(error, errorCtx));
         },
         onFail() {
           toast.error("Transfer is not available right now.");

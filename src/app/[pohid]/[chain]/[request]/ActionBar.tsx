@@ -41,8 +41,9 @@ import Appeal from "./Appeal";
 import Challenge from "./Challenge";
 import FundButton from "./Funding";
 import RemoveVouch from "./RemoveVouch";
-import Vouch from "./Vouch";
+import Vouch, { VouchFlowModal } from "./Vouch";
 import { AlertTriangleIcon, InfoCircleIcon } from "./AlertIcons";
+import { getWriteErrorMessage } from "hooks/useActionFeedback";
 
 enableReactUse();
 
@@ -112,11 +113,12 @@ interface VouchingActionsProps {
   funded: bigint;
   chain: SupportedChain;
   address?: Address;
-  me?: Awaited<ReturnType<typeof getMyData>>;
   web3Loaded: boolean;
   userChainId: number;
   didIVouchFor: boolean;
   isVouchOnchain: boolean;
+  canVouch: boolean;
+  onVouchClick: () => void;
   lockClaimed: boolean;
   claimedTooltip: string;
   needsVouches: boolean;
@@ -134,11 +136,12 @@ function VouchingActions({
   funded,
   chain,
   address,
-  me,
   web3Loaded,
   userChainId,
   didIVouchFor,
   isVouchOnchain,
+  canVouch,
+  onVouchClick,
   lockClaimed,
   claimedTooltip,
   needsVouches,
@@ -195,16 +198,14 @@ function VouchingActions({
     return (
       <>
         {fundButton}
-        <Vouch
-          pohId={pohId}
-          claimer={requester}
-          web3Loaded={web3Loaded}
-          me={me}
-          chain={chain}
-          address={address}
-          disabled={isVouching && lockClaimed}
-          tooltip={isVouching && lockClaimed ? claimedTooltip : undefined}
-        />
+        {canVouch && (
+          <Vouch
+            chain={chain}
+            onClick={onVouchClick}
+            disabled={isVouching && lockClaimed}
+            tooltip={isVouching && lockClaimed ? claimedTooltip : undefined}
+          />
+        )}
       </>
     );
   }
@@ -247,6 +248,7 @@ export default function ActionBar({
 }: ActionBarProps) {
   const chain = useChainParam()!;
   const [withdrawModalOpen, setWithdrawModalOpen] = useState(false);
+  const [vouchModalOpen, setVouchModalOpen] = useState(false);
   const [appealActive, setAppealActive] = useState(false);
   const { address } = useAccount();
   const { effective, pendingAction, applyAction } = useRequestOptimistic();
@@ -318,8 +320,8 @@ export default function ActionBar({
     "executeRequest",
     useMemo(
       () => ({
-        onError() {
-          toast.error("Transaction rejected");
+        onError(error, errorCtx) {
+          toast.error(getWriteErrorMessage(error, errorCtx));
         },
         onSuccess() {
           applyAction("execute", buildExecuteSuccessPatch(effectiveRevocation));
@@ -333,8 +335,8 @@ export default function ActionBar({
     "advanceState",
     useMemo(
       () => ({
-        onError() {
-          toast.error("Transaction rejected");
+        onError(error, errorCtx) {
+          toast.error(getWriteErrorMessage(error, errorCtx));
         },
         onSuccess() {
           if (effectiveRevocation) return;
@@ -349,8 +351,8 @@ export default function ActionBar({
     "withdrawRequest",
     useMemo(
       () => ({
-        onError() {
-          toast.error("Transaction rejected");
+        onError(error, errorCtx) {
+          toast.error(getWriteErrorMessage(error, errorCtx));
         },
         onSuccess() {
           applyAction("withdraw", buildWithdrawSuccessPatch());
@@ -522,6 +524,14 @@ export default function ActionBar({
   }, [prepareWithdraw, withdrawPrepareKey]);
 
   const totalCost = BigInt(contractData.baseDeposit) + arbitrationCost;
+  const isMyRegistrationValid =
+    !!me?.expirationTime && me.expirationTime > Date.now() / 1000;
+  const canVouch =
+    web3Loaded &&
+    !!me &&
+    me.homeChain?.id === chain.id &&
+    !!me.pohId &&
+    isMyRegistrationValid;
   const vouchingActionsProps = {
     pohId,
     requester,
@@ -530,11 +540,12 @@ export default function ActionBar({
     funded: effectiveFunded,
     chain,
     address,
-    me,
     web3Loaded,
     userChainId,
     didIVouchFor,
     isVouchOnchain,
+    canVouch,
+    onVouchClick: () => setVouchModalOpen(true),
     lockClaimed,
     claimedTooltip,
     needsVouches: effectiveValidVouches < contractData.requiredNumberOfVouches,
@@ -760,7 +771,12 @@ export default function ActionBar({
                   ? "Removal request was rejected"
                   : effectiveRequestStatus === RequestStatus.REJECTED
                     ? "Request was rejected"
-                    : "Request was accepted"}
+                    : effectiveRequestStatus === RequestStatus.PUNISHED_VOUCH
+                      ? "Profile was removed for vouching for a punished profile"
+                      : effectiveRequestStatus ===
+                          RequestStatus.RESOLVED_REVOCATION
+                        ? "Profile was removed"
+                        : "Request was accepted"}
               <TimeAgo
                 className={`ml-1 text-status-${statusColor}`}
                 time={
@@ -827,6 +843,16 @@ export default function ActionBar({
           primaryClassName="sm:w-[244px]"
         />
       </RequestModal>
+      {canVouch && effectiveStatus === "vouching" && (
+        <VouchFlowModal
+          open={vouchModalOpen}
+          onClose={() => setVouchModalOpen(false)}
+          pohId={pohId}
+          claimer={requester}
+          chain={chain}
+          address={address}
+        />
+      )}
     </div>
   );
 }

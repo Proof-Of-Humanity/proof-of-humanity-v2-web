@@ -40,6 +40,7 @@ import PhotoStep from "./Photo";
 import ReviewStep from "./Review";
 import VideoStep from "./Video";
 import { formatEth } from "utils/misc";
+import { getWriteErrorMessage } from "hooks/useActionFeedback";
 
 enableReactUse();
 
@@ -222,10 +223,10 @@ function FormContent({
 
   const events = useMemo<Effects>(
     () => ({
-      onError() {
+      onError(error, errorCtx) {
         state$.uri.set("");
         loading.stop();
-        toast.error("Transaction rejected");
+        toast.error(getWriteErrorMessage(error, errorCtx));
       },
       onLoading() {
         toast.info("Transaction pending");

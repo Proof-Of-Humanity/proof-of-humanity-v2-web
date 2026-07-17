@@ -17,13 +17,11 @@ import useChainParam from "hooks/useChainParam";
 import { getContractInfo, ContractName } from "contracts";
 import {
   Abi,
+  BaseError,
   Hash,
   ParseAbiParameter,
   toBytes,
   zeroAddress,
-  TransactionNotFoundError,
-  TransactionReceiptNotFoundError,
-  WaitForTransactionReceiptTimeoutError,
 } from "viem";
 
 const defaultForInputs = (inputs: readonly ParseAbiParameter<string>[]) =>
@@ -95,7 +93,8 @@ export default function useWagmiWrite<
   const preparedRequestRef = useRef<any>();
   const writeInFlightRef = useRef(false);
   const lastPendingHashRef = useRef<Hash | undefined>();
-  const lastSuccessHashRef = useRef<Hash | undefined>();
+  const lastSettledHashRef = useRef<Hash | undefined>();
+  const lastUnknownHashRef = useRef<Hash | undefined>();
 
   useEffect(() => {
     effectsRef.current = effects;
@@ -150,11 +149,13 @@ export default function useWagmiWrite<
     switch (status) {
       case "error":
         writeInFlightRef.current = false;
-        effectsRef.current?.onError?.(writeError);
+        effectsRef.current?.onError?.(writeError, { kind: "wallet" });
         setEnabled(false);
     }
   }, [status, writeError]);
 
+  // Settle each submitted tx exactly once, through either `onSuccess` or
+  // `onError` — callers key their loading/lock state off that guarantee.
   useEffect(() => {
     const txHash = submittedTx?.hash;
     if (!txHash) return;
@@ -166,33 +167,42 @@ export default function useWagmiWrite<
           effectsRef.current?.onLoading?.();
         }
         break;
-      case "success":
-        if (lastSuccessHashRef.current !== txHash) {
-          writeInFlightRef.current = false;
-          lastSuccessHashRef.current = txHash;
-          const ctx: WriteSuccessContext = {
-            contract,
-            functionName: String(functionName),
-            args: lastWriteRef.current?.args,
-            value: lastWriteRef.current?.value,
-            chainId: lastWriteRef.current?.chainId ?? currentChainId,
-            txHash,
-            receipt,
-          };
-          effectsRef.current?.onSuccess?.(ctx);
-        }
+      case "success": {
+        if (lastSettledHashRef.current === txHash) break;
+        lastSettledHashRef.current = txHash;
+        writeInFlightRef.current = false;
+        const ctx: WriteSuccessContext = {
+          contract,
+          functionName: String(functionName),
+          args: lastWriteRef.current?.args,
+          value: lastWriteRef.current?.value,
+          chainId: lastWriteRef.current?.chainId ?? currentChainId,
+          // A sped-up (repriced) tx confirms under a different hash, and the
+          // wait resolves with that replacement receipt.
+          txHash: receipt?.transactionHash ?? txHash,
+          receipt,
+        };
+        effectsRef.current?.onSuccess?.(ctx);
         break;
+      }
       case "error": {
-        // A reverted receipt makes wagmi throw, so a *settled* on-chain
-        // failure lands here — clear the guard so the user can retry. Only a
-        // genuinely ambiguous receipt failure (poll timeout / tx not yet
-        // found) leaves the original tx possibly in flight; keep the guard
-        // closed there so a duplicate non-idempotent write can't fire.
-        const outcomeUnknown =
-          transactionError instanceof WaitForTransactionReceiptTimeoutError ||
-          transactionError instanceof TransactionNotFoundError ||
-          transactionError instanceof TransactionReceiptNotFoundError;
-        if (!outcomeUnknown) writeInFlightRef.current = false;
+        if (transactionError instanceof BaseError) {
+          if (lastUnknownHashRef.current !== txHash) {
+            lastUnknownHashRef.current = txHash;
+            effectsRef.current?.onError?.(transactionError, {
+              kind: "unknown",
+              txHash,
+            });
+          }
+          break;
+        }
+        if (lastSettledHashRef.current === txHash) break;
+        lastSettledHashRef.current = txHash;
+        writeInFlightRef.current = false;
+        effectsRef.current?.onError?.(transactionError, {
+          kind: "reverted",
+          txHash,
+        });
         break;
       }
     }

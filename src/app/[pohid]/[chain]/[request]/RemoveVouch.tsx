@@ -11,6 +11,7 @@ import { useRequestOptimistic } from "optimistic/request";
 import type { RequestOptimisticOverlay } from "optimistic/types";
 import { useAccount } from "wagmi";
 import { resolveTxState } from "utils/txState";
+import { getWriteErrorMessage } from "hooks/useActionFeedback";
 
 enableReactUse();
 
@@ -62,8 +63,8 @@ export default function RemoveVouch({
     "removeVouch",
     useMemo(
       () => ({
-        onError() {
-          toast.error("Transaction rejected");
+        onError(error, errorCtx) {
+          toast.error(getWriteErrorMessage(error, errorCtx));
         },
         onLoading() {
           loading.start();

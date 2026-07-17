@@ -18,6 +18,7 @@ import { useCallback, useMemo, useRef, useState } from "react";
 import { toast } from "react-toastify";
 import { Address, Hash } from "viem";
 import { useAccount, useChainId } from "wagmi";
+import { getWriteErrorMessage } from "hooks/useActionFeedback";
 
 const buildEvidenceSuccessItem = (
   uri: string,
@@ -128,10 +129,10 @@ export default function AddEvidenceModal({
           stopLoading();
           toast.error("Transaction failed");
         },
-        onError() {
+        onError(error, errorCtx) {
           resetEvidenceState();
           stopLoading();
-          toast.error("Transaction rejected");
+          toast.error(getWriteErrorMessage(error, errorCtx));
         },
         onSuccess(ctx) {
           const uri =

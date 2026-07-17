@@ -24,6 +24,8 @@ query HistoricalWinnerClaim($humanityId: Bytes!, $lastStatusChange: BigInt!) {
     evidenceGroup {
       evidence(orderBy: creationTime, orderDirection: asc, first: 1) {
         uri
+        creationTime
+        submitter
       }
     }
   }

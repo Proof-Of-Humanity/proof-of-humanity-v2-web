@@ -16,7 +16,9 @@ export type Scalars = {
   BigDecimal: any;
   BigInt: any;
   Bytes: any;
+  /** 8 bytes signed integer */
   Int8: any;
+  /** A string representation of microseconds UNIX timestamp (16 digits) */
   Timestamp: any;
 };
 
@@ -3833,7 +3835,7 @@ export type HistoricalWinnerClaimQueryVariables = Exact<{
 }>;
 
 
-export type HistoricalWinnerClaimQuery = { __typename?: 'Query', requests: Array<{ __typename?: 'Request', creationTime: any, index: any, lastStatusChange: any, requester: any, resolutionTime: any, claimer: { __typename?: 'Claimer', id: any, name?: string | null }, evidenceGroup: { __typename?: 'EvidenceGroup', evidence: Array<{ __typename?: 'Evidence', uri: string }> } }> };
+export type HistoricalWinnerClaimQuery = { __typename?: 'Query', requests: Array<{ __typename?: 'Request', creationTime: any, index: any, lastStatusChange: any, requester: any, resolutionTime: any, claimer: { __typename?: 'Claimer', id: any, name?: string | null }, evidenceGroup: { __typename?: 'EvidenceGroup', evidence: Array<{ __typename?: 'Evidence', uri: string, creationTime: any, submitter: any }> } }> };
 
 export type HumanityQueryVariables = Exact<{
   id: Scalars['ID'];
@@ -3908,6 +3910,13 @@ export type RewardClaimQueryVariables = Exact<{
 
 
 export type RewardClaimQuery = { __typename?: 'Query', rewardClaim?: { __typename?: 'RewardClaim', id: any, amount: any, timestamp: any, claimer: { __typename?: 'Claimer', id: any } } | null };
+
+export type SubmitterLatestClaimQueryVariables = Exact<{
+  address: Scalars['String'];
+}>;
+
+
+export type SubmitterLatestClaimQuery = { __typename?: 'Query', requests: Array<{ __typename?: 'Request', creationTime: any, humanity: { __typename?: 'Humanity', id: any }, claimer: { __typename?: 'Claimer', id: any, name?: string | null }, evidenceGroup: { __typename?: 'EvidenceGroup', evidence: Array<{ __typename?: 'Evidence', uri: string }> } }> };
 
 export type IsSyncedQueryVariables = Exact<{
   block: Scalars['Int'];
@@ -4120,6 +4129,8 @@ export const HistoricalWinnerClaimDocument = gql`
     evidenceGroup {
       evidence(orderBy: creationTime, orderDirection: asc, first: 1) {
         uri
+        creationTime
+        submitter
       }
     }
   }
@@ -4491,6 +4502,30 @@ export const RewardClaimDocument = gql`
   }
 }
     `;
+export const SubmitterLatestClaimDocument = gql`
+    query SubmitterLatestClaim($address: String!) {
+  requests(
+    where: {claimer: $address, revocation: false, status_not_in: ["transferring", "transferred"], evidenceGroup_: {length_gt: 0}}
+    first: 1
+    orderBy: creationTime
+    orderDirection: desc
+  ) {
+    creationTime
+    humanity {
+      id
+    }
+    claimer {
+      id
+      name
+    }
+    evidenceGroup {
+      evidence(orderBy: creationTime, orderDirection: asc, first: 1) {
+        uri
+      }
+    }
+  }
+}
+    `;
 export const IsSyncedDocument = gql`
     query IsSynced($block: Int!) {
   _meta(block: {number: $block}) {
@@ -4577,6 +4612,9 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     },
     RewardClaim(variables: RewardClaimQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<RewardClaimQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<RewardClaimQuery>({ document: RewardClaimDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'RewardClaim', 'query', variables);
+    },
+    SubmitterLatestClaim(variables: SubmitterLatestClaimQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<SubmitterLatestClaimQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<SubmitterLatestClaimQuery>({ document: SubmitterLatestClaimDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'SubmitterLatestClaim', 'query', variables);
     },
     IsSynced(variables: IsSyncedQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<IsSyncedQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<IsSyncedQuery>({ document: IsSyncedDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'IsSynced', 'query', variables);

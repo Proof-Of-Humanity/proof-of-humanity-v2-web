@@ -37,6 +37,7 @@ import { formatEth } from "utils/misc";
 import { shortenAddress } from "utils/address";
 import { Address, Hash } from "viem";
 import { useRouter } from "next/navigation";
+import { getWriteErrorMessage } from "hooks/useActionFeedback";
 
 type AppealChallenge = ArrayElement<
   NonNullable<NonNullable<RequestQuery>["request"]>["challenges"]
@@ -161,10 +162,10 @@ const SideFunding: React.FC<SideFundingProps> = ({
         onReady(fire) {
           fire();
         },
-        onError() {
+        onError(error, errorCtx) {
           loading.stop();
           onLoadingChange?.(false);
-          toast.error("Transaction rejected");
+          toast.error(getWriteErrorMessage(error, errorCtx));
         },
         onSuccess(ctx) {
           loading.stop();
@@ -326,7 +327,10 @@ const Appeal: React.FC<AppealProps> = ({
       const currentRulingSide = Number(currentRuling) as SideEnum;
       const periodStart = Number(period![0]);
       const periodEnd = Number(period![1]);
-      const losingSideDeadline = (periodStart + periodEnd) / 2;
+      // Mirror the contract's integer division so the UI gate closes on the
+      // exact second the contract stops accepting the losing side's funds.
+      const losingSideDeadline =
+        periodStart + Math.floor((periodEnd - periodStart) / 2);
 
       return {
         status: Number(status) as DisputeStatusEnum,
@@ -346,8 +350,9 @@ const Appeal: React.FC<AppealProps> = ({
       );
   }, [loadFailed]);
 
-  // Deadlines are snapshot timestamps; tick a live clock so the funding gates
-  // close when the midpoint / full appeal period elapses while the page is open.
+  // Deadlines are snapshot timestamps; tick a live clock so the appealability
+  // and funding gates close when the midpoint / full period elapses while the
+  // page stays open.
   const [nowSec, setNowSec] = useState(() => Math.floor(Date.now() / 1000));
   useEffect(() => {
     const id = setInterval(
@@ -362,8 +367,13 @@ const Appeal: React.FC<AppealProps> = ({
     { active: isReconciling, message: "Waiting for indexer" },
   ]);
 
+  // Once the full period ends, no side can fund; before that only the losing
+  // side is cut off at the midpoint.
+  const appealEnded = !!snapshot && nowSec >= snapshot.appealPeriodEnd;
   const isAppealable =
-    !loadFailed && snapshot?.status === DisputeStatusEnum.Appealable;
+    !loadFailed &&
+    snapshot?.status === DisputeStatusEnum.Appealable &&
+    !appealEnded;
 
   useEffect(() => {
     onAppealableChange?.(isAppealable);
@@ -372,9 +382,6 @@ const Appeal: React.FC<AppealProps> = ({
   if (!isAppealable || !snapshot) return null;
 
   const { currentRulingSide } = snapshot;
-  // Once the full period ends, no side can fund; before that only the losing
-  // side is cut off at the midpoint.
-  const appealEnded = nowSec >= snapshot.appealPeriodEnd;
   const losingSideDeadlinePassed = nowSec >= snapshot.losingSideDeadline;
   const rulingParty =
     currentRulingSide === SideEnum.challenger

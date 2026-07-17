@@ -13,6 +13,7 @@ import ActionButton from "components/ActionButton";
 import { useRequestOptimistic } from "optimistic/request";
 import type { RequestOptimisticOverlay } from "optimistic/types";
 import { resolveTxState } from "utils/txState";
+import { getWriteErrorMessage } from "hooks/useActionFeedback";
 
 const normalizeAddress = (value: Address) => value.toLowerCase();
 
@@ -69,37 +70,68 @@ export const buildGaslessVouchSuccessPatch = (
 };
 
 interface VouchButtonProps {
-  pohId: Hash;
-  claimer: Address;
-  web3Loaded: any;
-  me: any;
   chain: SupportedChain;
-  address: Address | undefined;
+  onClick: () => void;
   disabled?: boolean;
   tooltip?: string;
 }
 
 export default function Vouch({
-  pohId,
-  claimer,
-  web3Loaded,
-  me,
   chain,
-  address,
+  onClick,
   disabled: externalDisabled,
   tooltip: externalTooltip,
 }: VouchButtonProps) {
-  const { effective, pendingAction, applyAction } = useRequestOptimistic();
+  const { pendingAction } = useRequestOptimistic();
   const userChainId = useChainId();
-  const [isOpen, setIsOpen] = useState(false);
+  const isReconciling = pendingAction !== null;
+
+  const trigger = resolveTxState([
+    { active: !!externalDisabled, message: externalTooltip },
+    { active: isReconciling, message: "Waiting for indexer" },
+    {
+      active: userChainId !== chain.id,
+      message: `Switch your chain above to ${idToChain(chain.id)?.name || "the correct chain"}`,
+    },
+  ]);
+
+  return (
+    <ActionButton
+      onClick={onClick}
+      label="Vouch"
+      className="mb-2 w-auto"
+      disabled={trigger.disabled}
+      tooltip={trigger.tooltip}
+    />
+  );
+}
+
+interface VouchFlowModalProps {
+  open: boolean;
+  onClose: () => void;
+  pohId: Hash;
+  claimer: Address;
+  chain: SupportedChain;
+  address: Address | undefined;
+}
+
+export function VouchFlowModal({
+  open,
+  onClose,
+  pohId,
+  claimer,
+  chain,
+  address,
+}: VouchFlowModalProps) {
+  const { effective, pendingAction, applyAction } = useRequestOptimistic();
   const [submitted, setSubmitted] = useState(false);
   const isReconciling = pendingAction !== null;
   const [prepare, addVouch, status] = usePoHWrite(
     "addVouch",
     useMemo(
       () => ({
-        onError() {
-          toast.error("Transaction rejected");
+        onError(error, errorCtx) {
+          toast.error(getWriteErrorMessage(error, errorCtx));
         },
         onLoading() {
           toast.info("Transaction pending");
@@ -230,55 +262,21 @@ export default function Vouch({
     else addVouch();
   };
 
-  const isRegistrationValid = !me?.expirationTime
-    ? false
-    : me.expirationTime > Date.now() / 1000;
-
-  const trigger = resolveTxState([
-    { active: !!externalDisabled, message: externalTooltip },
-    { active: isReconciling, message: "Waiting for indexer" },
-    {
-      active: userChainId !== chain.id,
-      message: `Switch your chain above to ${idToChain(chain.id)?.name || "the correct chain"}`,
-    },
-  ]);
   const closeModal = () => {
-    setIsOpen(false);
+    onClose();
     setSubmitted(false);
   };
 
   return (
-    web3Loaded &&
-    me &&
-    me.homeChain?.id === chain.id &&
-    me.pohId &&
-    isRegistrationValid && (
-      <>
-        <ActionButton
-          onClick={() => {
-            setSubmitted(false);
-            setIsOpen(true);
-          }}
-          label="Vouch"
-          className="mb-2 w-auto"
-          disabled={trigger.disabled}
-          tooltip={trigger.tooltip}
-        />
-        <RequestModal
-          open={isOpen}
-          onClose={closeModal}
-          canClose={!isSubmitting}
-        >
-          <VouchModalContent
-            submitted={submitted}
-            onClose={closeModal}
-            onVouch={handleVouch}
-            isSubmitting={isSubmitting}
-            disabled={isReconciling}
-            tooltip={isReconciling ? "Waiting for indexer" : undefined}
-          />
-        </RequestModal>
-      </>
-    )
+    <RequestModal open={open} onClose={closeModal} canClose={!isSubmitting}>
+      <VouchModalContent
+        submitted={submitted}
+        onClose={closeModal}
+        onVouch={handleVouch}
+        isSubmitting={isSubmitting}
+        disabled={isReconciling}
+        tooltip={isReconciling ? "Waiting for indexer" : undefined}
+      />
+    </RequestModal>
   );
 }

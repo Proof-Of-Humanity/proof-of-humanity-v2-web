@@ -17,6 +17,7 @@ import useChainParam from "hooks/useChainParam";
 import { formatEth } from "utils/misc";
 import { idToChain } from "config/chains";
 import { useRequestOptimistic } from "optimistic/request";
+import { getWriteErrorMessage } from "hooks/useActionFeedback";
 
 export const buildFundSuccessPatch = (
   funded: bigint,
@@ -87,9 +88,9 @@ const FundButton: React.FC<FundButtonProps> = ({
           loading.stop();
           toast.error("Transaction failed");
         },
-        onError() {
+        onError(error, errorCtx) {
           loading.stop();
-          toast.error("Transaction rejected");
+          toast.error(getWriteErrorMessage(error, errorCtx));
         },
         onSuccess(ctx) {
           applyAction(
@@ -142,6 +143,7 @@ const FundButton: React.FC<FundButtonProps> = ({
           setIsModalOpen(true);
         }}
         label="Fund"
+        variant="secondary"
         className="mb-2 w-auto"
         disabled={trigger.disabled}
         tooltip={trigger.tooltip}

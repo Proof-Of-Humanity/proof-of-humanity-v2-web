@@ -65,8 +65,8 @@ export default function UpdateStateSection({
           toast.success("Update transaction sent!");
           setIsUpdateModalOpen(false);
         },
-        onError(error) {
-          toast.error(getWriteErrorMessage(error));
+        onError(error, errorCtx) {
+          toast.error(getWriteErrorMessage(error, errorCtx));
         },
         onFail() {
           toast.error("Update is not available right now.");
@@ -186,7 +186,10 @@ export default function UpdateStateSection({
                         <span className="truncate text-sm text-peach">
                           {prettifyId(pohId)}
                         </span>
-                        <CopyButton value={prettifyId(pohId)} />
+                        <CopyButton
+                          value={prettifyId(pohId)}
+                          label="Copy POH ID"
+                        />
                       </div>
 
                       <div className="flex shrink-0 items-center gap-2 text-sm">

@@ -32,6 +32,7 @@ import { idToChain, nativeCurrencyLabel } from "config/chains";
 import { getDisputedRequestStatus } from "utils/status";
 import { useRequestOptimistic } from "optimistic/request";
 import { uploadEvidence } from "data/uploadEvidence";
+import { getWriteErrorMessage } from "hooks/useActionFeedback";
 
 type Reason =
   | "none"
@@ -227,9 +228,9 @@ export default function Challenge({
           loading.stop();
           toast.error("Transaction failed");
         },
-        onError() {
+        onError(error, errorCtx) {
           loading.stop();
-          toast.error("Transaction rejected");
+          toast.error(getWriteErrorMessage(error, errorCtx));
         },
         onSuccess() {
           applyAction("challenge", buildChallengeSuccessPatch(revocation));

@@ -9,7 +9,7 @@ const COPIED_RESET_MS = 2000;
 
 export default function CopyButton({
   value,
-  label = "Copy POH ID",
+  label = "Copy",
   className,
 }: {
   value: string;
@@ -64,6 +64,7 @@ export default function CopyButton({
         />
       </button>
       <span
+        role="status"
         className={cn(
           "tooltip-surface pointer-events-none absolute bottom-full left-1/2 z-50 mb-2 w-max -translate-x-1/2 text-center text-sm transition-all duration-200 ease-out",
           copied ? "translate-y-0 opacity-100" : "translate-y-1 opacity-0",
