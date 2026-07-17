@@ -13,10 +13,11 @@ import type {
   OptimisticEvidenceItem,
   RequestOptimisticOverlay,
 } from "optimistic/types";
+import { idToChain } from "config/chains";
 import { useCallback, useMemo, useRef, useState } from "react";
 import { toast } from "react-toastify";
 import { Address, Hash } from "viem";
-import { useAccount } from "wagmi";
+import { useAccount, useChainId } from "wagmi";
 
 const buildEvidenceSuccessItem = (
   uri: string,
@@ -60,6 +61,7 @@ interface AddEvidenceModalProps {
   onClose: () => void;
   pohId: Hash;
   requestIndex: number;
+  chainId: number;
 }
 
 export default function AddEvidenceModal({
@@ -67,10 +69,14 @@ export default function AddEvidenceModal({
   onClose,
   pohId,
   requestIndex,
+  chainId,
 }: AddEvidenceModalProps) {
   const { pendingAction, applyAction } = useRequestOptimistic();
   const isReconciling = pendingAction !== null;
   const { address } = useAccount();
+  const userChainId = useChainId();
+  const wrongChain = userChainId !== chainId;
+  const wrongChainTooltip = `Switch your chain above to ${idToChain(chainId)?.name || "the correct chain"}`;
   const [pending, setPending] = useState(false);
   const [loadingMessage, setLoadingMessage] = useState<string>();
   const startLoading = useCallback((message?: string) => {
@@ -159,6 +165,9 @@ export default function AddEvidenceModal({
   );
 
   const submit = async () => {
+    // Re-check the chain here: the wallet may have switched networks after the
+    // modal opened, and IPFS upload happens before the contract write.
+    if (wrongChain) return;
     startLoading("Uploading evidence...");
 
     try {
@@ -218,13 +227,23 @@ export default function AddEvidenceModal({
         >
           <ActionButton
             disabled={
-              pending || isReconciling || !title.trim() || !description.trim()
+              pending ||
+              isReconciling ||
+              wrongChain ||
+              !title.trim() ||
+              !description.trim()
             }
             isLoading={pending}
             className="w-full sm:w-auto sm:min-w-[170px]"
             onClick={submit}
             label={loadingMessage || "Add Evidence"}
-            tooltip={isReconciling ? "Waiting for indexer" : undefined}
+            tooltip={
+              wrongChain
+                ? wrongChainTooltip
+                : isReconciling
+                  ? "Waiting for indexer"
+                  : undefined
+            }
           />
         </AuthGuard>
         <ActionButton

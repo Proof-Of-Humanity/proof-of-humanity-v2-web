@@ -42,34 +42,43 @@ export const getEvidenceSubmitterProfiles = async (
     new Set(submitters.map((submitter) => submitter.toLowerCase())),
   );
 
-  const entries = await Promise.all(
-    unique.map(
-      async (address): Promise<[string, EvidenceSubmitterProfile | null]> => {
-        try {
-          const raw = await getClaimerData(address as Address);
-          const registeredChain = supportedChains.find(
-            (chain) => raw[chain.id]?.claimer?.registration?.humanity?.id,
-          );
-          if (!registeredChain) return [address, null];
+  const lookupProfile = async (
+    address: string,
+  ): Promise<[string, EvidenceSubmitterProfile | null]> => {
+    try {
+      const raw = await getClaimerData(address as Address);
+      const registeredChain = supportedChains.find(
+        (chain) => raw[chain.id]?.claimer?.registration?.humanity?.id,
+      );
+      if (!registeredChain) return [address, null];
 
-          const claimer = raw[registeredChain.id].claimer;
-          const pohId = claimer?.registration?.humanity?.id ?? null;
-          if (!pohId) return [address, null];
+      const claimer = raw[registeredChain.id].claimer;
+      const pohId = claimer?.registration?.humanity?.id ?? null;
+      if (!pohId) return [address, null];
 
-          // Same hop as the vouch avatars: winning claim evidence points at
-          // the registration file, which holds the profile photo.
-          const evidenceUri = claimer?.registration?.humanity.winnerClaim
-            .at(0)
-            ?.evidenceGroup.evidence.at(0)?.uri;
-          const photo = (await getRegistrationPhoto(evidenceUri)) ?? undefined;
+      // Same hop as the vouch avatars: winning claim evidence points at
+      // the registration file, which holds the profile photo.
+      const evidenceUri = claimer?.registration?.humanity.winnerClaim
+        .at(0)
+        ?.evidenceGroup.evidence.at(0)?.uri;
+      const photo = (await getRegistrationPhoto(evidenceUri)) ?? undefined;
 
-          return [address, { pohId, name: claimer?.name ?? undefined, photo }];
-        } catch {
-          return [address, null];
-        }
-      },
-    ),
-  );
+      return [address, { pohId, name: claimer?.name ?? undefined, photo }];
+    } catch {
+      return [address, null];
+    }
+  };
+
+  // Cap concurrency so a request with many distinct submitters doesn't fan out
+  // into an unbounded burst of subgraph/IPFS calls.
+  const CONCURRENCY = 5;
+  const entries: [string, EvidenceSubmitterProfile | null][] = [];
+  for (let start = 0; start < unique.length; start += CONCURRENCY) {
+    const batch = await Promise.all(
+      unique.slice(start, start + CONCURRENCY).map(lookupProfile),
+    );
+    entries.push(...batch);
+  }
 
   return Object.fromEntries(
     entries.filter(

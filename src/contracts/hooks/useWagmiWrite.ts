@@ -15,7 +15,16 @@ import {
 } from "wagmi";
 import useChainParam from "hooks/useChainParam";
 import { getContractInfo, ContractName } from "contracts";
-import { Abi, Hash, ParseAbiParameter, toBytes, zeroAddress } from "viem";
+import {
+  Abi,
+  Hash,
+  ParseAbiParameter,
+  toBytes,
+  zeroAddress,
+  TransactionNotFoundError,
+  TransactionReceiptNotFoundError,
+  WaitForTransactionReceiptTimeoutError,
+} from "viem";
 
 const defaultForInputs = (inputs: readonly ParseAbiParameter<string>[]) =>
   inputs.length
@@ -69,11 +78,14 @@ export default function useWagmiWrite<
   } as any);
 
   const { writeContractAsync, status, error: writeError } = useWriteContract();
-  const { data: receipt, status: transactionStatus } =
-    useWaitForTransactionReceipt({
-      hash: submittedTx?.hash,
-      chainId: submittedTx?.chainId,
-    });
+  const {
+    data: receipt,
+    status: transactionStatus,
+    error: transactionError,
+  } = useWaitForTransactionReceipt({
+    hash: submittedTx?.hash,
+    chainId: submittedTx?.chainId,
+  });
   const effectsRef = useRef(effects);
   const lastWriteRef = useRef<{
     args?: readonly unknown[];
@@ -170,12 +182,23 @@ export default function useWagmiWrite<
           effectsRef.current?.onSuccess?.(ctx);
         }
         break;
-      case "error":
-        writeInFlightRef.current = false;
+      case "error": {
+        // A reverted receipt makes wagmi throw, so a *settled* on-chain
+        // failure lands here — clear the guard so the user can retry. Only a
+        // genuinely ambiguous receipt failure (poll timeout / tx not yet
+        // found) leaves the original tx possibly in flight; keep the guard
+        // closed there so a duplicate non-idempotent write can't fire.
+        const outcomeUnknown =
+          transactionError instanceof WaitForTransactionReceiptTimeoutError ||
+          transactionError instanceof TransactionNotFoundError ||
+          transactionError instanceof TransactionReceiptNotFoundError;
+        if (!outcomeUnknown) writeInFlightRef.current = false;
         break;
+      }
     }
   }, [
     transactionStatus,
+    transactionError,
     submittedTx?.hash,
     receipt,
     contract,

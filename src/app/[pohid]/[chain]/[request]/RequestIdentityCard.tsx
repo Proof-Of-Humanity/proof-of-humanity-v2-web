@@ -5,6 +5,7 @@ import Identicon from "components/Identicon";
 import IdentityReferenceRow from "components/IdentityReferenceRow";
 import Label from "components/Label";
 import LoadableImage from "components/LoadableImage";
+import MediaFallback from "components/MediaFallback";
 import Previewed from "components/Previewed";
 import TimeAgo from "components/TimeAgo";
 import VideoThumbnail from "components/VideoThumbnail";
@@ -251,13 +252,13 @@ async function PolicyLink({ metaEvidenceUri }: { metaEvidenceUri: string }) {
     const href = `/attachment?url=${encodeURIComponent(policyLink)}`;
 
     return (
-      <div className="flex w-full items-center justify-center font-normal md:justify-end">
+      <div className="mb-6 flex w-full items-center justify-center font-normal md:mb-0 md:justify-end">
         <Link
           href={href}
-          className="flex items-center justify-center gap-2 text-sm text-peach hover:opacity-80"
+          className="group flex items-center justify-center gap-2 text-sm text-peach hover:opacity-80"
         >
           Relevant Policy
-          <DocumentIcon className="h-4 w-4 fill-current" />
+          <DocumentIcon className="h-4 w-4 fill-current transition-transform duration-200 ease-premium group-hover:-translate-y-0.5 group-hover:rotate-6" />
         </Link>
       </div>
     );
@@ -278,24 +279,32 @@ export async function IdentityVideo({
   const registrationFile = await identityFiles.registrationFilePromise;
   const videoUrl = safeIpfsUrl(registrationFile?.video);
 
-  if (!registrationFile || !videoUrl) return null;
-
   return (
     <div className="order-5 mt-8 flex w-full flex-col gap-4 px-4 md:order-none md:mt-0 md:px-0">
-      <Previewed
-        isVideo
-        openVideoInNewTabOnError
-        uri={videoUrl}
-        trigger={
-          <VideoThumbnail
-            className="aspect-[1.8] w-full cursor-pointer rounded-2xl"
-            src={videoUrl}
+      {videoUrl ? (
+        <>
+          <Previewed
+            isVideo
+            openVideoInNewTabOnError
+            uri={videoUrl}
+            trigger={
+              <VideoThumbnail
+                className="aspect-[1.8] w-full cursor-pointer rounded-2xl"
+                src={videoUrl}
+              />
+            }
           />
-        }
-      />
-      <span className="text-secondaryText text-center text-sm md:text-left">
-        Tap video to preview fullscreen
-      </span>
+          <span className="text-secondaryText text-center text-sm md:text-left">
+            Tap video to preview fullscreen
+          </span>
+        </>
+      ) : (
+        <MediaFallback
+          error
+          label="Video unavailable"
+          className="aspect-[1.8] w-full rounded-2xl"
+        />
+      )}
     </div>
   );
 }

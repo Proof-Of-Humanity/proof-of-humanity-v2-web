@@ -43,7 +43,11 @@ export default function LoadableImage({
       <img
         ref={imageRef}
         alt={alt}
-        className={twMerge(className, (isLoading || hasError) && "hidden")}
+        className={twMerge(
+          className,
+          (isLoading || hasError) && "hidden",
+          !isLoading && !hasError && "motion-safe:animate-mediaResolve",
+        )}
         src={src}
         onLoad={() => setIsLoading(false)}
         onError={() => {

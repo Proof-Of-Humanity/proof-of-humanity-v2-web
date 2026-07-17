@@ -253,6 +253,7 @@ export default function Evidence({
             onClose={() => setModalOpen(false)}
             pohId={pohId}
             requestIndex={requestIndex}
+            chainId={chainReq.id}
           />
         </>
       )}

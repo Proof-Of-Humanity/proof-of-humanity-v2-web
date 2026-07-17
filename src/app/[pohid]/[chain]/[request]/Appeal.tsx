@@ -1,18 +1,24 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import ExternalLink from "components/ExternalLink";
 import ExternalLinkIcon from "components/ExternalLinkIcon";
 import InfoTooltip from "components/InfoTooltip";
-import CurrencyField from "components/CurrencyField";
+import CurrencyField, { CurrencyIcon } from "components/CurrencyField";
 import Progress from "components/Progress";
 import TimeAgo from "components/TimeAgo";
 import ActionButton from "components/ActionButton";
 import RequestModal, {
   RequestModalActions,
+  RequestAmountPill,
   RequestModalHeader,
 } from "components/RequestModal";
-import { SupportedChainId, explorerTxLink, idToChain } from "config/chains";
+import {
+  SupportedChainId,
+  explorerTxLink,
+  idToChain,
+  nativeCurrencyLabel,
+} from "config/chains";
 import {
   APIArbitrator,
   DisputeStatusEnum,
@@ -95,7 +101,7 @@ interface SideFundingProps {
   appealCost: bigint;
   chainId: SupportedChainId;
   losingSideDeadlinePassed: boolean;
-  onSuccess?: (txHash?: Hash) => void;
+  onSuccess?: (amount: bigint, txHash?: Hash) => void;
   onLoadingChange?: (loading: boolean) => void;
   isReconciling?: boolean;
   fundingPending?: boolean;
@@ -143,10 +149,6 @@ const SideFunding: React.FC<SideFundingProps> = ({
       { active: isFullyFunded, message: "Already funded" },
       { active: isReconciling, message: "Waiting for indexer" },
       {
-        active: fundingPending,
-        message: "Another funding transaction is pending",
-      },
-      {
         active: losingSideDeadlinePassed,
         message: "Appeal time has ended for this side",
       },
@@ -168,7 +170,7 @@ const SideFunding: React.FC<SideFundingProps> = ({
           loading.stop();
           onLoadingChange?.(false);
           toast.success("Funded appeal successfully");
-          onSuccess?.(ctx.txHash);
+          onSuccess?.(ctx.value ?? 0n, ctx.txHash);
         },
         onFail() {
           loading.stop();
@@ -216,7 +218,7 @@ const SideFunding: React.FC<SideFundingProps> = ({
           label={loadingMessage || "Fund"}
           className="w-full px-5"
           fullWidth
-          disabled={isDisabled}
+          disabled={isDisabled || fundingPending}
           isLoading={isLoading}
           tooltip={submitTooltip}
         />
@@ -250,10 +252,11 @@ interface AppealSnapshot {
   appealPeriodEnd: number;
   currentRulingSide: SideEnum;
   /**
-   * The contract only lets the currently losing side fund during the first
-   * half of the appeal period; true once that midpoint has passed.
+   * Midpoint of the appeal period, in unix seconds. The contract only lets the
+   * currently losing side fund before this point; compared against a live clock
+   * so the gate closes while the page stays open.
    */
-  losingSideDeadlinePassed: boolean;
+  losingSideDeadline: number;
   claimerCost: bigint;
   challengerCost: bigint;
 }
@@ -273,12 +276,20 @@ const Appeal: React.FC<AppealProps> = ({
   const { pendingAction } = useRequestOptimistic();
   const isReconciling = pendingAction !== null;
   const router = useRouter();
+  const queryClient = useQueryClient();
+  const appealSnapshotQueryKey = [
+    "appealSnapshot",
+    chainId,
+    arbitrator,
+    disputeId.toString(),
+  ] as const;
 
   const [isAppealModalOpen, setAppealModalOpen] = useState(false);
   const [appealFundingPending, setAppealFundingPending] = useState(false);
-  const [fundSuccess, setFundSuccess] = useState<{ txHash?: Hash } | null>(
-    null,
-  );
+  const [fundSuccess, setFundSuccess] = useState<{
+    amount: bigint;
+    txHash?: Hash;
+  } | null>(null);
 
   // Funds already committed to the pending appeal round, from the subgraph.
   const { claimerFunds, challengerFunds } = useMemo(
@@ -286,19 +297,22 @@ const Appeal: React.FC<AppealProps> = ({
     [currentChallenge],
   );
 
-  const handleFundSuccess = (txHash?: Hash) => {
-    setFundSuccess({ txHash });
-    router.refresh();
+  const handleFundSuccess = (amount: bigint, txHash?: Hash) => {
+    setFundSuccess({ amount, txHash });
   };
 
   const closeAppealModal = () => {
     setAppealModalOpen(false);
     setFundSuccess(null);
+    if (fundSuccess) {
+      void queryClient.invalidateQueries({ queryKey: appealSnapshotQueryKey });
+      router.refresh();
+    }
   };
 
   // bigint is not JSON-serializable, so the dispute id goes in as a string.
   const { data: snapshot, isError: loadFailed } = useQuery({
-    queryKey: ["appealSnapshot", chainId, arbitrator, disputeId.toString()],
+    queryKey: appealSnapshotQueryKey,
     queryFn: async (): Promise<AppealSnapshot> => {
       const stakeMultipliers = await APIPoH.getStakeMultipliers(chainId);
       const { status, cost, period, currentRuling } =
@@ -318,7 +332,7 @@ const Appeal: React.FC<AppealProps> = ({
         status: Number(status) as DisputeStatusEnum,
         appealPeriodEnd: periodEnd,
         currentRulingSide,
-        losingSideDeadlinePassed: losingSideDeadline < Date.now() / 1000,
+        losingSideDeadline,
         ...getSideAppealCosts(cost!, currentRulingSide, stakeMultipliers),
       };
     },
@@ -331,6 +345,17 @@ const Appeal: React.FC<AppealProps> = ({
         "Unexpected error while reading appellate round info. Come back later",
       );
   }, [loadFailed]);
+
+  // Deadlines are snapshot timestamps; tick a live clock so the funding gates
+  // close when the midpoint / full appeal period elapses while the page is open.
+  const [nowSec, setNowSec] = useState(() => Math.floor(Date.now() / 1000));
+  useEffect(() => {
+    const id = setInterval(
+      () => setNowSec(Math.floor(Date.now() / 1000)),
+      10_000,
+    );
+    return () => clearInterval(id);
+  }, []);
 
   const appealTrigger = resolveTxState([
     { active: !!externalDisabled, message: externalTooltip ?? "Disabled" },
@@ -346,7 +371,11 @@ const Appeal: React.FC<AppealProps> = ({
 
   if (!isAppealable || !snapshot) return null;
 
-  const { currentRulingSide, losingSideDeadlinePassed } = snapshot;
+  const { currentRulingSide } = snapshot;
+  // Once the full period ends, no side can fund; before that only the losing
+  // side is cut off at the midpoint.
+  const appealEnded = nowSec >= snapshot.appealPeriodEnd;
+  const losingSideDeadlinePassed = nowSec >= snapshot.losingSideDeadline;
   const rulingParty =
     currentRulingSide === SideEnum.challenger
       ? "Challenger"
@@ -357,7 +386,6 @@ const Appeal: React.FC<AppealProps> = ({
   return (
     <>
       <InfoTooltip
-        align="right"
         label={
           <>
             Appeal ends&nbsp;
@@ -404,8 +432,14 @@ const Appeal: React.FC<AppealProps> = ({
                   <span className="text-peach">fund the appeal</span>!
                 </>
               }
-              description="Your appeal-funding transaction was confirmed."
+              description="You contributed with"
             />
+            <div className="mt-4 flex justify-center">
+              <RequestAmountPill
+                amount={`${formatEth(fundSuccess.amount)} ${nativeCurrencyLabel(chainId)}`}
+                icon={<CurrencyIcon symbol={nativeCurrencyLabel(chainId)} />}
+              />
+            </div>
             {fundSuccess.txHash && idToChain(chainId) && (
               <div className="mt-4 flex justify-center">
                 <ExternalLink
@@ -466,9 +500,10 @@ const Appeal: React.FC<AppealProps> = ({
                 appealCost={snapshot.claimerCost}
                 chainId={chainId}
                 losingSideDeadlinePassed={
-                  currentRulingSide === SideEnum.challenger
+                  appealEnded ||
+                  (currentRulingSide === SideEnum.challenger
                     ? losingSideDeadlinePassed
-                    : false
+                    : false)
                 }
                 onSuccess={handleFundSuccess}
                 onLoadingChange={setAppealFundingPending}
@@ -484,9 +519,10 @@ const Appeal: React.FC<AppealProps> = ({
                 appealCost={snapshot.challengerCost}
                 chainId={chainId}
                 losingSideDeadlinePassed={
-                  currentRulingSide === SideEnum.claimer
+                  appealEnded ||
+                  (currentRulingSide === SideEnum.claimer
                     ? losingSideDeadlinePassed
-                    : false
+                    : false)
                 }
                 onSuccess={handleFundSuccess}
                 onLoadingChange={setAppealFundingPending}

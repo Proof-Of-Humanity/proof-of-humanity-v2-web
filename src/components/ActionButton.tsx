@@ -47,7 +47,7 @@ const ActionButton = React.forwardRef<HTMLButtonElement, ActionButtonProps>(
     );
 
     const mergedWrapperClasses = twMerge(
-      "relative group w-full md:w-fit",
+      "relative group flex w-full justify-center md:w-fit",
       fullWidth && "md:w-full",
     );
 

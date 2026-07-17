@@ -38,6 +38,7 @@ export default function VideoThumbnail({
         className={twMerge(
           "h-full w-full bg-black object-contain",
           (hasError || isLoading) && "invisible",
+          !hasError && !isLoading && "motion-safe:animate-mediaResolve",
         )}
         src={videoSrc}
         preload="metadata"

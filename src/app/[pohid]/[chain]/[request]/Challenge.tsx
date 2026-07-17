@@ -42,7 +42,8 @@ type Reason =
 
 const reasonToImages: Partial<Record<Reason, string[]>> = {
   incorrectSubmission: ["/reason/incorrect.png"],
-  sybilAttack: ["/reason/duplicate.png", "/reason/dne.png"],
+  identityTheft: ["/reason/duplicate.png"],
+  sybilAttack: ["/reason/dne.png"],
   deceased: ["/reason/deceased.png"],
 };
 

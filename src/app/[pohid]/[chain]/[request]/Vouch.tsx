@@ -137,7 +137,11 @@ export default function Vouch({
   });
 
   const isOnchainLoading =
-    status.prepare === "pending" || status.write === "pending";
+    status.prepare === "pending" ||
+    status.write === "pending" ||
+    // Keep the onchain-vouch link locked while the tx is mining, otherwise it
+    // re-enables after wallet confirmation and allows a duplicate addVouch.
+    (status.write === "success" && status.transaction === "pending");
 
   const expiration = useMemo(
     () => Math.floor(Date.now() / 1000) + 60 * 60 * 24 * 30 * 6,
@@ -196,6 +200,10 @@ export default function Vouch({
   );
   const { signTypedData, isPending } = useSignTypedData(signTypedDataConfig);
 
+  // One lock across both paths (gasless sign + on-chain tx) so they can't
+  // overlap and the modal can't close mid-submission.
+  const isSubmitting = isOnchainLoading || isPending;
+
   const gaslessVouch = () => {
     signTypedData({
       domain: {
@@ -245,7 +253,10 @@ export default function Vouch({
     isRegistrationValid && (
       <>
         <ActionButton
-          onClick={() => setIsOpen(true)}
+          onClick={() => {
+            setSubmitted(false);
+            setIsOpen(true);
+          }}
           label="Vouch"
           className="mb-2 w-auto"
           disabled={trigger.disabled}
@@ -254,7 +265,7 @@ export default function Vouch({
         <RequestModal
           open={isOpen}
           onClose={closeModal}
-          canClose={!isOnchainLoading}
+          canClose={!isSubmitting}
         >
           {submitted ? (
             <>
@@ -297,30 +308,25 @@ export default function Vouch({
                   label="Vouch"
                   className="w-full sm:w-[170px]"
                   isLoading={isPending}
-                  disabled={isPending || isReconciling}
+                  disabled={isSubmitting || isReconciling}
                   tooltip={isReconciling ? "Waiting for indexer" : undefined}
                   variant="primary"
                 />
-                <span
-                  className={`text-orange mt-4 text-sm underline underline-offset-2 ${
-                    isOnchainLoading
-                      ? "pointer-events-none cursor-not-allowed opacity-50"
-                      : "cursor-pointer"
-                  }`}
-                  onClick={() => {
-                    if (isOnchainLoading || isReconciling) return;
-                    addVouch();
-                  }}
-                  aria-disabled={isOnchainLoading || isReconciling}
-                  aria-busy={isOnchainLoading || isReconciling}
+                <button
+                  type="button"
+                  className="text-orange mt-4 cursor-pointer text-sm underline underline-offset-2 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50"
+                  onClick={addVouch}
+                  disabled={isSubmitting || isReconciling}
+                  aria-busy={isOnchainLoading}
                 >
                   or vouch on chain
-                </span>
+                </button>
                 <ActionButton
                   onClick={closeModal}
                   label="Return"
                   className="mt-8 w-full sm:w-[170px]"
                   variant="secondary"
+                  disabled={isSubmitting}
                 />
               </div>
             </>

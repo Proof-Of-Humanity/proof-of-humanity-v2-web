@@ -92,6 +92,8 @@ module.exports = {
         fadeIn: "fadeIn 0.3s ease-out forwards",
         accordionItemIn:
           "accordionItemIn 0.6s cubic-bezier(0.22, 0.61, 0.36, 1) both",
+        mediaResolve:
+          "mediaResolve 0.6s cubic-bezier(0.22, 0.61, 0.36, 1) both",
       },
       keyframes: {
         flip: {
@@ -125,6 +127,14 @@ module.exports = {
         accordionItemIn: {
           "0%": { opacity: "0", transform: "translateY(12px)" },
           "100%": { opacity: "1", transform: "translateY(0)" },
+        },
+        mediaResolve: {
+          "0%": {
+            opacity: "0",
+            filter: "blur(12px)",
+            transform: "scale(1.02)",
+          },
+          "100%": { opacity: "1", filter: "blur(0)", transform: "scale(1)" },
         },
         // progress: {
         //   "0%": { transform: "scaleX(1)" },

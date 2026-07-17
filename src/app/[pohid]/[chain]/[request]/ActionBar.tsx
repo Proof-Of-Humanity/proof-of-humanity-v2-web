@@ -121,7 +121,6 @@ interface VouchingActionsProps {
   claimedTooltip: string;
   needsVouches: boolean;
   withdrawTrigger: { disabled: boolean; tooltip?: string };
-  isWithdrawLoading: boolean;
   onWithdraw: () => void;
 }
 
@@ -144,7 +143,6 @@ function VouchingActions({
   claimedTooltip,
   needsVouches,
   withdrawTrigger,
-  isWithdrawLoading,
   onWithdraw,
 }: VouchingActionsProps) {
   const isRequester = requester.toLowerCase() === address?.toLowerCase();
@@ -155,12 +153,8 @@ function VouchingActions({
       totalCost={totalCost}
       index={index}
       funded={funded}
-      disabled={(isRequester || didIVouchFor) && lockClaimed}
-      tooltip={
-        (isRequester || didIVouchFor) && lockClaimed
-          ? claimedTooltip
-          : undefined
-      }
+      disabled={lockClaimed}
+      tooltip={lockClaimed ? claimedTooltip : undefined}
     />
   ) : null;
 
@@ -168,10 +162,9 @@ function VouchingActions({
     const withdrawButton = (
       <ActionButton
         disabled={withdrawTrigger.disabled}
-        isLoading={isWithdrawLoading}
         onClick={onWithdraw}
         variant="secondary"
-        label={isVouching && isWithdrawLoading ? "Withdrawing" : "Withdraw"}
+        label="Withdraw"
         tooltip={withdrawTrigger.tooltip}
         className="mb-2 w-auto"
       />
@@ -181,7 +174,7 @@ function VouchingActions({
 
     return (
       <div className="flex flex-col items-center md:items-start">
-        <div className="flex flex-row justify-center gap-2 md:justify-start">
+        <div className="request-actions-row flex flex-row justify-center gap-2 md:justify-start">
           {fundButton}
           {withdrawButton}
         </div>
@@ -391,6 +384,9 @@ export default function ActionBar({
     message: `Switch your chain above to ${idToChain(chain.id)?.name || "the correct chain"}`,
   };
   const withdrawTrigger = resolveTxState([
+    // Message-less: keeps the bar trigger disabled while the modal's
+    // withdraw tx is in flight, without putting it into a loading state.
+    { active: isWithdrawLoading },
     { active: isReconciling, message: "Waiting for indexer" },
     {
       active: isWithdrawPrepareError,
@@ -543,7 +539,6 @@ export default function ActionBar({
     claimedTooltip,
     needsVouches: effectiveValidVouches < contractData.requiredNumberOfVouches,
     withdrawTrigger,
-    isWithdrawLoading,
     onWithdraw: () => setWithdrawModalOpen(true),
   } satisfies Omit<VouchingActionsProps, "mode" | "showFund">;
 
@@ -618,7 +613,7 @@ export default function ActionBar({
                   </span>
                 </div>
 
-                <div className="request-action-buttons flex w-full flex-wrap justify-center gap-4 md:w-auto md:justify-end">
+                <div className="request-action-buttons request-actions-row flex w-full flex-wrap justify-center gap-4 md:w-auto md:shrink-0 md:flex-nowrap md:justify-end">
                   <VouchingActions
                     {...vouchingActionsProps}
                     mode="vouching"
@@ -634,7 +629,7 @@ export default function ActionBar({
                 Ready to advance
               </span>
 
-              <div className="request-action-buttons flex w-full flex-wrap justify-center gap-4 md:w-auto md:justify-end">
+              <div className="request-action-buttons request-actions-row flex w-full flex-wrap justify-center gap-4 md:w-auto md:shrink-0 md:flex-nowrap md:justify-end">
                 <VouchingActions
                   {...vouchingActionsProps}
                   mode="advance"
@@ -656,7 +651,7 @@ export default function ActionBar({
               <span className="text-secondaryText text-center md:text-left">
                 Ready to finalize.
               </span>
-              <div className="request-action-buttons flex w-full flex-wrap items-center justify-center gap-4 font-normal md:w-auto md:justify-end">
+              <div className="request-action-buttons request-actions-row flex w-full flex-wrap items-center justify-center gap-4 font-normal md:w-auto md:shrink-0 md:flex-nowrap md:justify-end">
                 <ActionButton
                   disabled={executeTrigger.disabled}
                   isLoading={isExecuteLoading}
@@ -707,7 +702,7 @@ export default function ActionBar({
                     <>
                       {" "}
                       for{" "}
-                      <strong className="text-orange capitalize">
+                      <strong className="text-status-challenged capitalize">
                         {currentChallenge.reason.id}
                       </strong>
                     </>
@@ -718,7 +713,7 @@ export default function ActionBar({
               {pendingAction !== "challenge" && currentChallenge && (
                 <div className="flex w-full flex-col items-center justify-center gap-4 md:w-auto md:flex-row md:justify-end lg:flex-nowrap">
                   {!appealActive && (
-                    <InfoTooltip align="right" label="Add Evidence">
+                    <InfoTooltip label="Add Evidence">
                       <p>
                         When a profile is challenged, a case is opened in Kleros
                         Court, where jurors review the evidence from both sides

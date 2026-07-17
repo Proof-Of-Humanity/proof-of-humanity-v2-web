@@ -96,6 +96,12 @@ export default function RemoveVouch({
     prepareRemoveVouch({ args: [requester, pohId] });
   });
 
+  // Covers both the wallet-confirmation and tx-mining phases, matching the
+  // other action buttons; `status.write` alone re-enables while still mining.
+  const isRemoveVouchLoading =
+    status.write === "pending" ||
+    (status.write === "success" && status.transaction === "pending");
+
   const trigger = resolveTxState([
     { active: isReconciling, message: "Waiting for indexer" },
     { active: !!disabled, message: tooltip },
@@ -103,7 +109,7 @@ export default function RemoveVouch({
       active: userChainId !== chain.id,
       message: `Switch your chain above to ${idToChain(chain.id)?.name || "the correct chain"}`,
     },
-    { active: status.write === "pending" },
+    { active: isRemoveVouchLoading },
   ]);
 
   return (
@@ -114,7 +120,7 @@ export default function RemoveVouch({
           onClick={removeOnchainVouch}
           label="Remove Vouch"
           className="mb-2 w-auto"
-          isLoading={status.write === "pending"}
+          isLoading={isRemoveVouchLoading}
           disabled={trigger.disabled}
           tooltip={trigger.tooltip}
         />

@@ -129,6 +129,9 @@ const Accordion: React.FC<AccordionProps> = ({
             <div
               className={cn("flex flex-col pt-2.5", !isRendered && "invisible")}
               aria-hidden={!open || undefined}
+              // `inert` pulls the collapsing subtree out of the tab order (and
+              // AT) immediately, so accordion items are not visible to screen readers during animation
+              inert={!open ? ("" as unknown as boolean) : undefined}
             >
               {children}
             </div>

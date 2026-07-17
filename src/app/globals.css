@@ -191,6 +191,15 @@
     width: min(100%, 10.625rem);
   }
 
+  @media (min-width: 768px) {
+    .request-actions-row > button:not([aria-expanded]),
+    .request-actions-row > a,
+    .request-actions-row > div {
+      min-width: 10.625rem;
+      flex-shrink: 0;
+    }
+  }
+
   .request-accordion > button {
     min-height: 5rem;
     padding-inline: clamp(1.25rem, 3vw, 2rem);
