@@ -1,8 +1,6 @@
 import { useMemo, useState } from "react";
-import RequestModal, {
-  RequestModalActions,
-  RequestModalHeader,
-} from "components/RequestModal";
+import RequestModal from "components/RequestModal";
+import VouchModalContent, { VouchMethod } from "./VouchModalContent";
 import usePoHWrite from "contracts/hooks/usePoHWrite";
 import { Address, Hash } from "viem";
 import { useSignTypedData, useChainId } from "wagmi";
@@ -15,7 +13,6 @@ import ActionButton from "components/ActionButton";
 import { useRequestOptimistic } from "optimistic/request";
 import type { RequestOptimisticOverlay } from "optimistic/types";
 import { resolveTxState } from "utils/txState";
-import VouchIcon from "icons/Vouch.svg";
 
 const normalizeAddress = (value: Address) => value.toLowerCase();
 
@@ -228,6 +225,11 @@ export default function Vouch({
     });
   };
 
+  const handleVouch = (method: VouchMethod) => {
+    if (method === "gasless") gaslessVouch();
+    else addVouch();
+  };
+
   const isRegistrationValid = !me?.expirationTime
     ? false
     : me.expirationTime > Date.now() / 1000;
@@ -267,70 +269,14 @@ export default function Vouch({
           onClose={closeModal}
           canClose={!isSubmitting}
         >
-          {submitted ? (
-            <>
-              <RequestModalHeader
-                title={
-                  <>
-                    Success!
-                    <br />
-                    Your vouch has been submitted.
-                  </>
-                }
-                description="Thanks!"
-              />
-              <VouchIcon className="mx-auto mt-4 h-32 w-32 text-[#CA80FF]" />
-              <RequestModalActions onReturn={closeModal} returnLabel="Close" />
-            </>
-          ) : (
-            <>
-              <RequestModalHeader
-                title={
-                  <>
-                    Vouch for <span className="text-peach">this Profile</span>
-                  </>
-                }
-                description="Only vouch for people you have physically encountered and whose submission follows the Policy."
-              />
-              <p className="text-secondaryText mx-auto mt-8 max-w-2xl text-center text-sm leading-5">
-                Make sure the person exists and only vouch for people you have
-                physically encountered. Note that in case a profile is removed
-                for a Sybil attack or identity theft, verified humans whose
-                vouches were used by that request can also lose their
-                registrations. Profiles that do not follow the Policy risk being
-                challenged and removed. Make sure you read and understand the
-                Policy before proceeding. A gasless vouch cannot be manually
-                removed and expires after approximately six months.
-              </p>
-              <div className="mt-8 flex flex-col items-center">
-                <ActionButton
-                  onClick={gaslessVouch}
-                  label="Vouch"
-                  className="w-full sm:w-[170px]"
-                  isLoading={isPending}
-                  disabled={isSubmitting || isReconciling}
-                  tooltip={isReconciling ? "Waiting for indexer" : undefined}
-                  variant="primary"
-                />
-                <button
-                  type="button"
-                  className="text-orange mt-4 cursor-pointer text-sm underline underline-offset-2 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50"
-                  onClick={addVouch}
-                  disabled={isSubmitting || isReconciling}
-                  aria-busy={isOnchainLoading}
-                >
-                  or vouch on chain
-                </button>
-                <ActionButton
-                  onClick={closeModal}
-                  label="Return"
-                  className="mt-8 w-full sm:w-[170px]"
-                  variant="secondary"
-                  disabled={isSubmitting}
-                />
-              </div>
-            </>
-          )}
+          <VouchModalContent
+            submitted={submitted}
+            onClose={closeModal}
+            onVouch={handleVouch}
+            isSubmitting={isSubmitting}
+            disabled={isReconciling}
+            tooltip={isReconciling ? "Waiting for indexer" : undefined}
+          />
         </RequestModal>
       </>
     )
