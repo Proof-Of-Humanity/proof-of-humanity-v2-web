@@ -115,16 +115,14 @@ export default function RemoveVouch({
   return (
     web3Loaded &&
     (userChainId === chain.id || disabled) && (
-      <div className="flex gap-4">
-        <ActionButton
-          onClick={removeOnchainVouch}
-          label="Remove Vouch"
-          className="mb-2 w-auto"
-          isLoading={isRemoveVouchLoading}
-          disabled={trigger.disabled}
-          tooltip={trigger.tooltip}
-        />
-      </div>
+      <ActionButton
+        onClick={removeOnchainVouch}
+        label="Remove Vouch"
+        className="mb-2 w-auto"
+        isLoading={isRemoveVouchLoading}
+        disabled={trigger.disabled}
+        tooltip={trigger.tooltip}
+      />
     )
   );
 }

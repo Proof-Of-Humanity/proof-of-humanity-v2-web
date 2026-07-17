@@ -342,7 +342,11 @@ export default function RequestIdentityCard({
       <div className="flex flex-col md:flex-row">
         <Suspense
           fallback={
-            <div className="border-stroke hidden min-w-[16rem] shrink-0 border-r md:flex md:w-[26%]" />
+            <div className="md:border-stroke contents md:flex md:w-[26%] md:min-w-[16rem] md:shrink-0 md:flex-col md:items-center md:border-r md:px-6 md:py-6">
+              <div className="order-3 flex w-full justify-center px-6 md:order-none md:px-0">
+                <MediaFallback className="h-32 w-32 rounded-full" />
+              </div>
+            </div>
           }
         >
           <DesktopProfileAside
@@ -363,7 +367,13 @@ export default function RequestIdentityCard({
           <div className="order-2 mt-6 flex justify-center px-6 md:order-none md:mt-0 md:px-0">
             {requestInfo}
           </div>
-          <Suspense fallback={null}>
+          <Suspense
+            fallback={
+              <div className="order-5 mt-8 w-full px-4 md:order-none md:mt-0 md:px-0">
+                <MediaFallback className="aspect-[1.8] w-full rounded-2xl" />
+              </div>
+            }
+          >
             <IdentityVideo identityFiles={identityFiles} />
           </Suspense>
           <div className="order-6 mt-6 px-6 md:order-none md:mt-0 md:px-0">
