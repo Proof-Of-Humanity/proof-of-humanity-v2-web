@@ -357,7 +357,7 @@ const Appeal: React.FC<AppealProps> = ({
   useEffect(() => {
     const id = setInterval(
       () => setNowSec(Math.floor(Date.now() / 1000)),
-      10_000,
+      5_000,
     );
     return () => clearInterval(id);
   }, []);
@@ -379,7 +379,11 @@ const Appeal: React.FC<AppealProps> = ({
     onAppealableChange?.(isAppealable);
   }, [isAppealable, onAppealableChange]);
 
-  if (!isAppealable || !snapshot) return null;
+  // Keep an already-open modal mounted past the deadline: unmounting it would
+  // discard a possibly in-flight funding tx (the write hook drops callbacks
+  // after unmount), leaving the user with no success/failure feedback. The
+  // forms inside disable themselves via the deadline gates instead.
+  if (!snapshot || (!isAppealable && !isAppealModalOpen)) return null;
 
   const { currentRulingSide } = snapshot;
   const losingSideDeadlinePassed = nowSec >= snapshot.losingSideDeadline;
@@ -392,39 +396,44 @@ const Appeal: React.FC<AppealProps> = ({
 
   return (
     <>
-      <InfoTooltip
-        label={
-          <>
-            Appeal ends&nbsp;
-            <TimeAgo time={snapshot.appealPeriodEnd} />
-          </>
-        }
-      >
-        <p>
-          When someone challenges a profile, a case is opened in Kleros Court.
-        </p>
-        <p>
-          A group of random jurors is selected to review the case. They look at
-          the evidence from both sides and vote. The side with the most votes
-          wins the dispute.
-        </p>
-        <p>
-          If either side disagrees with the decision, they can appeal. The case
-          is reviewed again by a new group of jurors.
-        </p>
-        <p>
-          Providing clear evidence is important. It helps the jurors understand
-          the case and make a fair decision.
-        </p>
-      </InfoTooltip>
-      <ActionButton
-        onClick={() => setAppealModalOpen(true)}
-        disabled={appealTrigger.disabled}
-        tooltip={appealTrigger.tooltip}
-        label="Appeal"
-        variant="secondary"
-        className="w-[170px]"
-      />
+      {isAppealable && (
+        <>
+          <InfoTooltip
+            label={
+              <>
+                Appeal ends&nbsp;
+                <TimeAgo time={snapshot.appealPeriodEnd} />
+              </>
+            }
+          >
+            <p>
+              When someone challenges a profile, a case is opened in Kleros
+              Court.
+            </p>
+            <p>
+              A group of random jurors is selected to review the case. They look
+              at the evidence from both sides and vote. The side with the most
+              votes wins the dispute.
+            </p>
+            <p>
+              If either side disagrees with the decision, they can appeal. The
+              case is reviewed again by a new group of jurors.
+            </p>
+            <p>
+              Providing clear evidence is important. It helps the jurors
+              understand the case and make a fair decision.
+            </p>
+          </InfoTooltip>
+          <ActionButton
+            onClick={() => setAppealModalOpen(true)}
+            disabled={appealTrigger.disabled}
+            tooltip={appealTrigger.tooltip}
+            label="Appeal"
+            variant="secondary"
+            className="w-[170px]"
+          />
+        </>
+      )}
       <RequestModal
         open={isAppealModalOpen}
         onClose={closeAppealModal}

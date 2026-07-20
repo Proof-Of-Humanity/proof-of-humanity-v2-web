@@ -532,6 +532,17 @@ export default function ActionBar({
     me.homeChain?.id === chain.id &&
     !!me.pohId &&
     isMyRegistrationValid;
+  const vouchModalMounted = canVouch && effectiveStatus === "vouching";
+
+  const [prevVouchAddress, setPrevVouchAddress] = useState(address);
+  if (prevVouchAddress !== address) {
+    setPrevVouchAddress(address);
+    setVouchModalOpen(false);
+  }
+  if (vouchModalOpen && !vouchModalMounted) {
+    setVouchModalOpen(false);
+  }
+
   const vouchingActionsProps = {
     pohId,
     requester,
@@ -843,8 +854,9 @@ export default function ActionBar({
           primaryClassName="sm:w-[244px]"
         />
       </RequestModal>
-      {canVouch && effectiveStatus === "vouching" && (
+      {vouchModalMounted && (
         <VouchFlowModal
+          key={address ?? "disconnected"}
           open={vouchModalOpen}
           onClose={() => setVouchModalOpen(false)}
           pohId={pohId}
