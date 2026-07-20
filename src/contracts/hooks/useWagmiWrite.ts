@@ -168,7 +168,11 @@ export default function useWagmiWrite<
         }
         break;
       case "success": {
-        if (lastSettledHashRef.current === txHash) break;
+        if (
+          lastSettledHashRef.current === txHash ||
+          lastUnknownHashRef.current === txHash
+        )
+          break;
         lastSettledHashRef.current = txHash;
         writeInFlightRef.current = false;
         const ctx: WriteSuccessContext = {
@@ -187,7 +191,10 @@ export default function useWagmiWrite<
       }
       case "error": {
         if (transactionError instanceof BaseError) {
-          if (lastUnknownHashRef.current !== txHash) {
+          if (
+            lastUnknownHashRef.current !== txHash &&
+            lastSettledHashRef.current !== txHash
+          ) {
             lastUnknownHashRef.current = txHash;
             effectsRef.current?.onError?.(transactionError, {
               kind: "unknown",
@@ -196,7 +203,11 @@ export default function useWagmiWrite<
           }
           break;
         }
-        if (lastSettledHashRef.current === txHash) break;
+        if (
+          lastSettledHashRef.current === txHash ||
+          lastUnknownHashRef.current === txHash
+        )
+          break;
         lastSettledHashRef.current = txHash;
         writeInFlightRef.current = false;
         effectsRef.current?.onError?.(transactionError, {
