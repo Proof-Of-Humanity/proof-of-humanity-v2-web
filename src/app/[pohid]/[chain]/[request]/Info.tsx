@@ -52,7 +52,7 @@ export default function Info({ nbRequests, label }: InfoProps) {
           <ActionButton
             label="Got it"
             onClick={() => setOpen(false)}
-            className="w-full sm:w-[170px]"
+            className="w-full sm:w-fit sm:min-w-[170px]"
           />
         </div>
       </RequestModal>

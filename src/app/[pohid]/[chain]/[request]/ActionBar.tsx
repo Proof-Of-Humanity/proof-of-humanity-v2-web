@@ -851,7 +851,7 @@ export default function ActionBar({
           primaryDisabled={withdrawTrigger.disabled}
           primaryLoading={isWithdrawLoading}
           primaryTooltip={withdrawTrigger.tooltip}
-          primaryClassName="sm:w-[244px]"
+          primaryClassName="sm:min-w-[244px]"
         />
       </RequestModal>
       {vouchModalMounted && (

@@ -430,7 +430,7 @@ const Appeal: React.FC<AppealProps> = ({
             tooltip={appealTrigger.tooltip}
             label="Appeal"
             variant="secondary"
-            className="w-[170px]"
+            className="w-fit min-w-[170px]"
           />
         </>
       )}

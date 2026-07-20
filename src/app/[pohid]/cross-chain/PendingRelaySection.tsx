@@ -293,7 +293,7 @@ export default function PendingRelaySection({
 
           {relayActionState === "connect-wallet" ? (
             <ActionButton
-              className="w-[170px] whitespace-nowrap"
+              className="w-fit min-w-[170px] whitespace-nowrap"
               label="Connect wallet"
               onClick={openConnectWallet}
             />
@@ -307,7 +307,7 @@ export default function PendingRelaySection({
             relayMode === RELAY_MODE_MANUAL_SIGNATURES &&
             encodedData ? (
             <ActionButton
-              className="w-[170px] whitespace-nowrap"
+              className="w-fit min-w-[170px] whitespace-nowrap"
               disabled={busy}
               isLoading={busy}
               label={busy ? "Relaying…" : "Execute relay"}

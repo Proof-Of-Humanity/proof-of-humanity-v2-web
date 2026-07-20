@@ -221,7 +221,7 @@ export default function Challenge({
         onReady(fire) {
           loading.stop();
           fire();
-          loading.start("Executing transaction");
+          loading.start("Executing...");
           toast.info("Transaction pending");
         },
         onFail() {
@@ -250,7 +250,7 @@ export default function Challenge({
     )
       return;
 
-    loading.start("Uploading evidence...");
+    loading.start("Uploading...");
     try {
       const { evidenceUri } = await uploadEvidence(uploadFile, {
         name: "Challenge Justification",
@@ -406,10 +406,14 @@ export default function Challenge({
         </div>
 
         <div className="mt-12 flex flex-col items-center justify-center gap-4 sm:flex-row">
-          <AuthGuard signInButtonProps={{ className: "w-full sm:w-[244px]" }}>
+          <AuthGuard
+            signInButtonProps={{
+              className: "w-full sm:w-fit sm:min-w-[244px]",
+            }}
+          >
             <ActionButton
               disabled={submitDisabled}
-              className="w-full sm:w-[244px]"
+              className="w-full sm:w-fit sm:min-w-[244px]"
               onClick={submit}
               isLoading={isLoading}
               label={
@@ -420,7 +424,7 @@ export default function Challenge({
             />
           </AuthGuard>
           <ActionButton
-            className="w-full sm:w-[170px]"
+            className="w-full sm:w-fit sm:min-w-[170px]"
             onClick={closeModal}
             label="Return"
             disabled={isLoading}

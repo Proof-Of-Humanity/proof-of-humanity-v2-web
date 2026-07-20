@@ -180,7 +180,7 @@ export default function TransferSection({
           </div>
           <div className="flex justify-center">
             <ActionButton
-              className="w-[170px]"
+              className="w-fit min-w-[170px]"
               disabled={hasTransferInFlight}
               isLoading={hasTransferInFlight}
               label={hasTransferInFlight ? "Transferring..." : "Transfer"}

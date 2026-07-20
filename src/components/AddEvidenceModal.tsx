@@ -121,7 +121,7 @@ export default function AddEvidenceModal({
       () => ({
         onReady(fire) {
           fire();
-          startLoading("Transaction pending");
+          startLoading("Submitting...");
           toast.info("Transaction pending");
         },
         onFail() {
@@ -169,7 +169,7 @@ export default function AddEvidenceModal({
     // Re-check the chain here: the wallet may have switched networks after the
     // modal opened, and IPFS upload happens before the contract write.
     if (wrongChain) return;
-    startLoading("Uploading evidence...");
+    startLoading("Uploading...");
 
     try {
       const { evidenceUri, fileURI } = await uploadEvidence(uploadFile, {

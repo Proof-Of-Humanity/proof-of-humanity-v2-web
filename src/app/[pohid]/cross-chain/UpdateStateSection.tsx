@@ -218,7 +218,7 @@ export default function UpdateStateSection({
                 })}
               </div>
               <ActionButton
-                className="w-[170px]"
+                className="w-fit min-w-[170px]"
                 disabled={hasUpdateInFlight}
                 isLoading={hasUpdateInFlight}
                 label={hasUpdateInFlight ? "Updating..." : "Update"}
