@@ -24,6 +24,11 @@ import {
   zeroAddress,
 } from "viem";
 
+// Transient RPC failures while polling for the receipt are absorbed by the
+// query's retry policy (exponential backoff); only exhausted retries surface
+// as a terminal `"error"` status in the settle effect below.
+const RECEIPT_RETRY_COUNT = 6;
+
 const defaultForInputs = (inputs: readonly ParseAbiParameter<string>[]) =>
   inputs.length
     ? inputs.map((inp) => {
@@ -83,6 +88,9 @@ export default function useWagmiWrite<
   } = useWaitForTransactionReceipt({
     hash: submittedTx?.hash,
     chainId: submittedTx?.chainId,
+    query: {
+      retry: RECEIPT_RETRY_COUNT,
+    },
   });
   const effectsRef = useRef(effects);
   const lastWriteRef = useRef<{
@@ -94,7 +102,6 @@ export default function useWagmiWrite<
   const writeInFlightRef = useRef(false);
   const lastPendingHashRef = useRef<Hash | undefined>();
   const lastSettledHashRef = useRef<Hash | undefined>();
-  const lastUnknownHashRef = useRef<Hash | undefined>();
 
   useEffect(() => {
     effectsRef.current = effects;
@@ -167,53 +174,35 @@ export default function useWagmiWrite<
           effectsRef.current?.onLoading?.();
         }
         break;
-      case "success": {
-        if (
-          lastSettledHashRef.current === txHash ||
-          lastUnknownHashRef.current === txHash
-        )
-          break;
-        lastSettledHashRef.current = txHash;
-        writeInFlightRef.current = false;
-        const ctx: WriteSuccessContext = {
-          contract,
-          functionName: String(functionName),
-          args: lastWriteRef.current?.args,
-          value: lastWriteRef.current?.value,
-          chainId: lastWriteRef.current?.chainId ?? currentChainId,
-          // A sped-up (repriced) tx confirms under a different hash, and the
-          // wait resolves with that replacement receipt.
-          txHash: receipt?.transactionHash ?? txHash,
-          receipt,
-        };
-        effectsRef.current?.onSuccess?.(ctx);
-        break;
-      }
+      case "success":
       case "error": {
-        if (transactionError instanceof BaseError) {
-          if (
-            lastUnknownHashRef.current !== txHash &&
-            lastSettledHashRef.current !== txHash
-          ) {
-            lastUnknownHashRef.current = txHash;
-            effectsRef.current?.onError?.(transactionError, {
-              kind: "unknown",
-              txHash,
-            });
-          }
-          break;
-        }
-        if (
-          lastSettledHashRef.current === txHash ||
-          lastUnknownHashRef.current === txHash
-        )
-          break;
+        if (lastSettledHashRef.current === txHash) break;
         lastSettledHashRef.current = txHash;
         writeInFlightRef.current = false;
-        effectsRef.current?.onError?.(transactionError, {
-          kind: "reverted",
-          txHash,
-        });
+
+        if (transactionStatus === "success") {
+          const ctx: WriteSuccessContext = {
+            contract,
+            functionName: String(functionName),
+            args: lastWriteRef.current?.args,
+            value: lastWriteRef.current?.value,
+            chainId: lastWriteRef.current?.chainId ?? currentChainId,
+            // A sped-up (repriced) tx confirms under a different hash, and
+            // the wait resolves with that replacement receipt.
+            txHash: receipt?.transactionHash ?? txHash,
+            receipt,
+          };
+          effectsRef.current?.onSuccess?.(ctx);
+        } else {
+          effectsRef.current?.onError?.(transactionError, {
+            // Retries are exhausted by this point: a `BaseError` means the
+            // receipt lookup itself kept failing (outcome unverified), while
+            // anything else indicates the tx reverted on-chain.
+            kind:
+              transactionError instanceof BaseError ? "unknown" : "reverted",
+            txHash,
+          });
+        }
         break;
       }
     }

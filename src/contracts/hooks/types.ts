@@ -31,8 +31,9 @@ export interface WriteSuccessContext {
  * Why a submitted write terminally failed:
  * - `wallet`: rejected or failed at submission, never reached the chain.
  * - `reverted`: mined and reverted on-chain.
- * - `unknown`: the receipt lookup failed; the tx may still confirm, so the
- *   hook keeps its duplicate-write guard closed.
+ * - `unknown`: the receipt lookup kept failing after retries; the outcome is
+ *   unverified and the tx may still have confirmed. Verify via `txHash`
+ *   before retrying — the UI converges through the normal data refetch.
  */
 export type WriteErrorKind = "wallet" | "reverted" | "unknown";
 
