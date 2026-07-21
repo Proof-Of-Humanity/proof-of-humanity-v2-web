@@ -24,7 +24,7 @@ const chainExplorers = [
   {
     id: 100,
     name: "Gnosis Chain",
-    explorer: "gnosisscan.io",
+    explorer: "gnosis.blockscout.com",
   },
   {
     id: 10200,
