@@ -4,7 +4,6 @@ import { getClaimerData } from "data/claimer";
 import { OffChainVouch } from "data/request";
 import type { ClaimerQuery, Vouch as VouchQuery } from "generated/graphql";
 import { cache } from "react";
-import { getRegistrationPhoto } from "data/evidence";
 import { Address, Hash } from "viem";
 import type {
   RequestChain,
@@ -75,7 +74,8 @@ export interface RequestVouchStatusItem {
 export interface RequestVouchDisplayItem extends RequestVouchStatusItem {
   name: string | null | undefined;
   pohId: Address | undefined;
-  photo: string | undefined;
+  /** Registration evidence URI; the client resolves the photo from it. */
+  evidenceUri: string | undefined;
 }
 
 export interface RequestVouchData {
@@ -208,14 +208,6 @@ const getVouchProfile = (
 };
 
 /**
- * @notice Fetches the registration photo associated with a claimer evidence URI.
- * @dev Returns undefined when the profile evidence or registration file cannot
- * be loaded, preserving the identicon fallback.
- */
-const getVouchPhoto = async (evidenceUri: string | undefined) =>
-  (await getRegistrationPhoto(evidenceUri)) ?? undefined;
-
-/**
  * @notice Builds one display-ready voucher avatar item.
  * @dev Profile data is fetched per voucher at the leaf component level.
  */
@@ -235,25 +227,13 @@ const getRequestVouchDisplayItem = async (
     }),
   );
   const profile = getVouchProfile(rawClaimer, chain);
-  const photoStartedAt = Date.now();
-  const photo = await getVouchPhoto(profile.evidenceUri);
-  console.info(
-    "[request-debug]",
-    JSON.stringify({
-      event: "vouch-photo-done",
-      chainId: chain.id,
-      voucher: statusItem.voucher,
-      durationMs: Date.now() - photoStartedAt,
-      hasPhoto: !!photo,
-    }),
-  );
 
   return {
     ...statusItem,
     voucher: profile.voucher ?? statusItem.voucher,
     name: profile.name,
     pohId: profile.pohId,
-    photo,
+    evidenceUri: profile.evidenceUri,
   };
 };
 

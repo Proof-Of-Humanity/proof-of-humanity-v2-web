@@ -72,7 +72,7 @@ export async function VouchedForSection({
             isActive={true}
             reason={undefined}
             name={item.name}
-            photo={item.photo}
+            evidenceUri={item.evidenceUri}
             idx={index}
             href={`/${prettifyId(item.pohId)}`}
             pohId={item.pohId}
@@ -129,7 +129,7 @@ export async function RequestVouchersSection({
                 : undefined
             }
             name={item.name}
-            photo={item.photo}
+            evidenceUri={item.evidenceUri}
             idx={index}
             href={`/${prettifyId(item.pohId)}`}
             pohId={item.pohId}
