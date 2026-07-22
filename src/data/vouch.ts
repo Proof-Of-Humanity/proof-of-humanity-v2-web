@@ -223,15 +223,37 @@ const getRequestVouchDisplayItem = async (
   chain: RequestChain,
   statusItem: RequestVouchStatusItem,
 ): Promise<RequestVouchDisplayItem> => {
+  const profileStartedAt = Date.now();
   const rawClaimer = await getClaimerData(statusItem.voucher);
+  console.info(
+    "[request-debug]",
+    JSON.stringify({
+      event: "vouch-profile-data-done",
+      chainId: chain.id,
+      voucher: statusItem.voucher,
+      durationMs: Date.now() - profileStartedAt,
+    }),
+  );
   const profile = getVouchProfile(rawClaimer, chain);
+  const photoStartedAt = Date.now();
+  const photo = await getVouchPhoto(profile.evidenceUri);
+  console.info(
+    "[request-debug]",
+    JSON.stringify({
+      event: "vouch-photo-done",
+      chainId: chain.id,
+      voucher: statusItem.voucher,
+      durationMs: Date.now() - photoStartedAt,
+      hasPhoto: !!photo,
+    }),
+  );
 
   return {
     ...statusItem,
     voucher: profile.voucher ?? statusItem.voucher,
     name: profile.name,
     pohId: profile.pohId,
-    photo: await getVouchPhoto(profile.evidenceUri),
+    photo,
   };
 };
 
@@ -243,10 +265,30 @@ const getRequestVouchDisplayItem = async (
 export const getRequestVoucherDisplayItems = cache(
   async (chain: RequestChain, vouchDataPromise: Promise<RequestVouchData>) => {
     const { statusItems } = await vouchDataPromise;
+    const startedAt = Date.now();
+    console.info(
+      "[request-debug]",
+      JSON.stringify({
+        event: "request-voucher-profiles-start",
+        chainId: chain.id,
+        count: statusItems.length,
+      }),
+    );
 
-    return Promise.all(
+    const items = await Promise.all(
       statusItems.map((item) => getRequestVouchDisplayItem(chain, item)),
     );
+    console.info(
+      "[request-debug]",
+      JSON.stringify({
+        event: "request-voucher-profiles-done",
+        chainId: chain.id,
+        count: items.length,
+        durationMs: Date.now() - startedAt,
+      }),
+    );
+
+    return items;
   },
 );
 
@@ -262,9 +304,31 @@ export const getVouchedForDisplayItems = cache(
       isOnChain: true,
       vouchStatus: undefined,
     }));
+    const startedAt = Date.now();
+    console.info(
+      "[request-debug]",
+      JSON.stringify({
+        event: "vouched-for-profiles-start",
+        chainId: chain.id,
+        requestIndex: Number(request.index),
+        count: statusItems.length,
+      }),
+    );
 
-    return Promise.all(
+    const items = await Promise.all(
       statusItems.map((item) => getRequestVouchDisplayItem(chain, item)),
     );
+    console.info(
+      "[request-debug]",
+      JSON.stringify({
+        event: "vouched-for-profiles-done",
+        chainId: chain.id,
+        requestIndex: Number(request.index),
+        count: items.length,
+        durationMs: Date.now() - startedAt,
+      }),
+    );
+
+    return items;
   },
 );

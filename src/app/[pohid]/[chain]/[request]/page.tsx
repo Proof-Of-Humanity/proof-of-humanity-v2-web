@@ -52,11 +52,32 @@ export default async function Request({ params }: PageProps) {
   if (!chain) throw new Error("unsupported chain");
 
   const pohId = machinifyId(pohid)!;
+  const debugContext = {
+    pohId,
+    chainId: chain.id,
+    requestIndex: Number(requestParam),
+  };
+  const pageStartedAt = Date.now();
+  console.info(
+    "[request-debug]",
+    JSON.stringify({ event: "request-page-start", ...debugContext }),
+  );
 
+  const coreDataStartedAt = Date.now();
   const [requestResult, contractResult] = await Promise.allSettled([
     getRequestPageData(chain.id, pohId, +requestParam),
     getContractData(chain.id),
   ]);
+  console.info(
+    "[request-debug]",
+    JSON.stringify({
+      event: "core-data-settled",
+      ...debugContext,
+      durationMs: Date.now() - coreDataStartedAt,
+      requestStatus: requestResult.status,
+      contractStatus: contractResult.status,
+    }),
+  );
 
   if (requestResult.status === "rejected") {
     console.error(
@@ -76,9 +97,19 @@ export default async function Request({ params }: PageProps) {
 
   const needsHistoricalIdentity =
     fetchedRequest.revocation || Number(fetchedRequest.index) <= -100;
+  const historicalIdentityStartedAt = Date.now();
   const historicalIdentity = needsHistoricalIdentity
     ? await getHistoricalWinnerClaim(pohId, fetchedRequest.lastStatusChange)
     : null;
+  if (needsHistoricalIdentity)
+    console.info(
+      "[request-debug]",
+      JSON.stringify({
+        event: "historical-identity-done",
+        ...debugContext,
+        durationMs: Date.now() - historicalIdentityStartedAt,
+      }),
+    );
   const identitySource = historicalIdentity || fetchedRequest;
   const identity = {
     claimer: identitySource.claimer,
@@ -100,10 +131,20 @@ export default async function Request({ params }: PageProps) {
   )
     return <RequestNotFoundCard chainName={chain.name} />;
 
+  const offChainVouchesStartedAt = Date.now();
   const offChainVouches = await getOffChainVouches(
     chain.id,
     request.claimer.id,
     pohId,
+  );
+  console.info(
+    "[request-debug]",
+    JSON.stringify({
+      event: "off-chain-vouches-done",
+      ...debugContext,
+      durationMs: Date.now() - offChainVouchesStartedAt,
+      count: offChainVouches.length,
+    }),
   );
   const vouchDataPromise = getRequestVouchData(
     chain.id,
@@ -153,10 +194,19 @@ export default async function Request({ params }: PageProps) {
   }
 
   const contractData = contractResult.value;
+  const arbitrationCostStartedAt = Date.now();
   const arbitrationCost = await getArbitrationCost(
     chain,
     contractData.arbitrationInfo.arbitrator,
     contractData.arbitrationInfo.extraData,
+  );
+  console.info(
+    "[request-debug]",
+    JSON.stringify({
+      event: "arbitration-cost-done",
+      ...debugContext,
+      durationMs: Date.now() - arbitrationCostStartedAt,
+    }),
   );
   const requestStatus = getStatus(request, contractData);
   const punishedVouchSource = request.punishedVouchSourceRequest;
@@ -170,7 +220,18 @@ export default async function Request({ params }: PageProps) {
       ? "Identity Theft"
       : "Sybil Attack";
   const humanityEventsPromise = getHumanityEvents(pohId);
+  const vouchDataStartedAt = Date.now();
   const { onChainVouches, validVouches } = await vouchDataPromise;
+  console.info(
+    "[request-debug]",
+    JSON.stringify({
+      event: "vouch-data-done",
+      ...debugContext,
+      durationMs: Date.now() - vouchDataStartedAt,
+      onChainCount: onChainVouches.length,
+      offChainCount: offChainVouches.length,
+    }),
+  );
   // Extract used reasons from existing challenges
 
   const usedReasons = request.challenges.map(
@@ -221,6 +282,15 @@ export default async function Request({ params }: PageProps) {
       (request.claimer.id as string).toLowerCase();
   const anotherClaimPending =
     !request.revocation && Number(request.humanity.nbPendingRequests ?? 0) > 1;
+
+  console.info(
+    "[request-debug]",
+    JSON.stringify({
+      event: "initial-render-ready",
+      ...debugContext,
+      durationMs: Date.now() - pageStartedAt,
+    }),
+  );
 
   return (
     <>

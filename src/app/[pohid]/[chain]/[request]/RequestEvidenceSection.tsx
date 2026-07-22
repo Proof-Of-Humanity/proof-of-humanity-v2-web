@@ -30,7 +30,28 @@ async function EvidenceWithProfiles({
   requestIndex: number;
   submitters: Address[];
 }) {
+  const startedAt = Date.now();
+  console.info(
+    "[request-debug]",
+    JSON.stringify({
+      event: "evidence-profiles-start",
+      pohId,
+      requestIndex,
+      submitterCount: new Set(submitters.map((item) => item.toLowerCase()))
+        .size,
+    }),
+  );
   const submitterProfiles = await getEvidenceSubmitterProfiles(submitters);
+  console.info(
+    "[request-debug]",
+    JSON.stringify({
+      event: "evidence-profiles-done",
+      pohId,
+      requestIndex,
+      profileCount: Object.keys(submitterProfiles).length,
+      durationMs: Date.now() - startedAt,
+    }),
+  );
 
   return (
     <Evidence
