@@ -15,6 +15,7 @@ const STATUS_ICONS: Record<string, ComponentType<SVGProps<SVGSVGElement>>> = {
   claim: EyeIcon,
   registered: CheckCircleOutlineIcon,
   challenged: ChallengeIcon,
+  removed: CloseCircleOutlineIcon,
   rejected: CloseCircleOutlineIcon,
   expired: HourglassIcon,
   transferred: TransferIcon,

@@ -31,7 +31,7 @@ export default function ActionWalletGate({
     return (
       <button
         onClick={() => modal.open({ view: "Connect" })}
-        className="btn-secondary w-[170px] whitespace-nowrap"
+        className="btn-secondary w-fit min-w-[170px] whitespace-nowrap"
       >
         Connect wallet
       </button>

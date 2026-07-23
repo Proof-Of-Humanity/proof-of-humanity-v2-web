@@ -37,7 +37,11 @@ async function Profile({ params }: PageProps) {
           <h1 className="text-primaryText text-2xl font-semibold">POH ID</h1>
           <p className="max-w-[calc(100vw-7rem)] break-all px-2 text-center text-sm leading-5 text-peach sm:max-w-none">
             {displayId}
-            <CopyButton value={displayId} className="ml-1 align-middle" />
+            <CopyButton
+              value={displayId}
+              label="Copy POH ID"
+              className="ml-1 align-middle"
+            />
           </p>
         </div>
 

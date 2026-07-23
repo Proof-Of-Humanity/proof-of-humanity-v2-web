@@ -1,90 +1,39 @@
 "use client";
 
-import { enableReactUse } from "@legendapp/state/config/enableReactUse";
-import { useObservable } from "@legendapp/state/react";
 import Accordion from "components/Accordion";
+import ActionButton from "components/ActionButton";
+import AddEvidenceModal from "components/AddEvidenceModal";
 import Attachment from "components/Attachment";
 import ExternalLink from "components/ExternalLink";
-import Field from "components/Field";
+import ExternalLinkIcon from "components/ExternalLinkIcon";
 import Identicon from "components/Identicon";
-import Label from "components/Label";
-import Modal from "components/Modal";
 import TimeAgo from "components/TimeAgo";
-import FileUploadZone from "components/FileUploadZone";
 import { explorerLink, idToChain } from "config/chains";
-import { Effects } from "contracts/hooks/types";
-import usePoHWrite from "contracts/hooks/usePoHWrite";
-import { RequestQuery } from "generated/graphql";
+import type { EvidenceSubmitterProfile } from "data/evidence";
 import useChainParam from "hooks/useChainParam";
 import useIPFS from "hooks/useIPFS";
-import { useLoading } from "hooks/useLoading";
-import DocumentIcon from "icons/NoteMajor.svg";
-import type {
-  OptimisticEvidenceItem,
-  RequestOptimisticOverlay,
-} from "optimistic/types";
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { toast } from "react-toastify";
-import useSWR from "swr";
-import ActionButton from "components/ActionButton";
-import { EvidenceFile, MetaEvidenceFile } from "types/docs";
-import { shortenAddress } from "utils/address";
-import { ipfsFetch, ipfs } from "utils/ipfs";
-import { romanize } from "utils/misc";
-import { resolveTxState } from "utils/txState";
-import { Address, Hash } from "viem";
-import { useAccount, useChainId } from "wagmi";
-import { useAtlasProvider, Roles } from "@kleros/kleros-app";
-import AuthGuard from "components/AuthGuard";
+import Image from "next/image";
+import Link from "next/link";
+import type { OptimisticEvidenceItem } from "optimistic/types";
 import { useRequestOptimistic } from "optimistic/request";
-
-enableReactUse();
-
-export const buildEvidenceSuccessItem = (
-  uri: string,
-  submitter: Address,
-  name: string,
-  description: string,
-  fileURI?: string,
-  txHash?: string,
-): OptimisticEvidenceItem => ({
-  id: `optimistic-evidence-${txHash ?? Date.now()}`,
-  uri,
-  creationTime: Math.floor(Date.now() / 1000),
-  submitter,
-  name,
-  description,
-  fileURI,
-});
-
-export const buildEvidenceSuccessPatch = (
-  uri: string,
-  submitter: Address,
-  name: string,
-  description: string,
-  fileURI?: string,
-  txHash?: string,
-): RequestOptimisticOverlay => ({
-  evidenceList: [
-    buildEvidenceSuccessItem(
-      uri,
-      submitter,
-      name,
-      description,
-      fileURI,
-      txHash,
-    ),
-  ],
-});
+import { useEffect, useState } from "react";
+import { EvidenceFile } from "types/docs";
+import { shortenAddress } from "utils/address";
+import { prettifyId } from "utils/identifier";
+import { safeIpfsUrl } from "utils/ipfs";
+import { resolveTxState } from "utils/txState";
+import { Hash } from "viem";
+import { useChainId } from "wagmi";
 
 interface ItemInterface {
-  index: number;
+  number: number;
   item: OptimisticEvidenceItem;
   isPending?: boolean;
+  profile?: EvidenceSubmitterProfile;
 }
 
-function Item({ index, item, isPending }: ItemInterface) {
-  const chain = useChainParam()!;
+function Item({ number, item, isPending, profile }: ItemInterface) {
+  const chain = useChainParam();
   const [evidence] = useIPFS<EvidenceFile>(item.uri);
   const ipfsUri = evidence?.fileURI
     ? evidence?.fileURI
@@ -94,40 +43,68 @@ function Item({ index, item, isPending }: ItemInterface) {
   const title = evidence?.name || item.name;
   const description = evidence?.description || item.description;
 
+  if (!chain) return null;
+
+  const shortAddress = shortenAddress(item.submitter);
+  const photoUrl = safeIpfsUrl(profile?.photo);
+
   return (
     <div
       className={
-        isPending ? "mt-4 flex flex-col opacity-70" : "mt-4 flex flex-col"
+        isPending ? "mt-2 flex flex-col opacity-70" : "mt-2 flex flex-col"
       }
     >
-      <div className="paper relative px-8 py-4">
-        <span className="absolute left-3 text-sm text-slate-500">
-          {romanize(index + 1)}
-        </span>
-        {isPending && (
-          <span className="absolute right-3 top-2 animate-pulse text-xs font-medium text-orange-400">
-            Pending
-          </span>
-        )}
-        <div className="flex justify-between text-xl font-bold">
-          {title}
-          {ipfsUri && <Attachment uri={ipfsUri} />}
+      <div className="border-stroke bg-whiteBackground rounded-2xl border p-6">
+        <div className="min-w-0">
+          <div className="flex items-start gap-3 text-base font-semibold">
+            <span className="min-w-0 flex-1 break-words leading-snug">
+              #{number} - {title}
+            </span>
+            {isPending && (
+              <span className="text-orange bg-orange/10 shrink-0 animate-pulse rounded-full px-2.5 py-1 text-xs font-medium">
+                Pending
+              </span>
+            )}
+            {ipfsUri && <Attachment uri={ipfsUri} />}
+          </div>
+          <p className="text-secondaryText mt-1 break-words text-sm font-normal leading-5">
+            {description}
+          </p>
         </div>
-        <p className="break-word break-words">{description}</p>
-      </div>
-      <div className="flex items-center px-4 py-2">
-        <Identicon diameter={32} address={item.submitter} />
-        <div className="text-primaryText flex flex-col pl-2">
-          <span>
-            submitted by{" "}
+        <div className="bg-grey mt-4 flex min-h-12 flex-wrap items-center gap-x-4 gap-y-2 rounded-2xl px-4 py-2 text-sm font-normal">
+          {photoUrl ? (
+            <Image
+              className="h-8 w-8 rounded-full object-cover"
+              alt="profile"
+              src={photoUrl}
+              width={64}
+              height={64}
+              unoptimized // IPFS photos bypass the image optimizer, same as vouch avatars
+            />
+          ) : (
+            <Identicon diameter={32} address={item.submitter} />
+          )}
+          {profile ? (
+            <Link
+              className="text-primaryText group/external-link inline-flex items-center gap-1.5 font-semibold hover:opacity-80"
+              href={`/${prettifyId(profile.pohId as Hash)}`}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              {profile.name || shortAddress}
+              <ExternalLinkIcon className="text-orange" />
+            </Link>
+          ) : (
             <ExternalLink
-              className="text-blue-500 underline underline-offset-2"
+              className="text-primaryText font-semibold hover:opacity-80"
               href={explorerLink(item.submitter, chain)}
             >
-              {shortenAddress(item.submitter)}
+              {shortAddress}
             </ExternalLink>
+          )}
+          <span className="text-secondaryText">
+            <TimeAgo time={item.creationTime} />
           </span>
-          <TimeAgo time={item.creationTime} />
         </div>
       </div>
     </div>
@@ -137,169 +114,101 @@ function Item({ index, item, isPending }: ItemInterface) {
 interface EvidenceProps {
   pohId: Hash;
   requestIndex: number;
-  arbitrationInfo: NonNullable<RequestQuery["request"]>["arbitratorHistory"];
+  submitterProfiles: Record<string, EvidenceSubmitterProfile>;
 }
 
 export default function Evidence({
   pohId,
   requestIndex,
-  arbitrationInfo,
+  submitterProfiles,
 }: EvidenceProps) {
-  const { effective, pendingAction, pendingEvidenceItem, applyAction } =
+  const { effective, pendingAction, pendingEvidenceItem } =
     useRequestOptimistic();
   const isReconciling = pendingAction !== null;
-  const chainReq = useChainParam()!;
+  const chainReq = useChainParam();
   const chainId = useChainId();
-  const { address } = useAccount();
-  const { data: policy } = useSWR(
-    arbitrationInfo.registrationMeta,
-    async (metaEvidenceLink) =>
-      (await ipfsFetch<MetaEvidenceFile>(metaEvidenceLink)).fileURI,
-  );
   const [modalOpen, setModalOpen] = useState(false);
-  const loading = useLoading();
-  const [pending, loadingMessage] = loading.use();
-  const state$ = useObservable({
-    uri: "",
-    name: "",
-    description: "",
-    fileURI: "",
-  });
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [file, setFile] = useState<File | null>(null);
-  const closeModal = useCallback(() => {
-    setModalOpen(false);
-    setTitle("");
-    setDescription("");
-    setFile(null);
-    state$.uri.set("");
-    state$.name.set("");
-    state$.description.set("");
-    state$.fileURI.set("");
-    loading.stop();
-  }, [loading, state$]);
-
-  const { uploadFile } = useAtlasProvider();
-  const [prepare] = usePoHWrite(
-    "submitEvidence",
-    useMemo<Effects>(
-      () => ({
-        onReady(fire) {
-          fire();
-          loading.start("Transaction pending");
-          toast.info("Transaction pending");
-        },
-        onFail() {
-          state$.uri.set("");
-          state$.name.set("");
-          state$.description.set("");
-          state$.fileURI.set("");
-          loading.stop();
-          toast.error("Transaction failed");
-        },
-        onError() {
-          state$.uri.set("");
-          state$.name.set("");
-          state$.description.set("");
-          state$.fileURI.set("");
-          loading.stop();
-          toast.error("Transaction rejected");
-        },
-        onSuccess(ctx) {
-          const uri =
-            typeof ctx.args?.[2] === "string" ? ctx.args[2] : undefined;
-          if (address && uri) {
-            applyAction(
-              "evidence",
-              buildEvidenceSuccessPatch(
-                uri,
-                address,
-                state$.name.get(),
-                state$.description.get(),
-                state$.fileURI.get() || undefined,
-                ctx.txHash,
-              ),
-            );
-          }
-          toast.success("Evidence submitted successfully");
-          closeModal();
-        },
-      }),
-      [
-        address,
-        applyAction,
-        closeModal,
-        loading,
-        state$.description,
-        state$.fileURI,
-        state$.name,
-        state$.uri,
-      ],
-    ),
+  const [evidenceOpen, setEvidenceOpen] = useState(
+    effective.status === "disputed",
+  );
+  const [firstEvidenceVisible, setFirstEvidenceVisible] = useState(true);
+  const [lastEvidenceVisible, setLastEvidenceVisible] = useState(true);
+  // Track the observed elements via state (not refs) so the observer effect
+  // re-runs whenever the first/last item actually (re-)mounts — important
+  // because the accordion unmounts and re-mounts its children on close/open.
+  const [firstEvidenceEl, setFirstEvidenceEl] = useState<HTMLDivElement | null>(
+    null,
+  );
+  const [lastEvidenceEl, setLastEvidenceEl] = useState<HTMLDivElement | null>(
+    null,
   );
 
-  const submit = async () => {
-    state$.uri.set("");
-    loading.start("Uploading evidence...");
-
-    let evidenceFileURI;
-    try {
-      if (file) {
-        evidenceFileURI = await uploadFile(file, Roles.Evidence);
-        if (!evidenceFileURI) {
-          toast.error("Failed to upload file.");
-          loading.stop();
-          return;
-        }
-      }
-
-      const evidenceJson = {
-        name: title,
-        description,
-        fileURI: evidenceFileURI,
-      };
-
-      const evidenceTextFile = new File(
-        [JSON.stringify(evidenceJson)],
-        "evidence",
-        {
-          type: "text/plain",
-        },
-      );
-
-      const evidenceUri = await uploadFile(evidenceTextFile, Roles.Evidence);
-
-      if (!evidenceUri) {
-        toast.error("Failed to upload evidence.");
-        loading.stop();
-        return;
-      }
-
-      state$.uri.set(evidenceUri);
-      state$.name.set(title);
-      state$.description.set(description);
-      state$.fileURI.set(evidenceFileURI || "");
-    } catch (error) {
-      toast.error(`Failed to upload evidence : 
-      ${error instanceof Error ? error.message : "Unknown error"}`);
-      loading.stop();
-    }
-  };
-
+  const confirmed = effective.evidenceList;
+  const confirmedCount = confirmed.length;
+  const hasPending = pendingAction === "evidence" && !!pendingEvidenceItem;
+  const evidenceItems: Array<{
+    item: OptimisticEvidenceItem;
+    isPending: boolean;
+    number: number;
+  }> = [
+    ...(hasPending
+      ? [
+          {
+            item: pendingEvidenceItem,
+            isPending: true,
+            number: confirmedCount + 1,
+          },
+        ]
+      : []),
+    ...confirmed.map((item, index) => ({
+      item,
+      isPending: false,
+      number: confirmedCount - index,
+    })),
+  ];
   useEffect(() => {
-    const unsubscribe = state$.onChange(({ value }) => {
-      if (!value.uri) return;
-      prepare({ args: [pohId, BigInt(requestIndex), value.uri] });
-    });
+    if (!evidenceOpen || !firstEvidenceEl || !lastEvidenceEl) return;
 
-    return () => unsubscribe();
-  }, [pohId, prepare, requestIndex, state$]);
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.target === firstEvidenceEl)
+            setFirstEvidenceVisible(entry.isIntersecting);
+          if (entry.target === lastEvidenceEl)
+            setLastEvidenceVisible(entry.isIntersecting);
+        });
+      },
+      { threshold: 0.01 },
+    );
+
+    observer.observe(firstEvidenceEl);
+    if (lastEvidenceEl !== firstEvidenceEl) observer.observe(lastEvidenceEl);
+
+    return () => observer.disconnect();
+  }, [evidenceOpen, firstEvidenceEl, lastEvidenceEl]);
+
+  // Hide the "Scroll to..." shortcuts while the open animation is running:
+  // the accordion height transition (550ms, Accordion's ANIMATION_MS) plus the
+  // staggered item entries (delay capped at 800ms + 600ms accordionItemIn).
+  // Jumping to an anchor mid-animation would land on a moving target.
+  const [isAnimating, setIsAnimating] = useState(false);
+  useEffect(() => {
+    if (!evidenceOpen) return;
+
+    setIsAnimating(true);
+    const timeout = window.setTimeout(
+      () => setIsAnimating(false),
+      550 + Math.min(evidenceItems.length, 8) * 100 + 600,
+    );
+    return () => window.clearTimeout(timeout);
+  }, [evidenceOpen, evidenceItems.length]);
+
+  if (!chainReq) return null;
 
   const isEvidenceDisabled = chainReq.id !== chainId;
 
   const evidenceTrigger = resolveTxState([
-    { active: isReconciling, message: "Syncing" },
+    { active: isReconciling, message: "Waiting for indexer" },
     {
       active: isEvidenceDisabled,
       message: `Switch your chain above to ${idToChain(chainReq.id)?.name || "the correct chain"}`,
@@ -307,94 +216,86 @@ export default function Evidence({
   ]);
 
   return (
-    <Accordion title="Evidence">
+    <Accordion
+      className="request-accordion"
+      isOpen={evidenceOpen}
+      onToggle={() => setEvidenceOpen((open) => !open)}
+      title="Evidence"
+      size="lg"
+      unmountOnClose
+    >
       {requestIndex >= 0 && (
         <>
-          <div className="mr-2 mt-4 self-end">
+          <div
+            className="mb-4 mt-4 flex animate-accordionItemIn flex-col items-center gap-3"
+            id="request-evidence-top"
+          >
             <ActionButton
               disabled={evidenceTrigger.disabled}
               onClick={() => setModalOpen(true)}
               label="Add Evidence"
               tooltip={evidenceTrigger.tooltip}
+              className="w-[min(100%,10.625rem)]"
             />
-          </div>
-          <Modal
-            formal
-            open={modalOpen}
-            onClose={closeModal}
-            canClose={!pending}
-            header="Evidence"
-          >
-            <div className="bg-whiteBackground flex flex-col flex-wrap p-4">
-              {policy && (
-                <div className="centered text-primaryText flex-col">
-                  <ExternalLink
-                    className="flex flex-wrap gap-y-[8px] lg:gap-y-[0]"
-                    href={ipfs(arbitrationInfo.registrationMeta)}
-                  >
-                    <DocumentIcon className="fill-orange h-6 w-6" />
-                    <strong className="text-orange mr-1 font-semibold">
-                      Registration Policy
-                    </strong>
-                    (at the time of submission)
-                  </ExternalLink>
-                  <span className="text-secondaryText text-sm">
-                    Updated: <TimeAgo time={arbitrationInfo.updateTime} />
-                  </span>
-                </div>
+            {evidenceItems.length > 1 &&
+              !lastEvidenceVisible &&
+              !isAnimating && (
+                <a
+                  className="text-sm text-peach"
+                  href="#request-evidence-bottom"
+                >
+                  Scroll to oldest evidence ↓
+                </a>
               )}
-
-              <Field
-                label="Title"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-              />
-              <Field
-                textarea
-                label="Description (Your Arguments)"
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-              />
-              <Label>File</Label>
-              <FileUploadZone
-                type="all"
-                fileName={file?.name}
-                onDrop={(acceptedFiles) => {
-                  const acceptedFile = acceptedFiles[0];
-                  if (acceptedFile) setFile(acceptedFile);
-                }}
-              />
-              <AuthGuard signInButtonProps={{ className: "mt-12" }}>
-                <ActionButton
-                  disabled={pending || isReconciling}
-                  isLoading={pending}
-                  className="mt-12"
-                  onClick={submit}
-                  label={loadingMessage || "Submit"}
-                  tooltip={isReconciling ? "Syncing" : undefined}
-                />
-              </AuthGuard>
-            </div>
-          </Modal>
+          </div>
+          <AddEvidenceModal
+            open={modalOpen}
+            onClose={() => setModalOpen(false)}
+            pohId={pohId}
+            requestIndex={requestIndex}
+            chainId={chainReq.id}
+          />
         </>
       )}
 
-      {pendingAction === "evidence" && pendingEvidenceItem && (
-        <Item
-          key={pendingEvidenceItem.id}
-          index={0}
-          item={pendingEvidenceItem}
-          isPending
-        />
-      )}
-      {effective.evidenceList.map((item, i) => (
-        <Item
-          key={item.id}
-          index={pendingEvidenceItem ? i + 1 : i}
-          item={item}
-          isPending={false}
-        />
-      ))}
+      {evidenceItems.map(({ item, isPending, number }, index) => {
+        const isFirst = index === 0;
+        const isLast = index === evidenceItems.length - 1;
+
+        return (
+          <div
+            key={item.id}
+            className="animate-accordionItemIn"
+            style={{ animationDelay: `${Math.min(index + 1, 8) * 100}ms` }}
+            id={isLast ? "request-evidence-bottom" : undefined}
+            ref={
+              isFirst
+                ? setFirstEvidenceEl
+                : isLast
+                  ? setLastEvidenceEl
+                  : undefined
+            }
+          >
+            <Item
+              number={number}
+              item={item}
+              isPending={isPending}
+              profile={submitterProfiles[item.submitter.toLowerCase()]}
+            />
+          </div>
+        );
+      })}
+
+      {requestIndex >= 0 &&
+        evidenceItems.length > 1 &&
+        !firstEvidenceVisible &&
+        !isAnimating && (
+          <div className="mt-4 flex flex-col items-center gap-3">
+            <a className="text-sm text-peach" href="#request-evidence-top">
+              Scroll to latest evidence ↑
+            </a>
+          </div>
+        )}
     </Accordion>
   );
 }

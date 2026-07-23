@@ -13,8 +13,8 @@ export default function VideoThumbnail({
   src,
   className,
 }: VideoThumbnailProps) {
-  const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   // Append #t=0.001 to force iOS Safari to render first frame
   const videoSrc = src.includes("#") ? src : `${src}#t=0.001`;
 
@@ -25,29 +25,26 @@ export default function VideoThumbnail({
         className,
       )}
     >
-      {isLoading && !hasError ? (
-        <MediaFallback className="absolute inset-0" />
-      ) : null}
       {hasError ? (
         <MediaFallback
           error
           label="Video unavailable"
           className="absolute inset-0"
         />
+      ) : isLoading ? (
+        <MediaFallback className="absolute inset-0" />
       ) : null}
       <video
         className={twMerge(
           "h-full w-full bg-black object-contain",
-          (isLoading || hasError) && "hidden",
+          (hasError || isLoading) && "invisible",
+          !hasError && !isLoading && "motion-safe:animate-mediaResolve",
         )}
         src={videoSrc}
-        preload="metadata"
+        preload="auto"
         playsInline
         onLoadedData={() => setIsLoading(false)}
-        onError={() => {
-          setIsLoading(false);
-          setHasError(true);
-        }}
+        onError={() => setHasError(true)}
       />
     </div>
   );

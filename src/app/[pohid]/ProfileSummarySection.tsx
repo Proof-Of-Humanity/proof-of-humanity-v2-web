@@ -257,7 +257,7 @@ export default async function ProfileSummarySection({
             <div className="border-stroke mb-4 h-px w-full border-t" />
             {canStartClaim ? (
               <Link
-                className="btn-primary mb-2 w-[170px] whitespace-nowrap"
+                className="btn-primary mb-2 w-fit min-w-[170px] whitespace-nowrap"
                 href={`/${pohId}/claim`}
                 target="_blank"
                 rel="noopener noreferrer"

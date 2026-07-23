@@ -70,8 +70,8 @@ export default function TransferSection({
           toast.success("Transfer initiated!");
           setIsTransferModalOpen(false);
         },
-        onError(error) {
-          toast.error(getWriteErrorMessage(error));
+        onError(error, errorCtx) {
+          toast.error(getWriteErrorMessage(error, errorCtx));
         },
         onFail() {
           toast.error("Transfer is not available right now.");
@@ -180,7 +180,7 @@ export default function TransferSection({
           </div>
           <div className="flex justify-center">
             <ActionButton
-              className="w-[170px]"
+              className="w-fit min-w-[170px]"
               disabled={hasTransferInFlight}
               isLoading={hasTransferInFlight}
               label={hasTransferInFlight ? "Transferring..." : "Transfer"}

@@ -1,10 +1,11 @@
-import Arrow from "components/Arrow";
 import Attachment from "components/Attachment";
-import ChainLogo from "components/ChainLogo";
 import DocumentIcon from "components/DocumentIcon";
 import ExternalLink from "components/ExternalLink";
 import Identicon from "components/Identicon";
+import IdentityReferenceRow from "components/IdentityReferenceRow";
 import Label from "components/Label";
+import LoadableImage from "components/LoadableImage";
+import MediaFallback from "components/MediaFallback";
 import Previewed from "components/Previewed";
 import TimeAgo from "components/TimeAgo";
 import VideoThumbnail from "components/VideoThumbnail";
@@ -108,7 +109,7 @@ export async function RevocationBanner({
         <span className="text-secondaryText mr-2">Requested by</span>
         <Identicon diameter={16} address={request.requester} />
         <ExternalLink
-          className="ml-1 flex flex-wrap break-words break-all text-blue-500 underline underline-offset-2"
+          className="ml-1 flex flex-wrap break-words break-all text-peach underline underline-offset-2 hover:opacity-80"
           href={explorerLink(request.requester, chain)}
         >
           {request.requester}
@@ -142,13 +143,11 @@ function ProfileSummary({
         <Previewed
           uri={photoUrl}
           trigger={
-            <Image
+            <LoadableImage
               className="h-32 w-32 cursor-pointer rounded-full object-cover md:bg-cover md:bg-center md:bg-no-repeat"
               alt="image"
+              fallbackLabel="Profile photo unavailable"
               src={photoUrl}
-              width={144}
-              height={144}
-              unoptimized={true} //Skips cache
             />
           }
         />
@@ -168,28 +167,35 @@ export async function DesktopProfileAside({
   identity,
   identityFiles,
   request,
+  vouchedFor,
+  vouchers,
 }: {
   identity: RequestIdentitySource;
   identityFiles: RequestIdentityFiles;
   request: RequestPageRequest;
+  vouchedFor: ReactNode;
+  vouchers: ReactNode;
 }) {
   const registrationFile = await identityFiles.registrationFilePromise;
   const displayedClaimerName =
     registrationFile?.name || identity.claimer.name || "";
 
   return (
-    <div className="background border-stroke hidden w-2/5 flex-col items-stretch justify-between border-r px-8 pt-8 md:flex">
-      <div className="flex flex-col items-center">
+    <div className="md:border-stroke contents md:flex md:w-[26%] md:min-w-[16rem] md:shrink-0 md:flex-col md:items-center md:border-r md:px-6 md:py-6">
+      <div className="order-3 flex w-full flex-col items-center px-6 text-center md:order-none md:px-0">
         <ProfileSummary
           displayedClaimerName={displayedClaimerName}
           registrationFile={registrationFile}
-          nameClassName="text-primaryText mb-12 mt-4 text-2xl"
-          bioClassName="text-secondaryText text-sm font-light"
+          nameClassName="text-primaryText mt-2 text-2xl font-semibold"
+          bioClassName="text-secondaryText mt-2 max-w-[18rem] text-sm font-normal leading-5"
         />
       </div>
-
-      <Label className="text-orange mb-8">
-        Last update: <TimeAgo time={Number(request.lastStatusChange)} />
+      <div className="border-stroke order-7 mb-8 mt-8 flex w-[calc(100%-3rem)] flex-col items-center gap-4 self-center border-y py-4 md:order-none md:mb-0 md:w-full md:self-auto [&:not(:has(>*))]:hidden">
+        {vouchers}
+        {vouchedFor}
+      </div>
+      <Label className="text-secondaryText order-9 mb-10 mt-8 text-center text-xs font-normal md:order-none md:mb-0 md:mt-auto md:pt-8">
+        Last update <TimeAgo time={Number(request.lastStatusChange)} />
       </Label>
     </div>
   );
@@ -202,32 +208,32 @@ export async function DesktopProfileAside({
 export async function IdentityHeader({
   chain,
   identity,
+  pohId,
 }: {
   chain: RequestChain;
   identity: RequestIdentitySource;
+  pohId: `0x${string}`;
 }) {
   const displayedClaimerId = identity.claimer.id as Address;
+  const prettyPohId = prettifyId(pohId);
 
   return (
-    <div className="mb-8 flex flex-col-reverse items-center justify-between md:flex-row md:items-stretch">
-      <div className="flex w-full flex-col items-center md:w-auto md:flex-row md:items-center md:justify-start">
-        <Identicon diameter={24} address={displayedClaimerId} />
-        <ExternalLink
-          className="mt-1 text-center font-semibold text-slate-400 hover:text-slate-600 md:ml-2 md:mt-0 md:text-left"
-          href={explorerLink(displayedClaimerId, chain)}
-        >
-          {displayedClaimerId.slice(0, 20)}
-          <wbr />
-          {displayedClaimerId.slice(20)}
-        </ExternalLink>
-      </div>
-      <span className="text-primaryText mb-2 flex items-center justify-center md:mb-0 md:justify-start">
-        <ChainLogo
-          chainId={chain.id}
-          className="fill-primaryText m-1 h-4 w-4"
-        />
-        {chain.name}
-      </span>
+    <div className="order-1 flex w-full flex-col gap-2 px-4 pt-6 md:order-none md:px-0 md:pt-0">
+      <IdentityReferenceRow
+        chainId={chain.id}
+        external
+        href={explorerLink(displayedClaimerId, chain)}
+        value={displayedClaimerId}
+      >
+        <Identicon diameter={40} address={displayedClaimerId} />
+      </IdentityReferenceRow>
+      <IdentityReferenceRow
+        chainId={chain.id}
+        href={`/${prettyPohId}`}
+        value={prettyPohId}
+      >
+        <Image alt="POH ID" src="/logo/pohid.svg" height={40} width={40} />
+      </IdentityReferenceRow>
     </div>
   );
 }
@@ -237,11 +243,7 @@ export async function IdentityHeader({
  * @dev Returns null when the meta-evidence file is unavailable or has no file
  * URI, allowing the rest of the identity card to stream without this request.
  */
-export async function PolicyLink({
-  metaEvidenceUri,
-}: {
-  metaEvidenceUri: string;
-}) {
+async function PolicyLink({ metaEvidenceUri }: { metaEvidenceUri: string }) {
   try {
     const policyLink = (await ipfsFetch<MetaEvidenceFile>(metaEvidenceUri))
       .fileURI;
@@ -250,15 +252,13 @@ export async function PolicyLink({
     const href = `/attachment?url=${encodeURIComponent(policyLink)}`;
 
     return (
-      <div className="flex w-full flex-col items-center font-normal md:flex-row md:items-end md:justify-end">
+      <div className="mb-6 flex w-full items-center justify-center font-normal md:mb-0 md:justify-end">
         <Link
           href={href}
-          className="text-primaryText ml-0 flex items-center justify-center md:ml-2"
+          className="group flex items-center justify-center gap-2 text-sm text-peach hover:opacity-80"
         >
-          <DocumentIcon className="fill-orange h-6 w-6" />
-          <div className="text-primaryText group relative flex py-[8px]">
-            Relevant Policy
-          </div>
+          Relevant Policy
+          <DocumentIcon className="h-4 w-4 fill-current transition-transform duration-200 ease-premium group-hover:-translate-y-0.5 group-hover:rotate-6" />
         </Link>
       </div>
     );
@@ -268,60 +268,20 @@ export async function PolicyLink({
 }
 
 /**
- * @notice Renders the policy link and vouch slots below the registration video.
- * @dev Keeps caller-provided vouch UI composed into the identity card.
+ * @notice Waits for identity data and renders the registration video.
+ * @dev The same media block is reused across responsive layouts.
  */
-export function RequestRelatedActions({
-  policyMetaEvidenceUri,
-  vouchedFor,
-  vouchers,
-}: {
-  policyMetaEvidenceUri: string;
-  vouchedFor: ReactNode;
-  vouchers: ReactNode;
-}) {
-  return (
-    <>
-      <div className="flex w-full flex-wrap justify-center gap-2 md:flex-row md:items-center md:justify-between">
-        <Suspense fallback={null}>
-          <PolicyLink metaEvidenceUri={policyMetaEvidenceUri} />
-        </Suspense>
-        {vouchedFor}
-      </div>
-      <div className="flex w-full flex-wrap justify-center gap-2 md:flex-row md:items-center md:justify-between">
-        {vouchers}
-      </div>
-    </>
-  );
-}
-
-/**
- * @notice Waits for identity data and renders mobile profile media and video.
- * @dev Desktop profile media is handled by `DesktopProfileAside`.
- */
-export async function MobileIdentityMedia({
-  identity,
+export async function IdentityVideo({
   identityFiles,
 }: {
-  identity: RequestIdentitySource;
   identityFiles: RequestIdentityFiles;
 }) {
   const registrationFile = await identityFiles.registrationFilePromise;
-  const displayedClaimerName =
-    registrationFile?.name || identity.claimer.name || "";
   const videoUrl = safeIpfsUrl(registrationFile?.video);
 
   return (
-    <>
-      <div className="flex flex-col items-center md:hidden">
-        <ProfileSummary
-          displayedClaimerName={displayedClaimerName}
-          registrationFile={registrationFile}
-          nameClassName="text-primaryText mb-[16px] mt-4 text-2xl"
-          bioClassName="text-secondaryText mb-[32px] text-sm font-light"
-        />
-      </div>
-      {registrationFile && videoUrl && (
+    <div className="order-5 mt-8 flex w-full flex-col gap-4 px-4 md:order-none md:mt-0 md:px-0">
+      {videoUrl ? (
         <>
           <Previewed
             isVideo
@@ -329,17 +289,23 @@ export async function MobileIdentityMedia({
             uri={videoUrl}
             trigger={
               <VideoThumbnail
-                className="w-full cursor-pointer rounded"
+                className="aspect-[1.8] w-full cursor-pointer rounded-2xl"
                 src={videoUrl}
               />
             }
           />
-          <span className="text-secondaryText mt-1 text-center text-sm md:text-left">
+          <span className="text-secondaryText text-center text-sm md:text-left">
             Tap video to preview fullscreen
           </span>
         </>
+      ) : (
+        <MediaFallback
+          error
+          label="Video unavailable"
+          className="aspect-[1.8] w-full rounded-2xl"
+        />
       )}
-    </>
+    </div>
   );
 }
 
@@ -363,10 +329,8 @@ export default function RequestIdentityCard({
     identity,
     request,
   });
-  const prettyPohId = prettifyId(pohId);
-
   return (
-    <div className="border-stroke bg-whiteBackground mb-1 rounded border shadow">
+    <div className="border-stroke bg-whiteBackground mb-1 overflow-hidden rounded-card border shadow-soft-inset">
       <Suspense fallback={null}>
         <RevocationBanner
           chain={chain}
@@ -378,53 +342,48 @@ export default function RequestIdentityCard({
       <div className="flex flex-col md:flex-row">
         <Suspense
           fallback={
-            <div className="background border-stroke hidden w-2/5 border-r md:flex" />
+            <div className="md:border-stroke contents md:flex md:w-[26%] md:min-w-[16rem] md:shrink-0 md:flex-col md:items-center md:border-r md:px-6 md:py-6">
+              <div className="order-3 flex w-full justify-center px-6 md:order-none md:px-0">
+                <MediaFallback className="h-32 w-32 rounded-full" />
+              </div>
+            </div>
           }
         >
           <DesktopProfileAside
             identity={identity}
             identityFiles={identityFiles}
             request={request}
-          />
-        </Suspense>
-
-        <div className="flex w-full flex-col p-[24px] lg:p-[32px]">
-          <Suspense fallback={<div className="mb-8 h-8" />}>
-            <IdentityHeader chain={chain} identity={identity} />
-          </Suspense>
-          <div className="mb-4 h-1 w-full border-b"></div>
-          {requestInfo}
-          <div className="text-orange mb-8 flex flex-wrap justify-center gap-x-[8px] gap-y-[8px] font-medium md:justify-start">
-            <Link
-              className="text-orange flex flex-row flex-wrap justify-center gap-x-[8px] text-center font-semibold hover:text-orange-500 md:justify-start"
-              href={`/${prettyPohId}`}
-            >
-              <Image
-                alt="poh id"
-                src="/logo/pohid.svg"
-                height={24}
-                width={24}
-              />
-              {prettyPohId.slice(0, 20)}
-              <wbr />
-              {prettyPohId.slice(20)} <span>- Open ID</span> <Arrow />
-            </Link>
-          </div>
-          <Suspense fallback={null}>
-            <MobileIdentityMedia
-              identity={identity}
-              identityFiles={identityFiles}
-            />
-          </Suspense>
-          <RequestRelatedActions
-            policyMetaEvidenceUri={policyMetaEvidenceUri}
             vouchedFor={vouchedFor}
             vouchers={vouchers}
           />
-          {timeline}
-          <Label className="text-orange mb-8 text-center md:hidden">
-            Last update: <TimeAgo time={request.lastStatusChange} />
-          </Label>
+        </Suspense>
+
+        <div className="contents md:flex md:w-full md:min-w-0 md:flex-col md:gap-4 md:p-6 lg:p-8">
+          <Suspense
+            fallback={<div className="order-1 h-72 md:order-none md:h-28" />}
+          >
+            <IdentityHeader chain={chain} identity={identity} pohId={pohId} />
+          </Suspense>
+          <div className="order-2 mt-6 flex justify-center px-6 md:order-none md:mt-0 md:px-0">
+            {requestInfo}
+          </div>
+          <Suspense
+            fallback={
+              <div className="order-5 mt-8 w-full px-4 md:order-none md:mt-0 md:px-0">
+                <MediaFallback className="aspect-[1.8] w-full rounded-2xl" />
+              </div>
+            }
+          >
+            <IdentityVideo identityFiles={identityFiles} />
+          </Suspense>
+          <div className="order-6 mt-6 px-6 md:order-none md:mt-0 md:px-0">
+            <Suspense fallback={null}>
+              <PolicyLink metaEvidenceUri={policyMetaEvidenceUri} />
+            </Suspense>
+          </div>
+          <div className="border-stroke order-8 mx-6 border-t pt-4 md:order-none md:mx-0">
+            {timeline}
+          </div>
         </div>
       </div>
     </div>

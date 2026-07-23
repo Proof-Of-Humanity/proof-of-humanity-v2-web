@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useId, useState } from "react";
 import Image from "next/image";
 import { twMerge } from "tailwind-merge";
 
@@ -23,7 +23,8 @@ const buttonStyles = {
   secondary: "btn-secondary",
 };
 
-const buttonBaseClass = "disabled:cursor-not-allowed";
+const buttonBaseClass =
+  "disabled:cursor-not-allowed aria-disabled:cursor-not-allowed aria-disabled:opacity-40";
 
 const ActionButton = React.forwardRef<HTMLButtonElement, ActionButtonProps>(
   (
@@ -40,6 +41,10 @@ const ActionButton = React.forwardRef<HTMLButtonElement, ActionButtonProps>(
     },
     ref,
   ) => {
+    const tooltipId = useId();
+    const [tooltipVisible, setTooltipVisible] = useState(false);
+    const isDisabled = disabled || isLoading;
+
     const mergedButtonClasses = twMerge(
       buttonStyles[variant],
       buttonBaseClass,
@@ -47,7 +52,7 @@ const ActionButton = React.forwardRef<HTMLButtonElement, ActionButtonProps>(
     );
 
     const mergedWrapperClasses = twMerge(
-      "relative group w-full md:w-fit",
+      "relative flex w-full justify-center md:w-fit",
       fullWidth && "md:w-full",
     );
 
@@ -66,15 +71,24 @@ const ActionButton = React.forwardRef<HTMLButtonElement, ActionButtonProps>(
       </>
     );
 
+    // When the button has a tooltip it stays focusable while unavailable
+    // (`aria-disabled` + click guard instead of the native `disabled`
+    // attribute), so keyboard and screen-reader users can reach the
+    // explanation of why the action is unavailable.
     const button = (
       <button
         ref={ref}
-        onClick={onClick}
+        onClick={() => {
+          if (isDisabled) return;
+          onClick();
+        }}
         aria-label={
           ariaLabel || (typeof label === "string" ? label : undefined)
         }
+        aria-describedby={tooltip ? tooltipId : undefined}
+        aria-disabled={tooltip ? isDisabled : undefined}
+        disabled={tooltip ? undefined : isDisabled}
         className={mergedButtonClasses}
-        disabled={disabled || isLoading}
       >
         {buttonContent}
       </button>
@@ -82,9 +96,25 @@ const ActionButton = React.forwardRef<HTMLButtonElement, ActionButtonProps>(
 
     if (tooltip) {
       return (
-        <div className={mergedWrapperClasses}>
+        <div
+          className={mergedWrapperClasses}
+          onMouseEnter={() => setTooltipVisible(true)}
+          onMouseLeave={() => setTooltipVisible(false)}
+          onFocus={() => setTooltipVisible(true)}
+          onBlur={() => setTooltipVisible(false)}
+          onKeyDown={(event) => {
+            if (event.key === "Escape") setTooltipVisible(false);
+          }}
+        >
           {button}
-          <span className="tooltip-surface pointer-events-none absolute bottom-full left-1/2 z-10 mb-2 w-max max-w-[240px] -translate-x-1/2 text-center text-sm opacity-0 transition-opacity group-hover:opacity-100">
+          <span
+            id={tooltipId}
+            role="tooltip"
+            className={twMerge(
+              "tooltip-surface pointer-events-none absolute bottom-full left-1/2 z-50 mb-2 w-max max-w-[240px] -translate-x-1/2 text-center text-sm transition-opacity",
+              tooltipVisible ? "opacity-100" : "opacity-0",
+            )}
+          >
             {tooltip}
           </span>
         </div>

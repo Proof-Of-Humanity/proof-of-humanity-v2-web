@@ -86,9 +86,9 @@ export default function RevokeModal({
           loading.stop();
           toast.error("Revoke is not available right now.");
         },
-        onError(error) {
+        onError(error, errorCtx) {
           loading.stop();
-          toast.error(getWriteErrorMessage(error));
+          toast.error(getWriteErrorMessage(error, errorCtx));
         },
         onSuccess() {
           applyAction("revoke", buildRevokeSuccessPatch());
@@ -104,7 +104,7 @@ export default function RevokeModal({
     if (cost === undefined) return;
 
     try {
-      loading.start("Uploading evidence...");
+      loading.start("Uploading...");
       const { evidenceUri } = await uploadEvidence(uploadFile, {
         name: title,
         description,
@@ -201,7 +201,7 @@ export default function RevokeModal({
           <ActionButton
             disabled={disabledByReason || isBusy}
             isLoading={isBusy}
-            className="w-[170px]"
+            className="w-fit min-w-[170px]"
             onClick={submit}
             label={loadingMessage || "Revoke"}
             tooltip={disabledReason}

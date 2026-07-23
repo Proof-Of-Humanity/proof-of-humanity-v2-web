@@ -66,7 +66,7 @@ export default function RevokeClient({
   return (
     <>
       <ActionButton
-        className="w-[170px]"
+        className="w-fit min-w-[170px]"
         onClick={() => setModalOpen(true)}
         label="Revoke"
         disabled={isReconciling}

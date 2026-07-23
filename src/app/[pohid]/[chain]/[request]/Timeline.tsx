@@ -27,6 +27,8 @@ interface TimelineProps {
   items: TimelineItem[];
   children?: ReactNode;
   className?: string;
+  compact?: boolean;
+  title?: string;
 }
 
 const TIMELINE_STYLES: Record<
@@ -145,6 +147,8 @@ export default function Timeline({
   items,
   children,
   className = "",
+  compact = false,
+  title = "Timeline History",
 }: TimelineProps) {
   const rootRef = useRef<HTMLDivElement | null>(null);
   const [isVisible, setIsVisible] = useState(false);
@@ -174,13 +178,21 @@ export default function Timeline({
     <div
       ref={rootRef}
       className={twMerge(
-        "timeline-root mt-8 border-t pt-8",
+        compact
+          ? "timeline-root mt-0 border-0 pt-0"
+          : "timeline-root mt-8 border-t pt-8",
         className,
         isVisible ? "timeline-visible" : "timeline-hidden",
       )}
     >
-      <h2 className="text-primaryText text-xl font-semibold">
-        Timeline History
+      <h2
+        className={
+          compact
+            ? "text-secondaryText text-sm font-normal"
+            : "text-primaryText text-xl font-semibold"
+        }
+      >
+        {title}
       </h2>
       {children}
       <div className="mt-6">
@@ -231,7 +243,9 @@ export default function Timeline({
                 )}
               </div>
               <div
-                className={`timeline-milestone min-w-0 ${isLast ? "pb-0" : "pb-8"}`}
+                className={`timeline-milestone min-w-0 ${
+                  isLast ? "pb-0" : compact ? "pb-4" : "pb-8"
+                }`}
                 style={{ animationDelay: itemDelay }}
               >
                 <div className="flex flex-wrap items-center gap-x-2 gap-y-1 leading-tight">
@@ -240,7 +254,7 @@ export default function Timeline({
                       href={item.externalHref}
                       target="_blank"
                       rel="noreferrer"
-                      className="group/external-link inline-flex items-center gap-1 font-semibold hover:opacity-80"
+                      className={`group/external-link inline-flex items-center gap-1 font-semibold hover:opacity-80 ${compact ? "text-sm" : ""}`}
                     >
                       <span className={styles.text}>{item.title}</span>
                       <span className="text-secondaryText inline-flex">
@@ -250,13 +264,13 @@ export default function Timeline({
                   ) : item.href ? (
                     <Link
                       href={item.href}
-                      className="inline-flex items-center font-semibold hover:opacity-80"
+                      className={`inline-flex items-center font-semibold hover:opacity-80 ${compact ? "text-sm" : ""}`}
                     >
                       <span className={styles.text}>{item.title}</span>
                     </Link>
                   ) : (
                     <span
-                      className={`inline-flex items-center gap-1 font-semibold ${styles.text}`}
+                      className={`inline-flex items-center gap-1 font-semibold ${styles.text} ${compact ? "text-sm" : ""}`}
                     >
                       {item.title}
                     </span>
@@ -271,7 +285,9 @@ export default function Timeline({
                     </span>
                   )}
                 </div>
-                <div className="text-secondaryText text-sm font-normal">
+                <div
+                  className={`text-secondaryText font-normal ${compact ? "text-xs" : "text-sm"}`}
+                >
                   {formatter.format(new Date(item.timestamp * 1000))}
                 </div>
               </div>

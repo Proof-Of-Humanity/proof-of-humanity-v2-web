@@ -115,11 +115,11 @@
 
   .btn-primary,
   .btn-main {
-    @apply centered min-h-[48px] w-full rounded-btn px-8 py-2.5 font-normal normal-case text-white transition duration-200 ease-premium disabled:opacity-40 md:w-auto;
+    @apply centered min-h-[48px] w-full whitespace-nowrap rounded-btn px-8 py-2.5 font-normal normal-case text-white transition duration-200 ease-premium disabled:opacity-40 md:w-auto;
   }
 
   .btn-secondary {
-    @apply centered min-h-[48px] w-full rounded-btn border px-8 py-2.5 font-normal normal-case transition duration-200 ease-premium disabled:opacity-40 md:w-auto;
+    @apply centered min-h-[48px] w-full whitespace-nowrap rounded-btn border px-8 py-2.5 font-normal normal-case transition duration-200 ease-premium disabled:opacity-40 md:w-auto;
     background: transparent;
     border-color: #ffb08a;
     color: #ffb08a;
@@ -131,7 +131,7 @@
   }
 
   .btn-tertiary {
-    @apply centered min-h-[48px] w-full rounded-btn border px-8 py-2.5 font-normal normal-case transition duration-200 ease-premium disabled:opacity-40 md:w-auto;
+    @apply centered min-h-[48px] w-full whitespace-nowrap rounded-btn border px-8 py-2.5 font-normal normal-case transition duration-200 ease-premium disabled:opacity-40 md:w-auto;
     background: #292d35;
     border-color: #3a3e48;
     color: #f7f3ef;
@@ -181,6 +181,43 @@
 
   .icon-btn svg {
     @apply h-4 w-4 shrink-0;
+  }
+
+  /* Size the action buttons uniformly, but leave info-tooltip triggers
+     (which carry aria-expanded) at their natural width so their label doesn't
+     wrap. */
+  .request-action-buttons button:not([aria-expanded]),
+  .request-action-buttons > a {
+    width: min(100%, 10.625rem);
+  }
+
+  @media (min-width: 768px) {
+    .request-actions-row > button:not([aria-expanded]),
+    .request-actions-row > a,
+    .request-actions-row > div {
+      min-width: 10.625rem;
+      flex-shrink: 0;
+    }
+  }
+
+  .request-accordion > button {
+    min-height: 5rem;
+    padding-inline: clamp(1.25rem, 3vw, 2rem);
+  }
+
+  .request-accordion > button > span:last-child {
+    color: #ffb08a;
+    background: #2f333d;
+    border: 1px solid #3a3e48;
+  }
+
+  .request-accordion > button > span:last-child svg {
+    color: #ffb08a;
+  }
+
+  #request-evidence-top,
+  #request-evidence-bottom {
+    scroll-margin-top: 6rem;
   }
 
   .btn-primary svg,

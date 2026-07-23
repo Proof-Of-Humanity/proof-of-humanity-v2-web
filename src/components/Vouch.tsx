@@ -1,13 +1,15 @@
+"use client";
+
+import useProfilePhoto from "hooks/useProfilePhoto";
 import Image from "next/image";
 import Link from "next/link";
-import { safeIpfsUrl } from "utils/ipfs";
 import Identicon from "./Identicon";
 
 interface VouchingTooltipProps {
   isActive: boolean | undefined;
   reason: string | undefined;
   name: string | null | undefined;
-  photo: string | undefined;
+  evidenceUri: string | undefined;
   idx: number;
   href: string;
   pohId: any;
@@ -20,7 +22,7 @@ const Vouch: React.FC<VouchingTooltipProps> = ({
   isActive,
   reason,
   name,
-  photo,
+  evidenceUri,
   idx: key,
   href,
   pohId,
@@ -40,7 +42,7 @@ const Vouch: React.FC<VouchingTooltipProps> = ({
         left-1/2 -translate-x-1/2 translate-y-full m-4 mx-auto p-[8px] z-10 \
         not-italic font-normal leading-[normal] outline-black outline-color: #E5E5E5 \
         ${reducedTooltip ? "" : "w-[219px] h-[72px]"}`;
-  const photoUrl = safeIpfsUrl(photo);
+  const photoUrl = useProfilePhoto(evidenceUri);
 
   return (
     <Link key={key} href={pohId && href}>

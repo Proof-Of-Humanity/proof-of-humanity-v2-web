@@ -46,5 +46,5 @@ export const ipfsFetch = async <F>(ipfsURI: string) => {
 
   if (!url) throw new Error("Invalid IPFS URI.");
 
-  return (await axios.get(url)).data as F;
+  return (await axios.get(url, { timeout: 10_000 })).data as F;
 };

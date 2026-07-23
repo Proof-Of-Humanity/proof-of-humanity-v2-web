@@ -7,6 +7,7 @@ type FieldStatus = "error";
 
 type FieldCommonProps = {
   label?: ReactNode;
+  labelClassName?: string;
   status?: FieldStatus;
   message?: ReactNode;
 };
@@ -27,6 +28,7 @@ const statusMessage: Record<FieldStatus, string> = {
 
 function Field({
   label,
+  labelClassName,
   textarea = false,
   status,
   message,
@@ -35,7 +37,7 @@ function Field({
 }: FieldProps) {
   return (
     <div className="flex w-full flex-col">
-      {label && <Label>{label}</Label>}
+      {label && <Label className={labelClassName}>{label}</Label>}
       <div
         className={cn(
           "flat-control w-full overflow-hidden rounded-input transition duration-200 ease-premium",

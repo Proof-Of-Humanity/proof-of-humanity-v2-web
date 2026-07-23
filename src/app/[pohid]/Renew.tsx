@@ -17,7 +17,7 @@ export default function Renew({ pohId, claimer }: RenewProps) {
 
   return (
     <Link
-      className="btn-primary w-[170px] whitespace-nowrap"
+      className="btn-primary w-fit min-w-[170px] whitespace-nowrap"
       href={`/${prettifyId(pohId)}/claim`}
       target="_blank"
       rel="noopener noreferrer"
