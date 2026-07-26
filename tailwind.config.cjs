@@ -42,7 +42,6 @@ module.exports = {
           theme: "#FF8A66",
           primaryText: "#F7F3EF",
           secondaryText: "#B8B1C2",
-          mutedText: "#8A8494",
           orange: "#FF8A66",
           lightOrange: "#2F333D",
           grey: "#2F333D",
@@ -62,7 +61,6 @@ module.exports = {
           purple: "#D09BFF",
         },
         peach: "#FFB08A",
-        pink: "#FF9A6A",
       },
       borderRadius: {
         card: "26px",
@@ -73,21 +71,12 @@ module.exports = {
         soft: "0 20px 50px rgba(0,0,0,0.28)",
         "soft-inset":
           "0 20px 50px rgba(0,0,0,0.28), inset 0 1px 0 rgba(255,255,255,0.045)",
-        inset: "inset 0 2px 6px rgba(0,0,0,0.35)",
       },
       transitionTimingFunction: {
         premium: "cubic-bezier(0.22, 0.61, 0.36, 1)",
       },
       animation: {
         flip: "flip 5s linear infinite",
-        wizardInRight:
-          "wizardInRight 0.35s cubic-bezier(0.22, 0.61, 0.36, 1) forwards",
-        wizardInLeft:
-          "wizardInLeft 0.35s cubic-bezier(0.22, 0.61, 0.36, 1) forwards",
-        wizardOutLeft:
-          "wizardOutLeft 0.18s cubic-bezier(0.22, 0.61, 0.36, 1) forwards",
-        wizardOutRight:
-          "wizardOutRight 0.18s cubic-bezier(0.22, 0.61, 0.36, 1) forwards",
         fadeOut: "fadeOut 0.4s ease-out forwards",
         fadeIn: "fadeIn 0.3s ease-out forwards",
         accordionItemIn:
@@ -99,22 +88,6 @@ module.exports = {
         flip: {
           "0%, 100%": { transform: "rotateY(0deg)" },
           "50%": { transform: "rotateY(360deg)" },
-        },
-        wizardInRight: {
-          "0%": { opacity: "0", transform: "translateX(12px) scale(0.995)" },
-          "100%": { opacity: "1", transform: "translateX(0) scale(1)" },
-        },
-        wizardInLeft: {
-          "0%": { opacity: "0", transform: "translateX(-12px) scale(0.995)" },
-          "100%": { opacity: "1", transform: "translateX(0) scale(1)" },
-        },
-        wizardOutLeft: {
-          "0%": { opacity: "1", transform: "translateX(0) scale(1)" },
-          "100%": { opacity: "0", transform: "translateX(-12px) scale(0.995)" },
-        },
-        wizardOutRight: {
-          "0%": { opacity: "1", transform: "translateX(0) scale(1)" },
-          "100%": { opacity: "0", transform: "translateX(12px) scale(0.995)" },
         },
         fadeOut: {
           "0%": { opacity: "1" },

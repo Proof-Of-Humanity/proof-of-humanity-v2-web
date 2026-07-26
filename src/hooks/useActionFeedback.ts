@@ -57,11 +57,6 @@ export const WAITING_FOR_INDEXER_TOOLTIP =
 export const isActionStateLoading = (state: ControlledActionState) =>
   state === ACTION_STATES.confirmWallet || state === ACTION_STATES.txPending;
 
-export const isActionStateError = (state: ControlledActionState) =>
-  state === ACTION_STATES.walletRejected ||
-  state === ACTION_STATES.actionUnavailable ||
-  state === ACTION_STATES.error;
-
 const DEFAULT_WRITE_ERROR_MESSAGE =
   "Transaction failed. Check your wallet and try again.";
 
