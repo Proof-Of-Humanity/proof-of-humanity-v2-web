@@ -33,10 +33,6 @@
     -moz-appearance: textfield;
   }
 
-  .divider {
-    @apply h-px w-full rounded-full bg-[#3A3E48];
-  }
-
   /* Kill browser / @tailwindcss/forms default blue accent & focus ring */
   .checkbox {
     @apply h-6 w-6 cursor-pointer rounded-md border;
@@ -109,10 +105,6 @@
     background-image: radial-gradient(circle, #ffb08a 0 40%, transparent 42%);
   }
 
-  .bordered {
-    @apply rounded bg-peach p-px;
-  }
-
   .btn-primary,
   .btn-main {
     @apply centered min-h-[48px] w-full whitespace-nowrap rounded-btn px-8 py-2.5 font-normal normal-case text-white transition duration-200 ease-premium disabled:opacity-40 md:w-auto;
@@ -128,18 +120,6 @@
   .btn-secondary:hover,
   .btn-secondary:active {
     background: rgba(255, 153, 102, 0.32);
-  }
-
-  .btn-tertiary {
-    @apply centered min-h-[48px] w-full whitespace-nowrap rounded-btn border px-8 py-2.5 font-normal normal-case transition duration-200 ease-premium disabled:opacity-40 md:w-auto;
-    background: #292d35;
-    border-color: #3a3e48;
-    color: #f7f3ef;
-  }
-
-  .btn-tertiary:hover,
-  .btn-tertiary:active {
-    background: #3a3e48;
   }
 
   .tooltip-surface {
@@ -221,14 +201,12 @@
   }
 
   .btn-primary svg,
-  .btn-secondary svg,
-  .btn-tertiary svg {
+  .btn-secondary svg {
     transition: transform 200ms cubic-bezier(0.22, 0.61, 0.36, 1);
   }
 
   .btn-primary:hover svg,
-  .btn-secondary:hover svg,
-  .btn-tertiary:hover svg {
+  .btn-secondary:hover svg {
     transform: translateX(2px);
   }
 
@@ -399,12 +377,6 @@
     box-shadow: 0 0 12px currentColor;
   }
 
-  .status-pill-success {
-    border-color: rgba(116, 226, 173, 0.22);
-    background: rgba(116, 226, 173, 0.08);
-    color: #74e2ad;
-  }
-
   .status-pill-warning {
     border-color: rgba(255, 138, 102, 0.28);
     background: rgba(255, 138, 102, 0.08);
@@ -436,46 +408,19 @@
       transform 180ms ease-out;
   }
 
-  .interactive-surface:hover {
-    transform: translateY(-3px);
-    border-color: rgba(255, 138, 102, 0.32);
-    box-shadow:
-      0 28px 70px rgba(0, 0, 0, 0.34),
-      0 0 0 1px rgba(255, 138, 102, 0.08),
-      inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  .paper-inset {
+    @apply text-primaryText border;
+    background: theme("colors.dark.primaryBackground");
+    border-color: theme("colors.dark.stroke");
+    border-radius: 16px;
+    box-shadow: 0 2px 3px rgba(0, 0, 0, 0.06);
   }
 
-  .reward-surface {
-    @apply rounded-card border;
-    background: linear-gradient(
-      180deg,
-      theme("colors.dark.grey") 0%,
-      theme("colors.dark.whiteBackground") 100%
-    );
-    border-color: rgba(255, 255, 255, 0.08);
-    box-shadow:
-      0 20px 50px rgba(0, 0, 0, 0.28),
-      inset 0 1px 0 rgba(255, 255, 255, 0.04);
-    transition:
-      border-color 180ms ease-out,
-      box-shadow 180ms ease-out,
-      transform 180ms ease-out;
-  }
-
-  .reward-surface:hover {
-    transform: translateY(-3px);
-    border-color: rgba(255, 138, 102, 0.32);
-    box-shadow:
-      0 28px 70px rgba(0, 0, 0, 0.34),
-      0 0 0 1px rgba(255, 138, 102, 0.08),
-      inset 0 1px 0 rgba(255, 255, 255, 0.06);
-  }
-
-  .pill-tag {
-    @apply inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold;
-    background: rgba(255, 138, 102, 0.12);
-    color: theme("colors.peach");
-    border: 1px solid rgba(255, 138, 102, 0.22);
+  .content-card {
+    @apply text-primaryText border;
+    background: theme("colors.dark.whiteBackground");
+    border-color: theme("colors.dark.stroke");
+    border-radius: 16px;
   }
 
   .poh-toast-container {
@@ -661,14 +606,6 @@
     background: #20232b;
   }
 
-  .border-theme {
-    border-color: theme("colors.light.theme");
-  }
-
-  .dark .border-theme {
-    border-color: theme("colors.dark.theme");
-  }
-
   .border-stroke {
     border-color: theme("colors.light.stroke");
   }
@@ -703,14 +640,6 @@
 
   .dark .text-secondaryText {
     color: theme("colors.dark.secondaryText");
-  }
-
-  .text-mutedText {
-    color: theme("colors.light.secondaryText");
-  }
-
-  .dark .text-mutedText {
-    color: theme("colors.dark.mutedText");
   }
 
   .text-orange {
@@ -845,16 +774,6 @@
     fill: theme("colors.dark.purple");
   }
 
-  .fill-status-registered {
-    fill: theme("colors.light.status.registered");
-    color: theme("colors.light.status.registered");
-  }
-
-  .dark .fill-status-registered {
-    fill: theme("colors.dark.status.registered");
-    color: theme("colors.dark.status.registered");
-  }
-
   .bg-whiteBackground {
     background-color: theme("colors.light.whiteBackground");
   }
@@ -863,22 +782,20 @@
     background-color: theme("colors.dark.whiteBackground");
   }
 
-  .bg-whiteBackgroundWithOpacity {
-    background-color: theme("colors.light.whiteBackground");
-    opacity: 90%;
-  }
-
-  .dark .bg-whiteBackgroundWithOpacity {
-    background-color: theme("colors.dark.whiteBackground");
-    opacity: 90%;
-  }
-
   .bg-theme {
     background-color: theme("colors.light.theme");
   }
 
   .dark .bg-theme {
     background-color: theme("colors.dark.theme");
+  }
+
+  .bg-stroke {
+    background-color: theme("colors.light.stroke");
+  }
+
+  .dark .bg-stroke {
+    background-color: theme("colors.dark.stroke");
   }
 
   .bg-primaryBackground {
@@ -907,19 +824,6 @@
 
   .dark .bg-lightOrange {
     background-color: theme("colors.dark.lightOrange");
-  }
-
-  .review-warning-callout {
-    transition: background-color 200ms;
-  }
-
-  .review-warning-callout:hover {
-    background-color: #fbe9e9;
-  }
-
-  .dark .review-warning-callout:hover,
-  [data-theme="dark"] .review-warning-callout:hover {
-    background-color: #5a1368;
   }
 
   .bg-grey {
@@ -1032,12 +936,6 @@
     display: flex;
     align-items: center;
     justify-content: center;
-  }
-
-  .absolute-centered {
-    left: 50%;
-    top: 50%;
-    transform: translate(-50%, -50%);
   }
 
   .gradient {
