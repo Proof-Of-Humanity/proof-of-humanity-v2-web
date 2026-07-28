@@ -6,7 +6,6 @@ interface LabelProps {
   children: React.ReactNode;
 }
 
-// twMerge (not cn) so callers can reliably override the default margins.
 const Label: React.FC<LabelProps> = ({ children, className }) => (
   <legend
     className={twMerge(

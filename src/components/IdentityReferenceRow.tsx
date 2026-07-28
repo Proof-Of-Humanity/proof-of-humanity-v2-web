@@ -1,35 +1,31 @@
 import ChainLogo from "components/ChainLogo";
 import CopyButton from "components/CopyButton";
 import ExternalLink from "components/ExternalLink";
+import Identicon from "components/Identicon";
 import { idToChain } from "config/chains";
 import ArrowRight from "icons/ArrowRight.svg";
+import Image from "next/image";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import cn from "classnames";
 
 interface IdentityReferenceRowProps {
   chainId: number;
-  children: ReactNode;
-  href: string;
+  avatar: ReactNode;
+  action: ReactNode;
+  copyLabel: string;
   value: string;
-  external?: boolean;
   compact?: boolean;
 }
 
-export default function IdentityReferenceRow({
+function IdentityReferenceRow({
   chainId,
-  children,
-  href,
+  avatar,
+  action,
+  copyLabel,
   value,
-  external = false,
   compact = false,
 }: IdentityReferenceRowProps) {
-  const linkClassName = cn(
-    "icon-btn h-8 w-8",
-    compact ? "order-3" : "order-2 md:order-3",
-  );
-  const linkContent = <ArrowRight />;
-
   return (
     <div
       className={cn(
@@ -41,7 +37,7 @@ export default function IdentityReferenceRow({
     >
       <div className="relative h-10 w-[3.875rem]">
         <div className="absolute left-0 top-0 flex h-10 w-10 items-center justify-center">
-          {children}
+          {avatar}
         </div>
         <ChainLogo
           chainId={chainId}
@@ -49,23 +45,7 @@ export default function IdentityReferenceRow({
         />
         <span className="sr-only">{idToChain(chainId)?.name} chain</span>
       </div>
-      {external ? (
-        <ExternalLink
-          aria-label={`Open ${value} in block explorer`}
-          className={linkClassName}
-          href={href}
-        >
-          {linkContent}
-        </ExternalLink>
-      ) : (
-        <Link
-          aria-label={`Open POH ID ${value}`}
-          className={linkClassName}
-          href={href}
-        >
-          {linkContent}
-        </Link>
-      )}
+      {action}
       <div
         className={cn(
           "flex min-w-0 gap-2 text-peach",
@@ -75,11 +55,77 @@ export default function IdentityReferenceRow({
         )}
       >
         <span className="min-w-0 break-all leading-5 md:truncate">{value}</span>
-        <CopyButton
-          value={value}
-          label={external ? "Copy wallet address" : "Copy POH ID"}
-        />
+        <CopyButton value={value} label={copyLabel} />
       </div>
     </div>
+  );
+}
+
+const linkClassName = (compact: boolean) =>
+  cn("icon-btn h-8 w-8", compact ? "order-3" : "order-2 md:order-3");
+
+export function WalletReferenceRow({
+  chainId,
+  address,
+  href,
+  value,
+  compact,
+}: {
+  chainId: number;
+  address: string | null | undefined;
+  href: string;
+  value: string;
+  compact?: boolean;
+}) {
+  return (
+    <IdentityReferenceRow
+      chainId={chainId}
+      avatar={<Identicon diameter={40} address={address} />}
+      value={value}
+      compact={compact}
+      copyLabel="Copy wallet address"
+      action={
+        <ExternalLink
+          aria-label={`Open ${value} in block explorer`}
+          className={linkClassName(!!compact)}
+          href={href}
+        >
+          <ArrowRight />
+        </ExternalLink>
+      }
+    />
+  );
+}
+
+export function PohIdReferenceRow({
+  chainId,
+  href,
+  value,
+  compact,
+}: {
+  chainId: number;
+  href: string;
+  value: string;
+  compact?: boolean;
+}) {
+  return (
+    <IdentityReferenceRow
+      chainId={chainId}
+      avatar={
+        <Image alt="POH ID" src="/logo/pohid.svg" height={40} width={40} />
+      }
+      value={value}
+      compact={compact}
+      copyLabel="Copy POH ID"
+      action={
+        <Link
+          aria-label={`Open POH ID ${value}`}
+          className={linkClassName(!!compact)}
+          href={href}
+        >
+          <ArrowRight />
+        </Link>
+      }
+    />
   );
 }

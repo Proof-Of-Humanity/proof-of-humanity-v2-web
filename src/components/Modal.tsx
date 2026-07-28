@@ -14,15 +14,11 @@ interface ModalProps extends React.HTMLAttributes<HTMLDivElement> {
   onClose: () => void;
   canClose?: boolean;
   className?: string;
-  formal?: boolean;
-  header?: string;
 }
 
 const ANIMATION_MS = 260;
 
 const Modal: React.FC<ModalProps> = ({
-  formal,
-  header,
   className,
   children,
   open,
@@ -84,20 +80,14 @@ const Modal: React.FC<ModalProps> = ({
           <div
             className={twMerge(
               cn(
-                "modal-shell fixed left-1/2 top-1/2 z-30 w-4/5 md:w-3/5 xl:w-2/5",
+                "modal-shell modal-surface fixed left-1/2 top-1/2 z-30 w-4/5 overflow-clip md:w-3/5 xl:w-2/5",
                 {
-                  "modal-surface overflow-clip": formal,
                   "modal-shell-open": isVisible,
                 },
                 className,
               ),
             )}
           >
-            {header && (
-              <h2 className="text-primaryText px-4 pt-5 text-left text-2xl font-semibold">
-                {header}
-              </h2>
-            )}
             {children}
           </div>
         </>
