@@ -1,6 +1,5 @@
 import { supportedChains } from "config/chains";
 import { getContractDataAllChains } from "data/contract";
-import { getTotalCosts } from "data/costs";
 import { getHumanityData } from "data/humanity";
 import { getRegistrationData } from "data/registration";
 import { redirect, RedirectType } from "next/navigation";
@@ -35,14 +34,19 @@ export default async function Claim({ params }: PageProps) {
   const registrationContractData = registrationChain
     ? contractData[registrationChain.id]
     : null;
-  const isRenewal =
+  const renewal =
     registrationChain &&
     registrationContractData &&
     +registrationData[registrationChain.id]!.expirationTime -
       Date.now() / 1000 <
-      +registrationContractData.renewalPeriodDuration;
+      +registrationContractData.renewalPeriodDuration
+      ? {
+          ...registrationData[registrationChain.id]!,
+          chain: registrationChain,
+        }
+      : undefined;
 
-  if (registrationChain && registrationContractData && !isRenewal) {
+  if (registrationChain && registrationContractData && !renewal) {
     redirect(`/${pohid}`, RedirectType.replace);
   }
 
@@ -50,11 +54,9 @@ export default async function Claim({ params }: PageProps) {
     (chain) => (humanityData[chain.id]?.humanity?.winnerClaim?.length ?? 0) > 0,
   );
 
-  const totalCosts = await getTotalCosts(contractData);
-
   if (registrationChain && !registrationContractData) {
     return (
-      <div className="content paper flex flex-col items-center px-4 py-12 text-center sm:px-8 lg:px-10">
+      <div className="content paper-inset flex max-w-[800px] flex-col items-center px-4 py-12 text-center sm:px-8 lg:px-10">
         <span className="text-primaryText text-lg font-semibold">
           Renewal data is temporarily unavailable.
         </span>
@@ -67,22 +69,10 @@ export default async function Claim({ params }: PageProps) {
   }
 
   return (
-    <div className="content paper flex flex-col px-4 py-4 sm:px-8 sm:py-6 lg:px-10 lg:py-6">
+    <div className="content paper-inset flex max-w-[800px] flex-col px-4 py-4 sm:px-8 sm:py-6 lg:px-10 lg:py-6">
       <FormLoader
         contractData={contractData}
-        fallbackTotalCosts={supportedChains.reduce(
-          (acc, chain) => ({
-            ...acc,
-            [chain.id]: totalCosts[chain.id]?.toString() ?? "",
-          }),
-          {} as Record<(typeof supportedChains)[number]["id"], string>,
-        )}
-        renewal={
-          registrationChain && {
-            ...registrationData[registrationChain.id]!,
-            chain: registrationChain,
-          }
-        }
+        renewal={renewal}
         hasPastVerifiedClaim={hasPastVerifiedClaim}
       />
     </div>

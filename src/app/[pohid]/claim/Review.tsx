@@ -3,6 +3,7 @@ import ExternalLink from "components/ExternalLink";
 import Field from "components/Field";
 import Label from "components/Label";
 import Switch from "components/Switch";
+import ActionButton from "components/ActionButton";
 import AuthGuard from "components/AuthGuard";
 import Previewed from "components/Previewed";
 import TimeAgo from "components/TimeAgo";
@@ -19,17 +20,23 @@ import { formatEth } from "utils/misc";
 import { Abi, Hash, formatEther, parseEther } from "viem";
 import { useAccount, useChainId, useReadContract, useSwitchChain } from "wagmi";
 import useEnoughFunds from "hooks/useEnoughFunds";
-import { EmailSubmissionStatus, MediaState, SubmissionState } from "./Form";
+import {
+  EmailSubmissionStatus,
+  FundingChoice,
+  fundingEth,
+  MediaState,
+  SubmissionState,
+} from "./Form";
 
 interface ReviewProps {
   arbitrationInfo: ContractData["arbitrationInfo"];
   contractData: Record<SupportedChainId, ContractData | null>;
   totalCost: bigint | null;
-  selfFunded$: ObservablePrimitiveBaseFns<number>;
-  submitForFree$: ObservablePrimitiveBaseFns<boolean>;
+  funding$: ObservablePrimitiveBaseFns<FundingChoice>;
   state$: ObservableObject<SubmissionState>;
   media$: ObservableObject<MediaState>;
   loadingMessage?: string;
+  goBack: () => void;
   submit: () => void;
   registrationComplete?: boolean;
   email$: ObservablePrimitiveBaseFns<string>;
@@ -43,11 +50,11 @@ function Review({
   arbitrationInfo,
   contractData,
   totalCost,
-  selfFunded$,
-  submitForFree$,
+  funding$,
   state$,
   media$,
   loadingMessage,
+  goBack,
   submit,
   registrationComplete = false,
   email$,
@@ -56,19 +63,24 @@ function Review({
   skipEmail,
   isRenewal,
 }: ReviewProps) {
-  const selfFunded = selfFunded$.use();
-  const submitForFree = submitForFree$.use();
+  const funding = funding$.use();
+  const submitForFree = funding.kind === "free";
 
-  const toggleSubmitForFree = (enabled: boolean) => {
-    submitForFree$.set(enabled);
-    selfFunded$.set(enabled ? 0 : totalCost ? formatEth(totalCost) : 0);
-  };
+  const toggleSubmitForFree = (enabled: boolean) =>
+    funding$.set(enabled ? { kind: "free" } : { kind: "fullDeposit" });
   const { pohId, name } = state$.use();
   const email = email$.use();
   const { photo, video } = media$.use();
+  // submit() bails out early when either is missing, so surface that as a
+  // disabled reason instead of letting the button no-op silently.
+  const missingMedia = [!photo && "photo", !video && "video"].filter(
+    Boolean,
+  ) as string[];
   const { address } = useAccount();
   const chainId = useChainId() as SupportedChainId;
   const { switchChain } = useSwitchChain();
+
+  const selfFunded = fundingEth(funding, chainId, totalCost);
 
   let selfFundedWei: bigint | undefined;
   if (!submitForFree && selfFunded) {
@@ -107,158 +119,123 @@ function Review({
   // Assume Gnosis is always cheaper (1 xDAI = 1 USD) until we have ETH/USD price feeds
   const isCurrentChainCheaper = chainId === 100;
 
+  const reviewChecklist = [
+    "The photo must face forward, with no coverings that hide facial features.",
+    "No filters, heavy makeup, or adornments that obscure the face. Hats are allowed.",
+    "Your video shows the correct wallet address clearly, and you say the exact required phrase.",
+  ];
+
   return (
-    <>
-      <span className="text-primaryText my-4 flex w-full flex-col text-2xl font-bold">
-        {isRenewal ? "Finalize your renewal" : "Finalize your registration"}
-        <div className="divider mt-4 w-2/3" />
-      </span>
-
-      {/* Warning callout */}
-      <div className="review-warning-callout border-orange bg-lightOrange mb-6 flex justify-center rounded-lg border px-4 py-4 text-center">
-        <div className="flex max-w-2xl flex-col items-center">
-          <InfoIcon className="text-status-rejected h-7 w-7 stroke-current stroke-2" />
-          <div className="mt-2">
-            <p className="text-primaryText font-bold">
-              Required before you continue
-            </p>
-            <p className="text-secondaryText mt-1 text-sm">
-              Review this carefully — incorrect submissions can be challenged
-              and{" "}
-              <span className="font-semibold text-red-500">
-                may lose deposit
-              </span>
-              .
-            </p>
-          </div>
-        </div>
-      </div>
-
-      {/* Registration Policy card */}
-      <div className="border-stroke bg-whiteBackground hover:bg-primaryBackground group mb-6 flex flex-col items-center gap-4 rounded-lg border px-4 py-4 text-center transition-colors duration-200 sm:flex-row sm:justify-between sm:py-3 sm:text-left">
-        <div className="group/policy-icon flex items-center gap-3">
-          <DocumentIcon className="fill-orange text-orange h-6 w-6 transition-transform duration-200 group-hover/policy-icon:scale-105" />
-          <div>
-            <p className="text-primaryText font-semibold">
-              Registration Policy
-            </p>
-            <p className="text-secondaryText text-xs">
-              Updated <TimeAgo time={arbitrationInfo.updateTime} />
-            </p>
-          </div>
-        </div>
-        <ExternalLink
-          className="group/external-link text-orange hover:text-orange/80 flex items-center gap-1 text-sm font-medium transition-colors duration-200"
-          href={ipfs(arbitrationInfo.policy)}
-        >
-          <span>Open the full policy</span>
-          <ExternalLinkIcon />
-        </ExternalLink>
-      </div>
-
-      {/* Checklist */}
-      <div className="text-secondaryText mb-6 flex flex-col items-center text-center text-sm">
-        <p className="max-w-2xl">
-          Before proceeding, make sure your submission follows the Registration
-          Policy.
+    <div className="flex w-full flex-col items-center pb-2">
+      <div className="flex flex-col items-center text-center">
+        <h1 className="text-primaryText text-2xl font-semibold">
+          Review{" "}
+          <span className="text-peach">
+            {isRenewal ? "your Renewal" : "your Registration"}
+          </span>
+        </h1>
+        <p className="text-secondaryText mt-3 text-sm leading-6">
+          Make sure you read and understand the Policy
         </p>
-        <p className="text-primaryText mt-3 font-bold">Check these 3 things:</p>
-        <ul className="mt-3 flex w-full max-w-2xl flex-col items-start gap-3 px-2 text-left sm:px-0">
-          <li className="flex items-start gap-2">
-            <svg
-              className="mt-0.5 h-5 w-5 shrink-0 text-green-500"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth={2}
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-              />
-            </svg>
-            <span className="text-primaryText">
-              Photo and video are{" "}
-              <strong>clear, well-lit, forward-facing</strong>, and not mirrored
-              or blurred.
+        <p className="mt-1 flex flex-wrap items-center justify-center gap-x-2 text-sm">
+          <ExternalLink
+            className="text-orange hover:text-orange/80 flex items-center gap-1 font-medium transition-colors duration-200"
+            href={ipfs(arbitrationInfo.policy)}
+          >
+            <DocumentIcon className="fill-orange h-4 w-4" />
+            <span>Relevant Policy</span>
+            <ExternalLinkIcon />
+          </ExternalLink>
+          <span className="text-secondaryText">
+            (updated <TimeAgo time={arbitrationInfo.updateTime} />)
+          </span>
+        </p>
+      </div>
+
+      {/* Boxed review checklist, per Figma; keeps the deposit-loss warning. */}
+      <div className="content-card mt-8 w-full px-5 py-5">
+        <div className="flex flex-col items-center text-center">
+          <p className="text-primaryText flex items-center gap-2 font-semibold">
+            <InfoIcon className="h-5 w-5 stroke-current stroke-2 text-peach" />
+            Review
+          </p>
+          <p className="text-secondaryText mt-1 text-sm">
+            Check the uploaded files and ensure they comply with the rules —
+            incorrect submissions can be challenged and your{" "}
+            <span className="text-status-rejected font-medium">
+              deposit may be lost.
             </span>
-          </li>
-          <li className="flex items-start gap-2">
-            <svg
-              className="mt-0.5 h-5 w-5 shrink-0 text-green-500"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth={2}
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-              />
-            </svg>
-            <span className="text-primaryText">
-              Your facial features are <strong>fully visible</strong> — no
-              coverings or glare
-            </span>
-          </li>
-          <li className="flex items-start gap-2">
-            <svg
-              className="mt-0.5 h-5 w-5 shrink-0 text-green-500"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth={2}
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-              />
-            </svg>
-            <span className="text-primaryText">
-              Your video shows the <strong>correct wallet address</strong>{" "}
-              clearly, and you say the <strong>exact required phrase</strong>
-            </span>
-          </li>
+          </p>
+        </div>
+        <ul className="mt-4 flex flex-col gap-2.5 text-left text-sm">
+          {reviewChecklist.map((text) => (
+            <li key={text} className="flex items-start gap-2.5">
+              <svg
+                className="mt-0.5 h-5 w-5 shrink-0 text-green-500"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
+              </svg>
+              <span className="text-primaryText">{text}</span>
+            </li>
+          ))}
         </ul>
       </div>
 
-      <div className="mx-auto flex w-full min-w-0 flex-col items-center justify-center gap-4 overflow-hidden sm:grid sm:grid-cols-[1fr_auto_1fr_auto_1fr] sm:items-center sm:gap-0">
+      <div className="mx-auto mt-8 flex w-full min-w-0 flex-col items-center justify-center gap-4 overflow-hidden sm:grid sm:grid-cols-[1fr_auto_1fr_auto_1fr] sm:items-center sm:gap-0">
         <div className="flex w-48 shrink-0 items-center justify-center sm:col-start-2">
-          <Previewed
-            uri={photo!.uri}
-            trigger={
-              <Image
-                alt="preview"
-                className="h-48 w-48 max-w-full shrink-0 rounded-full"
-                src={photo!.uri}
-                width={256}
-                height={256}
-              />
-            }
-          />
+          {photo ? (
+            <Previewed
+              kind="image"
+              uri={photo.uri}
+              trigger={
+                <Image
+                  alt="preview"
+                  className="h-48 w-48 max-w-full shrink-0 rounded-full"
+                  src={photo.uri}
+                  width={256}
+                  height={256}
+                />
+              }
+            />
+          ) : (
+            <div className="bg-whiteBackground text-secondaryText flex h-48 w-48 shrink-0 items-center justify-center rounded-full text-sm">
+              No photo
+            </div>
+          )}
         </div>
         <div className="flex w-full min-w-0 justify-center sm:col-start-4 sm:w-auto sm:min-w-0 sm:justify-center">
-          <video
-            className="mx-auto max-h-72 w-auto max-w-full rounded bg-black object-contain sm:max-h-64"
-            src={`${video!.uri}#t=0.001`}
-            controls
-            playsInline
-            preload="metadata"
-          />
+          {video ? (
+            <video
+              className="mx-auto max-h-72 w-auto max-w-full rounded bg-black object-contain sm:max-h-64"
+              src={`${video.uri}#t=0.001`}
+              controls
+              playsInline
+              preload="metadata"
+            />
+          ) : (
+            <div className="text-secondaryText flex h-48 w-64 items-center justify-center rounded bg-black text-sm">
+              No video
+            </div>
+          )}
         </div>
       </div>
 
       <div className="flex w-full flex-col">
+        <Field label="Display Name" value={name} disabled />
+        <Field label="Connected Wallet" value={address} disabled />
         <Field
           label="Proof of Humanity ID"
           value={prettifyId(pohId)}
           disabled
         />
-        <Field label="Name" value={name} disabled />
-        <Field label="Account" value={address} disabled />
         {email ? <Field label="Email" value={email} disabled /> : null}
 
         <Label className="!mt-2">
@@ -297,7 +274,13 @@ function Review({
                   max={totalCost ? formatEther(totalCost) : undefined}
                   value={selfFunded}
                   disabled={!totalCost || submitForFree}
-                  onChange={(event) => selfFunded$.set(+event.target.value)}
+                  onChange={(event) =>
+                    funding$.set({
+                      kind: "custom",
+                      eth: +event.target.value,
+                      chainId,
+                    })
+                  }
                 />
               </div>
               <div className="flex flex-wrap items-center gap-2 text-sm sm:text-base">
@@ -306,7 +289,7 @@ function Review({
                   onClick={() =>
                     !submitForFree &&
                     totalCost &&
-                    selfFunded$.set(formatEth(totalCost))
+                    funding$.set({ kind: "fullDeposit" })
                   }
                   className={`font-semibold underline underline-offset-2 ${
                     submitForFree
@@ -371,72 +354,89 @@ function Review({
           ) : null}
         </div>
       </div>
-      <div className="w-full">
-        {registrationComplete && emailStatus === "failed" ? (
-          <div className="text-primaryText mt-1 text-sm">
-            <p className="inline-flex items-center gap-1 font-semibold text-green-500">
-              Your profile was submitted.
-              <svg
-                className="h-4 w-4 shrink-0"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth={2.5}
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M5 13l4 4L19 7"
-                />
-              </svg>
-            </p>
-            <p className="text-secondaryText mt-1">
-              We couldn't save <span className="font-semibold">{email}</span>{" "}
-              for profile notifications. You can retry now or enable
-              notifications later from settings.
-            </p>
-            <div className="mt-3">
-              <button
-                className="btn-primary w-full py-3 text-sm font-bold"
-                onClick={retryEmail}
-              >
-                Save email for notifications
-              </button>
-            </div>
-          </div>
-        ) : loadingMessage ? (
-          <button className="btn-primary gap-2 md:w-full" disabled>
-            <Image
-              alt="loading"
-              src="/logo/poh-white.svg"
-              className="animate-flip fill-white"
-              width={14}
-              height={14}
-            />
-            {loadingMessage}...
-          </button>
-        ) : !totalCost ? (
-          <button className="btn-primary md:w-full" disabled>
-            Loading deposit...
-          </button>
-        ) : (
-          <AuthGuard signInButtonProps={{ className: "md:w-full" }}>
-            <button
-              className="btn-primary md:w-full"
-              onClick={submit}
-              disabled={funds.isLoading || funds.insufficient}
+      {registrationComplete && emailStatus === "failed" ? (
+        <div className="text-primaryText mt-1 w-full text-sm">
+          <p className="inline-flex items-center gap-1 font-semibold text-green-500">
+            Your profile was submitted.
+            <svg
+              className="h-4 w-4 shrink-0"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={2.5}
             >
-              Submit
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M5 13l4 4L19 7"
+              />
+            </svg>
+          </p>
+          <p className="text-secondaryText mt-1">
+            We couldn't save <span className="font-semibold">{email}</span> for
+            profile notifications. You can retry now or enable notifications
+            later from settings.
+          </p>
+          <div className="mt-3">
+            <button
+              className="btn-primary w-full py-3 text-sm font-bold"
+              onClick={retryEmail}
+            >
+              Save email for notifications
             </button>
-            {funds.insufficient && (
-              <p className="text-status-rejected mt-2 text-center text-sm md:text-left">
-                {funds.message}
-              </p>
-            )}
-          </AuthGuard>
-        )}
-      </div>
-    </>
+          </div>
+        </div>
+      ) : (
+        <div className="mt-8 flex w-full flex-wrap-reverse items-center justify-center gap-3">
+          {!loadingMessage && (
+            <ActionButton
+              onClick={goBack}
+              label="Back"
+              variant="secondary"
+              className="min-w-[170px]"
+            />
+          )}
+          {loadingMessage ? (
+            <button className="btn-primary min-w-[170px] gap-2" disabled>
+              <Image
+                alt="loading"
+                src="/logo/poh-white.svg"
+                className="animate-flip fill-white"
+                width={14}
+                height={14}
+              />
+              {loadingMessage}
+            </button>
+          ) : !totalCost ? (
+            <button className="btn-primary min-w-[170px]" disabled>
+              Loading deposit
+            </button>
+          ) : (
+            <AuthGuard signInButtonProps={{ className: "min-w-[170px]" }}>
+              <ActionButton
+                onClick={submit}
+                label="Submit"
+                disabled={
+                  funds.isLoading || funds.insufficient || !!missingMedia.length
+                }
+                tooltip={
+                  missingMedia.length
+                    ? `Your ${missingMedia.join(" and ")} ${
+                        missingMedia.length > 1 ? "are" : "is"
+                      } missing — use the steps above to add ${
+                        missingMedia.length > 1 ? "them" : "it"
+                      }.`
+                    : funds.insufficient
+                      ? funds.message
+                      : undefined
+                }
+                className="min-w-[170px]"
+              />
+            </AuthGuard>
+          )}
+        </div>
+      )}
+    </div>
   );
 }
 

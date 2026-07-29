@@ -1,7 +1,15 @@
 import { ReactNode } from "react";
 import Link from "next/link";
+import { useAccount, useChainId } from "wagmi";
 import ExternalLink from "components/ExternalLink";
+import {
+  PohIdReferenceRow,
+  WalletReferenceRow,
+} from "components/IdentityReferenceRow";
 import NewTabIcon from "icons/NewTab.svg";
+import { explorerLink, idToChain } from "config/chains";
+import { machinifyId, prettifyId } from "utils/identifier";
+import { formatDuration } from "utils/time";
 import { EmailSubmissionStatus } from "./Form";
 
 interface FinalizedProps {
@@ -14,6 +22,35 @@ interface FinalizedProps {
   isRenewal: boolean;
 }
 
+const AccountIdRows: React.FC<{ pohId: string }> = ({ pohId }) => {
+  const { address } = useAccount();
+  const chainId = useChainId();
+  const chain = idToChain(chainId);
+  // The URL param arrives both prettified (all internal links) and
+  // 0x-prefixed; normalize before prettifying so we never double-strip.
+  const machineId = machinifyId(pohId);
+  const prettyPohId = machineId ? prettifyId(machineId) : pohId.toUpperCase();
+
+  if (!address) return null;
+
+  return (
+    <div className="mt-8 flex w-full max-w-2xl flex-col items-center gap-3 lg:max-w-4xl">
+      <span className="text-secondaryText">Your account and POH ID:</span>
+      <WalletReferenceRow
+        chainId={chainId}
+        href={chain ? explorerLink(address, chain) : "#"}
+        value={address}
+        address={address}
+      />
+      <PohIdReferenceRow
+        chainId={chainId}
+        href={`/${prettyPohId}`}
+        value={prettyPohId}
+      />
+    </div>
+  );
+};
+
 const Finalized: React.FC<FinalizedProps> = ({
   requiredVouches,
   challengePeriodDuration,
@@ -22,7 +59,7 @@ const Finalized: React.FC<FinalizedProps> = ({
   emailStatus = "idle",
   isRenewal,
 }) => {
-  const days = challengePeriodDuration / 86400;
+  const challengePeriod = formatDuration(challengePeriodDuration);
 
   // Built as an array so the visible numbering stays correct regardless of
   // which conditional steps (verify email, get vouched) are present.
@@ -86,8 +123,10 @@ const Finalized: React.FC<FinalizedProps> = ({
       </span>
     </div>,
     <div className="text-secondaryText">
-      <span className="text-primaryText font-bold">Wait {days} Days:</span> Once
-      the above steps are done, a security timer starts.
+      <span className="text-primaryText font-bold">
+        Wait {challengePeriod}:
+      </span>{" "}
+      Once the above steps are done, a security timer starts.
     </div>,
     isRenewal ? (
       <div className="text-secondaryText">
@@ -115,10 +154,10 @@ const Finalized: React.FC<FinalizedProps> = ({
           <span>Renewal request submitted</span>
         ) : (
           <span>
-            🎉 Welcome to
-            <strong className="ml-2 font-semibold uppercase">
+            🎉 Welcome to{" "}
+            <strong className="font-semibold text-peach">
               Proof of Humanity
-            </strong>
+            </strong>{" "}
             🎉
           </span>
         )}
@@ -132,6 +171,8 @@ const Finalized: React.FC<FinalizedProps> = ({
           Needs Vouch
         </span>
       </div>
+
+      <AccountIdRows pohId={pohId} />
 
       <div className="my-8 flex w-full max-w-2xl flex-col lg:max-w-4xl">
         <div className="mb-6 flex flex-col items-center">
@@ -153,7 +194,7 @@ const Finalized: React.FC<FinalizedProps> = ({
 
       <Link
         href="/"
-        className="btn-primary w-full py-3 text-center text-lg font-bold text-white hover:opacity-90"
+        className="btn-primary mx-auto min-w-[170px] px-8 py-3 text-center text-base font-semibold text-white hover:opacity-90"
       >
         Return to Homepage
       </Link>
