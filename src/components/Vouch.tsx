@@ -14,6 +14,7 @@ interface VouchProps {
   pohId: any;
   address: `0x${string}` | undefined;
   tooltip: ReactNode;
+  tooltipPlacement?: "above" | "below";
 }
 
 const Vouch: React.FC<VouchProps> = ({
@@ -24,6 +25,7 @@ const Vouch: React.FC<VouchProps> = ({
   pohId,
   address,
   tooltip,
+  tooltipPlacement = "above",
 }) => {
   const avatarClassName = `w-8 h-8 rounded-full cursor-pointer object-cover ${
     !isActive ? "opacity-25" : ""
@@ -45,7 +47,11 @@ const Vouch: React.FC<VouchProps> = ({
         ) : (
           <Identicon key={key} address={address} diameter={32} />
         )}
-        <div className="tooltip-surface invisible absolute bottom-full left-1/2 z-50 mb-2 w-max max-w-[240px] -translate-x-1/2 text-center text-sm font-normal group-hover:visible">
+        <div
+          className={`tooltip-surface invisible absolute left-1/2 z-50 w-max max-w-[240px] -translate-x-1/2 text-center text-sm font-normal group-hover:visible ${
+            tooltipPlacement === "below" ? "top-full mt-2" : "bottom-full mb-2"
+          }`}
+        >
           {tooltip}
         </div>
       </div>

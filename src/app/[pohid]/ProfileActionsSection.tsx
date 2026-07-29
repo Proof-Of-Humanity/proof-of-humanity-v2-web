@@ -5,10 +5,10 @@ import { type Hash } from "viem";
 import ActionWalletGate from "./ActionWalletGate";
 import CrossChain from "./cross-chain/CrossChain";
 import CrossChainLoading from "./cross-chain/CrossChainLoading";
-import ProfileSectionPlaceholderError from "./ProfileSectionPlaceholderError";
 import { getProfileBaseData } from "./profilePageData";
 import Renew from "./Renew";
 import Revoke from "./Revoke";
+import StatusCard, { StatusBadge } from "./StatusCard";
 
 interface ProfileActionsSectionProps {
   pohId: Hash;
@@ -101,10 +101,18 @@ export default async function ProfileActionsSection({
   } catch {
     return (
       <div className="border-stroke mt-8 w-full self-stretch border-t px-4 py-4">
-        <ProfileSectionPlaceholderError
+        <StatusCard
           section="Actions"
-          title="Actions unavailable"
-        />
+          className="mt-3 flex items-center justify-between gap-3 border-dashed px-4 py-4"
+        >
+          <div className="flex min-w-0 items-center gap-3">
+            <StatusBadge className="h-6 w-6 text-xs" />
+            <div className="text-primaryText text-sm font-semibold">
+              Actions unavailable
+            </div>
+          </div>
+          <div className="text-secondaryText shrink-0 text-xs">Retry later</div>
+        </StatusCard>
       </div>
     );
   }

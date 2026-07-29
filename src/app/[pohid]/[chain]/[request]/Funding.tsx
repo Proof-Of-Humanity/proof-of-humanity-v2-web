@@ -187,15 +187,16 @@ const FundButton: React.FC<FundButtonProps> = ({
             disabled={isLoading}
           />
         </div>
-        <RequestModalActions
-          onReturn={closeModal}
-          returnDisabled={isLoading}
-          primaryLabel={loadingMessage || "Fund"}
-          onPrimary={handleSubmit}
-          primaryDisabled={isDisabled}
-          primaryLoading={isLoading}
-          primaryTooltip={submitTooltip}
-        />
+        <RequestModalActions onReturn={closeModal} returnDisabled={isLoading}>
+          <ActionButton
+            className="w-full sm:w-auto sm:min-w-[170px]"
+            label={loadingMessage || "Fund"}
+            onClick={handleSubmit}
+            disabled={isDisabled}
+            isLoading={isLoading}
+            tooltip={submitTooltip}
+          />
+        </RequestModalActions>
       </RequestModal>
     </>
   );

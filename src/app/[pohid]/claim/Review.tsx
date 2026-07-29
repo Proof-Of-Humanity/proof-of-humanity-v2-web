@@ -17,6 +17,7 @@ import Image from "next/image";
 import { prettifyId } from "utils/identifier";
 import { ipfs } from "utils/ipfs";
 import { formatEth } from "utils/misc";
+import { resolveTxState } from "utils/txState";
 import { Abi, Hash, formatEther, parseEther } from "viem";
 import { useAccount, useChainId, useReadContract, useSwitchChain } from "wagmi";
 import useEnoughFunds from "hooks/useEnoughFunds";
@@ -91,6 +92,20 @@ function Review({
     }
   }
   const funds = useEnoughFunds({ chainId, amount: selfFundedWei });
+  const submitState = resolveTxState([
+    {
+      active: !!missingMedia.length,
+      message: missingMedia.length
+        ? `Your ${missingMedia.join(" and ")} ${
+            missingMedia.length > 1 ? "are" : "is"
+          } missing — use the steps above to add ${
+            missingMedia.length > 1 ? "them" : "it"
+          }.`
+        : undefined,
+    },
+    { active: funds.isLoading },
+    { active: funds.insufficient, message: funds.message },
+  ]);
 
   const currentChain = idToChain(chainId)!;
   const { nativeCurrency } = currentChain;
@@ -416,20 +431,8 @@ function Review({
               <ActionButton
                 onClick={submit}
                 label="Submit"
-                disabled={
-                  funds.isLoading || funds.insufficient || !!missingMedia.length
-                }
-                tooltip={
-                  missingMedia.length
-                    ? `Your ${missingMedia.join(" and ")} ${
-                        missingMedia.length > 1 ? "are" : "is"
-                      } missing — use the steps above to add ${
-                        missingMedia.length > 1 ? "them" : "it"
-                      }.`
-                    : funds.insufficient
-                      ? funds.message
-                      : undefined
-                }
+                disabled={submitState.disabled}
+                tooltip={submitState.tooltip}
                 className="min-w-[170px]"
               />
             </AuthGuard>

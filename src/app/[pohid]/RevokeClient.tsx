@@ -1,7 +1,6 @@
 "use client";
 
-import { enableReactUse } from "@legendapp/state/config/enableReactUse";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import type { Hash } from "viem";
 
 import ActionButton from "components/ActionButton";
@@ -12,16 +11,41 @@ import { useProfileOptimistic } from "optimistic/profile";
 
 import RevokeModal from "./RevokeModal";
 
-enableReactUse();
-
 export { buildRevokeSuccessPatch } from "./RevokeModal";
 
 interface RevokeProps {
-  cost?: bigint;
+  cost: bigint;
   pohId: Hash;
   homeChain: SupportedChain;
   arbitrationInfo: ContractData["arbitrationInfo"];
-  unavailableReason?: string;
+}
+
+function PendingRevocationNotice() {
+  const { pendingAction } = useProfileOptimistic();
+
+  return (
+    <span className="text-secondaryText mb-2 text-center">
+      {pendingAction === "revoke"
+        ? "Removal proposed. Waiting for indexed state."
+        : "Removal proposed."}
+    </span>
+  );
+}
+
+/** Rendered instead of `RevokeClient` when the revocation cost can't be loaded. */
+export function RevokeUnavailable({ reason }: { reason: string }) {
+  const { effective } = useProfileOptimistic();
+
+  return effective.pendingRevocation ? (
+    <PendingRevocationNotice />
+  ) : (
+    <ActionButton
+      onClick={() => undefined}
+      label="Revoke"
+      disabled
+      tooltip={reason}
+    />
+  );
 }
 
 export default function RevokeClient({
@@ -29,7 +53,6 @@ export default function RevokeClient({
   cost,
   homeChain,
   arbitrationInfo,
-  unavailableReason,
 }: RevokeProps) {
   const { effective, pendingAction } = useProfileOptimistic();
   const isReconciling = pendingAction !== null;
@@ -37,31 +60,7 @@ export default function RevokeClient({
 
   const closeModal = useCallback(() => setModalOpen(false), []);
 
-  useEffect(() => {
-    if (effective.pendingRevocation) closeModal();
-  }, [closeModal, effective.pendingRevocation]);
-
-  const pendingNotice = (
-    <span className="text-secondaryText mb-2 text-center">
-      {pendingAction === "revoke"
-        ? "Removal proposed. Waiting for indexed state."
-        : "Removal proposed."}
-    </span>
-  );
-
-  if (unavailableReason)
-    return effective.pendingRevocation ? (
-      pendingNotice
-    ) : (
-      <ActionButton
-        onClick={() => undefined}
-        label="Revoke"
-        disabled
-        tooltip={unavailableReason}
-      />
-    );
-
-  if (effective.pendingRevocation) return pendingNotice;
+  if (effective.pendingRevocation) return <PendingRevocationNotice />;
 
   return (
     <>

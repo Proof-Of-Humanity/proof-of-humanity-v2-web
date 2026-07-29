@@ -363,14 +363,15 @@ export default function Challenge({
           </div>
         )}
 
-        <EvidenceFormFields
-          hideTitle
-          description={justification}
-          file={file}
-          onDescriptionChange={setJustification}
-          onFileChange={setFile}
-          disabled={isLoading}
-        />
+        <div className="mt-12 flex w-full flex-col gap-4">
+          <EvidenceFormFields
+            description={justification}
+            file={file}
+            onDescriptionChange={setJustification}
+            onFileChange={setFile}
+            disabled={isLoading}
+          />
+        </div>
 
         <RequestWarning>
           When someone challenges a profile, a case is opened in Kleros Court. A

@@ -5,7 +5,7 @@ import ExternalLink from "components/ExternalLink";
 import ExternalLinkIcon from "components/ExternalLinkIcon";
 import TimeAgo from "components/TimeAgo";
 import ActionButton from "components/ActionButton";
-import IdentityReferenceRow from "components/IdentityReferenceRow";
+import { PohIdReferenceRow } from "components/IdentityReferenceRow";
 import InfoTooltip from "components/InfoTooltip";
 import RequestModal, {
   RequestModalActions,
@@ -36,7 +36,6 @@ import { idToChain, type SupportedChain } from "config/chains";
 import { resolveTxState } from "utils/txState";
 import { useRequestOptimistic } from "optimistic/request";
 import { prettifyId } from "utils/identifier";
-import Image from "next/image";
 import Appeal from "./Appeal";
 import Challenge from "./Challenge";
 import FundButton from "./Funding";
@@ -828,14 +827,12 @@ export default function ActionBar({
           description="Cancel this pending request before it advances beyond the vouching stage."
         />
         <div className="mt-4">
-          <IdentityReferenceRow
+          <PohIdReferenceRow
             compact
             chainId={chain.id}
             href={`/${prettifyId(pohId)}`}
             value={prettifyId(pohId)}
-          >
-            <Image alt="POH ID" src="/logo/pohid.svg" height={40} width={40} />
-          </IdentityReferenceRow>
+          />
         </div>
         <RequestWarning>
           This cancels only the pending request and returns the fees and rewards
@@ -846,13 +843,16 @@ export default function ActionBar({
         <RequestModalActions
           onReturn={() => setWithdrawModalOpen(false)}
           returnDisabled={isWithdrawLoading}
-          primaryLabel={isWithdrawLoading ? "Withdrawing" : "Withdraw"}
-          onPrimary={withdraw}
-          primaryDisabled={withdrawTrigger.disabled}
-          primaryLoading={isWithdrawLoading}
-          primaryTooltip={withdrawTrigger.tooltip}
-          primaryClassName="sm:min-w-[244px]"
-        />
+        >
+          <ActionButton
+            className="w-full sm:w-auto sm:min-w-[244px]"
+            label={isWithdrawLoading ? "Withdrawing" : "Withdraw"}
+            onClick={withdraw}
+            disabled={withdrawTrigger.disabled}
+            isLoading={isWithdrawLoading}
+            tooltip={withdrawTrigger.tooltip}
+          />
+        </RequestModalActions>
       </RequestModal>
       {vouchModalMounted && (
         <VouchFlowModal

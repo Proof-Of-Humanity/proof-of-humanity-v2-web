@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import cn from "classnames";
+import ActionButton from "components/ActionButton";
 import {
   RequestModalActions,
   RequestModalHeader,
@@ -154,18 +155,19 @@ export default function VouchModalContent({
           })}
         </div>
       </div>
-      <RequestModalActions
-        onReturn={onClose}
-        returnDisabled={isSubmitting}
-        primaryLabel="Vouch"
-        onPrimary={() => onVouch(method)}
-        primaryDisabled={!acknowledged || locked}
-        primaryLoading={isSubmitting}
-        primaryTooltip={
-          tooltip ??
-          (!acknowledged ? "Confirm the statement above to vouch" : undefined)
-        }
-      />
+      <RequestModalActions onReturn={onClose} returnDisabled={isSubmitting}>
+        <ActionButton
+          className="w-full sm:w-auto sm:min-w-[170px]"
+          label="Vouch"
+          onClick={() => onVouch(method)}
+          disabled={!acknowledged || locked}
+          isLoading={isSubmitting}
+          tooltip={
+            tooltip ??
+            (!acknowledged ? "Confirm the statement above to vouch" : undefined)
+          }
+        />
+      </RequestModalActions>
     </>
   );
 }

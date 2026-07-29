@@ -2,7 +2,10 @@ import Attachment from "components/Attachment";
 import DocumentIcon from "components/DocumentIcon";
 import ExternalLink from "components/ExternalLink";
 import Identicon from "components/Identicon";
-import IdentityReferenceRow from "components/IdentityReferenceRow";
+import {
+  PohIdReferenceRow,
+  WalletReferenceRow,
+} from "components/IdentityReferenceRow";
 import Label from "components/Label";
 import LoadableImage from "components/LoadableImage";
 import MediaFallback from "components/MediaFallback";
@@ -10,7 +13,6 @@ import Previewed from "components/Previewed";
 import TimeAgo from "components/TimeAgo";
 import VideoThumbnail from "components/VideoThumbnail";
 import { explorerLink } from "config/chains";
-import Image from "next/image";
 import Link from "next/link";
 import { Suspense, type ReactNode } from "react";
 import type {
@@ -141,6 +143,7 @@ function ProfileSummary({
     <>
       {registrationFile && photoUrl && (
         <Previewed
+          kind="image"
           uri={photoUrl}
           trigger={
             <LoadableImage
@@ -219,21 +222,17 @@ export async function IdentityHeader({
 
   return (
     <div className="order-1 flex w-full flex-col gap-2 px-4 pt-6 md:order-none md:px-0 md:pt-0">
-      <IdentityReferenceRow
+      <WalletReferenceRow
         chainId={chain.id}
-        external
         href={explorerLink(displayedClaimerId, chain)}
         value={displayedClaimerId}
-      >
-        <Identicon diameter={40} address={displayedClaimerId} />
-      </IdentityReferenceRow>
-      <IdentityReferenceRow
+        address={displayedClaimerId}
+      />
+      <PohIdReferenceRow
         chainId={chain.id}
         href={`/${prettyPohId}`}
         value={prettyPohId}
-      >
-        <Image alt="POH ID" src="/logo/pohid.svg" height={40} width={40} />
-      </IdentityReferenceRow>
+      />
     </div>
   );
 }
@@ -284,9 +283,9 @@ export async function IdentityVideo({
       {videoUrl ? (
         <>
           <Previewed
-            isVideo
-            openVideoInNewTabOnError
+            kind="video"
             uri={videoUrl}
+            openInNewTabOnError
             trigger={
               <VideoThumbnail
                 className="aspect-[1.8] w-full cursor-pointer rounded-2xl"
