@@ -5,29 +5,27 @@ import { IS_MOBILE } from "utils/media";
 import FlipCameraIcon from "icons/FlipCameraMajor.svg";
 import MaximizeIcon from "icons/MaximizeMinor.svg";
 import MinimizeIcon from "icons/MinimizeMinor.svg";
-import PauseIcon from "icons/PauseMajor.svg";
-import PlayIcon from "icons/PlayMajor.svg";
-import SmileyIcon from "icons/SmileyHappyMajor.svg";
+import CloseIcon from "icons/MobileCancelMajor.svg";
 
 interface CameraButtonInterface {
   className?: string;
-  secondary?: boolean;
   onClick: () => void;
+  label: string;
   children: React.ReactNode;
 }
 
+/** The hero capture control — rendered centered in the camera dock. */
 export const CameraButton: React.FC<CameraButtonInterface> = ({
   className,
-  secondary,
   onClick,
+  label,
   children,
 }) => (
   <button
+    type="button"
+    aria-label={label}
     className={cn(
-      "btn-primary absolute shrink-0 rounded-full !p-0",
-      secondary
-        ? "h-12 w-12 opacity-70"
-        : "outline-theme h-16 w-16 outline outline-2 outline-offset-2",
+      "btn-primary outline-theme h-16 w-16 shrink-0 rounded-full !p-0 outline outline-2 outline-offset-2",
       className,
     )}
     style={{ touchAction: "manipulation" }}
@@ -37,26 +35,82 @@ export const CameraButton: React.FC<CameraButtonInterface> = ({
   </button>
 );
 
+/** Quiet in-frame chrome (flip, fullscreen, close) — ghost circles that sit
+ * on the video without competing with the capture button. */
+const DockButton: React.FC<CameraButtonInterface & { label: string }> = ({
+  className,
+  onClick,
+  label,
+  children,
+}) => (
+  <button
+    type="button"
+    aria-label={label}
+    title={label}
+    className={cn(
+      "flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-black/40 backdrop-blur-sm transition-colors hover:bg-black/60",
+      className,
+    )}
+    style={{ touchAction: "manipulation" }}
+    onClick={onClick}
+  >
+    {children}
+  </button>
+);
+
+const CAMERA_ERRORS = {
+  blocked: {
+    title: "Camera access is blocked",
+    hint: "Allow camera access for this site in your browser settings, then try again.",
+  },
+  busy: {
+    title: "Your camera is in use",
+    hint: "Another app appears to be using the camera. Close it and try again.",
+  },
+  missing: {
+    title: "No camera found",
+    hint: "Connect a camera and try again.",
+  },
+  constraints: {
+    title: "This camera isn't supported",
+    hint: "It doesn't support the video quality we need. Try a different camera.",
+  },
+  generic: {
+    title: "Camera isn't working",
+    hint: "Something went wrong starting the camera. Try a different browser or device.",
+  },
+} as const;
+
 interface WebcamProps {
+  /** Controlled by the parent — it exits fullscreen after capture completes. */
   fullscreen: boolean;
-  recording?: boolean;
   toggleFullscreen: () => void;
-  action: () => void;
-  isVideo?: boolean;
-  overlay?: boolean;
-  phrase?: string;
-  loadCamera: React.Dispatch<React.SetStateAction<ReactWebcam | null>>;
+  /** Record mode: captures audio and uses video-rate constraints. */
+  video?: boolean;
+  /** Live capture in progress: locks the chrome and shows the indicator. */
+  recording?: boolean;
+  onCamera: (camera: ReactWebcam | null) => void;
+  /** Rendered over the camera surface (absolutely positioned by the caller). */
+  overlay?: React.ReactNode;
+  /** Capture control(s) — compose with `CameraButton`; rendered centered in
+   * the bottom dock. */
+  children: React.ReactNode;
+  /** Dismiss the camera — renders the ✕ chip in the top-right of the frame. */
+  onClose?: () => void;
+  /** Rendered alongside the error state so the upload path stays reachable. */
+  fallback?: React.ReactNode;
 }
 
 const Webcam: React.FC<WebcamProps> = ({
-  isVideo = false,
+  video = false,
   overlay,
-  loadCamera,
-  action,
+  onCamera,
   recording,
   fullscreen,
   toggleFullscreen,
-  phrase,
+  children,
+  onClose,
+  fallback,
 }) => {
   const [devices, setDevices] = useState<MediaDeviceInfo[]>([]);
   const [currentCamera, setCurrentCamera] = useState("");
@@ -67,10 +121,14 @@ const Webcam: React.FC<WebcamProps> = ({
   const switchFacingMode = () =>
     setFacingMode(facingMode === "user" ? "environment" : "user");
 
+  const cycleCamera = () =>
+    setCurrentCamera((current) => {
+      const i = devices.findIndex((device) => device.deviceId === current);
+      return devices[(i + 1) % devices.length]?.deviceId ?? current;
+    });
+
   const onUserMedia = (_mediaStream: MediaStream) => {
     if (devices.length !== 0) return;
-
-    // if (video) loadFFMPEG();
 
     navigator.mediaDevices.enumerateDevices().then((videoDevices) => {
       const cameras = videoDevices.filter(
@@ -98,19 +156,46 @@ const Webcam: React.FC<WebcamProps> = ({
         break;
       case "NotReadableError":
       case "TrackStartError":
-        setUserMediaError("NoCamera");
+        setUserMediaError("CameraBusy");
         break;
+      // react-webcam also emits plain strings ("getUserMedia not supported")
+      // and other DOMExceptions (SecurityError, AbortError…). Without this,
+      // no error state renders and capture fails silently.
+      default:
+        setUserMediaError("CameraFailed");
     }
   };
 
-  if (!cameraPermission || userMediaError)
-    return <div className="text-3xl text-red-500">Camera not enabled</div>;
+  if (!cameraPermission || userMediaError) {
+    let errorData;
+    if (!cameraPermission) {
+      errorData = CAMERA_ERRORS.blocked;
+    } else if (userMediaError === "CameraBusy") {
+      errorData = CAMERA_ERRORS.busy;
+    } else if (userMediaError === "NoConstraints") {
+      errorData = CAMERA_ERRORS.constraints;
+    } else if (userMediaError === "NoCamera") {
+      errorData = CAMERA_ERRORS.missing;
+    } else {
+      errorData = CAMERA_ERRORS.generic;
+    }
+    const { title, hint } = errorData;
+
+    return (
+      <div className="flex w-full flex-col items-center gap-2 py-8 text-center">
+        <span className="text-status-rejected text-lg font-semibold">
+          {title}
+        </span>
+        <p className="text-secondaryText max-w-sm text-sm leading-6">{hint}</p>
+        {fallback}
+      </div>
+    );
+  }
 
   const FullscreenIcon = fullscreen ? MinimizeIcon : MaximizeIcon;
-  const ActionIcon = isVideo ? (recording ? PauseIcon : PlayIcon) : SmileyIcon;
   const selectedDeviceId =
     !IS_MOBILE && currentCamera ? currentCamera : undefined;
-  const videoConstraints = isVideo
+  const videoConstraints = video
     ? {
         width: IS_MOBILE
           ? { ideal: 1280, max: 1280 }
@@ -141,9 +226,9 @@ const Webcam: React.FC<WebcamProps> = ({
           "h-full w-full object-contain",
           !IS_MOBILE && "aspect-video",
         )}
-        ref={loadCamera}
+        ref={onCamera}
         screenshotFormat={"image/jpeg"}
-        audio={isVideo}
+        audio={video}
         muted={true}
         screenshotQuality={1}
         forceScreenshotSourceSize
@@ -158,45 +243,45 @@ const Webcam: React.FC<WebcamProps> = ({
         }}
       />
 
-      {recording && overlay && (
-        <div className="centered absolute left-0 top-0 h-full w-full select-none bg-black text-center text-xl font-semibold uppercase text-white opacity-70 sm:text-3xl md:text-3xl lg:text-4xl">
-          {phrase}
-        </div>
-      )}
+      {overlay}
 
       {recording ? (
-        <>
-          <span className="absolute right-6 top-6 inline-flex h-8 w-8 rounded-full bg-red-500 before:h-full before:w-full before:animate-ping before:rounded-full before:bg-red-400/80" />
-        </>
+        <span className="absolute right-6 top-6 inline-flex h-8 w-8 rounded-full bg-red-500 before:h-full before:w-full before:animate-ping before:rounded-full before:bg-red-400/80" />
       ) : (
-        <>
-          {IS_MOBILE && devices.length > 1 && (
-            <CameraButton
-              secondary
-              className="left-4 top-4"
-              onClick={switchFacingMode}
-            >
-              <FlipCameraIcon className="h-10 w-10 fill-white" />
-            </CameraButton>
-          )}
-          {!IS_MOBILE && (
-            <CameraButton
-              secondary
-              className="right-4 top-4"
-              onClick={toggleFullscreen}
-            >
-              <FullscreenIcon className="h-10 w-10 fill-white" />
-            </CameraButton>
-          )}
-        </>
+        onClose && (
+          <DockButton
+            label="Close camera"
+            className="absolute right-3 top-3"
+            onClick={onClose}
+          >
+            <CloseIcon className="h-5 w-5 fill-white" />
+          </DockButton>
+        )
       )}
-
-      <CameraButton
-        className="bottom-8 left-1/2 -translate-x-1/2 opacity-90"
-        onClick={action}
-      >
-        <ActionIcon className="h-12 w-12 fill-white" />
-      </CameraButton>
+      <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent px-4 pb-4 pt-14">
+        <div className="grid grid-cols-[1fr_auto_1fr] items-center">
+          <div className="flex justify-start">
+            {!recording && devices.length > 1 && (
+              <DockButton
+                label="Switch camera"
+                onClick={IS_MOBILE ? switchFacingMode : cycleCamera}
+              >
+                <FlipCameraIcon className="h-5 w-5 fill-white" />
+              </DockButton>
+            )}
+          </div>
+          <div className="flex justify-center">{children}</div>
+          <div className="flex justify-end">
+            {/* Stays available mid-recording — resizing the viewport doesn't
+                touch the MediaRecorder stream, unlike switching cameras. */}
+            {!IS_MOBILE && (
+              <DockButton label="Toggle fullscreen" onClick={toggleFullscreen}>
+                <FullscreenIcon className="h-5 w-5 fill-white" />
+              </DockButton>
+            )}
+          </div>
+        </div>
+      </div>
     </div>
   );
 };

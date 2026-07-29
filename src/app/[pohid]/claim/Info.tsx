@@ -222,7 +222,7 @@ function Info({ advance, state$, email$, isRenewal }: InfoProps) {
       </div>
 
       <button
-        className="btn-main"
+        className="btn-primary"
         disabled={!name || !walletNotice || !requestNotice || showEmailError}
         onClick={advance}
       >

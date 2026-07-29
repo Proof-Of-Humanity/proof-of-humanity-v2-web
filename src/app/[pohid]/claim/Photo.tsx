@@ -1,17 +1,19 @@
 "use client";
 
 import { ObservableObject } from "@legendapp/state";
+import ActionButton from "components/ActionButton";
 import Checklist from "components/Checklist";
 import Previewed from "components/Previewed";
-import Webcam from "components/Webcam";
+import Webcam, { CameraButton } from "components/Webcam";
 import useFullscreen from "hooks/useFullscreen";
 import { useLoading } from "hooks/useLoading";
+import useStaleGuard from "hooks/useStaleGuard";
 import CircleCancel from "icons/CircleCancelMinor.svg";
 import CircleTick from "icons/CircleTickMinor.svg";
-import CheckmarkIcon from "icons/MobileAcceptMajor.svg";
 import ResetIcon from "icons/ResetMinor.svg";
 import ZoomIcon from "icons/SearchMajor.svg";
 import CameraIcon from "icons/CameraMajor.svg";
+import SmileyIcon from "icons/SmileyHappyMajor.svg";
 import Image, { StaticImageData } from "next/image";
 import { useEffect, useRef, useState } from "react";
 import Cropper from "react-easy-crop";
@@ -29,6 +31,7 @@ import { MediaState } from "./Form";
 
 interface PhotoProps {
   advance: () => void;
+  onBack?: () => void;
   photo$: ObservableObject<MediaState["photo"]>;
 }
 
@@ -51,7 +54,22 @@ const ExamplePic: React.FC<
   </div>
 );
 
-function Photo({ advance, photo$ }: PhotoProps) {
+const PHOTO_CHECKLIST = [
+  {
+    text: "Face forward, centered, well lit.",
+    isValid: true,
+  },
+  {
+    text: "Eyes, nose, mouth visible (eyeglasses allowed, given no glare/reflection covering eyes).",
+    isValid: true,
+  },
+  {
+    text: "No masks/veils covering facial features.",
+    isValid: false,
+  },
+];
+
+function Photo({ advance, onBack, photo$ }: PhotoProps) {
   const photo = photo$.use();
   const fullscreenRef = useRef(null);
   const { isFullscreen, setFullscreen, toggleFullscreen } =
@@ -70,6 +88,7 @@ function Photo({ advance, photo$ }: PhotoProps) {
   const cropTooSmallRef = useRef(false);
 
   const loading = useLoading();
+  const staleGuard = useStaleGuard();
   const [pending, loadingMessage] = loading.use();
 
   const onCrop = async () => {
@@ -84,16 +103,18 @@ function Photo({ advance, photo$ }: PhotoProps) {
       return;
     }
 
+    const isStale = staleGuard.begin();
     loading.start("Cropping photo");
     try {
       const cropped = await getCroppedPhoto(originalPhoto.uri, cropPixels);
-      if (!cropped) return;
+      if (isStale() || !cropped) return;
       const croppedBase64 = cropped.split(",")[1];
       if (!croppedBase64) return;
 
       const sanitized = await sanitizeImage(
         Buffer.from(base64ToUint8Array(croppedBase64)),
       );
+      if (isStale()) return;
 
       const sizeError = validatePhotoSize(sanitized.size);
       if (sizeError) {
@@ -104,9 +125,10 @@ function Photo({ advance, photo$ }: PhotoProps) {
       if (photo?.uri) URL.revokeObjectURL(photo.uri);
       photo$.set({ content: sanitized, uri: URL.createObjectURL(sanitized) });
     } catch (err: any) {
-      toast.error(err.message);
+      if (!isStale()) toast.error(err.message);
     } finally {
-      loading.stop();
+      // A retake/supersede path owns the loader once this run goes stale.
+      if (!isStale()) loading.stop();
     }
   };
 
@@ -129,6 +151,8 @@ function Photo({ advance, photo$ }: PhotoProps) {
   };
 
   const retakePhoto = () => {
+    // Abandon any in-flight crop so it can't resurrect a discarded photo.
+    staleGuard.invalidate();
     setShowCamera(false);
     if (photo?.uri) URL.revokeObjectURL(photo.uri);
     if (originalPhoto?.uri) URL.revokeObjectURL(originalPhoto.uri);
@@ -148,21 +172,68 @@ function Photo({ advance, photo$ }: PhotoProps) {
     [originalPhoto?.uri],
   );
 
+  // Four distinct stages, not two — the confirmed photo used to fall through
+  // to the "Take a Photo" copy while showing the finished portrait, and the
+  // live camera used to promise "the examples below" after they'd unmounted.
+  const stage = photo
+    ? "confirmed"
+    : originalPhoto
+      ? "cropping"
+      : showCamera
+        ? "camera"
+        : "empty";
+
+  const COPY = {
+    empty: {
+      title: (
+        <>
+          Take a <span className="text-peach">Photo</span>
+        </>
+      ),
+      body: "Face the camera directly with your whole face visible — the examples below show what passes and what gets rejected.",
+    },
+    camera: {
+      title: (
+        <>
+          Take a <span className="text-peach">Photo</span>
+        </>
+      ),
+      body: "Look straight at the lens, fill the frame with your face, and make sure nothing covers your eyes, nose, or mouth.",
+    },
+    cropping: {
+      title: (
+        <>
+          Crop <span className="text-peach">Photo</span>
+        </>
+      ),
+      body: "Center your face in the circle and zoom in until it fills most of the frame. Keep it straight — not tilted or rotated.",
+    },
+    confirmed: {
+      title: (
+        <>
+          Check Your <span className="text-peach">Photo</span>
+        </>
+      ),
+      body: "This portrait will be public on your profile and reviewed against the policy. Make sure it's sharp, well lit, and shows your whole face before continuing.",
+    },
+  }[stage];
+
   return (
-    <>
-      <span className="my-4 flex w-full flex-col text-2xl font-semibold">
-        {originalPhoto && !photo ? "Crop photo" : "Take Photo"}
-        <div className="divider mt-4 w-2/3" />
-      </span>
+    <div className="flex w-full flex-col items-center pb-2">
+      <div className="flex flex-col items-center text-center">
+        <h1 className="text-primaryText text-2xl font-semibold">
+          {COPY.title}
+        </h1>
+        <p className="text-secondaryText mt-3 max-w-xl text-sm leading-6">
+          {COPY.body}
+        </p>
+      </div>
 
-      <span className="pb-8">
-        {originalPhoto && !photo
-          ? "Make sure your face is centered and not rotated"
-          : "The photo should include the face of the submitter facing the camera and the facial features must be visible"}
-      </span>
-
-      {!showCamera && !originalPhoto && !photo && (
-        <div className="flex flex-col items-center gap-8">
+      {/* ── Stage: empty (nothing captured, camera closed) — teach the rules
+          first (pass/fail examples + checklist) before offering the camera
+          CTA, since failing them costs the deposit. */}
+      {stage === "empty" && (
+        <div className="mt-8 flex flex-col items-center gap-8">
           <div className="flex w-fit flex-col items-center">
             <span className="pb-2 font-semibold">Facing the camera</span>
             <div className="grid grid-cols-2 gap-2">
@@ -186,51 +257,62 @@ function Photo({ advance, photo$ }: PhotoProps) {
           <Checklist
             title="Photo Checklist"
             warning="Not following these guidelines will result in a loss of funds."
-            items={[
-              {
-                text: "Face forward, centered, well lit.",
-                isValid: true,
-              },
-              {
-                text: "Eyes, nose, mouth visible (eyeglasses allowed, given no glare/reflection covering eyes).",
-                isValid: true,
-              },
-              {
-                text: "No masks/veils covering facial features.",
-                isValid: false,
-              },
-            ]}
+            items={PHOTO_CHECKLIST}
           />
 
-          <div className="mt-6 flex w-full flex-col items-center">
-            <button
-              className="gradient flex w-full max-w-xl items-center justify-center gap-3 rounded-full px-6 py-4 text-lg font-semibold text-white shadow-lg transition hover:opacity-90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+          <div className="flex w-full flex-col items-center">
+            <ActionButton
               onClick={() => setShowCamera(true)}
-            >
-              <CameraIcon className="h-6 w-6 fill-white" />
-              <span>Take with Camera</span>
-            </button>
+              ariaLabel="Take with Camera"
+              label={
+                <span className="flex items-center gap-2">
+                  <CameraIcon className="h-5 w-5 fill-white" />
+                  Take with Camera
+                </span>
+              }
+              className="w-full max-w-xs"
+            />
+            {/* Back sits under the CTA — empty is the only stage without an
+                inline Next/primary to pair it with. */}
+            {onBack && (
+              <ActionButton
+                onClick={onBack}
+                label="Back"
+                variant="secondary"
+                className="mt-4 w-full max-w-[10rem]"
+              />
+            )}
           </div>
         </div>
       )}
 
-      {showCamera && (
-        <div tabIndex={0} ref={fullscreenRef}>
+      {/* ── Stage: camera (live preview) — the webcam dock with the hero
+          capture button; the wrapper holds the ref/tabIndex fullscreen
+          targets. */}
+      {stage === "camera" && (
+        <div className="mt-6 w-full" tabIndex={0} ref={fullscreenRef}>
           <Webcam
             fullscreen={isFullscreen}
             toggleFullscreen={toggleFullscreen}
-            loadCamera={setCamera}
-            action={takePhoto}
-          />
+            onCamera={setCamera}
+          >
+            <CameraButton onClick={takePhoto} label="Take photo">
+              <SmileyIcon className="mx-auto h-8 w-8 fill-white" />
+            </CameraButton>
+          </Webcam>
         </div>
       )}
 
-      {!showCamera && !!originalPhoto && !photo && (
+      {/* ── Stage: cropping (raw capture taken, not yet confirmed) — zoom rail
+          + circular cropper; "Next" validates dimensions and commits the
+          crop, which is what produces `photo`. */}
+      {stage === "cropping" && (
         <>
-          <div className="centered mx-12 mb-4">
-            <ZoomIcon className="fill-theme mr-2 h-6 w-6" />
+          <div className="mb-4 mt-8 flex w-full items-center gap-3">
+            <ZoomIcon className="fill-orange h-6 w-6 shrink-0" />
             <input
-              className="slider-thumb h-0.5 w-full appearance-none bg-slate-200"
+              aria-label="Zoom"
+              className="slider-thumb bg-stroke h-1.5 w-full appearance-none rounded-full"
               type="range"
               min={1}
               max={maxZoom}
@@ -240,7 +322,7 @@ function Photo({ advance, photo$ }: PhotoProps) {
             />
           </div>
 
-          <div className="relative mb-2 h-96 w-full bg-slate-200">
+          <div className="bg-whiteBackground relative mb-2 h-96 w-full">
             <Cropper
               image={originalPhoto?.uri}
               crop={crop}
@@ -275,56 +357,86 @@ function Photo({ advance, photo$ }: PhotoProps) {
             />
           </div>
 
-          {pending ? (
-            <button className="btn-main">
-              <Image
-                alt="loading"
-                src="/logo/poh-white.svg"
-                className="animate-flip"
-                height={12}
-                width={12}
+          <div className="mt-2 flex w-full max-w-xs gap-3">
+            {onBack && (
+              <ActionButton
+                onClick={onBack}
+                label="Back"
+                variant="secondary"
+                className="flex-1"
               />
-              {loadingMessage}...
-            </button>
-          ) : (
-            <button className="btn-main" onClick={onCrop}>
-              <CheckmarkIcon className="mr-2 h-6 w-6 fill-white" />
-              Ready
-            </button>
-          )}
+            )}
+            <ActionButton
+              onClick={onCrop}
+              isLoading={pending}
+              disabled={pending}
+              label={pending ? `${loadingMessage}...` : "Next"}
+              className="flex-1"
+            />
+          </div>
         </>
       )}
 
-      {!!photo && (
-        <div className="flex flex-col items-center">
+      {/* ── Stage: confirmed (cropped photo committed) — the final portrait
+          (click to expand) so the user checks exactly what goes on-chain,
+          with Back/Next to move through the wizard. */}
+      {stage === "confirmed" && photo && (
+        <div className="mt-8 flex flex-col items-center">
           <Previewed
+            kind="image"
             uri={photo.uri}
             trigger={
               <Image
                 alt="preview"
-                className="rounded-full"
+                className="cursor-pointer rounded-full ring-1 ring-peach"
                 src={photo.uri}
                 width={256}
                 height={256}
               />
             }
           />
-          <button className="btn-main mt-4" onClick={advance}>
-            Next
+          <div className="mt-6 flex w-full max-w-xs gap-3">
+            {onBack && (
+              <ActionButton
+                onClick={onBack}
+                label="Back"
+                variant="secondary"
+                className="flex-1"
+              />
+            )}
+            <ActionButton onClick={advance} label="Next" className="flex-1" />
+          </div>
+        </div>
+      )}
+
+      {/* Escape hatch, every stage past empty — resets back to the empty
+          stage. "Cancel" while the camera is open (nothing captured yet),
+          "Retake" once an image exists. */}
+      {stage !== "empty" && (
+        <div className="mt-5 flex justify-center">
+          <button
+            className="text-orange flex items-center py-1 text-base font-medium hover:underline"
+            onClick={retakePhoto}
+          >
+            {stage !== "camera" && (
+              <ResetIcon className="fill-orange mr-1.5 h-5 w-5" />
+            )}
+            {stage === "camera" ? "Cancel" : "Retake"}
           </button>
         </div>
       )}
 
-      {(showCamera || !!originalPhoto || !!photo) && (
-        <button
-          className="centered text-orange mt-4 text-lg font-semibold uppercase"
-          onClick={retakePhoto}
-        >
-          <ResetIcon className="fill-orange mr-2 h-6 w-6" />
-          {showCamera ? "Return" : "Retake"}
-        </button>
+      {/* Checklist repeated while filming — the rules matter most at the
+          moment of capture, so opening the camera must not drop them
+          (Video keeps its checklist on screen for the same reason). */}
+      {stage === "camera" && (
+        <Checklist
+          title="Photo Checklist"
+          warning="Not following these guidelines will result in a loss of funds."
+          items={PHOTO_CHECKLIST}
+        />
       )}
-    </>
+    </div>
   );
 }
 

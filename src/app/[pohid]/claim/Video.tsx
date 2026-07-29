@@ -1,15 +1,18 @@
 import { ObservableObject } from "@legendapp/state";
+import ActionButton from "components/ActionButton";
 import Checklist from "components/Checklist";
 import Previewed from "components/Previewed";
 import Uploader from "components/Uploader";
-import Webcam from "components/Webcam";
+import Webcam, { CameraButton } from "components/Webcam";
 import useFullscreen from "hooks/useFullscreen";
 import { useLoading } from "hooks/useLoading";
+import useStaleGuard from "hooks/useStaleGuard";
 import CameraIcon from "icons/CameraMajor.svg";
 import InfoIcon from "icons/info.svg";
+import PlayIcon from "icons/PlayMajor.svg";
 import ResetIcon from "icons/ResetMinor.svg";
 import Image from "next/image";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import ReactWebcam from "react-webcam";
 import { toast } from "react-toastify";
 import {
@@ -22,8 +25,9 @@ import {
 import { useAccount } from "wagmi";
 import { MediaState } from "./Form";
 
-interface PhotoProps {
+interface VideoProps {
   advance: () => void;
+  onBack?: () => void;
   video$: ObservableObject<MediaState["video"]>;
   isRenewal: boolean;
   videoError: (error: string) => void;
@@ -32,7 +36,13 @@ interface PhotoProps {
 const SAMPLE_VIDEO_URL = "/api/media/sample-registration-video";
 const isSampleSubmissionEnabled = true;
 
-function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
+function VideoStep({
+  advance,
+  onBack,
+  video$,
+  isRenewal,
+  videoError,
+}: VideoProps) {
   const WARNING_TOAST_BASE_MS = 5000;
   const WARNING_TOAST_PER_MESSAGE_MS = 1500;
   const WARNING_TOAST_MAX_MS = 20000;
@@ -42,7 +52,8 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
   const { address } = useAccount();
 
   const timerRef = useRef<NodeJS.Timeout | null>(null);
-  const cancelledRef = useRef(false);
+  const recorderRef = useRef<MediaRecorder | null>(null);
+  const staleGuard = useStaleGuard();
   const fullscreenRef = useRef(null);
   const { isFullscreen, setFullscreen, toggleFullscreen } =
     useFullscreen(fullscreenRef);
@@ -57,8 +68,6 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
     [],
   );
   const [rawPreviewUri, setRawPreviewUri] = useState<string | null>(null);
-
-  const [recorder, setRecorder] = useState<MediaRecorder | null>(null);
 
   const loading = useLoading();
   const [pending, loadingMessage] = loading.use();
@@ -94,7 +103,7 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
     );
   };
 
-  const processVideoBlob = async (blob: Blob) => {
+  const processVideoBlob = async (blob: Blob, isStale: () => boolean) => {
     // Show a raw preview immediately so user sees their video while processing
     const previewUrl = URL.createObjectURL(blob);
     setRawPreviewUri((prev) => {
@@ -108,7 +117,8 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
     }
 
     const result = await processVideoInput(blob);
-    if (cancelledRef.current) {
+    if (isStale()) {
+      // User retook/cancelled (or left the step) while we were processing.
       URL.revokeObjectURL(previewUrl);
       return;
     }
@@ -160,15 +170,16 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
 
     setVideoValidationErrors([]);
     setVideoQualityWarnings([]);
-    cancelledRef.current = false;
+    const isStale = staleGuard.begin();
     loading.start("Processing video");
 
     try {
-      await processVideoBlob(file);
+      await processVideoBlob(file, isStale);
     } catch (err: unknown) {
-      setGenericProcessingError();
+      if (!isStale()) setGenericProcessingError();
     } finally {
-      loading.stop();
+      // A retake/supersede path owns the loader once this run goes stale.
+      if (!isStale()) loading.stop();
     }
   };
 
@@ -236,6 +247,7 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
       handledStop = true;
 
       if (timerRef.current) clearTimeout(timerRef.current);
+      recorderRef.current = null;
       setFullscreen(false);
       setRecording(false);
 
@@ -250,7 +262,7 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
 
       setVideoValidationErrors([]);
       setVideoQualityWarnings([]);
-      cancelledRef.current = false;
+      const isStale = staleGuard.begin();
       loading.start("Processing video");
 
       try {
@@ -260,17 +272,18 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
             (recordedChunks[0] instanceof Blob ? recordedChunks[0].type : "") ||
             (IS_IOS ? "video/mp4" : "video/webm"),
         });
-        await processVideoBlob(blob);
+        await processVideoBlob(blob, isStale);
       } catch (err: unknown) {
-        setGenericProcessingError();
+        if (!isStale()) setGenericProcessingError();
       } finally {
-        loading.stop();
+        // A retake/supersede path owns the loader once this run goes stale.
+        if (!isStale()) loading.stop();
       }
     };
 
     mediaRecorder.start();
 
-    setRecorder(mediaRecorder);
+    recorderRef.current = mediaRecorder;
     setRecording(true);
 
     //Auto - stop recording at MAX_DURATION
@@ -290,13 +303,32 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
 
   const stopRecording = () => {
     if (timerRef.current) clearTimeout(timerRef.current);
-    if (!recorder || !recording) return;
-    recorder.stop();
+    if (!recorderRef.current || !recording) return;
+    recorderRef.current.stop();
   };
 
+  // Tears down a recording session whose output nobody wants anymore:
+  // disarm the auto-stop timer and silence the recorder's handlers before
+  // stopping it, so its (always-async) onstop can't feed the processing
+  // pipeline. Only touches refs, hence safely stable.
+  const discardActiveRecording = useCallback(() => {
+    if (timerRef.current) clearTimeout(timerRef.current);
+    const recorder = recorderRef.current;
+    if (recorder) {
+      recorder.ondataavailable = null;
+      recorder.onstop = null;
+      if (recorder.state === "recording") recorder.stop();
+      recorderRef.current = null;
+    }
+  }, []);
+
+  // The recording session must not outlive the step.
+  useEffect(() => discardActiveRecording, [discardActiveRecording]);
+
   const retakeVideo = () => {
-    // Signal any in-flight processing to bail out
-    cancelledRef.current = true;
+    // Abandon in-flight processing and any live recording session.
+    staleGuard.invalidate();
+    discardActiveRecording();
 
     setShowCamera(false);
     setRecording(false);
@@ -354,23 +386,24 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
 
   return (
     <>
-      <span className="my-4 flex w-full flex-col text-2xl font-semibold">
-        Video
-        <div className="divider mt-4 w-2/3" />
-      </span>
+      <div className="flex w-full flex-col items-center text-center">
+        <h1 className="text-primaryText text-2xl font-semibold">
+          Record your <span className="text-peach">Video</span>
+        </h1>
+      </div>
 
-      <span className="mx-4 my-8 flex flex-col text-center sm:mx-12">
+      <span className="text-secondaryText mx-4 mb-8 mt-3 flex flex-col text-center text-sm leading-6 sm:mx-12">
         <span>
           Record a short video: hold your phone showing this wallet address
           (readable, no glare)
         </span>
-        <strong className="my-2 break-all font-mono text-sm sm:text-base">
+        <strong className="text-orange my-2 break-all font-mono text-sm sm:text-base">
           {address}
         </strong>
         <span>and say the phrase</span>
         <span className="my-2">
           <code className="text-orange">&quot;</code>
-          <strong>{phrase}</strong>
+          <strong className="text-orange">{phrase}</strong>
           <code className="text-orange">&quot;</code>
         </span>
       </span>
@@ -413,25 +446,36 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
           />
 
           <div className="mt-6 flex w-full flex-col items-center">
-            <button
-              className="gradient flex w-full max-w-xl items-center justify-center gap-3 rounded-full px-6 py-4 text-lg font-semibold text-white shadow-lg transition hover:opacity-90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+            <ActionButton
               onClick={() => setShowCamera(true)}
-            >
-              <CameraIcon className="h-6 w-6 fill-white" />
-              <span>Record with Camera (Recommended)</span>
-            </button>
+              ariaLabel="Record with Camera"
+              label={
+                <span className="flex items-center gap-2">
+                  <CameraIcon className="h-5 w-5 fill-white" />
+                  Record with Camera (Recommended)
+                </span>
+              }
+              className="w-full max-w-xs px-10 py-3.5"
+            />
 
-            <span className="text-primaryText mt-2 text-sm font-semibold">
-              OR
-            </span>
+            <span className="text-secondaryText mt-4 text-sm">OR</span>
 
             <Uploader
-              className="text-primary hover:text-orange mt-1 text-base font-semibold underline underline-offset-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-300"
+              className="text-orange mt-2 text-sm font-medium hover:underline"
               type="video"
               onDrop={handleUploadedVideo}
             >
               <span>Upload video</span>
             </Uploader>
+
+            {onBack && (
+              <ActionButton
+                onClick={onBack}
+                label="Back"
+                variant="secondary"
+                className="mt-6 w-full max-w-[10rem]"
+              />
+            )}
           </div>
         </>
       )}
@@ -441,15 +485,49 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
         <>
           <div tabIndex={0} ref={fullscreenRef}>
             <Webcam
-              isVideo
-              overlay
+              video
               recording={recording}
-              action={recording ? stopRecording : startRecording}
               fullscreen={isFullscreen}
               toggleFullscreen={toggleFullscreen}
-              loadCamera={setCamera}
-              phrase={phrase}
-            />
+              onCamera={setCamera}
+              overlay={
+                recording ? (
+                  <div className="centered absolute left-0 top-0 h-full w-full select-none bg-black text-center text-xl font-semibold uppercase text-white opacity-70 sm:text-3xl md:text-3xl lg:text-4xl">
+                    {phrase}
+                  </div>
+                ) : undefined
+              }
+              fallback={
+                <Uploader
+                  className="text-orange text-sm font-medium hover:underline"
+                  type="video"
+                  onDrop={handleUploadedVideo}
+                >
+                  <span>Upload video</span>
+                </Uploader>
+              }
+            >
+              <CameraButton
+                onClick={recording ? stopRecording : startRecording}
+                label={recording ? "Stop recording" : "Start recording"}
+                className={recording ? "btn-recording" : undefined}
+              >
+                {recording ? (
+                  <span className="mx-auto block h-6 w-6 rounded-[4px] bg-white" />
+                ) : (
+                  <PlayIcon className="mx-auto h-8 w-8 fill-white" />
+                )}
+              </CameraButton>
+            </Webcam>
+          </div>
+          <div className="mt-3 flex justify-center">
+            <button
+              className="text-orange py-1 text-base font-medium hover:underline disabled:opacity-50"
+              onClick={() => retakeVideo()}
+              disabled={recording}
+            >
+              Cancel
+            </button>
           </div>
           <Checklist
             title="Video Checklist"
@@ -462,7 +540,7 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
       {/* ── S3: Processing ── */}
       {isPreparing && (
         <div className="mt-4 flex flex-col items-center">
-          <button className="btn-main" disabled>
+          <button className="btn-primary" disabled>
             <Image
               alt="loading"
               src="/logo/poh-white.svg"
@@ -505,7 +583,7 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
       {isAccepted && (
         <div className="flex flex-col items-center">
           <Previewed
-            isVideo
+            kind="video"
             uri={video.uri}
             trigger={
               <div className="inline-block max-w-full overflow-hidden rounded-lg bg-black">
@@ -532,18 +610,20 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
               {videoQualityWarnings.length > 0 && (
                 <div className="mx-auto w-full max-w-lg">
                   <div className="mb-2 flex justify-center">
-                    <span className="bg-status-challenged/15 rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-[#D98A1F]">
+                    <span className="bg-status-challenged/15 text-status-challenged rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em]">
                       Warnings
                     </span>
                   </div>
-                  <ul className="flex flex-col items-center gap-2 text-center text-sm text-[#D98A1F]">
+                  <ul className="text-status-challenged flex flex-col items-center gap-2 text-center text-sm">
                     {videoQualityWarnings.map((warningMessage, idx) => (
                       <li
                         key={`accepted-warning-${idx}`}
                         className="flex items-start justify-center gap-2"
                       >
-                        <span className="mt-[7px] h-1.5 w-1.5 shrink-0 rounded-full bg-black" />
-                        <span className="text-[#D98A1F]">{warningMessage}</span>
+                        <span className="bg-status-challenged mt-[7px] h-1.5 w-1.5 shrink-0 rounded-full" />
+                        <span className="text-status-challenged">
+                          {warningMessage}
+                        </span>
                       </li>
                     ))}
                   </ul>
@@ -551,9 +631,17 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
               )}
             </div>
           )}
-          <button className="btn-main mt-4" onClick={advance}>
-            Next
-          </button>
+          <div className="mt-4 flex w-full max-w-xs gap-3">
+            {onBack && (
+              <ActionButton
+                onClick={onBack}
+                label="Back"
+                variant="secondary"
+                className="flex-1"
+              />
+            )}
+            <ActionButton onClick={advance} label="Next" className="flex-1" />
+          </div>
         </div>
       )}
 
@@ -587,7 +675,7 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
                       key={`error-${idx}`}
                       className="flex items-start justify-center gap-2"
                     >
-                      <span className="mt-[7px] h-1.5 w-1.5 shrink-0 rounded-full bg-black" />
+                      <span className="bg-status-rejected mt-[7px] h-1.5 w-1.5 shrink-0 rounded-full" />
                       <span className="text-status-rejected">
                         {errorMessage}
                       </span>
@@ -605,18 +693,20 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
                 }
               >
                 <div className="mb-2 flex justify-center">
-                  <span className="bg-status-challenged/15 rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-[#D98A1F]">
+                  <span className="bg-status-challenged/15 text-status-challenged rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em]">
                     Warnings
                   </span>
                 </div>
-                <ul className="mx-auto flex w-full max-w-lg flex-col items-center gap-2 text-center text-sm text-[#D98A1F]">
+                <ul className="text-status-challenged mx-auto flex w-full max-w-lg flex-col items-center gap-2 text-center text-sm">
                   {videoQualityWarnings.map((warningMessage, idx) => (
                     <li
                       key={`warning-${idx}`}
                       className="flex items-start justify-center gap-2"
                     >
-                      <span className="mt-[7px] h-1.5 w-1.5 shrink-0 rounded-full bg-black" />
-                      <span className="text-[#D98A1F]">{warningMessage}</span>
+                      <span className="bg-status-challenged mt-[7px] h-1.5 w-1.5 shrink-0 rounded-full" />
+                      <span className="text-status-challenged">
+                        {warningMessage}
+                      </span>
                     </li>
                   ))}
                 </ul>
@@ -627,21 +717,18 @@ function VideoStep({ advance, video$, isRenewal, videoError }: PhotoProps) {
       )}
 
       {/* ── Bottom action button ── */}
-      {((showCamera && !pending) ||
-        isAccepted ||
-        isProcessing ||
-        isPreparing ||
-        hasError) && (
+      {(isAccepted || isProcessing || isPreparing || hasError) && (
         <button
-          className="centered text-orange mt-4 text-lg font-semibold uppercase disabled:opacity-50"
+          className="text-orange mx-auto mt-3 flex items-center self-center py-1 text-base font-medium hover:underline"
           onClick={() => retakeVideo()}
-          disabled={recording}
         >
-          <ResetIcon className="fill-orange mr-2 h-6 w-6" />
+          {!(isProcessing || isPreparing) && (
+            <ResetIcon className="fill-orange mr-1.5 h-5 w-5" />
+          )}
           {isProcessing || isPreparing
             ? "Cancel"
-            : showCamera
-              ? "Return"
+            : isAccepted
+              ? "Retake"
               : "Try Again"}
         </button>
       )}

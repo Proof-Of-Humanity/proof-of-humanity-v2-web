@@ -105,9 +105,8 @@
     background-image: radial-gradient(circle, #ffb08a 0 40%, transparent 42%);
   }
 
-  .btn-primary,
-  .btn-main {
-    @apply centered min-h-[48px] w-full whitespace-nowrap rounded-btn px-8 py-2.5 font-normal normal-case text-white transition duration-200 ease-premium disabled:opacity-40 md:w-auto;
+  .btn-primary {
+    @apply centered min-h-[48px] w-full whitespace-nowrap rounded-btn border border-transparent px-8 py-2.5 font-normal normal-case text-white transition duration-200 ease-premium disabled:opacity-40 md:w-auto;
   }
 
   .btn-secondary {
@@ -198,16 +197,6 @@
   #request-evidence-top,
   #request-evidence-bottom {
     scroll-margin-top: 6rem;
-  }
-
-  .btn-primary svg,
-  .btn-secondary svg {
-    transition: transform 200ms cubic-bezier(0.22, 0.61, 0.36, 1);
-  }
-
-  .btn-primary:hover svg,
-  .btn-secondary:hover svg {
-    transform: translateX(2px);
   }
 
   .backdrop {
@@ -922,14 +911,22 @@
     background-color: theme("colors.dark.status.rejected");
   }
 
-  .btn-primary,
-  .btn-main {
+  .btn-primary {
     background: linear-gradient(90deg, #ff7a5f 0%, #ff9a6a 100%);
     box-shadow: 0 10px 24px rgba(255, 122, 95, 0.1);
   }
 
+  .btn-recording {
+    background: linear-gradient(90deg, #e5484d 0%, #f2555a 100%);
+    box-shadow: 0 10px 24px rgba(229, 72, 77, 0.25);
+  }
+
   .slider-thumb::-webkit-slider-thumb {
     @apply bg-theme h-4 w-4 cursor-pointer appearance-none rounded-full;
+  }
+
+  .slider-thumb::-moz-range-thumb {
+    @apply bg-theme h-4 w-4 cursor-pointer rounded-full border-0;
   }
 
   .centered {

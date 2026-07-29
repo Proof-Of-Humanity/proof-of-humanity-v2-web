@@ -397,7 +397,7 @@ function Review({
             </p>
             <div className="mt-3">
               <button
-                className="btn-main w-full py-3 text-sm font-bold"
+                className="btn-primary w-full py-3 text-sm font-bold"
                 onClick={retryEmail}
               >
                 Save email for notifications
@@ -405,7 +405,7 @@ function Review({
             </div>
           </div>
         ) : loadingMessage ? (
-          <button className="btn-main gap-2 md:w-full" disabled>
+          <button className="btn-primary gap-2 md:w-full" disabled>
             <Image
               alt="loading"
               src="/logo/poh-white.svg"
@@ -416,13 +416,13 @@ function Review({
             {loadingMessage}...
           </button>
         ) : !totalCost ? (
-          <button className="btn-main md:w-full" disabled>
+          <button className="btn-primary md:w-full" disabled>
             Loading deposit...
           </button>
         ) : (
           <AuthGuard signInButtonProps={{ className: "md:w-full" }}>
             <button
-              className="btn-main md:w-full"
+              className="btn-primary md:w-full"
               onClick={submit}
               disabled={funds.isLoading || funds.insufficient}
             >

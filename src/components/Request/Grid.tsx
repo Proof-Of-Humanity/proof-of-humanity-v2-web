@@ -379,7 +379,7 @@ function RequestsGrid() {
 
       {!pending && (
         <button
-          className="btn-main gradient my-8 px-8 py-4 md:mx-auto"
+          className="btn-primary gradient my-8 px-8 py-4 md:mx-auto"
           onClick={() => filter$.cursor.set((c) => c + 1)}
         >
           Load More
