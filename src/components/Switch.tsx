@@ -25,7 +25,7 @@ function Switch({ checked, onChange, label, className, small }: SwitchProps) {
     >
       <span
         className={cn(
-          "absolute top-1/2 -translate-y-1/2 rounded-full bg-white transition-transform duration-200 ease-premium",
+          "absolute left-0 top-1/2 -translate-y-1/2 rounded-full bg-white transition-transform duration-200 ease-premium",
           small ? "h-3 w-3" : "h-5 w-5",
           checked
             ? small

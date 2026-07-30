@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { ObservableObject, ObservablePrimitiveBaseFns } from "@legendapp/state";
 import ExternalLink from "components/ExternalLink";
 import Field from "components/Field";
@@ -12,6 +13,7 @@ import { getContractInfo } from "contracts";
 import { SupportedChainId, idToChain, getForeignChain } from "config/chains";
 import { ContractData } from "data/contract";
 import InfoIcon from "icons/info.svg";
+import { CurrencyIcon } from "components/CurrencyField";
 import ExternalLinkIcon from "components/ExternalLinkIcon";
 import Image from "next/image";
 import { prettifyId } from "utils/identifier";
@@ -47,6 +49,12 @@ interface ReviewProps {
   isRenewal: boolean;
 }
 
+const reviewChecklist = [
+  "The photo must face forward, with no coverings that hide facial features.",
+  "No filters, heavy makeup, or adornments that obscure the face. Hats are allowed.",
+  "Your video shows the correct wallet address clearly, and you say the exact required phrase.",
+];
+
 function Review({
   arbitrationInfo,
   contractData,
@@ -77,6 +85,12 @@ function Review({
   const missingMedia = [!photo && "photo", !video && "video"].filter(
     Boolean,
   ) as string[];
+  const [checkedRules, setCheckedRules] = useState<boolean[]>(() =>
+    reviewChecklist.map(() => false),
+  );
+  const toggleRule = (index: number) =>
+    setCheckedRules((prev) => prev.with(index, !prev[index]));
+  const allRulesChecked = checkedRules.every(Boolean);
   const { address } = useAccount();
   const chainId = useChainId() as SupportedChainId;
   const { switchChain } = useSwitchChain();
@@ -105,6 +119,10 @@ function Review({
     },
     { active: funds.isLoading },
     { active: funds.insufficient, message: funds.message },
+    {
+      active: !allRulesChecked,
+      message: "Confirm every item in the review checklist first.",
+    },
   ]);
 
   const currentChain = idToChain(chainId)!;
@@ -128,17 +146,12 @@ function Review({
       ? BigInt(foreignContractData.baseDeposit) + foreignArbitrationCost
       : null;
   const totalCostLabel = totalCost ? formatEther(totalCost) : "Loading...";
-
+  const depositMet =
+    !!totalCost && selfFundedWei !== undefined && selfFundedWei >= totalCost;
   const jumperUrl = `https://jumper.exchange/?toChain=${currentChain.id}&toToken=0x0000000000000000000000000000000000000000`;
 
   // Assume Gnosis is always cheaper (1 xDAI = 1 USD) until we have ETH/USD price feeds
   const isCurrentChainCheaper = chainId === 100;
-
-  const reviewChecklist = [
-    "The photo must face forward, with no coverings that hide facial features.",
-    "No filters, heavy makeup, or adornments that obscure the face. Hats are allowed.",
-    "Your video shows the correct wallet address clearly, and you say the exact required phrase.",
-  ];
 
   return (
     <div className="flex w-full flex-col items-center pb-2">
@@ -165,43 +178,6 @@ function Review({
             (updated <TimeAgo time={arbitrationInfo.updateTime} />)
           </span>
         </p>
-      </div>
-
-      {/* Boxed review checklist, per Figma; keeps the deposit-loss warning. */}
-      <div className="content-card mt-8 w-full px-5 py-5">
-        <div className="flex flex-col items-center text-center">
-          <p className="text-primaryText flex items-center gap-2 font-semibold">
-            <InfoIcon className="h-5 w-5 stroke-current stroke-2 text-peach" />
-            Review
-          </p>
-          <p className="text-secondaryText mt-1 text-sm">
-            Check the uploaded files and ensure they comply with the rules —
-            incorrect submissions can be challenged and your{" "}
-            <span className="text-status-rejected font-medium">
-              deposit may be lost.
-            </span>
-          </p>
-        </div>
-        <ul className="mt-4 flex flex-col gap-2.5 text-left text-sm">
-          {reviewChecklist.map((text) => (
-            <li key={text} className="flex items-start gap-2.5">
-              <svg
-                className="mt-0.5 h-5 w-5 shrink-0 text-green-500"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth={2}
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-                />
-              </svg>
-              <span className="text-primaryText">{text}</span>
-            </li>
-          ))}
-        </ul>
       </div>
 
       <div className="mx-auto mt-8 flex w-full min-w-0 flex-col items-center justify-center gap-4 overflow-hidden sm:grid sm:grid-cols-[1fr_auto_1fr_auto_1fr] sm:items-center sm:gap-0">
@@ -243,7 +219,46 @@ function Review({
         </div>
       </div>
 
-      <div className="flex w-full flex-col">
+      <div className="content-card mt-8 w-full px-5 py-5">
+        <div className="flex flex-col items-center text-center">
+          <p className="text-primaryText flex items-center gap-2 font-semibold">
+            <InfoIcon className="h-5 w-5 stroke-current stroke-2 text-peach" />
+            Review
+          </p>
+          <p className="text-secondaryText mt-1 text-sm">
+            Check the uploaded files and ensure they comply with the rules —
+            incorrect submissions can be challenged and your{" "}
+            <span className="text-status-rejected font-medium">
+              deposit may be lost.
+            </span>
+          </p>
+        </div>
+        <ul className="mt-4 flex flex-col gap-2.5 text-left text-sm">
+          {reviewChecklist.map((text, index) => (
+            <li key={text}>
+              <label className="flex cursor-pointer items-center gap-2.5">
+                <input
+                  type="checkbox"
+                  className="checkbox h-4 w-4 shrink-0 cursor-pointer"
+                  checked={checkedRules[index]}
+                  onChange={() => toggleRule(index)}
+                />
+                <span
+                  className={`transition-colors duration-200 ${
+                    checkedRules[index]
+                      ? "text-primaryText"
+                      : "text-secondaryText"
+                  }`}
+                >
+                  {text}
+                </span>
+              </label>
+            </li>
+          ))}
+        </ul>
+      </div>
+
+      <div className="mt-8 flex w-full flex-col">
         <Field label="Display Name" value={name} disabled />
         <Field label="Connected Wallet" value={address} disabled />
         <Field
@@ -254,85 +269,72 @@ function Review({
         {email ? <Field label="Email" value={email} disabled /> : null}
 
         <Label className="!mt-2">
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
+          <div className="flex w-full items-center justify-between gap-2">
             <span>{isRenewal ? "Deposit" : "Initial deposit"}</span>
             {funds.balance !== undefined && (
-              <span className="text-primaryText text-sm normal-case sm:text-base">
-                Your balance:{" "}
-                <strong>
-                  {formatEth(funds.balance)} {nativeCurrency.symbol}
-                </strong>
+              <span className="text-secondaryText text-sm font-normal normal-case">
+                Balance: {formatEth(funds.balance)} {nativeCurrency.symbol}
               </span>
             )}
-            <ExternalLink
-              href={jumperUrl}
-              className="cursor-pointer py-1 text-sm font-semibold normal-case text-purple-600 transition-all hover:text-purple-500 hover:underline sm:ml-auto"
-            >
-              Need {currentChain.nativeCurrency.symbol}? bridge to{" "}
-              {currentChain.name} →
-            </ExternalLink>
           </div>
         </Label>
         <div className="txt mb-8 flex flex-col">
           <div
-            className={`flex flex-col gap-3 transition-opacity sm:flex-row sm:flex-wrap sm:items-center sm:gap-2 ${
-              submitForFree ? "opacity-50" : ""
+            className={`transition-opacity ${submitForFree ? "opacity-50" : ""}`}
+          >
+            <Field
+              type="number"
+              className="no-spinner"
+              step="any"
+              min={0}
+              max={totalCost ? formatEther(totalCost) : undefined}
+              value={selfFunded}
+              disabled={!totalCost || submitForFree}
+              onChange={(event) => {
+                const eth = Math.max(0, +event.target.value || 0);
+                const maxEth = totalCost ? +formatEther(totalCost) : Infinity;
+                funding$.set(
+                  eth >= maxEth
+                    ? { kind: "fullDeposit" }
+                    : { kind: "custom", eth, chainId },
+                );
+              }}
+              trailing={
+                <div className="mr-4 flex shrink-0 items-center gap-2">
+                  <button
+                    type="button"
+                    disabled={!totalCost || submitForFree}
+                    onClick={() => funding$.set({ kind: "fullDeposit" })}
+                    className="text-orange text-xs font-semibold tracking-wide transition-opacity hover:opacity-80 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    MAX
+                  </button>
+                  <CurrencyIcon symbol={nativeCurrency.symbol} />
+                </div>
+              }
+            />
+          </div>
+          <span
+            className={`mt-1.5 text-center text-xs ${
+              depositMet && !submitForFree
+                ? "text-secondaryText"
+                : "text-orange"
             }`}
           >
-            <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
-              <div className="w-full sm:w-48">
-                <Field
-                  type="number"
-                  className="no-spinner text-right"
-                  step="any"
-                  min={0}
-                  max={totalCost ? formatEther(totalCost) : undefined}
-                  value={selfFunded}
-                  disabled={!totalCost || submitForFree}
-                  onChange={(event) =>
-                    funding$.set({
-                      kind: "custom",
-                      eth: +event.target.value,
-                      chainId,
-                    })
-                  }
-                />
-              </div>
-              <div className="flex flex-wrap items-center gap-2 text-sm sm:text-base">
-                <span>of</span>
-                <span
-                  onClick={() =>
-                    !submitForFree &&
-                    totalCost &&
-                    funding$.set({ kind: "fullDeposit" })
-                  }
-                  className={`font-semibold underline underline-offset-2 ${
-                    submitForFree
-                      ? "cursor-not-allowed text-slate-400"
-                      : "text-orange cursor-pointer"
-                  }`}
-                >
-                  {totalCostLabel}
-                </span>
-                <span>{nativeCurrency.symbol}</span>
-              </div>
-            </div>
-            {!isCurrentChainCheaper && foreignCost && (
-              <>
-                <span className="hidden xl:block">•</span>
-                <span
-                  className="inline-flex cursor-pointer items-center py-1 text-sm font-semibold text-purple-600 transition-all hover:text-purple-500 hover:underline"
-                  onClick={() => switchChain?.({ chainId: foreignChainId })}
-                >
-                  Switch to {foreignChain.name} for a smaller deposit (
-                  {formatEther(foreignCost)}{" "}
-                  {foreignChain.nativeCurrency.symbol})
-                </span>
-              </>
-            )}
-          </div>
+            {submitForFree
+              ? `0 of ${totalCostLabel} ${nativeCurrency.symbol} — covered by PoH supporters`
+              : `${selfFunded ?? 0} of ${totalCostLabel} ${nativeCurrency.symbol} required`}
+          </span>
+          {funds.insufficient && !submitForFree && (
+            <ExternalLink
+              href={jumperUrl}
+              className="text-orange mt-1 cursor-pointer self-center text-xs font-semibold transition-all hover:underline hover:opacity-80"
+            >
+              Need {nativeCurrency.symbol}? Bridge to {currentChain.name} →
+            </ExternalLink>
+          )}
 
-          <div className="text-primaryText mt-2 flex items-start gap-3 sm:items-center">
+          <div className="text-primaryText mt-3 flex items-start gap-3 sm:items-center">
             <Switch
               checked={submitForFree}
               onChange={toggleSubmitForFree}
@@ -348,12 +350,27 @@ function Review({
             </span>
           </div>
 
-          <span className="mt-1 text-blue-500">
-            If you don&apos;t fund the deposit now, PoH supporters can cover it
-            for you. The deposit is reimbursed after successful{" "}
-            {isRenewal ? "renewal" : "registration"} and lost only if the
-            profile is rejected.
+          <span className="text-secondaryText mt-2 flex items-start gap-2 text-sm">
+            <InfoIcon
+              aria-hidden
+              className="mt-0.5 h-4 w-4 shrink-0 stroke-current stroke-2"
+            />
+            <span>
+              The deposit is reimbursed after successful{" "}
+              {isRenewal ? "renewal" : "registration"} and lost only if the
+              profile is rejected. Any amount not contributed now can be covered
+              by PoH supporters later.
+            </span>
           </span>
+          {!isCurrentChainCheaper && foreignCost && (
+            <span
+              className="text-orange hover:text-orange/80 mt-1.5 cursor-pointer self-start text-sm transition-colors"
+              onClick={() => switchChain?.({ chainId: foreignChainId })}
+            >
+              Switch to {foreignChain.name} for a smaller deposit (
+              {formatEther(foreignCost)} {foreignChain.nativeCurrency.symbol})
+            </span>
+          )}
           {!isRenewal && pohId.toLowerCase() !== address?.toLowerCase() ? (
             <span className="text-orange mt-2">
               <span className="font-semibold underline">Beware</span>: Your PoH

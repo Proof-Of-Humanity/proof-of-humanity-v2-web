@@ -455,7 +455,7 @@ function VideoStep({
                   Record with Camera (Recommended)
                 </span>
               }
-              className="w-full max-w-xs px-10 py-3.5"
+              className="w-full max-w-sm px-10 py-3.5"
             />
 
             <span className="text-secondaryText mt-4 text-sm">OR</span>

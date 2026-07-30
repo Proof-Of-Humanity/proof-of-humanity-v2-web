@@ -6,6 +6,7 @@ import {
   PohIdReferenceRow,
   WalletReferenceRow,
 } from "components/IdentityReferenceRow";
+import NeedsVouchIcon from "icons/NeedsVouch.svg";
 import NewTabIcon from "icons/NewTab.svg";
 import { explorerLink, idToChain } from "config/chains";
 import { machinifyId, prettifyId } from "utils/identifier";
@@ -163,12 +164,13 @@ const Finalized: React.FC<FinalizedProps> = ({
         )}
       </div>
 
-      <div className="mt-6 flex items-center text-lg">
+      <div className="mt-6 flex flex-col items-center gap-3 text-lg">
         {isRenewal
           ? "Your renewal request starts with the status:"
           : "Your profile starts with the status:"}
-        <span className="bg-status-vouching ml-2 rounded-full px-3 py-1 text-base font-semibold text-white">
-          Needs Vouch
+        <span className="bg-whiteBackground border-stroke flex items-center gap-2 rounded-full border px-3 py-2">
+          <NeedsVouchIcon className="text-status-vouching h-4 w-4 shrink-0" />
+          <span className="text-status-vouching text-sm">Needs Vouch</span>
         </span>
       </div>
 

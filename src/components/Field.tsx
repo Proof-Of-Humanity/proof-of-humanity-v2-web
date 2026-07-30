@@ -10,6 +10,7 @@ type FieldCommonProps = {
   labelClassName?: string;
   status?: FieldStatus;
   message?: ReactNode;
+  trailing?: ReactNode;
 };
 
 type FieldProps =
@@ -32,6 +33,7 @@ function Field({
   textarea = false,
   status,
   message,
+  trailing,
   className,
   ...props
 }: FieldProps) {
@@ -64,6 +66,7 @@ function Field({
               )}
               {...(props as InputHTMLAttributes<HTMLInputElement>)}
             />
+            {trailing}
             {status === "error" && (
               <CloseCircleOutlineIcon
                 aria-hidden
