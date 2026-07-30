@@ -1,7 +1,7 @@
-import { getChainRpc, idToChain, SupportedChainId } from "config/chains";
+import { getChainTransport, idToChain, SupportedChainId } from "config/chains";
 import { getContractInfo } from "contracts/registry";
 import { cache } from "react";
-import { createPublicClient, erc20Abi, http } from "viem";
+import { createPublicClient, erc20Abi } from "viem";
 import { mainnet } from "viem/chains";
 
 // Court configuration constants
@@ -120,7 +120,7 @@ export const getHumanityCourtFeeForJuror = cache(
 
     const publicClient = createPublicClient({
       chain,
-      transport: http(getChainRpc(chain.id)),
+      transport: getChainTransport(chain.id),
     });
     const courtId =
       chainId === 100
@@ -339,7 +339,7 @@ async function getTotalStakedAllChains(): Promise<number> {
 async function getTotalPnkSupply(): Promise<number> {
   const publicClient = createPublicClient({
     chain: mainnet,
-    transport: http(getChainRpc(mainnet.id)),
+    transport: getChainTransport(mainnet.id),
   });
 
   const totalSupply = await publicClient.readContract({

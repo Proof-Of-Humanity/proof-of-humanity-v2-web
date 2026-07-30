@@ -31,6 +31,9 @@ import { Address, parseEther } from "viem";
 import { useAccount, useBalance, useChainId } from "wagmi";
 import { useRouter } from "next/navigation";
 
+const toWeiBigInt = (amount: bigint | string | number | null | undefined) =>
+  BigInt(amount ?? 0);
+
 interface SideFundingProps {
   side: SideEnum;
   arbitrator: Address;
@@ -311,11 +314,13 @@ const Appeal: React.FC<AppealProps> = ({
           Number(currentChallenge.nbRounds) + 1 ===
           currentChallenge.rounds.length;
         const claimerFunds = isPartiallyFunded
-          ? currentChallenge.rounds.at(-1)?.requesterFund.amount
+          ? toWeiBigInt(currentChallenge.rounds.at(-1)?.requesterFund.amount)
           : 0n;
         const challengerFunds = isPartiallyFunded
           ? currentChallenge.rounds.at(-1)?.challengerFund
-            ? currentChallenge.rounds.at(-1)?.challengerFund?.amount
+            ? toWeiBigInt(
+                currentChallenge.rounds.at(-1)?.challengerFund?.amount,
+              )
             : 0n
           : 0n;
         setClaimerFunds(claimerFunds);
