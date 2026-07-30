@@ -1,6 +1,6 @@
-import { cookieStorage, createStorage, http } from "wagmi";
+import { cookieStorage, createStorage } from "wagmi";
 import { WagmiAdapter } from "@reown/appkit-adapter-wagmi";
-import { supportedChains, getChainRpc } from "./chains";
+import { supportedChains, getChainTransport } from "./chains";
 
 export const projectId = process.env.WALLET_CONNECT_PROJECT_ID;
 
@@ -11,7 +11,7 @@ if (!projectId) {
 const transports = Object.fromEntries(
   supportedChains.map((chain) => [
     [chain.id],
-    http(getChainRpc(Number(chain.id))),
+    getChainTransport(Number(chain.id)),
   ]),
 );
 

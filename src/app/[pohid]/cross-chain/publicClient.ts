@@ -1,7 +1,7 @@
-import { getChainRpc, type SupportedChainId } from "config/chains";
-import { createPublicClient, http } from "viem";
+import { getChainTransport, type SupportedChainId } from "config/chains";
+import { createPublicClient } from "viem";
 
 export const getChainPublicClient = (chainId: SupportedChainId) =>
   createPublicClient({
-    transport: http(getChainRpc(chainId)),
+    transport: getChainTransport(chainId),
   });

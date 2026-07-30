@@ -1,15 +1,19 @@
-import { SupportedChainId, getChainRpc, supportedChains } from "config/chains";
+import {
+  SupportedChainId,
+  getChainTransport,
+  supportedChains,
+} from "config/chains";
 import { getContractInfo } from "contracts";
 import { sdk } from "config/subgraph";
 import { cache } from "react";
 import { MetaEvidenceFile } from "types/docs";
 import { ipfsFetch } from "utils/ipfs";
-import { createPublicClient, http } from "viem";
+import { createPublicClient } from "viem";
 import { settleChainQueries } from "./chainQuery";
 
 export const getContractData = cache(async (chainId: SupportedChainId) => {
   const publicClient = createPublicClient({
-    transport: http(getChainRpc(chainId)),
+    transport: getChainTransport(chainId),
   });
   const [contract, transferCooldown] = await Promise.all([
     sdk[chainId].Contract(),

@@ -1,5 +1,6 @@
 import { ChainSet, configSetSelection } from "contracts";
 import { gnosis, gnosisChiado, mainnet, sepolia } from "@reown/appkit/networks";
+import { fallback, http } from "viem";
 import {
   getForeignChain as getForeignChainMain,
   idToChain as idToChainMain,
@@ -24,7 +25,7 @@ const chainExplorers = [
   {
     id: 100,
     name: "Gnosis Chain",
-    explorer: "gnosisscan.io",
+    explorer: "gnosis.blockscout.com",
   },
   {
     id: 10200,
@@ -107,6 +108,16 @@ export function getChainRpc(id: number): string {
     default:
       throw new Error("chain not supported");
   }
+}
+
+export function getChainTransport(id: number) {
+  const publicRpc =
+    id === mainnet.id
+      ? "https://ethereum-rpc.publicnode.com"
+      : idToChainAny(id)?.rpcUrls.default.http[0];
+  if (!publicRpc) throw new Error("chain not supported");
+
+  return fallback([http(getChainRpc(id)), http(publicRpc)]);
 }
 
 export function getForeignChain(chainId: number) {
