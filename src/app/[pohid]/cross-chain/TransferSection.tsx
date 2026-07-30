@@ -15,7 +15,10 @@ import {
   type SupportedChain,
 } from "config/chains";
 import useCCPoHWrite from "contracts/hooks/useCCPoHWrite";
-import { getWriteErrorMessage } from "hooks/useActionFeedback";
+import {
+  getWriteErrorMessage,
+  WAITING_FOR_INDEXER_TOOLTIP,
+} from "hooks/useActionFeedback";
 import useWeb3Loaded from "hooks/useWeb3Loaded";
 import { useProfileOptimistic } from "optimistic/profile";
 import TransferIcon from "icons/Transfer.svg";
@@ -112,7 +115,7 @@ export default function TransferSection({
         label="Transfer"
         icon={TransferIcon}
         disabled
-        showTooltip
+        tooltip={WAITING_FOR_INDEXER_TOOLTIP}
       />
     );
   }
@@ -132,10 +135,9 @@ export default function TransferSection({
         icon={TransferIcon}
         onClick={() => setIsTransferModalOpen(true)}
         disabled={isReconciling}
-        showTooltip={isReconciling}
+        tooltip={isReconciling ? WAITING_FOR_INDEXER_TOOLTIP : undefined}
       />
       <Modal
-        formal
         className={CROSS_CHAIN_MODAL_CLASS}
         open={isTransferModalOpen}
         onClose={closeTransferModal}

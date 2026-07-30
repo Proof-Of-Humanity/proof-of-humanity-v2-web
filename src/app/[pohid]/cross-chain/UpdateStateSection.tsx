@@ -16,7 +16,10 @@ import {
 } from "config/chains";
 import useCCPoHWrite from "contracts/hooks/useCCPoHWrite";
 import type { ProfileHumanityQuery } from "generated/graphql";
-import { getWriteErrorMessage } from "hooks/useActionFeedback";
+import {
+  getWriteErrorMessage,
+  WAITING_FOR_INDEXER_TOOLTIP,
+} from "hooks/useActionFeedback";
 import useWeb3Loaded from "hooks/useWeb3Loaded";
 import { useProfileOptimistic } from "optimistic/profile";
 import { timeAgo } from "utils/time";
@@ -111,7 +114,7 @@ export default function UpdateStateSection({
         label="Update state"
         icon={LoadingIcon}
         disabled
-        showTooltip
+        tooltip={WAITING_FOR_INDEXER_TOOLTIP}
         className="basis-full text-center"
       />
     );
@@ -124,11 +127,10 @@ export default function UpdateStateSection({
         icon={LoadingIcon}
         onClick={() => setIsUpdateModalOpen(true)}
         disabled={isReconciling}
-        showTooltip={isReconciling}
+        tooltip={isReconciling ? WAITING_FOR_INDEXER_TOOLTIP : undefined}
         className="basis-full text-center"
       />
       <Modal
-        formal
         className={CROSS_CHAIN_MODAL_CLASS}
         open={isUpdateModalOpen}
         onClose={closeUpdateModal}
