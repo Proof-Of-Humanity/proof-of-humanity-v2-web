@@ -1,5 +1,9 @@
-import { SupportedChainId, getChainRpc, supportedChains } from "config/chains";
-import { Address, createPublicClient, http } from "viem";
+import {
+  SupportedChainId,
+  getChainTransport,
+  supportedChains,
+} from "config/chains";
+import { Address, createPublicClient } from "viem";
 import Error from "next/error";
 import { KlerosLiquid } from "../deployments/KlerosLiquid";
 
@@ -34,7 +38,7 @@ export class APIArbitrator {
     this.address = _arbitrator;
     this.publicClient = createPublicClient({
       chain: supportedChains[_chainId],
-      transport: http(getChainRpc(_chainId)),
+      transport: getChainTransport(_chainId),
     });
   }
   private static getApiReader(
