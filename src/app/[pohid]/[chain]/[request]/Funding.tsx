@@ -12,7 +12,7 @@ import { useLoading } from "hooks/useLoading";
 import useFundingAmount from "hooks/useFundingAmount";
 import { resolveTxState } from "utils/txState";
 import type { RequestOptimisticOverlay } from "optimistic/types";
-import { Hash, formatEther } from "viem";
+import { Hash } from "viem";
 import useChainParam from "hooks/useChainParam";
 import { formatEth } from "utils/misc";
 import { idToChain } from "config/chains";
@@ -53,9 +53,9 @@ const FundButton: React.FC<FundButtonProps> = ({
   const {
     input: addedFundInput,
     setInput: setAddedFundInput,
-    resetInput,
+    setMax,
     inputAmount,
-    remainingAmount,
+    maxInput: maxFundAmount,
     unit,
     isWrongChain,
     disabled: isDisabled,
@@ -64,7 +64,6 @@ const FundButton: React.FC<FundButtonProps> = ({
     chainId: chain.id,
     funded,
     totalCost,
-    defaultToRemaining: true,
     checks: [
       { active: isReconciling, message: "Waiting for indexer" },
       { active: isLoading },
@@ -72,9 +71,8 @@ const FundButton: React.FC<FundButtonProps> = ({
   });
   const closeModal = useCallback(() => {
     setIsModalOpen(false);
-    resetInput();
     loading.stop();
-  }, [loading, resetInput]);
+  }, [loading]);
 
   const [prepareFund] = usePoHWrite(
     "fundRequest",
@@ -109,7 +107,6 @@ const FundButton: React.FC<FundButtonProps> = ({
     ),
   );
 
-  const maxFundAmount = formatEther(remainingAmount);
   const totalCostEth = formatEth(totalCost);
   const progress =
     totalCostEth > 0
@@ -139,7 +136,7 @@ const FundButton: React.FC<FundButtonProps> = ({
     <>
       <ActionButton
         onClick={() => {
-          setAddedFundInput(maxFundAmount);
+          setMax();
           setIsModalOpen(true);
         }}
         label="Fund"
@@ -184,6 +181,7 @@ const FundButton: React.FC<FundButtonProps> = ({
             max={maxFundAmount}
             value={addedFundInput}
             onChange={(e) => setAddedFundInput(e.target.value)}
+            onMax={setMax}
             disabled={isLoading}
           />
         </div>

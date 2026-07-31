@@ -20,22 +20,22 @@ import { prettifyId } from "utils/identifier";
 import { ipfs } from "utils/ipfs";
 import { formatEth } from "utils/misc";
 import { resolveTxState } from "utils/txState";
-import { Abi, Hash, formatEther, parseEther } from "viem";
+import { Abi, Hash, formatEther } from "viem";
 import { useAccount, useChainId, useReadContract, useSwitchChain } from "wagmi";
 import useEnoughFunds from "hooks/useEnoughFunds";
+import { EmailSubmissionStatus, MediaState, SubmissionState } from "./Form";
 import {
-  EmailSubmissionStatus,
-  FundingChoice,
-  fundingEth,
-  MediaState,
-  SubmissionState,
-} from "./Form";
+  Funding,
+  clampFundingInput,
+  fundingDisplay,
+  computeFundingWei,
+} from "utils/funding";
 
 interface ReviewProps {
   arbitrationInfo: ContractData["arbitrationInfo"];
   contractData: Record<SupportedChainId, ContractData | null>;
   totalCost: bigint | null;
-  funding$: ObservablePrimitiveBaseFns<FundingChoice>;
+  funding$: ObservablePrimitiveBaseFns<Funding>;
   state$: ObservableObject<SubmissionState>;
   media$: ObservableObject<MediaState>;
   loadingMessage?: string;
@@ -73,10 +73,10 @@ function Review({
   isRenewal,
 }: ReviewProps) {
   const funding = funding$.use();
-  const submitForFree = funding.kind === "free";
+  const submitForFree = funding === "free";
 
   const toggleSubmitForFree = (enabled: boolean) =>
-    funding$.set(enabled ? { kind: "free" } : { kind: "fullDeposit" });
+    funding$.set(enabled ? "free" : "full");
   const { pohId, name } = state$.use();
   const email = email$.use();
   const { photo, video } = media$.use();
@@ -95,17 +95,13 @@ function Review({
   const chainId = useChainId() as SupportedChainId;
   const { switchChain } = useSwitchChain();
 
-  const selfFunded = fundingEth(funding, chainId, totalCost);
-
-  let selfFundedWei: bigint | undefined;
-  if (!submitForFree && selfFunded) {
-    try {
-      selfFundedWei = parseEther(selfFunded.toString());
-    } catch {
-      selfFundedWei = undefined;
-    }
-  }
-  const funds = useEnoughFunds({ chainId, amount: selfFundedWei });
+  const selfFunded = fundingDisplay(funding, totalCost);
+  const selfFundedWei = computeFundingWei(funding, totalCost);
+  const funds = useEnoughFunds({
+    chainId,
+    // `null` (invalid) and `0n` (free/zero) both mean nothing to pay.
+    amount: selfFundedWei || undefined,
+  });
   const submitState = resolveTxState([
     {
       active: !!missingMedia.length,
@@ -119,6 +115,10 @@ function Review({
     },
     { active: funds.isLoading },
     { active: funds.insufficient, message: funds.message },
+    {
+      active: !!totalCost && selfFundedWei === null,
+      message: "Enter a valid deposit amount.",
+    },
     {
       active: !allRulesChecked,
       message: "Confirm every item in the review checklist first.",
@@ -147,7 +147,7 @@ function Review({
       : null;
   const totalCostLabel = totalCost ? formatEther(totalCost) : "Loading...";
   const depositMet =
-    !!totalCost && selfFundedWei !== undefined && selfFundedWei >= totalCost;
+    !!totalCost && selfFundedWei !== null && selfFundedWei >= totalCost;
   const jumperUrl = `https://jumper.exchange/?toChain=${currentChain.id}&toToken=0x0000000000000000000000000000000000000000`;
 
   // Assume Gnosis is always cheaper (1 xDAI = 1 USD) until we have ETH/USD price feeds
@@ -291,12 +291,12 @@ function Review({
               value={selfFunded}
               disabled={!totalCost || submitForFree}
               onChange={(event) => {
-                const eth = Math.max(0, +event.target.value || 0);
-                const maxEth = totalCost ? +formatEther(totalCost) : Infinity;
+                const raw = clampFundingInput(event.target.value);
+                const wei = computeFundingWei(raw, null);
                 funding$.set(
-                  eth >= maxEth
-                    ? { kind: "fullDeposit" }
-                    : { kind: "custom", eth, chainId },
+                  wei !== null && totalCost !== null && wei >= totalCost
+                    ? "full"
+                    : raw,
                 );
               }}
               trailing={
@@ -304,7 +304,7 @@ function Review({
                   <button
                     type="button"
                     disabled={!totalCost || submitForFree}
-                    onClick={() => funding$.set({ kind: "fullDeposit" })}
+                    onClick={() => funding$.set("full")}
                     className="text-orange text-xs font-semibold tracking-wide transition-opacity hover:opacity-80 disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     MAX
@@ -316,16 +316,14 @@ function Review({
           </div>
           <span
             className={`mt-1.5 text-center text-xs ${
-              depositMet && !submitForFree
-                ? "text-secondaryText"
-                : "text-orange"
+              depositMet ? "text-secondaryText" : "text-orange"
             }`}
           >
             {submitForFree
               ? `0 of ${totalCostLabel} ${nativeCurrency.symbol} — covered by PoH supporters`
-              : `${selfFunded ?? 0} of ${totalCostLabel} ${nativeCurrency.symbol} required`}
+              : `${selfFunded || "0"} of ${totalCostLabel} ${nativeCurrency.symbol} required`}
           </span>
-          {funds.insufficient && !submitForFree && (
+          {funds.insufficient && (
             <ExternalLink
               href={jumperUrl}
               className="text-orange mt-1 cursor-pointer self-center text-xs font-semibold transition-all hover:underline hover:opacity-80"

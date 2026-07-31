@@ -4,11 +4,12 @@ import { useAtlasProvider, Roles } from "@kleros/kleros-app";
 import { enableReactUse } from "@legendapp/state/config/enableReactUse";
 import { Show, Switch, useObservable } from "@legendapp/state/react";
 import cn from "classnames";
-import { SupportedChain, SupportedChainId } from "config/chains";
+import { SupportedChain, SupportedChainId, idToChain } from "config/chains";
 import { getContractInfo } from "contracts";
 import { Effects } from "contracts/hooks/types";
 import usePoHWrite from "contracts/hooks/usePoHWrite";
 import { ContractData } from "data/contract";
+import { getArbitrationCost } from "data/costs";
 import { RegistrationQuery } from "generated/graphql";
 import { useLoading } from "hooks/useLoading";
 import { useParams, useRouter } from "next/navigation";
@@ -22,19 +23,19 @@ import {
 } from "react";
 import { toast } from "react-toastify";
 import { machinifyId } from "utils/identifier";
-import { Abi, Hash, parseEther } from "viem";
+import { Abi, Hash } from "viem";
 import { useAccount, useChainId, useConfig, useReadContract } from "wagmi";
-import { getChainId, readContract } from "wagmi/actions";
+import { getChainId } from "wagmi/actions";
 import ActionButton from "components/ActionButton";
 import { useSubmitEmail } from "components/Integrations/Airdrop/useSubmitEmail";
 import { isValidEmailAddress } from "utils/validators";
 import Connect from "./Connect";
 import Finalized from "./Finalized";
+import { Funding, computeFundingWei } from "utils/funding";
 import InfoStep, { InfoState } from "./Info";
 import PhotoStep from "./Photo";
 import ReviewStep from "./Review";
 import VideoStep from "./Video";
-import { formatEth } from "utils/misc";
 import { getWriteErrorMessage } from "hooks/useActionFeedback";
 
 enableReactUse();
@@ -78,22 +79,6 @@ export enum Step {
   review,
   finalized,
 }
-
-export type FundingChoice =
-  | { kind: "fullDeposit" }
-  | { kind: "free" }
-  | { kind: "custom"; eth: number; chainId: SupportedChainId };
-
-export const fundingEth = (
-  funding: FundingChoice,
-  chainId: SupportedChainId,
-  totalCost: bigint | null,
-): number => {
-  if (funding.kind === "free") return 0;
-  if (funding.kind === "custom" && funding.chainId === chainId)
-    return funding.eth;
-  return totalCost ? formatEth(totalCost) : 0;
-};
 
 const totalCostOn = (
   chainId: SupportedChainId,
@@ -161,8 +146,6 @@ function FormContent({
 }: FormProps) {
   const params = useParams();
   const { address, isConnected } = useAccount();
-  // Wallet connected when the wizard mounted; changing or disconnecting it
-  // mid-flow exits the wizard (effect below).
   const [initialAddress] = useState(() => address);
   const router = useRouter();
   const chainId = useChainId() as SupportedChainId;
@@ -204,7 +187,12 @@ function FormContent({
     currentArbitrationCost as bigint | undefined,
     contractData,
   );
-  const funding$ = useObservable<FundingChoice>({ kind: "fullDeposit" });
+  const funding$ = useObservable<Funding>("full");
+  useEffect(() => {
+    const funding = funding$.peek();
+    if (funding !== "free" && funding !== "full") funding$.set("full");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [chainId]);
   const loading = useLoading();
   const [, loadingMessage] = loading.use();
   const [registrationComplete, setRegistrationComplete] = useState(false);
@@ -226,10 +214,6 @@ function FormContent({
   const canGoBack =
     step > Step.info && step < Step.finalized && !navigationLocked;
 
-  // Single navigation authority: forward moves push history entries (effect
-  // below); every backwards move — Back button, stepper pill, browser back —
-  // goes through the history stack, so the popstate handler is the only
-  // backwards writer of step$ and history can never disagree with the UI.
   const goToStep = (target: Step) => {
     if (!canGoBack || target >= step) return;
     window.history.go(target - step);
@@ -305,20 +289,16 @@ function FormContent({
   const [prepareClaimHumanity] = usePoHWrite("claimHumanity", events);
   const [prepareRenewHumanity] = usePoHWrite("renewHumanity", events);
 
-  // Resolves the chain and full deposit as they are *right now* — called by
-  // submit() after the (long) uploads, so the tx value is never derived from
-  // values captured back when the button was clicked.
   const fetchLiveDeposit = async () => {
     const liveChainId = getChainId(wagmiConfig) as SupportedChainId;
+    const liveChain = idToChain(liveChainId);
     const liveContractData = contractData[liveChainId];
-    if (!liveContractData) return null;
-    const arbitrationCost = (await readContract(wagmiConfig, {
-      chainId: liveChainId,
-      address: liveContractData.arbitrationInfo.arbitrator as `0x${string}`,
-      abi: getContractInfo("KlerosLiquid", liveChainId).abi as Abi,
-      functionName: "arbitrationCost",
-      args: [liveContractData.arbitrationInfo.extraData as Hash],
-    }).catch(() => undefined)) as bigint | undefined;
+    if (!liveChain || !liveContractData) return null;
+    const arbitrationCost = await getArbitrationCost(
+      liveChain,
+      liveContractData.arbitrationInfo.arbitrator as `0x${string}`,
+      liveContractData.arbitrationInfo.extraData as Hash,
+    ).catch(() => undefined);
     const totalCost = totalCostOn(liveChainId, arbitrationCost, contractData);
     return totalCost !== null ? { chainId: liveChainId, totalCost } : null;
   };
@@ -403,27 +383,20 @@ function FormContent({
       if (!registrationUri) return abort(`Failed to upload ${requestType}.`);
 
       loading.start("Submitting...");
-      // Uploads take long enough for the wallet to switch networks — resolve
-      // the chain and deposit at this moment instead of trusting the
-      // click-time closure, so value and target chain always agree.
       const liveDeposit = await fetchLiveDeposit();
       if (!liveDeposit)
         return abort("Unable to load the deposit amount. Please try again.");
       if (getChainId(wagmiConfig) !== liveDeposit.chainId)
         return abort("Network changed. Please submit again.");
-
-      const selfFundedWei = parseEther(
-        fundingEth(
-          funding$.peek(),
-          liveDeposit.chainId,
-          liveDeposit.totalCost,
-        ).toString(),
-      );
-      // Cap at the exact required deposit — the user can never over-fund.
-      const funded =
-        selfFundedWei > liveDeposit.totalCost
-          ? liveDeposit.totalCost
-          : selfFundedWei;
+      if (liveDeposit.totalCost !== currentTotalCost)
+        return abort(
+          "The required deposit changed while uploading. Please review and submit again.",
+        );
+      const funded = computeFundingWei(funding$.peek(), liveDeposit.totalCost);
+      if (funded === null)
+        return abort(
+          "Invalid deposit amount. Please review the deposit field.",
+        );
       if (isRenewal)
         prepareRenewHumanity({
           value: funded,
