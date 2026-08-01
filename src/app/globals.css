@@ -142,6 +142,15 @@
     transform: translateX(-50%) rotate(45deg);
   }
 
+  /* Bubble rendered below its anchor: arrow flips to the top edge, pointing up. */
+  .tooltip-surface-below::before {
+    top: -5px;
+    border-bottom: none;
+    border-right: none;
+    border-top: 1px solid #3a3e48;
+    border-left: 1px solid #3a3e48;
+  }
+
   /* Circle chrome: rest = dark surface + peach glyph; hover = orange fill + white glyph.
      !important so ExternalLink's default hover:text-orange does not reintroduce link blue/orange on the glyph. */
   .icon-btn {

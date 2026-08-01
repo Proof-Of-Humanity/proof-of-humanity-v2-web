@@ -49,7 +49,9 @@ const Vouch: React.FC<VouchProps> = ({
         )}
         <div
           className={`tooltip-surface invisible absolute left-1/2 z-50 w-max max-w-[240px] -translate-x-1/2 text-center text-sm font-normal group-hover:visible ${
-            tooltipPlacement === "below" ? "top-full mt-2" : "bottom-full mb-2"
+            tooltipPlacement === "below"
+              ? "tooltip-surface-below top-full mt-2"
+              : "bottom-full mb-2"
           }`}
         >
           {tooltip}
