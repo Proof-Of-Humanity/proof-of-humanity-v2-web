@@ -80,7 +80,7 @@ const Modal: React.FC<ModalProps> = ({
           <div
             className={twMerge(
               cn(
-                "modal-shell modal-surface fixed left-1/2 top-1/2 z-30 w-4/5 overflow-clip md:w-3/5 xl:w-2/5",
+                "modal-shell modal-surface fixed left-1/2 top-1/2 z-30 w-4/5 md:w-3/5 xl:w-2/5",
                 {
                   "modal-shell-open": isVisible,
                 },

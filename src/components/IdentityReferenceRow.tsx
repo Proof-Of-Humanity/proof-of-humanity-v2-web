@@ -73,7 +73,7 @@ export function WalletReferenceRow({
 }: {
   chainId: number;
   address: string | null | undefined;
-  href: string;
+  href?: string;
   value: string;
   compact?: boolean;
 }) {
@@ -85,13 +85,15 @@ export function WalletReferenceRow({
       compact={compact}
       copyLabel="Copy wallet address"
       action={
-        <ExternalLink
-          aria-label={`Open ${value} in block explorer`}
-          className={linkClassName(!!compact)}
-          href={href}
-        >
-          <ArrowRight />
-        </ExternalLink>
+        href ? (
+          <ExternalLink
+            aria-label={`Open ${value} in block explorer`}
+            className={linkClassName(!!compact)}
+            href={href}
+          >
+            <ArrowRight />
+          </ExternalLink>
+        ) : null
       }
     />
   );

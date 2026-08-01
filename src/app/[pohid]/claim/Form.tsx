@@ -53,6 +53,7 @@ const Stepper: React.FC<{
           type="button"
           disabled={!onStepClick || step <= i}
           aria-current={step === i ? "step" : undefined}
+          aria-label={item}
           className={cn(
             "centered h-8 whitespace-nowrap rounded-full text-sm",
             step === i

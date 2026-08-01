@@ -39,7 +39,7 @@ const AccountIdRows: React.FC<{ pohId: string }> = ({ pohId }) => {
       <span className="text-secondaryText">Your account and POH ID:</span>
       <WalletReferenceRow
         chainId={chainId}
-        href={chain ? explorerLink(address, chain) : "#"}
+        href={chain ? explorerLink(address, chain) : undefined}
         value={address}
         address={address}
       />

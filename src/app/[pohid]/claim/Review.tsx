@@ -361,13 +361,14 @@ function Review({
             </span>
           </span>
           {!isCurrentChainCheaper && foreignCost && (
-            <span
-              className="text-orange hover:text-orange/80 mt-1.5 cursor-pointer self-start text-sm transition-colors"
+            <button
+              type="button"
+              className="text-orange hover:text-orange/80 mt-1.5 cursor-pointer self-start text-left text-sm transition-colors"
               onClick={() => switchChain?.({ chainId: foreignChainId })}
             >
               Switch to {foreignChain.name} for a smaller deposit (
               {formatEther(foreignCost)} {foreignChain.nativeCurrency.symbol})
-            </span>
+            </button>
           )}
           {!isRenewal && pohId.toLowerCase() !== address?.toLowerCase() ? (
             <span className="text-orange mt-2">
@@ -403,8 +404,8 @@ function Review({
             </svg>
           </p>
           <p className="text-secondaryText mt-1">
-            We couldn't save <span className="font-semibold">{email}</span> for
-            profile notifications. You can retry now or enable notifications
+            We couldn&apos;t save <span className="font-semibold">{email}</span>{" "}
+            for profile notifications. You can retry now or enable notifications
             later from settings.
           </p>
           <div className="mt-3">

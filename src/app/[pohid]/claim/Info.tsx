@@ -166,8 +166,8 @@ function Info({
             <>
               <div className="border-orange text-secondaryText ml-2 mt-4 border-l-2 p-4 text-sm leading-6">
                 You&apos;re in the right place — this claim recovers Humanity ID{" "}
-                <span className="font-semibold">{pohId}</span>. Continue to
-                register your profile against it.
+                <span className="font-semibold">{prettifyId(pohId)}</span>.
+                Continue to register your profile against it.
               </div>
               <label
                 className="text-primaryText mt-4 flex cursor-pointer items-start text-sm"

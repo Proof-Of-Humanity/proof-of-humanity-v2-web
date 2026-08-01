@@ -84,7 +84,7 @@ export default function Connect({
             >
               here
             </ExternalLink>{" "}
-            to learn on how to create one.
+            to learn how to create one.
           </p>
         </>
       )}
