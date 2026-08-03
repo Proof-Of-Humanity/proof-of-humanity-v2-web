@@ -1,7 +1,7 @@
 import { supportedChains, legacyChain } from "config/chains";
 import { sdk } from "config/subgraph";
 import { MeQuery } from "generated/graphql";
-import { settleChainQueries } from "./chainQuery";
+import { settleChainQueries, settleChainQueriesStrict } from "./chainQuery";
 
 const isTransferStatus = (statusId?: string | null) =>
   statusId === "transferred" || statusId === "transferring";
@@ -41,12 +41,7 @@ const sanitize = (res: MeQuery[]) => {
   });
 };
 
-export const getMyData = async (account: string) => {
-  const id = account.toLowerCase();
-  const res = await settleChainQueries(
-    (chain) => sdk[chain.id].Me({ id }),
-    (): MeQuery => ({ claimer: null }),
-  );
+const deriveMyData = (res: MeQuery[]) => {
   sanitize(res);
   const homeChain = supportedChains.find((_, i) => {
     const registration = res[i]?.claimer?.registration;
@@ -82,4 +77,30 @@ export const getMyData = async (account: string) => {
       ...requestChainData.claimer.currentRequest,
     },
   };
+};
+
+/**
+ * Tolerant wallet status for display surfaces (header, action bars): a chain
+ * whose subgraph is down reads as "nothing there" so the rest still renders.
+ */
+export const getMyData = async (account: string) => {
+  const id = account.toLowerCase();
+  return deriveMyData(
+    await settleChainQueries(
+      (chain) => sdk[chain.id].Me({ id }),
+      (): MeQuery => ({ claimer: null }),
+    ),
+  );
+};
+
+/**
+ * Strict wallet status for eligibility gates (the claim wizard preflight):
+ * any unreachable chain rejects instead of being read as "not registered",
+ * so a partial outage can never fail-open into a duplicate claim.
+ */
+export const getMyDataStrict = async (account: string) => {
+  const id = account.toLowerCase();
+  return deriveMyData(
+    await settleChainQueriesStrict((chain) => sdk[chain.id].Me({ id })),
+  );
 };

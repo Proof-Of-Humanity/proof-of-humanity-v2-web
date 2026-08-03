@@ -54,6 +54,21 @@ export default async function Claim({ params }: PageProps) {
     (chain) => (humanityData[chain.id]?.humanity?.winnerClaim?.length ?? 0) > 0,
   );
 
+  const humanityActiveOnAnyChain = supportedChains.some(
+    (chain) => registrationData[chain.id],
+  );
+
+  const pendingClaimers = supportedChains.flatMap((chain) =>
+    (humanityData[chain.id]?.humanity?.requests ?? [])
+      .filter(
+        (request) =>
+          !request.revocation &&
+          (request.status.id === "vouching" ||
+            request.status.id === "resolving"),
+      )
+      .map((request) => String(request.requester)),
+  );
+
   if (registrationChain && !registrationContractData) {
     return (
       <div className="content paper-inset flex max-w-[800px] flex-col items-center px-4 py-12 text-center sm:px-8 lg:px-10">
@@ -74,6 +89,8 @@ export default async function Claim({ params }: PageProps) {
         contractData={contractData}
         renewal={renewal}
         hasPastVerifiedClaim={hasPastVerifiedClaim}
+        humanityActiveOnAnyChain={humanityActiveOnAnyChain}
+        pendingClaimers={pendingClaimers}
       />
     </div>
   );

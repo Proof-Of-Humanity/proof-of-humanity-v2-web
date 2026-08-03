@@ -9,12 +9,14 @@ import Link from "next/link";
 import { prettifyId } from "utils/identifier";
 import { resolveTxState } from "utils/txState";
 import { isValidEmailAddress } from "utils/validators";
+import { Hash } from "viem";
 
 export interface InfoState {
   stage: "details" | "identity";
   dataConsent: boolean;
   requestNotice: boolean;
-  recoverMode: boolean;
+  /** null: recoverable route, the user hasn't picked create vs recover yet. */
+  recoverMode: boolean | null;
 }
 
 interface InfoProps {
@@ -22,6 +24,8 @@ interface InfoProps {
   state$: ObservableObject<SubmissionState>;
   email$: ObservablePrimitiveBaseFns<string>;
   infoState$: ObservableObject<InfoState>;
+  pohId: Hash;
+  competingClaims: number;
   isRenewal: boolean;
   isRecovery: boolean;
 }
@@ -31,6 +35,8 @@ function Info({
   state$,
   email$,
   infoState$,
+  pohId,
+  competingClaims,
   isRenewal,
   isRecovery,
 }: InfoProps) {
@@ -41,10 +47,8 @@ function Info({
   const recoverMode = infoState$.recoverMode.use();
   const name = state$.name.use();
   const trimmedName = name.trim();
-  const pohId = state$.pohId.use();
   const email = email$.use();
   const trimmedEmail = email.trim();
-  // Email is optional: only flag an actual malformed entry, never an empty one.
   const showEmailError =
     trimmedEmail !== "" && !isValidEmailAddress(trimmedEmail);
 
@@ -100,18 +104,17 @@ function Info({
               type="radio"
               name="humanity-mode"
               className="radio shrink-0"
-              checked={!recoverMode}
+              checked={recoverMode === false}
               onChange={() => {
                 infoState$.recoverMode.set(false);
-                // The create/recover consents are different statements — a
-                // checkbox ticked for one must not carry over to the other.
+                // Consents must not carry over between create and recover.
                 infoState$.requestNotice.set(false);
               }}
             />
             Create my Humanity ID for the first time.
           </label>
 
-          {!recoverMode && (
+          {recoverMode === false && (
             <>
               <Field
                 label="Your Humanity ID"
@@ -152,7 +155,7 @@ function Info({
               type="radio"
               name="humanity-mode"
               className="radio shrink-0"
-              checked={recoverMode}
+              checked={recoverMode === true}
               onChange={() => {
                 infoState$.recoverMode.set(true);
                 infoState$.requestNotice.set(false);
@@ -162,13 +165,22 @@ function Info({
             existing Humanity ID.
           </label>
 
-          {recoverMode && isRecovery && (
+          {recoverMode === true && isRecovery && (
             <>
               <div className="border-orange text-secondaryText ml-2 mt-4 border-l-2 p-4 text-sm leading-6">
                 You&apos;re in the right place — this claim recovers Humanity ID{" "}
                 <span className="font-semibold">{prettifyId(pohId)}</span>.
                 Continue to register your profile against it.
               </div>
+              {competingClaims > 0 && (
+                <div className="border-orange text-secondaryText ml-2 mt-4 border-l-2 p-4 text-sm leading-6">
+                  {competingClaims === 1
+                    ? "Someone else has a pending claim"
+                    : `${competingClaims} other people have pending claims`}{" "}
+                  to this Humanity ID. You can still proceed — only one claim
+                  can ultimately succeed.
+                </div>
+              )}
               <label
                 className="text-primaryText mt-4 flex cursor-pointer items-start text-sm"
                 htmlFor="request-notice"
@@ -190,7 +202,7 @@ function Info({
               </label>
             </>
           )}
-          {recoverMode && !isRecovery && (
+          {recoverMode === true && !isRecovery && (
             <div className="border-orange text-secondaryText ml-2 mt-4 border-l-2 p-4 text-sm leading-6">
               <p className="mb-3">
                 To recover a Humanity ID, open the profile you previously
@@ -237,7 +249,7 @@ function Info({
             variant="secondary"
             className="min-w-[170px]"
           />
-          {recoverMode && !isRecovery ? (
+          {recoverMode === true && !isRecovery ? (
             <Link href="/" className="btn-primary min-w-[170px]">
               Find my past profile
             </Link>
@@ -249,9 +261,11 @@ function Info({
               tooltip={
                 requestNotice
                   ? undefined
-                  : recoverMode
-                    ? "Confirm this Humanity ID belongs to you to continue."
-                    : "Confirm you're not already registered to continue."
+                  : recoverMode === null
+                    ? "Choose whether to create or recover a Humanity ID to continue."
+                    : recoverMode
+                      ? "Confirm this Humanity ID belongs to you to continue."
+                      : "Confirm you're not already registered to continue."
               }
               className="min-w-[170px]"
             />

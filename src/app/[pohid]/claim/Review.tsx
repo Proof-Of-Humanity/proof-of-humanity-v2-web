@@ -9,7 +9,6 @@ import AuthGuard from "components/AuthGuard";
 import Previewed from "components/Previewed";
 import TimeAgo from "components/TimeAgo";
 import DocumentIcon from "components/DocumentIcon";
-import { getContractInfo } from "contracts";
 import { SupportedChainId, idToChain, getForeignChain } from "config/chains";
 import { ContractData } from "data/contract";
 import InfoIcon from "icons/info.svg";
@@ -20,10 +19,11 @@ import { prettifyId } from "utils/identifier";
 import { ipfs } from "utils/ipfs";
 import { formatEth } from "utils/misc";
 import { resolveTxState } from "utils/txState";
-import { Abi, Hash, formatEther } from "viem";
-import { useAccount, useChainId, useReadContract, useSwitchChain } from "wagmi";
+import { Hash, formatEther } from "viem";
+import { useAccount, useChainId, useSwitchChain } from "wagmi";
 import useEnoughFunds from "hooks/useEnoughFunds";
 import { EmailSubmissionStatus, MediaState, SubmissionState } from "./Form";
+import { useTotalCost } from "./useTotalCost";
 import {
   Funding,
   clampFundingInput,
@@ -34,7 +34,7 @@ import {
 interface ReviewProps {
   arbitrationInfo: ContractData["arbitrationInfo"];
   contractData: Record<SupportedChainId, ContractData | null>;
-  totalCost: bigint | null;
+  pohId: Hash;
   funding$: ObservablePrimitiveBaseFns<Funding>;
   state$: ObservableObject<SubmissionState>;
   media$: ObservableObject<MediaState>;
@@ -44,8 +44,8 @@ interface ReviewProps {
   registrationComplete?: boolean;
   email$: ObservablePrimitiveBaseFns<string>;
   emailStatus?: EmailSubmissionStatus;
-  retryEmail?: () => void;
-  skipEmail?: () => void;
+  retryEmail: () => void;
+  skipEmail: () => void;
   isRenewal: boolean;
 }
 
@@ -58,7 +58,7 @@ const reviewChecklist = [
 function Review({
   arbitrationInfo,
   contractData,
-  totalCost,
+  pohId,
   funding$,
   state$,
   media$,
@@ -77,11 +77,10 @@ function Review({
 
   const toggleSubmitForFree = (enabled: boolean) =>
     funding$.set(enabled ? "free" : "full");
-  const { pohId, name } = state$.use();
+  const { name } = state$.use();
   const email = email$.use();
   const { photo, video } = media$.use();
-  // submit() bails out early when either is missing, so surface that as a
-  // disabled reason instead of letting the button no-op silently.
+  // Surface missing prerequisites as a disabled reason instead of a silent no-op.
   const missingMedia = [!photo && "photo", !video && "video"].filter(
     Boolean,
   ) as string[];
@@ -89,11 +88,17 @@ function Review({
     reviewChecklist.map(() => false),
   );
   const toggleRule = (index: number) =>
-    setCheckedRules((prev) => prev.with(index, !prev[index]));
+    setCheckedRules((prev) => prev.map((v, i) => (i === index ? !v : v)));
   const allRulesChecked = checkedRules.every(Boolean);
   const { address } = useAccount();
   const chainId = useChainId() as SupportedChainId;
   const { switchChain } = useSwitchChain();
+
+  const {
+    data: totalCost = null,
+    isError: totalCostError,
+    refetch: refetchTotalCost,
+  } = useTotalCost(chainId, contractData);
 
   const selfFunded = fundingDisplay(funding, totalCost);
   const selfFundedWei = computeFundingWei(funding, totalCost);
@@ -130,22 +135,18 @@ function Review({
 
   const foreignChainId = getForeignChain(chainId);
   const foreignChain = idToChain(foreignChainId)!;
-  // May be null when the foreign chain's subgraph is down; the cost
-  // comparison is simply skipped in that case.
+  // Null when the foreign chain’s subgraph is down; the comparison is skipped then.
   const foreignContractData = contractData[foreignChainId];
-  const { data: foreignArbitrationCost } = useReadContract({
-    address: foreignContractData?.arbitrationInfo.arbitrator as `0x${string}`,
-    abi: getContractInfo("KlerosLiquid", foreignChainId).abi as Abi,
-    functionName: "arbitrationCost",
-    args: [foreignContractData?.arbitrationInfo.extraData as Hash],
-    chainId: foreignChainId,
-    query: { enabled: !!foreignContractData },
-  });
-  const foreignCost =
-    foreignContractData && typeof foreignArbitrationCost === "bigint"
-      ? BigInt(foreignContractData.baseDeposit) + foreignArbitrationCost
-      : null;
-  const totalCostLabel = totalCost ? formatEther(totalCost) : "Loading...";
+  const { data: foreignCost = null } = useTotalCost(
+    foreignChainId,
+    contractData,
+    !!foreignContractData,
+  );
+  const totalCostLabel = totalCost
+    ? formatEther(totalCost)
+    : totalCostError
+      ? "unavailable"
+      : "Loading...";
   const depositMet =
     !!totalCost && selfFundedWei !== null && selfFundedWei >= totalCost;
   const jumperUrl = `https://jumper.exchange/?toChain=${currentChain.id}&toToken=0x0000000000000000000000000000000000000000`;
@@ -370,19 +371,6 @@ function Review({
               {formatEther(foreignCost)} {foreignChain.nativeCurrency.symbol})
             </button>
           )}
-          {!isRenewal && pohId.toLowerCase() !== address?.toLowerCase() ? (
-            <span className="text-orange mt-2">
-              <span className="font-semibold underline">Beware</span>: Your PoH
-              ID differs from the wallet address connected to your account. If
-              you are registering for the first time, this discrepancy will
-              result in fund loss. To make both addresses match, you may need to
-              change the connected wallet, or else reinitiate the registration
-              process. If you are not a newcomer and wish to reclaim your ID
-              from a different wallet (e.g., if you have lost the private key to
-              your original wallet), please confirm that the PoH ID you are
-              using is the one from your initial registration.
-            </span>
-          ) : null}
         </div>
       </div>
       {registrationComplete && emailStatus === "failed" ? (
@@ -408,13 +396,19 @@ function Review({
             for profile notifications. You can retry now or enable notifications
             later from settings.
           </p>
-          <div className="mt-3">
+          <div className="mt-3 flex flex-col gap-2">
             <button
               className="btn-primary w-full py-3 text-sm font-bold"
               onClick={retryEmail}
             >
               Save email for notifications
             </button>
+            <ActionButton
+              onClick={skipEmail}
+              label="Skip for now"
+              variant="secondary"
+              className="w-full"
+            />
           </div>
         </div>
       ) : (
@@ -438,7 +432,14 @@ function Review({
               />
               {loadingMessage}
             </button>
-          ) : !totalCost ? (
+          ) : totalCostError ? (
+            <ActionButton
+              onClick={() => void refetchTotalCost()}
+              label="Deposit unavailable — Retry"
+              variant="secondary"
+              className="min-w-[170px]"
+            />
+          ) : totalCost === null ? (
             <button className="btn-primary min-w-[170px]" disabled>
               Loading deposit
             </button>

@@ -4,14 +4,14 @@ import { useAtlasProvider, Roles } from "@kleros/kleros-app";
 import { enableReactUse } from "@legendapp/state/config/enableReactUse";
 import { Show, Switch, useObservable } from "@legendapp/state/react";
 import cn from "classnames";
-import { SupportedChain, SupportedChainId, idToChain } from "config/chains";
-import { getContractInfo } from "contracts";
+import { SupportedChain, SupportedChainId } from "config/chains";
 import { Effects } from "contracts/hooks/types";
 import usePoHWrite from "contracts/hooks/usePoHWrite";
 import { ContractData } from "data/contract";
-import { getArbitrationCost } from "data/costs";
+import { getMyDataStrict } from "data/user";
 import { RegistrationQuery } from "generated/graphql";
 import { useLoading } from "hooks/useLoading";
+import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import {
   Fragment,
@@ -23,16 +23,20 @@ import {
 } from "react";
 import { toast } from "react-toastify";
 import { machinifyId } from "utils/identifier";
-import { Abi, Hash } from "viem";
-import { useAccount, useChainId, useConfig, useReadContract } from "wagmi";
-import { getChainId } from "wagmi/actions";
+import { Hash } from "viem";
+import { useAccount, useChainId, useConfig } from "wagmi";
+import { useQuery } from "@tanstack/react-query";
+import { useTotalCost } from "./useTotalCost";
+import { getAccount, getChainId } from "wagmi/actions";
 import ActionButton from "components/ActionButton";
 import { useSubmitEmail } from "components/Integrations/Airdrop/useSubmitEmail";
 import { isValidEmailAddress } from "utils/validators";
 import Connect from "./Connect";
 import Finalized from "./Finalized";
+import FormSkeleton from "./FormSkeleton";
 import { Funding, computeFundingWei } from "utils/funding";
 import InfoStep, { InfoState } from "./Info";
+import { ClaimGate, resolveClaimIntent, resolveRenewalGate } from "./intent";
 import PhotoStep from "./Photo";
 import ReviewStep from "./Review";
 import VideoStep from "./Video";
@@ -81,17 +85,6 @@ export enum Step {
   finalized,
 }
 
-const totalCostOn = (
-  chainId: SupportedChainId,
-  arbitrationCost: bigint | undefined,
-  contractData: FormProps["contractData"],
-): bigint | null => {
-  const data = contractData[chainId];
-  return data && typeof arbitrationCost === "bigint"
-    ? BigInt(data.baseDeposit) + arbitrationCost
-    : null;
-};
-
 export type EmailSubmissionStatus =
   | "idle"
   | "saving"
@@ -106,7 +99,6 @@ export interface MediaState {
 }
 
 export interface SubmissionState {
-  pohId: Hash;
   name: string;
 }
 
@@ -116,13 +108,15 @@ export interface FormProps {
     chain: SupportedChain;
   };
   hasPastVerifiedClaim?: boolean;
+  humanityActiveOnAnyChain?: boolean;
+  pendingClaimers?: string[];
 }
 
-/** A successful IPFS upload, keyed by what produced it so an unchanged
- * re-submit can reuse the pin instead of uploading again. */
+/** An IPFS upload keyed by its inputs; an unchanged re-submit reuses the pin. */
 type PinnedUpload = { key: unknown; uri: string };
 
 export default function Form(props: FormProps) {
+  const params = useParams();
   const chainId = useChainId() as SupportedChainId;
 
   if (!props.contractData[chainId])
@@ -137,34 +131,29 @@ export default function Form(props: FormProps) {
       </span>
     );
 
-  return <FormContent {...props} />;
+  return <FormContent key={String(params.pohid)} {...props} />;
 }
 
 function FormContent({
   contractData,
   renewal,
   hasPastVerifiedClaim = false,
+  humanityActiveOnAnyChain = false,
+  pendingClaimers,
 }: FormProps) {
   const params = useParams();
+  const urlPohId = machinifyId(params.pohid as string)!;
   const { address, isConnected } = useAccount();
-  const [initialAddress] = useState(() => address);
   const router = useRouter();
   const chainId = useChainId() as SupportedChainId;
   const wagmiConfig = useConfig();
 
   const { uploadFile: uploadToIPFS } = useAtlasProvider();
-  // Off-chain notification email opt-in.
   const { mutateAsync: submitEmail } = useSubmitEmail();
   const currentContractData = contractData[chainId]!;
   const isRenewal = !!renewal;
 
-  const { data: currentArbitrationCost } = useReadContract({
-    address: currentContractData.arbitrationInfo.arbitrator as `0x${string}`,
-    abi: getContractInfo("KlerosLiquid", chainId).abi as Abi,
-    functionName: "arbitrationCost",
-    args: [currentContractData.arbitrationInfo.extraData as Hash],
-    chainId,
-  });
+  const { data: totalCost } = useTotalCost(chainId, contractData);
 
   const step$ = useObservable(Step.info);
   const step = step$.use();
@@ -174,20 +163,12 @@ function FormContent({
     stage: "details",
     dataConsent: false,
     requestNotice: false,
-    recoverMode: hasPastVerifiedClaim,
+    recoverMode: hasPastVerifiedClaim ? null : false,
   });
   const media = media$.use();
-  const state$ = useObservable<SubmissionState>({
-    pohId: machinifyId(params.pohid as string)!,
-    name: "",
-  });
+  const state$ = useObservable<SubmissionState>({ name: "" });
   const state = state$.use();
   const email$ = useObservable("");
-  const currentTotalCost = totalCostOn(
-    chainId,
-    currentArbitrationCost as bigint | undefined,
-    contractData,
-  );
   const funding$ = useObservable<Funding>("full");
   useEffect(() => {
     const funding = funding$.peek();
@@ -198,8 +179,7 @@ function FormContent({
   const [, loadingMessage] = loading.use();
   const [registrationComplete, setRegistrationComplete] = useState(false);
   const [emailStatus, setEmailStatus] = useState<EmailSubmissionStatus>("idle");
-  // Last step value already mirrored into the history stack; null until the
-  // mount-time replaceState has run.
+  // Null until the mount-time replaceState has run.
   const syncedStep = useRef<Step | null>(null);
   const uploadCache = useRef<
     Record<"photo" | "video" | "file" | "registration", PinnedUpload | null>
@@ -209,11 +189,58 @@ function FormContent({
     file: null,
     registration: null,
   });
-  // While a transaction is in flight (or has succeeded) the wizard must not
-  // move backwards, whatever initiated the move.
+  // Never move backwards while a transaction is in flight (or succeeded).
   const navigationLocked = !!loadingMessage || registrationComplete;
   const canGoBack =
     step > Step.info && step < Step.finalized && !navigationLocked;
+
+  const {
+    data: me,
+    error: meError,
+    refetch: retryMe,
+  } = useQuery({
+    queryKey: ["myDataStrict", address],
+    queryFn: () => getMyDataStrict(address!),
+    // Renewal never consults the preflight, so don't let it fetch (or fail).
+    enabled: !!address && isConnected && !renewal,
+  });
+
+  const recoverMode = infoState$.recoverMode.use();
+  const wallet = address && isConnected ? { address, chainId } : null;
+  const gate: ClaimGate | null = renewal
+    ? resolveRenewalGate({
+        urlPohId,
+        connectedWallet: wallet,
+        registrationToRenew: {
+          claimer: String(renewal.claimer.id),
+          chainId: renewal.chain.id,
+        },
+      })
+    : !wallet
+      ? { type: "connect" }
+      : me
+        ? resolveClaimIntent({
+            urlPohId,
+            connectedWallet: wallet,
+            hasPastVerifiedClaim,
+            selectedMode:
+              recoverMode === null ? null : recoverMode ? "recover" : "create",
+            walletActivePohId: (me.pohId as Hash | undefined) ?? null,
+            humanityActiveOnAnyChain,
+          })
+        : null; // preflight still in flight (or failed — handled at render)
+  const intent = gate?.type === "proceed" ? gate.intent : null;
+
+  const competingClaims = (pendingClaimers ?? []).filter(
+    (claimer) => claimer.toLowerCase() !== address?.toLowerCase(),
+  ).length;
+
+  // Single navigation effect; frozen while a transaction is in flight.
+  const navigateTo =
+    !navigationLocked && gate?.type === "navigate" ? gate.to : null;
+  useEffect(() => {
+    if (navigateTo) router.replace(navigateTo);
+  }, [navigateTo, router]);
 
   const goToStep = (target: Step) => {
     if (!canGoBack || target >= step) return;
@@ -290,23 +317,7 @@ function FormContent({
   const [prepareClaimHumanity] = usePoHWrite("claimHumanity", events);
   const [prepareRenewHumanity] = usePoHWrite("renewHumanity", events);
 
-  const fetchLiveDeposit = async () => {
-    const liveChainId = getChainId(wagmiConfig) as SupportedChainId;
-    const liveChain = idToChain(liveChainId);
-    const liveContractData = contractData[liveChainId];
-    if (!liveChain || !liveContractData) return null;
-    const arbitrationCost = await getArbitrationCost(
-      liveChain,
-      liveContractData.arbitrationInfo.arbitrator as `0x${string}`,
-      liveContractData.arbitrationInfo.extraData as Hash,
-    ).catch(() => undefined);
-    const totalCost = totalCostOn(liveChainId, arbitrationCost, contractData);
-    return totalCost !== null ? { chainId: liveChainId, totalCost } : null;
-  };
-
-  // Upload-once: skips the pin when `key` still matches the slot's last
-  // successful upload, so a retry after a late failure never re-uploads
-  // unchanged media.
+  // Reuses the last pin when `key` is unchanged.
   const pinOnce = async (
     slot: keyof typeof uploadCache.current,
     key: unknown,
@@ -322,10 +333,12 @@ function FormContent({
   const submit = async () => {
     const { photo, video } = media;
     if (!photo || !video) return;
+    // Snapshot at click time; re-checked against live wagmi state before the write.
+    if (!intent || !address) return;
+    const snapshot = { address, chainId, intent };
     const infoState = infoState$.peek();
     if (
       !state$.name.peek().trim() ||
-      (infoState.recoverMode && !hasPastVerifiedClaim) ||
       !infoState.dataConsent ||
       !infoState.requestNotice
     ) {
@@ -333,7 +346,7 @@ function FormContent({
       goToStep(Step.info);
       return;
     }
-    if (!currentTotalCost) {
+    if (totalCost === undefined) {
       toast.error("Unable to load the deposit amount. Please try again.");
       return;
     }
@@ -342,7 +355,8 @@ function FormContent({
       toast.error(message);
       loading.stop();
     };
-    const requestType = isRenewal ? "renewal" : "registration";
+    const requestType =
+      snapshot.intent.kind === "renew" ? "renewal" : "registration";
     loading.start("Uploading media");
     try {
       const [photoUri, videoUri] = await Promise.all([
@@ -384,21 +398,18 @@ function FormContent({
       if (!registrationUri) return abort(`Failed to upload ${requestType}.`);
 
       loading.start("Submitting...");
-      const liveDeposit = await fetchLiveDeposit();
-      if (!liveDeposit)
-        return abort("Unable to load the deposit amount. Please try again.");
-      if (getChainId(wagmiConfig) !== liveDeposit.chainId)
+      // Uploads take a while — refuse to write if the wallet or network moved since the click.
+      const liveAddress = getAccount(wagmiConfig).address;
+      if (liveAddress?.toLowerCase() !== snapshot.address.toLowerCase())
+        return abort("Wallet changed. Please review and submit again.");
+      if (getChainId(wagmiConfig) !== snapshot.chainId)
         return abort("Network changed. Please submit again.");
-      if (liveDeposit.totalCost !== currentTotalCost)
-        return abort(
-          "The required deposit changed while uploading. Please review and submit again.",
-        );
-      const funded = computeFundingWei(funding$.peek(), liveDeposit.totalCost);
+      const funded = computeFundingWei(funding$.peek(), totalCost);
       if (funded === null)
         return abort(
           "Invalid deposit amount. Please review the deposit field.",
         );
-      if (isRenewal)
+      if (snapshot.intent.kind === "renew")
         prepareRenewHumanity({
           value: funded,
           args: [registrationUri],
@@ -406,7 +417,7 @@ function FormContent({
       else
         prepareClaimHumanity({
           value: funded,
-          args: [state$.pohId.peek(), registrationUri, state$.name.peek()],
+          args: [snapshot.intent.urlPohId, registrationUri, state$.name.peek()],
         });
     } catch (error) {
       abort(
@@ -437,8 +448,7 @@ function FormContent({
 
       const currentStep = step$.peek();
       if (navigationLocked && targetStep < currentStep) {
-        // Browser back during an in-flight (or completed) transaction:
-        // undo the pop so history stays aligned with the locked wizard.
+        // Undo the pop so history stays aligned with the locked wizard.
         window.history.go(currentStep - targetStep);
         return;
       }
@@ -451,44 +461,69 @@ function FormContent({
     return () => window.removeEventListener("popstate", onPopState);
   }, [step$, navigationLocked]);
 
-  useEffect(() => {
-    if (!initialAddress) return;
-    if (!address) {
-      router.replace("/");
-    } else if (
-      !renewal &&
-      initialAddress.toLowerCase() !== address.toLowerCase()
-    ) {
-      router.replace(`/${address}`);
-    }
-  }, [address, initialAddress, renewal, router]);
-
-  useEffect(() => {
-    if (
-      renewal ||
-      hasPastVerifiedClaim ||
-      !address ||
-      state.pohId.toLowerCase() === address.toLowerCase()
-    )
-      return;
-    router.replace(`/${address}/claim`);
-  }, [renewal, hasPastVerifiedClaim, address, state.pohId, router]);
-
-  if (
-    !isConnected ||
-    (renewal &&
-      (renewal.claimer.id !== address!.toLowerCase() ||
-        renewal.chain.id !== chainId))
-  )
-    return (
-      <>
-        <Stepper step={0} />
-        <Connect
-          renewalAddress={renewal?.claimer.id}
-          renewalChain={renewal?.chain}
-        />
-      </>
-    );
+  // Frozen once a transaction is in flight (or done); never tear down the receipt UI.
+  if (!navigationLocked) {
+    if (gate?.type === "connect")
+      return (
+        <>
+          <Stepper step={0} />
+          <Connect
+            renewalAddress={renewal?.claimer.id}
+            renewalChain={renewal?.chain}
+          />
+        </>
+      );
+    if (meError)
+      return (
+        <div className="text-primaryText m-auto flex flex-col items-center gap-2 py-16 text-center">
+          <span className="font-semibold">
+            We couldn&apos;t check this wallet&apos;s registration status.
+          </span>
+          <span className="text-secondaryText text-sm">
+            The check protects your deposit — please retry.
+          </span>
+          <ActionButton
+            onClick={() => retryMe()}
+            label="Retry"
+            variant="secondary"
+            className="mt-4 min-w-[170px]"
+          />
+        </div>
+      );
+    // Neutral placeholder — never flash a foreign Humanity ID in a create wizard.
+    if (!gate || gate.type === "navigate") return <FormSkeleton />;
+    if (gate.type === "blocked")
+      return (
+        <div className="text-primaryText m-auto flex flex-col items-center gap-2 py-16 text-center">
+          {gate.reason === "already-registered" ? (
+            <>
+              <span className="font-semibold">
+                This wallet already has an active Proof of Humanity profile.
+              </span>
+              <span className="text-secondaryText text-sm">
+                A wallet can only hold one Humanity ID at a time.
+              </span>
+              <Link
+                href={`/${gate.profileId}`}
+                className="text-orange mt-2 text-sm font-semibold hover:underline"
+              >
+                View your profile
+              </Link>
+            </>
+          ) : (
+            <>
+              <span className="font-semibold">
+                This Humanity ID can&apos;t be recovered right now.
+              </span>
+              <span className="text-secondaryText text-sm">
+                Its registration is still active. A Humanity ID can only be
+                recovered after it expires.
+              </span>
+            </>
+          )}
+        </div>
+      );
+  }
 
   return (
     <>
@@ -502,8 +537,6 @@ function FormContent({
         {{
           [Step.info]: () => (
             <InfoStep
-              // Normalize here so every downstream consumer (IPFS metadata and
-              // the on-chain claim args) gets the same trimmed name.
               advance={() => {
                 state$.name.set(state$.name.peek().trim());
                 step$.set(Step.photo);
@@ -511,6 +544,8 @@ function FormContent({
               state$={state$}
               email$={email$}
               infoState$={infoState$}
+              pohId={urlPohId}
+              competingClaims={competingClaims}
               isRenewal={isRenewal}
               isRecovery={hasPastVerifiedClaim}
             />
@@ -533,8 +568,8 @@ function FormContent({
           ),
           [Step.review]: () => (
             <ReviewStep
-              totalCost={currentTotalCost}
               contractData={contractData}
+              pohId={urlPohId}
               state$={state$}
               arbitrationInfo={currentContractData.arbitrationInfo}
               media$={media$}
@@ -564,17 +599,6 @@ function FormContent({
           ),
         }}
       </Switch>
-
-      {registrationComplete && emailStatus === "failed" && (
-        <div className="mt-4 flex justify-center">
-          <ActionButton
-            onClick={() => settleEmail({ skip: true })}
-            label="Skip for now"
-            variant="secondary"
-            className="w-full max-w-xs"
-          />
-        </div>
-      )}
     </>
   );
 }
