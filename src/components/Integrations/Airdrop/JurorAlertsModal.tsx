@@ -18,13 +18,11 @@ type ModalStep = "warning" | "email";
 interface JurorAlertsModalProps {
   open: boolean;
   onClose: () => void;
-  className?: string;
 }
 
 export default function JurorAlertsModal({
   open,
   onClose,
-  className,
 }: JurorAlertsModalProps) {
   const [step, setStep] = useState<ModalStep>("warning");
   const [acknowledged, setAcknowledged] = useState(false);
@@ -69,11 +67,7 @@ export default function JurorAlertsModal({
   const isBusy = isSubmitting || isAddingUser || isUpdatingUser;
 
   return (
-    <Modal
-      open={open}
-      onClose={handleModalClose}
-      className={className}
-    >
+    <Modal open={open} onClose={handleModalClose}>
       <h2 className="text-primaryText px-4 pt-5 text-left text-2xl font-semibold">
         Action required
       </h2>

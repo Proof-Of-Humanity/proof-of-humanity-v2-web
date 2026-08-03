@@ -12,8 +12,6 @@ export interface Integration {
   headerTitle?: string;
   headerDescription?: string;
   buttonText: string;
-  displayOrder?: number;
-  statusLabel?: string;
   firstInfoSlide?: InfoSlide[];
   secondInfoSlide?: InfoSlide[];
   externalLinks?: ExternalLink[];
@@ -29,10 +27,13 @@ export interface InfoSlide {
   imageWidth?: number;
   imageHeight?: number;
   bulletPoints?: string[];
-  featureList?: Array<{
-    text: string;
-    iconType?: "check" | "success" | "warning" | "error" | "pending";
-  }>;
+  /** Structured copy for the bespoke "become a juror" airdrop slide. */
+  juror?: {
+    highlight: string;
+    staking: string;
+    voteResults: string[];
+    links: string;
+  };
 }
 
 export interface ExternalLink {

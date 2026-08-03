@@ -70,6 +70,7 @@ const FundButton: React.FC<FundButtonProps> = ({
     ],
   });
   const closeModal = useCallback(() => {
+    console.info("[funding-modal]", { event: "close" });
     setIsModalOpen(false);
     loading.stop();
   }, [loading]);
@@ -79,18 +80,29 @@ const FundButton: React.FC<FundButtonProps> = ({
     useMemo(
       () => ({
         onReady(fire) {
+          console.info("[funding-modal]", { event: "transaction-ready" });
           fire();
           toast.info("Transaction pending");
         },
         onFail() {
+          console.warn("[funding-modal]", { event: "transaction-failed" });
           loading.stop();
           toast.error("Transaction failed");
         },
         onError(error, errorCtx) {
+          console.error("[funding-modal]", {
+            event: "transaction-error",
+            error,
+            errorCtx,
+          });
           loading.stop();
           toast.error(getWriteErrorMessage(error, errorCtx));
         },
         onSuccess(ctx) {
+          console.info("[funding-modal]", {
+            event: "transaction-success",
+            value: (ctx.value ?? 0n).toString(),
+          });
           applyAction(
             "fund",
             buildFundSuccessPatch(
@@ -114,8 +126,20 @@ const FundButton: React.FC<FundButtonProps> = ({
       : 0;
 
   const handleSubmit = () => {
-    if (inputAmount === null || inputAmount <= 0n) return;
+    if (inputAmount === null || inputAmount <= 0n) {
+      console.warn("[funding-modal]", {
+        event: "submit-blocked",
+        input: addedFundInput,
+      });
+      return;
+    }
 
+    console.info("[funding-modal]", {
+      event: "submit",
+      pohId,
+      requestIndex: index,
+      value: inputAmount.toString(),
+    });
     loading.start("Funding...");
     prepareFund({
       value: inputAmount,
@@ -138,6 +162,13 @@ const FundButton: React.FC<FundButtonProps> = ({
         onClick={() => {
           setMax();
           setIsModalOpen(true);
+          console.info("[funding-modal]", {
+            event: "open",
+            pohId,
+            requestIndex: index,
+            funded: funded.toString(),
+            totalCost: totalCost.toString(),
+          });
         }}
         label="Fund"
         variant="secondary"

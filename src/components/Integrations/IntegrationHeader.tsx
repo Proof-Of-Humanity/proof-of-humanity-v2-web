@@ -30,7 +30,7 @@ export default function IntegrationHeader({
         <h3 className="text-primaryText mt-1 font-semibold">
           {integration.headerTitle || integration.title}
         </h3>
-        <p className="text-primaryText mb-4 mt-2 break-words text-sm text-gray-600">
+        <p className="text-secondaryText mb-4 mt-2 break-words text-sm">
           {integration.headerDescription || integration.description}
         </p>
       </div>

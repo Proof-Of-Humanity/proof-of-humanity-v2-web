@@ -12,10 +12,8 @@ const integrations: Record<string, Integration> = {
     logoWidth: 185,
     logoHeight: 48,
     isActive: true,
-    startPath: "app/circles",
+    startPath: "/app/circles",
     buttonText: "Start Earning",
-    displayOrder: 2,
-    statusLabel: "Live",
     firstInfoSlide: [
       {
         id: "start",
@@ -34,12 +32,10 @@ const integrations: Record<string, Integration> = {
       {
         id: "activateAccount",
         title: "Activate Your Circles Account",
-        description: [
-          "Go the 'Circles' tab → 'Find an invite' and share your QR code with an existing user to activate your account.",
-          "Post your link on the [Circles Telegram community](https://t.me/about_circles), and ask to get invited!",
-        ].join(" "),
+        description:
+          "Go the 'Circles' tab → 'Find an invite' and share your QR code with an existing user to activate your account. Post your link on the [Circles Telegram community](https://t.me/about_circles) ↗️, and ask to get invited!",
         disclaimer:
-          "(!) Important: You need to be invited into Circles to be able to join our group.",
+          "You need to be invited into Circles to be able to join our group.",
         image: "/images/integrations/circles-step3.png",
       },
       {
@@ -82,10 +78,8 @@ const integrations: Record<string, Integration> = {
     logoHeight: 48,
     darkLogo: "/logo/kleros.svg",
     isActive: true,
-    startPath: "app/pnk-airdrop",
+    startPath: "/app/pnk-airdrop",
     buttonText: "Start Now",
-    displayOrder: 1,
-    statusLabel: "Live",
     firstInfoSlide: [
       {
         id: "klerosInfo",
@@ -123,12 +117,21 @@ const integrations: Record<string, Integration> = {
         id: "becomeJuror",
         title: "Turn Your PNK Into Earning Opportunities: Become a Juror!",
         description:
-          "To become a Kleros juror, you need to stake PNK (Kleros' native token) in a specific court. For example, the Humanity Court. Once staked, subscribe to notifications so you'll be alerted when you're randomly selected to judge a case.\n\nThe more PNK you stake, the higher your chances of being selected. But remember, jurors are expected to vote honestly and coherently based on the evidence.\n\n✅ Coherent Vote (Align with the majority) = 🤑 Earn arbitration fees + extra PNK\n❌ Incoherent Vote (Against the majority) = 😬 Lose some staked PNK",
+          "To become a Kleros juror, you need to stake PNK (Kleros' native token) in a specific court. For example, the Humanity Court. Once staked, subscribe to notifications so you'll be alerted when you're randomly selected to judge a case.",
         image: "/images/integrations/kleros-slide4.png",
-        bulletPoints: [
-          "Stake > Judge > Earn > Repeat",
-          "Visit: [Kleros.io](https://kleros.io) | [Documentation](https://docs.kleros.io) | [Klerosboard](https://klerosboard.com/1)",
-        ],
+        bulletPoints: ["Stake > Judge > Earn > Repeat"],
+        juror: {
+          highlight:
+            "Anyone can be a juror! Whether you're a pilot, a teacher or a homemaker. No legal degree needed.",
+          staking:
+            "The more PNK you stake, the higher your chances of being selected. But remember, jurors are expected to vote honestly and coherently based on the evidence.",
+          voteResults: [
+            "✅ Coherent Vote (Align with the majority) = 🤑 Earn arbitration fees + extra PNK",
+            "❌ Incoherent Vote (Against the majority) = 😬 Lose some staked PNK",
+          ],
+          links:
+            "🌐 [Kleros.io](https://kleros.io) | 📚 [Documentation](https://docs.kleros.io) | 📊 [Klerosboard](https://klerosboard.com/1)",
+        },
       },
     ],
   },
@@ -144,10 +147,8 @@ const integrations: Record<string, Integration> = {
     logoHeight: 48,
     darkLogo: "/images/seer-logo-white.png",
     isActive: true,
-    startPath: "app/seer-credits",
+    startPath: "/app/seer-credits",
     buttonText: "Claim $10",
-    displayOrder: 3,
-    statusLabel: "Live",
     firstInfoSlide: [
       {
         id: "whatIsSeer",
@@ -162,13 +163,7 @@ const integrations: Record<string, Integration> = {
         id: "whyDifferent",
         title: "Why is Seer different?",
         description:
-          "Unlike traditional betting or centralized platforms, Seer runs entirely on smart contracts, meaning **no middlemen, no manipulation and no hidden rules**. Every market is open, verifiable and secured.",
-        bulletPoints: [
-          "**Transparent**: Enables the creation and management of diverse, trustless markets via [Reality.eth](https://reality.eth.limo/app/docs/html/index.html) and [Conditional Tokens Framework](https://conditional-tokens-docs.netlify.app/docs/introduction1).",
-          "**Fair**: [Kleros](https://kleros.io/) acts as a decentralized arbiter to resolve disputes and ensure fair, transparent outcomes.",
-          "**Create Your Own Markets**: Allows users to create custom prediction markets for any event or topic.",
-          "**Fair Rewards**: Easily trade market outcomes and earn rewards through prediction farming.",
-        ],
+          "Unlike traditional betting or centralized platforms, Seer runs entirely on smart contracts, meaning **no middlemen, no manipulation and no hidden rules**. Every market is open, verifiable and secured.\n\n• **Transparent**: Enables the creation and management of diverse, trustless markets via [Reality.eth](https://reality.eth.limo/app/docs/html/index.html) and [Conditional Tokens Framework](https://conditional-tokens-docs.netlify.app/docs/introduction1).\n• **Fair**: [Kleros](https://kleros.io/) acts as a decentralized arbiter to resolve disputes and ensure fair, transparent outcomes.\n• **Create Your Own Markets**: Allows users to create custom prediction markets for any event or topic.\n• **Fair Rewards**: Easily trade market outcomes and earn rewards through prediction farming.",
         image: "/images/integrations/seer-slide2.png",
         imageHeight: 566,
         imageWidth: 906,
@@ -176,14 +171,8 @@ const integrations: Record<string, Integration> = {
       {
         id: "howToUse",
         title: "What are Seer Credits?",
-        description: "~~Get $10 of Seer Credits when you register.~~",
-        bulletPoints: [
-          "Rewards for **registered Proof of Humanity users** to use on the Seer platform.",
-          "**Use them like trading funds.** Open/close positions on Seer without spending your own crypto.",
-          "**They're not tokens.** They're non-transferable, and can't be withdrawn.",
-          "**Potential bonus credits.** More credits may be added after registration.",
-          "**Use them before they expire.** Unused credits may not roll over.",
-        ],
+        description:
+          "~~Get $10 of Seer Credits when you register.~~\n\n• Rewards for **registered Proof of Humanity users** to use on the Seer platform.\n• **Use them like trading funds.** Open/close positions on Seer without spending your own crypto.\n• **They're not tokens.** They're non-transferable, and can't be withdrawn.\n• **Potential bonus credits.** More credits may be added after registration.\n• **Use them before they expire.** Unused credits may not roll over.",
         image: "/images/integrations/seer-slide3.png",
         imageHeight: 322,
         imageWidth: 901,
@@ -208,9 +197,10 @@ const integrations: Record<string, Integration> = {
  * Get all available integrations
  */
 export async function getIntegrations(): Promise<Integration[]> {
-  return Object.values(integrations)
-    .filter((integration) => integration.isActive)
-    .sort((a, b) => (a.displayOrder ?? 99) - (b.displayOrder ?? 99));
+  // Filter out inactive integrations
+  return Object.values(integrations).filter(
+    (integration) => integration.isActive,
+  );
 }
 
 /**

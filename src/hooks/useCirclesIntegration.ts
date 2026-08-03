@@ -28,9 +28,6 @@ export default function useCirclesIntegration() {
   const { switchChain } = useSwitchChain();
   const { connect } = useConnect();
 
-  const [currentCreateAccountStep, setCurrentCreateAccountStep] = useState(0);
-  const [currentMintStep, setCurrentMintStep] = useState(0);
-
   const [walletAddress, setWalletAddress] = useState("");
   const [disableButton, setDisableButton] = useState(false);
 
@@ -214,7 +211,7 @@ export default function useCirclesIntegration() {
           disabled: false,
         };
       }
-      const disabled = disableButton || !isWalletAddressValid;
+      let disabled = disableButton || !isWalletAddressValid;
       if (humanityStatus === "invalid") {
         return {
           onClick: () =>
@@ -222,7 +219,7 @@ export default function useCirclesIntegration() {
               "Verification required. Become a verified human on PoH, then paste your Circles wallet to link.",
             ),
           label: defaultLabel,
-          disabled,
+          disabled: disabled,
         };
       }
 
@@ -236,8 +233,6 @@ export default function useCirclesIntegration() {
       disableButton,
       isWalletAddressValid,
       humanityStatus,
-      connect,
-      switchChain,
     ],
   );
 
@@ -251,16 +246,12 @@ export default function useCirclesIntegration() {
     linkStatus,
     humanityStatus,
     isCirclesDataQueryError,
-    currentCreateAccountStep,
-    currentMintStep,
     isWalletAddressValid,
     pending,
     isLoadingCirclesData,
     humanityId: currentHumanityId,
 
     setWalletAddress,
-    setCurrentCreateAccountStep,
-    setCurrentMintStep,
     handleLinkAccount,
     handleRenewTrust,
     getActionButtonProps,
