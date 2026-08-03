@@ -364,7 +364,12 @@ export default function ClaimSection({
     return (
       <div className="border-stroke bg-primaryBackground rounded-[30px] border p-6 shadow-[0_0_45px_rgba(255,255,255,0.10)] lg:w-[440px] lg:p-8">
         <div className="text-center">
-          <ClaimedPanel amountPerClaim={amountPerClaim} isTestnet={isTestnet} />
+          {/* key: reset email-form state (modal, editing, draft) on wallet switch */}
+          <ClaimedPanel
+            key={address ?? "no-address"}
+            amountPerClaim={amountPerClaim}
+            isTestnet={isTestnet}
+          />
         </div>
       </div>
     );

@@ -1,7 +1,6 @@
 "use client";
 import React, { useState, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { useAccount } from "wagmi";
 import { toast } from "react-toastify";
 import { useAtlasProvider } from "@kleros/kleros-app";
 
@@ -31,7 +30,6 @@ export default function ClaimedPanel({
   isTestnet,
 }: ClaimedPanelProps) {
   const router = useRouter();
-  const { address } = useAccount();
   const { isVerified, user, isFetchingUser, isAddingUser, isUpdatingUser } =
     useAtlasProvider();
 
@@ -70,16 +68,6 @@ export default function ClaimedPanel({
       setShowModal(true);
     }
   }, [isVerified, isFetchingUser, hasEmail]);
-
-  const prevAddress = React.useRef(address);
-  useEffect(() => {
-    if (prevAddress.current !== undefined && prevAddress.current !== address) {
-      setShowModal(false);
-      setIsEditing(false);
-      setUserEmail("");
-    }
-    prevAddress.current = address;
-  }, [address]);
 
   const { mutate: submitEmail, isPending: isSubmitting } = useSubmitEmail({
     onSuccess: () => {
@@ -275,10 +263,7 @@ export default function ClaimedPanel({
             </p>
           )}
           {isEditing && !canUpdateEmail && (
-            <p className="text-secondaryText mt-1 text-[11px] italic">
-              You can update again in {minutesUntilUpdateable}{" "}
-              {minutesUntilUpdateable === 1 ? "minute" : "minutes"}.
-            </p>
+            <CooldownNote minutes={minutesUntilUpdateable} />
           )}
 
           {isEditing && (
@@ -312,10 +297,7 @@ export default function ClaimedPanel({
                 . Check your inbox and spam folder.
               </p>
               {!canUpdateEmail && (
-                <p className="text-secondaryText mt-1 text-[11px] italic">
-                  You can update again in {minutesUntilUpdateable}{" "}
-                  {minutesUntilUpdateable === 1 ? "minute" : "minutes"}.
-                </p>
+                <CooldownNote minutes={minutesUntilUpdateable} />
               )}
               <div className="mt-2 flex items-center gap-3">
                 <button
@@ -363,10 +345,10 @@ export default function ClaimedPanel({
                 Change email
               </button>
               {!canUpdateEmail && (
-                <p className="text-secondaryText mt-0.5 text-[11px] italic">
-                  Updateable in {minutesUntilUpdateable}{" "}
-                  {minutesUntilUpdateable === 1 ? "minute" : "minutes"}.
-                </p>
+                <CooldownNote
+                  minutes={minutesUntilUpdateable}
+                  className="mt-0.5"
+                />
               )}
             </div>
           </div>
@@ -394,5 +376,19 @@ export default function ClaimedPanel({
       </ExternalLink>
       <JurorAlertsModal open={showModal} onClose={() => setShowModal(false)} />
     </>
+  );
+}
+
+function CooldownNote({
+  minutes,
+  className = "mt-1",
+}: {
+  minutes: number;
+  className?: string;
+}) {
+  return (
+    <p className={`text-secondaryText ${className} text-[11px] italic`}>
+      You can update again in {minutes} {minutes === 1 ? "minute" : "minutes"}.
+    </p>
   );
 }

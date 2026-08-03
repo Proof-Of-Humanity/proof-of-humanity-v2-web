@@ -20,8 +20,6 @@ import { isAddress } from "viem";
 import usePOHCirclesWrite from "contracts/hooks/usePOHCirclesWrite";
 import { useLoading } from "hooks/useLoading";
 
-type CirclesDataQueryKey = ["circlesData", string];
-
 export default function useCirclesIntegration() {
   const { address, isConnected } = useAccount();
   const connectedChainId = useChainId() as SupportedChainId;
@@ -43,14 +41,9 @@ export default function useCirclesIntegration() {
     isSuccess: isCirclesDataSuccess,
     isError: isCirclesDataQueryError,
     refetch: refetchCirclesData,
-  } = useQuery<
-    ProcessedCirclesData,
-    Error,
-    ProcessedCirclesData,
-    CirclesDataQueryKey
-  >({
-    queryKey: ["circlesData", address] as CirclesDataQueryKey,
-    queryFn: ({ queryKey }) => getProcessedCirclesData(queryKey[1] as string),
+  } = useQuery<ProcessedCirclesData>({
+    queryKey: ["circlesData", address],
+    queryFn: () => getProcessedCirclesData(address as string),
     enabled: !!address && isConnected,
     refetchOnWindowFocus: false,
     refetchOnMount: false,
@@ -77,11 +70,14 @@ export default function useCirclesIntegration() {
     [walletAddress],
   );
 
-  const [writeLink] = usePOHCirclesWrite(
-    "register",
-    useMemo(
-      () => ({
-        onReady: (fire) => {
+  const txCallbacks = useCallback(
+    (successMsg: string, failMsg: string) => {
+      const fail = () => {
+        loading.stop();
+        toast.error(failMsg);
+      };
+      return {
+        onReady: (fire: () => void) => {
           fire();
           toast.info("Transaction pending");
         },
@@ -91,47 +87,32 @@ export default function useCirclesIntegration() {
           setTimeout(() => {
             refetchCirclesData();
           }, 1000);
-          toast.success("Successfully linked Circles account!");
+          toast.success(successMsg);
         },
-        onFail: () => {
-          loading.stop();
-          toast.error("Failed to link account");
-        },
-        onError: () => {
-          loading.stop();
-          toast.error("Failed to link account");
-        },
-      }),
-      [loading, refetchCirclesData],
+        onFail: fail,
+        onError: fail,
+      };
+    },
+    [loading, refetchCirclesData],
+  );
+
+  const [writeLink] = usePOHCirclesWrite(
+    "register",
+    useMemo(
+      () =>
+        txCallbacks(
+          "Successfully linked Circles account!",
+          "Failed to link account",
+        ),
+      [txCallbacks],
     ),
   );
 
   const [writeRenew] = usePOHCirclesWrite(
     "renewTrust",
     useMemo(
-      () => ({
-        onReady(fire) {
-          fire();
-          toast.info("Transaction pending");
-        },
-        onSuccess: () => {
-          loading.stop();
-          setDisableButton(true);
-          setTimeout(() => {
-            refetchCirclesData();
-          }, 1000);
-          toast.success("Successfully renewed trust!");
-        },
-        onFail: () => {
-          loading.stop();
-          toast.error("Failed to renew trust");
-        },
-        onError: () => {
-          loading.stop();
-          toast.error("Failed to renew trust");
-        },
-      }),
-      [loading, refetchCirclesData],
+      () => txCallbacks("Successfully renewed trust!", "Failed to renew trust"),
+      [txCallbacks],
     ),
   );
 
@@ -211,7 +192,7 @@ export default function useCirclesIntegration() {
           disabled: false,
         };
       }
-      let disabled = disableButton || !isWalletAddressValid;
+      const disabled = disableButton || !isWalletAddressValid;
       if (humanityStatus === "invalid") {
         return {
           onClick: () =>
@@ -219,7 +200,7 @@ export default function useCirclesIntegration() {
               "Verification required. Become a verified human on PoH, then paste your Circles wallet to link.",
             ),
           label: defaultLabel,
-          disabled: disabled,
+          disabled,
         };
       }
 
@@ -233,6 +214,8 @@ export default function useCirclesIntegration() {
       disableButton,
       isWalletAddressValid,
       humanityStatus,
+      connect,
+      switchChain,
     ],
   );
 

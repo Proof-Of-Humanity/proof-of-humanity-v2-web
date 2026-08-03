@@ -143,7 +143,8 @@ const integrations: Record<string, Integration> = {
     description:
       "Register on Proof of Humanity to receive $10 of Seer Credits, with potential bonus credits after.",
     logo: "/images/integrations/seer-logo.png",
-    logoWidth: 164,
+    // seer-logo-white.png is 862x400; 103x48 keeps its true aspect ratio
+    logoWidth: 103,
     logoHeight: 48,
     darkLogo: "/images/seer-logo-white.png",
     isActive: true,

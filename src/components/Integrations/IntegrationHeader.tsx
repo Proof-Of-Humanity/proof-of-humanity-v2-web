@@ -24,6 +24,12 @@ export default function IntegrationHeader({
               alt={`${integration.name} logo`}
               width={logoWidth}
               height={logoHeight}
+              style={{
+                width: `${logoWidth}px`,
+                height: `${logoHeight}px`,
+                objectFit: "contain",
+                objectPosition: "left",
+              }}
             />
           </div>
         )}

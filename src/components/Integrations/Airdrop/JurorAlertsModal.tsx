@@ -15,6 +15,28 @@ import { isValidEmailAddress } from "utils/validators";
 
 type ModalStep = "warning" | "email";
 
+const stakeWarningList = (
+  <ul className="mb-6 max-w-sm space-y-3">
+    <li className="flex items-start justify-center gap-2">
+      <div className="bg-primaryText mt-2 h-1.5 w-1.5 flex-shrink-0 rounded-full" />
+      <span className="text-primaryText text-sm">
+        You&apos;re now staked and may be drawn as a juror.
+      </span>
+    </li>
+    <li className="flex items-start justify-center gap-2">
+      <WarningCircle16Icon
+        width={16}
+        height={16}
+        className="fill-orange mt-0.5 flex-shrink-0"
+      />
+      <span className="text-orange text-sm">
+        If you&apos;re drawn and miss the vote deadline, you can lose locked
+        stake.
+      </span>
+    </li>
+  </ul>
+);
+
 interface JurorAlertsModalProps {
   open: boolean;
   onClose: () => void;
@@ -73,25 +95,7 @@ export default function JurorAlertsModal({
       </h2>
       {step === "warning" ? (
         <div className="flex flex-col items-center p-6 text-center">
-          <ul className="mb-6 max-w-sm space-y-3">
-            <li className="flex items-start justify-center gap-2">
-              <div className="bg-primaryText mt-2 h-1.5 w-1.5 flex-shrink-0 rounded-full" />
-              <span className="text-primaryText text-sm">
-                You&apos;re now staked and may be drawn as a juror.
-              </span>
-            </li>
-            <li className="flex items-start justify-center gap-2">
-              <WarningCircle16Icon
-                width={16}
-                height={16}
-                className="fill-orange mt-0.5 flex-shrink-0"
-              />
-              <span className="text-orange text-sm">
-                If you&apos;re drawn and miss the vote deadline, you can lose
-                locked stake.
-              </span>
-            </li>
-          </ul>
+          {stakeWarningList}
 
           <ActionButton
             onClick={() => setStep("email")}
@@ -135,25 +139,7 @@ export default function JurorAlertsModal({
         </div>
       ) : (
         <div className="flex flex-col items-center p-6 text-center">
-          <ul className="mb-6 max-w-sm space-y-3">
-            <li className="flex items-start justify-center gap-2">
-              <div className="bg-primaryText mt-2 h-1.5 w-1.5 flex-shrink-0 rounded-full" />
-              <span className="text-primaryText text-sm">
-                You&apos;re now staked and may be drawn as a juror.
-              </span>
-            </li>
-            <li className="flex items-start justify-center gap-2">
-              <WarningCircle16Icon
-                width={16}
-                height={16}
-                className="fill-orange mt-0.5 flex-shrink-0"
-              />
-              <span className="text-orange text-sm">
-                If you&apos;re drawn and miss the vote deadline, you can lose
-                locked stake.
-              </span>
-            </li>
-          </ul>
+          {stakeWarningList}
 
           <div className="mb-2 w-full text-left">
             <label className="text-primaryText mb-2 block text-sm font-semibold">

@@ -18,22 +18,18 @@ export default function IntegrationCard({ integration }: IntegrationCardProps) {
       <div className="flex flex-1 flex-col p-5 md:p-7">
         <div className="mb-4 flex items-start justify-between gap-2">
           {integration.logo && (
-            <div
-              className="flex items-center"
-              style={{ height: `${logoHeight}px` }}
-            >
-              <Image
-                src={src}
-                alt={`${integration.name} logo`}
-                width={logoWidth}
-                height={logoHeight}
-                style={{
-                  width: "auto",
-                  height: "100%",
-                  maxHeight: `${logoHeight}px`,
-                }}
-              />
-            </div>
+            <Image
+              src={src}
+              alt={`${integration.name} logo`}
+              width={logoWidth}
+              height={logoHeight}
+              style={{
+                width: `${logoWidth}px`,
+                height: `${logoHeight}px`,
+                objectFit: "contain",
+                objectPosition: "left",
+              }}
+            />
           )}
         </div>
         <h3 className="text-primaryText font-semibold">{integration.title}</h3>
