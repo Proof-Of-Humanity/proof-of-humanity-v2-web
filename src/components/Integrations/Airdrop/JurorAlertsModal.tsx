@@ -40,11 +40,13 @@ const stakeWarningList = (
 interface JurorAlertsModalProps {
   open: boolean;
   onClose: () => void;
+  className?: string;
 }
 
 export default function JurorAlertsModal({
   open,
   onClose,
+  className,
 }: JurorAlertsModalProps) {
   const [step, setStep] = useState<ModalStep>("warning");
   const [acknowledged, setAcknowledged] = useState(false);
@@ -89,10 +91,12 @@ export default function JurorAlertsModal({
   const isBusy = isSubmitting || isAddingUser || isUpdatingUser;
 
   return (
-    <Modal open={open} onClose={handleModalClose}>
-      <h2 className="text-primaryText px-4 pt-5 text-left text-2xl font-semibold">
-        Action required
-      </h2>
+    <Modal
+      open={open}
+      onClose={handleModalClose}
+      title="Action required"
+      className={className}
+    >
       {step === "warning" ? (
         <div className="flex flex-col items-center p-6 text-center">
           {stakeWarningList}

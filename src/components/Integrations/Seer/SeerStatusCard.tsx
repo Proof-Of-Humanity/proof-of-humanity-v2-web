@@ -9,7 +9,6 @@ import CrossCircle16Icon from "icons/CrossCircle16.svg";
 export type SeerEligibilityStatus =
   | "eligible"
   | "not-eligible"
-  | "error"
   | "disconnected";
 
 interface SeerStatusCardProps {
@@ -55,20 +54,6 @@ export default function SeerStatusCard({
           textColor: "text-red-500",
           buttonLabel: "Register Now",
         };
-      case "error":
-        return {
-          icon: (
-            <WarningCircle16Icon
-              width={16}
-              height={16}
-              className="fill-orange"
-            />
-          ),
-          label: "Eligibility check failed",
-          text: "We couldn't reach every network. Try again.",
-          textColor: "text-orange",
-          buttonLabel: "Retry",
-        };
       case "disconnected":
       default:
         return {
@@ -107,7 +92,6 @@ export default function SeerStatusCard({
     }).catch(() => undefined);
   }, [address, status]);
 
-  // Show loading state
   if (isLoading) {
     return (
       <div className="border-stroke bg-primaryBackground rounded-[30px] border p-6 shadow-[0_0_45px_rgba(255,255,255,0.10)] lg:w-[391px] lg:p-8">

@@ -1,15 +1,17 @@
 "use client";
-import { useState } from "react";
+import { useState, useCallback, useMemo } from "react";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
 import IntegrationHeader from "components/Integrations/IntegrationHeader";
-import StepCarousel from "components/Integrations/StepCarousel";
-import FeatureList from "components/FeatureList";
+import StepCarousel, {
+  type StepNavProps,
+} from "components/Integrations/StepCarousel";
+import WizardNav from "components/Integrations/WizardNav";
+import FeatureList, { type FeatureItem } from "components/FeatureList";
 import { addLinkToText } from "components/addLinkToText";
 import SeerStatusCard, { SeerEligibilityStatus } from "./SeerStatusCard";
 import type { Integration, InfoSlide } from "types/integrations";
 import ExternalLink from "components/ExternalLink";
-import { useAccount } from "wagmi";
+import { useAccount, useChainId } from "wagmi";
 import { useAppKit } from "@reown/appkit/react";
 import { useQuery } from "@tanstack/react-query";
 import { prettifyId } from "utils/identifier";
@@ -21,210 +23,261 @@ interface SeerCreditsProps {
   integration: Integration;
 }
 
+type SeerUserData = {
+  hasValidRegistration: boolean;
+  humanityId: string | null;
+  chainId: SupportedChainId | undefined;
+};
+
 export default function SeerCredits({ integration }: SeerCreditsProps) {
-  const [slidesCompleted, setSlidesCompleted] = useState(false);
+  const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
   const { address, isConnected } = useAccount();
-  const router = useRouter();
+  const chainId = useChainId();
   const modal = useAppKit();
 
-  const slides = integration.firstInfoSlide ?? [];
+  const slidesCompleted =
+    currentSlideIndex >= (integration.firstInfoSlide?.length ?? 0);
+  const currentSlide = integration.firstInfoSlide?.[currentSlideIndex];
 
-  // Eligible when the address has a registration (local or cross-chain) on any supported chain.
-  const {
-    data: isRegistered,
-    isLoading,
-    isError,
-    refetch,
-  } = useQuery({
-    queryKey: ["seerEligibility", address],
-    queryFn: async () => {
-      if (!address) return false;
+  // Query to check if user has an included profile (checking registrations and cross-chain registrations)
+  const { data: userData, isLoading } = useQuery<SeerUserData | null>({
+    queryKey: ["seerEligibility", address, chainId],
+    queryFn: async (): Promise<SeerUserData | null> => {
+      if (!address) return null;
+
       const normalizedAddress = address.toLowerCase() as Address;
       const now = Math.ceil(Date.now() / 1000);
+
       const results = await Promise.all(
-        supportedChains.map((chain) =>
-          sdk[chain.id as SupportedChainId]
-            .HumanityIdByClaimer({ address: normalizedAddress, now })
-            .catch((error) => {
-              console.error(`Error checking chain ${chain.id}:`, error);
-              return null;
-            }),
-        ),
+        supportedChains.map(async (chain) => {
+          try {
+            const data = await sdk[
+              chain.id as SupportedChainId
+            ].HumanityIdByClaimer({
+              address: normalizedAddress,
+              now,
+            });
+
+            const localRegistration = data?.registrations?.[0];
+            if (localRegistration?.humanity?.id) {
+              return {
+                hasValidRegistration: true,
+                humanityId: localRegistration.humanity.id,
+                chainId: chain.id,
+              };
+            }
+
+            const crossChainRegistration = data?.crossChainRegistrations?.[0];
+            if (crossChainRegistration?.id) {
+              return {
+                hasValidRegistration: true,
+                humanityId: crossChainRegistration.id,
+                chainId: chain.id,
+              };
+            }
+
+            return {
+              hasValidRegistration: false,
+              humanityId: null,
+              chainId: chain.id,
+            };
+          } catch (error) {
+            console.error(`Error checking chain ${chain.id}:`, error);
+            return {
+              hasValidRegistration: false,
+              humanityId: null,
+              chainId: chain.id,
+            };
+          }
+        }),
       );
-      const registered = results.some(
-        (data) =>
-          data?.registrations?.[0]?.humanity?.id ||
-          data?.crossChainRegistrations?.[0]?.id,
+
+      return (
+        results.find((r) => r.hasValidRegistration) || {
+          hasValidRegistration: false,
+          humanityId: null,
+          chainId: undefined,
+        }
       );
-      // A failed chain may hold the user's registration — never report
-      // "not eligible" unless every chain actually answered.
-      if (!registered && results.some((data) => data === null))
-        throw new Error("Eligibility check failed on at least one chain");
-      return registered;
     },
     enabled: isConnected && !!address,
   });
 
-  const eligibilityStatus: SeerEligibilityStatus =
-    !isConnected || isLoading
-      ? "disconnected"
-      : isError
-        ? "error"
-        : isRegistered
-          ? "eligible"
-          : "not-eligible";
+  const eligibilityStatus: SeerEligibilityStatus = useMemo(() => {
+    if (!isConnected) return "disconnected";
+    if (isLoading) return "disconnected";
+    if (userData?.hasValidRegistration) {
+      return "eligible";
+    }
+    return "not-eligible";
+  }, [isConnected, isLoading, userData]);
 
-  const handleActionClick = () => {
+  const handleActionClick = useCallback(() => {
     switch (eligibilityStatus) {
       case "eligible":
         window.open("https://app.seer.pm/", "_blank", "noopener,noreferrer");
         break;
       case "not-eligible":
-        if (address) router.push(`/${prettifyId(address)}/claim`);
-        break;
-      case "error":
-        void refetch();
+        if (address) {
+          const opened = window.open(
+            `/${prettifyId(address)}/claim`,
+            "_blank",
+            "noopener,noreferrer",
+          );
+          if (!opened) window.location.assign(`/${prettifyId(address)}/claim`);
+        }
         break;
       case "disconnected":
         modal.open({ view: "Connect" });
         break;
     }
-  };
+  }, [eligibilityStatus, modal, address]);
 
   return (
-    <div className="flex w-full flex-col space-y-8 md:w-10/12">
-      <div className="paper">
+    <div className="flex w-full max-w-[1200px] flex-col space-y-8 md:w-10/12">
+      <div className="flex flex-col gap-3">
         <IntegrationHeader {...{ integration }} />
-        <div className="flex flex-col items-center justify-center space-y-4 px-4 py-2 md:px-8 md:py-4">
-          {!slidesCompleted && slides.length > 0 ? (
-            <>
-              <ExternalLink
-                href="https://seer.pm/"
-                className="text-purple text-md my-4 text-center"
-              >
-                Learn more about Seer to get started
-              </ExternalLink>
-              <StepCarousel
-                slides={slides}
-                onComplete={() => setSlidesCompleted(true)}
-                arrowClasses={{
-                  icon: "transition-all duration-200",
-                  enabled: "hover:scale-110",
-                }}
-              >
-                {({ slide, index, arrows }) => (
-                  <SeerSlide
-                    {...{ slide, arrows }}
-                    isFirst={index === 0}
-                    isLast={index === slides.length - 1}
-                  />
-                )}
-              </StepCarousel>
-            </>
-          ) : (
-            <div className="mx-auto w-full max-w-[1095px] rounded-[30px] bg-gradient-to-br from-[#F9BFCE] to-[#BE75FF] p-[1px]">
-              <div className="bg-primaryBackground flex flex-col rounded-[29px] lg:flex-row">
-                <div className="flex-1 p-6 lg:p-8">
-                  <h2 className="text-primaryText mb-4 text-xl font-semibold md:text-2xl">
-                    Claim and use your Seer Credits
-                  </h2>
-                  <div className="mb-4">
-                    <p className="text-secondaryText mb-2 text-sm">
-                      To qualify, you must be an Included profile.
-                    </p>
-                  </div>
-
-                  <div className="space-y-4">
-                    <p className="text-purple text-base font-semibold md:text-lg">
-                      Get $10 of Seer Credits when you register, with potential
-                      bonus credits after.
-                    </p>
-
-                    <div className="text-secondaryText space-y-3 text-sm leading-relaxed">
-                      <p>
-                        Seer Credits are rewards for registered Proof of
-                        Humanity users to use on the Seer Prediction Market
-                        platform.
-                      </p>
-
-                      <p>
-                        Use your starting credits to take positions in
-                        prediction markets. Bonus credits may be added later,
-                        and unused credits can expire.
-                      </p>
-                    </div>
-                  </div>
+        {!slidesCompleted && integration.firstInfoSlide && currentSlide ? (
+          <div className="paper flex flex-col items-center justify-center space-y-4 px-4 py-2 md:px-8 md:py-4">
+            <ExternalLink
+              href="https://seer.pm/"
+              className="text-orange text-md my-4 text-center"
+            >
+              Learn more about Seer to get started
+            </ExternalLink>
+            <StepCarousel
+              slides={integration.firstInfoSlide}
+              currentIndex={currentSlideIndex}
+              exitOverlay
+              onPrevious={() => setCurrentSlideIndex(currentSlideIndex - 1)}
+              onNext={() => setCurrentSlideIndex(currentSlideIndex + 1)}
+              onLastSlideComplete={() =>
+                setCurrentSlideIndex(currentSlideIndex + 1)
+              }
+            >
+              {({ slide, index, nav }) => (
+                <SeerSlide
+                  slide={slide}
+                  isLast={index === integration.firstInfoSlide!.length - 1}
+                  isFirst={index === 0}
+                  nav={nav}
+                />
+              )}
+            </StepCarousel>
+          </div>
+        ) : (
+          <div className="relative w-full">
+            <div className="border-stroke bg-whiteBackground relative flex flex-col rounded-[30px] border shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] lg:flex-row lg:items-stretch">
+              <div className="flex-1 p-6 lg:p-8">
+                <h2 className="text-primaryText mb-4 text-xl font-semibold md:text-2xl">
+                  Claim and use your Seer Credits
+                </h2>
+                <div className="mb-4">
+                  <p className="text-status-registered mb-2 text-sm">
+                    To qualify, you must be a Verified Human profile.
+                  </p>
                 </div>
 
-                <SeerStatusCard
-                  status={eligibilityStatus}
-                  onActionClick={handleActionClick}
-                  isLoading={isLoading && isConnected}
-                  address={address}
-                />
+                <div className="space-y-4">
+                  <p className="text-orange text-base font-semibold md:text-lg">
+                    Get $10 of Seer Credits when you register, with potential
+                    bonus credits after.
+                  </p>
+
+                  <div className="text-secondaryText space-y-3 text-sm leading-relaxed">
+                    <p>
+                      Seer Credits are rewards for registered Proof of Humanity
+                      users to use on the Seer Prediction Market platform.
+                    </p>
+
+                    <p>
+                      Use your starting credits to take positions in prediction
+                      markets. Bonus credits may be added later, and unused
+                      credits can expire.
+                    </p>
+                  </div>
+                </div>
               </div>
+
+              <SeerStatusCard
+                status={eligibilityStatus}
+                onActionClick={handleActionClick}
+                isLoading={isLoading && isConnected}
+                address={address}
+              />
             </div>
-          )}
-        </div>
+          </div>
+        )}
       </div>
     </div>
   );
 }
 
+// Very wide (>2.2) or tall/square (<1.4) images letterbox instead of cropping
+const getObjectFitClass = (slide: InfoSlide, isLast: boolean) => {
+  if (slide.imageWidth && slide.imageHeight) {
+    const ratio = slide.imageWidth / slide.imageHeight;
+    if (ratio > 2.2 || ratio < 1.4) {
+      return "object-contain";
+    }
+  }
+  return isLast ? "object-contain" : "object-cover";
+};
+
 function SeerSlide({
   slide,
   isFirst,
   isLast,
-  arrows,
+  nav,
 }: {
   slide: InfoSlide;
   isFirst: boolean;
   isLast: boolean;
-  arrows: React.ReactNode;
+  nav: StepNavProps;
 }) {
-  // 16:9 is ~1.77. Wide (>2.2) or tall/square (<1.4) images get cropped badly
-  // by object-cover; the last slide always uses contain (legacy behavior).
-  const ratio =
-    slide.imageWidth && slide.imageHeight
-      ? slide.imageWidth / slide.imageHeight
-      : null;
-  const objectFit =
-    (ratio !== null && (ratio > 2.2 || ratio < 1.4)) || isLast
-      ? "object-contain"
-      : "object-cover";
-
   return (
-    <div className="border-stroke flex h-full w-full max-w-[1095px] flex-col overflow-hidden rounded-[30px] border shadow">
-      <div className="bg-whiteBackground flex w-full items-center justify-center overflow-hidden rounded-t-[30px] px-4 py-4 sm:px-6 sm:py-6 md:px-8 md:py-8">
-        {/* Use a fixed height container that matches the aspect-video height on large screens to maintain consistency */}
-        <div className="relative flex aspect-video w-full items-center justify-center">
+    <>
+      {/* Fixed aspect box keeps the visual anchor identical on every slide */}
+      <div className="mt-4 flex w-full justify-center px-2 sm:px-6 lg:mt-6">
+        <div className="relative aspect-video w-full max-w-[900px]">
           <Image
             src={slide.image || ""}
             alt={slide.title}
             fill
-            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 1100px"
-            className={`border-stroke rounded-md border shadow transition-opacity duration-300 ${objectFit}`}
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 900px"
+            className={`rounded-2xl ${getObjectFitClass(slide, isLast)}`}
             priority={isFirst}
           />
         </div>
       </div>
-      {/* Fixed height container for text content to prevent layout shifts */}
-      <div className="bg-primaryBackground flex h-[420px] flex-col rounded-b-[30px] p-4 md:p-6">
-        <p className="text-primaryText line-clamp-2 min-h-[56px] text-xl font-semibold md:min-h-[64px] md:text-2xl">
+
+      <div className="border-stroke mx-2 mt-6 border-t sm:mx-6 lg:mt-8" />
+
+      <div className="flex flex-1 flex-col px-2 py-5 sm:px-6 lg:py-6">
+        <p className="text-primaryText text-xl font-semibold md:text-2xl">
           {slide.title}
         </p>
-        <div className="text-primaryText mt-4 flex-1 overflow-y-auto text-sm md:text-base">
+        <div className="text-secondaryText mt-4 text-sm leading-relaxed md:text-base">
           {addLinkToText(slide.description)}
         </div>
         {slide.bulletPoints && slide.bulletPoints.length > 0 && (
           <FeatureList
-            items={slide.bulletPoints}
+            items={slide.bulletPoints.map(
+              (point): FeatureItem => ({
+                text: point,
+                iconType: "check",
+              }),
+            )}
             className="mt-4"
-            textClassName="text-primaryText text-sm md:text-base"
+            iconWidth={20}
+            iconHeight={20}
+            iconClassName="flex-shrink-0 fill-status-registered"
+            textClassName="text-status-registered text-sm md:text-base"
           />
         )}
-        {arrows}
+        {/* mt-auto pins nav to the same baseline across slides of varying content height */}
+        <WizardNav {...nav} className="mt-auto pt-4 md:pt-6" />
       </div>
-    </div>
+    </>
   );
 }

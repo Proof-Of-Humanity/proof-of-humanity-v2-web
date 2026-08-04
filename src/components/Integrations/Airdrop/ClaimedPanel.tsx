@@ -40,7 +40,6 @@ export default function ClaimedPanel({
   const isEmailValid =
     trimmedEmail.length === 0 ? true : isValidEmailAddress(trimmedEmail);
 
-  // Derived email state
   const hasEmail = !!user?.email;
   const isEmailVerified = user?.isEmailVerified ?? false;
   const parsedEmailUpdateableAt = user?.emailUpdateableAt
@@ -171,7 +170,6 @@ export default function ClaimedPanel({
         </div>
       </div>
       {!isVerified ? (
-        /* State 0: Not signed in */
         <div className="border-stroke mb-4 rounded-2xl border p-3 text-left">
           <div className="mb-3 flex items-start gap-2">
             <WarningCircle16Icon
@@ -192,12 +190,10 @@ export default function ClaimedPanel({
           <SignInButton className="w-full py-2 text-sm" />
         </div>
       ) : isFetchingUser ? (
-        /* State 1: Loading */
         <div className="border-stroke mb-4 flex items-center justify-center rounded-2xl border p-3">
           <div className="border-purple h-5 w-5 animate-spin rounded-full border-b-2" />
         </div>
       ) : showForm ? (
-        /* State 2 & 5: No email / Editing */
         <div className="border-stroke mb-4 rounded-2xl border p-3 text-left">
           <div className="mb-2 flex items-start gap-2">
             <WarningCircle16Icon
@@ -277,7 +273,6 @@ export default function ClaimedPanel({
           )}
         </div>
       ) : alertsPending ? (
-        /* State 3: Email set but unverified */
         <div className="bg-lightOrange border-orange mb-4 rounded-2xl border p-3 text-left">
           <div className="flex items-start gap-2">
             <WarningCircle16Icon
@@ -321,7 +316,6 @@ export default function ClaimedPanel({
           </div>
         </div>
       ) : (
-        /* State 4: Email verified */
         <div className="box-success mb-4 rounded-2xl p-3 text-left">
           <div className="flex items-start gap-2">
             <CheckCircleIcon

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import {
   useAccount,
   useChainId,
@@ -20,11 +20,15 @@ import { isAddress } from "viem";
 import usePOHCirclesWrite from "contracts/hooks/usePOHCirclesWrite";
 import { useLoading } from "hooks/useLoading";
 
+type CirclesDataQueryKey = ["circlesData", string];
+
 export default function useCirclesIntegration() {
   const { address, isConnected } = useAccount();
   const connectedChainId = useChainId() as SupportedChainId;
   const { switchChain } = useSwitchChain();
   const { connect } = useConnect();
+
+  const [currentCreateAccountStep, setCurrentCreateAccountStep] = useState(0);
 
   const [walletAddress, setWalletAddress] = useState("");
   const [disableButton, setDisableButton] = useState(false);
@@ -41,9 +45,14 @@ export default function useCirclesIntegration() {
     isSuccess: isCirclesDataSuccess,
     isError: isCirclesDataQueryError,
     refetch: refetchCirclesData,
-  } = useQuery<ProcessedCirclesData>({
-    queryKey: ["circlesData", address],
-    queryFn: () => getProcessedCirclesData(address as string),
+  } = useQuery<
+    ProcessedCirclesData,
+    Error,
+    ProcessedCirclesData,
+    CirclesDataQueryKey
+  >({
+    queryKey: ["circlesData", address] as CirclesDataQueryKey,
+    queryFn: ({ queryKey }) => getProcessedCirclesData(queryKey[1] as string),
     enabled: !!address && isConnected,
     refetchOnWindowFocus: false,
     refetchOnMount: false,
@@ -69,6 +78,9 @@ export default function useCirclesIntegration() {
     () => isAddress(walletAddress.trim()),
     [walletAddress],
   );
+
+  const latestLinkInputsRef = useRef({ walletAddress, currentHumanityId });
+  latestLinkInputsRef.current = { walletAddress, currentHumanityId };
 
   const txCallbacks = useCallback(
     (successMsg: string, failMsg: string) => {
@@ -122,8 +134,20 @@ export default function useCirclesIntegration() {
         toast.error("Please enter a valid wallet address");
         return;
       }
+      const submittedAddress = walletAddress.trim();
+      const submittedHumanityId = currentHumanityId;
       loading.start();
-      const isHuman = await validateCirclesHumanity(walletAddress);
+      const isHuman = await validateCirclesHumanity(submittedAddress);
+      if (
+        latestLinkInputsRef.current.walletAddress.trim() !== submittedAddress ||
+        latestLinkInputsRef.current.currentHumanityId !== submittedHumanityId
+      ) {
+        loading.stop();
+        toast.error(
+          "The address or account changed while validating. Please try again.",
+        );
+        return;
+      }
       if (!isHuman) {
         loading.stop();
         toast.error("The provided address is not a human in Circles.");
@@ -132,8 +156,8 @@ export default function useCirclesIntegration() {
 
       writeLink({
         args: [
-          currentHumanityId as `0x${string}`,
-          walletAddress.trim() as `0x${string}`,
+          submittedHumanityId as `0x${string}`,
+          submittedAddress as `0x${string}`,
         ],
       });
     } catch (error) {
@@ -229,12 +253,14 @@ export default function useCirclesIntegration() {
     linkStatus,
     humanityStatus,
     isCirclesDataQueryError,
+    currentCreateAccountStep,
     isWalletAddressValid,
     pending,
     isLoadingCirclesData,
     humanityId: currentHumanityId,
 
     setWalletAddress,
+    setCurrentCreateAccountStep,
     handleLinkAccount,
     handleRenewTrust,
     getActionButtonProps,

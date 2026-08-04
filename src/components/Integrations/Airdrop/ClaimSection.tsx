@@ -98,11 +98,7 @@ export default function ClaimSection({
   const router = useRouter();
 
   const humanitySubcourtId = getHumanitySubCourtId(airdropChainId);
-  const {
-    data: currentStake = 0n,
-    isLoading: isStakeLoading,
-    error: stakeError,
-  } = useQuery<bigint>({
+  const { isLoading: isStakeLoading, error: stakeError } = useQuery<bigint>({
     queryKey: [
       "currentStake",
       address,
@@ -197,10 +193,22 @@ export default function ClaimSection({
     switchChain({ chainId: airdropChainId });
   }, [switchChain, airdropChainId]);
 
-  const handleClaimAndStake = useCallback(() => {
+  const handleClaimAndStake = useCallback(async () => {
     if (!address) return;
 
-    const newStake = currentStake + amountPerClaim;
+    let freshStake: bigint;
+    try {
+      freshStake = await getCurrentStake(
+        address as Address,
+        airdropChainId,
+        humanitySubcourtId,
+      );
+    } catch {
+      toast.error("Unable to verify your current stake. Please try again.");
+      return;
+    }
+
+    const newStake = freshStake + amountPerClaim;
 
     prepareBatch({
       calls: [
@@ -216,10 +224,15 @@ export default function ClaimSection({
         },
       ],
     });
-  }, [address, amountPerClaim, currentStake, humanitySubcourtId, prepareBatch]);
+  }, [
+    address,
+    amountPerClaim,
+    airdropChainId,
+    humanitySubcourtId,
+    prepareBatch,
+  ]);
 
   const renderActionButton = () => {
-    // No action button for error state
     if (eligibilityStatus === "error") return null;
 
     const getButtonProps = () => {

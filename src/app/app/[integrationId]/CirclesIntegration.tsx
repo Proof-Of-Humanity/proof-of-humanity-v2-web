@@ -22,51 +22,55 @@ export default function CirclesIntegration({
   };
 
   const {
-    // State
     walletAddress,
     linkStatus,
     isCirclesDataQueryError,
+    currentCreateAccountStep,
     pending,
     isLoadingCirclesData,
 
-    // Actions
     setWalletAddress,
+    setCurrentCreateAccountStep,
     handleLinkAccount,
     handleRenewTrust,
     getActionButtonProps,
   } = useCirclesIntegration();
 
   return (
-    <div className="paper flex w-full flex-col md:w-10/12">
-      <IntegrationHeader integration={integration} />
+    <div className="flex w-full max-w-[1159px] flex-col gap-4 px-4 md:mt-4 md:px-0">
+      <IntegrationHeader
+        integration={integration}
+        className="rounded-[16px] md:min-h-[201px]"
+      />
 
-      <div className="paper flex flex-col items-center justify-center space-y-4 px-4 py-2 md:px-8 md:py-4">
-        <CirclesCreateAccountStep
-          steps={integration.firstInfoSlide || []}
-          isOpen={openAccordionKey === "createAccount"}
-          onToggle={() => handleToggleAccordion("createAccount")}
-        />
+      <CirclesCreateAccountStep
+        steps={integration.firstInfoSlide || []}
+        currentStep={currentCreateAccountStep}
+        setCurrentStep={setCurrentCreateAccountStep}
+        onComplete={() => setOpenAccordionKey("linkAccount")}
+        isOpen={openAccordionKey === "createAccount"}
+        onToggle={() => handleToggleAccordion("createAccount")}
+      />
 
-        <CirclesLinkAccountStep
-          linkStatus={linkStatus}
-          walletAddress={walletAddress}
-          onAddressChange={(e) => setWalletAddress(e.target.value)}
-          onLinkAccount={handleLinkAccount}
-          onRenewTrust={handleRenewTrust}
-          isLoading={isLoadingCirclesData}
-          isError={isCirclesDataQueryError}
-          getActionButtonProps={getActionButtonProps}
-          pending={pending}
-          isOpen={openAccordionKey === "linkAccount"}
-          onToggle={() => handleToggleAccordion("linkAccount")}
-        />
+      <CirclesLinkAccountStep
+        linkStatus={linkStatus}
+        walletAddress={walletAddress}
+        onAddressChange={(e) => setWalletAddress(e.target.value)}
+        onLinkAccount={handleLinkAccount}
+        onRenewTrust={handleRenewTrust}
+        isLoading={isLoadingCirclesData}
+        isError={isCirclesDataQueryError}
+        getActionButtonProps={getActionButtonProps}
+        pending={pending}
+        isOpen={openAccordionKey === "linkAccount"}
+        onToggle={() => handleToggleAccordion("linkAccount")}
+      />
 
-        <CirclesMintTokensStep
-          steps={integration.secondInfoSlide || []}
-          isOpen={openAccordionKey === "mintTokens"}
-          onToggle={() => handleToggleAccordion("mintTokens")}
-        />
-      </div>
+      <CirclesMintTokensStep
+        steps={integration.secondInfoSlide || []}
+        isOpen={openAccordionKey === "mintTokens"}
+        onToggle={() => handleToggleAccordion("mintTokens")}
+      />
     </div>
   );
 }
