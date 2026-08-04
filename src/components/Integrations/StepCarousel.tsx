@@ -1,116 +1,170 @@
 "use client";
-import React, { useState } from "react";
-import LeftArrowIcon from "icons/ArrowCircleLeft.svg";
-import RightArrowIcon from "icons/ArrowCircleRight.svg";
+import React, { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
+import Image from "next/image";
 import { InfoSlide } from "types/integrations";
+
+/** Everything a slide's navigation control needs — spread onto `WizardNav`
+ * (or any card that renders its own nav, e.g. `BecomeJurorCard`). */
+export type StepNavProps = {
+  previousStep: boolean;
+  nextStep: boolean;
+  onPrevious: () => void;
+  onNext: () => void;
+};
 
 export type StepCarouselProps = {
   slides: InfoSlide[];
-  /** When set, the right arrow stays enabled on the last slide ("Complete and
-   * continue") and fires when it is clicked. */
-  onComplete?: () => void;
-  // ponytail: class knobs preserve the styling drift between the pre-existing
-  // Circles/Seer/PNK carousels — collapse them once design blesses one style
-  arrowClasses?: {
-    row?: string;
-    icon?: string;
-    enabled?: string;
-    disabled?: string;
-  };
-  /** Card body. Place `arrows` wherever the layout wants the navigation row. */
+  /** Controlled: the owner keeps the index so it can also derive
+   * "slides completed" from it. */
+  currentIndex: number;
+  onPrevious: () => void;
+  onNext: () => void;
+  /** When set, "Next" on the last slide fires this instead of advancing. */
+  onLastSlideComplete?: () => void;
+  /** Classes for the grid wrapper that stacks the deck. */
+  className?: string;
+  /** Cover the screen with the PoH loading overlay while completing. */
+  exitOverlay?: boolean;
+  /** Body of one slide. Render the nav wherever the layout wants it. */
   children: (args: {
     slide: InfoSlide;
     index: number;
-    arrows: React.ReactNode;
+    isCurrent: boolean;
+    nav: StepNavProps;
   }) => React.ReactNode;
 };
 
-function Arrow({
-  Icon,
-  enabled,
-  onClick,
-  label,
-  className,
-}: {
-  Icon: React.FC<React.SVGProps<SVGElement>>;
-  enabled: boolean;
-  onClick: () => void;
-  label: string;
-  className: string;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      disabled={!enabled}
-      aria-label={label}
-    >
-      <Icon width={32} height={32} className={className} />
-    </button>
+type Dir = "left" | "right";
+
+/** The carousel's whole lifecycle as one value, so no combination of
+ * direction/animation/overlay flags can ever disagree with itself.
+ * `exiting` carries the navigation to commit once its animation ends. */
+type Phase =
+  | { name: "idle" }
+  | { name: "exiting"; dir: Dir; commit: () => void }
+  | { name: "entering"; dir: Dir }
+  | { name: "overlay" };
+
+/** Animation class per phase. Durations live in the CSS animations
+ * (`tailwind.config.cjs`); the state machine advances on `animationend`,
+ * so JS timings can't drift from the CSS. An exit to the left brings the
+ * next slide in from the right, and vice versa. */
+const ANIM: Record<"exiting" | "entering", Record<Dir, string>> = {
+  exiting: { left: "animate-wizardOutLeft", right: "animate-wizardOutRight" },
+  entering: { left: "animate-wizardInRight", right: "animate-wizardInLeft" },
+};
+
+const OVERLAY_MS = 1200;
+
+const CompletionOverlay: React.FC<{ onDone: () => void }> = ({ onDone }) => {
+  useEffect(() => {
+    const timer = setTimeout(onDone, OVERLAY_MS);
+    return () => clearTimeout(timer);
+  }, [onDone]);
+
+  return createPortal(
+    <div className="backdrop z-50">
+      <div className="flex flex-col items-center">
+        <Image
+          alt="PoH Logo"
+          className="animate-flip"
+          src="/logo/poh-colored.svg"
+          width={48}
+          height={48}
+        />
+        <p className="mt-6 animate-pulse text-lg font-medium text-white">
+          Loading...
+        </p>
+      </div>
+    </div>,
+    document.body,
   );
-}
+};
 
-export default function StepCarousel({
+const StepCarousel: React.FC<StepCarouselProps> = ({
   slides,
-  onComplete,
-  arrowClasses = {},
+  currentIndex,
+  onPrevious,
+  onNext,
+  onLastSlideComplete,
+  className = "grid w-full max-w-[1095px]",
+  exitOverlay = false,
   children,
-}: StepCarouselProps) {
-  const [index, setIndex] = useState(0);
+}) => {
+  const [phase, setPhase] = useState<Phase>({ name: "idle" });
 
-  const slide = slides[index];
-  if (!slide) return null;
+  const idle = phase.name === "idle";
+  const previousStep = currentIndex > 0;
+  const nextStep = currentIndex < slides.length - 1;
 
-  const isLast = index === slides.length - 1;
-  const hasPrevious = index > 0;
-  const hasNext = !isLast || !!onComplete;
+  const navigate = (dir: Dir, commit: () => void) => {
+    if (!idle) return;
+    setPhase({ name: "exiting", dir, commit });
+  };
 
   const handlePrevious = () => {
-    if (!hasPrevious) return;
-    setIndex(index - 1);
+    if (previousStep) navigate("right", onPrevious);
   };
 
   const handleNext = () => {
-    if (isLast) {
-      onComplete?.();
-    } else {
-      setIndex(index + 1);
+    if (!idle) return;
+    if (nextStep) {
+      navigate("left", onNext);
+    } else if (onLastSlideComplete) {
+      if (exitOverlay) setPhase({ name: "overlay" });
+      else navigate("left", onLastSlideComplete);
     }
   };
 
-  const iconClass = (enabled: boolean) =>
-    `${arrowClasses.icon ?? ""} ${
-      enabled
-        ? `cursor-pointer opacity-100 ${arrowClasses.enabled ?? ""}`
-        : `pointer-events-none cursor-not-allowed ${arrowClasses.disabled ?? "opacity-50"}`
-    }`.trim();
+  /** Advance the state machine when the current slide's own animation
+   * ends. The target guard skips `animationend` events bubbling up from
+   * animated children inside the slide. */
+  const handleAnimationEnd = (e: React.AnimationEvent) => {
+    if (e.target !== e.currentTarget) return;
+    if (phase.name === "exiting") {
+      phase.commit(); // owner moves `currentIndex`; the new slide enters
+      setPhase({ name: "entering", dir: phase.dir });
+    } else if (phase.name === "entering") {
+      setPhase({ name: "idle" });
+    }
+  };
 
-  const arrows =
-    slides.length > 1 || onComplete ? (
-      <div
-        role="group"
-        aria-label="Step navigation"
-        className={arrowClasses.row ?? "mt-4 flex gap-4 md:mt-6 md:gap-6"}
-      >
-        <span className="sr-only" aria-live="polite">
-          Step {index + 1} of {slides.length}
-        </span>
-        <Arrow
-          Icon={LeftArrowIcon}
-          enabled={hasPrevious}
-          onClick={handlePrevious}
-          label="Previous step"
-          className={iconClass(hasPrevious)}
-        />
-        <Arrow
-          Icon={RightArrowIcon}
-          enabled={hasNext}
-          onClick={handleNext}
-          label={isLast && onComplete ? "Complete and continue" : "Next step"}
-          className={iconClass(hasNext)}
-        />
-      </div>
-    ) : null;
+  if (phase.name === "overlay") {
+    return <CompletionOverlay onDone={onLastSlideComplete!} />;
+  }
 
-  return <>{children({ slide, index, arrows })}</>;
-}
+  const animationClass = idle ? "" : ANIM[phase.name][phase.dir];
+
+  return (
+    <div className={className}>
+      {slides.map((slide, i) => {
+        const isCurrent = i === currentIndex;
+        return (
+          <div
+            key={slide.id ?? i}
+            aria-hidden={!isCurrent}
+            onAnimationEnd={isCurrent ? handleAnimationEnd : undefined}
+            className={`col-start-1 row-start-1 flex w-full flex-col ${
+              isCurrent ? animationClass : "invisible"
+            }`}
+          >
+            {children({
+              slide,
+              index: i,
+              isCurrent,
+              nav: {
+                previousStep: i > 0 && idle,
+                nextStep: idle,
+                onPrevious: handlePrevious,
+                onNext: handleNext,
+              },
+            })}
+          </div>
+        );
+      })}
+    </div>
+  );
+};
+
+export default StepCarousel;

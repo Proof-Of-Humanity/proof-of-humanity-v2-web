@@ -78,7 +78,7 @@ function CreateAccountSlide({
         </div>
         <WizardNav
           {...nav}
-          className="mt-auto justify-start [&>button]:w-[170px]"
+          className="mt-auto justify-start [&>button]:min-w-[170px]"
         />
       </div>
       <div className="order-1 flex flex-1 items-center justify-center p-4 md:order-2 md:p-6">

@@ -92,7 +92,7 @@ export default function CirclesLinkAccountStep({
                       ariaLabel="Link Circles account"
                       disabled={disabled}
                       isLoading={pending}
-                      className="w-[170px] shrink-0 self-center whitespace-nowrap px-8"
+                      className="min-w-[170px] shrink-0 self-center whitespace-nowrap px-8"
                       variant={label === "Link" ? "primary" : "secondary"}
                     />
                   );

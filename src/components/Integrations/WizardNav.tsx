@@ -26,7 +26,7 @@ const WizardNav: React.FC<WizardNavProps> = ({
   <div className={`flex items-center justify-center gap-4 ${className}`}>
     <button
       type="button"
-      className="btn-secondary w-32 md:w-40"
+      className="btn-secondary w-fit min-w-32 md:min-w-40"
       onClick={onPrevious}
       disabled={!previousStep}
       aria-label="Previous step"
@@ -35,7 +35,7 @@ const WizardNav: React.FC<WizardNavProps> = ({
     </button>
     <button
       type="button"
-      className="btn-primary w-32 md:w-40"
+      className="btn-primary w-fit min-w-32 md:min-w-40"
       onClick={onNext}
       disabled={!nextStep}
       aria-label={nextLabel === "Next" ? "Next step" : nextLabel}
