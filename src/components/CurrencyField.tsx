@@ -1,6 +1,5 @@
 import cn from "classnames";
 import { InputHTMLAttributes, ReactNode } from "react";
-import CaretDownIcon from "icons/CaretDown.svg";
 import XdaiTokenIcon from "icons/XdaiToken.svg";
 import EthTokenIcon from "icons/EthToken.svg";
 import Label from "./Label";
@@ -10,8 +9,8 @@ type CurrencyFieldProps = InputHTMLAttributes<HTMLInputElement> & {
   labelClassName?: string;
   /** Native currency symbol deciding the token icon, e.g. "ETH" or "xDAI". */
   symbol?: string;
-  /** When set, the token becomes a selector with a caret. */
-  onTokenClick?: () => void;
+  /** Renders a MAX button that fills the field with its maximum value. */
+  onMax?: () => void;
 };
 
 export const CurrencyIcon = ({ symbol }: { symbol?: string }) =>
@@ -25,7 +24,7 @@ function CurrencyField({
   label,
   labelClassName,
   symbol,
-  onTokenClick,
+  onMax,
   className,
   ...props
 }: CurrencyFieldProps) {
@@ -41,19 +40,17 @@ function CurrencyField({
           )}
           {...props}
         />
-        {onTokenClick ? (
+        {onMax && (
           <button
             type="button"
-            onClick={onTokenClick}
-            aria-label="Select currency"
-            className="flex shrink-0 items-center gap-1.5"
+            disabled={props.disabled}
+            onClick={onMax}
+            className="text-orange text-xs font-semibold tracking-wide transition-opacity hover:opacity-80 disabled:cursor-not-allowed disabled:opacity-50"
           >
-            <CurrencyIcon symbol={symbol} />
-            <CaretDownIcon className="h-2 w-2 fill-current text-peach" />
+            MAX
           </button>
-        ) : (
-          <CurrencyIcon symbol={symbol} />
         )}
+        <CurrencyIcon symbol={symbol} />
       </div>
     </div>
   );

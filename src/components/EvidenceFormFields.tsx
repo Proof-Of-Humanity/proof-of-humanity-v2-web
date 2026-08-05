@@ -1,48 +1,53 @@
 import Field from "components/Field";
 import FileUploadZone from "components/FileUploadZone";
 
-interface EvidenceFormFieldsProps {
-  title?: string;
-  description: string;
-  file: File | null;
-  onTitleChange?: (value: string) => void;
+interface EvidenceTitleFieldProps {
+  title: string;
+  onTitleChange: (value: string) => void;
   onTitleBlur?: () => void;
-  onDescriptionChange: (value: string) => void;
-  onFileChange: (file: File) => void;
   disabled?: boolean;
-  titlePlaceholder?: string;
-  hideTitle?: boolean;
   titleError?: boolean;
 }
 
-export default function EvidenceFormFields({
-  title = "",
-  description,
-  file,
+export function EvidenceTitleField({
+  title,
   onTitleChange,
   onTitleBlur,
+  disabled,
+  titleError = false,
+}: EvidenceTitleFieldProps) {
+  return (
+    <Field
+      label="Title"
+      labelClassName="!mb-2 !mt-0 text-sm !font-normal normal-case !text-secondaryText"
+      placeholder="eg. The profile is legit."
+      value={title}
+      onChange={(event) => onTitleChange(event.target.value)}
+      onBlur={onTitleBlur}
+      status={titleError ? "error" : undefined}
+      message="A title is required"
+      disabled={disabled}
+    />
+  );
+}
+
+interface EvidenceFormFieldsProps {
+  description: string;
+  file: File | null;
+  onDescriptionChange: (value: string) => void;
+  onFileChange: (file: File) => void;
+  disabled?: boolean;
+}
+
+export default function EvidenceFormFields({
+  description,
+  file,
   onDescriptionChange,
   onFileChange,
   disabled,
-  titlePlaceholder = "eg. The profile is legit.",
-  hideTitle = false,
-  titleError = false,
 }: EvidenceFormFieldsProps) {
   return (
-    <div className="mt-12 flex w-full flex-col gap-4">
-      {!hideTitle && (
-        <Field
-          label="Title"
-          labelClassName="!mb-2 !mt-0 text-sm !font-normal normal-case !text-secondaryText"
-          placeholder={titlePlaceholder}
-          value={title}
-          onChange={(event) => onTitleChange?.(event.target.value)}
-          onBlur={onTitleBlur}
-          status={titleError ? "error" : undefined}
-          message="A title is required"
-          disabled={disabled}
-        />
-      )}
+    <>
       <Field
         textarea
         label="Text"
@@ -66,6 +71,6 @@ export default function EvidenceFormFields({
         footnoteIconClassName="text-status-claim"
         disabled={disabled}
       />
-    </div>
+    </>
   );
 }

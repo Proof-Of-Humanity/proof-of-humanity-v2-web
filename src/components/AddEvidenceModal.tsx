@@ -3,7 +3,9 @@
 import { useAtlasProvider } from "@kleros/kleros-app";
 import ActionButton from "components/ActionButton";
 import AuthGuard from "components/AuthGuard";
-import EvidenceFormFields from "components/EvidenceFormFields";
+import EvidenceFormFields, {
+  EvidenceTitleField,
+} from "components/EvidenceFormFields";
 import RequestModal, { RequestModalHeader } from "components/RequestModal";
 import { Effects } from "contracts/hooks/types";
 import usePoHWrite from "contracts/hooks/usePoHWrite";
@@ -211,17 +213,22 @@ export default function AddEvidenceModal({
           </>
         }
       />
-      <EvidenceFormFields
-        title={title}
-        description={description}
-        file={file}
-        onTitleChange={setTitle}
-        onTitleBlur={() => setTitleTouched(true)}
-        onDescriptionChange={setDescription}
-        onFileChange={setFile}
-        disabled={pending}
-        titleError={showTitleError}
-      />
+      <div className="mt-12 flex w-full flex-col gap-4">
+        <EvidenceTitleField
+          title={title}
+          onTitleChange={setTitle}
+          onTitleBlur={() => setTitleTouched(true)}
+          disabled={pending}
+          titleError={showTitleError}
+        />
+        <EvidenceFormFields
+          description={description}
+          file={file}
+          onDescriptionChange={setDescription}
+          onFileChange={setFile}
+          disabled={pending}
+        />
+      </div>
       <div className="mt-12 flex flex-col items-center justify-center gap-4 sm:flex-row">
         <AuthGuard
           signInButtonProps={{ className: "w-full sm:w-auto sm:min-w-[170px]" }}

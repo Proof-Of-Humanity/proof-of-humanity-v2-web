@@ -14,7 +14,8 @@ import {
   getProfileBaseData,
   getProfileRequestCardData,
 } from "./profilePageData";
-import ProfileSectionErrorCard from "./ProfileSectionErrorCard";
+import RetryButton from "./RetryButton";
+import StatusCard, { StatusBadge } from "./StatusCard";
 
 interface ProfileSummarySectionProps {
   pohId: Hash;
@@ -271,12 +272,22 @@ export default async function ProfileSummarySection({
     );
   } catch {
     return (
-      <div className="w-full px-6">
-        <ProfileSectionErrorCard
+      <div className="mb-5 w-full px-6">
+        <StatusCard
           section="Summary"
-          title="Summary unavailable"
-          description="We couldn't load the current registration summary for this profile."
-        />
+          className="mt-3 px-5 py-6 text-center sm:px-6"
+        >
+          <StatusBadge className="mx-auto h-10 w-10 text-base" />
+          <div className="text-primaryText mt-3 text-lg font-semibold">
+            Summary unavailable
+          </div>
+          <div className="text-secondaryText mt-2 text-sm leading-6">
+            {
+              "We couldn't load the current registration summary for this profile."
+            }
+          </div>
+          <RetryButton className="btn-secondary mx-auto mt-4 px-4 py-2 text-sm" />
+        </StatusCard>
       </div>
     );
   }

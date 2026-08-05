@@ -5,7 +5,7 @@ import ExternalLink from "components/ExternalLink";
 import ExternalLinkIcon from "components/ExternalLinkIcon";
 import TimeAgo from "components/TimeAgo";
 import ActionButton from "components/ActionButton";
-import IdentityReferenceRow from "components/IdentityReferenceRow";
+import { PohIdReferenceRow } from "components/IdentityReferenceRow";
 import InfoTooltip from "components/InfoTooltip";
 import RequestModal, {
   RequestModalActions,
@@ -36,7 +36,6 @@ import { idToChain, type SupportedChain } from "config/chains";
 import { resolveTxState } from "utils/txState";
 import { useRequestOptimistic } from "optimistic/request";
 import { prettifyId } from "utils/identifier";
-import Image from "next/image";
 import Appeal from "./Appeal";
 import Challenge from "./Challenge";
 import FundButton from "./Funding";
@@ -121,7 +120,6 @@ interface VouchingActionsProps {
   onVouchClick: () => void;
   lockClaimed: boolean;
   claimedTooltip: string;
-  needsVouches: boolean;
   withdrawTrigger: { disabled: boolean; tooltip?: string };
   onWithdraw: () => void;
 }
@@ -144,7 +142,6 @@ function VouchingActions({
   onVouchClick,
   lockClaimed,
   claimedTooltip,
-  needsVouches,
   withdrawTrigger,
   onWithdraw,
 }: VouchingActionsProps) {
@@ -176,20 +173,9 @@ function VouchingActions({
     if (!isVouching) return withdrawButton;
 
     return (
-      <div className="flex flex-col items-center md:items-start">
-        <div className="request-actions-row flex flex-row justify-center gap-2 md:justify-start">
-          {fundButton}
-          {withdrawButton}
-        </div>
-        {needsVouches && (
-          <ExternalLink
-            href="https://t.me/proofhumanity"
-            className="text-purple group/external-link inline-flex items-center justify-center gap-1 text-sm font-medium underline underline-offset-4 transition-colors hover:opacity-80 md:justify-end"
-          >
-            Get a vouch
-            <ExternalLinkIcon className="h-3.5 w-3.5" />
-          </ExternalLink>
-        )}
+      <div className="request-actions-row flex flex-row justify-center gap-2 md:justify-start">
+        {fundButton}
+        {withdrawButton}
       </div>
     );
   }
@@ -559,7 +545,6 @@ export default function ActionBar({
     onVouchClick: () => setVouchModalOpen(true),
     lockClaimed,
     claimedTooltip,
-    needsVouches: effectiveValidVouches < contractData.requiredNumberOfVouches,
     withdrawTrigger,
     onWithdraw: () => setWithdrawModalOpen(true),
   } satisfies Omit<VouchingActionsProps, "mode" | "showFund">;
@@ -604,7 +589,7 @@ export default function ActionBar({
               action === ActionType.VOUCH ||
               action === ActionType.FUND) && (
               <>
-                <div className="flex justify-center gap-6 md:justify-start">
+                <div className="flex flex-col items-center gap-1 md:items-start">
                   <span className="text-secondaryText text-center md:text-left">
                     {effectiveValidVouches <
                       contractData.requiredNumberOfVouches && (
@@ -633,6 +618,17 @@ export default function ActionBar({
                       </>
                     )}
                   </span>
+                  {requester.toLowerCase() === address?.toLowerCase() &&
+                    effectiveValidVouches <
+                      contractData.requiredNumberOfVouches && (
+                      <ExternalLink
+                        href="https://t.me/proofhumanity"
+                        className="text-purple group/external-link inline-flex items-center justify-center gap-1 text-sm font-medium underline underline-offset-4 transition-colors hover:opacity-80"
+                      >
+                        Get a vouch
+                        <ExternalLinkIcon className="h-3.5 w-3.5" />
+                      </ExternalLink>
+                    )}
                 </div>
 
                 <div className="request-action-buttons request-actions-row flex w-full flex-wrap justify-center gap-4 md:w-auto md:shrink-0 md:flex-nowrap md:justify-end">
@@ -828,14 +824,12 @@ export default function ActionBar({
           description="Cancel this pending request before it advances beyond the vouching stage."
         />
         <div className="mt-4">
-          <IdentityReferenceRow
+          <PohIdReferenceRow
             compact
             chainId={chain.id}
             href={`/${prettifyId(pohId)}`}
             value={prettifyId(pohId)}
-          >
-            <Image alt="POH ID" src="/logo/pohid.svg" height={40} width={40} />
-          </IdentityReferenceRow>
+          />
         </div>
         <RequestWarning>
           This cancels only the pending request and returns the fees and rewards
@@ -846,13 +840,16 @@ export default function ActionBar({
         <RequestModalActions
           onReturn={() => setWithdrawModalOpen(false)}
           returnDisabled={isWithdrawLoading}
-          primaryLabel={isWithdrawLoading ? "Withdrawing" : "Withdraw"}
-          onPrimary={withdraw}
-          primaryDisabled={withdrawTrigger.disabled}
-          primaryLoading={isWithdrawLoading}
-          primaryTooltip={withdrawTrigger.tooltip}
-          primaryClassName="sm:min-w-[244px]"
-        />
+        >
+          <ActionButton
+            className="w-full sm:w-auto sm:min-w-[244px]"
+            label={isWithdrawLoading ? "Withdrawing" : "Withdraw"}
+            onClick={withdraw}
+            disabled={withdrawTrigger.disabled}
+            isLoading={isWithdrawLoading}
+            tooltip={withdrawTrigger.tooltip}
+          />
+        </RequestModalActions>
       </RequestModal>
       {vouchModalMounted && (
         <VouchFlowModal

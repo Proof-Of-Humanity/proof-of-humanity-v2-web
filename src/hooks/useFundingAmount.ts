@@ -1,10 +1,11 @@
 "use client";
 
 import { useCallback, useMemo, useState } from "react";
-import { formatEther, parseEther } from "viem";
+import { formatEther } from "viem";
 import { useAccount, useChainId } from "wagmi";
 import { idToChain, nativeCurrencyLabel } from "config/chains";
 import useEnoughFunds from "hooks/useEnoughFunds";
+import { clampFundingInput, parseFundingInput } from "utils/funding";
 import { formatEth } from "utils/misc";
 import { resolveTxState, type TxCheck } from "utils/txState";
 
@@ -13,41 +14,34 @@ interface FundingAmountOptions {
   funded: bigint;
   totalCost: bigint;
   checks?: TxCheck[];
-  /** Pre-fill (and reset) the input with the full remaining amount. */
-  defaultToRemaining?: boolean;
 }
 
+/**
+ * Central funding-input state for every surface that lets a user fund a cost
+ * (claim deposit, crowdfunding, appeals). Owns the invariant that the wei
+ * submitted on-chain is exactly the string displayed — no float round-trips.
+ */
 export default function useFundingAmount({
   chainId,
   funded,
   totalCost,
   checks = [],
-  defaultToRemaining = false,
 }: FundingAmountOptions) {
   const remainingAmount = totalCost > funded ? totalCost - funded : 0n;
-  const defaultInput =
-    defaultToRemaining && remainingAmount > 0n
-      ? formatEther(remainingAmount)
-      : "";
-  const [input, setInput] = useState(defaultInput);
-  // `defaultInput` is recomputed every render, so reset restores the *current*
-  // remaining amount, not the one captured on mount.
-  const resetInput = useCallback(() => setInput(defaultInput), [defaultInput]);
+  const maxInput = remainingAmount > 0n ? formatEther(remainingAmount) : "";
+  const [input, setInputState] = useState(maxInput);
+  // Clamp at entry so the field can never hold sub-wei precision.
+  const setInput = useCallback(
+    (raw: string) => setInputState(clampFundingInput(raw)),
+    [],
+  );
+  const setMax = useCallback(() => setInputState(maxInput), [maxInput]);
   const { isConnected } = useAccount();
   const connectedChainId = useChainId();
   const unit = nativeCurrencyLabel(chainId);
 
-  // Parsed wei value of the input. Sentinels: `null` = unparsable text,
-  // `0n` = empty input (negatives are clamped to 0).
-  const inputAmount = useMemo(() => {
-    if (!input) return 0n;
-    try {
-      const parsed = parseEther(input);
-      return parsed < 0n ? 0n : parsed;
-    } catch {
-      return null;
-    }
-  }, [input]);
+  // Exact wei callers submit; `null` = invalid, `0n` = empty input.
+  const inputAmount = useMemo(() => parseFundingInput(input), [input]);
 
   const isInvalidInput = inputAmount === null;
   const isZeroInput = inputAmount === 0n;
@@ -55,12 +49,10 @@ export default function useFundingAmount({
     inputAmount !== null && inputAmount > remainingAmount;
   const balanceCheck = useEnoughFunds({
     chainId,
-    // `undefined` skips the balance check until there's a valid positive amount.
     amount: inputAmount !== null && inputAmount > 0n ? inputAmount : undefined,
   });
   const isWrongChain = connectedChainId !== chainId;
-  // Order matters: the first active check with a message supplies the tooltip,
-  // so checks go from most fundamental (connection) to most specific (balance).
+  // First active check with a message supplies the tooltip.
   const txState = resolveTxState([
     ...checks,
     { active: !isConnected, message: "Please connect your wallet" },
@@ -82,9 +74,10 @@ export default function useFundingAmount({
   return {
     input,
     setInput,
-    resetInput,
+    setMax,
     inputAmount,
     remainingAmount,
+    maxInput,
     unit,
     isWrongChain,
     ...txState,

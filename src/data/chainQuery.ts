@@ -22,9 +22,6 @@ export class SubgraphUnavailableError extends Error {
  * A chain whose subgraph is down resolves to the provided fallback instead of
  * rejecting the whole batch, so live chains can still be displayed.
  * The returned array is aligned with `supportedChains`.
- *
- * If *all* chains fail, there is nothing left to display, so a
- * `SubgraphUnavailableError` is thrown for callers to handle.
  */
 export const settleChainQueries = async <T>(
   query: (chain: SupportedChain) => Promise<T>,
@@ -51,6 +48,34 @@ export const settleChainQueries = async <T>(
     const result = results[i]!;
     return result.status === "fulfilled" ? result.value : fallback(chain);
   });
+};
+
+/**
+ * Like `settleChainQueries`, but *any* per-chain failure rejects the whole
+ * batch with a `SubgraphUnavailableError`. For eligibility checks (e.g. the
+ * claim wizard's wallet-status preflight) a chain that merely timed out must
+ * not be silently read as "no registration there" — incomplete data has to
+ * surface as an error the caller can retry, never as a fail-open answer.
+ */
+export const settleChainQueriesStrict = async <T>(
+  query: (chain: SupportedChain) => Promise<T>,
+): Promise<T[]> => {
+  const results = await Promise.allSettled(
+    supportedChains.map((chain) => query(chain)),
+  );
+
+  const failureReasons = results.flatMap((result, i) => {
+    if (result.status !== "rejected") return [];
+    console.error(
+      `Subgraph query failed on ${supportedChains[i]!.name}:`,
+      result.reason,
+    );
+    return [result.reason];
+  });
+  if (failureReasons.length > 0)
+    throw new SubgraphUnavailableError(failureReasons);
+
+  return results.map((result) => (result as PromiseFulfilledResult<T>).value);
 };
 
 const META_QUERY = `query { _meta { block { number } } }`;

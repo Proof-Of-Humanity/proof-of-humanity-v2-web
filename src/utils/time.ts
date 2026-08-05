@@ -1,3 +1,4 @@
+import humanizeDuration from "humanize-duration";
 import { format } from "timeago.js";
 
 interface PohRequest {
@@ -8,6 +9,13 @@ interface PohRequest {
 }
 
 export const timeAgo = (s: number) => format(s * 1000);
+
+/**
+ * Humanize a duration in seconds to its largest sensible unit:
+ * 600 -> "10 minutes", 3599 -> "1 hour", 86400 -> "1 day".
+ */
+export const formatDuration = (seconds: number) =>
+  humanizeDuration(seconds * 1000, { largest: 1, round: true });
 
 const LEGACY_REQUEST_LIFESPAN = 63115200; // 2 years in seconds
 

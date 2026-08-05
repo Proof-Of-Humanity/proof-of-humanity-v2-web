@@ -1,6 +1,5 @@
 "use client";
 
-import { enableReactUse } from "@legendapp/state/config/enableReactUse";
 import { useAtlasProvider } from "@kleros/kleros-app";
 import { useCallback, useMemo, useState } from "react";
 import { toast } from "react-toastify";
@@ -29,8 +28,6 @@ import { resolveTxState } from "utils/txState";
 
 import RevokeConsequences from "./RevokeConsequences";
 
-enableReactUse();
-
 export const buildRevokeSuccessPatch = (): ProfileOptimisticOverlay => ({
   pendingRevocation: true,
 });
@@ -39,7 +36,7 @@ interface RevokeModalProps {
   open: boolean;
   onClose: () => void;
   pohId: Hash;
-  cost?: bigint;
+  cost: bigint;
   homeChain: SupportedChain;
   arbitrationInfo: ContractData["arbitrationInfo"];
 }
@@ -101,8 +98,6 @@ export default function RevokeModal({
   );
 
   const submit = async () => {
-    if (cost === undefined) return;
-
     try {
       loading.start("Uploading...");
       const { evidenceUri } = await uploadEvidence(uploadFile, {
@@ -127,17 +122,12 @@ export default function RevokeModal({
   const funds = useEnoughFunds({ chainId: homeChain.id, amount: cost });
   const { disabled: disabledByReason, tooltip: disabledReason } =
     resolveTxState([
-      {
-        active: cost === undefined,
-        message: "Deposit is unavailable right now.",
-      },
       { active: !title.trim(), message: "Enter a title to continue." },
       { active: funds.insufficient, message: funds.message },
     ]);
 
   return (
     <Modal
-      formal
       className="w-[calc(100%-2rem)] max-w-[560px] md:w-[calc(100%-4rem)] xl:w-[560px]"
       open={open}
       onClose={handleClose}
@@ -162,11 +152,7 @@ export default function RevokeModal({
         </div>
 
         <RevokeConsequences
-          deposit={
-            cost !== undefined
-              ? `${formatEth(cost)} ${homeChain.nativeCurrency.symbol}`
-              : "—"
-          }
+          deposit={`${formatEth(cost)} ${homeChain.nativeCurrency.symbol}`}
         />
 
         <div className="border-stroke flex w-full flex-col gap-1 border-t pt-2">

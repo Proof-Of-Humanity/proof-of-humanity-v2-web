@@ -40,31 +40,47 @@ function ChainChip({ chainId }: { chainId: SupportedChainId }) {
   );
 }
 
-const buildTransferRelaySuccessPatch = () => ({
-  hasPendingTransferRelay: false,
-});
+export const TRANSFER_RELAY_KIND = {
+  title: "Transfer relay",
+  description: "Your profile is bridging to another chain.",
+  automaticMessage:
+    "This transfer relay is handled automatically by the bridge.",
+  actionName: "relayTransfer",
+  pendingKey: "hasPendingTransferRelay",
+} as const;
 
-const buildUpdateRelaySuccessPatch = () => ({
-  hasPendingUpdateRelay: false,
-});
+export const UPDATE_RELAY_KIND = {
+  title: "State update relay",
+  description: "Your state update is bridging to another chain.",
+  automaticMessage:
+    "This state update relay is handled automatically by the bridge.",
+  actionName: "relayUpdate",
+  pendingKey: "hasPendingUpdateRelay",
+} as const;
 
-type PendingRelaySectionProps = {
-  mode: "transfer" | "update";
+export type PendingRelayDescriptor = (
+  | typeof TRANSFER_RELAY_KIND
+  | typeof UPDATE_RELAY_KIND
+) & {
   relayMode: RelayMode;
   sourceChainId: SupportedChainId;
   destinationChainId: SupportedChainId;
   encodedData?: `0x${string}`;
-  transferTimestamp?: number;
+  startedAt?: number;
 };
 
 export default function PendingRelaySection({
-  mode,
+  title,
+  description,
+  automaticMessage,
+  actionName,
+  pendingKey,
   relayMode,
   sourceChainId,
   destinationChainId,
   encodedData,
-  transferTimestamp,
-}: PendingRelaySectionProps) {
+  startedAt,
+}: PendingRelayDescriptor) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const modal = useAppKit();
   const { isConnected } = useAccount();
@@ -74,10 +90,7 @@ export default function PendingRelaySection({
   const sourceChainName = idToChain(sourceChainId)?.name;
   const destinationChainName = idToChain(destinationChainId)?.name;
   const isOnCorrectChain = chainId === destinationChainId;
-  const relayPending =
-    mode === "transfer"
-      ? effective.hasPendingTransferRelay
-      : effective.hasPendingUpdateRelay;
+  const relayPending = effective[pendingKey];
   const {
     actionState,
     setIdle,
@@ -85,7 +98,6 @@ export default function PendingRelaySection({
     setUnavailable,
     setWriteError,
   } = useActionFeedback();
-  const relayAction = mode === "transfer" ? "relayTransfer" : "relayUpdate";
   const relayActionState =
     relayMode === RELAY_MODE_WAIT_ONLY
       ? "wait"
@@ -105,12 +117,7 @@ export default function PendingRelaySection({
           fire();
         },
         onSuccess() {
-          applyAction(
-            relayAction,
-            mode === "transfer"
-              ? buildTransferRelaySuccessPatch()
-              : buildUpdateRelaySuccessPatch(),
-          );
+          applyAction(actionName, { [pendingKey]: false });
           toast.success("Relay transaction sent!");
           setIdle();
           setIsModalOpen(false);
@@ -128,9 +135,9 @@ export default function PendingRelaySection({
         },
       }),
       [
+        actionName,
         applyAction,
-        mode,
-        relayAction,
+        pendingKey,
         setFeedbackState,
         setIdle,
         setUnavailable,
@@ -189,9 +196,7 @@ export default function PendingRelaySection({
 
   const waitMessage =
     relayMode === RELAY_MODE_WAIT_ONLY
-      ? mode === "transfer"
-        ? "This transfer relay is handled automatically by the bridge."
-        : "This state update relay is handled automatically by the bridge."
+      ? automaticMessage
       : !encodedData
         ? "Relay details are still loading. Check back in a moment."
         : "Relay approvals are not ready yet. Wait a bit and try again.";
@@ -206,7 +211,7 @@ export default function PendingRelaySection({
       : { label: "Your turn", tone: "text-peach" };
 
   if (!relayPending) {
-    const isIndexing = pendingAction === relayAction;
+    const isIndexing = pendingAction === actionName;
     return (
       <div className="flex basis-full items-center justify-center gap-2 text-sm">
         {isIndexing ? (
@@ -236,23 +241,13 @@ export default function PendingRelaySection({
         className="basis-full text-center"
       />
       <Modal
-        formal
         className={CROSS_CHAIN_MODAL_CLASS}
         open={isModalOpen}
         onClose={closeModal}
         canClose={!busy}
       >
         <div className="flex flex-col items-center gap-8 p-8 text-center">
-          <CrossChainModalHeading
-            title={
-              mode === "transfer" ? "Transfer relay" : "State update relay"
-            }
-            description={
-              mode === "transfer"
-                ? "Your profile is bridging to another chain."
-                : "Your state update is bridging to another chain."
-            }
-          />
+          <CrossChainModalHeading title={title} description={description} />
 
           <div className="flex w-full flex-col gap-5">
             <div className="flex w-full items-center gap-3">
@@ -284,9 +279,9 @@ export default function PendingRelaySection({
               </div>
             </div>
 
-            {mode === "transfer" && transferTimestamp ? (
+            {startedAt ? (
               <span className="text-secondaryText text-xs">
-                Started <TimeAgo time={transferTimestamp} />
+                Started <TimeAgo time={startedAt} />
               </span>
             ) : null}
           </div>

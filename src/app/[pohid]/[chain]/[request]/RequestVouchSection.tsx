@@ -25,6 +25,39 @@ const hasPohId = (
   item: Awaited<ReturnType<typeof getVouchedForDisplayItems>>[number],
 ): item is RequestVouchItemWithPohId => !!item.pohId;
 
+function VouchTooltip({
+  name,
+  isVouching = false,
+  isActive,
+  isOnChain = true,
+  reason,
+}: {
+  name: string | null | undefined;
+  isVouching?: boolean;
+  isActive?: boolean;
+  isOnChain?: boolean;
+  reason?: string;
+}) {
+  return (
+    <>
+      {isVouching ? (
+        <>
+          {!isOnChain ? "(off-chain) " : null}
+          {isActive ? "Vouch confirmed" : "Vouch in queue"}
+          <br />
+          {reason ? (
+            <>
+              <span className="italic">({reason})</span>
+              <br />
+            </>
+          ) : null}
+        </>
+      ) : null}
+      <span className="text-base font-bold">{name}</span>
+    </>
+  );
+}
+
 /**
  * @notice Renders a compact loading state for request voucher avatars.
  * @dev Used as the Suspense fallback while voucher profile/photo data loads.
@@ -70,15 +103,13 @@ export async function VouchedForSection({
           <Vouch
             key={`${item.pohId}-${index}`}
             isActive={true}
-            reason={undefined}
-            name={item.name}
             evidenceUri={item.evidenceUri}
             idx={index}
             href={`/${prettifyId(item.pohId)}`}
             pohId={item.pohId}
             address={item.pohId}
-            isOnChain={item.isOnChain}
-            reducedTooltip={true}
+            tooltip={<VouchTooltip name={item.name} />}
+            tooltipPlacement="below"
           />
         ))}
       </div>
@@ -115,29 +146,33 @@ export async function RequestVouchersSection({
         {request.status.id === "vouching" && <OptimisticVouchIndicator />}
       </span>
       <div className="flex flex-wrap justify-center gap-2">
-        {visibleItems.map((item, index) => (
-          <Vouch
-            key={`${item.voucher ?? item.pohId}-${index}`}
-            isActive={
-              request.status.id === "vouching"
-                ? item.vouchStatus?.isValid
-                : true
-            }
-            reason={
-              request.status.id === "vouching"
-                ? item.vouchStatus?.reason
-                : undefined
-            }
-            name={item.name}
-            evidenceUri={item.evidenceUri}
-            idx={index}
-            href={`/${prettifyId(item.pohId)}`}
-            pohId={item.pohId}
-            address={item.voucher}
-            isOnChain={item.isOnChain}
-            reducedTooltip={request.status.id !== "vouching"}
-          />
-        ))}
+        {visibleItems.map((item, index) => {
+          const isVouching = request.status.id === "vouching";
+          const isActive = isVouching ? item.vouchStatus?.isValid : true;
+          const reason = isVouching ? item.vouchStatus?.reason : undefined;
+
+          return (
+            <Vouch
+              key={`${item.voucher ?? item.pohId}-${index}`}
+              isActive={isActive}
+              evidenceUri={item.evidenceUri}
+              idx={index}
+              href={`/${prettifyId(item.pohId)}`}
+              pohId={item.pohId}
+              address={item.voucher}
+              tooltipPlacement="below"
+              tooltip={
+                <VouchTooltip
+                  name={item.name}
+                  isVouching={isVouching}
+                  isActive={isActive}
+                  isOnChain={item.isOnChain}
+                  reason={reason}
+                />
+              }
+            />
+          );
+        })}
       </div>
     </div>
   );

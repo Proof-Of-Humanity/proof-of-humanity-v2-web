@@ -136,8 +136,9 @@ const SideFunding: React.FC<SideFundingProps> = ({
   const {
     input: fundInput,
     setInput: setFundInput,
+    setMax,
     inputAmount,
-    remainingAmount,
+    maxInput,
     unit,
     disabled: isDisabled,
     tooltip: submitTooltip,
@@ -145,7 +146,6 @@ const SideFunding: React.FC<SideFundingProps> = ({
     chainId,
     funded: partyFunds,
     totalCost: appealCost,
-    defaultToRemaining: true,
     checks: [
       { active: isFullyFunded, message: "Already funded" },
       { active: isReconciling, message: "Waiting for indexer" },
@@ -201,9 +201,10 @@ const SideFunding: React.FC<SideFundingProps> = ({
           symbol={unit}
           step="any"
           min={0}
-          max={formatEth(remainingAmount)}
+          max={maxInput}
           value={fundInput}
           onChange={(v) => setFundInput(v.target.value)}
+          onMax={setMax}
           disabled={isLoading || isFullyFunded}
         />
         <ActionButton

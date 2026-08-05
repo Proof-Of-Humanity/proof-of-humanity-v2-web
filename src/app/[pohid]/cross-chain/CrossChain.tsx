@@ -17,22 +17,17 @@ import {
 } from "../errors";
 import { getBridgeStrategy } from "./bridgeStrategies";
 import { deriveCrossChainState, type CrossChainState } from "./crossChainState";
-import CrossChainError from "./CrossChainError";
 import CrossChainStatusStrip from "./CrossChainStatusStrip";
-import PendingRelaySection from "./PendingRelaySection";
+import PendingRelaySection, {
+  type PendingRelayDescriptor,
+  TRANSFER_RELAY_KIND,
+  UPDATE_RELAY_KIND,
+} from "./PendingRelaySection";
 import { getChainPublicClient } from "./publicClient";
 import { getAMBMessageInfo, hasRelayedMessage } from "./relayHelpers";
 import TransferSection from "./TransferSection";
-import { RELAY_MODE_WAIT_ONLY, type RelayMode } from "./types";
+import { RELAY_MODE_WAIT_ONLY } from "./types";
 import UpdateStateSection from "./UpdateStateSection";
-
-type PendingRelayDescriptor = {
-  relayMode: RelayMode;
-  sourceChainId: SupportedChainId;
-  destinationChainId: SupportedChainId;
-  encodedData?: `0x${string}`;
-  transferTimestamp?: number;
-};
 
 type PendingUpdateRelayError =
   | RelayDataUnavailableError
@@ -157,10 +152,11 @@ async function resolvePendingTransferRelay({
     destinationChainId,
   ).relayMode;
   const pendingTransferRelay: PendingRelayDescriptor = {
+    ...TRANSFER_RELAY_KIND,
     relayMode,
     sourceChainId,
     destinationChainId,
-    transferTimestamp: Number(lastTransfer.transferTimestamp),
+    startedAt: Number(lastTransfer.transferTimestamp),
   };
 
   if (relayMode !== RELAY_MODE_WAIT_ONLY) {
@@ -205,6 +201,7 @@ async function resolvePendingUpdateRelay({
   }
 
   const pendingUpdateRelay: PendingRelayDescriptor = {
+    ...UPDATE_RELAY_KIND,
     relayMode: getBridgeStrategy(sourceChainId, destinationChainId).relayMode,
     sourceChainId,
     destinationChainId,
@@ -329,29 +326,11 @@ function CrossChainActions({
   transferCooldownEndsAt?: number;
 }) {
   if (pendingTransferRelay) {
-    return (
-      <PendingRelaySection
-        mode="transfer"
-        relayMode={pendingTransferRelay.relayMode}
-        sourceChainId={pendingTransferRelay.sourceChainId}
-        destinationChainId={pendingTransferRelay.destinationChainId}
-        encodedData={pendingTransferRelay.encodedData}
-        transferTimestamp={pendingTransferRelay.transferTimestamp}
-      />
-    );
+    return <PendingRelaySection {...pendingTransferRelay} />;
   }
 
   if (pendingUpdateRelay) {
-    return (
-      <PendingRelaySection
-        mode="update"
-        relayMode={pendingUpdateRelay.relayMode}
-        sourceChainId={pendingUpdateRelay.sourceChainId}
-        destinationChainId={pendingUpdateRelay.destinationChainId}
-        encodedData={pendingUpdateRelay.encodedData}
-        transferTimestamp={pendingUpdateRelay.transferTimestamp}
-      />
-    );
+    return <PendingRelaySection {...pendingUpdateRelay} />;
   }
 
   const pendingUpdateStatusMessage =
@@ -375,17 +354,12 @@ function CrossChainActions({
           pohId={pohId}
         />
       ) : null}
-      {pendingUpdateError ? (
+      {pendingUpdateStatusMessage ? (
         <div className="mt-4 w-full min-w-0 sm:ml-4 sm:mt-0 sm:flex-1">
-          <CrossChainStatusStrip
-            title={pendingUpdateStatusMessage?.title ?? ""}
-            description={[
-              pendingUpdateStatusMessage?.description,
-              pendingUpdateStatusMessage?.nextStep,
-            ]
-              .filter(Boolean)
-              .join(" ")}
-          />
+          <CrossChainStatusStrip title={pendingUpdateStatusMessage.title}>
+            <p>{pendingUpdateStatusMessage.description}</p>
+            <p>{pendingUpdateStatusMessage.nextStep}</p>
+          </CrossChainStatusStrip>
         </div>
       ) : null}
     </>
@@ -475,13 +449,19 @@ export default async function CrossChain({
     );
   } catch (error) {
     return (
-      <CrossChainError
-        error={
+      <div
+        className="w-full px-4 py-3"
+        title={
           error instanceof Error
-            ? error
-            : new Error("Unknown cross-chain failure.")
+            ? error.message
+            : "Unknown cross-chain failure."
         }
-      />
+      >
+        <CrossChainStatusStrip title="Cross-chain unavailable">
+          Bridge status could not be loaded. Refresh the page or try again in a
+          moment.
+        </CrossChainStatusStrip>
+      </div>
     );
   }
 }

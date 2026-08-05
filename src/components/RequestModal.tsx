@@ -2,7 +2,6 @@
 
 import Modal from "components/Modal";
 import ActionButton from "components/ActionButton";
-import cn from "classnames";
 import type { ReactNode } from "react";
 
 interface RequestModalProps {
@@ -22,7 +21,6 @@ export default function RequestModal({
 }: RequestModalProps) {
   return (
     <Modal
-      formal
       open={open}
       onClose={onClose}
       canClose={canClose}
@@ -57,36 +55,17 @@ export function RequestModalHeader({
 export function RequestModalActions({
   onReturn,
   returnDisabled,
-  primaryLabel,
-  onPrimary,
-  primaryDisabled,
-  primaryLoading,
-  primaryTooltip,
-  primaryClassName,
   returnLabel = "Return",
+  children,
 }: {
   onReturn: () => void;
   returnDisabled?: boolean;
-  primaryLabel?: ReactNode;
-  onPrimary?: () => void;
-  primaryDisabled?: boolean;
-  primaryLoading?: boolean;
-  primaryTooltip?: string;
-  primaryClassName?: string;
-  returnLabel?: ReactNode;
+  returnLabel?: string;
+  children?: ReactNode;
 }) {
   return (
     <div className="mt-12 flex flex-col items-center justify-center gap-4 sm:flex-row">
-      {primaryLabel && onPrimary && (
-        <ActionButton
-          className={cn("w-full sm:w-auto sm:min-w-[170px]", primaryClassName)}
-          label={primaryLabel}
-          onClick={onPrimary}
-          disabled={primaryDisabled}
-          isLoading={primaryLoading}
-          tooltip={primaryTooltip}
-        />
-      )}
+      {children}
       <ActionButton
         className="w-full sm:w-auto sm:min-w-[170px]"
         label={returnLabel}

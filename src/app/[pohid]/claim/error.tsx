@@ -14,7 +14,7 @@ export default function ClaimError({
   }, [error]);
 
   return (
-    <div className="content paper flex flex-col px-4 py-4 sm:px-8 sm:py-6 lg:px-10 lg:py-6">
+    <div className="content paper-inset flex max-w-[800px] flex-col px-4 py-4 sm:px-8 sm:py-6 lg:px-10 lg:py-6">
       <div className="border-stroke bg-whiteBackground flex w-full flex-col items-center rounded-3xl border px-6 py-8 text-center sm:px-8">
         <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-red-500/10 text-lg font-semibold text-red-400">
           !
@@ -28,7 +28,7 @@ export default function ClaimError({
         </div>
         <button
           type="button"
-          className="btn-main mt-6 px-4 py-2 normal-case"
+          className="btn-primary mt-6 px-4 py-2 normal-case"
           onClick={reset}
         >
           Try again

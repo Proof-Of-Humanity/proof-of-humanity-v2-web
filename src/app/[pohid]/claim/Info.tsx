@@ -1,234 +1,379 @@
 import Field from "components/Field";
-import { useState } from "react";
 import { useAccount } from "wagmi";
 import { SubmissionState } from "./Form";
 import { ObservableObject, ObservablePrimitiveBaseFns } from "@legendapp/state";
-import ExternalLink from "components/ExternalLink";
+import ActionButton from "components/ActionButton";
+import LongArrowBoth from "icons/LongArrowBoth.svg";
+import LongArrowRight from "icons/LongArrowRight.svg";
+import Link from "next/link";
+import { prettifyId } from "utils/identifier";
+import { resolveTxState } from "utils/txState";
 import { isValidEmailAddress } from "utils/validators";
+import { Hash } from "viem";
+
+export interface InfoState {
+  stage: "details" | "identity";
+  dataConsent: boolean;
+  requestNotice: boolean;
+  /** null: recoverable route, the user hasn't picked create vs recover yet. */
+  recoverMode: boolean | null;
+}
 
 interface InfoProps {
   advance: () => void;
   state$: ObservableObject<SubmissionState>;
   email$: ObservablePrimitiveBaseFns<string>;
+  infoState$: ObservableObject<InfoState>;
+  pohId: Hash;
+  competingClaims: number;
   isRenewal: boolean;
+  isRecovery: boolean;
 }
 
-function Info({ advance, state$, email$, isRenewal }: InfoProps) {
+function Info({
+  advance,
+  state$,
+  email$,
+  infoState$,
+  pohId,
+  competingClaims,
+  isRenewal,
+  isRecovery,
+}: InfoProps) {
   const { address } = useAccount();
-  const [walletNotice, setWalletNotice] = useState(false);
-  const [requestNotice, setRequestNotice] = useState(false);
-  const [showDetails, setShowDetails] = useState(false);
+  const stage = infoState$.stage.use();
+  const dataConsent = infoState$.dataConsent.use();
+  const requestNotice = infoState$.requestNotice.use();
+  const recoverMode = infoState$.recoverMode.use();
   const name = state$.name.use();
+  const trimmedName = name.trim();
   const email = email$.use();
   const trimmedEmail = email.trim();
-  // Email is optional: only flag an actual malformed entry, never an empty one.
   const showEmailError =
     trimmedEmail !== "" && !isValidEmailAddress(trimmedEmail);
 
+  const detailsState = resolveTxState([
+    { active: !trimmedName, message: "Enter your name to continue." },
+    {
+      active: showEmailError,
+      message: "Fix or clear the email address to continue.",
+    },
+    { active: !dataConsent, message: "Accept the data notice to continue." },
+    {
+      active: isRenewal && !requestNotice,
+      message: "Accept the renewal acknowledgement to continue.",
+    },
+  ]);
+
+  if (stage === "identity")
+    return (
+      <div className="flex w-full flex-col items-center pb-6">
+        <div className="flex flex-col items-center text-center">
+          <h1 className="text-primaryText text-2xl font-semibold">
+            Humanity <span className="text-peach">ID</span>
+          </h1>
+          <p className="text-secondaryText mt-3 max-w-xl text-sm leading-6">
+            When you create your first Proof of Humanity profile, a unique
+            Humanity ID (Soulbound ID) will be created for you. It serves as
+            your persistent digital identity and proves you&apos;re a unique
+            human.
+          </p>
+          <p className="mt-4 flex flex-wrap items-center justify-center gap-x-2 gap-y-1 text-sm text-peach">
+            <span>1 Human</span>
+            <span className="flex items-center gap-x-2">
+              <LongArrowRight className="h-2.5 w-9 shrink-0" aria-hidden />1
+              Wallet address
+            </span>
+            <span className="flex items-center gap-x-2">
+              <LongArrowBoth className="h-2.5 w-9 shrink-0" aria-hidden />1
+              Humanity ID
+            </span>
+          </p>
+          <p className="text-secondaryText mt-4 max-w-xl text-sm leading-6">
+            If you lose access to your wallet, you can recover the Humanity ID
+            previously created for you by linking it to a new wallet address.
+          </p>
+        </div>
+
+        <div className="mt-8 flex w-full flex-col">
+          <label
+            className="text-primaryText flex cursor-pointer items-center gap-3 text-sm"
+            htmlFor="humanity-create"
+          >
+            <input
+              id="humanity-create"
+              type="radio"
+              name="humanity-mode"
+              className="radio shrink-0"
+              checked={recoverMode === false}
+              onChange={() => {
+                infoState$.recoverMode.set(false);
+                // Consents must not carry over between create and recover.
+                infoState$.requestNotice.set(false);
+              }}
+            />
+            I&apos;m creating my Humanity ID for the first time
+          </label>
+
+          {recoverMode === false && (
+            <>
+              <label
+                className="text-primaryText mt-4 flex cursor-pointer items-start text-sm"
+                htmlFor="request-notice"
+              >
+                <input
+                  id="request-notice"
+                  type="checkbox"
+                  className="checkbox mt-0.5 cursor-pointer"
+                  checked={requestNotice}
+                  onChange={() => infoState$.requestNotice.toggle()}
+                />
+                <span className="ml-3">
+                  I confirm that I don&apos;t already have an active Proof of
+                  Humanity profile. I understand that if I submit a duplicate
+                  profile, it may be challenged and I may{" "}
+                  <span className="text-status-rejected font-medium">
+                    lose my deposit.
+                  </span>
+                </span>
+              </label>
+              {requestNotice && (
+                <Field
+                  label="Your Humanity ID"
+                  labelClassName="mt-4"
+                  className="truncate"
+                  value={prettifyId(pohId)}
+                  disabled
+                />
+              )}
+            </>
+          )}
+
+          <label
+            className="text-primaryText mt-6 flex cursor-pointer items-center gap-3 text-sm"
+            htmlFor="humanity-recover"
+          >
+            <input
+              id="humanity-recover"
+              type="radio"
+              name="humanity-mode"
+              className="radio shrink-0"
+              checked={recoverMode === true}
+              onChange={() => {
+                infoState$.recoverMode.set(true);
+                infoState$.requestNotice.set(false);
+              }}
+            />
+            I&apos;ve already registered with Proof of Humanity before. Recover
+            my existing Humanity ID.
+          </label>
+
+          {recoverMode === true && isRecovery && (
+            <>
+              <div className="border-orange text-secondaryText ml-2 mt-4 border-l-2 p-4 text-sm leading-6">
+                You&apos;re in the right place. This claim recovers Humanity ID{" "}
+                <span className="font-semibold">{prettifyId(pohId)}</span>.
+                Continue to register your profile against it.
+              </div>
+              {competingClaims > 0 && (
+                <div className="border-orange text-secondaryText ml-2 mt-4 border-l-2 p-4 text-sm leading-6">
+                  {competingClaims === 1
+                    ? "Someone else has a pending claim"
+                    : `${competingClaims} other people have pending claims`}{" "}
+                  to this Humanity ID. You can still proceed. Only one claim
+                  can ultimately succeed.
+                </div>
+              )}
+              <label
+                className="text-primaryText mt-4 flex cursor-pointer items-start text-sm"
+                htmlFor="request-notice"
+              >
+                <input
+                  id="request-notice"
+                  type="checkbox"
+                  className="checkbox mt-0.5 cursor-pointer"
+                  checked={requestNotice}
+                  onChange={() => infoState$.requestNotice.toggle()}
+                />
+                <span className="ml-3">
+                  I confirm this Humanity ID belongs to me. I understand that a
+                  claim I&apos;m not entitled to can be challenged, and my{" "}
+                  <span className="text-status-rejected font-medium">
+                    deposit may be lost.
+                  </span>
+                </span>
+              </label>
+            </>
+          )}
+          {recoverMode === true && !isRecovery && (
+            <div className="border-orange text-secondaryText ml-2 mt-4 border-l-2 p-4 text-sm leading-6">
+              <p className="mb-3">
+                To recover a Humanity ID, open the profile you previously
+                registered and start the claim from there. Coming from PoH v1
+                and registering on v2 for the first time? You can either:{" "}
+                <strong className="font-semibold">(a)</strong> claim your past
+                (v1) profile, or <strong className="font-semibold">(b)</strong>{" "}
+                register on the current interface (v2) with your previously
+                used, or new wallet. Simultaneous submissions are not allowed.
+              </p>
+              <p className="mb-3">
+                Click on your profile&apos;s PoH ID and select the relevant
+                option:
+              </p>
+              <ul className="list-disc space-y-2 pl-5">
+                <li>
+                  <strong className="font-semibold">Renew.</strong> Use the
+                  same wallet to extend/refresh your v2 profile or update your
+                  name/alias.
+                </li>
+                <li>
+                  <strong className="font-semibold">Claim Humanity.</strong>{" "}
+                  Use a different/new wallet if you changed or lost the old one,
+                  or if someone already registered you (even incorrectly). Works
+                  for expired / withdrawn / revoked / rejected / pending /
+                  challenged profiles.
+                </li>
+                <li>
+                  <strong className="font-semibold">Revoke.</strong> If you
+                  want to remove your profile, revoke it and then use the
+                  correct flow above.
+                </li>
+              </ul>
+            </div>
+          )}
+        </div>
+
+        {/* wrap-reverse: when the row breaks on mobile, the primary action
+            stacks above the secondary one. */}
+        <div className="mt-8 flex w-full flex-wrap-reverse items-center justify-center gap-3">
+          <ActionButton
+            onClick={() => infoState$.stage.set("details")}
+            label="Back"
+            variant="secondary"
+            className="min-w-[170px]"
+          />
+          {recoverMode === true && !isRecovery ? (
+            <Link href="/" className="btn-primary min-w-[170px]">
+              Find my past profile
+            </Link>
+          ) : (
+            <ActionButton
+              onClick={advance}
+              label="Next"
+              disabled={!requestNotice}
+              tooltip={
+                requestNotice
+                  ? undefined
+                  : recoverMode === null
+                    ? "Choose whether to create or recover a Humanity ID to continue."
+                    : recoverMode
+                      ? "Confirm this Humanity ID belongs to you to continue."
+                      : "Confirm you're not already registered to continue."
+              }
+              className="min-w-[170px]"
+            />
+          )}
+        </div>
+      </div>
+    );
+
   return (
-    <>
-      <div className="my-4 flex w-full flex-col text-2xl font-extralight">
-        <span>{isRenewal ? "Renew your" : "Create your"}</span>
-        <span>
-          <strong className="font-semibold uppercase">Proof of Humanity</strong>{" "}
-          Profile
-        </span>
-        <div className="divider mt-4 w-2/3" />
+    <div className="flex w-full flex-col items-center pb-6">
+      <div className="flex flex-col items-center text-center">
+        <h1 className="text-primaryText text-2xl font-semibold">
+          {isRenewal ? "Renew" : "Create"} your{" "}
+          <span className="text-peach">Proof of Humanity</span> Profile
+        </h1>
+        <p className="text-secondaryText mt-3 max-w-xl text-sm leading-6">
+          {isRenewal
+            ? "You are renewing the profile linked to your existing Humanity ID (Soulbound). Humanity is your unique ID, and it's used to identify you as a unique being."
+            : "Submitting your profile to Proof of Humanity takes an average of 5-10 minutes and requires a compatible Web3 wallet, a profile photo, and a short verification video of yourself speaking."}
+        </p>
       </div>
 
-      <span className="mb-6">
-        {isRenewal
-          ? "Renewing your Proof of Humanity profile takes 5-10 minutes and requires your linked wallet and a short video."
-          : "Submitting your profile to Proof of Humanity takes 5-10 minutes and requires an Ethereum wallet and a short video."}
-      </span>
-
-      <Field label="Connected wallet" value={address} disabled />
-      <Field
-        label="First and Last Name"
-        placeholder="name by which you are known"
-        value={name}
-        onChange={(e) => state$.name.set(e.target.value)}
-      />
-      <Field
-        type="email"
-        label={
-          <>
-            Email{" "}
-            <span className="text-secondaryText text-xs font-normal normal-case">
-              (optional)
-            </span>
-          </>
-        }
-        placeholder="get notified about your profile request"
-        value={email}
-        onChange={(e) => email$.set(e.target.value)}
-        status={showEmailError ? "error" : undefined}
-        message={showEmailError ? "Please enter a valid email" : undefined}
-      />
-
-      <label
-        className="mb-4 mt-8 flex cursor-pointer items-start"
-        htmlFor="wallet-notice"
-      >
-        <input
-          id="wallet-notice"
-          type="checkbox"
-          className="checkbox mt-1 cursor-pointer"
-          checked={walletNotice}
-          onChange={() => setWalletNotice((c) => !c)}
+      <div className="flex w-full flex-col">
+        {!!address && (
+          <Field label="Connected Wallet" value={address} disabled />
+        )}
+        {isRenewal && !!address && (
+          <Field label="Your Humanity ID" value={prettifyId(pohId)} disabled />
+        )}
+        <Field
+          label="Display Name"
+          placeholder="Name by which you would like to be known."
+          value={name}
+          onChange={(e) => state$.name.set(e.target.value)}
         />
-        <span className="ml-3">
-          {isRenewal
-            ? "I understand this wallet is linked to my real-world identity and I will not use it for any private or sensitive information."
-            : "I understand this wallet will be irreversibly linked to my real-world identity and I will not use that wallet for any private or sensitive information."}
-        </span>
-      </label>
+        <Field
+          type="email"
+          label={
+            <>
+              Email{" "}
+              <span className="text-secondaryText text-xs font-normal normal-case">
+                (optional)
+              </span>
+            </>
+          }
+          placeholder="get notified about your profile request"
+          value={email}
+          onChange={(e) => email$.set(e.target.value)}
+          status={showEmailError ? "error" : undefined}
+          message={showEmailError ? "Please enter a valid email" : undefined}
+        />
 
-      <div className="mb-8 flex flex-col items-start">
         <label
-          className="text-primaryText flex cursor-pointer items-start"
-          htmlFor="request-notice"
+          className="text-primaryText mt-8 flex cursor-pointer items-start text-sm"
+          htmlFor="data-consent"
         >
           <input
-            id="request-notice"
+            id="data-consent"
             type="checkbox"
-            className="checkbox mt-1 cursor-pointer"
-            checked={requestNotice}
-            onChange={() => setRequestNotice((c) => !c)}
+            className="checkbox mt-0.5 cursor-pointer"
+            checked={dataConsent}
+            onChange={() => infoState$.dataConsent.toggle()}
           />
           <span className="ml-3">
-            {isRenewal ? (
-              <>
-                I understand this renewal request is for my active PoH profile.
-                It can be challenged if the submission is incorrect, and my{" "}
-                <span className="font-medium text-red-500">
-                  deposit may be lost.
-                </span>
-              </>
-            ) : (
-              <>
-                I'm not currently registered on PoH, and don't have an active
-                profile. I understand that a duplicate submission can be
-                challenged, and my{" "}
-                <span className="font-medium text-red-500">
-                  deposit may be lost.
-                </span>
-              </>
-            )}
+            I agree that my photo, video, and wallet address will be public and
+            permanently stored via decentralized systems (blockchain/IPFS). I
+            understand this data cannot be deleted or changed, and consent to it
+            being linked to my identity. I acknowledge this wallet should not be
+            used for private or sensitive activity.
           </span>
         </label>
 
-        <button
-          className="ml-7 mt-2 flex items-center gap-1 text-sm font-normal text-orange-500"
-          onClick={() => setShowDetails((s) => !s)}
-        >
-          Details{" "}
-          {showDetails ? (
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="24"
-              height="24"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              className="lucide lucide-chevron-down h-3 w-3 rotate-180 transition-transform"
-            >
-              <path d="m6 9 6 6 6-6"></path>
-            </svg>
-          ) : (
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="24"
-              height="24"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              className="lucide lucide-chevron-down h-3 w-3 transition-transform"
-            >
-              <path d="m6 9 6 6 6-6"></path>
-            </svg>
-          )}
-        </button>
-
-        {showDetails && (
-          <div className="text-secondaryText ml-7 mt-3 border-l-2 border-l-[#F5E5DD] p-5 text-sm dark:border-l-dark-orange">
-            <p className="mb-3">
-              <span className="font-medium">
-                Coming from PoH v1 and registering on v2 for the first
-                time?{" "}
-              </span>{" "}
-              You can either: <strong className="font-semibold">(a)</strong>{" "}
-              claim your past (v1) profile, or{" "}
-              <strong className="font-semibold">(b)</strong> register on the
-              current interface (v2) with your{" "}
-              <strong className="font-semibold">previously used</strong>, or{" "}
-              <strong className="font-semibold">new</strong> wallet.
-              Simultaneous submissions not allowed.
-            </p>
-            <p className="mb-3">
-              Click on your profile's PoH ID and select the relevant option:
-            </p>
-            <ul className="mb-4 list-disc space-y-2 pl-5">
-              <li>
-                <strong className="font-semibold">Renew</strong> — use the same
-                wallet to extend/refresh your v2 profile or update your
-                name/alias.
-              </li>
-              <li>
-                <strong className="font-semibold">Claim Humanity</strong> — use
-                a different/new wallet if you changed or lost the old one, or if
-                someone already registered you (even incorrectly). Works for
-                expired / withdrawn / revoked / rejected / pending / challenged
-                profiles.
-              </li>
-              <li>
-                <strong className="font-semibold">Revoke</strong> — if you want
-                to remove your profile, revoke it and then use the correct flow
-                above.
-              </li>
-            </ul>
-            <div className="flex flex-wrap items-center gap-2">
-              <span>Search here to find your past profiles:</span>
-              <ExternalLink
-                href="/"
-                className="bg-background/50 ring-offset-background focus-visible:ring-ring inline-flex h-6 items-center justify-center gap-2 whitespace-nowrap rounded-full border border-orange-200 px-3 text-xs font-medium transition-all hover:border-orange-500 hover:bg-orange-500/10 hover:text-orange-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 dark:border-dark-orange dark:bg-dark-whiteBackground/50 dark:hover:border-dark-orange dark:hover:bg-dark-orange/10 dark:hover:text-dark-orange [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
-              >
-                All Profiles
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="24"
-                  height="24"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  className="lucide lucide-arrow-up-right h-3 w-3"
-                >
-                  <path d="M7 7h10v10"></path>
-                  <path d="M7 17 17 7"></path>
-                </svg>
-              </ExternalLink>
-            </div>
-          </div>
+        {isRenewal && (
+          <label
+            className="text-primaryText mt-4 flex cursor-pointer items-start text-sm"
+            htmlFor="request-notice"
+          >
+            <input
+              id="request-notice"
+              type="checkbox"
+              className="checkbox mt-0.5 cursor-pointer"
+              checked={requestNotice}
+              onChange={() => infoState$.requestNotice.toggle()}
+            />
+            <span className="ml-3">
+              I understand this renewal request is for my active PoH profile. It
+              can be challenged if the submission is incorrect, and my{" "}
+              <span className="text-status-rejected font-medium">
+                deposit may be lost.
+              </span>
+            </span>
+          </label>
         )}
       </div>
 
-      <button
-        className="btn-main"
-        disabled={!name || !walletNotice || !requestNotice || showEmailError}
-        onClick={advance}
-      >
-        NEXT
-      </button>
-    </>
+      <div className="mt-8 flex w-full justify-center">
+        <ActionButton
+          onClick={isRenewal ? advance : () => infoState$.stage.set("identity")}
+          label="Next"
+          disabled={detailsState.disabled}
+          tooltip={detailsState.tooltip}
+          className="min-w-[170px]"
+        />
+      </div>
+    </div>
   );
 }
 

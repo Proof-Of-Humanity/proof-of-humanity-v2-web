@@ -67,12 +67,10 @@ export default function JurorAlertsModal({
   const isBusy = isSubmitting || isAddingUser || isUpdatingUser;
 
   return (
-    <Modal
-      open={open}
-      onClose={handleModalClose}
-      formal
-      header="Action required"
-    >
+    <Modal open={open} onClose={handleModalClose}>
+      <h2 className="text-primaryText px-4 pt-5 text-left text-2xl font-semibold">
+        Action required
+      </h2>
       {step === "warning" ? (
         <div className="p-6">
           <ul className="mb-6 space-y-3">

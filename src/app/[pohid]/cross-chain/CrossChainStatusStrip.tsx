@@ -1,27 +1,29 @@
+import type { ReactNode } from "react";
+
+import StatusCard, { StatusBadge } from "../StatusCard";
+
 type CrossChainStatusStripProps = {
   title: string;
-  description: string;
+  children: ReactNode;
   label?: string;
 };
 
 export default function CrossChainStatusStrip({
   title,
-  description,
+  children,
   label = "Cross-chain",
 }: CrossChainStatusStripProps) {
   return (
-    <div className="border-stroke bg-whiteBackground w-full min-w-0 rounded-2xl border px-4 py-4 sm:px-5">
+    <StatusCard className="px-4 py-4 sm:px-5">
       <div className="flex items-start justify-between gap-4">
         <div className="flex min-w-0 flex-1 items-start gap-3">
-          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-red-500/10 text-sm font-semibold text-red-400">
-            !
-          </div>
+          <StatusBadge className="h-8 w-8 text-sm" />
           <div className="min-w-0 flex-1">
             <div className="text-primaryText text-base font-semibold">
               {title}
             </div>
             <div className="text-secondaryText mt-1 text-sm leading-6">
-              {description}
+              {children}
             </div>
           </div>
         </div>
@@ -29,6 +31,6 @@ export default function CrossChainStatusStrip({
           {label}
         </div>
       </div>
-    </div>
+    </StatusCard>
   );
 }

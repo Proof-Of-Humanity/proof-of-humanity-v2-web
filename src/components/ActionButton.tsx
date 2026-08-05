@@ -89,6 +89,17 @@ const ActionButton = React.forwardRef<HTMLButtonElement, ActionButtonProps>(
         aria-disabled={tooltip ? isDisabled : undefined}
         disabled={tooltip ? undefined : isDisabled}
         className={mergedButtonClasses}
+        onMouseEnter={tooltip ? () => setTooltipVisible(true) : undefined}
+        onMouseLeave={tooltip ? () => setTooltipVisible(false) : undefined}
+        onFocus={tooltip ? () => setTooltipVisible(true) : undefined}
+        onBlur={tooltip ? () => setTooltipVisible(false) : undefined}
+        onKeyDown={
+          tooltip
+            ? (event) => {
+                if (event.key === "Escape") setTooltipVisible(false);
+              }
+            : undefined
+        }
       >
         {buttonContent}
       </button>
@@ -96,16 +107,7 @@ const ActionButton = React.forwardRef<HTMLButtonElement, ActionButtonProps>(
 
     if (tooltip) {
       return (
-        <div
-          className={mergedWrapperClasses}
-          onMouseEnter={() => setTooltipVisible(true)}
-          onMouseLeave={() => setTooltipVisible(false)}
-          onFocus={() => setTooltipVisible(true)}
-          onBlur={() => setTooltipVisible(false)}
-          onKeyDown={(event) => {
-            if (event.key === "Escape") setTooltipVisible(false);
-          }}
-        >
+        <div className={mergedWrapperClasses}>
           {button}
           <span
             id={tooltipId}
