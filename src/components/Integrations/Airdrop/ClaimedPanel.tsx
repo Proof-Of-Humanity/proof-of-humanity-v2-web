@@ -15,6 +15,7 @@ import { useSubmitEmail } from "components/Integrations/Airdrop/useSubmitEmail";
 
 import CheckCircleMinorIcon from "icons/CheckCircleMinor.svg";
 import CheckCircleIcon from "icons/CheckCircle.svg";
+import InfoIcon from "icons/info.svg";
 import WarningCircle16Icon from "icons/WarningCircle16.svg";
 import NewTabIcon from "icons/NewTab.svg";
 
@@ -35,7 +36,7 @@ export default function ClaimedPanel({
 
   const [userEmail, setUserEmail] = useState("");
   const [isEditing, setIsEditing] = useState(false);
-  const [showModal, setShowModal] = useState(false);
+  const [showModal, setShowModal] = useState(true);
   const trimmedEmail = userEmail.trim();
   const isEmailValid =
     trimmedEmail.length === 0 ? true : isValidEmailAddress(trimmedEmail);
@@ -127,38 +128,46 @@ export default function ClaimedPanel({
         </div>
       )}
 
-      <div className="border-stroke mb-3 rounded-2xl border p-3 text-left">
+      <div className="border-stroke relative mb-3 rounded-2xl border p-3 text-left">
+        <span
+          aria-hidden="true"
+          className="bg-stroke absolute left-[19.5px] top-7 h-2 w-px"
+        />
         <div className="flex items-center gap-1">
-          <CheckCircleIcon
-            width={22}
-            height={22}
-            className="text-status-registered mt-1 flex-shrink-0"
-          />
+          <div className="flex h-4 w-4 flex-shrink-0 items-center justify-center">
+            <CheckCircleIcon
+              width={12}
+              height={12}
+              className="text-status-registered"
+            />
+          </div>
           <span className="text-primaryText text-sm font-medium">
             Claimed &amp; Staked
           </span>
         </div>
 
         <div className="flex items-center gap-1">
-          {alertsEnabled ? (
-            <CheckCircleIcon
-              width={22}
-              height={22}
-              className="text-status-registered mt-1 flex-shrink-0"
-            />
-          ) : !isVerified ? (
-            <WarningCircle16Icon
-              width={22}
-              height={22}
-              className="fill-purple mt-1 flex-shrink-0"
-            />
-          ) : (
-            <WarningCircle16Icon
-              width={22}
-              height={22}
-              className="fill-orange mt-1 flex-shrink-0"
-            />
-          )}
+          <div className="flex h-4 w-4 flex-shrink-0 items-center justify-center">
+            {alertsEnabled ? (
+              <CheckCircleIcon
+                width={12}
+                height={12}
+                className="text-status-registered"
+              />
+            ) : !isVerified ? (
+              <InfoIcon
+                width={16}
+                height={16}
+                className="text-purple stroke-current stroke-2"
+              />
+            ) : (
+              <InfoIcon
+                width={16}
+                height={16}
+                className="text-orange stroke-current stroke-2"
+              />
+            )}
+          </div>
           <span className="text-primaryText text-sm font-medium">
             Juror Alerts
           </span>

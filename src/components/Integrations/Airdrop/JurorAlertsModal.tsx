@@ -8,6 +8,7 @@ import ActionButton from "components/ActionButton";
 import AuthGuard from "components/AuthGuard";
 import ExternalLink from "components/ExternalLink";
 import Field from "components/Field";
+import InfoIcon from "icons/info.svg";
 import WarningCircle16Icon from "icons/WarningCircle16.svg";
 import { useSubmitEmail } from "components/Integrations/Airdrop/useSubmitEmail";
 
@@ -18,7 +19,7 @@ type ModalStep = "warning" | "email";
 const stakeWarningList = (
   <ul className="mb-6 max-w-sm space-y-3">
     <li className="flex items-start justify-center gap-2">
-      <div className="bg-primaryText mt-2 h-1.5 w-1.5 flex-shrink-0 rounded-full" />
+      <InfoIcon className="text-primaryText mt-0.5 h-4 w-4 flex-shrink-0 stroke-current stroke-2" />
       <span className="text-primaryText text-sm">
         You&apos;re now staked and may be drawn as a juror.
       </span>
@@ -95,7 +96,7 @@ export default function JurorAlertsModal({
       open={open}
       onClose={handleModalClose}
       title="Action required"
-      className={className}
+      className={`max-w-[420px] ${className ?? ""}`}
     >
       {step === "warning" ? (
         <div className="flex flex-col items-center p-6 text-center">
