@@ -58,7 +58,7 @@ const integrations: Record<string, Integration> = {
         id: "mintGroupTokens",
         title: "Minting our group $CRC tokens",
         description:
-          "Once you join the Gnosis App, you get 24 CRC (individual tokens) per day — one every hour. To mint our group's own $CRC tokens, use your phone to scan the QR code above, and swap your individual $CRCs for our group tokens.\n\n To do this via the Gnosis app: visit your wallet balance, and 'Send' the desired amount of individual $CRC you want to swap, to our group. You'll receive your group $CRC instantly.",
+          "Once you join the Gnosis App, you get 24 CRC (individual tokens) per day, one every hour. To mint our group's own $CRC tokens, use your phone to scan the QR code above, and swap your individual $CRCs for our group tokens.\n\n To do this via the Gnosis app: visit your wallet balance, and 'Send' the desired amount of individual $CRC you want to swap, to our group. You'll receive your group $CRC instantly.",
         image: "/images/integrations/mint-qr-code.png",
       },
     ],
