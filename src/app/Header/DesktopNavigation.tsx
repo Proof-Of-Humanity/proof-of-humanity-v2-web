@@ -42,7 +42,7 @@ const DesktopNavigation = ({
   const registerActive = isRegisterActive(me?.pohId, pathname);
 
   return (
-    <div className="my-2 hidden items-center gap-x-8 whitespace-nowrap md:flex">
+    <div className="my-2 hidden items-center gap-x-8 whitespace-nowrap xl:flex">
       {web3Loaded && chain.id === sepolia.id && (
         <ExternalLink
           href="https://docs.scroll.io/en/user-guide/faucet/"

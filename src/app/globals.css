@@ -151,6 +151,17 @@
     border-left: 1px solid #3a3e48;
   }
 
+  .request-card-tooltip::before {
+    left: calc(100% - 0.75rem);
+  }
+
+  @media (max-width: 430px) {
+    w3m-modal {
+      --wui-spacing-s: 10px;
+      --wui-spacing-xs: 6px;
+    }
+  }
+
   /* Circle chrome: rest = dark surface + peach glyph; hover = orange fill + white glyph.
      !important so ExternalLink's default hover:text-orange does not reintroduce link blue/orange on the glyph. */
   .icon-btn {
