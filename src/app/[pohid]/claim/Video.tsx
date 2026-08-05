@@ -375,7 +375,7 @@ function VideoStep({
       isValid: true,
     },
     {
-      text: "Show wallet address on a phone screen—clear, no shine. If on paper, confirm every character matches.",
+      text: "Show wallet address on a phone screen, clear, no shine. If on paper, confirm every character matches.",
       isValid: true,
     },
     {

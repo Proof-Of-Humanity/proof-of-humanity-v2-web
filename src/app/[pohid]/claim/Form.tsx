@@ -480,7 +480,7 @@ function FormContent({
             We couldn&apos;t check this wallet&apos;s registration status.
           </span>
           <span className="text-secondaryText text-sm">
-            The check protects your deposit — please retry.
+            The check protects your deposit. Please retry.
           </span>
           <ActionButton
             onClick={() => retryMe()}
