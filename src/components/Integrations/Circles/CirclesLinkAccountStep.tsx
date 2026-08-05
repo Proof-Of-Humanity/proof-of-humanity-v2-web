@@ -71,7 +71,7 @@ export default function CirclesLinkAccountStep({
               <Label className="text-secondaryText -mt-1 mb-1 normal-case">
                 Paste your Gnosis App (Circles) Wallet Address
               </Label>
-              <div className="mt-4 flex items-stretch gap-2">
+              <div className="mt-4 flex flex-col gap-2 md:flex-row md:items-stretch">
                 <div className="min-w-0 flex-1">
                   <Field
                     value={walletAddress}

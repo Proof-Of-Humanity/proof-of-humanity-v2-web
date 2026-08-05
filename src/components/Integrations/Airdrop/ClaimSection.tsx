@@ -265,13 +265,10 @@ export default function ClaimSection({
           return {
             onClick: () => {
               if (!address) return;
-              const opened = window.open(
-                `/${prettifyId(address)}/claim`,
-                "_blank",
-                "noopener,noreferrer",
-              );
-              if (!opened)
-                window.location.assign(`/${prettifyId(address)}/claim`);
+              const url = `/${prettifyId(address)}/claim`;
+              const opened = window.open(url, "_blank");
+              if (opened) opened.opener = null;
+              else window.location.assign(url);
             },
             label: "Register",
           };
