@@ -314,7 +314,7 @@ export default function ClaimSection({
             <CrossCircle16Icon
               width={16}
               height={16}
-              className="fill-status-removed"
+              className="text-status-removed"
             />
           ),
           text: "Not eligible:",

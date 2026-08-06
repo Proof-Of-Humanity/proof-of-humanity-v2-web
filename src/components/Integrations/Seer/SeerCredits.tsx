@@ -271,7 +271,7 @@ function SeerSlide({
             className="mt-4"
             iconWidth={20}
             iconHeight={20}
-            iconClassName="flex-shrink-0 fill-status-registered"
+            iconClassName="flex-shrink-0 text-status-registered"
             textClassName="text-status-registered text-sm md:text-base"
           />
         )}

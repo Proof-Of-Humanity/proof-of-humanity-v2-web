@@ -122,7 +122,7 @@ export default function PnkAirdropContent({
                   spacing="compact"
                   iconWidth={16}
                   iconHeight={16}
-                  iconClassName="flex-shrink-0 fill-status-registered"
+                  iconClassName="flex-shrink-0 text-status-registered"
                 />
 
                 <div className="text-purple ml-1 text-xs">
@@ -218,7 +218,7 @@ function KlerosSlide({ slide, index }: { slide: InfoSlide; index: number }) {
               spacing="compact"
               iconWidth={20}
               iconHeight={20}
-              iconClassName="flex-shrink-0 fill-status-registered"
+              iconClassName="flex-shrink-0 text-status-registered"
               textClassName="text-status-registered text-sm sm:text-base leading-[1.36] whitespace-pre-line"
               className=""
             />

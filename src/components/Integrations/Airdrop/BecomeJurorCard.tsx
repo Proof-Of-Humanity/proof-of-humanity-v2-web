@@ -88,7 +88,7 @@ const BecomeJurorCard: React.FC<BecomeJurorCardProps> = ({
             spacing="compact"
             iconWidth={16}
             iconHeight={16}
-            iconClassName="flex-shrink-0 fill-status-registered"
+            iconClassName="flex-shrink-0 text-status-registered"
             textClassName="text-status-registered text-sm sm:text-base leading-[1.36] whitespace-pre-line"
           />
         )}

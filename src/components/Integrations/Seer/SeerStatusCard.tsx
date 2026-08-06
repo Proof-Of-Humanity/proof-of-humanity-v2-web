@@ -33,7 +33,7 @@ export default function SeerStatusCard({
             <CheckCircleIcon
               width={16}
               height={16}
-              className="fill-status-registered mr-1"
+              className="text-status-registered mr-1"
             />
           ),
           label: "Eligible: Verified Human profile",
@@ -47,7 +47,7 @@ export default function SeerStatusCard({
             <CrossCircle16Icon
               width={16}
               height={16}
-              className="fill-status-removed"
+              className="text-status-removed"
             />
           ),
           label: "Not eligible:",
