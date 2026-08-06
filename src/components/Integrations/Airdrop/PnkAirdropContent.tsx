@@ -4,10 +4,7 @@ import Image from "next/image";
 import IntegrationHeader from "components/Integrations/IntegrationHeader";
 import ClaimSection from "components/Integrations/Airdrop/ClaimSection";
 import BecomeJurorCard from "components/Integrations/Airdrop/BecomeJurorCard";
-import StepCarousel, {
-  type StepNavProps,
-} from "components/Integrations/StepCarousel";
-import WizardNav from "components/Integrations/WizardNav";
+import StepCarousel from "components/Integrations/StepCarousel";
 import FeatureList, { type FeatureItem } from "components/FeatureList";
 import { addLinkToText } from "components/addLinkToText";
 import { formatEth } from "utils/misc";
@@ -85,11 +82,11 @@ export default function PnkAirdropContent({
                 setCurrentSlideIndex(currentSlideIndex + 1)
               }
             >
-              {({ slide, index, nav }) =>
+              {({ slide, index }) =>
                 slide.id === "becomeJuror" ? (
-                  <BecomeJurorCard {...nav} slide={slide} className="flex-1" />
+                  <BecomeJurorCard slide={slide} className="flex-1" />
                 ) : (
-                  <KlerosSlide {...{ slide, index, nav }} />
+                  <KlerosSlide {...{ slide, index }} />
                 )
               }
             </StepCarousel>
@@ -182,15 +179,7 @@ export default function PnkAirdropContent({
   );
 }
 
-function KlerosSlide({
-  slide,
-  index,
-  nav,
-}: {
-  slide: InfoSlide;
-  index: number;
-  nav: StepNavProps;
-}) {
+function KlerosSlide({ slide, index }: { slide: InfoSlide; index: number }) {
   return (
     <>
       {slide.image && (
@@ -208,7 +197,7 @@ function KlerosSlide({
 
       <div className="border-stroke mx-2 mt-6 border-t sm:mx-6 lg:mt-8" />
 
-      <div className="flex flex-1 flex-col px-2 py-5 sm:px-6 lg:py-6">
+      <div className="flex flex-1 flex-col px-2 pt-5 sm:px-6 lg:pt-6">
         <h2 className="text-primaryText mb-3 text-xl font-semibold leading-[1.36] sm:text-2xl lg:mb-4">
           {slide.title}
         </h2>
@@ -235,8 +224,6 @@ function KlerosSlide({
             />
           </div>
         )}
-
-        <WizardNav {...nav} className="mt-auto pt-4" />
       </div>
     </>
   );

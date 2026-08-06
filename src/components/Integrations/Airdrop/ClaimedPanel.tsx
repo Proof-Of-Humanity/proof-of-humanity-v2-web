@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useCallback, useEffect } from "react";
+import React, { useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "react-toastify";
 import { useAtlasProvider } from "@kleros/kleros-app";
@@ -24,11 +24,13 @@ import { isValidEmailAddress } from "utils/validators";
 interface ClaimedPanelProps {
   amountPerClaim: bigint;
   isTestnet: boolean;
+  justClaimed?: boolean;
 }
 
 export default function ClaimedPanel({
   amountPerClaim,
   isTestnet,
+  justClaimed = false,
 }: ClaimedPanelProps) {
   const router = useRouter();
   const { isVerified, user, isFetchingUser, isAddingUser, isUpdatingUser } =
@@ -36,7 +38,7 @@ export default function ClaimedPanel({
 
   const [userEmail, setUserEmail] = useState("");
   const [isEditing, setIsEditing] = useState(false);
-  const [showModal, setShowModal] = useState(true);
+  const [showModal, setShowModal] = useState(justClaimed);
   const trimmedEmail = userEmail.trim();
   const isEmailValid =
     trimmedEmail.length === 0 ? true : isValidEmailAddress(trimmedEmail);
@@ -62,12 +64,6 @@ export default function ClaimedPanel({
   const alertsEnabled = hasEmail && isEmailVerified;
   const alertsPending = hasEmail && !isEmailVerified;
   const showForm = !hasEmail || isEditing;
-
-  useEffect(() => {
-    if (isVerified && !isFetchingUser && !hasEmail) {
-      setShowModal(true);
-    }
-  }, [isVerified, isFetchingUser, hasEmail]);
 
   const { mutate: submitEmail, isPending: isSubmitting } = useSubmitEmail({
     onSuccess: () => {
@@ -377,7 +373,11 @@ export default function ClaimedPanel({
           <NewTabIcon width={12} height={12} />
         </span>
       </ExternalLink>
-      <JurorAlertsModal open={showModal} onClose={() => setShowModal(false)} />
+      <JurorAlertsModal
+        open={showModal}
+        alertsEnabled={alertsEnabled}
+        onClose={() => setShowModal(false)}
+      />
     </>
   );
 }

@@ -41,12 +41,14 @@ const stakeWarningList = (
 interface JurorAlertsModalProps {
   open: boolean;
   onClose: () => void;
+  alertsEnabled?: boolean;
   className?: string;
 }
 
 export default function JurorAlertsModal({
   open,
   onClose,
+  alertsEnabled = false,
   className,
 }: JurorAlertsModalProps) {
   const [step, setStep] = useState<ModalStep>("warning");
@@ -102,18 +104,22 @@ export default function JurorAlertsModal({
         <div className="flex flex-col items-center p-6 text-center">
           {stakeWarningList}
 
-          <ActionButton
-            onClick={() => setStep("email")}
-            label="Enable Juror Alerts (important)"
-            variant="primary"
-            className="mb-4 w-full py-3"
-          />
+          {!alertsEnabled && (
+            <>
+              <ActionButton
+                onClick={() => setStep("email")}
+                label="Enable Juror Alerts (important)"
+                variant="primary"
+                className="mb-4 w-full py-3"
+              />
 
-          <div className="mb-4 flex w-full items-center gap-3">
-            <div className="border-stroke h-px flex-1 border-t" />
-            <span className="text-secondaryText text-xs uppercase">or</span>
-            <div className="border-stroke h-px flex-1 border-t" />
-          </div>
+              <div className="mb-4 flex w-full items-center gap-3">
+                <div className="border-stroke h-px flex-1 border-t" />
+                <span className="text-secondaryText text-xs uppercase">or</span>
+                <div className="border-stroke h-px flex-1 border-t" />
+              </div>
+            </>
+          )}
 
           <label className="mb-4 flex max-w-sm cursor-pointer items-start justify-center gap-2 text-left">
             <input
@@ -136,7 +142,7 @@ export default function JurorAlertsModal({
 
           <ActionButton
             onClick={handleModalClose}
-            label="Continue without alerts"
+            label={alertsEnabled ? "Continue" : "Continue without alerts"}
             variant="secondary"
             disabled={!acknowledged}
             className="w-full py-3"

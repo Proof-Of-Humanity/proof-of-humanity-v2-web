@@ -5,7 +5,8 @@ import { addLinkToText } from "./addLinkToText";
 
 export interface FeatureItem {
   text: string;
-  iconType?: "check" | "success" | "warning" | "error" | "pending";
+  /** Only a check icon is rendered; widen this union only alongside an icon switch. */
+  iconType?: "check";
 }
 
 interface FeatureListProps {
@@ -29,7 +30,7 @@ const FeatureList: React.FC<FeatureListProps> = ({
   className = "",
   iconWidth = 16,
   iconHeight = 16,
-  iconClassName = "",
+  iconClassName = "fill-status-registered",
   spacing = "normal",
   textClassName = "text-primaryText text-base leading-[1.36] whitespace-pre-line",
 }) => (

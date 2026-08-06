@@ -4,23 +4,14 @@ import Image from "next/image";
 import { InfoSlide } from "types/integrations";
 import { addLinkToText } from "components/addLinkToText";
 import FeatureList, { FeatureItem } from "components/FeatureList";
-import WizardNav from "components/Integrations/WizardNav";
 
 export type BecomeJurorCardProps = {
   slide: InfoSlide;
-  previousStep: boolean;
-  nextStep: boolean;
-  onPrevious: () => void;
-  onNext: () => void;
   className?: string;
 };
 
 const BecomeJurorCard: React.FC<BecomeJurorCardProps> = ({
   slide,
-  previousStep,
-  nextStep,
-  onPrevious,
-  onNext,
   className = "",
 }) => {
   const descriptionLines = slide.description.split("\n\n");
@@ -58,7 +49,7 @@ const BecomeJurorCard: React.FC<BecomeJurorCardProps> = ({
 
       <div className="border-stroke mx-2 mt-6 border-t sm:mx-6 lg:mt-8" />
 
-      <div className="flex flex-1 flex-col px-2 py-5 sm:px-6 lg:py-6">
+      <div className="flex flex-1 flex-col px-2 pt-5 sm:px-6 lg:pt-6">
         <h2 className="text-primaryText mb-3 text-xl font-semibold leading-[1.36] sm:text-2xl lg:mb-4">
           {slide.title}
         </h2>
@@ -101,14 +92,6 @@ const BecomeJurorCard: React.FC<BecomeJurorCardProps> = ({
             textClassName="text-status-registered text-sm sm:text-base leading-[1.36] whitespace-pre-line"
           />
         )}
-
-        <WizardNav
-          previousStep={previousStep}
-          nextStep={nextStep}
-          onPrevious={onPrevious}
-          onNext={onNext}
-          className="mt-auto pt-4"
-        />
       </div>
     </div>
   );

@@ -2,10 +2,7 @@
 import { useState, useCallback, useMemo } from "react";
 import Image from "next/image";
 import IntegrationHeader from "components/Integrations/IntegrationHeader";
-import StepCarousel, {
-  type StepNavProps,
-} from "components/Integrations/StepCarousel";
-import WizardNav from "components/Integrations/WizardNav";
+import StepCarousel from "components/Integrations/StepCarousel";
 import FeatureList, { type FeatureItem } from "components/FeatureList";
 import { addLinkToText } from "components/addLinkToText";
 import SeerStatusCard, { SeerEligibilityStatus } from "./SeerStatusCard";
@@ -39,8 +36,12 @@ export default function SeerCredits({ integration }: SeerCreditsProps) {
     currentSlideIndex >= (integration.firstInfoSlide?.length ?? 0);
   const currentSlide = integration.firstInfoSlide?.[currentSlideIndex];
 
-  // Query to check if user has an included profile (checking registrations and cross-chain registrations)
-  const { data: userData, isLoading } = useQuery<SeerUserData | null>({
+  const {
+    data: userData,
+    isLoading,
+    isError,
+    refetch,
+  } = useQuery<SeerUserData | null>({
     queryKey: ["seerEligibility", address, chainId],
     queryFn: async (): Promise<SeerUserData | null> => {
       if (!address) return null;
@@ -48,57 +49,58 @@ export default function SeerCredits({ integration }: SeerCreditsProps) {
       const normalizedAddress = address.toLowerCase() as Address;
       const now = Math.ceil(Date.now() / 1000);
 
-      const results = await Promise.all(
-        supportedChains.map(async (chain) => {
-          try {
-            const data = await sdk[
-              chain.id as SupportedChainId
-            ].HumanityIdByClaimer({
-              address: normalizedAddress,
-              now,
-            });
+      const results = await Promise.allSettled(
+        supportedChains.map(async (chain): Promise<SeerUserData> => {
+          const data = await sdk[
+            chain.id as SupportedChainId
+          ].HumanityIdByClaimer({
+            address: normalizedAddress,
+            now,
+          });
 
-            const localRegistration = data?.registrations?.[0];
-            if (localRegistration?.humanity?.id) {
-              return {
-                hasValidRegistration: true,
-                humanityId: localRegistration.humanity.id,
-                chainId: chain.id,
-              };
-            }
-
-            const crossChainRegistration = data?.crossChainRegistrations?.[0];
-            if (crossChainRegistration?.id) {
-              return {
-                hasValidRegistration: true,
-                humanityId: crossChainRegistration.id,
-                chainId: chain.id,
-              };
-            }
-
+          const localRegistration = data?.registrations?.[0];
+          if (localRegistration?.humanity?.id) {
             return {
-              hasValidRegistration: false,
-              humanityId: null,
-              chainId: chain.id,
-            };
-          } catch (error) {
-            console.error(`Error checking chain ${chain.id}:`, error);
-            return {
-              hasValidRegistration: false,
-              humanityId: null,
+              hasValidRegistration: true,
+              humanityId: localRegistration.humanity.id,
               chainId: chain.id,
             };
           }
+
+          const crossChainRegistration = data?.crossChainRegistrations?.[0];
+          if (crossChainRegistration?.id) {
+            return {
+              hasValidRegistration: true,
+              humanityId: crossChainRegistration.id,
+              chainId: chain.id,
+            };
+          }
+
+          return {
+            hasValidRegistration: false,
+            humanityId: null,
+            chainId: chain.id,
+          };
         }),
       );
 
-      return (
-        results.find((r) => r.hasValidRegistration) || {
-          hasValidRegistration: false,
-          humanityId: null,
-          chainId: undefined,
-        }
+      const valid = results.find(
+        (r): r is PromiseFulfilledResult<SeerUserData> =>
+          r.status === "fulfilled" && r.value.hasValidRegistration,
       );
+      if (valid) return valid.value;
+
+      const failed = results.find((r) => r.status === "rejected");
+      if (failed) {
+        console.error("Seer eligibility check failed:", failed.reason);
+        throw new Error("Unable to determine Seer eligibility");
+      }
+
+      return {
+        hasValidRegistration: false,
+        humanityId: null,
+        chainId: undefined,
+      };
     },
     enabled: isConnected && !!address,
   });
@@ -106,11 +108,12 @@ export default function SeerCredits({ integration }: SeerCreditsProps) {
   const eligibilityStatus: SeerEligibilityStatus = useMemo(() => {
     if (!isConnected) return "disconnected";
     if (isLoading) return "disconnected";
+    if (isError) return "error";
     if (userData?.hasValidRegistration) {
       return "eligible";
     }
     return "not-eligible";
-  }, [isConnected, isLoading, userData]);
+  }, [isConnected, isLoading, isError, userData]);
 
   const handleActionClick = useCallback(() => {
     switch (eligibilityStatus) {
@@ -125,11 +128,14 @@ export default function SeerCredits({ integration }: SeerCreditsProps) {
           else window.location.assign(url);
         }
         break;
+      case "error":
+        void refetch();
+        break;
       case "disconnected":
         modal.open({ view: "Connect" });
         break;
     }
-  }, [eligibilityStatus, modal, address]);
+  }, [eligibilityStatus, modal, address, refetch]);
 
   return (
     <div className="flex w-full max-w-[1200px] flex-col space-y-8 md:w-10/12">
@@ -146,19 +152,17 @@ export default function SeerCredits({ integration }: SeerCreditsProps) {
             <StepCarousel
               slides={integration.firstInfoSlide}
               currentIndex={currentSlideIndex}
-              exitOverlay
               onPrevious={() => setCurrentSlideIndex(currentSlideIndex - 1)}
               onNext={() => setCurrentSlideIndex(currentSlideIndex + 1)}
               onLastSlideComplete={() =>
                 setCurrentSlideIndex(currentSlideIndex + 1)
               }
             >
-              {({ slide, index, nav }) => (
+              {({ slide, index }) => (
                 <SeerSlide
                   slide={slide}
                   isLast={index === integration.firstInfoSlide!.length - 1}
                   isFirst={index === 0}
-                  nav={nav}
                 />
               )}
             </StepCarousel>
@@ -226,12 +230,10 @@ function SeerSlide({
   slide,
   isFirst,
   isLast,
-  nav,
 }: {
   slide: InfoSlide;
   isFirst: boolean;
   isLast: boolean;
-  nav: StepNavProps;
 }) {
   return (
     <>
@@ -251,7 +253,7 @@ function SeerSlide({
 
       <div className="border-stroke mx-2 mt-6 border-t sm:mx-6 lg:mt-8" />
 
-      <div className="flex flex-1 flex-col px-2 py-5 sm:px-6 lg:py-6">
+      <div className="flex flex-1 flex-col px-2 pt-5 sm:px-6 lg:pt-6">
         <p className="text-primaryText text-xl font-semibold md:text-2xl">
           {slide.title}
         </p>
@@ -273,8 +275,6 @@ function SeerSlide({
             textClassName="text-status-registered text-sm md:text-base"
           />
         )}
-        {/* mt-auto pins nav to the same baseline across slides of varying content height */}
-        <WizardNav {...nav} className="mt-auto pt-4 md:pt-6" />
       </div>
     </>
   );
