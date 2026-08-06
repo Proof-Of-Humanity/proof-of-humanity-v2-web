@@ -188,7 +188,7 @@ export default function SeerCredits({ integration }: SeerCreditsProps) {
 
                   <div className="space-y-4">
                     <p className="text-purple text-base font-semibold md:text-lg">
-                      Get $10 of Seer Credits when you register, with potential
+                      Get $5 of Seer Credits when you register, with potential
                       bonus credits after.
                     </p>
 

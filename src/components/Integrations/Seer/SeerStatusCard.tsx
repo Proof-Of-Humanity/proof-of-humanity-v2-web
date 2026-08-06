@@ -36,7 +36,7 @@ export default function SeerStatusCard({
             />
           ),
           label: "Eligible",
-          text: "Use $10 of Seer Credits now",
+          text: "Use $5 of Seer Credits now",
           textColor: "text-green-500",
           buttonLabel: "Start Trading",
         };
@@ -50,7 +50,7 @@ export default function SeerStatusCard({
             />
           ),
           label: "Not eligible:",
-          text: "Register to unlock $10 of Seer Credits",
+          text: "Register to unlock $5 of Seer Credits",
           textColor: "text-red-500",
           buttonLabel: "Register Now",
         };
@@ -99,7 +99,7 @@ export default function SeerStatusCard({
         <div className="text-center">
           <p className="text-purple mb-6 text-sm font-medium">Reward</p>
           <h3 className="text-primaryText mb-6 text-xl font-semibold">
-            Unlock Your $10 Seer Balance
+            Unlock Your $5 Seer Balance
           </h3>
           <div className="my-8 flex items-center justify-center">
             <div className="border-purple h-8 w-8 animate-spin rounded-full border-b-2"></div>
