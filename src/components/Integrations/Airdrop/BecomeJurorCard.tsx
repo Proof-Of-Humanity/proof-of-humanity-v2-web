@@ -22,7 +22,19 @@ const BecomeJurorCard: React.FC<BecomeJurorCardProps> = ({
     "⚖️ Fair rulings are rewarded & the system keeps jurors honest.";
   const stakingInfo = descriptionLines[1] || "";
 
-  const bottomBullets = (slide.bulletPoints ?? []).filter(Boolean);
+  // First bullet is the Stake > Judge > Earn > Repeat flow; it sits under the title.
+  const [stepFlow, ...bottomBullets] = (slide.bulletPoints ?? []).filter(
+    Boolean,
+  );
+
+  const bulletStyle = {
+    spacing: "compact",
+    iconWidth: 16,
+    iconHeight: 16,
+    iconClassName: "flex-shrink-0 text-status-registered",
+    textClassName:
+      "text-status-registered text-sm sm:text-base leading-[1.36] whitespace-pre-line",
+  } as const;
 
   const voteResultsRaw = descriptionLines.slice(2).join("\n\n");
   const voteResults = voteResultsRaw
@@ -53,6 +65,14 @@ const BecomeJurorCard: React.FC<BecomeJurorCardProps> = ({
         <h2 className="text-primaryText mb-3 text-xl font-semibold leading-[1.36] sm:text-2xl lg:mb-4">
           {slide.title}
         </h2>
+
+        {stepFlow && (
+          <FeatureList
+            items={[{ text: stepFlow, iconType: "check" }]}
+            className="mb-3 lg:mb-4"
+            {...bulletStyle}
+          />
+        )}
 
         <div className={`text-primaryText ${textSection}`}>
           {addLinkToText(mainDescription)}
@@ -85,11 +105,7 @@ const BecomeJurorCard: React.FC<BecomeJurorCardProps> = ({
               }),
             )}
             className="mb-4"
-            spacing="compact"
-            iconWidth={16}
-            iconHeight={16}
-            iconClassName="flex-shrink-0 text-status-registered"
-            textClassName="text-status-registered text-sm sm:text-base leading-[1.36] whitespace-pre-line"
+            {...bulletStyle}
           />
         )}
       </div>
