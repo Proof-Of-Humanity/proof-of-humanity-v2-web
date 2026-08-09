@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { InfoSlide } from "types/integrations";
 import WizardNav from "components/Integrations/WizardNav";
 
@@ -34,6 +34,10 @@ const ANIM: Record<"exiting" | "entering", Record<Dir, string>> = {
   exiting: { left: "animate-wizardOutLeft", right: "animate-wizardOutRight" },
   entering: { left: "animate-wizardInRight", right: "animate-wizardInLeft" },
 };
+
+/** Longest wizard keyframe is 0.3s; anything past this means `animationend`
+ * is not coming (unpainted subtree, backgrounded tab, stripped animation). */
+const ANIM_FALLBACK_MS = 500;
 
 const StepCarousel: React.FC<StepCarouselProps> = ({
   slides,
@@ -80,6 +84,22 @@ const StepCarousel: React.FC<StepCarouselProps> = ({
       setPhase({ name: "idle" });
     }
   };
+
+  /** Safety net: both nav buttons are gated on `idle`, so a missed
+   * `animationend` would strand the wizard with no way for the user to
+   * advance or go back. Force the transition through on a timer. */
+  useEffect(() => {
+    if (phase.name === "idle") return;
+    const timer = window.setTimeout(() => {
+      if (phase.name === "exiting") {
+        phase.commit();
+        setPhase({ name: "entering", dir: phase.dir });
+      } else {
+        setPhase({ name: "idle" });
+      }
+    }, ANIM_FALLBACK_MS);
+    return () => window.clearTimeout(timer);
+  }, [phase]);
 
   const animationClass = idle ? "" : ANIM[phase.name][phase.dir];
 

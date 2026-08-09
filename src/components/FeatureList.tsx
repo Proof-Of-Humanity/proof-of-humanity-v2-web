@@ -36,17 +36,18 @@ const FeatureList: React.FC<FeatureListProps> = ({
 }) => (
   <div className={`${spacingMap[spacing]} ${className}`}>
     {items.map((item, index) => (
-      <div key={index} className="flex items-start gap-2">
-        <div className="mt-1 flex-shrink-0">
+      <div key={index} className={`flex items-start gap-2 ${textClassName}`}>
+        <div
+          aria-hidden
+          className="flex h-[1lh] flex-shrink-0 items-center"
+        >
           <CheckCircleIcon
             width={iconWidth}
             height={iconHeight}
             className={iconClassName}
           />
         </div>
-        <div className="flex-1">
-          <span className={textClassName}>{addLinkToText(item.text)}</span>
-        </div>
+        <span className="min-w-0 flex-1">{addLinkToText(item.text)}</span>
       </div>
     ))}
   </div>

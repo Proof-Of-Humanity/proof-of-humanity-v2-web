@@ -35,7 +35,7 @@ const integrations: Record<string, Integration> = {
         id: "activateAccount",
         title: "Activate Your Circles Account",
         description: [
-          "Go the 'Circles' tab → 'Find an invite' and share your QR code with an existing user to activate your account.",
+          "Go to the 'Circles' tab → 'Find an invite' and share your QR code with an existing user to activate your account.",
           "Post your link on the [Circles Telegram community](https://t.me/about_circles), and ask to get invited!",
         ].join(" "),
         disclaimer:
