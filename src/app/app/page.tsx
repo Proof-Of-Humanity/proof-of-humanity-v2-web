@@ -1,7 +1,7 @@
 import { Metadata } from "next";
 import IntegrationsList from "components/Integrations/IntegrationsList";
 import { getIntegrations } from "data/integrations";
-import ConnectIcon from "components/ConnectIcon";
+import GiftIcon from "icons/Gift.svg";
 
 export const metadata: Metadata = {
   title: "Proof of Humanity V2 - App Integrations",
@@ -14,23 +14,19 @@ export default async function AppPage() {
     <div className="content-wide flex flex-col">
       <div className="mb-6">
         <h1 className="text-primaryText flex items-center gap-2 text-2xl font-semibold">
-          <span className="text-primary text-orange">
-            <ConnectIcon />
+          <span className="text-orange">
+            <GiftIcon className="h-7 w-7" />
           </span>{" "}
           Rewards
         </h1>
-        <p className="text-secondaryText mt-2 text-base text-gray-700">
-          Unlock exclusive airdrops & rewards with your Proof of Humanity
-          profile. Ready to get rewarded for being part of the Proof of Humanity
-          (PoH) community? Start claiming rewards now and make the most of your
-          PoH identity!
+        <p className="text-secondaryText mt-2 max-w-3xl text-sm">
+          Unlock rewards and perks available to verified humans on Proof of
+          Humanity. Claim airdrops, access partner benefits, and make the most
+          of your PoH identity.
         </p>
       </div>
 
       <div className="mt-4">
-        <h2 className="text-primaryText mb-4 text-xl">
-          Available integrations:
-        </h2>
         <IntegrationsList integrations={integrations} />
       </div>
     </div>

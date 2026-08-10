@@ -83,6 +83,12 @@ module.exports = {
           "accordionItemIn 0.6s cubic-bezier(0.22, 0.61, 0.36, 1) both",
         mediaResolve:
           "mediaResolve 0.6s cubic-bezier(0.22, 0.61, 0.36, 1) both",
+        wizardOutLeft: "wizardOutLeft 0.16s ease-in both",
+        wizardOutRight: "wizardOutRight 0.16s ease-in both",
+        wizardInLeft:
+          "wizardInLeft 0.3s cubic-bezier(0.22, 0.61, 0.36, 1) both",
+        wizardInRight:
+          "wizardInRight 0.3s cubic-bezier(0.22, 0.61, 0.36, 1) both",
       },
       keyframes: {
         flip: {
@@ -113,6 +119,22 @@ module.exports = {
         //   "0%": { transform: "scaleX(1)" },
         //   "100%": { transform: "scaleX(0)" },
         // },
+        wizardOutLeft: {
+          "0%": { opacity: "1", transform: "translateX(0)" },
+          "100%": { opacity: "0", transform: "translateX(-24px)" },
+        },
+        wizardOutRight: {
+          "0%": { opacity: "1", transform: "translateX(0)" },
+          "100%": { opacity: "0", transform: "translateX(24px)" },
+        },
+        wizardInLeft: {
+          "0%": { opacity: "0", transform: "translateX(-24px)" },
+          "100%": { opacity: "1", transform: "translateX(0)" },
+        },
+        wizardInRight: {
+          "0%": { opacity: "0", transform: "translateX(24px)" },
+          "100%": { opacity: "1", transform: "translateX(0)" },
+        },
       },
       fontFamily: {
         sans: ["Inter", ...defaultTheme.fontFamily.sans],

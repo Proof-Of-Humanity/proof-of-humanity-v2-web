@@ -69,7 +69,7 @@ export default function Header({ policy }: IHeader) {
           />
         </Link>
 
-        <div className="ml-auto flex items-center gap-2 md:hidden">
+        <div className="ml-auto flex items-center gap-2 xl:hidden">
           {showRewardsCta ? (
             <Link
               href="/app"
@@ -100,7 +100,7 @@ export default function Header({ policy }: IHeader) {
         </div>
 
         {chain && (
-          <div className="lg:absolute lg:left-1/2 lg:top-1/2 lg:-translate-x-1/2 lg:-translate-y-1/2 lg:transform">
+          <div className="xl:absolute xl:left-1/2 xl:top-1/2 xl:-translate-x-1/2 xl:-translate-y-1/2 xl:transform">
             <DesktopNavigation
               {...{
                 address,
@@ -118,11 +118,11 @@ export default function Header({ policy }: IHeader) {
 
         <div className="flex flex-row items-center gap-3">
           {chain && (
-            <div className="hidden md:block">
+            <div className="hidden xl:block">
               <WalletSection {...{ chain, address, isConnected, web3Loaded }} />
             </div>
           )}
-          <div className="hidden md:block">
+          <div className="hidden xl:block">
             <Options />
           </div>
         </div>

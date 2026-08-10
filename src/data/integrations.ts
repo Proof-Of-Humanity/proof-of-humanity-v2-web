@@ -4,7 +4,7 @@ const integrations: Record<string, Integration> = {
   circles: {
     id: "circles",
     name: "Circles Wallet",
-    title: "Start Earning 24 $CRC Per Day",
+    title: "Earn 24 $CRC Daily",
     description:
       "Join our group on the Gnosis App to start your daily income and unlock exclusive perks!",
     logo: "/images/integrations/circles-logo.png",
@@ -12,8 +12,10 @@ const integrations: Record<string, Integration> = {
     logoWidth: 185,
     logoHeight: 48,
     isActive: true,
-    startPath: "app/circles",
-    buttonText: "Start Earning",
+    startPath: "/app/circles",
+    buttonText: "Earn $CRC",
+    displayOrder: 2,
+    statusLabel: "Live",
     firstInfoSlide: [
       {
         id: "start",
@@ -32,8 +34,10 @@ const integrations: Record<string, Integration> = {
       {
         id: "activateAccount",
         title: "Activate Your Circles Account",
-        description:
-          "Go the 'Circles' tab → 'Find an invite' and share your QR code with an existing user to activate your account. Post your link on the [Circles Telegram community](https://t.me/about_circles) ↗️, and ask to get invited!",
+        description: [
+          "Go to the 'Circles' tab → 'Find an invite' and share your QR code with an existing user to activate your account.",
+          "Post your link on the [Circles Telegram community](https://t.me/about_circles), and ask to get invited!",
+        ].join(" "),
         disclaimer:
           "(!) Important: You need to be invited into Circles to be able to join our group.",
         image: "/images/integrations/circles-step3.png",
@@ -72,14 +76,16 @@ const integrations: Record<string, Integration> = {
       "Register. Earn. Stake. Repeat. Start Your Earning Journey with PNK!",
     headerDescription:
       "Welcome to the Proof of Humanity Verified 10K Campaign! To celebrate the launch of Proof of Humanity v2 and our growing community, we're rewarding the first 10,000 verified humans on the PoH v2 registry with PNK tokens, which will be staked on Kleros Court to become a juror!",
-    description: "Earn PNK tokens for being human.",
+    description: "Claim 1,200 PNK tokens as a Verified Human.",
     logo: "/images/kleros-logo.png",
     logoWidth: 164,
     logoHeight: 48,
     darkLogo: "/logo/kleros.svg",
     isActive: true,
-    startPath: "app/pnk-airdrop",
-    buttonText: "Start Now",
+    startPath: "/app/pnk-airdrop",
+    buttonText: "Claim PNK",
+    displayOrder: 1,
+    statusLabel: "Live",
     firstInfoSlide: [
       {
         id: "klerosInfo",
@@ -121,7 +127,7 @@ const integrations: Record<string, Integration> = {
         image: "/images/integrations/kleros-slide4.png",
         bulletPoints: [
           "Stake > Judge > Earn > Repeat",
-          "🌐 [Kleros.io](https://kleros.io) | 📚 [Documentation](https://docs.kleros.io) | 📊 [Klerosboard](https://klerosboard.com/1)",
+          "Visit: [Kleros.io](https://kleros.io) | [Documentation](https://docs.kleros.io) | [Klerosboard](https://klerosboard.com/1)",
         ],
       },
     ],
@@ -130,16 +136,19 @@ const integrations: Record<string, Integration> = {
   "seer-credits": {
     id: "seer-credits",
     name: "Seer Credits",
-    title: "Get $10 of Seer Credits",
+    title: "Claim $5 Welcome Credit",
     description:
-      "Register on Proof of Humanity to receive $10 of Seer Credits, with potential bonus credits after.",
+      "Register on Proof of Humanity to receive $5 of Seer Credits, with potential bonus credits after.",
     logo: "/images/integrations/seer-logo.png",
-    logoWidth: 164,
+    // seer-logo-white.png is 862x400; 103x48 keeps its true aspect ratio
+    logoWidth: 103,
     logoHeight: 48,
     darkLogo: "/images/seer-logo-white.png",
     isActive: true,
-    startPath: "app/seer-credits",
-    buttonText: "Claim $10",
+    startPath: "/app/seer-credits",
+    buttonText: "Claim $5",
+    displayOrder: 3,
+    statusLabel: "Live",
     firstInfoSlide: [
       {
         id: "whatIsSeer",
@@ -154,7 +163,13 @@ const integrations: Record<string, Integration> = {
         id: "whyDifferent",
         title: "Why is Seer different?",
         description:
-          "Unlike traditional betting or centralized platforms, Seer runs entirely on smart contracts, meaning **no middlemen, no manipulation and no hidden rules**. Every market is open, verifiable and secured.\n\n• **Transparent**: Enables the creation and management of diverse, trustless markets via [Reality.eth](https://reality.eth.limo/app/docs/html/index.html) and [Conditional Tokens Framework](https://conditional-tokens-docs.netlify.app/docs/introduction1).\n• **Fair**: [Kleros](https://kleros.io/) acts as a decentralized arbiter to resolve disputes and ensure fair, transparent outcomes.\n• **Create Your Own Markets**: Allows users to create custom prediction markets for any event or topic.\n• **Fair Rewards**: Easily trade market outcomes and earn rewards through prediction farming.",
+          "Unlike traditional betting or centralized platforms, Seer runs entirely on smart contracts, meaning **no middlemen, no manipulation and no hidden rules**. Every market is open, verifiable and secured.",
+        bulletPoints: [
+          "**Transparent**: Enables the creation and management of diverse, trustless markets via [Reality.eth](https://reality.eth.limo/app/docs/html/index.html) and [Conditional Tokens Framework](https://conditional-tokens-docs.netlify.app/docs/introduction1).",
+          "**Fair**: [Kleros](https://kleros.io/) acts as a decentralized arbiter to resolve disputes and ensure fair, transparent outcomes.",
+          "**Create Your Own Markets**: Allows users to create custom prediction markets for any event or topic.",
+          "**Fair Rewards**: Easily trade market outcomes and earn rewards through prediction farming.",
+        ],
         image: "/images/integrations/seer-slide2.png",
         imageHeight: 566,
         imageWidth: 906,
@@ -162,8 +177,14 @@ const integrations: Record<string, Integration> = {
       {
         id: "howToUse",
         title: "What are Seer Credits?",
-        description:
-          "~~Get $10 of Seer Credits when you register.~~\n\n• Rewards for **registered Proof of Humanity users** to use on the Seer platform.\n• **Use them like trading funds.** Open/close positions on Seer without spending your own crypto.\n• **They're not tokens.** They're non-transferable, and can't be withdrawn.\n• **Potential bonus credits.** More credits may be added after registration.\n• **Use them before they expire.** Unused credits may not roll over.",
+        description: "~~Get $5 of Seer Credits when you register.~~",
+        bulletPoints: [
+          "Rewards for **registered Proof of Humanity users** to use on the Seer platform.",
+          "**Use them like trading funds.** Open/close positions on Seer without spending your own crypto.",
+          "**They're not tokens.** They're non-transferable, and can't be withdrawn.",
+          "**Potential bonus credits.** More credits may be added after registration.",
+          "**Use them before they expire.** Unused credits may not roll over.",
+        ],
         image: "/images/integrations/seer-slide3.png",
         imageHeight: 322,
         imageWidth: 901,
@@ -172,7 +193,7 @@ const integrations: Record<string, Integration> = {
         id: "howToUseSeerCredits",
         title: "How to use your Seer Credits?",
         description:
-          "~~Register on Proof of Humanity to unlock $10 of Seer Credits, with potential bonus credits after.~~\n\n1. Go to Seer and connect your wallet address that's **registered** with your Proof of Humanity profile.\n2. Once connected, you'll be able to **check** your Seer Credits balance.\n3. Use your Seer Credits to **take positions** in prediction markets.\n\n**Note:** Bonus credits may be added later. Use your credits before they expire.",
+          "~~Register on Proof of Humanity to unlock $5 of Seer Credits, with potential bonus credits after.~~\n\n1. Go to Seer and connect your wallet address that's **registered** with your Proof of Humanity profile.\n2. Once connected, you'll be able to **check** your Seer Credits balance.\n3. Use your Seer Credits to **take positions** in prediction markets.\n\n**Note:** Bonus credits may be added later. Use your credits before they expire.",
         image: "/images/integrations/seer-slide4.png",
         imageHeight: 508,
         imageWidth: 425,
@@ -184,19 +205,13 @@ const integrations: Record<string, Integration> = {
   },
 };
 
-/**
- * Get all available integrations
- */
+// Sort order matches how cards are laid out on the rewards page.
 export async function getIntegrations(): Promise<Integration[]> {
-  // Filter out inactive integrations
-  return Object.values(integrations).filter(
-    (integration) => integration.isActive,
-  );
+  return Object.values(integrations)
+    .filter((integration) => integration.isActive)
+    .sort((a, b) => (a.displayOrder ?? 99) - (b.displayOrder ?? 99));
 }
 
-/**
- * Get a single integration by ID
- */
 export async function getIntegration(id: string): Promise<Integration | null> {
   return integrations[id] || null;
 }

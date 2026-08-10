@@ -14,6 +14,7 @@ interface ModalProps extends React.HTMLAttributes<HTMLDivElement> {
   onClose: () => void;
   canClose?: boolean;
   className?: string;
+  title?: string;
 }
 
 const ANIMATION_MS = 260;
@@ -24,6 +25,7 @@ const Modal: React.FC<ModalProps> = ({
   open,
   onClose,
   canClose = true,
+  title,
 }) => {
   const [isRendered, setIsRendered] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
@@ -88,6 +90,11 @@ const Modal: React.FC<ModalProps> = ({
               ),
             )}
           >
+            {title && (
+              <h2 className="text-primaryText pt-6 text-center text-xl font-semibold">
+                {title}
+              </h2>
+            )}
             {children}
           </div>
         </>

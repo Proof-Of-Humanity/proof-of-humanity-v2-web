@@ -1,21 +1,29 @@
 "use client";
 import React from "react";
 import Image from "next/image";
+import cn from "classnames";
 import { Integration } from "types/integrations";
 
 interface IntegrationHeaderProps {
   integration: Integration;
+  className?: string;
 }
 
 export default function IntegrationHeader({
   integration,
+  className,
 }: IntegrationHeaderProps) {
   const src = integration.darkLogo || integration.logo;
   const logoWidth = integration.logoWidth || 164;
   const logoHeight = integration.logoHeight || 48;
 
   return (
-    <div className="paper flex flex-col">
+    <div
+      className={cn(
+        "border-stroke bg-whiteBackground flex flex-col rounded-card border shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]",
+        className,
+      )}
+    >
       <div className="p-4 md:p-6">
         {integration.logo && (
           <div className="mb-4 ml-1">
