@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { useAtlasProvider } from "@kleros/kleros-app";
+import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-toastify";
 import { useSubmitEmail } from "components/Integrations/Airdrop/useSubmitEmail";
 import { useSettingsPopover } from "context/SettingsPopoverContext";
@@ -25,10 +26,8 @@ export const useEmailSettings = () => {
     deleteUser,
   } = useAtlasProvider();
 
-  // Resolves without a signed-in session, so the nudge can be shown to anyone
-  // with a wallet connected.
-  const { isSubscribed: isWalletSubscribed, refetch: refetchSubscription } =
-    useIsSubscribed();
+  const { isSubscribed } = useIsSubscribed();
+  const queryClient = useQueryClient();
 
   const savedEmail = user?.email ?? "";
 
@@ -97,12 +96,10 @@ export const useEmailSettings = () => {
     savedEmail === trimmedEmail ||
     Boolean(validFutureUpdateDate);
 
-  const showEmailError = !isEmailValid && trimmedEmail !== "";
+  const showEmailError = !isEmailValid;
   const isEmailVerified = Boolean(user?.isEmailVerified);
   const hasVerifiedEmail = Boolean(savedEmail) && isEmailVerified;
   const showVerificationNotice = Boolean(savedEmail) && !isEmailVerified;
-
-  const isSubscribed = hasVerifiedEmail || isWalletSubscribed;
 
   const cooldownTooltip = validFutureUpdateDate
     ? `You can update email in ${minutesUntilUpdateable} ${
@@ -141,7 +138,8 @@ export const useEmailSettings = () => {
     try {
       const deleted = await deleteUser();
       if (!deleted) throw new Error("Failed to unsubscribe");
-      await refetchSubscription();
+      // Ask the server rather than assume deleted ⇒ unsubscribed.
+      queryClient.invalidateQueries({ queryKey: ["isSubscribed"] });
       toast.success("You have been unsubscribed from PoH notifications.");
       setIsUnsubscribeModalOpen(false);
       closeSettingsPopover();

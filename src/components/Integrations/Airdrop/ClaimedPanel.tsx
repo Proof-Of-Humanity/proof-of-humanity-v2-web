@@ -1,7 +1,6 @@
 "use client";
-import React, { useState, useCallback, useEffect } from "react";
+import { useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { useAccount } from "wagmi";
 import { toast } from "react-toastify";
 import { useAtlasProvider } from "@kleros/kleros-app";
 
@@ -26,18 +25,32 @@ interface ClaimedPanelProps {
   isTestnet: boolean;
 }
 
+type AlertStatus = "checking" | "unknown" | "off" | "unverified" | "on";
+
+const STEP_BADGES: Record<AlertStatus, { label: string; className: string }> = {
+  checking: { label: "Checking…", className: "bg-grey text-purple" },
+  unknown: { label: "Unknown", className: "bg-grey text-purple" },
+  off: { label: "Pending", className: "bg-lightOrange text-orange" },
+  unverified: { label: "Unverified", className: "bg-lightOrange text-orange" },
+  on: { label: "Enabled", className: "badge-success" },
+};
+
 export default function ClaimedPanel({
   amountPerClaim,
   isTestnet,
 }: ClaimedPanelProps) {
   const router = useRouter();
-  const { address } = useAccount();
   const { isVerified, user, isFetchingUser, isAddingUser, isUpdatingUser } =
     useAtlasProvider();
-  const { isSubscribed, isLoading: isCheckingSubscription } = useIsSubscribed();
+  const {
+    isSubscribed,
+    isLoading: isCheckingSubscription,
+    isError: isSubscriptionError,
+  } = useIsSubscribed();
 
   const [userEmail, setUserEmail] = useState("");
   const [isEditing, setIsEditing] = useState(false);
+  // Visit-local only — next land with an unsubscribed wallet reopens the nudge.
   const [alertsModalDismissed, setAlertsModalDismissed] = useState(false);
   const trimmedEmail = userEmail.trim();
   const isEmailValid =
@@ -62,30 +75,26 @@ export default function ClaimedPanel({
         )
       : 0;
 
-  // Atlas answers the subscription question for the connected wallet without a
-  // signed-in session, so alert status (and the nudge) no longer waits on sign-in.
-  // The signed-in user record still adds whether a saved email awaits verification.
-  const alertsEnabled = isSubscribed || (hasEmail && isEmailVerified);
-  const alertsPending = !alertsEnabled && hasEmail && !isEmailVerified;
+  // The server owns on/off (`isSubscribed`, refetched after every email
+  // mutation); the signed-in record adds the one thing the lookup can't say —
+  // a saved email still awaiting verification. "unknown" = the lookup failed.
   const isCheckingAlerts =
-    isCheckingSubscription || (isVerified && isFetchingUser);
-  const showForm = isEditing || (!alertsEnabled && !hasEmail);
-  // Only nudge once Atlas has actually said "not subscribed" — never on unknown.
-  const showModal =
-    !alertsModalDismissed &&
-    !isCheckingAlerts &&
-    isSubscribed === false &&
-    !hasEmail;
+    (isVerified && isFetchingUser) || isCheckingSubscription;
+  const alertStatus: AlertStatus = isCheckingAlerts
+    ? "checking"
+    : hasEmail && !isEmailVerified
+      ? "unverified"
+      : isSubscribed === true
+        ? "on"
+        : isSubscribed === false
+          ? "off"
+          : "unknown";
 
-  const prevAddress = React.useRef(address);
-  useEffect(() => {
-    if (prevAddress.current !== undefined && prevAddress.current !== address) {
-      setAlertsModalDismissed(false);
-      setIsEditing(false);
-      setUserEmail("");
-    }
-    prevAddress.current = address;
-  }, [address]);
+  const showForm =
+    isEditing || alertStatus === "off" || alertStatus === "unknown";
+
+  const showAlertsPrompt =
+    !alertsModalDismissed && !isCheckingAlerts && isSubscribed === false;
 
   const { mutate: submitEmail, isPending: isSubmitting } = useSubmitEmail({
     onSuccess: () => {
@@ -120,13 +129,7 @@ export default function ClaimedPanel({
   const isBusy =
     isSubmitting || isAddingUser || isUpdatingUser || isFetchingUser;
 
-  const stepBadge = isCheckingAlerts
-    ? { label: "Checking…", className: "bg-grey text-purple" }
-    : alertsEnabled
-      ? { label: "Enabled", className: "badge-success" }
-      : alertsPending
-        ? { label: "Unverified", className: "bg-lightOrange text-orange" }
-        : { label: "Pending", className: "bg-lightOrange text-orange" };
+  const stepBadge = STEP_BADGES[alertStatus];
 
   return (
     <>
@@ -159,7 +162,7 @@ export default function ClaimedPanel({
         </div>
 
         <div className="flex items-center gap-1">
-          {alertsEnabled ? (
+          {alertStatus === "on" ? (
             <CheckCircleIcon
               width={22}
               height={22}
@@ -198,7 +201,13 @@ export default function ClaimedPanel({
             />
             <div>
               <h4 className="text-primaryText text-sm font-semibold">
-                {isEditing ? "Change email" : "Juror alerts not enabled"}
+                {isEditing
+                  ? "Change email"
+                  : alertStatus === "unknown"
+                    ? isSubscriptionError
+                      ? "Couldn't check juror alerts"
+                      : "Enable juror alerts"
+                    : "Juror alerts not enabled"}
               </h4>
               <p className="text-secondaryText mt-0.5 text-xs leading-relaxed">
                 {isEditing ? (
@@ -270,7 +279,7 @@ export default function ClaimedPanel({
             </button>
           )}
         </div>
-      ) : alertsPending ? (
+      ) : alertStatus === "unverified" ? (
         /* State 3: Email set but unverified */
         <div className="bg-lightOrange border-orange mb-4 rounded-lg border p-3 text-left">
           <div className="flex items-start gap-2">
@@ -343,7 +352,6 @@ export default function ClaimedPanel({
                   Change email
                 </button>
               ) : (
-                /* Subscribed, but changing the email needs an Atlas session. */
                 <p className="text-secondaryText mt-1 text-xs">
                   Sign in to change your email.
                 </p>
@@ -379,7 +387,7 @@ export default function ClaimedPanel({
         </span>
       </ExternalLink>
       <JurorAlertsModal
-        open={showModal}
+        open={showAlertsPrompt}
         onClose={() => setAlertsModalDismissed(true)}
       />
     </>

@@ -75,7 +75,7 @@ const SettingsPopover: React.FC = () => {
           </div>
 
           <div className="space-y-3 text-center">
-            {!isSubscribed && (
+            {isSubscribed === false && (
               <p className="text-secondaryText text-sm">
                 Subscribe to get important updates about your profile, requests
                 and challenges.

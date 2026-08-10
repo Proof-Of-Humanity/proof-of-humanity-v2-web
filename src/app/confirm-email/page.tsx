@@ -2,7 +2,7 @@
 
 import { useSearchParams, useRouter } from "next/navigation";
 import { useAtlasProvider } from "@kleros/kleros-app";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 
 import CheckCircle from "icons/CheckCircleMajor.svg";
@@ -44,6 +44,7 @@ const ConfirmEmailPage: React.FC = () => {
   const searchParams = useSearchParams();
   const router = useRouter();
   const { confirmEmail } = useAtlasProvider();
+  const queryClient = useQueryClient();
   const [{ address, token }] = useState(() => ({
     address: searchParams.get("address"),
     token: searchParams.get("token"),
@@ -57,7 +58,12 @@ const ConfirmEmailPage: React.FC = () => {
       }
 
       try {
-        return await confirmEmail({ address, token });
+        const result = await confirmEmail({ address, token });
+        if (result.isConfirmed) {
+          queryClient.invalidateQueries({ queryKey: ["UserSettings"] });
+          queryClient.invalidateQueries({ queryKey: ["isSubscribed"] });
+        }
+        return result;
       } finally {
         router.replace("/confirm-email", { scroll: false });
       }
