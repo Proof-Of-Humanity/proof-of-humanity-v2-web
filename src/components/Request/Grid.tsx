@@ -103,7 +103,7 @@ const normalize = (
               },
               {
                 humanityLifespan:
-                  humanityLifespanAllChains[
+                  humanityLifespanAllChains?.[
                     Number(chainId) as SupportedChainId
                   ],
               },
@@ -177,6 +177,7 @@ function RequestsGrid() {
   const [pending, loadingType] = loading.use();
 
   const [loadError, setLoadError] = useState(false);
+  const [failedChainIds, setFailedChainIds] = useState<SupportedChainId[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   useEffect(() => {
     const timer = setTimeout(
@@ -186,126 +187,157 @@ function RequestsGrid() {
     return () => clearTimeout(timer);
   }, [searchQuery]);
 
-  useMountOnce(() => {
-    (async () => {
-      try {
-        const contractData = await Promise.resolve(getContractDataAllChains());
-        humanityLifespanAllChains = Object.keys(contractData).reduce(
-          (acc, chainId) => {
-            acc[Number(chainId) as SupportedChainId] =
-              contractData[
-                Number(chainId) as SupportedChainId
-              ]?.humanityLifespan;
-            return acc;
-          },
-          {} as Record<SupportedChainId, string | undefined>,
-        );
+  const ensureContractData = async () => {
+    if (humanityLifespanAllChains) return;
+    const contractData = await getContractDataAllChains();
+    humanityLifespanAllChains = Object.keys(contractData).reduce(
+      (acc, chainId) => {
+        acc[Number(chainId) as SupportedChainId] =
+          contractData[Number(chainId) as SupportedChainId]?.humanityLifespan;
+        return acc;
+      },
+      {} as Record<SupportedChainId, string | undefined>,
+    );
+  };
 
-        chainStacks$.set(await getRequestsInitData());
-      } catch (err) {
-        console.error("Failed to load requests:", err);
-        setLoadError(true);
-      } finally {
-        loading.stop();
-      }
-    })();
-
-    /* (async () => {
-      chainStacks$.set(await getRequestsInitData());
+  const loadInit = async () => {
+    loading.start("init");
+    setLoadError(false);
+    setFailedChainIds([]);
+    try {
+      await ensureContractData();
+      const { stacks, failedChainIds: failed } = await getRequestsInitData();
+      chainStacks$.set(stacks);
+      setFailedChainIds(failed);
+    } catch (err) {
+      console.error("Failed to load requests:", err);
+      setLoadError(true);
+    } finally {
       loading.stop();
-    })(); */
+    }
+  };
 
-    filter$.onChange(
-      async ({
-        value: { chainId: chainFilter, search, status, cursor },
-        getPrevious,
-      }) => {
-        loading.start();
-        setLoadError(false);
-        try {
-          const loadContinued = cursor > getPrevious().cursor;
-          const fetchChains: SupportedChain[] = [];
-          const fetchPromises: Promise<RequestsQuery>[] = [];
+  const loadFiltered = async (
+    value: RequestFilter,
+    loadContinued: boolean,
+    loadingType?: string,
+  ) => {
+    const { chainId: chainFilter, search, status } = value;
+    loading.start(loadingType);
+    setLoadError(false);
+    setFailedChainIds([]);
+    try {
+      await ensureContractData();
+      const fetchChains: SupportedChain[] = [];
+      const fetchPromises: Promise<RequestsQuery>[] = [];
 
-          const chainStacks = filterChainStacksForChain(
-            chainStacks$.get(),
-            chainFilter,
+      const chainStacks = filterChainStacksForChain(
+        chainStacks$.get(),
+        chainFilter,
+      );
+
+      for (const chain of supportedChains) {
+        if (chainFilter && chainFilter !== chain.id) continue;
+
+        const displayedForChain = chainStacks[chain.id].length;
+
+        if (
+          !loadContinued ||
+          displayedForChain + REQUESTS_BATCH_SIZE >=
+            chainStacks[chain.id].length
+        ) {
+          const where: any = {
+            ...getRequestStatusFilter(status),
+            ...(search ? { claimer_: { name_contains_nocase: search } } : {}),
+          };
+
+          const skipNumber = loadContinued ? chainStacks[chain.id].length : 0;
+
+          const promises = getRequestsLoadingPromises(
+            chain.id,
+            where,
+            skipNumber,
           );
 
-          for (const chain of supportedChains) {
-            if (chainFilter && chainFilter !== chain.id) continue;
-
-            const displayedForChain = chainStacks[chain.id].length;
-
-            if (
-              !loadContinued ||
-              displayedForChain + REQUESTS_BATCH_SIZE >=
-                chainStacks[chain.id].length
-            ) {
-              const where: any = {
-                ...getRequestStatusFilter(status),
-                ...(search
-                  ? { claimer_: { name_contains_nocase: search } }
-                  : {}),
-              };
-
-              const skipNumber = loadContinued
-                ? chainStacks[chain.id].length
-                : 0;
-
-              const promises = getRequestsLoadingPromises(
-                chain.id,
-                where,
-                skipNumber,
-              );
-
-              fetchChains.push(chain);
-              fetchPromises.push(promises);
-            }
-          }
-
-          if (!fetchChains.length) {
-            chainStacks$.set(chainStacks);
-          } else {
-            const res = await Promise.all(fetchPromises);
-            chainStacks$.set(
-              await getFilteredRequestsInitData(
-                fetchChains.reduce(
-                  (acc, chain, i) => ({
-                    ...acc,
-                    [chain.id]: [
-                      ...(loadContinued ? chainStacks[chain.id] : []),
-                      ...(res[i]?.requests ?? []),
-                    ],
-                  }),
-                  chainStacks,
-                ),
-              ),
-            );
-          }
-        } catch (err) {
-          console.error("Failed to load requests:", err);
-          setLoadError(true);
-        } finally {
-          loading.stop();
+          fetchChains.push(chain);
+          fetchPromises.push(promises);
         }
-      },
-    );
+      }
+
+      if (!fetchChains.length) {
+        chainStacks$.set(chainStacks);
+        return;
+      }
+
+      // A rejected chain means "unknown", not "no results": keep its slot
+      // empty but report it, so the outage is surfaced instead of read as
+      // an empty grid.
+      const settled = await Promise.allSettled(fetchPromises);
+      const fetchFailedChainIds: SupportedChainId[] = [];
+      const res: RequestsQuery[] = settled.map((result, i) => {
+        if (result.status === "fulfilled") return result.value;
+        const chain = fetchChains[i];
+        if (chain) {
+          console.error(
+            `Subgraph query failed on ${chain.name}:`,
+            result.reason,
+          );
+          fetchFailedChainIds.push(chain.id);
+        }
+        return { requests: [] };
+      });
+
+      const { stacks, failedChainIds: initFailed } =
+        await getFilteredRequestsInitData(
+          fetchChains.reduce(
+            (acc, chain, i) => ({
+              ...acc,
+              [chain.id]: [
+                ...(loadContinued ? chainStacks[chain.id] : []),
+                ...(res[i]?.requests ?? []),
+              ],
+            }),
+            chainStacks,
+          ),
+        );
+      chainStacks$.set(stacks);
+      // A filtered-out chain's outage still matters: bridged profiles on the
+      // displayed chain are completed from the foreign chain's subgraph.
+      setFailedChainIds([...new Set([...fetchFailedChainIds, ...initFailed])]);
+      // Every chain of the current view failed — there is no live data
+      // source for what the user asked to see.
+      if (fetchFailedChainIds.length === fetchChains.length) setLoadError(true);
+    } catch (err) {
+      console.error("Failed to load requests:", err);
+      setLoadError(true);
+    } finally {
+      loading.stop();
+    }
+  };
+
+  const retry = () => {
+    const value = filter$.get();
+    const isDefaultFilter =
+      !value.search && value.status === RequestStatus.ALL && !value.chainId;
+    if (isDefaultFilter) void loadInit();
+    else void loadFiltered(value, false, "init");
+  };
+
+  useMountOnce(() => {
+    void loadInit();
+
+    filter$.onChange(({ value, getPrevious }) => {
+      void loadFiltered(value, value.cursor > getPrevious().cursor);
+    });
   });
 
   if (pending && loadingType === "init") return <Loading />;
 
-  if (loadError && requests.length === 0)
-    return (
-      <div className="text-primaryText flex flex-col items-center gap-2 py-16 text-center">
-        <span className="font-semibold">
-          Unable to load profiles right now.
-        </span>
-        <span className="text-secondaryText text-sm">
-          Our data services appear to be unavailable. Please try again later.
-        </span>
-      </div>
-    );
+  const showFullError = loadError && requests.length === 0;
+  const failedChainNames = failedChainIds
+    .map((chainId) => idToChain(chainId)?.name)
+    .filter(Boolean)
+    .join(", ");
 
   return (
     <>
@@ -357,33 +389,64 @@ function RequestsGrid() {
         </Dropdown>
       </div>
 
-      <div className="request-grid">
-        {requests.map((request) => (
-          <Card
-            key={`${request.chainId}-${request.humanity.id}-${request.index}`}
-            aspectRatio="wide"
-            chainId={request.chainId}
-            index={request.index}
-            humanity={request.humanity}
-            requester={request.requester}
-            claimer={request.claimer}
-            requestStatus={request.requestStatus}
-            revocation={request.revocation}
-            registrationEvidenceRevokedReq={
-              request.registrationEvidenceRevokedReq
-            }
-            evidence={request.evidenceGroup.evidence}
-          />
-        ))}
-      </div>
+      {!showFullError && failedChainIds.length > 0 && (
+        <div className="status-pill-warning mb-4 flex flex-wrap items-center justify-between gap-2 rounded-card border px-4 py-3 text-sm">
+          <span>
+            Some profiles may be missing right now — live data for{" "}
+            {failedChainNames} is temporarily unavailable.
+          </span>
+          <button className="font-semibold underline" onClick={retry}>
+            Retry
+          </button>
+        </div>
+      )}
 
-      {!pending && (
-        <button
-          className="btn-primary gradient my-8 px-8 py-4 md:mx-auto"
-          onClick={() => filter$.cursor.set((c) => c + 1)}
-        >
-          Load More
-        </button>
+      {showFullError ? (
+        <div className="text-primaryText flex flex-col items-center gap-2 py-16 text-center">
+          <span className="font-semibold">
+            Unable to load profiles right now.
+          </span>
+          <span className="text-secondaryText text-sm">
+            Our data services appear to be unavailable. Please try again later.
+          </span>
+          <button
+            className="btn-primary gradient mt-4 px-8 py-3"
+            onClick={retry}
+          >
+            Retry
+          </button>
+        </div>
+      ) : (
+        <>
+          <div className="request-grid">
+            {requests.map((request) => (
+              <Card
+                key={`${request.chainId}-${request.humanity.id}-${request.index}`}
+                aspectRatio="wide"
+                chainId={request.chainId}
+                index={request.index}
+                humanity={request.humanity}
+                requester={request.requester}
+                claimer={request.claimer}
+                requestStatus={request.requestStatus}
+                revocation={request.revocation}
+                registrationEvidenceRevokedReq={
+                  request.registrationEvidenceRevokedReq
+                }
+                evidence={request.evidenceGroup.evidence}
+              />
+            ))}
+          </div>
+
+          {!pending && (
+            <button
+              className="btn-primary gradient my-8 px-8 py-4 md:mx-auto"
+              onClick={() => filter$.cursor.set((c) => c + 1)}
+            >
+              Load More
+            </button>
+          )}
+        </>
       )}
     </>
   );

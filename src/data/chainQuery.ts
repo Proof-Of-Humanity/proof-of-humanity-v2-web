@@ -17,16 +17,25 @@ export class SubgraphUnavailableError extends Error {
   }
 }
 
+export interface ChainQueryResults<T> {
+  /** Aligned with `supportedChains`; a failed chain's slot holds `fallback(chain)`. */
+  values: T[];
+  /** Chains whose query rejected — their `values` slot is the fallback, not real data. */
+  failedChains: SupportedChain[];
+}
+
 /**
  * Runs a query against every supported chain, tolerating per-chain failures.
  * A chain whose subgraph is down resolves to the provided fallback instead of
- * rejecting the whole batch, so live chains can still be displayed.
- * The returned array is aligned with `supportedChains`.
+ * rejecting the whole batch, so live chains can still be displayed — but the
+ * failed chains are reported alongside the values so callers can tell a dead
+ * subgraph apart from a genuinely empty result. Throws
+ * `SubgraphUnavailableError` when every chain fails.
  */
-export const settleChainQueries = async <T>(
+export const settleChainQueriesWithStatus = async <T>(
   query: (chain: SupportedChain) => Promise<T>,
   fallback: (chain: SupportedChain) => T,
-): Promise<T[]> => {
+): Promise<ChainQueryResults<T>> => {
   const results = await Promise.allSettled(
     supportedChains.map((chain) => query(chain)),
   );
@@ -44,11 +53,25 @@ export const settleChainQueries = async <T>(
       results.map((result) => (result as PromiseRejectedResult).reason),
     );
 
-  return supportedChains.map((chain, i) => {
-    const result = results[i]!;
-    return result.status === "fulfilled" ? result.value : fallback(chain);
-  });
+  return {
+    values: supportedChains.map((chain, i) => {
+      const result = results[i]!;
+      return result.status === "fulfilled" ? result.value : fallback(chain);
+    }),
+    failedChains: supportedChains.filter(
+      (_, i) => results[i]!.status === "rejected",
+    ),
+  };
 };
+
+/**
+ * `settleChainQueriesWithStatus` without the failure report, for display
+ * surfaces where a down chain may safely read as "nothing there".
+ */
+export const settleChainQueries = async <T>(
+  query: (chain: SupportedChain) => Promise<T>,
+  fallback: (chain: SupportedChain) => T,
+): Promise<T[]> => (await settleChainQueriesWithStatus(query, fallback)).values;
 
 /**
  * Like `settleChainQueries`, but *any* per-chain failure rejects the whole
