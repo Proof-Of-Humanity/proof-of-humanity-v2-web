@@ -1,8 +1,4 @@
-import {
-  SupportedChainId,
-  getChainTransport,
-  supportedChains,
-} from "config/chains";
+import { SupportedChainId, getChainTransport, idToChain } from "config/chains";
 
 import { getContractInfo } from "contracts";
 import Error from "next/error";
@@ -36,7 +32,7 @@ export class APIPoH {
     this.address = getContractInfo("ProofOfHumanity", _chainId)
       .address as Address;
     this.publicClient = createPublicClient({
-      chain: supportedChains[_chainId],
+      chain: idToChain(_chainId),
       transport: getChainTransport(_chainId),
     });
   }

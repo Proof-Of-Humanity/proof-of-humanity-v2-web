@@ -79,6 +79,10 @@ export function nameToChainAny(name: string): AnySupportedChain | null {
   return nameToChainMain(normalized) ?? nameToChainTest(normalized);
 }
 
+// A SupportedChainId is by construction a member of the active chain set,
+// so lookup cannot miss — hence the non-nullable overload.
+export function idToChain(id: SupportedChainId): SupportedChain;
+export function idToChain(id: number): SupportedChain | null;
 export function idToChain(id: number): SupportedChain | null {
   return configSetSelection.chainSet === ChainSet.MAINNETS
     ? idToChainMain(id)
@@ -104,7 +108,7 @@ export function paramToChainAny(param: string): AnySupportedChain | null {
   return nameToChainAny(param) ?? idToChainAny(+param);
 }
 
-export function getChainRpc(id: number): string {
+export function getChainRpc(id: number): string | undefined {
   switch (id) {
     case mainnet.id:
       return process.env.MAINNET_RPC;
@@ -126,7 +130,8 @@ export function getChainTransport(id: number) {
       : idToChainAny(id)?.rpcUrls.default.http[0];
   if (!publicRpc) throw new Error("chain not supported");
 
-  return fallback([http(getChainRpc(id)), http(publicRpc)]);
+  const primaryRpc = getChainRpc(id);
+  return fallback([...(primaryRpc ? [http(primaryRpc)] : []), http(publicRpc)]);
 }
 
 export function getForeignChain(chainId: number) {
