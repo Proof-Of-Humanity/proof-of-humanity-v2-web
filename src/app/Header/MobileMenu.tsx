@@ -18,6 +18,7 @@ interface MobileMenuProps {
   chain: { id: number; name: string };
   pendingRegisterIntent: boolean;
   setPendingRegisterIntent: (value: boolean) => void;
+  onClose: () => void;
 }
 
 const MobileMenu = forwardRef(
@@ -32,6 +33,7 @@ const MobileMenu = forwardRef(
       chain,
       pendingRegisterIntent,
       setPendingRegisterIntent,
+      onClose,
     }: MobileMenuProps,
     ref: Ref<HTMLDivElement>,
   ) => {
@@ -49,6 +51,7 @@ const MobileMenu = forwardRef(
         <nav className="flex flex-col items-center gap-y-4 text-center">
           <Link
             href="/"
+            onClick={onClose}
             className={`text-lg ${pathname === "/" ? "font-bold" : ""}`}
           >
             Profiles
@@ -58,11 +61,13 @@ const MobileMenu = forwardRef(
             address={address}
             pendingRegisterIntent={pendingRegisterIntent}
             setPendingRegisterIntent={setPendingRegisterIntent}
+            onClick={onClose}
             className={`text-lg ${registerActive ? "font-bold" : ""}`}
           />
           {policyHref && (
             <Link
               href={policyHref}
+              onClick={onClose}
               className={`text-lg ${currentUrl === policy ? "font-bold" : ""}`}
             >
               Policy
@@ -70,6 +75,7 @@ const MobileMenu = forwardRef(
           )}
           <Link
             href="/app"
+            onClick={onClose}
             className={`text-lg ${pathname.startsWith("/app") ? "font-bold" : ""}`}
           >
             Rewards
