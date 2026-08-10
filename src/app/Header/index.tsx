@@ -131,6 +131,7 @@ export default function Header({ policy }: IHeader) {
       {menuOpen && chain && (
         <MobileMenu
           ref={menuRef}
+          onClose={() => setMenuOpen(false)}
           {...{
             isConnected,
             web3Loaded,
