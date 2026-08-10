@@ -38,10 +38,12 @@ import {
 } from "utils/status";
 
 import Card from "./Card";
+import OutageNotice from "./OutageNotice";
 
 enableReactUse();
 
 const REQUESTS_BATCH_SIZE = 12;
+const allChainIds = supportedChains.map((chain) => chain.id);
 let humanityLifespanAllChains: Record<SupportedChainId, string | undefined>;
 
 export type RequestsQueryItem = ArrayElement<RequestsQuery["requests"]>;
@@ -103,7 +105,7 @@ const normalize = (
               },
               {
                 humanityLifespan:
-                  humanityLifespanAllChains[
+                  humanityLifespanAllChains?.[
                     Number(chainId) as SupportedChainId
                   ],
               },
@@ -192,6 +194,7 @@ function RequestsGrid() {
   const [pending, loadingType] = loading.use();
 
   const [loadError, setLoadError] = useState(false);
+  const [failedChainIds, setFailedChainIds] = useState<SupportedChainId[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   useEffect(() => {
     const timer = setTimeout(
@@ -211,26 +214,32 @@ function RequestsGrid() {
       (reqs) => (reqs?.length ?? 0) >= PROFILES_DISPLAY_REQUIRED_REQS,
     );
 
+  const ensureContractData = async () => {
+    if (humanityLifespanAllChains) return;
+    const contractData = await getContractDataAllChains();
+    humanityLifespanAllChains = Object.keys(contractData).reduce(
+      (acc, chainId) => {
+        acc[Number(chainId) as SupportedChainId] =
+          contractData[Number(chainId) as SupportedChainId]?.humanityLifespan;
+        return acc;
+      },
+      {} as Record<SupportedChainId, string | undefined>,
+    );
+  };
+
   const loadInit = async () => {
     loading.start("init");
     setLoadError(false);
     try {
-      const contractData = await Promise.resolve(getContractDataAllChains());
-      humanityLifespanAllChains = Object.keys(contractData).reduce(
-        (acc, chainId) => {
-          acc[Number(chainId) as SupportedChainId] =
-            contractData[Number(chainId) as SupportedChainId]?.humanityLifespan;
-          return acc;
-        },
-        {} as Record<SupportedChainId, string | undefined>,
-      );
-
-      const initData = await getRequestsInitData();
-      setHasMore(anyFullPage(initData));
-      chainStacks$.set(initData);
+      await ensureContractData();
+      const { stacks, failedChainIds: failed } = await getRequestsInitData();
+      setHasMore(anyFullPage(stacks));
+      chainStacks$.set(stacks);
+      setFailedChainIds(failed);
     } catch (err) {
       console.error("Failed to load requests:", err);
       setLoadError(true);
+      setFailedChainIds(allChainIds);
     } finally {
       loading.stop();
     }
@@ -239,7 +248,7 @@ function RequestsGrid() {
   const retryLoad = () => {
     // if init never succeeded we need contract data too, else re-run the current filter fetch
     if (!humanityLifespanAllChains) loadInit();
-    else filter$.assign({ retry: filter$.retry.peek() + 1, cursor: 1 });
+    else filter$.assign({ retry: filter$.retry.peek() + 1 });
   };
 
   const clearFilters = () => {
@@ -263,6 +272,7 @@ function RequestsGrid() {
         loading.start();
         setLoadError(false);
         try {
+          await ensureContractData();
           const loadContinued = cursor > getPrevious().cursor;
           const fetchChains: SupportedChain[] = [];
           const fetchPromises: Promise<RequestsQuery>[] = [];
@@ -307,14 +317,27 @@ function RequestsGrid() {
           if (!fetchChains.length) {
             chainStacks$.set(chainStacks);
           } else {
-            const res = await Promise.all(fetchPromises);
+            const settled = await Promise.allSettled(fetchPromises);
+            const fetchFailedChainIds: SupportedChainId[] = [];
+            const res: RequestsQuery[] = settled.map((result, i) => {
+              if (result.status === "fulfilled") return result.value;
+              const chain = fetchChains[i];
+              if (chain) {
+                console.error(
+                  `Subgraph query failed on ${chain.name}:`,
+                  result.reason,
+                );
+                fetchFailedChainIds.push(chain.id);
+              }
+              return { requests: [] };
+            });
             setHasMore(
               res.some(
                 (r) =>
                   (r?.requests ?? []).length >= PROFILES_DISPLAY_REQUIRED_REQS,
               ),
             );
-            chainStacks$.set(
+            const { stacks, failedChainIds: initFailed } =
               await getFilteredRequestsInitData(
                 fetchChains.reduce(
                   (acc, chain, i) => ({
@@ -326,12 +349,18 @@ function RequestsGrid() {
                   }),
                   chainStacks,
                 ),
-              ),
-            );
+              );
+            chainStacks$.set(stacks);
+            setFailedChainIds([
+              ...new Set([...fetchFailedChainIds, ...initFailed]),
+            ]);
+            if (fetchFailedChainIds.length === fetchChains.length)
+              setLoadError(true);
           }
         } catch (err) {
           console.error("Failed to load requests:", err);
           setLoadError(true);
+          setFailedChainIds(chainFilter ? [chainFilter] : allChainIds);
         } finally {
           loading.stop();
         }
@@ -408,6 +437,10 @@ function RequestsGrid() {
           ))}
         </Dropdown>
       </div>
+
+      {!showSkeleton && !showError && failedChainIds.length > 0 && (
+        <OutageNotice chainIds={failedChainIds} onRetry={retryLoad} />
+      )}
 
       {showSkeleton ? (
         <div
