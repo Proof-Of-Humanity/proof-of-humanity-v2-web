@@ -14,6 +14,7 @@ const SettingsPopover: React.FC = () => {
     toggleSettingsPopover,
     closeAndDiscardChanges,
     isVerified,
+    isSubscribed,
     email,
     setEmail,
     showEmailError,
@@ -36,7 +37,9 @@ const SettingsPopover: React.FC = () => {
     confirmUnsubscribe,
     isDeleting,
   } = useEmailSettings();
-  const showUnreadDot = isVerified && !hasVerifiedEmail;
+  // Nudge as soon as we know the wallet isn't subscribed — signing in is only
+  // needed to act on the nudge, not to see it.
+  const showUnreadDot = isSubscribed === false;
 
   return (
     <div className="flex h-5 items-center">
@@ -71,60 +74,62 @@ const SettingsPopover: React.FC = () => {
             </h2>
           </div>
 
-          {!isVerified ? (
-            <SignInButton className="min-h-[44px] w-full px-6 text-base normal-case transition-colors duration-200 md:w-full" />
-          ) : (
-            <div className="space-y-3 text-center">
-              {!hasVerifiedEmail && (
-                <p className="text-secondaryText text-sm">
-                  Subscribe to get important updates about your profile,
-                  requests and challenges.
-                </p>
-              )}
+          <div className="space-y-3 text-center">
+            {!isSubscribed && (
+              <p className="text-secondaryText text-sm">
+                Subscribe to get important updates about your profile, requests
+                and challenges.
+              </p>
+            )}
 
-              <div className="flex flex-col items-center">
-                <EmailField
-                  value={email}
-                  isInvalid={showEmailError}
-                  autoFocus={!hasSavedEmail}
-                  onChange={setEmail}
-                  onKeyDown={handleKeyDown}
+            {!isVerified ? (
+              <SignInButton className="min-h-[44px] w-full px-6 text-base normal-case transition-colors duration-200 md:w-full" />
+            ) : (
+              <>
+                <div className="flex flex-col items-center">
+                  <EmailField
+                    value={email}
+                    isInvalid={showEmailError}
+                    autoFocus={!hasSavedEmail}
+                    onChange={setEmail}
+                    onKeyDown={handleKeyDown}
+                  />
+
+                  {showVerificationNotice && (
+                    <EmailVerificationNotice
+                      canResend={canResend}
+                      disabled={isBusy}
+                      isResending={isResending}
+                      minutesUntilUpdateable={minutesUntilUpdateable}
+                      onResend={resendVerification}
+                    />
+                  )}
+                </div>
+
+                <ActionButton
+                  onClick={saveEmail}
+                  isLoading={isSavingEmail}
+                  disabled={isSaveDisabled}
+                  label="Save"
+                  fullWidth
+                  className="min-h-[44px] w-full px-6 text-base normal-case transition-colors duration-200 md:w-full"
+                  ariaLabel={cooldownTooltip || "Save email address"}
+                  tooltip={cooldownTooltip}
                 />
 
-                {showVerificationNotice && (
-                  <EmailVerificationNotice
-                    canResend={canResend}
+                {hasVerifiedEmail && (
+                  <ActionButton
+                    onClick={openUnsubscribeModal}
+                    label="Unsubscribe"
                     disabled={isBusy}
-                    isResending={isResending}
-                    minutesUntilUpdateable={minutesUntilUpdateable}
-                    onResend={resendVerification}
+                    variant="secondary"
+                    className="min-h-[44px] w-full px-6 text-base normal-case transition-colors duration-200 md:w-full"
+                    ariaLabel="Unsubscribe from Kleros notifications"
                   />
                 )}
-              </div>
-
-              <ActionButton
-                onClick={saveEmail}
-                isLoading={isSavingEmail}
-                disabled={isSaveDisabled}
-                label="Save"
-                fullWidth
-                className="min-h-[44px] w-full px-6 text-base normal-case transition-colors duration-200 md:w-full"
-                ariaLabel={cooldownTooltip || "Save email address"}
-                tooltip={cooldownTooltip}
-              />
-
-              {hasVerifiedEmail && (
-                <ActionButton
-                  onClick={openUnsubscribeModal}
-                  label="Unsubscribe"
-                  disabled={isBusy}
-                  variant="secondary"
-                  className="min-h-[44px] w-full px-6 text-base normal-case transition-colors duration-200 md:w-full"
-                  ariaLabel="Unsubscribe from Kleros notifications"
-                />
-              )}
-            </div>
-          )}
+              </>
+            )}
+          </div>
         </div>
       </Popover>
 

@@ -7,12 +7,12 @@ import { useAtlasProvider } from "@kleros/kleros-app";
 
 import ActionButton from "components/ActionButton";
 import AuthGuard from "components/AuthGuard";
-import SignInButton from "components/SignInButton";
 import ExternalLink from "components/ExternalLink";
 import Field from "components/Field";
 import PnkDisplay from "components/Integrations/Airdrop/PnkDisplay";
 import JurorAlertsModal from "components/Integrations/Airdrop/JurorAlertsModal";
 import { useSubmitEmail } from "components/Integrations/Airdrop/useSubmitEmail";
+import useIsSubscribed from "hooks/useIsSubscribed";
 
 import CheckCircleMinorIcon from "icons/CheckCircleMinor.svg";
 import CheckCircleIcon from "icons/CheckCircle.svg";
@@ -34,10 +34,11 @@ export default function ClaimedPanel({
   const { address } = useAccount();
   const { isVerified, user, isFetchingUser, isAddingUser, isUpdatingUser } =
     useAtlasProvider();
+  const { isSubscribed, isLoading: isCheckingSubscription } = useIsSubscribed();
 
   const [userEmail, setUserEmail] = useState("");
   const [isEditing, setIsEditing] = useState(false);
-  const [showModal, setShowModal] = useState(false);
+  const [alertsModalDismissed, setAlertsModalDismissed] = useState(false);
   const trimmedEmail = userEmail.trim();
   const isEmailValid =
     trimmedEmail.length === 0 ? true : isValidEmailAddress(trimmedEmail);
@@ -61,20 +62,25 @@ export default function ClaimedPanel({
         )
       : 0;
 
-  const alertsEnabled = hasEmail && isEmailVerified;
-  const alertsPending = hasEmail && !isEmailVerified;
-  const showForm = !hasEmail || isEditing;
-
-  useEffect(() => {
-    if (isVerified && !isFetchingUser && !hasEmail) {
-      setShowModal(true);
-    }
-  }, [isVerified, isFetchingUser, hasEmail]);
+  // Atlas answers the subscription question for the connected wallet without a
+  // signed-in session, so alert status (and the nudge) no longer waits on sign-in.
+  // The signed-in user record still adds whether a saved email awaits verification.
+  const alertsEnabled = isSubscribed || (hasEmail && isEmailVerified);
+  const alertsPending = !alertsEnabled && hasEmail && !isEmailVerified;
+  const isCheckingAlerts =
+    isCheckingSubscription || (isVerified && isFetchingUser);
+  const showForm = isEditing || (!alertsEnabled && !hasEmail);
+  // Only nudge once Atlas has actually said "not subscribed" — never on unknown.
+  const showModal =
+    !alertsModalDismissed &&
+    !isCheckingAlerts &&
+    isSubscribed === false &&
+    !hasEmail;
 
   const prevAddress = React.useRef(address);
   useEffect(() => {
     if (prevAddress.current !== undefined && prevAddress.current !== address) {
-      setShowModal(false);
+      setAlertsModalDismissed(false);
       setIsEditing(false);
       setUserEmail("");
     }
@@ -114,8 +120,8 @@ export default function ClaimedPanel({
   const isBusy =
     isSubmitting || isAddingUser || isUpdatingUser || isFetchingUser;
 
-  const stepBadge = !isVerified
-    ? { label: "Sign In", className: "bg-grey text-purple" }
+  const stepBadge = isCheckingAlerts
+    ? { label: "Checking…", className: "bg-grey text-purple" }
     : alertsEnabled
       ? { label: "Enabled", className: "badge-success" }
       : alertsPending
@@ -159,12 +165,6 @@ export default function ClaimedPanel({
               height={22}
               className="text-status-registered mt-1 flex-shrink-0"
             />
-          ) : !isVerified ? (
-            <WarningCircle16Icon
-              width={22}
-              height={22}
-              className="fill-purple mt-1 flex-shrink-0"
-            />
           ) : (
             <WarningCircle16Icon
               width={22}
@@ -182,28 +182,7 @@ export default function ClaimedPanel({
           </span>
         </div>
       </div>
-      {!isVerified ? (
-        /* State 0: Not signed in */
-        <div className="border-stroke mb-4 rounded-lg border p-3 text-left">
-          <div className="mb-3 flex items-start gap-2">
-            <WarningCircle16Icon
-              width={16}
-              height={16}
-              className="fill-purple mt-0.5 flex-shrink-0"
-            />
-            <div>
-              <h4 className="text-primaryText text-xs font-semibold">
-                Sign in to manage juror alerts
-              </h4>
-              <p className="text-secondaryText mt-0.5 text-xs leading-relaxed">
-                Sign in with your wallet to check your alert status or enable
-                notifications.
-              </p>
-            </div>
-          </div>
-          <SignInButton className="w-full py-2 text-sm" />
-        </div>
-      ) : isFetchingUser ? (
+      {isCheckingAlerts ? (
         /* State 1: Loading */
         <div className="border-stroke mb-4 flex items-center justify-center rounded-lg border p-3">
           <div className="border-purple h-5 w-5 animate-spin rounded-full border-b-2" />
@@ -354,15 +333,22 @@ export default function ClaimedPanel({
               <p className="text-secondaryText mt-0.5 text-xs">
                 We&apos;ll notify you when you&apos;re drawn.
               </p>
-              <button
-                type="button"
-                onClick={handleStartEditing}
-                disabled={isBusy || !canUpdateEmail}
-                className="text-orange mt-1 text-xs font-medium hover:underline disabled:opacity-50"
-              >
-                Change email
-              </button>
-              {!canUpdateEmail && (
+              {isVerified ? (
+                <button
+                  type="button"
+                  onClick={handleStartEditing}
+                  disabled={isBusy || !canUpdateEmail}
+                  className="text-orange mt-1 text-xs font-medium hover:underline disabled:opacity-50"
+                >
+                  Change email
+                </button>
+              ) : (
+                /* Subscribed, but changing the email needs an Atlas session. */
+                <p className="text-secondaryText mt-1 text-xs">
+                  Sign in to change your email.
+                </p>
+              )}
+              {isVerified && !canUpdateEmail && (
                 <p className="text-secondaryText mt-0.5 text-[11px] italic">
                   Updateable in {minutesUntilUpdateable}{" "}
                   {minutesUntilUpdateable === 1 ? "minute" : "minutes"}.
@@ -392,7 +378,10 @@ export default function ClaimedPanel({
           <NewTabIcon width={12} height={12} />
         </span>
       </ExternalLink>
-      <JurorAlertsModal open={showModal} onClose={() => setShowModal(false)} />
+      <JurorAlertsModal
+        open={showModal}
+        onClose={() => setAlertsModalDismissed(true)}
+      />
     </>
   );
 }

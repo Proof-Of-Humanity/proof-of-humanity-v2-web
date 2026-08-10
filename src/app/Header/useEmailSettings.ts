@@ -3,6 +3,7 @@ import { useAtlasProvider } from "@kleros/kleros-app";
 import { toast } from "react-toastify";
 import { useSubmitEmail } from "components/Integrations/Airdrop/useSubmitEmail";
 import { useSettingsPopover } from "context/SettingsPopoverContext";
+import useIsSubscribed from "hooks/useIsSubscribed";
 import { isValidEmailAddress } from "utils/validators";
 
 /**
@@ -24,18 +25,17 @@ export const useEmailSettings = () => {
     deleteUser,
   } = useAtlasProvider();
 
-  // The email currently saved to the account (empty string when none). Derived
-  // once so the rest of the hook reads a plain string instead of repeating
-  // `user?.email` optional chaining everywhere.
+  // Resolves without a signed-in session, so the nudge can be shown to anyone
+  // with a wallet connected.
+  const { isSubscribed: isWalletSubscribed, refetch: refetchSubscription } =
+    useIsSubscribed();
+
   const savedEmail = user?.email ?? "";
 
   const [email, setEmail] = useState<string>(savedEmail);
   const [prevSavedEmail, setPrevSavedEmail] = useState(savedEmail);
   const [isUnsubscribeModalOpen, setIsUnsubscribeModalOpen] = useState(false);
 
-  // Reset the editable draft when the saved email actually changes (after a
-  // successful update, sign-in, or a background refetch returning a different
-  // address).
   if (savedEmail !== prevSavedEmail) {
     setPrevSavedEmail(savedEmail);
     setEmail(savedEmail);
@@ -102,6 +102,8 @@ export const useEmailSettings = () => {
   const hasVerifiedEmail = Boolean(savedEmail) && isEmailVerified;
   const showVerificationNotice = Boolean(savedEmail) && !isEmailVerified;
 
+  const isSubscribed = hasVerifiedEmail || isWalletSubscribed;
+
   const cooldownTooltip = validFutureUpdateDate
     ? `You can update email in ${minutesUntilUpdateable} ${
         minutesUntilUpdateable === 1 ? "minute" : "minutes"
@@ -139,6 +141,7 @@ export const useEmailSettings = () => {
     try {
       const deleted = await deleteUser();
       if (!deleted) throw new Error("Failed to unsubscribe");
+      await refetchSubscription();
       toast.success("You have been unsubscribed from PoH notifications.");
       setIsUnsubscribeModalOpen(false);
       closeSettingsPopover();
@@ -153,6 +156,7 @@ export const useEmailSettings = () => {
     toggleSettingsPopover,
     closeAndDiscardChanges,
     isVerified,
+    isSubscribed,
     // email field
     email,
     setEmail,
