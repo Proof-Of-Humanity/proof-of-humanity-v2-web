@@ -195,8 +195,10 @@ function RequestsGrid() {
 
   const [loadError, setLoadError] = useState(false);
   const [failedChainIds, setFailedChainIds] = useState<SupportedChainId[]>([]);
-  const [searchQuery, setSearchQuery] = useState("");
+  // seeded from filter$ because it outlives the component (back navigation)
+  const [searchQuery, setSearchQuery] = useState(() => filter$.search.peek());
   useEffect(() => {
+    if (searchQuery === filter$.search.peek()) return;
     const timer = setTimeout(
       () => filter$.assign({ search: searchQuery, cursor: 1 }),
       300,
@@ -262,9 +264,7 @@ function RequestsGrid() {
   };
 
   useMountOnce(() => {
-    loadInit();
-
-    filter$.onChange(
+    const dispose = filter$.onChange(
       async ({
         value: { chainId: chainFilter, search, status, cursor },
         getPrevious,
@@ -366,10 +366,18 @@ function RequestsGrid() {
         }
       },
     );
+
+    const { search, status, chainId } = filter$.peek();
+    if (search || status !== RequestStatus.ALL || chainId)
+      filter$.assign({ cursor: 1, retry: filter$.retry.peek() + 1 });
+    else loadInit();
+
+    return dispose;
   });
 
+  const settling = searchQuery !== filter.search;
   const showSkeleton =
-    pending && (loadingType === "init" || filter.cursor === 1);
+    settling || (pending && (loadingType === "init" || filter.cursor === 1));
   const showError = !showSkeleton && loadError && requests.length === 0;
   const showEmpty =
     !showSkeleton && !pending && !loadError && requests.length === 0;
