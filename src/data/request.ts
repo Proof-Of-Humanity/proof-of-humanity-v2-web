@@ -14,7 +14,7 @@ import { sanitizeHeadRequests } from "./sanitizer";
 
 const emptyRequests = (): RequestsQuery => ({ requests: [] });
 
-const PROFILES_DISPLAY_REQUIRED_REQS = 12 * 4;
+export const PROFILES_DISPLAY_REQUIRED_REQS = 12 * 4;
 
 const completeCrossChains = async (
   out: Record<SupportedChainId, RequestsQuery["requests"]>,

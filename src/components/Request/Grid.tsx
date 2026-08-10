@@ -19,6 +19,7 @@ import {
   getFilteredRequestsInitData,
   getRequestsInitData,
   getRequestsLoadingPromises,
+  PROFILES_DISPLAY_REQUIRED_REQS,
 } from "data/request";
 import { useEffect, useState } from "react";
 import ChainLogo from "components/ChainLogo";
@@ -37,7 +38,6 @@ import {
 } from "utils/status";
 
 import Card from "./Card";
-import Loading from "components/Loading";
 
 enableReactUse();
 
@@ -141,6 +141,7 @@ interface RequestFilter {
   status: RequestStatus;
   chainId: SupportedChainId | 0;
   cursor: number;
+  retry: number;
 }
 
 const filter$ = observable<RequestFilter>({
@@ -148,7 +149,21 @@ const filter$ = observable<RequestFilter>({
   status: RequestStatus.ALL,
   chainId: 0,
   cursor: 1,
+  retry: 0,
 });
+
+const SkeletonCard = () => (
+  <div className="border-stroke bg-whiteBackground relative aspect-[5/4] w-full animate-pulse overflow-hidden rounded-card border shadow-soft-inset">
+    <div className="absolute inset-x-0 top-0 flex justify-between px-4 pt-[9px]">
+      <div className="bg-grey h-6 w-24 rounded-full" />
+      <div className="bg-grey h-6 w-6 rounded-full" />
+    </div>
+    <div className="absolute inset-x-0 bottom-0 px-4 pb-[21px]">
+      <div className="bg-grey h-6 w-2/3 rounded" />
+      <div className="bg-grey mt-2 h-4 w-1/3 rounded" />
+    </div>
+  </div>
+);
 
 function RequestsGrid() {
   const filter = filter$.use();
@@ -181,39 +196,64 @@ function RequestsGrid() {
   useEffect(() => {
     const timer = setTimeout(
       () => filter$.assign({ search: searchQuery, cursor: 1 }),
-      100,
+      300,
     );
     return () => clearTimeout(timer);
   }, [searchQuery]);
 
-  useMountOnce(() => {
-    (async () => {
-      try {
-        const contractData = await Promise.resolve(getContractDataAllChains());
-        humanityLifespanAllChains = Object.keys(contractData).reduce(
-          (acc, chainId) => {
-            acc[Number(chainId) as SupportedChainId] =
-              contractData[
-                Number(chainId) as SupportedChainId
-              ]?.humanityLifespan;
-            return acc;
-          },
-          {} as Record<SupportedChainId, string | undefined>,
-        );
+  const [hasMore, setHasMore] = useState(true);
+  // a chain whose raw page came back full probably has a next page;
+  // all pages short of the raw batch size means the backend is exhausted
+  const anyFullPage = (
+    stacks: Partial<Record<SupportedChainId, RequestsQuery["requests"]>>,
+  ) =>
+    Object.values(stacks).some(
+      (reqs) => (reqs?.length ?? 0) >= PROFILES_DISPLAY_REQUIRED_REQS,
+    );
 
-        chainStacks$.set(await getRequestsInitData());
-      } catch (err) {
-        console.error("Failed to load requests:", err);
-        setLoadError(true);
-      } finally {
-        loading.stop();
-      }
-    })();
+  const loadInit = async () => {
+    loading.start("init");
+    setLoadError(false);
+    try {
+      const contractData = await Promise.resolve(getContractDataAllChains());
+      humanityLifespanAllChains = Object.keys(contractData).reduce(
+        (acc, chainId) => {
+          acc[Number(chainId) as SupportedChainId] =
+            contractData[Number(chainId) as SupportedChainId]?.humanityLifespan;
+          return acc;
+        },
+        {} as Record<SupportedChainId, string | undefined>,
+      );
 
-    /* (async () => {
-      chainStacks$.set(await getRequestsInitData());
+      const initData = await getRequestsInitData();
+      setHasMore(anyFullPage(initData));
+      chainStacks$.set(initData);
+    } catch (err) {
+      console.error("Failed to load requests:", err);
+      setLoadError(true);
+    } finally {
       loading.stop();
-    })(); */
+    }
+  };
+
+  const retryLoad = () => {
+    // if init never succeeded we need contract data too, else re-run the current filter fetch
+    if (!humanityLifespanAllChains) loadInit();
+    else filter$.assign({ retry: filter$.retry.peek() + 1, cursor: 1 });
+  };
+
+  const clearFilters = () => {
+    setSearchQuery("");
+    filter$.assign({
+      search: "",
+      status: RequestStatus.ALL,
+      chainId: 0,
+      cursor: 1,
+    });
+  };
+
+  useMountOnce(() => {
+    loadInit();
 
     filter$.onChange(
       async ({
@@ -268,6 +308,12 @@ function RequestsGrid() {
             chainStacks$.set(chainStacks);
           } else {
             const res = await Promise.all(fetchPromises);
+            setHasMore(
+              res.some(
+                (r) =>
+                  (r?.requests ?? []).length >= PROFILES_DISPLAY_REQUIRED_REQS,
+              ),
+            );
             chainStacks$.set(
               await getFilteredRequestsInitData(
                 fetchChains.reduce(
@@ -293,29 +339,33 @@ function RequestsGrid() {
     );
   });
 
-  if (pending && loadingType === "init") return <Loading />;
-
-  if (loadError && requests.length === 0)
-    return (
-      <div className="text-primaryText flex flex-col items-center gap-2 py-16 text-center">
-        <span className="font-semibold">
-          Unable to load profiles right now.
-        </span>
-        <span className="text-secondaryText text-sm">
-          Our data services appear to be unavailable. Please try again later.
-        </span>
-      </div>
-    );
+  const showSkeleton =
+    pending && (loadingType === "init" || filter.cursor === 1);
+  const showError = !showSkeleton && loadError && requests.length === 0;
+  const showEmpty =
+    !showSkeleton && !pending && !loadError && requests.length === 0;
+  const hasActiveFilter =
+    !!filter.search || filter.status !== RequestStatus.ALL || !!filter.chainId;
+  const showLoadMore =
+    !showSkeleton && !showError && !showEmpty && requests.length > 0 && hasMore;
 
   return (
     <>
       <div className="my-4 flex flex-col gap-2 py-2 sm:flex-row sm:gap-1 md:gap-2">
-        <SearchBar className="md:mr-2" onSearch={setSearchQuery} />
+        <SearchBar
+          className="md:mr-2"
+          value={searchQuery}
+          onSearch={setSearchQuery}
+        />
         <Dropdown
           title={
             filter.status === RequestStatus.ALL
               ? "Status"
               : getStatusLabel(filter.status)
+          }
+          active={filter.status !== RequestStatus.ALL}
+          onClear={() =>
+            filter$.assign({ status: RequestStatus.ALL, cursor: 1 })
           }
         >
           {STATUS_FILTER_OPTIONS.map((status) => (
@@ -334,6 +384,8 @@ function RequestsGrid() {
               ? idToChain(filter.chainId as SupportedChainId)!.name
               : "Chain"
           }
+          active={!!filter.chainId}
+          onClear={() => filter$.assign({ chainId: 0, cursor: 1 })}
         >
           <DropdownItem
             selected={!filter.chainId}
@@ -357,32 +409,86 @@ function RequestsGrid() {
         </Dropdown>
       </div>
 
-      <div className="request-grid">
-        {requests.map((request) => (
-          <Card
-            key={`${request.chainId}-${request.humanity.id}-${request.index}`}
-            aspectRatio="wide"
-            chainId={request.chainId}
-            index={request.index}
-            humanity={request.humanity}
-            requester={request.requester}
-            claimer={request.claimer}
-            requestStatus={request.requestStatus}
-            revocation={request.revocation}
-            registrationEvidenceRevokedReq={
-              request.registrationEvidenceRevokedReq
-            }
-            evidence={request.evidenceGroup.evidence}
-          />
-        ))}
-      </div>
+      {showSkeleton ? (
+        <div
+          className="request-grid"
+          role="status"
+          aria-label="Loading profiles"
+        >
+          {Array.from({ length: 8 }, (_, i) => (
+            <SkeletonCard key={i} />
+          ))}
+        </div>
+      ) : showError ? (
+        <div className="text-primaryText flex flex-col items-center gap-2 py-16 text-center">
+          <span className="font-semibold">
+            Unable to load profiles right now.
+          </span>
+          <span className="text-secondaryText text-sm">
+            Our data services appear to be unavailable.
+          </span>
+          <button
+            type="button"
+            className="btn-primary gradient mt-4 px-8 py-3"
+            onClick={retryLoad}
+          >
+            Retry
+          </button>
+        </div>
+      ) : showEmpty ? (
+        <div className="text-primaryText flex flex-col items-center gap-2 py-16 text-center">
+          <span className="font-semibold">No profiles found.</span>
+          <span className="text-secondaryText text-sm">
+            {hasActiveFilter
+              ? "Try adjusting your search or filters."
+              : "No profiles have been submitted yet."}
+          </span>
+          {hasActiveFilter && (
+            <button
+              type="button"
+              className="btn-primary gradient mt-4 px-8 py-3"
+              onClick={clearFilters}
+            >
+              Clear filters
+            </button>
+          )}
+        </div>
+      ) : (
+        <div className="request-grid">
+          {requests.map((request, i) => (
+            <div
+              key={`${request.chainId}-${request.humanity.id}-${request.index}`}
+              className="motion-safe:animate-cardIn"
+              style={{
+                animationDelay: `${(i % REQUESTS_BATCH_SIZE) * 30}ms`,
+              }}
+            >
+              <Card
+                aspectRatio="wide"
+                chainId={request.chainId}
+                index={request.index}
+                humanity={request.humanity}
+                requester={request.requester}
+                claimer={request.claimer}
+                requestStatus={request.requestStatus}
+                revocation={request.revocation}
+                registrationEvidenceRevokedReq={
+                  request.registrationEvidenceRevokedReq
+                }
+                evidence={request.evidenceGroup.evidence}
+              />
+            </div>
+          ))}
+        </div>
+      )}
 
-      {!pending && (
+      {showLoadMore && (
         <button
-          className="btn-primary gradient my-8 px-8 py-4 md:mx-auto"
+          className="btn-primary gradient my-8 px-8 py-4 disabled:opacity-60 md:mx-auto"
+          disabled={pending}
           onClick={() => filter$.cursor.set((c) => c + 1)}
         >
-          Load More
+          {pending ? "Loading…" : "Load More"}
         </button>
       )}
     </>
