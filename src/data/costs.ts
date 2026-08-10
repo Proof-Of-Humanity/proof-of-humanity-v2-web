@@ -1,13 +1,13 @@
-import { SupportedChain, getChainRpc } from "config/chains";
+import { SupportedChain, getChainTransport } from "config/chains";
 import { getContractInfo } from "contracts";
 import { cache } from "react";
-import { Address, Hash, createPublicClient, http } from "viem";
+import { Address, Hash, createPublicClient } from "viem";
 
 export const getArbitrationCost = cache(
   async (chain: SupportedChain, arbitrator: Address, extraData: Hash) =>
     await createPublicClient({
       chain,
-      transport: http(getChainRpc(chain.id)),
+      transport: getChainTransport(chain.id),
     }).readContract({
       address: arbitrator,
       abi: getContractInfo("KlerosLiquid", chain.id).abi,
