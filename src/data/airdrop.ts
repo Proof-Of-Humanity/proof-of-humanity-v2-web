@@ -1,5 +1,5 @@
-import { Address, createPublicClient, http } from "viem";
-import { SupportedChainId, idToChain, getChainRpc } from "config/chains";
+import { Address, createPublicClient } from "viem";
+import { SupportedChainId, idToChain, getChainTransport } from "config/chains";
 import { sdk } from "config/subgraph";
 import { getContractInfo } from "contracts/registry";
 import type { HumanityIdByClaimerQuery } from "generated/graphql";
@@ -77,7 +77,7 @@ export async function getAirdropContractData(chainId: SupportedChainId) {
 
   const publicClient = createPublicClient({
     chain,
-    transport: http(getChainRpc(chain.id)),
+    transport: getChainTransport(chain.id),
   });
 
   const amountPerClaim = await publicClient.readContract({
@@ -109,7 +109,7 @@ export async function getCurrentStake(
 
   const publicClient = createPublicClient({
     chain,
-    transport: http(getChainRpc(chain.id)),
+    transport: getChainTransport(chain.id),
   });
 
   const stake = await publicClient.readContract({

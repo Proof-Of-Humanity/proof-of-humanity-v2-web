@@ -16,7 +16,7 @@ export default async function PnkAirdrop({
   const [contractData, coherenceReward, gnosisApy] = await Promise.all([
     getAirdropContractData(airdropChainId),
     getHumanityCourtFeeForJuror(airdropChainId),
-    computeGnosisAPY(),
+    computeGnosisAPY().catch(() => null),
   ]);
 
   return (

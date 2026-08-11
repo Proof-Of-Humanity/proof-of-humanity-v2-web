@@ -25,7 +25,7 @@ export interface PnkAirdropContentProps {
   };
   airdropChainId: SupportedChainId;
   coherenceReward: bigint;
-  gnosisApy: number;
+  gnosisApy: number | null;
 }
 
 export default function PnkAirdropContent({
@@ -127,7 +127,13 @@ export default function PnkAirdropContent({
 
                 <div className="text-purple ml-1 text-xs">
                   <div className="flex flex-wrap gap-1">
-                    <span>Staking APY: {gnosisApy.toFixed(2)}% |</span>
+                    <span>
+                      Staking APY:{" "}
+                      {gnosisApy === null
+                        ? "Temporarily unavailable"
+                        : `${gnosisApy.toFixed(2)}%`}{" "}
+                      |
+                    </span>
                     <span>
                       Coherence Rewards (Humanity Court):{" "}
                       {formatEth(coherenceReward)} xDAI + PNK

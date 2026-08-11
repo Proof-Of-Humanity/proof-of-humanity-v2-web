@@ -1,8 +1,8 @@
-import { SupportedChainId, getChainRpc, supportedChains } from "config/chains";
+import { SupportedChainId, getChainTransport, idToChain } from "config/chains";
 
 import { getContractInfo } from "contracts";
 import Error from "next/error";
-import { Address, createPublicClient, http } from "viem";
+import { Address, createPublicClient } from "viem";
 
 export interface ArbitratorFromRequest {
   arbitrator: Address | undefined;
@@ -32,8 +32,8 @@ export class APIPoH {
     this.address = getContractInfo("ProofOfHumanity", _chainId)
       .address as Address;
     this.publicClient = createPublicClient({
-      chain: supportedChains[_chainId],
-      transport: http(getChainRpc(_chainId)),
+      chain: idToChain(_chainId),
+      transport: getChainTransport(_chainId),
     });
   }
   private static getApiReader(_chainId: SupportedChainId) {

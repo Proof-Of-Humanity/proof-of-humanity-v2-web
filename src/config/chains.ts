@@ -1,5 +1,6 @@
 import { ChainSet, configSetSelection } from "contracts";
 import { gnosis, gnosisChiado, mainnet, sepolia } from "@reown/appkit/networks";
+import { fallback, http } from "viem";
 import {
   getForeignChain as getForeignChainMain,
   idToChain as idToChainMain,
@@ -24,7 +25,7 @@ const chainExplorers = [
   {
     id: 100,
     name: "Gnosis Chain",
-    explorer: "gnosisscan.io",
+    explorer: "gnosis.blockscout.com",
   },
   {
     id: 10200,
@@ -78,6 +79,10 @@ export function nameToChainAny(name: string): AnySupportedChain | null {
   return nameToChainMain(normalized) ?? nameToChainTest(normalized);
 }
 
+// A SupportedChainId is by construction a member of the active chain set,
+// so lookup cannot miss — hence the non-nullable overload.
+export function idToChain(id: SupportedChainId): SupportedChain;
+export function idToChain(id: number): SupportedChain | null;
 export function idToChain(id: number): SupportedChain | null {
   return configSetSelection.chainSet === ChainSet.MAINNETS
     ? idToChainMain(id)
@@ -103,7 +108,7 @@ export function paramToChainAny(param: string): AnySupportedChain | null {
   return nameToChainAny(param) ?? idToChainAny(+param);
 }
 
-export function getChainRpc(id: number): string {
+export function getChainRpc(id: number): string | undefined {
   switch (id) {
     case mainnet.id:
       return process.env.MAINNET_RPC;
@@ -116,6 +121,17 @@ export function getChainRpc(id: number): string {
     default:
       throw new Error("chain not supported");
   }
+}
+
+export function getChainTransport(id: number) {
+  const publicRpc =
+    id === mainnet.id
+      ? "https://ethereum-rpc.publicnode.com"
+      : idToChainAny(id)?.rpcUrls.default.http[0];
+  if (!publicRpc) throw new Error("chain not supported");
+
+  const primaryRpc = getChainRpc(id);
+  return fallback([...(primaryRpc ? [http(primaryRpc)] : []), http(publicRpc)]);
 }
 
 export function getForeignChain(chainId: number) {

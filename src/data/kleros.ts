@@ -1,7 +1,7 @@
-import { getChainRpc, idToChain, SupportedChainId } from "config/chains";
+import { getChainTransport, idToChain, SupportedChainId } from "config/chains";
 import { getContractInfo } from "contracts/registry";
 import { cache } from "react";
-import { createPublicClient, erc20Abi, http } from "viem";
+import { createPublicClient, erc20Abi } from "viem";
 import { mainnet } from "viem/chains";
 
 // Court configuration constants
@@ -21,8 +21,8 @@ const API_ENDPOINTS = {
     "https://api.studio.thegraph.com/query/66145/klerosboard-gnosis/version/latest",
   KLEROSBOARD_MAINNET:
     "https://api.studio.thegraph.com/query/66145/klerosboard-mainnet/version/latest",
-  CLAIM_MODAL_RAW_URL:
-    "https://raw.githubusercontent.com/kleros/court/master/src/components/claim-modal.js",
+  // Published by kleros/court: the monthly reward snapshot CIDs, keyed by chain id.
+  SNAPSHOTS_URL: "https://court.kleros.io/snapshots.json",
   IPFS_CDN_BASE: "https://cdn.kleros.link/ipfs",
 } as const;
 
@@ -61,6 +61,42 @@ interface SnapshotData {
   };
 }
 
+type SnapshotsByChainId = Record<"1" | "100", string[]>;
+
+/**
+ * Fetches the snapshot manifest published by kleros/court.
+ *
+ * court.kleros.io answers unknown paths with index.html and a 200, so the shape of the
+ * body — not response.ok — is what tells us we really got the manifest.
+ */
+const fetchSnapshots = cache(async (): Promise<SnapshotsByChainId> => {
+  const res = await fetch(API_ENDPOINTS.SNAPSHOTS_URL);
+  const snapshots = await res.json();
+
+  if (!Array.isArray(snapshots?.["1"]) || !Array.isArray(snapshots?.["100"])) {
+    throw new Error(
+      `${API_ENDPOINTS.SNAPSHOTS_URL} did not return a snapshot manifest`,
+    );
+  }
+
+  return snapshots as SnapshotsByChainId;
+});
+
+/**
+ * Finds a chain's snapshot for a given month. Entries look like
+ * "<cid>/snapshot-2026-06.json" or "<cid>/xdai-snapshot-2026-06.json"; the leading
+ * slash matters, since "xdai-snapshot-..." also ends with the mainnet name.
+ */
+function findSnapshotPath(
+  paths: string[],
+  prefix: "snapshot" | "xdai-snapshot",
+  { month, year }: MonthYear,
+): string | undefined {
+  return paths.find((path) =>
+    path.endsWith(`/${prefix}-${year}-${month}.json`),
+  );
+}
+
 export const getHumanitySubCourtId = (chainId: SupportedChainId): bigint => {
   return chainId === 100
     ? COURT_IDS.GNOSIS_HUMANITY_SUBCOURT_ID
@@ -84,7 +120,7 @@ export const getHumanityCourtFeeForJuror = cache(
 
     const publicClient = createPublicClient({
       chain,
-      transport: http(getChainRpc(chain.id)),
+      transport: getChainTransport(chain.id),
     });
     const courtId =
       chainId === 100
@@ -140,27 +176,22 @@ function getPreviousMonthAndYear(date = new Date()): MonthYear {
  */
 async function getLastMonthReward(): Promise<number> {
   const { month, year } = getPreviousMonthAndYear();
-  const res = await fetch(API_ENDPOINTS.CLAIM_MODAL_RAW_URL);
-  const source = await res.text();
+  const snapshots = await fetchSnapshots();
 
-  const buildUrls = (m: string, y: string): string[] => {
-    const reg = new RegExp(
-      `"(?<cid>[a-zA-Z0-9]*)/(?<file>(?:snapshot|xdai-snapshot)-${y}-${m}\\.json)"`,
-      "g",
-    );
-    const matches = Array.from(source.matchAll(reg));
-    return matches.map(
-      (r) =>
-        `${API_ENDPOINTS.IPFS_CDN_BASE}/${r.groups?.cid}/${r.groups?.file}`,
-    );
-  };
+  const buildUrls = (monthYear: MonthYear): string[] =>
+    [
+      findSnapshotPath(snapshots["1"], "snapshot", monthYear),
+      findSnapshotPath(snapshots["100"], "xdai-snapshot", monthYear),
+    ]
+      .filter((path): path is string => path !== undefined)
+      .map((path) => `${API_ENDPOINTS.IPFS_CDN_BASE}/${path}`);
 
-  let urls = buildUrls(month, year);
+  let urls = buildUrls({ month, year });
   if (urls.length === 0) {
     const prev = getPreviousMonthAndYear(
       new Date(Number(year), Number(month) - 1, 1),
     );
-    urls = buildUrls(prev.month, prev.year);
+    urls = buildUrls(prev);
   }
 
   let lastMonthReward = 0n;
@@ -201,41 +232,34 @@ async function getTotalStakedOnGnosis(): Promise<number> {
   }
 
   // Fallback to snapshot data
-  const claimModalSrc = await (
-    await fetch(API_ENDPOINTS.CLAIM_MODAL_RAW_URL)
-  ).text();
+  const snapshots = await fetchSnapshots();
 
-  const tryMonth = async (m: string, y: string): Promise<number | null> => {
-    const reg = new RegExp(
-      `"(?<cid>[a-zA-Z0-9]*)/xdai-snapshot-${y}-${m}\\.json"`,
-      "g",
-    );
-    const matches = Array.from(claimModalSrc.matchAll(reg));
+  const tryMonth = async (monthYear: MonthYear): Promise<number | null> => {
+    const path = findSnapshotPath(snapshots["100"], "xdai-snapshot", monthYear);
+    if (!path) return null;
 
-    for (const match of matches) {
-      const url = `${API_ENDPOINTS.IPFS_CDN_BASE}/${match.groups?.cid}/xdai-snapshot-${y}-${m}.json`;
-      try {
-        const json = (await (await fetch(url)).json()) as SnapshotData;
-        const hex = json?.averageTotalStaked?.hex;
-        if (hex) {
-          return Number(BigInt(hex)) / CONFIG.TOKEN_DECIMALS;
-        }
-      } catch {
-        continue;
+    const url = `${API_ENDPOINTS.IPFS_CDN_BASE}/${path}`;
+    try {
+      const json = (await (await fetch(url)).json()) as SnapshotData;
+      const hex = json?.averageTotalStaked?.hex;
+      if (hex) {
+        return Number(BigInt(hex)) / CONFIG.TOKEN_DECIMALS;
       }
+    } catch {
+      return null;
     }
     return null;
   };
 
   // Try current month first, then previous month
   const { month, year } = getPreviousMonthAndYear();
-  let staked = await tryMonth(month, year);
+  let staked = await tryMonth({ month, year });
   if (staked !== null) return staked;
 
   const prev = getPreviousMonthAndYear(
     new Date(Number(year), Number(month) - 1, 1),
   );
-  staked = await tryMonth(prev.month, prev.year);
+  staked = await tryMonth(prev);
   if (staked !== null) return staked;
 
   throw new Error("Could not fetch total staked for Gnosis");
@@ -263,41 +287,34 @@ async function getTotalStakedOnMainnet(): Promise<number> {
   }
 
   // Fallback to snapshot data
-  const claimModalSrc = await (
-    await fetch(API_ENDPOINTS.CLAIM_MODAL_RAW_URL)
-  ).text();
+  const snapshots = await fetchSnapshots();
 
-  const tryMonth = async (m: string, y: string): Promise<number | null> => {
-    const reg = new RegExp(
-      `"(?<cid>[a-zA-Z0-9]*)/snapshot-${y}-${m}\\.json"`,
-      "g",
-    );
-    const matches = Array.from(claimModalSrc.matchAll(reg));
+  const tryMonth = async (monthYear: MonthYear): Promise<number | null> => {
+    const path = findSnapshotPath(snapshots["1"], "snapshot", monthYear);
+    if (!path) return null;
 
-    for (const match of matches) {
-      const url = `${API_ENDPOINTS.IPFS_CDN_BASE}/${match.groups?.cid}/snapshot-${y}-${m}.json`;
-      try {
-        const json = (await (await fetch(url)).json()) as SnapshotData;
-        const hex = json?.averageTotalStaked?.hex;
-        if (hex) {
-          return Number(BigInt(hex)) / CONFIG.TOKEN_DECIMALS;
-        }
-      } catch {
-        continue;
+    const url = `${API_ENDPOINTS.IPFS_CDN_BASE}/${path}`;
+    try {
+      const json = (await (await fetch(url)).json()) as SnapshotData;
+      const hex = json?.averageTotalStaked?.hex;
+      if (hex) {
+        return Number(BigInt(hex)) / CONFIG.TOKEN_DECIMALS;
       }
+    } catch {
+      return null;
     }
     return null;
   };
 
   // Try current month first, then previous month
   const { month, year } = getPreviousMonthAndYear();
-  let staked = await tryMonth(month, year);
+  let staked = await tryMonth({ month, year });
   if (staked !== null) return staked;
 
   const prev = getPreviousMonthAndYear(
     new Date(Number(year), Number(month) - 1, 1),
   );
-  staked = await tryMonth(prev.month, prev.year);
+  staked = await tryMonth(prev);
   if (staked !== null) return staked;
 
   throw new Error("Could not fetch total staked for Mainnet");
@@ -322,7 +339,7 @@ async function getTotalStakedAllChains(): Promise<number> {
 async function getTotalPnkSupply(): Promise<number> {
   const publicClient = createPublicClient({
     chain: mainnet,
-    transport: http(getChainRpc(mainnet.id)),
+    transport: getChainTransport(mainnet.id),
   });
 
   const totalSupply = await publicClient.readContract({

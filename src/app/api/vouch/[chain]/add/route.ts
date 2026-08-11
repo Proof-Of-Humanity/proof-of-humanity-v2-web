@@ -1,10 +1,10 @@
 import { HttpStatusCode } from "axios";
-import { getChainRpc, paramToChainAny } from "config/chains";
+import { getChainTransport, paramToChainAny } from "config/chains";
 import datalake from "config/supabase";
 
 import { getContractInfo } from "contracts";
 import { NextRequest, NextResponse } from "next/server";
-import { Address, Hash, createPublicClient, http, verifyTypedData } from "viem";
+import { Address, Hash, createPublicClient, verifyTypedData } from "viem";
 
 interface AddVouchBody {
   pohId: Hash;
@@ -42,7 +42,7 @@ export async function POST(
 
     const publicClient = createPublicClient({
       chain,
-      transport: http(getChainRpc(chain.id)),
+      transport: getChainTransport(chain.id),
     });
 
     const isVoucherHuman = await publicClient.readContract({
