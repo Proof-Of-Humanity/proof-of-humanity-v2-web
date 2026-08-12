@@ -107,15 +107,15 @@ export default function SeerCredits({ integration }: SeerCreditsProps) {
 
   const eligibilityStatus: SeerEligibilityStatus = useMemo(() => {
     if (!isConnected) return "disconnected";
-    if (isLoading) return "disconnected";
     if (isError) return "error";
     if (userData?.hasValidRegistration) {
       return "eligible";
     }
     return "not-eligible";
-  }, [isConnected, isLoading, isError, userData]);
+  }, [isConnected, isError, userData]);
 
   const handleActionClick = useCallback(() => {
+    if (isLoading) return;
     switch (eligibilityStatus) {
       case "eligible":
         window.open("https://app.seer.pm/", "_blank", "noopener,noreferrer");
@@ -135,7 +135,7 @@ export default function SeerCredits({ integration }: SeerCreditsProps) {
         modal.open({ view: "Connect" });
         break;
     }
-  }, [eligibilityStatus, modal, address, refetch]);
+  }, [eligibilityStatus, isLoading, modal, address, refetch]);
 
   return (
     <div className="flex w-full max-w-[1200px] flex-col space-y-8 md:w-10/12">
@@ -182,7 +182,7 @@ export default function SeerCredits({ integration }: SeerCreditsProps) {
 
                 <div className="space-y-4">
                   <p className="text-orange text-base font-semibold md:text-lg">
-                    Get $10 of Seer Credits when you register, with potential
+                    Get $5 of Seer Credits when you register, with potential
                     bonus credits after.
                   </p>
 
@@ -237,19 +237,20 @@ function SeerSlide({
 }) {
   return (
     <>
-      {/* Fixed aspect box keeps the visual anchor identical on every slide */}
-      <div className="mt-4 flex w-full justify-center px-2 sm:px-6 lg:mt-6">
-        <div className="relative aspect-video w-full max-w-[900px]">
-          <Image
-            src={slide.image || ""}
-            alt={slide.title}
-            fill
-            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 900px"
-            className={`rounded-2xl ${getObjectFitClass(slide, isLast)}`}
-            priority={isFirst}
-          />
+      {slide.image && (
+        <div className="mt-4 flex w-full justify-center px-2 sm:px-6 lg:mt-6">
+          <div className="relative aspect-video w-full max-w-[900px]">
+            <Image
+              src={slide.image}
+              alt={slide.title}
+              fill
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 900px"
+              className={`rounded-2xl ${getObjectFitClass(slide, isLast)}`}
+              priority={isFirst}
+            />
+          </div>
         </div>
-      </div>
+      )}
 
       <div className="border-stroke mx-2 mt-6 border-t sm:mx-6 lg:mt-8" />
 
@@ -269,9 +270,9 @@ function SeerSlide({
               }),
             )}
             className="mt-4"
-            iconWidth={20}
-            iconHeight={20}
-            iconClassName="flex-shrink-0 fill-status-registered"
+            iconWidth={16}
+            iconHeight={16}
+            iconClassName="flex-shrink-0 text-status-registered"
             textClassName="text-status-registered text-sm md:text-base"
           />
         )}

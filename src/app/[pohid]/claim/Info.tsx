@@ -73,9 +73,10 @@ function Info({
             Humanity <span className="text-peach">ID</span>
           </h1>
           <p className="text-secondaryText mt-3 max-w-xl text-sm leading-6">
-            When creating a profile for the first time, a Humanity ID
-            (Soulbound) will be created for you. Humanity is your unique ID, and
-            it&apos;s used to identify you as a unique being.
+            When you create your first Proof of Humanity profile, a unique
+            Humanity ID (Soulbound ID) will be created for you. It serves as
+            your persistent digital identity and proves you&apos;re a unique
+            human.
           </p>
           <p className="mt-4 flex flex-wrap items-center justify-center gap-x-2 gap-y-1 text-sm text-peach">
             <span>1 Human</span>
@@ -89,8 +90,8 @@ function Info({
             </span>
           </p>
           <p className="text-secondaryText mt-4 max-w-xl text-sm leading-6">
-            In case you lose access to your account you can claim the existing
-            Humanity previously created for you, linking it to your new address.
+            If you lose access to your wallet, you can recover the Humanity ID
+            previously created for you by linking it to a new wallet address.
           </p>
         </div>
 
@@ -111,18 +112,11 @@ function Info({
                 infoState$.requestNotice.set(false);
               }}
             />
-            Create my Humanity ID for the first time.
+            I&apos;m creating my Humanity ID for the first time
           </label>
 
           {recoverMode === false && (
             <>
-              <Field
-                label="Your Humanity ID"
-                labelClassName="mt-3"
-                className="truncate"
-                value={prettifyId(pohId)}
-                disabled
-              />
               <label
                 className="text-primaryText mt-4 flex cursor-pointer items-start text-sm"
                 htmlFor="request-notice"
@@ -135,14 +129,23 @@ function Info({
                   onChange={() => infoState$.requestNotice.toggle()}
                 />
                 <span className="ml-3">
-                  I&apos;m not currently registered on PoH, and don&apos;t have
-                  an active profile. I understand that a duplicate submission
-                  can be challenged, and my{" "}
+                  I confirm that I don&apos;t already have an active Proof of
+                  Humanity profile. I understand that if I submit a duplicate
+                  profile, it may be challenged and I may{" "}
                   <span className="text-status-rejected font-medium">
-                    deposit may be lost.
+                    lose my deposit.
                   </span>
                 </span>
               </label>
+              {requestNotice && (
+                <Field
+                  label="Your Humanity ID"
+                  labelClassName="mt-4"
+                  className="truncate"
+                  value={prettifyId(pohId)}
+                  disabled
+                />
+              )}
             </>
           )}
 
@@ -161,14 +164,14 @@ function Info({
                 infoState$.requestNotice.set(false);
               }}
             />
-            I&apos;ve had a Human Identification before. Claim (Recover) an
-            existing Humanity ID.
+            I&apos;ve already registered with Proof of Humanity before. Recover
+            my existing Humanity ID.
           </label>
 
           {recoverMode === true && isRecovery && (
             <>
               <div className="border-orange text-secondaryText ml-2 mt-4 border-l-2 p-4 text-sm leading-6">
-                You&apos;re in the right place — this claim recovers Humanity ID{" "}
+                You&apos;re in the right place. This claim recovers Humanity ID{" "}
                 <span className="font-semibold">{prettifyId(pohId)}</span>.
                 Continue to register your profile against it.
               </div>
@@ -177,8 +180,8 @@ function Info({
                   {competingClaims === 1
                     ? "Someone else has a pending claim"
                     : `${competingClaims} other people have pending claims`}{" "}
-                  to this Humanity ID. You can still proceed — only one claim
-                  can ultimately succeed.
+                  to this Humanity ID. You can still proceed. Only one claim can
+                  ultimately succeed.
                 </div>
               )}
               <label
@@ -219,21 +222,21 @@ function Info({
               </p>
               <ul className="list-disc space-y-2 pl-5">
                 <li>
-                  <strong className="font-semibold">Renew</strong> — use the
-                  same wallet to extend/refresh your v2 profile or update your
+                  <strong className="font-semibold">Renew.</strong> Use the same
+                  wallet to extend/refresh your v2 profile or update your
                   name/alias.
                 </li>
                 <li>
-                  <strong className="font-semibold">Claim Humanity</strong> —
-                  use a different/new wallet if you changed or lost the old one,
-                  or if someone already registered you (even incorrectly). Works
+                  <strong className="font-semibold">Claim Humanity.</strong> Use
+                  a different/new wallet if you changed or lost the old one, or
+                  if someone already registered you (even incorrectly). Works
                   for expired / withdrawn / revoked / rejected / pending /
                   challenged profiles.
                 </li>
                 <li>
-                  <strong className="font-semibold">Revoke</strong> — if you
-                  want to remove your profile, revoke it and then use the
-                  correct flow above.
+                  <strong className="font-semibold">Revoke.</strong> If you want
+                  to remove your profile, revoke it and then use the correct
+                  flow above.
                 </li>
               </ul>
             </div>
@@ -284,7 +287,7 @@ function Info({
         <p className="text-secondaryText mt-3 max-w-xl text-sm leading-6">
           {isRenewal
             ? "You are renewing the profile linked to your existing Humanity ID (Soulbound). Humanity is your unique ID, and it's used to identify you as a unique being."
-            : "Submitting your profile to Proof of Humanity takes an average of 5-10 minutes, an existing Ethereum account, and a short video of yourself talking."}
+            : "Submitting your profile to Proof of Humanity takes an average of 5-10 minutes and requires a compatible Web3 wallet, a profile photo, and a short verification video of yourself speaking."}
         </p>
       </div>
 

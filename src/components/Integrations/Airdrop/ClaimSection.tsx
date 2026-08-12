@@ -1,5 +1,5 @@
 "use client";
-import React, { useCallback, useMemo } from "react";
+import React, { useCallback, useMemo, useState } from "react";
 import Image from "next/image";
 import { useAccount, useChainId, useSwitchChain } from "wagmi";
 import { useAppKit } from "@reown/appkit/react";
@@ -193,8 +193,11 @@ export default function ClaimSection({
     switchChain({ chainId: airdropChainId });
   }, [switchChain, airdropChainId]);
 
+  const [isVerifyingStake, setIsVerifyingStake] = useState(false);
+
   const handleClaimAndStake = useCallback(async () => {
     if (!address) return;
+    setIsVerifyingStake(true);
 
     let freshStake: bigint;
     try {
@@ -206,6 +209,8 @@ export default function ClaimSection({
     } catch {
       toast.error("Unable to verify your current stake. Please try again.");
       return;
+    } finally {
+      setIsVerifyingStake(false);
     }
 
     const newStake = freshStake + amountPerClaim;
@@ -248,7 +253,7 @@ export default function ClaimSection({
           return {
             onClick: handleClaimAndStake,
             label: "Claim & Stake",
-            isLoading: isTxLoading,
+            isLoading: isTxLoading || isVerifyingStake,
           };
         case "disconnected":
           return {
@@ -314,7 +319,7 @@ export default function ClaimSection({
             <CrossCircle16Icon
               width={16}
               height={16}
-              className="fill-status-removed"
+              className="text-status-removed"
             />
           ),
           text: "Not eligible:",
@@ -340,7 +345,7 @@ export default function ClaimSection({
             <CrossCircle16Icon
               width={16}
               height={16}
-              className="fill-red-500"
+              className="text-red-500"
             />
           ),
           text: "Something went wrong",

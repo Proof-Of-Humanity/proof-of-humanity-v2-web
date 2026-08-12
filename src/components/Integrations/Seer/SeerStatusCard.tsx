@@ -33,7 +33,7 @@ export default function SeerStatusCard({
             <CheckCircleIcon
               width={16}
               height={16}
-              className="fill-status-registered mr-1"
+              className="text-status-registered mr-1"
             />
           ),
           label: "Eligible: Verified Human profile",
@@ -47,11 +47,11 @@ export default function SeerStatusCard({
             <CrossCircle16Icon
               width={16}
               height={16}
-              className="fill-status-removed"
+              className="text-status-removed"
             />
           ),
           label: "Not eligible:",
-          text: "Register to unlock $10 of Seer Credits",
+          text: "Register to unlock $5 of Seer Credits",
           textColor: "text-red-500",
           buttonLabel: "Register Now",
         };
@@ -113,7 +113,7 @@ export default function SeerStatusCard({
         <div className="text-center">
           <p className="text-orange mb-6 text-sm font-medium">Reward</p>
           <h3 className="text-primaryText mb-6 text-xl font-semibold">
-            Unlock Your $10 Seer Balance
+            Unlock Your $5 Seer Balance
           </h3>
           <div className="my-8 flex items-center justify-center">
             <div className="border-orange h-8 w-8 animate-spin rounded-full border-b-2"></div>

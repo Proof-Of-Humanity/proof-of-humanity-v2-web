@@ -190,7 +190,7 @@ function Photo({ advance, onBack, photo$ }: PhotoProps) {
           Take a <span className="text-peach">Photo</span>
         </>
       ),
-      body: "Face the camera directly with your whole face visible — the examples below show what passes and what gets rejected.",
+      body: "Face the camera directly with your whole face visible. The examples below show what passes and what gets rejected.",
     },
     camera: {
       title: (
@@ -206,7 +206,7 @@ function Photo({ advance, onBack, photo$ }: PhotoProps) {
           Crop <span className="text-peach">Photo</span>
         </>
       ),
-      body: "Center your face in the circle and zoom in until it fills most of the frame. Keep it straight — not tilted or rotated.",
+      body: "Center your face in the circle and zoom in until it fills most of the frame. Keep it straight, not tilted or rotated.",
     },
     confirmed: {
       title: (

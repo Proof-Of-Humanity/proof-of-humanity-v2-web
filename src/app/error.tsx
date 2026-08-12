@@ -25,8 +25,8 @@ export default function Error({
         </div>
         <div className="text-secondaryText mx-auto mt-3 max-w-xl text-sm font-normal leading-6 sm:text-base">
           We couldn&apos;t load this page right now. Our data services may be
-          temporarily unavailable. Nothing on chain is affected &mdash; please
-          try again in a moment.
+          temporarily unavailable. Nothing on chain is affected. Please try
+          again in a moment.
         </div>
         <button
           type="button"

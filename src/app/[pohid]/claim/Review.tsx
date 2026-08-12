@@ -113,7 +113,7 @@ function Review({
       message: missingMedia.length
         ? `Your ${missingMedia.join(" and ")} ${
             missingMedia.length > 1 ? "are" : "is"
-          } missing — use the steps above to add ${
+          } missing. Use the steps above to add ${
             missingMedia.length > 1 ? "them" : "it"
           }.`
         : undefined,
@@ -227,8 +227,8 @@ function Review({
             Review
           </p>
           <p className="text-secondaryText mt-1 text-sm">
-            Check the uploaded files and ensure they comply with the rules —
-            incorrect submissions can be challenged and your{" "}
+            Check the uploaded files and ensure they comply with the rules.
+            Incorrect submissions can be challenged and your{" "}
             <span className="text-status-rejected font-medium">
               deposit may be lost.
             </span>
@@ -271,7 +271,7 @@ function Review({
 
         <Label className="!mt-2">
           <div className="flex w-full items-center justify-between gap-2">
-            <span>{isRenewal ? "Deposit" : "Initial deposit"}</span>
+            <span>{isRenewal ? "Deposit" : "Registration deposit"}</span>
             {funds.balance !== undefined && (
               <span className="text-secondaryText text-sm font-normal normal-case">
                 Balance: {formatEth(funds.balance)} {nativeCurrency.symbol}
@@ -321,7 +321,7 @@ function Review({
             }`}
           >
             {submitForFree
-              ? `0 of ${totalCostLabel} ${nativeCurrency.symbol} — covered by PoH supporters`
+              ? `0 of ${totalCostLabel} ${nativeCurrency.symbol}, covered by PoH supporters`
               : `${selfFunded || "0"} of ${totalCostLabel} ${nativeCurrency.symbol} required`}
           </span>
           {funds.insufficient && (
@@ -344,8 +344,8 @@ function Review({
               className="min-w-0 flex-1 cursor-pointer pt-0.5 text-sm font-medium leading-snug sm:flex-none sm:pt-0 sm:text-base sm:leading-normal"
               onClick={() => toggleSubmitForFree(!submitForFree)}
             >
-              Submit for free — let PoH supporters cover your deposit (you only
-              pay gas)
+              Submit for free, and let PoH supporters cover your deposit (you
+              only pay gas)
             </span>
           </div>
 
@@ -435,7 +435,7 @@ function Review({
           ) : totalCostError ? (
             <ActionButton
               onClick={() => void refetchTotalCost()}
-              label="Deposit unavailable — Retry"
+              label="Deposit unavailable. Retry"
               variant="secondary"
               className="min-w-[170px]"
             />
@@ -447,7 +447,7 @@ function Review({
             <AuthGuard signInButtonProps={{ className: "min-w-[170px]" }}>
               <ActionButton
                 onClick={submit}
-                label="Submit"
+                label={isRenewal ? "Submit renewal" : "Submit registration"}
                 disabled={submitState.disabled}
                 tooltip={submitState.tooltip}
                 className="min-w-[170px]"
