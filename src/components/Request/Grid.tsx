@@ -28,6 +28,7 @@ import SearchBar from "components/SearchBar";
 import StatusIcon from "components/StatusIcon";
 import { RequestsQuery } from "generated/graphql";
 import { useLoading } from "hooks/useLoading";
+import { getRequestSearchFilter } from "utils/requestSearch";
 import {
   getStatus,
   RequestStatus,
@@ -244,9 +245,7 @@ function RequestsGrid() {
             ) {
               const where: any = {
                 ...getRequestStatusFilter(status),
-                ...(search
-                  ? { claimer_: { name_contains_nocase: search } }
-                  : {}),
+                ...getRequestSearchFilter(search),
               };
 
               const skipNumber = loadContinued
@@ -310,7 +309,11 @@ function RequestsGrid() {
   return (
     <>
       <div className="my-4 flex flex-col gap-2 py-2 sm:flex-row sm:gap-1 md:gap-2">
-        <SearchBar className="md:mr-2" onSearch={setSearchQuery} />
+        <SearchBar
+          className="md:mr-2"
+          placeholder="Search by name, address, or POH ID"
+          onSearch={setSearchQuery}
+        />
         <Dropdown
           title={
             filter.status === RequestStatus.ALL
