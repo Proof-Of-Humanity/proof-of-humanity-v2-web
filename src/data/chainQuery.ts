@@ -17,16 +17,15 @@ export class SubgraphUnavailableError extends Error {
   }
 }
 
-/**
- * Runs a query against every supported chain, tolerating per-chain failures.
- * A chain whose subgraph is down resolves to the provided fallback instead of
- * rejecting the whole batch, so live chains can still be displayed.
- * The returned array is aligned with `supportedChains`.
- */
-export const settleChainQueries = async <T>(
+export interface ChainQueryResults<T> {
+  values: T[];
+  failedChains: SupportedChain[];
+}
+
+export const settleChainQueriesWithStatus = async <T>(
   query: (chain: SupportedChain) => Promise<T>,
   fallback: (chain: SupportedChain) => T,
-): Promise<T[]> => {
+): Promise<ChainQueryResults<T>> => {
   const results = await Promise.allSettled(
     supportedChains.map((chain) => query(chain)),
   );
@@ -44,19 +43,22 @@ export const settleChainQueries = async <T>(
       results.map((result) => (result as PromiseRejectedResult).reason),
     );
 
-  return supportedChains.map((chain, i) => {
-    const result = results[i]!;
-    return result.status === "fulfilled" ? result.value : fallback(chain);
-  });
+  return {
+    values: supportedChains.map((chain, i) => {
+      const result = results[i]!;
+      return result.status === "fulfilled" ? result.value : fallback(chain);
+    }),
+    failedChains: supportedChains.filter(
+      (_, i) => results[i]!.status === "rejected",
+    ),
+  };
 };
 
-/**
- * Like `settleChainQueries`, but *any* per-chain failure rejects the whole
- * batch with a `SubgraphUnavailableError`. For eligibility checks (e.g. the
- * claim wizard's wallet-status preflight) a chain that merely timed out must
- * not be silently read as "no registration there" — incomplete data has to
- * surface as an error the caller can retry, never as a fail-open answer.
- */
+export const settleChainQueries = async <T>(
+  query: (chain: SupportedChain) => Promise<T>,
+  fallback: (chain: SupportedChain) => T,
+): Promise<T[]> => (await settleChainQueriesWithStatus(query, fallback)).values;
+
 export const settleChainQueriesStrict = async <T>(
   query: (chain: SupportedChain) => Promise<T>,
 ): Promise<T[]> => {

@@ -5,6 +5,29 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 
+const BannerMessage = ({ hidden = false }: { hidden?: boolean }) => (
+  <div
+    aria-hidden={hidden || undefined}
+    className="flex shrink-0 items-center gap-2 pr-12 text-center text-white"
+  >
+    <Image
+      src="/logo/poh-white.svg"
+      alt={hidden ? "" : "PoH"}
+      width={20}
+      height={20}
+      className="hidden shrink-0 sm:block"
+    />
+    <div className="flex items-center gap-x-1 whitespace-nowrap text-sm sm:text-base">
+      <span className="font-bold">Airdrop for early adopters:</span>
+      <span>Register yourself as human,</span>
+      <span className="font-bold">claim 1,200 $PNK</span>
+      <span>
+        and stake to double your allocation! First 10,000 humans only.
+      </span>
+    </div>
+  </div>
+);
+
 export default function AirdropBanner() {
   const [isVisible, setIsVisible] = useState(true);
   const pathname = usePathname();
@@ -17,25 +40,11 @@ export default function AirdropBanner() {
       <div className="flex w-full items-center px-4 sm:px-6">
         <Link
           href="/app/pnk-airdrop"
-          className="min-w-0 flex-1 cursor-pointer transition-opacity hover:opacity-90"
+          className="min-w-0 flex-1 cursor-pointer overflow-hidden transition-opacity hover:opacity-90"
         >
-          <div className="flex items-center justify-center gap-2 pr-2 text-center text-white">
-            <div className="hidden flex-shrink-0 sm:block">
-              <Image
-                src="/logo/poh-white.svg"
-                alt="PoH"
-                width={20}
-                height={20}
-              />
-            </div>
-            <div className="flex flex-wrap items-center justify-center gap-x-1 text-sm sm:text-base">
-              <span className="font-bold">Airdrop for early adopters:</span>
-              <span>Register yourself as human,</span>
-              <span className="font-bold">claim 1,200 $PNK</span>
-              <span>
-                and stake to double your allocation! First 10,000 humans only.
-              </span>
-            </div>
+          <div className="flex w-max animate-banner will-change-transform">
+            <BannerMessage />
+            <BannerMessage hidden />
           </div>
         </Link>
         <button

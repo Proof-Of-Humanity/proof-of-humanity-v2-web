@@ -13,9 +13,12 @@ const DropdownItem: React.FC<DropdownItemProps> = ({
   name,
   onSelect,
 }) => (
-  <span
+  <button
+    type="button"
+    role="menuitemradio"
+    aria-checked={selected}
     className={cn(
-      "flex min-h-9 cursor-pointer items-center border-l-2 px-4 py-1.5 text-sm transition-colors duration-200",
+      "flex min-h-9 cursor-pointer items-center whitespace-nowrap border-l-2 px-4 py-1.5 text-left text-sm transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-peach",
       selected
         ? "border-l-[#FFB08A] bg-[#3A3E48]"
         : "border-l-transparent hover:bg-[#2F333D]",
@@ -24,7 +27,7 @@ const DropdownItem: React.FC<DropdownItemProps> = ({
   >
     {icon}
     {name}
-  </span>
+  </button>
 );
 
 export default DropdownItem;

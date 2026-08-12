@@ -13,6 +13,7 @@ interface RegisterLinkProps {
   className?: string;
   pendingRegisterIntent?: boolean;
   setPendingRegisterIntent?: (value: boolean) => void;
+  onClick?: () => void;
 }
 
 const RegisterLink = ({
@@ -21,6 +22,7 @@ const RegisterLink = ({
   className,
   pendingRegisterIntent = false,
   setPendingRegisterIntent,
+  onClick,
 }: RegisterLinkProps) => {
   const modal = useAppKit();
   const router = useRouter();
@@ -51,6 +53,7 @@ const RegisterLink = ({
   ]);
 
   const handleClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    onClick?.();
     if (!isConnected) {
       e.preventDefault();
       setPendingRegisterIntent?.(true);
@@ -60,7 +63,11 @@ const RegisterLink = ({
 
   if (pohId) {
     return (
-      <Link href={`/${prettifyId(pohId)}`} className={className}>
+      <Link
+        href={`/${prettifyId(pohId)}`}
+        onClick={onClick}
+        className={className}
+      >
         PoH ID
       </Link>
     );

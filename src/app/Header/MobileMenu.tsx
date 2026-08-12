@@ -3,6 +3,9 @@
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Ref, forwardRef } from "react";
+import ExternalLink from "components/ExternalLink";
+import DashboardIcon from "icons/Dashboard.svg";
+import SearchIcon from "icons/SearchMajor.svg";
 import Options from "./Options";
 import RegisterLink from "./RegisterLink";
 import WalletSection from "./WalletSection";
@@ -18,6 +21,7 @@ interface MobileMenuProps {
   chain: { id: number; name: string };
   pendingRegisterIntent: boolean;
   setPendingRegisterIntent: (value: boolean) => void;
+  onClose: () => void;
 }
 
 const MobileMenu = forwardRef(
@@ -32,6 +36,7 @@ const MobileMenu = forwardRef(
       chain,
       pendingRegisterIntent,
       setPendingRegisterIntent,
+      onClose,
     }: MobileMenuProps,
     ref: Ref<HTMLDivElement>,
   ) => {
@@ -49,6 +54,7 @@ const MobileMenu = forwardRef(
         <nav className="flex flex-col items-center gap-y-4 text-center">
           <Link
             href="/"
+            onClick={onClose}
             className={`text-lg ${pathname === "/" ? "font-bold" : ""}`}
           >
             Profiles
@@ -58,11 +64,13 @@ const MobileMenu = forwardRef(
             address={address}
             pendingRegisterIntent={pendingRegisterIntent}
             setPendingRegisterIntent={setPendingRegisterIntent}
+            onClick={onClose}
             className={`text-lg ${registerActive ? "font-bold" : ""}`}
           />
           {policyHref && (
             <Link
               href={policyHref}
+              onClick={onClose}
               className={`text-lg ${currentUrl === policy ? "font-bold" : ""}`}
             >
               Policy
@@ -70,10 +78,28 @@ const MobileMenu = forwardRef(
           )}
           <Link
             href="/app"
+            onClick={onClose}
             className={`text-lg ${pathname.startsWith("/app") ? "font-bold" : ""}`}
           >
             Rewards
           </Link>
+          <span className="text-secondaryText text-sm font-semibold uppercase tracking-wide">
+            Tools
+          </span>
+          <ExternalLink
+            href="https://frabjous-marigold-8334d9.netlify.app"
+            className="flex items-center gap-2 text-lg"
+          >
+            <DashboardIcon className="h-4 w-4 fill-current text-peach" />
+            PoH Dashboard
+          </ExternalLink>
+          <ExternalLink
+            href="https://poh-duplicate-finder.netlify.app"
+            className="flex items-center gap-2 text-lg"
+          >
+            <SearchIcon className="h-4 w-4 fill-current text-peach" />
+            PoH Duplicate Finder
+          </ExternalLink>
         </nav>
 
         <div className="mt-4 flex justify-center">

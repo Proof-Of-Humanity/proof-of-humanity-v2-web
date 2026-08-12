@@ -76,7 +76,11 @@ module.exports = {
         premium: "cubic-bezier(0.22, 0.61, 0.36, 1)",
       },
       animation: {
+        banner: "banner 30s linear infinite",
         flip: "flip 5s linear infinite",
+        dropdownIn: "dropdownIn 0.2s cubic-bezier(0.22, 0.61, 0.36, 1) both",
+        cardIn:
+          "accordionItemIn 0.4s cubic-bezier(0.22, 0.61, 0.36, 1) backwards",
         fadeOut: "fadeOut 0.4s ease-out forwards",
         fadeIn: "fadeIn 0.3s ease-out forwards",
         accordionItemIn:
@@ -91,6 +95,21 @@ module.exports = {
           "wizardInRight 0.3s cubic-bezier(0.22, 0.61, 0.36, 1) both",
       },
       keyframes: {
+        banner: {
+          "0%": { transform: "translateX(0)" },
+          "100%": { transform: "translateX(-50%)" },
+        },
+        dropdownIn: {
+          "0%": {
+            opacity: "0",
+            transform: "translateY(-6px) scale(0.97)",
+          },
+          "100%": { opacity: "1", transform: "translateY(0) scale(1)" },
+        },
+        shimmer: {
+          "0%": { transform: "translateX(-100%)" },
+          "100%": { transform: "translateX(100%)" },
+        },
         flip: {
           "0%, 100%": { transform: "rotateY(0deg)" },
           "50%": { transform: "rotateY(360deg)" },

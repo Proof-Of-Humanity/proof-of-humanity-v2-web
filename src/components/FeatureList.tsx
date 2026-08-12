@@ -37,10 +37,7 @@ const FeatureList: React.FC<FeatureListProps> = ({
   <div className={`${spacingMap[spacing]} ${className}`}>
     {items.map((item, index) => (
       <div key={index} className={`flex items-start gap-2 ${textClassName}`}>
-        <div
-          aria-hidden
-          className="flex h-[1lh] flex-shrink-0 items-center"
-        >
+        <div aria-hidden className="flex h-[1lh] flex-shrink-0 items-center">
           <CheckCircleIcon
             width={iconWidth}
             height={iconHeight}

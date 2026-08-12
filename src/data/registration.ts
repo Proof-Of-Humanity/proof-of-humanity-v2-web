@@ -3,12 +3,11 @@ import { sdk } from "config/subgraph";
 import { RegistrationQuery } from "generated/graphql";
 import { cache } from "react";
 import { Hash } from "viem";
-import { settleChainQueries } from "./chainQuery";
+import { settleChainQueriesStrict } from "./chainQuery";
 
 export const getRegistrationData = cache(async (id: Hash) => {
-  const res = await settleChainQueries(
-    (chain) => sdk[chain.id].Registration({ id }),
-    (): RegistrationQuery => ({ registration: null }),
+  const res = await settleChainQueriesStrict((chain) =>
+    sdk[chain.id].Registration({ id }),
   );
 
   return supportedChains.reduce(

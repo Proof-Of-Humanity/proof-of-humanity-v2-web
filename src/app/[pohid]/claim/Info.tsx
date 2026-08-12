@@ -180,8 +180,8 @@ function Info({
                   {competingClaims === 1
                     ? "Someone else has a pending claim"
                     : `${competingClaims} other people have pending claims`}{" "}
-                  to this Humanity ID. You can still proceed. Only one claim
-                  can ultimately succeed.
+                  to this Humanity ID. You can still proceed. Only one claim can
+                  ultimately succeed.
                 </div>
               )}
               <label
@@ -222,21 +222,21 @@ function Info({
               </p>
               <ul className="list-disc space-y-2 pl-5">
                 <li>
-                  <strong className="font-semibold">Renew.</strong> Use the
-                  same wallet to extend/refresh your v2 profile or update your
+                  <strong className="font-semibold">Renew.</strong> Use the same
+                  wallet to extend/refresh your v2 profile or update your
                   name/alias.
                 </li>
                 <li>
-                  <strong className="font-semibold">Claim Humanity.</strong>{" "}
-                  Use a different/new wallet if you changed or lost the old one,
-                  or if someone already registered you (even incorrectly). Works
+                  <strong className="font-semibold">Claim Humanity.</strong> Use
+                  a different/new wallet if you changed or lost the old one, or
+                  if someone already registered you (even incorrectly). Works
                   for expired / withdrawn / revoked / rejected / pending /
                   challenged profiles.
                 </li>
                 <li>
-                  <strong className="font-semibold">Revoke.</strong> If you
-                  want to remove your profile, revoke it and then use the
-                  correct flow above.
+                  <strong className="font-semibold">Revoke.</strong> If you want
+                  to remove your profile, revoke it and then use the correct
+                  flow above.
                 </li>
               </ul>
             </div>
