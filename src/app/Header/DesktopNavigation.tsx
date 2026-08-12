@@ -2,8 +2,14 @@
 
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
+import { useState } from "react";
 import { sepolia } from "viem/chains";
+import cn from "classnames";
 import ExternalLink from "components/ExternalLink";
+import Popover from "components/Popover";
+import CaretDownIcon from "icons/CaretDown.svg";
+import DashboardIcon from "icons/Dashboard.svg";
+import SearchIcon from "icons/SearchMajor.svg";
 import RegisterLink from "./RegisterLink";
 import { isRegisterActive } from "utils/identifier";
 
@@ -35,6 +41,7 @@ const DesktopNavigation = ({
   pendingRegisterIntent,
   setPendingRegisterIntent,
 }: DesktopNavigationProps) => {
+  const [toolsOpen, setToolsOpen] = useState(false);
   const searchParams = useSearchParams();
   const currentUrl = searchParams.get("url");
   const policyHref = policy && `/attachment?url=${encodeURIComponent(policy)}`;
@@ -69,6 +76,48 @@ const DesktopNavigation = ({
       <Link href="/app" className={navLink(pathname.startsWith("/app"))}>
         Rewards
       </Link>
+      <Popover
+        open={toolsOpen}
+        desktopPosition="bottom left"
+        onOpen={() => setToolsOpen(true)}
+        onClose={() => setToolsOpen(false)}
+        className="w-max min-w-48"
+        trigger={
+          <button
+            type="button"
+            aria-expanded={toolsOpen}
+            className={`${navLink(false)} flex items-center gap-2`}
+          >
+            Tools
+            <CaretDownIcon
+              className={cn(
+                "h-3 w-3 fill-current text-peach transition-transform duration-200 ease-premium",
+                toolsOpen && "rotate-180",
+              )}
+            />
+          </button>
+        }
+      >
+        <div
+          className="bg-whiteBackground text-primaryText border-stroke flex origin-top animate-dropdownIn flex-col overflow-hidden rounded-2xl border py-2 shadow-soft"
+          onClick={() => setToolsOpen(false)}
+        >
+          <ExternalLink
+            href="https://frabjous-marigold-8334d9.netlify.app"
+            className="hover:bg-grey flex items-center gap-2 px-4 py-2 text-sm"
+          >
+            <DashboardIcon className="h-4 w-4 shrink-0 fill-current text-peach" />
+            PoH Dashboard
+          </ExternalLink>
+          <ExternalLink
+            href="https://poh-duplicate-finder.netlify.app"
+            className="hover:bg-grey flex items-center gap-2 px-4 py-2 text-sm"
+          >
+            <SearchIcon className="h-4 w-4 shrink-0 fill-current text-peach" />
+            PoH Duplicate Finder
+          </ExternalLink>
+        </div>
+      </Popover>
     </div>
   );
 };

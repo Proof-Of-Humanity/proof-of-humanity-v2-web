@@ -76,6 +76,7 @@ module.exports = {
         premium: "cubic-bezier(0.22, 0.61, 0.36, 1)",
       },
       animation: {
+        banner: "banner 30s linear infinite",
         flip: "flip 5s linear infinite",
         dropdownIn: "dropdownIn 0.2s cubic-bezier(0.22, 0.61, 0.36, 1) both",
         cardIn:
@@ -94,6 +95,10 @@ module.exports = {
           "wizardInRight 0.3s cubic-bezier(0.22, 0.61, 0.36, 1) both",
       },
       keyframes: {
+        banner: {
+          "0%": { transform: "translateX(0)" },
+          "100%": { transform: "translateX(-50%)" },
+        },
         dropdownIn: {
           "0%": {
             opacity: "0",
