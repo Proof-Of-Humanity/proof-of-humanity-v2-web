@@ -387,6 +387,16 @@ function RequestsGrid() {
 
   return (
     <>
+      <div className="mb-6">
+        <h1 className="text-primaryText text-2xl font-semibold md:text-3xl">
+          Explore the Proof of Humanity Registry
+        </h1>
+        <p className="text-secondaryText mt-2 max-w-3xl">
+          Browse verified humans and registration profiles. Search by name,
+          wallet address, or Humanity ID, filter by status or network, and view
+          public registration details.
+        </p>
+      </div>
       <div className="my-4 flex flex-col gap-2 py-2 sm:flex-row sm:gap-1 md:gap-2">
         <SearchBar
           className="md:mr-2"
