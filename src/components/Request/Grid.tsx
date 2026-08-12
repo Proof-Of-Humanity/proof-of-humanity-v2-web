@@ -27,6 +27,7 @@ import DropdownItem from "components/Dropdown/Item";
 import Dropdown from "components/Dropdown/Menu";
 import { RequestsQuery } from "generated/graphql";
 import { useLoading } from "hooks/useLoading";
+import { getRequestSearchFilter } from "utils/requestSearch";
 import {
   getStatus,
   RequestStatus,
@@ -244,9 +245,7 @@ function RequestsGrid() {
             ) {
               const where: any = {
                 ...getRequestStatusFilter(status),
-                ...(search
-                  ? { claimer_: { name_contains_nocase: search } }
-                  : {}),
+                ...getRequestSearchFilter(search),
               };
 
               const skipNumber = loadContinued
@@ -312,7 +311,7 @@ function RequestsGrid() {
       <div className="my-4 flex flex-col gap-2 py-2 sm:flex-row sm:gap-1 md:gap-2">
         <input
           className="border-stroke text-primaryText bg-whiteBackground w-full rounded border p-2 md:mr-2"
-          placeholder="Search by name"
+          placeholder="Search by name, address, or POH ID"
           onChange={(e) => setSearchQuery(e.target.value)}
         />
         <Dropdown
