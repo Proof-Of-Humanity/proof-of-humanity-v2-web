@@ -1,25 +1,19 @@
 import { Request_Filter } from "generated/graphql";
-import { Hash } from "viem";
-import { machinifyId } from "./identifier";
+import { type Hash, isAddress } from "viem";
 
-const HEX_ID_RE = /^(0x)?[0-9a-fA-F]{40}$/;
-
-export const parseSearchHexId = (search: string): Hash | null => {
-  const trimmed = search.trim();
-  if (!HEX_ID_RE.test(trimmed)) return null;
-  return machinifyId(trimmed.replace(/^0x/i, ""));
+const parseSearchId = (query: string): Hash | null => {
+  if (isAddress(query, { strict: false })) return query.toLowerCase() as Hash;
+  if (isAddress(`0x${query}`, { strict: false }))
+    return `0x${query.toLowerCase()}` as Hash;
+  return null;
 };
 
 export const getRequestSearchFilter = (search: string): Request_Filter => {
   const query = search.trim();
   if (!query) return {};
 
-  const hexId = parseSearchHexId(query);
-  if (hexId) {
-    return {
-      or: [{ claimer: hexId }, { humanity_: { id: hexId } }],
-    };
-  }
+  const id = parseSearchId(query);
+  if (id) return { or: [{ claimer: id }, { humanity_: { id } }] };
 
   return { claimer_: { name_contains_nocase: query } };
 };
