@@ -1,0 +1,14 @@
+overwrite: true
+schema: "${ATLAS_URI}/graphql"
+documents: "schemas/atlas/**/*.gql"
+generates:
+  ./src/generated/atlas.ts:
+    plugins:
+      - "typescript"
+      - "typescript-operations"
+      - "typescript-graphql-request"
+    config:
+      scalars:
+        Address: string
+      useTypeImports: true
+      onlyOperationTypes: true
