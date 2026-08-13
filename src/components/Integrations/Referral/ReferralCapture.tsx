@@ -2,7 +2,6 @@
 
 import { useAppKit } from "@reown/appkit/react";
 import { useQuery } from "@tanstack/react-query";
-import Identicon from "components/Identicon";
 import Modal from "components/Modal";
 import {
   parseReferralHumanityId,
@@ -15,12 +14,11 @@ import {
 import { useStoredReferral } from "hooks/useStoredReferral";
 import ReferralIcon from "icons/Referral.svg";
 import WarningIcon from "icons/WarningCircleMajor.svg";
-import Image from "next/image";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { prettifyId } from "utils/identifier";
-import { safeIpfsUrl } from "utils/ipfs";
 import { useAccount } from "wagmi";
+import ReferralAvatar from "./ReferralAvatar";
 
 const MODAL_CLASS = "max-w-md p-6 text-center sm:p-8";
 
@@ -87,7 +85,6 @@ const ReferralCapture = () => {
     storedReferral?.referrerHumanityId ===
       resolvedReferral.referrerHumanityId &&
     !hasPriorClaim;
-  const photoUrl = safeIpfsUrl(storedReferral?.photo);
 
   const clearRefParam = useCallback(() => {
     if (!searchParams.has("ref")) return;
@@ -169,21 +166,11 @@ const ReferralCapture = () => {
 
         {storedReferral && (
           <div className="mt-5 flex flex-col items-center gap-3">
-            {photoUrl ? (
-              <Image
-                alt={storedReferral.name}
-                src={photoUrl}
-                width={64}
-                height={64}
-                className="h-16 w-16 rounded-full object-cover"
-                unoptimized
-              />
-            ) : (
-              <Identicon
-                address={storedReferral.referrerHumanityId}
-                diameter={64}
-              />
-            )}
+            <ReferralAvatar
+              referral={storedReferral}
+              diameter={64}
+              className="h-16 w-16 rounded-full object-cover"
+            />
             <p className="text-primaryText text-lg">
               You&apos;ve been referred by{" "}
               <span className="font-semibold">{storedReferral.name}</span>.
