@@ -3878,7 +3878,14 @@ export type ReferralReferrerProfileQueryVariables = Exact<{
 }>;
 
 
-export type ReferralReferrerProfileQuery = { __typename?: 'Query', humanity?: { __typename?: 'Humanity', registration?: { __typename?: 'Registration', expirationTime: any, claimer: { __typename?: 'Claimer', name?: string | null } } | null, requests: Array<{ __typename?: 'Request', evidenceGroup: { __typename?: 'EvidenceGroup', evidence: Array<{ __typename?: 'Evidence', uri: string }> } }> } | null };
+export type ReferralReferrerProfileQuery = { __typename?: 'Query', humanity?: { __typename?: 'Humanity', registration?: { __typename?: 'Registration', expirationTime: any, claimer: { __typename?: 'Claimer', name?: string | null } } | null, winnerClaim: Array<{ __typename?: 'Request', creationTime: any, index: any, lastStatusChange: any, requester: any, resolutionTime: any, claimer: { __typename?: 'Claimer', id: any, name?: string | null }, evidenceGroup: { __typename?: 'EvidenceGroup', evidence: Array<{ __typename?: 'Evidence', uri: string }> } }> } | null };
+
+export type ReferralRefereePriorClaimQueryVariables = Exact<{
+  id: Scalars['ID'];
+}>;
+
+
+export type ReferralRefereePriorClaimQuery = { __typename?: 'Query', humanity?: { __typename?: 'Humanity', requests: Array<{ __typename?: 'Request', id: any }> } | null };
 
 export type RegistrationQueryVariables = Exact<{
   id: Scalars['ID'];
@@ -4324,17 +4331,15 @@ export const ReferralReferrerProfileDocument = gql`
         name
       }
     }
-    requests(
-      first: 1
-      orderBy: creationTime
-      orderDirection: desc
-      where: {revocation: false}
-    ) {
-      evidenceGroup {
-        evidence(first: 1, orderBy: creationTime, orderDirection: desc) {
-          uri
-        }
-      }
+    ...winnerClaim
+  }
+}
+    ${WinnerClaimFragmentDoc}`;
+export const ReferralRefereePriorClaimDocument = gql`
+    query ReferralRefereePriorClaim($id: ID!) {
+  humanity(id: $id) {
+    requests(first: 1, where: { index: "0", revocation: false }) {
+      id
     }
   }
 }
@@ -4600,6 +4605,9 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     },
     ReferralReferrerProfile(variables: ReferralReferrerProfileQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<ReferralReferrerProfileQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<ReferralReferrerProfileQuery>({ document: ReferralReferrerProfileDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'ReferralReferrerProfile', 'query', variables);
+    },
+    ReferralRefereePriorClaim(variables: ReferralRefereePriorClaimQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<ReferralRefereePriorClaimQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<ReferralRefereePriorClaimQuery>({ document: ReferralRefereePriorClaimDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'ReferralRefereePriorClaim', 'query', variables);
     },
     Registration(variables: RegistrationQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<RegistrationQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<RegistrationQuery>({ document: RegistrationDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'Registration', 'query', variables);

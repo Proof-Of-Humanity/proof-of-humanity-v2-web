@@ -6,17 +6,14 @@ query ReferralReferrerProfile($id: ID!) {
         name
       }
     }
-    requests(
-      first: 1
-      orderBy: creationTime
-      orderDirection: desc
-      where: { revocation: false }
-    ) {
-      evidenceGroup {
-        evidence(first: 1, orderBy: creationTime, orderDirection: desc) {
-          uri
-        }
-      }
+    ...winnerClaim
+  }
+}
+
+query ReferralRefereePriorClaim($id: ID!) {
+  humanity(id: $id) {
+    requests(first: 1, where: { index: "0", revocation: false }) {
+      id
     }
   }
 }
