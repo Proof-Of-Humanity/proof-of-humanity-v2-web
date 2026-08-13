@@ -3,6 +3,7 @@ import { defaultChain } from "config/chains";
 import { getContractData } from "data/contract";
 import { Metadata } from "next";
 import { Inter } from "next/font/google";
+import { Suspense } from "react";
 import "react-toastify/dist/ReactToastify.css";
 import Footer from "./Footer";
 import Header from "./Header/index";
@@ -13,6 +14,7 @@ import HashBasedRedirectHandler from "../components/HashBasedRedirectHandler";
 import { SettingsPopoverProvider } from "../context/SettingsPopoverContext";
 import AirdropBanner from "../components/AirdropBanner";
 import SubgraphsStatus from "../components/SubgraphsStatus";
+import ReferralCapture from "../components/Integrations/Referral/ReferralCapture";
 
 export const metadata: Metadata = {
   title: "Proof of Humanity V2",
@@ -48,6 +50,11 @@ export default async function RootLayout({ children }: RootLayoutProps) {
         <AppKitProvider>
           <SettingsPopoverProvider>
             <HashBasedRedirectHandler />
+            {/* useSearchParams inside needs a Suspense boundary to keep the
+                layout statically renderable. */}
+            <Suspense>
+              <ReferralCapture />
+            </Suspense>
             <SubgraphsStatus />
             <AirdropBanner />
             <Header policy={policy} />

@@ -84,14 +84,13 @@ export default async function Claim({ params }: PageProps) {
   }
 
   return (
-    <div className="content paper-inset flex max-w-[800px] flex-col px-4 py-4 sm:px-8 sm:py-6 lg:px-10 lg:py-6">
-      <FormLoader
-        contractData={contractData}
-        renewal={renewal}
-        hasPastVerifiedClaim={hasPastVerifiedClaim}
-        humanityActiveOnAnyChain={humanityActiveOnAnyChain}
-        pendingClaimers={pendingClaimers}
-      />
-    </div>
+    <FormLoader
+      pohId={machinifyId(pohid) as Hash}
+      contractData={contractData}
+      renewal={renewal}
+      hasPastVerifiedClaim={hasPastVerifiedClaim}
+      humanityActiveOnAnyChain={humanityActiveOnAnyChain}
+      pendingClaimers={pendingClaimers}
+    />
   );
 }

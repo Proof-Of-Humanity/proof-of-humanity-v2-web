@@ -1,7 +1,6 @@
 import { supportedChains } from "config/chains";
 import { sdk } from "config/subgraph";
 import { isAddress } from "viem";
-import { getRegistrationPhoto } from "./evidence";
 
 export const PENDING_KEY = "poh.referral";
 export const REFERRAL_STORAGE_EVENT = "poh.referral.updated";
@@ -9,7 +8,7 @@ export const REFERRAL_STORAGE_EVENT = "poh.referral.updated";
 export interface StoredReferral {
   referrerHumanityId: `0x${string}`;
   name: string;
-  photo?: string | null;
+  evidenceUri?: string | null;
 }
 
 export const parseReferralHumanityId = (
@@ -83,7 +82,8 @@ export const getStoredReferral = (
   return {
     referrerHumanityId,
     name: parsed.name,
-    photo: typeof parsed.photo === "string" ? parsed.photo : null,
+    evidenceUri:
+      typeof parsed.evidenceUri === "string" ? parsed.evidenceUri : null,
   };
 };
 
@@ -130,9 +130,8 @@ export const resolveReferralReferrer = async (
       name:
         registration.claimer.name?.trim() ||
         `${referrerHumanityId.slice(0, 6)}..${referrerHumanityId.slice(-4)}`,
-      photo: await getRegistrationPhoto(
-        humanity?.winnerClaim[0]?.evidenceGroup.evidence[0]?.uri,
-      ),
+      evidenceUri:
+        humanity?.winnerClaim[0]?.evidenceGroup.evidence[0]?.uri ?? null,
     };
   }
 
