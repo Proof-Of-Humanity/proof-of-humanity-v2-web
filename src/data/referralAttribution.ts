@@ -95,7 +95,13 @@ export const pinPendingReferral = (refereeHumanityId: `0x${string}`) => {
     pending.referrerHumanityId === refereeHumanityId.toLowerCase()
   )
     return;
-  persistReferral("local", pinKey(refereeHumanityId), pending);
+  if (!persistReferral("local", pinKey(refereeHumanityId), pending)) return;
+  try {
+    storage("session").removeItem(PENDING_KEY);
+    notify();
+  } catch {
+    // Blocked storage.
+  }
 };
 
 export const clearReferral = (refereeHumanityId: `0x${string}`) => {
