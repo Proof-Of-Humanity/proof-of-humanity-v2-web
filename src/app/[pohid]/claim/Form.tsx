@@ -296,8 +296,9 @@ function FormContent({
   const finishRegistration = useCallback(async () => {
     setRegistrationComplete(true);
     toast.success("Request created");
+    clearReferral(urlPohId);
     await settleEmail();
-  }, [settleEmail]);
+  }, [settleEmail, urlPohId]);
 
   const events = useMemo<Effects>(
     () => ({
@@ -343,9 +344,8 @@ function FormContent({
 
   /**
    * Links the stored referral on Atlas before the registration tx.
-   * @returns whether submit may continue. `false` keeps the pin (dismiss or
-   *   retry). `true` clears it once linked, already attributed, or payout
-   *   can never succeed (prior claim).
+   * @returns whether submit may continue. `false` keeps the pin. `true` keeps
+   *   it until the claim tx succeeds (retry still has it). Prior claim clears.
    */
   const attributeReferral = async () => {
     if (isRenewal || !claimingOwnHumanity) return true;
@@ -369,7 +369,6 @@ function FormContent({
       toast.info(
         `Would link referral ${referral.referrerHumanityId} (Atlas call skipped)`,
       );
-      clearReferral(urlPohId);
       return true;
     } catch (error) {
       loading.stop();
@@ -378,7 +377,6 @@ function FormContent({
         toast.info(
           "This account already has a referral attribution. Continuing registration.",
         );
-        clearReferral(urlPohId);
         return true;
       }
       if (
