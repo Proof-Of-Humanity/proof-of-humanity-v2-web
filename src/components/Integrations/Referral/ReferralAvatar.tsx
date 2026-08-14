@@ -25,7 +25,12 @@ const ReferralAvatar: React.FC<{
         alt={referral.name}
         src={photoUrl}
         className={className}
-        fallbackLabel="Photo unavailable"
+        errorFallback={
+          <Identicon
+            address={referral.referrerHumanityId}
+            diameter={diameter}
+          />
+        }
       />
     );
   return (
