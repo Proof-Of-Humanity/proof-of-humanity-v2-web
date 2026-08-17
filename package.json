@@ -48,7 +48,7 @@
     "@netlify/blobs": "^10.7.0",
     "@reown/appkit": "^1.6.9",
     "@reown/appkit-adapter-wagmi": "^1.6.9",
-    "@tanstack/react-query": "^5.67.1",
+    "@tanstack/react-query": "^5.101.4",
     "autoprefixer": "^10.5.4",
     "axios": "^1.18.0",
     "classnames": "^2.3.2",
