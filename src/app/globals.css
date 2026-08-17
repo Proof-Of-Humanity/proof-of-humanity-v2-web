@@ -941,6 +941,12 @@
     box-shadow: 0 10px 24px rgba(229, 72, 77, 0.25);
   }
 
+  /* Celebratory variant: warm orange into pink, the reverse of btn-primary. */
+  .btn-celebrate {
+    background: linear-gradient(90deg, #ff9a6a 0%, #f4586b 100%);
+    box-shadow: 0 10px 24px rgba(244, 88, 107, 0.18);
+  }
+
   .slider-thumb::-webkit-slider-thumb {
     @apply bg-theme h-4 w-4 cursor-pointer appearance-none rounded-full;
   }

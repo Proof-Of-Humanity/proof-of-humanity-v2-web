@@ -5,12 +5,13 @@ import { useAtlasProvider } from "@kleros/kleros-app";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 
-import CheckCircle from "icons/CheckCircleMajor.svg";
 import WarningCircle from "icons/WarningCircleMajor.svg";
 import MinusCircle from "icons/MinusCircleMajor.svg";
-import CheckCircleMinor from "icons/CheckCircleMinor.svg";
 import WarningCircleMinor from "icons/WarningCircleMinor.svg";
 import MinusCircleMinor from "icons/MinusCircleMinor.svg";
+import VerifiedSparkle from "icons/VerifiedSparkle.svg";
+import VerifiedCheckOrbit from "icons/VerifiedCheckOrbit.svg";
+import ArrowRight from "icons/ArrowRight.svg";
 import ActionButton from "components/ActionButton";
 import { extractStatusCode } from "utils/errors";
 
@@ -102,8 +103,11 @@ const ConfirmEmailPage: React.FC = () => {
     titleColor: string;
     icon?: React.ComponentType<{ className?: string }>;
     largeIcon?: React.ComponentType<{ className?: string }>;
+    iconClassName?: string;
+    largeIconClassName?: string;
     onClick?: () => void;
-    buttonText?: string;
+    buttonText?: React.ReactNode;
+    buttonClassName?: string;
   }
 
   const statusConfig: Record<VerificationStatus, StatusConfig> = {
@@ -115,17 +119,25 @@ const ConfirmEmailPage: React.FC = () => {
     success: {
       title: (
         <>
-          Congratulations :)
+          <span className="text-primaryText">Congratulations! 🎉</span>
           <div className="my-1" />
-          Your email has been verified!
+          Your email has been verified.
         </>
       ),
       description:
-        "We'll remind you when your actions are required on POH, and send you notifications on key moments to help you achieve the best of Proof of Humanity.",
+        "We'll remind you when your actions are required on PoH, and send you notifications on key moments to help you achieve the best of Proof of Humanity.",
       titleColor: "text-status-registered",
-      buttonText: "Let's start!",
-      icon: CheckCircleMinor,
-      largeIcon: CheckCircle,
+      buttonText: (
+        <span className="inline-flex items-center gap-3">
+          Let&apos;s get started
+          <ArrowRight aria-hidden className="h-3.5 w-3.5 fill-current" />
+        </span>
+      ),
+      buttonClassName: "btn-celebrate",
+      icon: VerifiedSparkle,
+      largeIcon: VerifiedCheckOrbit,
+      iconClassName: "h-[100px] w-[100px]",
+      largeIconClassName: "h-[440px] w-[440px] max-w-full",
       onClick: () => {
         router.push("/");
       },
@@ -176,21 +188,24 @@ const ConfirmEmailPage: React.FC = () => {
     description,
     titleColor,
     buttonText,
+    buttonClassName,
     onClick,
     icon: IconComponent,
     largeIcon: LargeIconComponent,
+    iconClassName,
+    largeIconClassName,
   } = config;
 
   return (
     <div className="flex h-full flex-col">
       <div className="flex flex-grow items-center justify-center py-12 lg:mt-24 lg:py-24">
         <div className="mx-auto w-full px-4">
-          <div className="grid grid-cols-1 items-center gap-8 lg:mx-14 lg:grid-cols-6 lg:gap-16 xl:mx-32">
+          <div className="grid grid-cols-1 items-center gap-8 lg:mx-10 lg:grid-cols-6 lg:gap-12 xl:mx-20">
             {/* Content Section */}
-            <div className="flex flex-col items-center space-y-8 text-center lg:col-span-4 lg:items-start lg:text-left">
+            <div className="flex flex-col items-center space-y-8 text-center lg:col-span-3 lg:items-start lg:text-left">
               {IconComponent && (
                 <div className="flex justify-center lg:justify-start">
-                  <IconComponent />
+                  <IconComponent className={iconClassName} />
                 </div>
               )}
 
@@ -200,7 +215,7 @@ const ConfirmEmailPage: React.FC = () => {
                 {title}
               </h1>
 
-              <p className="text-secondaryText w-full text-base leading-relaxed md:text-lg">
+              <p className="text-secondaryText w-full max-w-xl text-base leading-relaxed md:text-lg">
                 {description}
               </p>
 
@@ -208,15 +223,15 @@ const ConfirmEmailPage: React.FC = () => {
                 <ActionButton
                   onClick={onClick}
                   label={buttonText}
-                  className="px-8 py-3"
+                  className={`px-8 py-3 ${buttonClassName ?? ""}`}
                 />
               )}
             </div>
 
             {/* Decorative Icon Section */}
             {LargeIconComponent && (
-              <div className="flex items-center justify-center lg:col-span-2 lg:justify-end">
-                <LargeIconComponent />
+              <div className="flex items-center justify-center lg:col-span-3 lg:justify-end">
+                <LargeIconComponent className={largeIconClassName} />
               </div>
             )}
           </div>
