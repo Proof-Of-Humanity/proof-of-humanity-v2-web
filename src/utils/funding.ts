@@ -1,7 +1,4 @@
-import { formatEther, parseEther } from "viem";
-
-/** Claim-wizard funding choice: "full" | "free" | custom amount string. */
-export type Funding = "full" | "free" | string;
+import { parseEther } from "viem";
 
 // Truncate plain decimals to 18 fractional digits (1 wei). Anything else
 // (scientific notation, signs, garbage) is left for parseFundingInput to reject.
@@ -26,24 +23,22 @@ export const parseFundingInput = (raw: string): bigint | null => {
   return wei < 0n ? null : wei;
 };
 
-export const computeFundingWei = (
-  funding: Funding,
-  totalCost: bigint | null,
-): bigint | null => {
-  if (funding === "free") return 0n;
-  if (funding === "full") return totalCost;
-  const wei = parseFundingInput(funding);
-  return wei !== null && totalCost !== null && wei > totalCost
-    ? totalCost
-    : wei;
-};
+export interface FundingAmount {
+  /** What will be sent, capped at the deposit. `null` when not spendable. */
+  wei: bigint | null;
+  /** More than the deposit was typed — callers block submission and say so. */
+  overCap: boolean;
+}
 
-export const fundingDisplay = (
-  funding: Funding,
+export const resolveFunding = (
+  raw: string,
   totalCost: bigint | null,
-): string => {
-  if (funding === "free") return "0";
-  if (funding === "full")
-    return totalCost !== null ? formatEther(totalCost) : "";
-  return funding;
+): FundingAmount => {
+  const wei = parseFundingInput(raw);
+  if (wei === null) return { wei: null, overCap: false };
+  if (totalCost === null)
+    return { wei: wei === 0n ? 0n : null, overCap: false };
+  return wei > totalCost
+    ? { wei: totalCost, overCap: true }
+    : { wei, overCap: false };
 };

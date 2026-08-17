@@ -23,7 +23,7 @@ import {
 } from "react";
 import { toast } from "react-toastify";
 import { machinifyId } from "utils/identifier";
-import { Hash } from "viem";
+import { Hash, formatEther } from "viem";
 import { useAccount, useChainId, useConfig } from "wagmi";
 import { useQuery } from "@tanstack/react-query";
 import { useTotalCost } from "./useTotalCost";
@@ -34,7 +34,7 @@ import { isValidEmailAddress } from "utils/validators";
 import Connect from "./Connect";
 import Finalized from "./Finalized";
 import FormSkeleton from "./FormSkeleton";
-import { Funding, computeFundingWei } from "utils/funding";
+import { resolveFunding } from "utils/funding";
 import InfoStep, { InfoState } from "./Info";
 import { ClaimGate, resolveClaimIntent, resolveRenewalGate } from "./intent";
 import PhotoStep from "./Photo";
@@ -169,12 +169,11 @@ function FormContent({
   const state$ = useObservable<SubmissionState>({ name: "" });
   const state = state$.use();
   const email$ = useObservable("");
-  const funding$ = useObservable<Funding>("full");
+  const funding$ = useObservable("");
   useEffect(() => {
-    const funding = funding$.peek();
-    if (funding !== "free" && funding !== "full") funding$.set("full");
+    funding$.set(totalCost != null ? formatEther(totalCost) : "");
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [chainId]);
+  }, [chainId, totalCost]);
   const loading = useLoading();
   const [, loadingMessage] = loading.use();
   const [registrationComplete, setRegistrationComplete] = useState(false);
@@ -404,10 +403,19 @@ function FormContent({
         return abort("Wallet changed. Please review and submit again.");
       if (getChainId(wagmiConfig) !== snapshot.chainId)
         return abort("Network changed. Please submit again.");
-      const funded = computeFundingWei(funding$.peek(), totalCost);
+      const { wei: funded, overCap } = resolveFunding(
+        funding$.peek(),
+        totalCost ?? null,
+      );
       if (funded === null)
         return abort(
           "Invalid deposit amount. Please review the deposit field.",
+        );
+      // Review already blocks this, but never silently send an amount that
+      // differs from the one on screen.
+      if (overCap)
+        return abort(
+          "Deposit amount exceeds the required deposit. Please review the deposit field.",
         );
       if (snapshot.intent.kind === "renew")
         prepareRenewHumanity({
