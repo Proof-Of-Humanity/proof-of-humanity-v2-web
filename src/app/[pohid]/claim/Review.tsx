@@ -2,8 +2,6 @@ import { useState } from "react";
 import { ObservableObject, ObservablePrimitiveBaseFns } from "@legendapp/state";
 import ExternalLink from "components/ExternalLink";
 import Field from "components/Field";
-import Label from "components/Label";
-import Switch from "components/Switch";
 import ActionButton from "components/ActionButton";
 import AuthGuard from "components/AuthGuard";
 import Previewed from "components/Previewed";
@@ -12,30 +10,24 @@ import DocumentIcon from "components/DocumentIcon";
 import { SupportedChainId, idToChain, getForeignChain } from "config/chains";
 import { ContractData } from "data/contract";
 import InfoIcon from "icons/info.svg";
-import { CurrencyIcon } from "components/CurrencyField";
 import ExternalLinkIcon from "components/ExternalLinkIcon";
 import Image from "next/image";
 import { prettifyId } from "utils/identifier";
 import { ipfs } from "utils/ipfs";
-import { formatEth } from "utils/misc";
 import { resolveTxState } from "utils/txState";
 import { Hash, formatEther } from "viem";
 import { useAccount, useChainId, useSwitchChain } from "wagmi";
 import useEnoughFunds from "hooks/useEnoughFunds";
 import { EmailSubmissionStatus, MediaState, SubmissionState } from "./Form";
 import { useTotalCost } from "./useTotalCost";
-import {
-  Funding,
-  clampFundingInput,
-  fundingDisplay,
-  computeFundingWei,
-} from "utils/funding";
+import RegistrationDeposit from "./RegistrationDeposit";
+import { resolveFunding } from "utils/funding";
 
 interface ReviewProps {
   arbitrationInfo: ContractData["arbitrationInfo"];
   contractData: Record<SupportedChainId, ContractData | null>;
   pohId: Hash;
-  funding$: ObservablePrimitiveBaseFns<Funding>;
+  funding$: ObservablePrimitiveBaseFns<string>;
   state$: ObservableObject<SubmissionState>;
   media$: ObservableObject<MediaState>;
   loadingMessage?: string;
@@ -73,10 +65,6 @@ function Review({
   isRenewal,
 }: ReviewProps) {
   const funding = funding$.use();
-  const submitForFree = funding === "free";
-
-  const toggleSubmitForFree = (enabled: boolean) =>
-    funding$.set(enabled ? "free" : "full");
   const { name } = state$.use();
   const email = email$.use();
   const { photo, video } = media$.use();
@@ -100,11 +88,9 @@ function Review({
     refetch: refetchTotalCost,
   } = useTotalCost(chainId, contractData);
 
-  const selfFunded = fundingDisplay(funding, totalCost);
-  const selfFundedWei = computeFundingWei(funding, totalCost);
+  const { wei: selfFundedWei, overCap } = resolveFunding(funding, totalCost);
   const funds = useEnoughFunds({
     chainId,
-    // `null` (invalid) and `0n` (free/zero) both mean nothing to pay.
     amount: selfFundedWei || undefined,
   });
   const submitState = resolveTxState([
@@ -125,13 +111,14 @@ function Review({
       message: "Enter a valid deposit amount.",
     },
     {
+      active: overCap,
+      message: "Amount exceeds the required deposit.",
+    },
+    {
       active: !allRulesChecked,
       message: "Confirm every item in the review checklist first.",
     },
   ]);
-
-  const currentChain = idToChain(chainId)!;
-  const { nativeCurrency } = currentChain;
 
   const foreignChainId = getForeignChain(chainId);
   const foreignChain = idToChain(foreignChainId)!;
@@ -142,14 +129,6 @@ function Review({
     contractData,
     !!foreignContractData,
   );
-  const totalCostLabel = totalCost
-    ? formatEther(totalCost)
-    : totalCostError
-      ? "unavailable"
-      : "Loading...";
-  const depositMet =
-    !!totalCost && selfFundedWei !== null && selfFundedWei >= totalCost;
-  const jumperUrl = `https://jumper.exchange/?toChain=${currentChain.id}&toToken=0x0000000000000000000000000000000000000000`;
 
   // Assume Gnosis is always cheaper (1 xDAI = 1 USD) until we have ETH/USD price feeds
   const isCurrentChainCheaper = chainId === 100;
@@ -269,109 +248,23 @@ function Review({
         />
         {email ? <Field label="Email" value={email} disabled /> : null}
 
-        <Label className="!mt-2">
-          <div className="flex w-full items-center justify-between gap-2">
-            <span>{isRenewal ? "Deposit" : "Registration deposit"}</span>
-            {funds.balance !== undefined && (
-              <span className="text-secondaryText text-sm font-normal normal-case">
-                Balance: {formatEth(funds.balance)} {nativeCurrency.symbol}
-              </span>
-            )}
-          </div>
-        </Label>
-        <div className="txt mb-8 flex flex-col">
-          <div
-            className={`transition-opacity ${submitForFree ? "opacity-50" : ""}`}
+        <RegistrationDeposit
+          funding$={funding$}
+          totalCost={totalCost}
+          costError={totalCostError}
+          isRenewal={isRenewal}
+          locked={!!loadingMessage}
+        />
+        {!isCurrentChainCheaper && foreignCost && (
+          <button
+            type="button"
+            className="mt-2 cursor-pointer self-start text-left text-xs text-peach transition-opacity hover:opacity-80"
+            onClick={() => switchChain?.({ chainId: foreignChainId })}
           >
-            <Field
-              type="number"
-              className="no-spinner"
-              step="any"
-              min={0}
-              max={totalCost ? formatEther(totalCost) : undefined}
-              value={selfFunded}
-              disabled={!totalCost || submitForFree}
-              onChange={(event) => {
-                const raw = clampFundingInput(event.target.value);
-                const wei = computeFundingWei(raw, null);
-                funding$.set(
-                  wei !== null && totalCost !== null && wei >= totalCost
-                    ? "full"
-                    : raw,
-                );
-              }}
-              trailing={
-                <div className="mr-4 flex shrink-0 items-center gap-2">
-                  <button
-                    type="button"
-                    disabled={!totalCost || submitForFree}
-                    onClick={() => funding$.set("full")}
-                    className="text-orange text-xs font-semibold tracking-wide transition-opacity hover:opacity-80 disabled:cursor-not-allowed disabled:opacity-50"
-                  >
-                    MAX
-                  </button>
-                  <CurrencyIcon symbol={nativeCurrency.symbol} />
-                </div>
-              }
-            />
-          </div>
-          <span
-            className={`mt-1.5 text-center text-xs ${
-              depositMet ? "text-secondaryText" : "text-orange"
-            }`}
-          >
-            {submitForFree
-              ? `0 of ${totalCostLabel} ${nativeCurrency.symbol}, covered by PoH supporters`
-              : `${selfFunded || "0"} of ${totalCostLabel} ${nativeCurrency.symbol} required`}
-          </span>
-          {funds.insufficient && (
-            <ExternalLink
-              href={jumperUrl}
-              className="text-orange mt-1 cursor-pointer self-center text-xs font-semibold transition-all hover:underline hover:opacity-80"
-            >
-              Need {nativeCurrency.symbol}? Bridge to {currentChain.name} →
-            </ExternalLink>
-          )}
-
-          <div className="text-primaryText mt-3 flex items-start gap-3 sm:items-center">
-            <Switch
-              checked={submitForFree}
-              onChange={toggleSubmitForFree}
-              label="Submit for free"
-              className="mt-0.5 sm:mt-0"
-            />
-            <span
-              className="min-w-0 flex-1 cursor-pointer pt-0.5 text-sm font-medium leading-snug sm:flex-none sm:pt-0 sm:text-base sm:leading-normal"
-              onClick={() => toggleSubmitForFree(!submitForFree)}
-            >
-              Submit for free, and let PoH supporters cover your deposit (you
-              only pay gas)
-            </span>
-          </div>
-
-          <span className="text-secondaryText mt-2 flex items-start gap-2 text-sm">
-            <InfoIcon
-              aria-hidden
-              className="mt-0.5 h-4 w-4 shrink-0 stroke-current stroke-2"
-            />
-            <span>
-              The deposit is reimbursed after successful{" "}
-              {isRenewal ? "renewal" : "registration"} and lost only if the
-              profile is rejected. Any amount not contributed now can be covered
-              by PoH supporters later.
-            </span>
-          </span>
-          {!isCurrentChainCheaper && foreignCost && (
-            <button
-              type="button"
-              className="text-orange hover:text-orange/80 mt-1.5 cursor-pointer self-start text-left text-sm transition-colors"
-              onClick={() => switchChain?.({ chainId: foreignChainId })}
-            >
-              Switch to {foreignChain.name} for a smaller deposit (
-              {formatEther(foreignCost)} {foreignChain.nativeCurrency.symbol})
-            </button>
-          )}
-        </div>
+            Switch to {foreignChain.name} for a smaller deposit (
+            {formatEther(foreignCost)} {foreignChain.nativeCurrency.symbol})
+          </button>
+        )}
       </div>
       {registrationComplete && emailStatus === "failed" ? (
         <div className="text-primaryText mt-1 w-full text-sm">
@@ -412,47 +305,55 @@ function Review({
           </div>
         </div>
       ) : (
-        <div className="mt-8 flex w-full flex-wrap-reverse items-center justify-center gap-3">
-          {!loadingMessage && (
-            <ActionButton
-              onClick={goBack}
-              label="Back"
-              variant="secondary"
-              className="min-w-[170px]"
-            />
-          )}
-          {loadingMessage ? (
-            <button className="btn-primary min-w-[170px] gap-2" disabled>
-              <Image
-                alt="loading"
-                src="/logo/poh-white.svg"
-                className="animate-flip fill-white"
-                width={14}
-                height={14}
-              />
-              {loadingMessage}
-            </button>
-          ) : totalCostError ? (
-            <ActionButton
-              onClick={() => void refetchTotalCost()}
-              label="Deposit unavailable. Retry"
-              variant="secondary"
-              className="min-w-[170px]"
-            />
-          ) : totalCost === null ? (
-            <button className="btn-primary min-w-[170px]" disabled>
-              Loading deposit
-            </button>
-          ) : (
-            <AuthGuard signInButtonProps={{ className: "min-w-[170px]" }}>
+        <div className="mt-8 flex w-full flex-col items-center gap-2">
+          <div className="flex w-full flex-wrap-reverse items-center justify-center gap-4">
+            {!loadingMessage && (
               <ActionButton
-                onClick={submit}
-                label={isRenewal ? "Submit renewal" : "Submit registration"}
-                disabled={submitState.disabled}
-                tooltip={submitState.tooltip}
+                onClick={goBack}
+                label="Back"
+                variant="secondary"
                 className="min-w-[170px]"
               />
-            </AuthGuard>
+            )}
+            {loadingMessage ? (
+              <button className="btn-primary min-w-[170px] gap-2" disabled>
+                <Image
+                  alt="loading"
+                  src="/logo/poh-white.svg"
+                  className="animate-flip fill-white"
+                  width={14}
+                  height={14}
+                />
+                {loadingMessage}
+              </button>
+            ) : totalCostError ? (
+              <ActionButton
+                onClick={() => void refetchTotalCost()}
+                label="Deposit unavailable. Retry"
+                variant="secondary"
+                className="min-w-[170px]"
+              />
+            ) : totalCost === null ? (
+              <button className="btn-primary min-w-[170px]" disabled>
+                Loading deposit
+              </button>
+            ) : (
+              <AuthGuard signInButtonProps={{ className: "min-w-[170px]" }}>
+                <ActionButton
+                  onClick={submit}
+                  label={isRenewal ? "Submit renewal" : "Submit registration"}
+                  disabled={submitState.disabled}
+                  className="min-w-[170px]"
+                />
+              </AuthGuard>
+            )}
+          </div>
+          {!loadingMessage && !totalCostError && totalCost !== null && (
+            <p className="text-secondaryText text-center text-xs">
+              {submitState.disabled
+                ? submitState.tooltip
+                : `Proceed to submit your ${isRenewal ? "renewal" : "registration"}`}
+            </p>
           )}
         </div>
       )}

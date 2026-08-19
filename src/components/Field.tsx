@@ -1,5 +1,10 @@
 import cn from "classnames";
-import { InputHTMLAttributes, ReactNode, TextareaHTMLAttributes } from "react";
+import {
+  InputHTMLAttributes,
+  ReactNode,
+  TextareaHTMLAttributes,
+  useId,
+} from "react";
 import CloseCircleOutlineIcon from "icons/CloseCircleOutline.svg";
 import Label from "./Label";
 
@@ -37,6 +42,9 @@ function Field({
   className,
   ...props
 }: FieldProps) {
+  const messageId = useId();
+  const describedBy = status && message ? messageId : undefined;
+
   return (
     <div className="flex w-full flex-col">
       {label && <Label className={labelClassName}>{label}</Label>}
@@ -54,6 +62,8 @@ function Field({
               "focus:ring-0",
               className,
             )}
+            aria-invalid={status === "error" || undefined}
+            aria-describedby={describedBy}
             {...(props as TextareaHTMLAttributes<HTMLTextAreaElement>)}
           />
         ) : (
@@ -64,6 +74,8 @@ function Field({
                 "focus:ring-0 focus-visible:outline-none",
                 className,
               )}
+              aria-invalid={status === "error" || undefined}
+              aria-describedby={describedBy}
               {...(props as InputHTMLAttributes<HTMLInputElement>)}
             />
             {trailing}
@@ -77,7 +89,10 @@ function Field({
         )}
       </div>
       {status && message && (
-        <span className={cn("mt-1.5 text-xs", statusMessage[status])}>
+        <span
+          id={messageId}
+          className={cn("mt-1.5 text-xs", statusMessage[status])}
+        >
           {message}
         </span>
       )}

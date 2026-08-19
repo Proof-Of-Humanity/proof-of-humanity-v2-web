@@ -103,7 +103,7 @@ const DesktopNavigation = ({
           onClick={() => setToolsOpen(false)}
         >
           <ExternalLink
-            href="https://frabjous-marigold-8334d9.netlify.app"
+            href="https://poh-dashboard.netlify.app"
             className="hover:bg-grey flex items-center gap-2 px-4 py-2 text-sm"
           >
             <DashboardIcon className="h-4 w-4 shrink-0 fill-current text-peach" />
