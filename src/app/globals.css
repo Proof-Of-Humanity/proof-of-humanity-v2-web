@@ -815,6 +815,14 @@
     background: linear-gradient(180deg, #20232b 0%, #1e2129 100%);
   }
 
+  .text-primaryBackground {
+    color: theme("colors.light.primaryBackground");
+  }
+
+  .dark .text-primaryBackground {
+    color: theme("colors.dark.primaryBackground");
+  }
+
   .bg-orange {
     background-color: theme("colors.light.orange");
   }
