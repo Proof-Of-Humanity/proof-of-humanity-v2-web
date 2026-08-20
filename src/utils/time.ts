@@ -11,11 +11,12 @@ interface PohRequest {
 export const timeAgo = (s: number) => format(s * 1000);
 
 /**
- * Humanize a duration in seconds to its largest sensible unit:
- * 600 -> "10 minutes", 3599 -> "1 hour", 86400 -> "1 day".
+ * Exact duration from integer seconds. Do not round or collapse units:
+ * 302400 -> "3 days, 12 hours", not "4 days" / "3 days".
+ * Days/hours/minutes/seconds only — week/month units are 7d / 30d approximations.
  */
 export const formatDuration = (seconds: number) =>
-  humanizeDuration(seconds * 1000, { largest: 1, round: true });
+  humanizeDuration(seconds * 1000, { units: ["d", "h", "m", "s"] });
 
 const LEGACY_REQUEST_LIFESPAN = 63115200; // 2 years in seconds
 
