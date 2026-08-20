@@ -355,7 +355,11 @@ export default function ClaimSection({
     return (
       <div className="bg-whiteBackground rounded-[30px] border-t-[1px] border-t-[#BE75FF] p-6 lg:w-[440px] lg:border-l-[1px] lg:border-t-0 lg:border-l-[#BE75FF] lg:p-8">
         <div className="text-center">
-          <ClaimedPanel amountPerClaim={amountPerClaim} isTestnet={isTestnet} />
+          <ClaimedPanel
+            key={address}
+            amountPerClaim={amountPerClaim}
+            isTestnet={isTestnet}
+          />
         </div>
       </div>
     );

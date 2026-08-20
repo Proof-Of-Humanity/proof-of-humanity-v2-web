@@ -149,8 +149,8 @@ export default function PnkAirdropContent({
 
                   <div className="text-secondaryText border-orange border-l-2 pl-2 text-xs leading-relaxed">
                     <strong className="text-orange">Important:</strong>{" "}
-                    Unstaking your PNK immediately after the airdrop may make you
-                    ineligible for other Proof of Humanity rewards.
+                    Unstaking your PNK immediately after the airdrop may make
+                    you ineligible for other Proof of Humanity rewards.
                   </div>
 
                   <div className="text-secondaryText border-purple border-l-2 pl-2 text-xs">

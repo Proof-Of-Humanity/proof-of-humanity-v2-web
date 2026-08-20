@@ -2046,10 +2046,10 @@
     "@jridgewell/resolve-uri" "^3.1.0"
     "@jridgewell/sourcemap-codec" "^1.4.14"
 
-"@kleros/kleros-app@3.0.1":
-  version "3.0.1"
-  resolved "https://registry.yarnpkg.com/@kleros/kleros-app/-/kleros-app-3.0.1.tgz#1daf9d4313933fffeab76b0729c2d45871c390d0"
-  integrity sha512-q+sI9q/DaQfLbHKfZ17/U27gX17NE6oqJ8UAWE9WUOuYQsdUL9NjfTjUuCvYkix7i7r1L7g6GGBjypwMd06a+A==
+"@kleros/kleros-app@3.1.0":
+  version "3.1.0"
+  resolved "https://registry.yarnpkg.com/@kleros/kleros-app/-/kleros-app-3.1.0.tgz#10848f60c40d909328314d20c014b2928820b716"
+  integrity sha512-CuOhIbi3PcSqkbNDQgBjUb1u1HvmlCVGlucOHO8E67VSyo2eK4aWBTQ9gwkUxjme4A+1L+vGbA2lQZlvtroGaQ==
   dependencies:
     jose "^5.9.6"
 
