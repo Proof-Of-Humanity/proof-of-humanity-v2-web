@@ -1,17 +1,17 @@
 "use client";
-import React, { useState, useCallback } from "react";
+import { useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "react-toastify";
 import { useAtlasProvider } from "@kleros/kleros-app";
 
 import ActionButton from "components/ActionButton";
 import AuthGuard from "components/AuthGuard";
-import SignInButton from "components/SignInButton";
 import ExternalLink from "components/ExternalLink";
 import Field from "components/Field";
 import PnkDisplay from "components/Integrations/Airdrop/PnkDisplay";
 import JurorAlertsModal from "components/Integrations/Airdrop/JurorAlertsModal";
 import { useSubmitEmail } from "components/Integrations/Airdrop/useSubmitEmail";
+import useIsSubscribed from "hooks/useIsSubscribed";
 
 import CheckCircleMinorIcon from "icons/CheckCircleMinor.svg";
 import CheckCircleIcon from "icons/CheckCircle.svg";
@@ -24,21 +24,35 @@ import { isValidEmailAddress } from "utils/validators";
 interface ClaimedPanelProps {
   amountPerClaim: bigint;
   isTestnet: boolean;
-  justClaimed?: boolean;
 }
+
+type AlertStatus = "checking" | "unknown" | "off" | "unverified" | "on";
+
+const STEP_BADGES: Record<AlertStatus, { label: string; className: string }> = {
+  checking: { label: "Checking…", className: "bg-grey text-purple" },
+  unknown: { label: "Unknown", className: "bg-grey text-purple" },
+  off: { label: "Pending", className: "bg-lightOrange text-orange" },
+  unverified: { label: "Unverified", className: "bg-lightOrange text-orange" },
+  on: { label: "Enabled", className: "badge-success" },
+};
 
 export default function ClaimedPanel({
   amountPerClaim,
   isTestnet,
-  justClaimed = false,
 }: ClaimedPanelProps) {
   const router = useRouter();
   const { isVerified, user, isFetchingUser, isAddingUser, isUpdatingUser } =
     useAtlasProvider();
+  const {
+    isSubscribed,
+    isLoading: isCheckingSubscription,
+    isError: isSubscriptionError,
+  } = useIsSubscribed();
 
   const [userEmail, setUserEmail] = useState("");
   const [isEditing, setIsEditing] = useState(false);
-  const [showModal, setShowModal] = useState(justClaimed);
+  // Visit-local only — next land with an unsubscribed wallet reopens the nudge.
+  const [alertsModalDismissed, setAlertsModalDismissed] = useState(false);
   const trimmedEmail = userEmail.trim();
   const isEmailValid =
     trimmedEmail.length === 0 ? true : isValidEmailAddress(trimmedEmail);
@@ -61,9 +75,26 @@ export default function ClaimedPanel({
         )
       : 0;
 
-  const alertsEnabled = hasEmail && isEmailVerified;
-  const alertsPending = hasEmail && !isEmailVerified;
-  const showForm = !hasEmail || isEditing;
+  // The server owns on/off (`isSubscribed`, refetched after every email
+  // mutation); the signed-in record adds the one thing the lookup can't say —
+  // a saved email still awaiting verification. "unknown" = the lookup failed.
+  const isCheckingAlerts =
+    (isVerified && isFetchingUser) || isCheckingSubscription;
+  const alertStatus: AlertStatus = isCheckingAlerts
+    ? "checking"
+    : hasEmail && !isEmailVerified
+      ? "unverified"
+      : isSubscribed === true
+        ? "on"
+        : isSubscribed === false
+          ? "off"
+          : "unknown";
+
+  const showForm =
+    isEditing || alertStatus === "off" || alertStatus === "unknown";
+
+  const showAlertsPrompt =
+    !alertsModalDismissed && !isCheckingAlerts && isSubscribed === false;
 
   const { mutate: submitEmail, isPending: isSubmitting } = useSubmitEmail({
     onSuccess: () => {
@@ -98,13 +129,7 @@ export default function ClaimedPanel({
   const isBusy =
     isSubmitting || isAddingUser || isUpdatingUser || isFetchingUser;
 
-  const stepBadge = !isVerified
-    ? { label: "Sign In", className: "bg-grey text-purple" }
-    : alertsEnabled
-      ? { label: "Enabled", className: "badge-success" }
-      : alertsPending
-        ? { label: "Unverified", className: "bg-lightOrange text-orange" }
-        : { label: "Pending", className: "bg-lightOrange text-orange" };
+  const stepBadge = STEP_BADGES[alertStatus];
 
   return (
     <>
@@ -144,13 +169,13 @@ export default function ClaimedPanel({
 
         <div className="flex items-center gap-1">
           <div className="flex h-4 w-4 flex-shrink-0 items-center justify-center">
-            {alertsEnabled ? (
+            {alertStatus === "on" ? (
               <CheckCircleIcon
                 width={12}
                 height={12}
                 className="text-status-registered"
               />
-            ) : !isVerified ? (
+            ) : alertStatus === "checking" || alertStatus === "unknown" ? (
               <InfoIcon
                 width={16}
                 height={16}
@@ -174,27 +199,7 @@ export default function ClaimedPanel({
           </span>
         </div>
       </div>
-      {!isVerified ? (
-        <div className="border-stroke mb-4 rounded-2xl border p-3 text-left">
-          <div className="mb-3 flex items-start gap-2">
-            <WarningCircle16Icon
-              width={16}
-              height={16}
-              className="fill-purple mt-0.5 flex-shrink-0"
-            />
-            <div>
-              <h4 className="text-primaryText text-xs font-semibold">
-                Sign in to manage juror alerts
-              </h4>
-              <p className="text-secondaryText mt-0.5 text-xs leading-relaxed">
-                Sign in with your wallet to check your alert status or enable
-                notifications.
-              </p>
-            </div>
-          </div>
-          <SignInButton className="w-full py-2 text-sm" />
-        </div>
-      ) : isFetchingUser ? (
+      {isCheckingAlerts ? (
         <div className="border-stroke mb-4 flex items-center justify-center rounded-2xl border p-3">
           <div className="border-purple h-5 w-5 animate-spin rounded-full border-b-2" />
         </div>
@@ -208,7 +213,13 @@ export default function ClaimedPanel({
             />
             <div>
               <h4 className="text-primaryText text-sm font-semibold">
-                {isEditing ? "Change email" : "Juror alerts not enabled"}
+                {isEditing
+                  ? "Change email"
+                  : alertStatus === "unknown"
+                    ? isSubscriptionError
+                      ? "Couldn't check juror alerts"
+                      : "Enable juror alerts"
+                    : "Juror alerts not enabled"}
               </h4>
               <p className="text-secondaryText mt-0.5 text-xs leading-relaxed">
                 {isEditing ? (
@@ -277,7 +288,7 @@ export default function ClaimedPanel({
             </button>
           )}
         </div>
-      ) : alertsPending ? (
+      ) : alertStatus === "unverified" ? (
         <div className="bg-lightOrange border-orange mb-4 rounded-2xl border p-3 text-left">
           <div className="flex items-start gap-2">
             <WarningCircle16Icon
@@ -335,15 +346,21 @@ export default function ClaimedPanel({
               <p className="text-secondaryText mt-0.5 text-xs">
                 We&apos;ll notify you when you&apos;re drawn.
               </p>
-              <button
-                type="button"
-                onClick={handleStartEditing}
-                disabled={isBusy || !canUpdateEmail}
-                className="text-orange mt-1 text-xs font-medium hover:underline disabled:opacity-50"
-              >
-                Change email
-              </button>
-              {!canUpdateEmail && (
+              {isVerified ? (
+                <button
+                  type="button"
+                  onClick={handleStartEditing}
+                  disabled={isBusy || !canUpdateEmail}
+                  className="text-orange mt-1 text-xs font-medium hover:underline disabled:opacity-50"
+                >
+                  Change email
+                </button>
+              ) : (
+                <p className="text-secondaryText mt-1 text-xs">
+                  Sign in to change your email.
+                </p>
+              )}
+              {isVerified && !canUpdateEmail && (
                 <CooldownNote
                   minutes={minutesUntilUpdateable}
                   className="mt-0.5"
@@ -374,9 +391,9 @@ export default function ClaimedPanel({
         </span>
       </ExternalLink>
       <JurorAlertsModal
-        open={showModal}
-        alertsEnabled={alertsEnabled}
-        onClose={() => setShowModal(false)}
+        open={showAlertsPrompt}
+        alertsEnabled={alertStatus === "on"}
+        onClose={() => setAlertsModalDismissed(true)}
       />
     </>
   );

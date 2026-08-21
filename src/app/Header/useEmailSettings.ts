@@ -1,8 +1,10 @@
 import { useMemo, useState } from "react";
 import { useAtlasProvider } from "@kleros/kleros-app";
+import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-toastify";
 import { useSubmitEmail } from "components/Integrations/Airdrop/useSubmitEmail";
 import { useSettingsPopover } from "context/SettingsPopoverContext";
+import useIsSubscribed from "hooks/useIsSubscribed";
 import { isValidEmailAddress } from "utils/validators";
 
 /**
@@ -24,18 +26,15 @@ export const useEmailSettings = () => {
     deleteUser,
   } = useAtlasProvider();
 
-  // The email currently saved to the account (empty string when none). Derived
-  // once so the rest of the hook reads a plain string instead of repeating
-  // `user?.email` optional chaining everywhere.
+  const { isSubscribed } = useIsSubscribed();
+  const queryClient = useQueryClient();
+
   const savedEmail = user?.email ?? "";
 
   const [email, setEmail] = useState<string>(savedEmail);
   const [prevSavedEmail, setPrevSavedEmail] = useState(savedEmail);
   const [isUnsubscribeModalOpen, setIsUnsubscribeModalOpen] = useState(false);
 
-  // Reset the editable draft when the saved email actually changes (after a
-  // successful update, sign-in, or a background refetch returning a different
-  // address).
   if (savedEmail !== prevSavedEmail) {
     setPrevSavedEmail(savedEmail);
     setEmail(savedEmail);
@@ -97,7 +96,7 @@ export const useEmailSettings = () => {
     savedEmail === trimmedEmail ||
     Boolean(validFutureUpdateDate);
 
-  const showEmailError = !isEmailValid && trimmedEmail !== "";
+  const showEmailError = !isEmailValid;
   const isEmailVerified = Boolean(user?.isEmailVerified);
   const hasVerifiedEmail = Boolean(savedEmail) && isEmailVerified;
   const showVerificationNotice = Boolean(savedEmail) && !isEmailVerified;
@@ -139,6 +138,8 @@ export const useEmailSettings = () => {
     try {
       const deleted = await deleteUser();
       if (!deleted) throw new Error("Failed to unsubscribe");
+      // Ask the server rather than assume deleted ⇒ unsubscribed.
+      queryClient.invalidateQueries({ queryKey: ["isSubscribed"] });
       toast.success("You have been unsubscribed from PoH notifications.");
       setIsUnsubscribeModalOpen(false);
       closeSettingsPopover();
@@ -153,6 +154,7 @@ export const useEmailSettings = () => {
     toggleSettingsPopover,
     closeAndDiscardChanges,
     isVerified,
+    isSubscribed,
     // email field
     email,
     setEmail,
