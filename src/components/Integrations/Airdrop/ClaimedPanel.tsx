@@ -24,6 +24,7 @@ import { isValidEmailAddress } from "utils/validators";
 interface ClaimedPanelProps {
   amountPerClaim: bigint;
   isTestnet: boolean;
+  justClaimed?: boolean;
 }
 
 type AlertStatus = "checking" | "unknown" | "off" | "unverified" | "on";
@@ -39,6 +40,7 @@ const STEP_BADGES: Record<AlertStatus, { label: string; className: string }> = {
 export default function ClaimedPanel({
   amountPerClaim,
   isTestnet,
+  justClaimed = false,
 }: ClaimedPanelProps) {
   const router = useRouter();
   const { isVerified, user, isFetchingUser, isAddingUser, isUpdatingUser } =
@@ -47,6 +49,7 @@ export default function ClaimedPanel({
     isSubscribed,
     isLoading: isCheckingSubscription,
     isError: isSubscriptionError,
+    refetch: refetchIsSubscribed,
   } = useIsSubscribed();
 
   const [userEmail, setUserEmail] = useState("");
@@ -93,8 +96,18 @@ export default function ClaimedPanel({
   const showForm =
     isEditing || alertStatus === "off" || alertStatus === "unknown";
 
+  // A failed lookup should be retried, not "fixed" by submitting an email —
+  // that mutation would overwrite an already-verified address.
+  const showStatusRetry =
+    !isEditing && alertStatus === "unknown" && isSubscriptionError;
+
+  // The stake-risk warning is owed on the claim transition regardless of
+  // subscription state; the nudge additionally reopens on any visit while
+  // alerts are plainly off (but not while a saved email awaits verification).
   const showAlertsPrompt =
-    !alertsModalDismissed && !isCheckingAlerts && isSubscribed === false;
+    !alertsModalDismissed &&
+    !isCheckingAlerts &&
+    (justClaimed || alertStatus === "off");
 
   const { mutate: submitEmail, isPending: isSubmitting } = useSubmitEmail({
     onSuccess: () => {
@@ -224,6 +237,8 @@ export default function ClaimedPanel({
               <p className="text-secondaryText mt-0.5 text-xs leading-relaxed">
                 {isEditing ? (
                   "Enter a new email address for juror alerts."
+                ) : showStatusRetry ? (
+                  "We couldn't check whether alerts are enabled for this wallet."
                 ) : (
                   <>
                     Consider enabling alerts to avoid missing draws and{" "}
@@ -239,35 +254,44 @@ export default function ClaimedPanel({
             </div>
           </div>
 
-          <div className="flex gap-2">
-            <Field
-              type="email"
-              value={userEmail}
-              onChange={(e) => setUserEmail(e.target.value)}
-              disabled={isBusy}
-              placeholder="Enter your email"
-              className={!isEmailValid ? "!border-red-500" : ""}
+          {showStatusRetry ? (
+            <ActionButton
+              onClick={() => refetchIsSubscribed()}
+              label="Retry"
+              variant="secondary"
+              className="whitespace-nowrap px-5 py-2.5 text-sm"
             />
-            <AuthGuard
-              signInButtonProps={{
-                className: "px-5 py-2.5 text-sm whitespace-nowrap",
-              }}
-            >
-              <ActionButton
-                onClick={handleSubmitEmail}
-                label={isEditing ? "Save" : "Enable"}
-                disabled={
-                  !trimmedEmail ||
-                  !isEmailValid ||
-                  isBusy ||
-                  (isEditing && !canUpdateEmail)
-                }
-                isLoading={isBusy}
-                variant="primary"
-                className="whitespace-nowrap px-5 py-2.5 text-sm"
+          ) : (
+            <div className="flex gap-2">
+              <Field
+                type="email"
+                value={userEmail}
+                onChange={(e) => setUserEmail(e.target.value)}
+                disabled={isBusy}
+                placeholder="Enter your email"
+                className={!isEmailValid ? "!border-red-500" : ""}
               />
-            </AuthGuard>
-          </div>
+              <AuthGuard
+                signInButtonProps={{
+                  className: "px-5 py-2.5 text-sm whitespace-nowrap",
+                }}
+              >
+                <ActionButton
+                  onClick={handleSubmitEmail}
+                  label={isEditing ? "Save" : "Enable"}
+                  disabled={
+                    !trimmedEmail ||
+                    !isEmailValid ||
+                    isBusy ||
+                    (isEditing && !canUpdateEmail)
+                  }
+                  isLoading={isBusy}
+                  variant="primary"
+                  className="whitespace-nowrap px-5 py-2.5 text-sm"
+                />
+              </AuthGuard>
+            </div>
+          )}
 
           {!isEmailValid && (
             <p className="mt-1 text-[11px] text-red-500">

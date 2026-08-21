@@ -384,6 +384,7 @@ export default function ClaimSection({
             key={address ?? "no-address"}
             amountPerClaim={amountPerClaim}
             isTestnet={isTestnet}
+            justClaimed={optimisticClaimed}
           />
         </div>
       </div>
