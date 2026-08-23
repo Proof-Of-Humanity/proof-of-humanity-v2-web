@@ -358,12 +358,9 @@ function FormContent({
 
     loading.start("Linking referral");
     try {
-      // await getAuthedAtlasSdk().LinkReferralAttribution({
-      //   referrerHumanityId: referral.referrerHumanityId,
-      // });
-      toast.info(
-        `Would link referral ${referral.referrerHumanityId} (Atlas call skipped)`,
-      );
+      await getAuthedAtlasSdk().LinkReferralAttribution({
+        referrerHumanityId: referral.referrerHumanityId,
+      });
       return true;
     } catch (error) {
       loading.stop();
@@ -641,7 +638,7 @@ function FormContent({
               advance={() => step$.set(Step.review)}
               onBack={canGoBack ? goBack : undefined}
               video$={media$.video}
-              isRenewal={!!renewal}
+              isRenewal={isRenewal}
               videoError={(ErrMsg) => toast.error(ErrMsg)}
             />
           ),

@@ -3782,6 +3782,14 @@ export enum _SubgraphErrorPolicy_ {
   Deny = 'deny'
 }
 
+export type ActiveRegistrationByClaimerQueryVariables = Exact<{
+  address: Scalars['String'];
+  now: Scalars['BigInt'];
+}>;
+
+
+export type ActiveRegistrationByClaimerQuery = { __typename?: 'Query', registrations: Array<{ __typename?: 'Registration', humanity: { __typename?: 'Humanity', id: any, pendingRevocation: boolean, winnerClaim: Array<{ __typename?: 'Request', creationTime: any, index: any, lastStatusChange: any, requester: any, resolutionTime: any, claimer: { __typename?: 'Claimer', id: any, name?: string | null }, evidenceGroup: { __typename?: 'EvidenceGroup', evidence: Array<{ __typename?: 'Evidence', uri: string }> } }> } }> };
+
 export type GetCirclesAccountsByaddressQueryVariables = Exact<{
   address: Scalars['String'];
   expirationTime: Scalars['BigInt'];
@@ -3887,6 +3895,13 @@ export type ReferralRefereePriorClaimQueryVariables = Exact<{
 
 export type ReferralRefereePriorClaimQuery = { __typename?: 'Query', humanity?: { __typename?: 'Humanity', requests: Array<{ __typename?: 'Request', id: any }> } | null };
 
+export type ReferralRefereeProfilesQueryVariables = Exact<{
+  ids?: InputMaybe<Array<Scalars['Bytes']> | Scalars['Bytes']>;
+}>;
+
+
+export type ReferralRefereeProfilesQuery = { __typename?: 'Query', humanities: Array<{ __typename?: 'Humanity', id: any, pendingRevocation: boolean, registration?: { __typename?: 'Registration', expirationTime: any, claimer: { __typename?: 'Claimer', name?: string | null } } | null, latestClaimRequest: Array<{ __typename?: 'Request', status: { __typename?: 'Status', id: string }, winnerParty?: { __typename?: 'Party', id: string } | null, claimer: { __typename?: 'Claimer', name?: string | null }, evidenceGroup: { __typename?: 'EvidenceGroup', evidence: Array<{ __typename?: 'Evidence', uri: string }> } }> }> };
+
 export type RegistrationQueryVariables = Exact<{
   id: Scalars['ID'];
 }>;
@@ -3973,6 +3988,17 @@ export const WinnerClaimFragmentDoc = gql`
   }
 }
     `;
+export const ActiveRegistrationByClaimerDocument = gql`
+    query ActiveRegistrationByClaimer($address: String!, $now: BigInt!) {
+  registrations(where: {claimer: $address, expirationTime_gt: $now}, first: 1) {
+    humanity {
+      id
+      pendingRevocation
+      ...winnerClaim
+    }
+  }
+}
+    ${WinnerClaimFragmentDoc}`;
 export const GetCirclesAccountsByaddressDocument = gql`
     query GetCirclesAccountsByaddress($address: String!, $expirationTime: BigInt!) {
   registrations(
@@ -4338,8 +4364,43 @@ export const ReferralReferrerProfileDocument = gql`
 export const ReferralRefereePriorClaimDocument = gql`
     query ReferralRefereePriorClaim($id: ID!) {
   humanity(id: $id) {
-    requests(first: 1, where: { index: "0", revocation: false }) {
+    requests(first: 1, where: {index: "0", revocation: false}) {
       id
+    }
+  }
+}
+    `;
+export const ReferralRefereeProfilesDocument = gql`
+    query ReferralRefereeProfiles($ids: [Bytes!]) {
+  humanities(where: {id_in: $ids}, first: 100) {
+    id
+    pendingRevocation
+    registration {
+      expirationTime
+      claimer {
+        name
+      }
+    }
+    latestClaimRequest: requests(
+      first: 1
+      orderBy: creationTime
+      orderDirection: desc
+      where: {revocation: false}
+    ) {
+      status {
+        id
+      }
+      winnerParty {
+        id
+      }
+      claimer {
+        name
+      }
+      evidenceGroup {
+        evidence(first: 1, orderBy: creationTime, orderDirection: desc) {
+          uri
+        }
+      }
     }
   }
 }
@@ -4564,6 +4625,9 @@ const defaultWrapper: SdkFunctionWrapper = (action, _operationName, _operationTy
 
 export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = defaultWrapper) {
   return {
+    ActiveRegistrationByClaimer(variables: ActiveRegistrationByClaimerQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<ActiveRegistrationByClaimerQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<ActiveRegistrationByClaimerQuery>({ document: ActiveRegistrationByClaimerDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'ActiveRegistrationByClaimer', 'query', variables);
+    },
     GetCirclesAccountsByaddress(variables: GetCirclesAccountsByaddressQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<GetCirclesAccountsByaddressQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<GetCirclesAccountsByaddressQuery>({ document: GetCirclesAccountsByaddressDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'GetCirclesAccountsByaddress', 'query', variables);
     },
@@ -4608,6 +4672,9 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     },
     ReferralRefereePriorClaim(variables: ReferralRefereePriorClaimQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<ReferralRefereePriorClaimQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<ReferralRefereePriorClaimQuery>({ document: ReferralRefereePriorClaimDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'ReferralRefereePriorClaim', 'query', variables);
+    },
+    ReferralRefereeProfiles(variables?: ReferralRefereeProfilesQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<ReferralRefereeProfilesQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<ReferralRefereeProfilesQuery>({ document: ReferralRefereeProfilesDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'ReferralRefereeProfiles', 'query', variables);
     },
     Registration(variables: RegistrationQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<RegistrationQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<RegistrationQuery>({ document: RegistrationDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'Registration', 'query', variables);

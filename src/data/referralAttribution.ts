@@ -126,9 +126,9 @@ export const resolveReferralReferrer = async (
   );
 
   const now = BigInt(Math.floor(Date.now() / 1000));
-  for (const lookup of lookups) {
-    const humanity = lookup.humanity;
-    const registration = humanity?.registration;
+  for (const { humanity } of lookups) {
+    if (!humanity) continue;
+    const { registration } = humanity;
     if (!registration || BigInt(registration.expirationTime) <= now) continue;
 
     return {
@@ -137,7 +137,7 @@ export const resolveReferralReferrer = async (
         registration.claimer.name?.trim() ||
         `${referrerHumanityId.slice(0, 6)}..${referrerHumanityId.slice(-4)}`,
       evidenceUri:
-        humanity?.winnerClaim[0]?.evidenceGroup.evidence[0]?.uri ?? null,
+        humanity.winnerClaim[0]?.evidenceGroup.evidence[0]?.uri ?? null,
     };
   }
 
