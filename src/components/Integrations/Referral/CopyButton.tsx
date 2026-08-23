@@ -6,7 +6,6 @@ import CopyIcon from "icons/Copy.svg";
 
 interface CopyButtonProps {
   value: string;
-  // "icon" renders a bare copy glyph; "button" renders the primary "Copy Link" CTA.
   variant?: "icon" | "button";
   className?: string;
 }

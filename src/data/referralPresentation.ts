@@ -8,18 +8,16 @@ import {
   ReferredVerification,
 } from "types/referral";
 
-/** Format a PNK amount with thousands separators. */
 export const formatPnk = (amount: number) =>
   `${amount.toLocaleString("en-US")} PNK`;
 
-/** Truncate a referral link for display, e.g. `…/?ref=0xabc…` (full link is still copied). */
+/** Display-only; the full link is what gets copied. */
 export const shortenReferralLink = (link: string) => {
   const [base, ref] = link.split("?ref=");
   if (!ref) return link;
   return `${base}?ref=${ref.slice(0, 5)}...`;
 };
 
-/** Badge metadata for the referee's verification status. */
 export const VERIFICATION_META: Record<
   ReferredVerification,
   { label: string; text: string; description?: string }
@@ -40,11 +38,39 @@ export const VERIFICATION_META: Record<
     label: "Revocation Pending",
     text: "text-status-revocation",
     description:
-      "Someone requested this referee's removal from the registry. The reward is on hold until the request resolves.",
+      "Someone requested this referee's removal from the registry.",
+  },
+  removed: {
+    label: "Removed from Registry",
+    text: "text-status-rejected",
+    description:
+      "This referee was verified but has since been removed from the registry.",
+  },
+  expired: {
+    label: "Registration Expired",
+    text: "text-secondaryText",
+    description: "This referee's registration lapsed and can be renewed.",
   },
 };
 
-/** Ordered funnel steps, used to render the progress tracker. */
+export const getVerificationDescription = (
+  user: ReferredUser,
+): string | undefined => {
+  const base = VERIFICATION_META[user.verification].description;
+  if (base === undefined) return undefined;
+  if (user.payoutStatus === PohReferralPayoutTransactionStatus.Confirmed)
+    return user.verification === "removed" || user.verification === "expired"
+      ? `${base} The reward already paid is unaffected.`
+      : base;
+  if (user.verification === "revocation-pending")
+    // A broadcast payout can no longer be stopped; only an unsent reward is
+    // actually held back by the pending revocation.
+    return user.payoutStatus === PohReferralPayoutTransactionStatus.NotSent
+      ? `${base} The reward is on hold until the request resolves.`
+      : `${base} The payout already in flight is unaffected.`;
+  return base;
+};
+
 export const REFERRAL_STEPS: ReferralStep[] = [
   "started",
   "in-progress",
@@ -64,20 +90,20 @@ export const REFERRAL_STEP_LABELS: Record<ReferralStep, string> = {
 /**
  * The funnel is stopped (flagged or rejected/awaiting admin review) and the
  * stepper should render frozen at its current step rather than implying
- * progress. Paid rows are never halted — the reward already went out.
+ * progress. Paid rows are never halted — the reward already went out — and
+ * neither are broadcast (Pending) payouts: the transaction is in flight and
+ * nothing shown here can stop it.
  */
 export const isReferralHalted = (user: ReferredUser): boolean =>
-  user.payoutStatus !== PohReferralPayoutTransactionStatus.Confirmed &&
+  user.payoutStatus === PohReferralPayoutTransactionStatus.NotSent &&
   (user.refereeFlagged ||
     user.reviewStatus === PohReferralReviewStatus.Rejected ||
     user.reviewStatus === PohReferralReviewStatus.NeedsReview ||
     user.verification === "rejected" ||
-    user.verification === "revocation-pending");
+    user.verification === "revocation-pending" ||
+    user.verification === "removed");
 
-/**
- * Derive the displayed funnel step from the referral's payout + verification
- * state. Payout progress wins (it's the later half of the funnel);
- */
+/** Payout progress wins over verification (it's the later half of the funnel). */
 export const deriveStep = (user: ReferredUser): ReferralStep => {
   if (user.payoutStatus === PohReferralPayoutTransactionStatus.Confirmed)
     return "paid";
@@ -93,11 +119,11 @@ export const deriveStep = (user: ReferredUser): ReferralStep => {
     rewardLocked
   )
     return "reward-pending";
-  // Revocation-pending referees reached "verified" — the stepper freezes there
-  // (isReferralHalted) instead of implying reward progress.
   if (
     user.verification === "verified" ||
-    user.verification === "revocation-pending"
+    user.verification === "revocation-pending" ||
+    user.verification === "removed" ||
+    user.verification === "expired"
   )
     return "verified";
   if (

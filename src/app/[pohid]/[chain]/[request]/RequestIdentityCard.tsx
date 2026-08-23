@@ -2,6 +2,8 @@ import Attachment from "components/Attachment";
 import DocumentIcon from "components/DocumentIcon";
 import ExternalLink from "components/ExternalLink";
 import Identicon from "components/Identicon";
+import HumanConnectorBadge from "components/Integrations/Referral/HumanConnectorBadge";
+import InviteHumansBanner from "components/Integrations/Referral/InviteHumansBanner";
 import {
   PohIdReferenceRow,
   WalletReferenceRow,
@@ -32,20 +34,14 @@ import type {
   RequestPageRequest,
 } from "./RequestIdentityCard.types";
 
-/**
- * @notice Returns the original evidence URI from a request evidence list.
- * @dev Request evidence is fetched newest-first except winnerClaim, which only
- * requests the first registration evidence, so `at(-1)` works for both shapes.
- */
+/** Request evidence is fetched newest-first except winnerClaim, which only
+ *  requests the first registration evidence, so `at(-1)` works for both shapes. */
 function getInitialEvidenceUri(evidence: RequestIdentityEvidence[]) {
   return evidence.at(-1)?.uri ?? null;
 }
 
-/**
- * @notice Starts the IPFS file requests needed by identity UI.
- * @dev Registration media comes from the identity source; revocation details
- * come from the current revocation request.
- */
+/** Registration media comes from the identity source; revocation details come
+ *  from the current revocation request. */
 function getIdentityFiles({
   identity,
   request,
@@ -76,11 +72,6 @@ function getIdentityFiles({
   };
 }
 
-/**
- * @notice Waits for identity data and renders the revocation evidence banner.
- * @dev Hidden for non-revocation requests or when the revocation evidence file
- * could not be loaded; callers wrap this component in Suspense.
- */
 export async function RevocationBanner({
   chain,
   identityFiles,
@@ -121,11 +112,6 @@ export async function RevocationBanner({
   );
 }
 
-/**
- * @notice Renders the profile media, name, and bio.
- * @dev Shared by desktop and mobile identity sections with layout-specific
- * spacing classes.
- */
 function ProfileSummary({
   displayedClaimerName,
   registrationFile,
@@ -161,11 +147,8 @@ function ProfileSummary({
   );
 }
 
-/**
- * @notice Waits for identity data and renders the desktop identity sidebar.
- * @dev Kept separate from the main card body so request info and timeline are
- * not blocked by profile-media fetching.
- */
+/** Kept separate from the main card body so request info and timeline are not
+ *  blocked by profile-media fetching. */
 export async function DesktopProfileAside({
   identity,
   identityFiles,
@@ -192,6 +175,7 @@ export async function DesktopProfileAside({
           nameClassName="text-primaryText mt-2 text-2xl font-semibold"
           bioClassName="text-secondaryText mt-2 max-w-[18rem] text-sm font-normal leading-5"
         />
+        <HumanConnectorBadge claimerId={identity.claimer.id as Address} />
       </div>
       <div className="border-stroke order-7 mb-8 mt-8 flex w-[calc(100%-3rem)] flex-col items-center gap-4 self-center border-y py-4 md:order-none md:mb-0 md:w-full md:self-auto [&:not(:has(>*))]:hidden">
         {vouchers}
@@ -204,10 +188,8 @@ export async function DesktopProfileAside({
   );
 }
 
-/**
- * @notice Waits for identity data and renders the request identity header.
- * @dev Allows non-identity sections below the header to stream independently.
- */
+/** Streams independently so non-identity sections below the header are not
+ *  blocked on identity data. */
 export async function IdentityHeader({
   chain,
   identity,
@@ -237,11 +219,6 @@ export async function IdentityHeader({
   );
 }
 
-/**
- * @notice Fetches meta-evidence and renders the request policy link.
- * @dev Returns null when the meta-evidence file is unavailable or has no file
- * URI, allowing the rest of the identity card to stream without this request.
- */
 async function PolicyLink({ metaEvidenceUri }: { metaEvidenceUri: string }) {
   try {
     const policyLink = (await ipfsFetch<MetaEvidenceFile>(metaEvidenceUri))
@@ -266,10 +243,6 @@ async function PolicyLink({ metaEvidenceUri }: { metaEvidenceUri: string }) {
   }
 }
 
-/**
- * @notice Waits for identity data and renders the registration video.
- * @dev The same media block is reused across responsive layouts.
- */
 export async function IdentityVideo({
   identityFiles,
 }: {
@@ -308,11 +281,6 @@ export async function IdentityVideo({
   );
 }
 
-/**
- * @notice Renders the identity/profile section for a request page.
- * @dev The component owns identity display UI, while callers pass request-page
- * slots for request info, vouches, and timeline content.
- */
 export default function RequestIdentityCard({
   chain,
   identity,
@@ -329,62 +297,68 @@ export default function RequestIdentityCard({
     request,
   });
   return (
-    <div className="border-stroke bg-whiteBackground mb-1 overflow-hidden rounded-card border shadow-soft-inset">
-      <Suspense fallback={null}>
-        <RevocationBanner
-          chain={chain}
-          identityFiles={identityFiles}
-          request={request}
-        />
-      </Suspense>
-
-      <div className="flex flex-col md:flex-row">
-        <Suspense
-          fallback={
-            <div className="md:border-stroke contents md:flex md:w-[26%] md:min-w-[16rem] md:shrink-0 md:flex-col md:items-center md:border-r md:px-6 md:py-6">
-              <div className="order-3 flex w-full justify-center px-6 md:order-none md:px-0">
-                <MediaFallback className="h-32 w-32 rounded-full" />
-              </div>
-            </div>
-          }
-        >
-          <DesktopProfileAside
-            identity={identity}
+    <>
+      <InviteHumansBanner
+        claimerId={identity.claimer.id as Address}
+        className="mb-4"
+      />
+      <div className="border-stroke bg-whiteBackground mb-1 overflow-hidden rounded-card border shadow-soft-inset">
+        <Suspense fallback={null}>
+          <RevocationBanner
+            chain={chain}
             identityFiles={identityFiles}
             request={request}
-            vouchedFor={vouchedFor}
-            vouchers={vouchers}
           />
         </Suspense>
 
-        <div className="contents md:flex md:w-full md:min-w-0 md:flex-col md:gap-4 md:p-6 lg:p-8">
-          <Suspense
-            fallback={<div className="order-1 h-72 md:order-none md:h-28" />}
-          >
-            <IdentityHeader chain={chain} identity={identity} pohId={pohId} />
-          </Suspense>
-          <div className="order-2 mt-6 flex justify-center px-6 md:order-none md:mt-0 md:px-0">
-            {requestInfo}
-          </div>
+        <div className="flex flex-col md:flex-row">
           <Suspense
             fallback={
-              <div className="order-5 mt-8 w-full px-4 md:order-none md:mt-0 md:px-0">
-                <MediaFallback className="aspect-[1.8] w-full rounded-2xl" />
+              <div className="md:border-stroke contents md:flex md:w-[26%] md:min-w-[16rem] md:shrink-0 md:flex-col md:items-center md:border-r md:px-6 md:py-6">
+                <div className="order-3 flex w-full justify-center px-6 md:order-none md:px-0">
+                  <MediaFallback className="h-32 w-32 rounded-full" />
+                </div>
               </div>
             }
           >
-            <IdentityVideo identityFiles={identityFiles} />
+            <DesktopProfileAside
+              identity={identity}
+              identityFiles={identityFiles}
+              request={request}
+              vouchedFor={vouchedFor}
+              vouchers={vouchers}
+            />
           </Suspense>
-          <div className="order-6 mt-6 px-6 md:order-none md:mt-0 md:px-0">
-            <Suspense fallback={null}>
-              <PolicyLink metaEvidenceUri={policyMetaEvidenceUri} />
+
+          <div className="contents md:flex md:w-full md:min-w-0 md:flex-col md:gap-4 md:p-6 lg:p-8">
+            <Suspense
+              fallback={<div className="order-1 h-72 md:order-none md:h-28" />}
+            >
+              <IdentityHeader chain={chain} identity={identity} pohId={pohId} />
             </Suspense>
-          </div>
-          <div className="border-stroke order-8 mx-6 border-t pt-4 md:order-none md:mx-0">
-            {timeline}
+            <div className="order-2 mt-6 flex justify-center px-6 md:order-none md:mt-0 md:px-0">
+              {requestInfo}
+            </div>
+            <Suspense
+              fallback={
+                <div className="order-5 mt-8 w-full px-4 md:order-none md:mt-0 md:px-0">
+                  <MediaFallback className="aspect-[1.8] w-full rounded-2xl" />
+                </div>
+              }
+            >
+              <IdentityVideo identityFiles={identityFiles} />
+            </Suspense>
+            <div className="order-6 mt-6 px-6 md:order-none md:mt-0 md:px-0">
+              <Suspense fallback={null}>
+                <PolicyLink metaEvidenceUri={policyMetaEvidenceUri} />
+              </Suspense>
+            </div>
+            <div className="border-stroke order-8 mx-6 border-t pt-4 md:order-none md:mx-0">
+              {timeline}
+            </div>
           </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }

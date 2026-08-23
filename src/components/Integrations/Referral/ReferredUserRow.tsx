@@ -10,12 +10,14 @@ import NewTabIcon from "icons/NewTab.svg";
 import NeedsVouchIcon from "icons/NeedsVouch.svg";
 import EyeIcon from "icons/Eye.svg";
 import CheckCircleOutlineIcon from "icons/CheckCircleOutline.svg";
-import WarningIcon from "icons/WarningCircle16.svg";
-import RejectedIcon from "icons/CircleCancelMinor.svg";
+import WarningIcon from "icons/WarningCircleOutline16.svg";
+import RejectedIcon from "icons/CircleCancelFilled16.svg";
+import RemovedIcon from "icons/CrossCircle16.svg";
 import HourglassIcon from "icons/Hourglass.svg";
 import {
   VERIFICATION_META,
   deriveStep,
+  getVerificationDescription,
   isReferralHalted,
 } from "data/referralPresentation";
 import {
@@ -42,6 +44,8 @@ const VERIFICATION_ICON: Record<
   rejected: RejectedIcon,
   verified: CheckCircleOutlineIcon,
   "revocation-pending": WarningIcon,
+  removed: RemovedIcon,
+  expired: HourglassIcon,
 };
 
 const getRowStatus = (user: ReferredUser) => {
@@ -50,16 +54,21 @@ const getRowStatus = (user: ReferredUser) => {
   if (user.payoutStatus === PohReferralPayoutTransactionStatus.Confirmed)
     return {
       ...VERIFICATION_META[user.verification],
+      description: getVerificationDescription(user),
       Icon: VERIFICATION_ICON[user.verification],
     };
+
+  const payoutInFlight =
+    user.payoutStatus === PohReferralPayoutTransactionStatus.Pending;
 
   if (user.refereeFlagged)
     return {
       label: "Referee Flagged",
       text: "text-status-rejected",
       Icon: WarningIcon,
-      description:
-        "Referral rewards are paused while this referred profile is flagged.",
+      description: payoutInFlight
+        ? "This referred profile is flagged. The payout already in flight is unaffected; future rewards are paused."
+        : "Referral rewards are paused while this referred profile is flagged.",
     };
 
   if (user.reviewStatus === PohReferralReviewStatus.Rejected)
@@ -67,7 +76,9 @@ const getRowStatus = (user: ReferredUser) => {
       label: "Referral Rejected",
       text: "text-status-rejected",
       Icon: RejectedIcon,
-      description: "This referral is not eligible for rewards.",
+      description: payoutInFlight
+        ? "This referral was rejected, but the payout already in flight is unaffected."
+        : "This referral is not eligible for rewards.",
     };
 
   if (user.reviewStatus === PohReferralReviewStatus.NeedsReview)
@@ -75,12 +86,15 @@ const getRowStatus = (user: ReferredUser) => {
       label: "Needs Review",
       text: "text-status-challenged",
       Icon: WarningIcon,
-      description: "This referral needs admin review before payout.",
+      description: payoutInFlight
+        ? "This referral needs admin review. The payout already in flight is unaffected."
+        : "This referral needs admin review before payout.",
     };
 
   const status = VERIFICATION_META[user.verification];
   return {
     ...status,
+    description: getVerificationDescription(user),
     Icon: VERIFICATION_ICON[user.verification],
   };
 };
@@ -93,7 +107,7 @@ const ReferredUserRow: React.FC<ReferredUserRowProps> = ({ user }) => {
   const photoUrl = user.photo ? safeIpfsUrl(user.photo) : null;
 
   return (
-    <div className="flex flex-col gap-3 border-b border-white/10 py-4 last:border-b-0 sm:flex-row sm:items-center sm:justify-between">
+    <div className="flex flex-col gap-3 border-b border-white/10 py-4 last:border-b-0 sm:flex-row sm:items-start sm:justify-between">
       <div className="flex flex-col gap-2">
         <div className="flex flex-wrap items-center gap-2">
           {photoUrl ? (

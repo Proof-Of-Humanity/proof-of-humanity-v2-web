@@ -1,7 +1,6 @@
 "use client";
 
 import { useAtlasProvider } from "@kleros/kleros-app";
-import cn from "classnames";
 import SignInButton from "components/SignInButton";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -13,11 +12,7 @@ import ReferralIcon from "icons/Referral.svg";
 import { useEffect, useState } from "react";
 import { useAccount } from "wagmi";
 import ReferralCard from "./ReferralCard";
-// dev harness start
-import { mockReferralPage, mockReferrer } from "./referralMockData";
-// dev harness end
 
-// Static card shell shown in every state (header of Card-Referral).
 const CardShell: React.FC<{ children: React.ReactNode }> = ({ children }) => (
   <div className="paper p-5 md:p-7">
     <div className="text-orange mb-4 flex items-center gap-2">
@@ -36,77 +31,13 @@ const CardShell: React.FC<{ children: React.ReactNode }> = ({ children }) => (
   </div>
 );
 
-// dev harness start
-// Bootstrappable via URL: ?mockReferral=1&mockFlagged=1&mockRevocation=1&mockEmpty=1
-interface MockState {
-  on: boolean;
-  flagged: boolean;
-  revocation: boolean;
-  empty: boolean;
-}
-
-const MockPill: React.FC<{
-  label: string;
-  active: boolean;
-  onClick: () => void;
-}> = ({ label, active, onClick }) => (
-  <button
-    type="button"
-    onClick={onClick}
-    className={cn(
-      "rounded-full border px-3 py-1 text-xs transition-colors",
-      active
-        ? "text-orange border-peach"
-        : "text-secondaryText border-stroke hover:text-orange",
-    )}
-  >
-    {label}
-  </button>
-);
-// dev harness end
-
-/**
- * Referral feature card on the Rewards page. Owns the auth gating, the page
- * state and data fetching; renders `ReferralCard` once the signed-in user's
- * referrer identity and the current page are loaded.
- */
 const ReferralDashboard = () => {
   const { address } = useAccount();
   const { isVerified: isSignedIn } = useAtlasProvider();
   const account = address?.toLowerCase() as `0x${string}` | undefined;
   const [currentPage, setCurrentPage] = useState(0);
 
-  // dev harness start
-  const [mock, setMock] = useState<MockState>({
-    on: false,
-    flagged: false,
-    revocation: false,
-    empty: false,
-  });
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    if (params.get("mockReferral") !== "1") return;
-    setMock({
-      on: true,
-      flagged: params.get("mockFlagged") === "1",
-      revocation: params.get("mockRevocation") === "1",
-      empty: params.get("mockEmpty") === "1",
-    });
-    const initialPage = Number(params.get("mockPage"));
-    if (Number.isInteger(initialPage) && initialPage > 0)
-      setCurrentPage(initialPage);
-  }, []);
-  const toggleMockOption = (key: keyof MockState) => () => {
-    setMock((current) => ({ ...current, [key]: !current[key] }));
-    setCurrentPage(0);
-  };
-  // dev harness end
-
-  const canFetch =
-    Boolean(account && isSignedIn) &&
-    // dev harness start
-    !mock.on;
-  // dev harness end
+  const canFetch = Boolean(account && isSignedIn);
 
   const referrer = useQuery({
     queryKey: ["referral-referrer", account],
@@ -124,52 +55,7 @@ const ReferralDashboard = () => {
       previousQuery?.queryKey[1] === account ? previousData : undefined,
   });
 
-  // dev harness start
-  const mockControls = (
-    <div className="mb-2 flex flex-wrap items-center justify-end gap-1.5">
-      <MockPill
-        label="Mock data"
-        active={mock.on}
-        onClick={toggleMockOption("on")}
-      />
-      {mock.on && (
-        <>
-          <MockPill
-            label="Flag referrer"
-            active={mock.flagged}
-            onClick={toggleMockOption("flagged")}
-          />
-          <MockPill
-            label="Revocation pending"
-            active={mock.revocation}
-            onClick={toggleMockOption("revocation")}
-          />
-          <MockPill
-            label="Empty"
-            active={mock.empty}
-            onClick={toggleMockOption("empty")}
-          />
-        </>
-      )}
-    </div>
-  );
-
-  const mockedPage = mock.on
-    ? mockReferralPage({
-        pageIndex: currentPage,
-        pageSize: REFERRALS_PAGE_SIZE,
-        humanityFlagged: mock.flagged,
-        empty: mock.empty,
-      })
-    : undefined;
-  // dev harness end
-
-  const totalCount = // dev harness start
-  (
-    mockedPage ??
-    // dev harness end
-    referralPage.data
-  )?.totalCount;
+  const totalCount = referralPage.data?.totalCount;
   const pageCount =
     totalCount === undefined ? 0 : Math.ceil(totalCount / REFERRALS_PAGE_SIZE);
 
@@ -182,21 +68,6 @@ const ReferralDashboard = () => {
 
   // No hooks below — the early returns inside this closure are safe.
   const body = (() => {
-    // dev harness start
-    if (mockedPage)
-      return (
-        <CardShell>
-          <ReferralCard
-            referrer={mockReferrer(mock.revocation)}
-            referralPage={mockedPage}
-            currentPage={currentPage}
-            pageCount={pageCount}
-            onPageChange={setCurrentPage}
-          />
-        </CardShell>
-      );
-    // dev harness end
-
     if (!canFetch)
       return (
         <CardShell>
@@ -248,12 +119,10 @@ const ReferralDashboard = () => {
       return (
         <CardShell>
           <div className="mt-5 flex animate-pulse flex-col">
-            {/* Link row: avatar + "My Referral Link: …" */}
             <div className="flex items-center gap-2">
               <div className="bg-grey h-6 w-6 shrink-0 rounded-full" />
               <div className="bg-grey h-4 w-64 max-w-full rounded-full" />
             </div>
-            {/* Copy + share actions */}
             <div className="mt-4 flex items-center gap-4">
               <div className="bg-grey h-11 w-40 rounded-full" />
               <div className="bg-grey h-8 w-32 rounded-full" />
@@ -296,14 +165,7 @@ const ReferralDashboard = () => {
     );
   })();
 
-  return (
-    <div>
-      {/* dev harness start */}
-      {mockControls}
-      {/* dev harness end */}
-      {body}
-    </div>
-  );
+  return body;
 };
 
 export default ReferralDashboard;
