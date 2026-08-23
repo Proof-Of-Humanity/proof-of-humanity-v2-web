@@ -20,8 +20,8 @@ interface ReferrerProfile {
   photo: string | null;
 }
 
-/** Finds the referrer's active registration across all supported chains; null if none.
- *  Throws on subgraph error so react-query shows the retry card, not a false "no humanity". */
+/** Throws on subgraph error so react-query shows the retry card, not a false
+ *  "no humanity". */
 const resolveReferrerProfile = async (
   referrerAccount: `0x${string}`,
 ): Promise<ReferrerProfile | null> => {
@@ -56,19 +56,18 @@ interface RefereeProfile {
   verification: ReferredVerification;
 }
 
-/** Resolves referee display profiles from the subgraphs; throws on error. */
 const resolveRefereeProfiles = async (
   refereeHumanityIds: string[],
 ): Promise<Map<string, RefereeProfile>> => {
   const profilesByHumanityId = new Map<
     string,
-    RefereeProfile & { evidenceUri?: string }
+    RefereeProfile & { evidenceUri?: string; liveliness: number }
   >();
   if (refereeHumanityIds.length === 0) return profilesByHumanityId;
 
   const nowSeconds = BigInt(Math.floor(Date.now() / 1000));
-  // A referee's humanity lives on a single chain, so ids don't collide across
-  // subgraphs — we just gather every hit into one lookup keyed by humanity id.
+  // A transferred humanity appears on both subgraphs under the same id; the
+  // dedupe below keeps whichever chain's record is most alive.
   const humanitiesPerChain = await Promise.all(
     supportedChains.map(async (chain) =>
       (
@@ -86,12 +85,21 @@ const resolveRefereeProfiles = async (
     const claimRejected =
       latestClaim?.status.id === "resolved" &&
       latestClaim.winnerParty?.id === "challenger";
-    // A won claim whose registration has since expired is still a completed
-    // verification — not a review in progress.
     const claimWon =
       (latestClaim?.status.id === "resolved" &&
         latestClaim.winnerParty?.id === "requester") ||
       latestClaim?.status.id === "transferred";
+    // After a won claim, a lapsed registration entity stays behind while a
+    // revoked one is deleted — that difference separates expired from removed.
+    const registrationLapsed = Boolean(registration) && !isRegistered;
+    const latestRemoval = humanity.latestRemovalRequest[0];
+    const removedAfterLatestClaim =
+      latestRemoval !== undefined &&
+      (latestClaim === undefined ||
+        BigInt(latestRemoval.creationTime) >=
+          BigInt(latestClaim.creationTime));
+    const transferredToAnotherChain =
+      latestClaim?.status.id === "transferred" && !removedAfterLatestClaim;
 
     let verification: ReferredVerification;
     if (isRegistered)
@@ -99,8 +107,16 @@ const resolveRefereeProfiles = async (
         ? "revocation-pending"
         : "verified";
     else if (claimRejected) verification = "rejected";
-    else if (claimWon) verification = "verified";
-    else if (latestClaim?.status.id === "vouching")
+    else if (claimWon) {
+      // A revocation dispute can outlive the registration's expiry; keep the
+      // dispute (and its reward hold) visible until the request resolves.
+      if (registrationLapsed)
+        verification = humanity.pendingRevocation
+          ? "revocation-pending"
+          : "expired";
+      else if (transferredToAnotherChain) verification = "verified";
+      else verification = "removed";
+    } else if (latestClaim?.status.id === "vouching")
       verification = "needs-vouch";
     else if (
       latestClaim?.status.id === "resolving" ||
@@ -110,7 +126,19 @@ const resolveRefereeProfiles = async (
     // No live claim (never claimed, or withdrawn).
     else verification = "not-registered";
 
-    profilesByHumanityId.set(String(humanity.id).toLowerCase(), {
+    // Rank how "alive" this chain's record is, so a transfer's stale source
+    // entry never shadows the destination chain's record. A transferred-away
+    // record is only a proxy for the destination chain, so it ranks lowest.
+    const liveliness = isRegistered
+      ? 2
+      : transferredToAnotherChain
+        ? 0
+        : latestClaim
+          ? 1
+          : 0;
+    const humanityKey = String(humanity.id).toLowerCase();
+    const alreadyResolved = profilesByHumanityId.get(humanityKey);
+    const resolvedProfile = {
       name:
         registration?.claimer.name?.trim() ||
         latestClaim?.claimer.name?.trim() ||
@@ -118,7 +146,21 @@ const resolveRefereeProfiles = async (
       chainId,
       verification,
       evidenceUri: latestClaim?.evidenceGroup.evidence[0]?.uri,
-    });
+      liveliness,
+    };
+    // Status follows the most-alive chain, but a bridged destination request
+    // has no claim evidence of its own — name/photo fall back to whichever
+    // chain still holds the original claim metadata.
+    if (alreadyResolved && alreadyResolved.liveliness >= liveliness) {
+      alreadyResolved.name ??= resolvedProfile.name;
+      alreadyResolved.evidenceUri ??= resolvedProfile.evidenceUri;
+      continue;
+    }
+    if (alreadyResolved) {
+      resolvedProfile.name ??= alreadyResolved.name;
+      resolvedProfile.evidenceUri ??= alreadyResolved.evidenceUri;
+    }
+    profilesByHumanityId.set(humanityKey, resolvedProfile);
   }
 
   await Promise.all(
@@ -134,7 +176,17 @@ const toPnk = (wei: string) => Number(formatUnits(BigInt(wei), 18));
 
 export const REFERRALS_PAGE_SIZE = 10;
 
-/** The signed-in user's referrer identity; null if they have no humanity. */
+export const HUMAN_CONNECTOR_THRESHOLD = 5;
+
+/** Atlas referral reads are scoped to the caller's JWT, so this cannot
+ *  resolve an arbitrary profile. */
+export const fetchVerifiedReferralCount = async (): Promise<number> => {
+  const { pohReferralStats } = await getAuthedAtlasSdk().PohReferralDashboard({
+    pagination: { skip: 0, take: 1 },
+  });
+  return pohReferralStats.verifiedReferrals;
+};
+
 export const fetchReferrerSummary = async (
   address: `0x${string}`,
 ): Promise<ReferrerSummary | null> => {
@@ -148,7 +200,7 @@ export const fetchReferrerSummary = async (
   };
 };
 
-/** One page of the referred list (0-based) plus stats and the flag banner. */
+/** `pageIndex` is 0-based. */
 export const fetchReferralPage = async (
   pageIndex: number,
 ): Promise<ReferralPage> => {

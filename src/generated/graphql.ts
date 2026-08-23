@@ -3900,7 +3900,7 @@ export type ReferralRefereeProfilesQueryVariables = Exact<{
 }>;
 
 
-export type ReferralRefereeProfilesQuery = { __typename?: 'Query', humanities: Array<{ __typename?: 'Humanity', id: any, pendingRevocation: boolean, registration?: { __typename?: 'Registration', expirationTime: any, claimer: { __typename?: 'Claimer', name?: string | null } } | null, latestClaimRequest: Array<{ __typename?: 'Request', status: { __typename?: 'Status', id: string }, winnerParty?: { __typename?: 'Party', id: string } | null, claimer: { __typename?: 'Claimer', name?: string | null }, evidenceGroup: { __typename?: 'EvidenceGroup', evidence: Array<{ __typename?: 'Evidence', uri: string }> } }> }> };
+export type ReferralRefereeProfilesQuery = { __typename?: 'Query', humanities: Array<{ __typename?: 'Humanity', id: any, pendingRevocation: boolean, registration?: { __typename?: 'Registration', expirationTime: any, claimer: { __typename?: 'Claimer', name?: string | null } } | null, latestRemovalRequest: Array<{ __typename?: 'Request', creationTime: any }>, latestClaimRequest: Array<{ __typename?: 'Request', creationTime: any, status: { __typename?: 'Status', id: string }, winnerParty?: { __typename?: 'Party', id: string } | null, claimer: { __typename?: 'Claimer', name?: string | null }, evidenceGroup: { __typename?: 'EvidenceGroup', evidence: Array<{ __typename?: 'Evidence', uri: string }> } }> }> };
 
 export type RegistrationQueryVariables = Exact<{
   id: Scalars['ID'];
@@ -4381,12 +4381,21 @@ export const ReferralRefereeProfilesDocument = gql`
         name
       }
     }
+    latestRemovalRequest: requests(
+      first: 1
+      orderBy: creationTime
+      orderDirection: desc
+      where: {revocation: true, status: "resolved", winnerParty_: {id: "requester"}}
+    ) {
+      creationTime
+    }
     latestClaimRequest: requests(
       first: 1
       orderBy: creationTime
       orderDirection: desc
       where: {revocation: false}
     ) {
+      creationTime
       status {
         id
       }

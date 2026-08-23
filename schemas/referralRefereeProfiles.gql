@@ -8,12 +8,21 @@ query ReferralRefereeProfiles($ids: [Bytes!]) {
         name
       }
     }
+    latestRemovalRequest: requests(
+      first: 1
+      orderBy: creationTime
+      orderDirection: desc
+      where: { revocation: true, status: "resolved", winnerParty_: { id: "requester" } }
+    ) {
+      creationTime
+    }
     latestClaimRequest: requests(
       first: 1
       orderBy: creationTime
       orderDirection: desc
       where: { revocation: false }
     ) {
+      creationTime
       status {
         id
       }

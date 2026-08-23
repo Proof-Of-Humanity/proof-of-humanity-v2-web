@@ -9,7 +9,6 @@ import CopyButton from "./CopyButton";
 interface ReferralLinkRowProps {
   link: string;
   avatarAddress: `0x${string}`;
-  // Referrer's registration photo (IPFS path); falls back to the identicon.
   photo: string | null;
 }
 
@@ -32,7 +31,9 @@ const ReferralLinkRow: React.FC<ReferralLinkRowProps> = ({
           unoptimized
         />
       ) : (
-        <Identicon address={avatarAddress} diameter={24} />
+        <span className="shrink-0">
+          <Identicon address={avatarAddress} diameter={24} />
+        </span>
       )}
       <span className="text-secondaryText whitespace-nowrap text-sm">
         My Referral Link:
