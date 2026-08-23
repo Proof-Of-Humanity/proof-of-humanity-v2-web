@@ -146,7 +146,7 @@ const ReferredUserRow: React.FC<ReferredUserRowProps> = ({ user }) => {
         />
       </div>
 
-      <div className="shrink-0 sm:max-w-56 sm:text-right">
+      <div className="flex shrink-0 flex-col items-start sm:max-w-56 sm:items-end">
         <div
           className={cn(
             "inline-flex items-center gap-2 text-sm font-semibold",
