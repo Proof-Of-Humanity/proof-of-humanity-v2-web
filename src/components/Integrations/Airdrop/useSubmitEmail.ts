@@ -1,4 +1,4 @@
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-toastify";
 import { useAccount } from "wagmi";
 import { useAtlasProvider } from "@kleros/kleros-app";
@@ -18,6 +18,7 @@ interface UseSubmitEmailOptions {
 export function useSubmitEmail(options?: UseSubmitEmailOptions) {
   const { address } = useAccount();
   const { user, addUser, updateEmail } = useAtlasProvider();
+  const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async (args: {
@@ -55,6 +56,10 @@ export function useSubmitEmail(options?: UseSubmitEmailOptions) {
       return true;
     },
     onSuccess: (wasUpdated, variables) => {
+      if (wasUpdated) {
+        queryClient.invalidateQueries({ queryKey: ["isSubscribed"] });
+      }
+
       if (variables?.isResend) {
         if (wasUpdated) {
           toast.success(
