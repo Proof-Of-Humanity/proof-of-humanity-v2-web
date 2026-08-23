@@ -116,7 +116,7 @@ const ReferralCapture = () => {
     clearRefParam,
   ]);
 
-  const handleCta = () => {
+  const connectWalletOrStartClaim = () => {
     if (!address) {
       modal.open({ view: "Connect" });
       return;
@@ -181,7 +181,7 @@ const ReferralCapture = () => {
         <button
           type="button"
           className="btn-primary mt-6 w-full"
-          onClick={handleCta}
+          onClick={connectWalletOrStartClaim}
           disabled={claimLoading}
         >
           {claimLoading

@@ -1,0 +1,33 @@
+query ReferralRefereeProfiles($ids: [Bytes!]) {
+  humanities(where: { id_in: $ids }, first: 100) {
+    id
+    pendingRevocation
+    registration {
+      expirationTime
+      claimer {
+        name
+      }
+    }
+    latestClaimRequest: requests(
+      first: 1
+      orderBy: creationTime
+      orderDirection: desc
+      where: { revocation: false }
+    ) {
+      status {
+        id
+      }
+      winnerParty {
+        id
+      }
+      claimer {
+        name
+      }
+      evidenceGroup {
+        evidence(first: 1, orderBy: creationTime, orderDirection: desc) {
+          uri
+        }
+      }
+    }
+  }
+}

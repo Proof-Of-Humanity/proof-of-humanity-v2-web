@@ -69,7 +69,7 @@
     "dev": "next dev --turbo",
     "build": "next build",
     "start": "next start",
-    "gql": "DOTENV_CONFIG_PATH=.env.local graphql-codegen --config codegen.yml",
+    "gql": "DOTENV_CONFIG_PATH=.env.local node -r dotenv/config ./node_modules/@graphql-codegen/cli/bin.js --config codegen.yml",
     "wagmi": "wagmi generate",
     "format": "prettier --write .",
     "format:check": "prettier --check .",

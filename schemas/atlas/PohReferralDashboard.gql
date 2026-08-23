@@ -1,0 +1,25 @@
+query PohReferralDashboard($pagination: PaginationArgs) {
+  humanityFlag
+  pohReferralStats {
+    verifiedReferrals
+    paidRewardsAmountInWei
+    pendingRewardsAmountInWei
+  }
+  pohReferrals(pagination: $pagination) {
+    count
+    items {
+      item {
+        refereeHumanityId
+        reviewStatus
+        rewardAmount
+        payoutTransaction {
+          status
+          txHash
+        }
+        refereeFlag {
+          isFlagged
+        }
+      }
+    }
+  }
+}

@@ -1,5 +1,6 @@
 import { Metadata } from "next";
 import IntegrationsList from "components/Integrations/IntegrationsList";
+import ReferralDashboard from "components/Integrations/Referral/ReferralDashboard";
 import { getIntegrations } from "data/integrations";
 import GiftIcon from "icons/Gift.svg";
 
@@ -28,6 +29,10 @@ export default async function AppPage() {
 
       <div className="mt-4">
         <IntegrationsList integrations={integrations} />
+      </div>
+
+      <div className="mt-8">
+        <ReferralDashboard />
       </div>
     </div>
   );
