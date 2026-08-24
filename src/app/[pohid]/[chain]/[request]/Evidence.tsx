@@ -7,6 +7,7 @@ import Attachment from "components/Attachment";
 import ExternalLink from "components/ExternalLink";
 import ExternalLinkIcon from "components/ExternalLinkIcon";
 import Identicon from "components/Identicon";
+import MarkdownText from "components/MarkdownText";
 import TimeAgo from "components/TimeAgo";
 import { explorerLink, idToChain } from "config/chains";
 import type { EvidenceSubmitterProfile } from "data/evidence";
@@ -67,9 +68,12 @@ function Item({ number, item, isPending, profile }: ItemInterface) {
             )}
             {ipfsUri && <Attachment uri={ipfsUri} />}
           </div>
-          <p className="text-secondaryText mt-1 break-words text-sm font-normal leading-5">
-            {description}
-          </p>
+          {description && (
+            <MarkdownText
+              className="text-secondaryText mt-1 break-words text-sm font-normal leading-5"
+              text={description}
+            />
+          )}
         </div>
         <div className="bg-grey mt-4 flex min-h-12 flex-wrap items-center gap-x-4 gap-y-2 rounded-2xl px-4 py-2 text-sm font-normal">
           {photoUrl ? (
@@ -96,10 +100,11 @@ function Item({ number, item, isPending, profile }: ItemInterface) {
             </Link>
           ) : (
             <ExternalLink
-              className="text-primaryText font-semibold hover:opacity-80"
+              className="text-primaryText group/external-link inline-flex items-center gap-1.5 font-semibold hover:opacity-80"
               href={explorerLink(item.submitter, chain)}
             >
               {shortAddress}
+              <ExternalLinkIcon className="text-orange" />
             </ExternalLink>
           )}
           <span className="text-secondaryText">

@@ -96,16 +96,9 @@ export async function RevocationBanner({
 
   return (
     <div className="bg-primaryBackground p-4">
-      <div className="relative">
-        <div className="text-primaryText flex flex-col items-center gap-2 text-center md:flex-row md:justify-between md:text-left">
-          Revocation requested - {revocationFile.name}
-          {revocationFile.fileURI && (
-            <Attachment uri={revocationFile.fileURI} />
-          )}
-        </div>
-        <p className="text-primaryText text-center md:text-left">
-          {revocationFile.description}
-        </p>
+      <div className="text-primaryText flex flex-col items-center gap-2 text-center md:flex-row md:justify-between md:text-left">
+        Revocation requested - {revocationFile.name}
+        {revocationFile.fileURI && <Attachment uri={revocationFile.fileURI} />}
       </div>
       <div className="flex flex-wrap items-center justify-center text-center text-sm font-normal md:justify-start md:text-left">
         <span className="text-secondaryText mr-2">Requested by</span>
