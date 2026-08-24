@@ -4,7 +4,7 @@ import { useCallback, useState } from "react";
 import type { Hash } from "viem";
 
 import ActionButton from "components/ActionButton";
-import type { SupportedChain } from "config/chains";
+import { idToChain, type SupportedChainId } from "config/chains";
 import type { ContractData } from "data/contract";
 import { WAITING_FOR_INDEXER_TOOLTIP } from "hooks/useActionFeedback";
 import { useProfileOptimistic } from "optimistic/profile";
@@ -16,7 +16,7 @@ export { buildRevokeSuccessPatch } from "./RevokeModal";
 interface RevokeProps {
   cost: bigint;
   pohId: Hash;
-  homeChain: SupportedChain;
+  homeChainId: SupportedChainId;
   arbitrationInfo: ContractData["arbitrationInfo"];
 }
 
@@ -51,9 +51,10 @@ export function RevokeUnavailable({ reason }: { reason: string }) {
 export default function RevokeClient({
   pohId,
   cost,
-  homeChain,
+  homeChainId,
   arbitrationInfo,
 }: RevokeProps) {
+  const homeChain = idToChain(homeChainId)!;
   const { effective, pendingAction } = useProfileOptimistic();
   const isReconciling = pendingAction !== null;
   const [modalOpen, setModalOpen] = useState(false);

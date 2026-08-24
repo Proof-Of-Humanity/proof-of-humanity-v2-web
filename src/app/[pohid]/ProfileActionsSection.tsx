@@ -61,7 +61,7 @@ export default async function ProfileActionsSection({
         >
           <div className="flex w-full flex-col items-center gap-4">
             {claimedRegistration && homeChain && homeChainContractData ? (
-              <ActionWalletGate homeChain={homeChain}>
+              <ActionWalletGate homeChainId={homeChain.id}>
                 {canRenew ? (
                   <Renew
                     claimer={claimedRegistration.claimer.id}
