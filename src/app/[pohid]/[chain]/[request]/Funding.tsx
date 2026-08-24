@@ -88,28 +88,41 @@ const FundButton: React.FC<FundButtonProps> = ({
 
   const remainingAmount = totalCost - funded;
   const maxFundAmount = formatEther(remainingAmount);
+  const inputAmount = useMemo(() => {
+    if (!addedFundInput) return 0n;
+    try {
+      const parsed = parseEther(addedFundInput);
+      return parsed < 0n ? null : parsed;
+    } catch {
+      return null;
+    }
+  }, [addedFundInput]);
 
   const handleSubmit = () => {
-    if (!addedFundInput) return;
+    if (inputAmount === null || inputAmount === 0n) return;
 
     loading.start("Funding...");
     prepareFund({
-      value: BigInt(parseEther(addedFundInput)),
+      value: inputAmount,
       args: [pohId, BigInt(index)],
     });
   };
-  const inputAmount = parseEther(addedFundInput);
+  const isInvalidInput = inputAmount === null;
+  const isZeroInput = inputAmount === 0n;
   const insufficientFunds = useMemo(() => {
     const available = balanceData?.value ?? 0n;
-    return inputAmount > available;
-  }, [inputAmount, balanceData, addedFundInput]);
+    return inputAmount !== null && inputAmount > available;
+  }, [inputAmount, balanceData]);
 
-  const exceedsRemaining = inputAmount != null && inputAmount > remainingAmount;
+  const exceedsRemaining =
+    inputAmount !== null && inputAmount > remainingAmount;
   const isReconciling = pendingAction !== null;
 
   const isDisabled =
     !isConnected ||
     !addedFundInput ||
+    isInvalidInput ||
+    isZeroInput ||
     isLoading ||
     isReconciling ||
     userChainId !== chain.id ||
@@ -122,6 +135,8 @@ const FundButton: React.FC<FundButtonProps> = ({
     if (userChainId !== chain.id)
       return `Switch your chain above to ${idToChain(chain.id)?.name || "the correct chain"}`;
     if (!addedFundInput) return "Please enter an amount to fund";
+    if (isInvalidInput) return "Please enter a valid amount";
+    if (isZeroInput) return "Amount must be greater than 0";
     if (exceedsRemaining)
       return `Amount exceeds remaining needed (${formatEth(remainingAmount)} ${chain.nativeCurrency.symbol})`;
     if (insufficientFunds)
