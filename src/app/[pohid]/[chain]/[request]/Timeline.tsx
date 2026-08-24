@@ -264,9 +264,14 @@ export default function Timeline({
                   ) : item.href ? (
                     <Link
                       href={item.href}
-                      className={`inline-flex items-center font-semibold hover:opacity-80 ${compact ? "text-sm" : ""}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className={`group/external-link inline-flex items-center gap-1 font-semibold hover:opacity-80 ${compact ? "text-sm" : ""}`}
                     >
                       <span className={styles.text}>{item.title}</span>
+                      <span className="text-secondaryText inline-flex">
+                        <ExternalLinkIcon />
+                      </span>
                     </Link>
                   ) : (
                     <span
