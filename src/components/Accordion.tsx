@@ -92,7 +92,7 @@ const Accordion: React.FC<AccordionProps> = ({
       <button
         type="button"
         aria-expanded={open}
-        className="hover:border-orange flex min-h-[62px] w-full cursor-pointer items-center justify-between gap-4 rounded-[22px] border border-[#3A3E48] bg-[#292D35] px-5 py-4 text-left font-bold shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] transition duration-200 ease-premium"
+        className="hover:border-orange flex min-h-[62px] w-full cursor-pointer items-center justify-between gap-4 rounded-[22px] border border-[#E5E5E5] bg-white px-5 py-4 text-left font-bold transition duration-200 ease-premium dark:border-[#3A3E48] dark:bg-[#292D35] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]"
         onClick={handleToggle}
       >
         <span className="min-w-0 flex-1 leading-snug">{title}</span>

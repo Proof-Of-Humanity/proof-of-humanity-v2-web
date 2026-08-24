@@ -174,7 +174,7 @@ export default function SubgraphsStatus() {
       aria-label={`${activeStatus.chainLabel} subgraph status: ${
         activeStatus.ok ? "healthy" : "degraded"
       }: ${getStatusDescription(activeStatus)}.`}
-      className="sticky top-0 z-30 mb-4 overflow-hidden rounded-input border border-[rgba(255,138,102,0.28)] bg-[#292D35] shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]"
+      className="sticky top-0 z-30 mb-4 overflow-hidden rounded-input border border-[rgba(255,138,102,0.28)] bg-white dark:bg-[#292D35] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]"
     >
       <div
         aria-hidden="true"

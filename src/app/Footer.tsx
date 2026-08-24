@@ -29,7 +29,7 @@ const SOCIALS = [
 ] as const;
 
 const Footer: React.FC = () => (
-  <div className="bg-whiteBackground w-full border-t border-white/[0.08] text-lg text-white">
+  <div className="footer-background on-brand w-full border-t border-black/[0.06] text-lg text-white dark:border-white/[0.08]">
     <div className="app-container flex flex-wrap items-center justify-center gap-x-4 gap-y-[20px] py-4 sm:justify-between">
       <ExternalLink
         className="flex items-center gap-2 text-sm"

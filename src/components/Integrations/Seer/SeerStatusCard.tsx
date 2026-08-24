@@ -109,7 +109,7 @@ export default function SeerStatusCard({
 
   if (isLoading) {
     return (
-      <div className="border-stroke bg-primaryBackground rounded-[30px] border p-6 shadow-[0_0_45px_rgba(255,255,255,0.10)] lg:w-[391px] lg:p-8">
+      <div className="border-stroke bg-primaryBackground rounded-[30px] border p-6 shadow-[0_0_45px_rgba(0,0,0,0.08)] dark:shadow-[0_0_45px_rgba(255,255,255,0.10)] lg:w-[391px] lg:p-8">
         <div className="text-center">
           <p className="text-orange mb-6 text-sm font-medium">Reward</p>
           <h3 className="text-primaryText mb-6 text-xl font-semibold">
@@ -127,7 +127,7 @@ export default function SeerStatusCard({
   }
 
   return (
-    <div className="border-stroke bg-primaryBackground rounded-[30px] border p-6 shadow-[0_0_45px_rgba(255,255,255,0.10)] lg:w-[391px] lg:p-8">
+    <div className="border-stroke bg-primaryBackground rounded-[30px] border p-6 shadow-[0_0_45px_rgba(0,0,0,0.08)] dark:shadow-[0_0_45px_rgba(255,255,255,0.10)] lg:w-[391px] lg:p-8">
       <div className="text-center">
         <p className="text-orange mb-1 text-sm font-medium">Reward</p>
         <h3 className="text-primaryText text-xl font-semibold">Seer Credits</h3>

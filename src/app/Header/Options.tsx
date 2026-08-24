@@ -4,6 +4,7 @@ import ExternalLink from "components/ExternalLink";
 import Popover from "components/Popover";
 import SocialHelpIcon from "icons/SocialHelp.svg";
 import SocialSnapshotIcon from "icons/SocialSnapshot.svg";
+import ThemeToggle from "components/ThemeToggle";
 import SettingsPopover from "./SettingsPopover";
 
 const Options: React.FC = () => {
@@ -12,6 +13,7 @@ const Options: React.FC = () => {
   return (
     <div className="mt-[16px] flex flex-row items-center md:mt-0">
       <SettingsPopover key={address} />
+      <ThemeToggle className="ml-2 h-9 w-9" />
       <ExternalLink
         href="https://snapshot.org/#/poh.eth/"
         className="icon-btn ml-2 h-9 w-9"

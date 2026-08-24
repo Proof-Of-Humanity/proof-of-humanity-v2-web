@@ -56,15 +56,23 @@ export default function Header({ policy }: IHeader) {
   }, [menuOpen]);
 
   return (
-    <header className="header-background relative w-full border-b border-white/[0.08] text-lg text-white">
+    <header className="header-background on-brand relative w-full border-b border-black/[0.06] text-lg text-white dark:border-white/[0.08]">
       <div className="app-container relative flex h-16 items-center justify-between pb-2 pt-2">
         <Link href="/" className="flex shrink-0 items-center">
+          <Image
+            alt="proof of humanity logo"
+            src="/logo/poh-text-white.svg"
+            height={48}
+            width={185}
+            className="h-12 w-auto dark:hidden"
+            priority
+          />
           <Image
             alt="proof of humanity logo"
             src="/logo/poh.svg"
             height={48}
             width={185}
-            className="h-12 w-auto"
+            className="hidden h-12 w-auto dark:block"
             priority
           />
         </Link>
@@ -73,8 +81,8 @@ export default function Header({ policy }: IHeader) {
           {showRewardsCta ? (
             <Link
               href="/app"
-              className={`hover:border-orange rounded-full border border-white/[0.08] bg-[#2F333D] px-4 py-2 text-sm font-semibold text-white transition ${
-                pathname.startsWith("/app") ? "text-orange" : ""
+              className={`header-chip rounded-full border px-4 py-2 text-sm font-semibold transition ${
+                pathname.startsWith("/app") ? "header-chip-active" : ""
               }`}
             >
               Rewards
@@ -85,13 +93,13 @@ export default function Header({ policy }: IHeader) {
               address={address}
               pendingRegisterIntent={pendingRegisterIntent}
               setPendingRegisterIntent={setPendingRegisterIntent}
-              className={`hover:border-orange rounded-full border border-white/[0.08] bg-[#2F333D] px-4 py-2 text-sm font-semibold text-white transition ${
-                isRegisterActive(me?.pohId, pathname) ? "text-orange" : ""
+              className={`header-chip rounded-full border px-4 py-2 text-sm font-semibold transition ${
+                isRegisterActive(me?.pohId, pathname) ? "header-chip-active" : ""
               }`}
             />
           ) : null}
           <button
-            className="hover:border-orange flex h-9 w-9 items-center justify-center rounded-full border border-white/[0.08] bg-[#2F333D] text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] transition duration-200 ease-premium"
+            className="hover:border-orange text-primaryText flex h-9 w-9 items-center justify-center rounded-full border border-black/[0.08] bg-black/[0.04] transition duration-200 ease-premium dark:border-white/[0.08] dark:bg-[#2F333D] dark:text-white dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]"
             onClick={() => setMenuOpen(!menuOpen)}
             aria-label="Toggle navigation"
           >
@@ -107,8 +115,6 @@ export default function Header({ policy }: IHeader) {
                 me,
                 policy,
                 pathname,
-                chain,
-                web3Loaded,
                 pendingRegisterIntent,
                 setPendingRegisterIntent,
               }}

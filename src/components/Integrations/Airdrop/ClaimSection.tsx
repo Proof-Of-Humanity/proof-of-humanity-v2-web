@@ -51,7 +51,7 @@ function PnkPulse() {
 
 function LoadingState() {
   return (
-    <div className="border-stroke bg-primaryBackground rounded-[30px] border p-6 shadow-[0_0_45px_rgba(255,255,255,0.10)] lg:w-[391px] lg:p-8">
+    <div className="border-stroke bg-primaryBackground rounded-[30px] border p-6 shadow-[0_0_45px_rgba(0,0,0,0.08)] dark:shadow-[0_0_45px_rgba(255,255,255,0.10)] lg:w-[391px] lg:p-8">
       <div className="text-center">
         <div className="text-orange mb-6 text-sm font-medium">Loading...</div>
         <PnkPulse />
@@ -377,7 +377,7 @@ export default function ClaimSection({
 
   if (eligibilityStatus === "claimed") {
     return (
-      <div className="border-stroke bg-primaryBackground rounded-[30px] border p-6 shadow-[0_0_45px_rgba(255,255,255,0.10)] lg:w-[440px] lg:p-8">
+      <div className="border-stroke bg-primaryBackground rounded-[30px] border p-6 shadow-[0_0_45px_rgba(0,0,0,0.08)] dark:shadow-[0_0_45px_rgba(255,255,255,0.10)] lg:w-[440px] lg:p-8">
         <div className="text-center">
           {/* key: reset email-form state (modal, editing, draft) on wallet switch */}
           <ClaimedPanel
@@ -392,7 +392,7 @@ export default function ClaimSection({
   }
 
   return (
-    <div className="border-stroke bg-primaryBackground rounded-[30px] border p-6 shadow-[0_0_45px_rgba(255,255,255,0.10)] lg:w-[391px] lg:p-8">
+    <div className="border-stroke bg-primaryBackground rounded-[30px] border p-6 shadow-[0_0_45px_rgba(0,0,0,0.08)] dark:shadow-[0_0_45px_rgba(255,255,255,0.10)] lg:w-[391px] lg:p-8">
       <div className="text-center">
         <div className="text-purple mb-1.5 text-sm font-medium">Reward</div>
         <PnkDisplay amount={amountPerClaim} />

@@ -20,7 +20,7 @@ export default function IntegrationHeader({
   return (
     <div
       className={cn(
-        "border-stroke bg-whiteBackground flex flex-col rounded-card border shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]",
+        "border-stroke bg-whiteBackground flex flex-col rounded-card border dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]",
         className,
       )}
     >

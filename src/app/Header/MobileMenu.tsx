@@ -83,21 +83,21 @@ const MobileMenu = forwardRef(
           >
             Rewards
           </Link>
-          <span className="text-secondaryText text-sm font-semibold uppercase tracking-wide">
+          <span className="text-sm font-semibold uppercase tracking-wide text-white/70 dark:text-secondaryText">
             Tools
           </span>
           <ExternalLink
             href="https://frabjous-marigold-8334d9.netlify.app"
             className="flex items-center gap-2 text-lg"
           >
-            <DashboardIcon className="h-4 w-4 fill-current text-peach" />
+            <DashboardIcon className="h-4 w-4 fill-current text-white dark:text-peach" />
             PoH Dashboard
           </ExternalLink>
           <ExternalLink
             href="https://poh-duplicate-finder.netlify.app"
             className="flex items-center gap-2 text-lg"
           >
-            <SearchIcon className="h-4 w-4 fill-current text-peach" />
+            <SearchIcon className="h-4 w-4 fill-current text-white dark:text-peach" />
             PoH Duplicate Finder
           </ExternalLink>
         </nav>

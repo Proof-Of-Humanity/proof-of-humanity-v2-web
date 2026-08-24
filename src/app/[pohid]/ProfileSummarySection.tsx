@@ -36,7 +36,7 @@ function ProfileMainCardSkeleton() {
           aria-label="Loading profile card"
           className="request-card-shell relative aspect-square w-full animate-pulse overflow-hidden rounded-card border"
         >
-          <div className="absolute inset-0 bg-[#292D35]" />
+          <div className="absolute inset-0 bg-white dark:bg-[#292D35]" />
           <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent" />
           <div className="absolute inset-x-0 top-0 flex items-start justify-between p-3">
             <div className="h-7 w-28 rounded-full bg-white/10" />

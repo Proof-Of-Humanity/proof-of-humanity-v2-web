@@ -24,7 +24,7 @@ async function Profile({ params }: PageProps) {
   return (
     <div className="content max-w-[1156px]">
       <div className="paper relative mt-24 flex flex-col items-center px-2 pb-6 pt-20 sm:px-8">
-        <div className="absolute -top-16 left-1/2 h-32 w-32 -translate-x-1/2 rounded-full shadow">
+        <div className="bg-whiteBackground absolute -top-16 left-1/2 h-32 w-32 -translate-x-1/2 rounded-full shadow">
           <Image
             alt="poh id"
             src="/logo/pohid-badge.svg"

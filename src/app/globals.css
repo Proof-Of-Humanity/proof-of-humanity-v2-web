@@ -2,9 +2,14 @@
 
 @layer base {
   html {
+    color: #333333;
+    background: #fffcfa;
+    overscroll-behavior: none;
+  }
+
+  html.dark {
     color: #f7f3ef;
     background: #1e2129;
-    overscroll-behavior: none;
   }
 
   body {
@@ -202,6 +207,11 @@
   .request-accordion > button {
     min-height: 5rem;
     padding-inline: clamp(1.25rem, 3vw, 2rem);
+    box-shadow: theme("boxShadow.soft-inset");
+  }
+
+  .dark .request-accordion > button {
+    box-shadow: theme("boxShadow.soft-inset");
   }
 
   .request-accordion > button > span:last-child {
@@ -608,11 +618,119 @@
 
 @layer utilities {
   .header-background {
-    @apply gradient;
+    background: theme("colors.light.orange");
   }
 
   .dark .header-background {
     background: #20232b;
+  }
+
+  .footer-background {
+    background: theme("colors.light.orange");
+  }
+
+  .dark .footer-background {
+    background: theme("colors.dark.whiteBackground");
+  }
+
+  /* Header/footer chrome on the light-mode orange brand surface. Dark mode
+     keeps the original dark chrome. */
+  .header-chip {
+    border-color: rgba(255, 255, 255, 0.35);
+    background: rgba(255, 255, 255, 0.14);
+    color: #ffffff;
+  }
+
+  .header-chip:hover {
+    border-color: #ffffff;
+  }
+
+  .dark .header-chip {
+    border-color: rgba(255, 255, 255, 0.08);
+    background: #2f333d;
+    color: #ffffff;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  }
+
+  .dark .header-chip:hover {
+    border-color: theme("colors.dark.orange");
+  }
+
+  .header-chip-active {
+    background: #ffffff;
+    color: theme("colors.light.orange");
+  }
+
+  .dark .header-chip-active {
+    background: #2f333d;
+    color: theme("colors.dark.orange");
+  }
+
+  .nav-link-idle {
+    color: rgba(255, 255, 255, 0.78);
+  }
+
+  .nav-link-idle:hover {
+    color: #ffffff;
+  }
+
+  .dark .nav-link-idle {
+    color: theme("colors.dark.secondaryText");
+  }
+
+  .dark .nav-link-idle:hover {
+    color: theme("colors.dark.primaryText");
+  }
+
+  .nav-link-active {
+    color: #ffffff;
+  }
+
+  .dark .nav-link-active {
+    color: theme("colors.dark.orange");
+  }
+
+  .nav-underline::after {
+    background-color: rgba(255, 255, 255, 0.9);
+  }
+
+  .dark .nav-underline::after {
+    background-color: theme("colors.peach");
+    box-shadow: 0 0 12px rgba(255, 176, 138, 0.45);
+  }
+
+  .nav-caret {
+    color: rgba(255, 255, 255, 0.8);
+  }
+
+  .dark .nav-caret {
+    color: theme("colors.peach");
+  }
+
+  html:not(.dark) .on-brand .icon-btn {
+    background: rgba(255, 255, 255, 0.14);
+    border-color: rgba(255, 255, 255, 0.35);
+    color: #ffffff !important;
+  }
+
+  html:not(.dark) .on-brand .icon-btn:hover,
+  html:not(.dark) .on-brand .icon-btn:focus-visible {
+    background: #ffffff;
+    border-color: #ffffff;
+    color: theme("colors.light.orange") !important;
+  }
+
+  .dark .on-brand .icon-btn {
+    background: #2f333d;
+    border-color: #3a3e48;
+    color: #ffb08a !important;
+  }
+
+  .dark .on-brand .icon-btn:hover,
+  .dark .on-brand .icon-btn:focus-visible {
+    background: #ff9966;
+    border-color: #ff9966;
+    color: #ffffff !important;
   }
 
   .border-stroke {
@@ -1054,4 +1172,183 @@
     opacity: 1;
     transform: translateY(0);
   }
+}
+
+/* ==========================================================================
+   Light mode
+   Dark is the default look and its output above is untouched; these rules
+   restyle the dark-baked component classes only when <html> lacks `.dark`.
+   The `html:not(.dark)` prefix outranks base `:hover`/`:checked`/variant
+   selectors, so every interactive state is redeclared here explicitly.
+   ========================================================================== */
+
+html:not(.dark) .checkbox {
+  background-color: #ffffff;
+}
+
+html:not(.dark) .checkbox:checked {
+  background-color: #ffb08a;
+}
+
+html:not(.dark) .checkbox:checked:hover {
+  background-color: #ff9966;
+}
+
+html:not(.dark) .radio {
+  background-color: #ffffff;
+  border-color: #e5e5e5;
+}
+
+html:not(.dark) .radio:hover {
+  border-color: #ffb08a;
+}
+
+html:not(.dark) .radio:checked {
+  background-color: #ffffff;
+  border-color: #ffb08a;
+}
+
+html:not(.dark) .btn-secondary {
+  border-color: #ff9966;
+  color: #e2703a;
+}
+
+html:not(.dark) .btn-secondary:hover,
+html:not(.dark) .btn-secondary:active {
+  background: rgba(255, 153, 102, 0.16);
+}
+
+html:not(.dark) .tooltip-surface {
+  background: #ffffff;
+  border-color: #e5e5e5;
+  color: #333333;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.1);
+}
+
+html:not(.dark) .tooltip-surface::before {
+  background: #ffffff;
+  border-bottom-color: #e5e5e5;
+  border-right-color: #e5e5e5;
+}
+
+html:not(.dark) .tooltip-surface-below::before {
+  border-top-color: #e5e5e5;
+  border-left-color: #e5e5e5;
+}
+
+html:not(.dark) .icon-btn {
+  background: #ffffff;
+  border-color: #e5e5e5;
+  color: #e2703a !important;
+}
+
+html:not(.dark) .icon-btn:hover,
+html:not(.dark) .icon-btn:focus-visible {
+  background: #ff9966;
+  border-color: #ff9966;
+  color: #ffffff !important;
+}
+
+html:not(.dark) .request-accordion > button > span:last-child {
+  color: #e2703a;
+  background: #fff7f0;
+  border-color: #ffd7c2;
+}
+
+html:not(.dark) .request-accordion > button > span:last-child svg {
+  color: #e2703a;
+}
+
+html:not(.dark) .modal-surface {
+  background: #fffcfa;
+  border-color: #e5e5e5;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.12);
+}
+
+html:not(.dark) .request-card-shell {
+  border-color: rgba(0, 0, 0, 0.08);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.1);
+}
+
+html:not(.dark) .request-card-shell:hover {
+  border-color: #ff9966;
+  box-shadow: 3px 9px 12px rgba(255, 153, 102, 0.18);
+}
+
+html:not(.dark) .flat-control {
+  background: #ffffff;
+  border-color: #e5e5e5;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.06);
+}
+
+html:not(.dark) .flat-control:hover {
+  background: #fffcfa;
+}
+
+html:not(.dark) .flat-control:focus-within,
+html:not(.dark) .flat-control:focus {
+  background: #ffffff;
+  border-color: #ff9966;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.08);
+}
+
+html:not(.dark) .flat-control-error {
+  border-color: #f60c6e;
+}
+
+html:not(.dark) .status-pill {
+  background: rgba(255, 255, 255, 0.9);
+  border-color: rgba(0, 0, 0, 0.08);
+  color: #6f6a78;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+html:not(.dark) .status-pill-warning {
+  border-color: rgba(226, 112, 58, 0.35);
+  background: rgba(255, 153, 102, 0.1);
+  color: #cf5f2e;
+}
+
+html:not(.dark) .status-pill-danger {
+  border-color: rgba(217, 4, 41, 0.25);
+  background: rgba(246, 12, 110, 0.06);
+  color: #d90429;
+}
+
+html:not(.dark) .status-pill-muted {
+  border-color: rgba(0, 0, 0, 0.08);
+  background: rgba(0, 0, 0, 0.04);
+  color: #857f8f;
+}
+
+html:not(.dark) .paper {
+  background: #ffffff;
+  border-color: rgba(0, 0, 0, 0.08);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.08);
+}
+
+html:not(.dark) .paper-inset {
+  background: theme("colors.light.primaryBackground");
+  border-color: theme("colors.light.stroke");
+}
+
+html:not(.dark) .content-card {
+  background: theme("colors.light.whiteBackground");
+  border-color: theme("colors.light.stroke");
+}
+
+html:not(.dark) .poh-toast {
+  border-color: rgba(0, 0, 0, 0.08);
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.14);
+  color: #333333;
+}
+
+html:not(.dark) .poh-toast-body {
+  color: #333333;
+}
+
+html:not(.dark) .poh-toast .Toastify__close-button:hover {
+  background: rgba(0, 0, 0, 0.06);
+  color: #333333;
 }

@@ -4,7 +4,7 @@ export default function Loading() {
   return (
     <div className="content animate-pulse">
       <div className="paper relative mt-24 flex flex-col items-center pt-20">
-        <div className="absolute -top-16 left-1/2 h-32 w-32 -translate-x-1/2 rounded-full shadow">
+        <div className="bg-whiteBackground absolute -top-16 left-1/2 h-32 w-32 -translate-x-1/2 rounded-full shadow">
           <Image
             alt="poh id"
             src="/logo/pohid-badge.svg"

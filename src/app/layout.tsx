@@ -38,7 +38,16 @@ export default async function RootLayout({ children }: RootLayoutProps) {
     });
 
   return (
-    <html lang="en" className="dark" data-theme="dark">
+    <html lang="en" className="dark" data-theme="dark" suppressHydrationWarning>
+      <head>
+        {/* Runs before first paint: dark stays the SSR default, so only
+            visitors who opted into light mode take the class swap. */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `try{if(localStorage.getItem("poh-theme")==="light"){var r=document.documentElement;r.classList.remove("dark");r.setAttribute("data-theme","light");}}catch(e){}`,
+          }}
+        />
+      </head>
       <body
         className={cn(
           "bg-primaryBackground scrollbar relative flex min-h-screen flex-col",

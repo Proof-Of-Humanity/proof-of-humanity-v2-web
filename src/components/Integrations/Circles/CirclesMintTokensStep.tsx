@@ -21,7 +21,7 @@ export default function CirclesMintTokensStep({
   return (
     <Accordion
       title="Step 3 - Join Our Group On the Gnosis App And Earn $CRC"
-      className="w-full [&>button:focus-visible]:!shadow-[0_0_0_1px_#3A3E48] [&>button:focus-visible]:!ring-0 [&>button:focus]:!outline-none [&>button]:min-h-20 [&>button]:rounded-[28px] [&>button]:px-8 [&>button]:hover:!border-[#3A3E48]"
+      className="w-full [&>button:focus-visible]:!shadow-[0_0_0_1px_#E5E5E5] [&>button:focus-visible]:!ring-0 dark:[&>button:focus-visible]:!shadow-[0_0_0_1px_#3A3E48] [&>button:focus]:!outline-none [&>button]:min-h-20 [&>button]:rounded-[28px] [&>button]:px-8 [&>button]:hover:!border-[#E5E5E5] dark:[&>button]:hover:!border-[#3A3E48]"
       isOpen={isOpen}
       onToggle={onToggle}
     >
