@@ -49,6 +49,7 @@ export interface ReferralStats {
 
 export interface ReferrerSummary {
   humanityId: `0x${string}`;
+  name?: string;
   /** Referrer's registration photo (IPFS path); null → identicon fallback. */
   photo: string | null;
   /** Shareable invite URL, `…/?ref=<humanityId>`. */

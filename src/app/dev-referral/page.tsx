@@ -28,6 +28,8 @@ import PageNumbers from "components/Integrations/Referral/PageNumbers";
 // ShareModal was dead code and is being deleted in the cleanup pass — not imported here.
 import CopyButton from "components/Integrations/Referral/CopyButton";
 import ReferralDashboard from "components/Integrations/Referral/ReferralDashboard";
+import InviteHumansBanner from "components/Integrations/Referral/InviteHumansBanner";
+import InfoTooltip from "components/InfoTooltip";
 
 // ---------------------------------------------------------------- boundary
 
@@ -355,6 +357,8 @@ const SECTION_IDS = [
   "s13",
   "s14",
   "s15",
+  "s16",
+  "s17",
 ];
 
 export default function DevReferralPage() {
@@ -416,14 +420,12 @@ export default function DevReferralPage() {
           title="3. ReferralCard — referrer humanityFlagged (Rewards on hold)"
           note="expects the warning panel + 'On hold' tag in the stats bar; 3 rows = single page, no page numbers"
         >
-          <Shell>
-            <PagedCardDemo
-              pageOverrides={{
-                humanityFlagged: true,
-                referred: rows.slice(0, 3),
-              }}
-            />
-          </Shell>
+          <PagedCardDemo
+            pageOverrides={{
+              humanityFlagged: true,
+              referred: rows.slice(0, 3),
+            }}
+          />
         </Section>
 
         <Section
@@ -606,6 +608,92 @@ export default function DevReferralPage() {
               }}
             />
           </Shell>
+        </Section>
+
+        <Section
+          id="s16"
+          title="16. InviteHumansBanner — profile-page strip (with / without invite count)"
+        >
+          <div className="flex flex-col gap-4">
+            <InviteHumansBanner claimerId={addr(0xb0b1e)} />
+          </div>
+        </Section>
+
+        <Section
+          id="s17"
+          title="17. InfoTooltip — every production layout"
+          note="same props/wrappers as ReferralStatsBar, ActionBar Add Evidence, Appeal, RegistrationDeposit"
+        >
+          <div className="flex flex-col gap-10">
+            <Shell>
+              <p className="text-secondaryText mb-3 text-xs">
+                ReferralStatsBar: align=center side=above, pill
+              </p>
+              <ReferralStatsBar
+                stats={{
+                  verifiedReferrals: 12,
+                  paidRewards: 3000,
+                  pendingRewards: 1250,
+                }}
+              />
+            </Shell>
+            <Shell>
+              <p className="text-secondaryText mb-3 text-xs">
+                ActionBar: label Add Evidence, default below/center
+              </p>
+              <div className="flex w-full flex-col items-center justify-center gap-4 md:w-auto md:flex-row md:justify-end lg:flex-nowrap">
+                <InfoTooltip label="Add Evidence">
+                  <p>
+                    When a profile is challenged, a case is opened in Kleros
+                    Court, where jurors review the evidence from both sides
+                    before voting.
+                  </p>
+                  <p>
+                    You can submit evidence for this case from the Evidence
+                    section below.
+                  </p>
+                </InfoTooltip>
+              </div>
+            </Shell>
+            <Shell>
+              <p className="text-secondaryText mb-3 text-xs">
+                Appeal: long label, default below/center, beside a button
+              </p>
+              <div className="flex w-full flex-col items-center justify-center gap-4 md:flex-row md:justify-end">
+                <InfoTooltip label={<>Appeal ends&nbsp;in 2 days</>}>
+                  <p>
+                    When someone challenges a profile, a case is opened in
+                    Kleros Court.
+                  </p>
+                  <p>
+                    A group of random jurors is selected to review the case.
+                  </p>
+                </InfoTooltip>
+                <button
+                  type="button"
+                  className="border-stroke rounded-full border px-6 py-2 text-sm"
+                >
+                  Appeal
+                </button>
+              </div>
+            </Shell>
+            <Shell>
+              <p className="text-secondaryText mb-3 text-xs">
+                RegistrationDeposit: align=end, right of a section heading
+              </p>
+              <div className="flex items-end justify-between gap-4">
+                <h2 className="text-sm font-normal uppercase text-peach">
+                  Registration deposit
+                </h2>
+                <InfoTooltip label="All amounts in ETH" align="end">
+                  <span>
+                    The deposit is paid in Ethereum&apos;s native currency
+                    (ETH). Gas fees are charged on top.
+                  </span>
+                </InfoTooltip>
+              </div>
+            </Shell>
+          </div>
         </Section>
       </div>
     </OnlyContext.Provider>

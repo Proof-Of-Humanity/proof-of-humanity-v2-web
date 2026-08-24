@@ -1,5 +1,23 @@
-import { getSdk as getAtlasSdk } from "generated/atlas";
+import { getSdk as getAtlasSdk, SdkFunctionWrapper } from "generated/atlas";
 import { ClientError, GraphQLClient } from "graphql-request";
+
+const keepPartialDataOnFieldErrors: SdkFunctionWrapper = async <T,>(
+  action: () => Promise<T>,
+  operationName: string,
+) => {
+  try {
+    return await action();
+  } catch (error) {
+    if (error instanceof ClientError && error.response.data) {
+      console.warn(
+        `Atlas ${operationName}: rendering partial data, some fields errored`,
+        error.response.errors,
+      );
+      return error.response.data as T;
+    }
+    throw error;
+  }
+};
 
 export const getAuthedAtlasSdk = () => {
   if (!process.env.ATLAS_URI) throw new Error("Missing ATLAS_URI");
@@ -20,7 +38,7 @@ export const getAuthedAtlasSdk = () => {
     headers: token ? { authorization: `Bearer ${token}` } : undefined,
   });
 
-  return getAtlasSdk(client);
+  return getAtlasSdk(client, keepPartialDataOnFieldErrors);
 };
 
 export const getAtlasError = (error: unknown) => {

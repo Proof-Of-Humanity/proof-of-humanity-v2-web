@@ -16,6 +16,7 @@ import { getRegistrationPhoto } from "./evidence";
 
 interface ReferrerProfile {
   humanityId: `0x${string}`;
+  name?: string;
   pendingRevocation: boolean;
   photo: string | null;
 }
@@ -44,6 +45,7 @@ const resolveReferrerProfile = async (
   const evidenceUri = humanity.winnerClaim[0]?.evidenceGroup.evidence[0]?.uri;
   return {
     humanityId: String(humanity.id).toLowerCase() as `0x${string}`,
+    name: humanity.winnerClaim[0]?.claimer.name?.trim() || undefined,
     pendingRevocation: humanity.pendingRevocation,
     photo: await getRegistrationPhoto(evidenceUri),
   };
@@ -194,6 +196,7 @@ export const fetchReferrerSummary = async (
   if (!referrerProfile) return null;
   return {
     humanityId: referrerProfile.humanityId,
+    name: referrerProfile.name,
     photo: referrerProfile.photo,
     referralLink: `${window.location.origin}/?ref=${referrerProfile.humanityId}`,
     pendingRevocation: referrerProfile.pendingRevocation,

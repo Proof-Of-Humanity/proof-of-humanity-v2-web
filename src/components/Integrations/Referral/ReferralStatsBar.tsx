@@ -32,7 +32,7 @@ const ReferralStatsBar: React.FC<ReferralStatsBarProps> = ({
   stats,
   rewardsOnHold,
 }) => (
-  <div className="flex flex-wrap items-center gap-x-6 gap-y-3 rounded-2xl bg-white/[0.03] px-4 py-2 text-sm">
+  <div className="flex flex-nowrap items-center gap-x-4 overflow-visible rounded-2xl bg-white/[0.03] px-4 py-2 text-sm">
     <Stat
       label="Total verified referrals"
       value={String(stats.verifiedReferrals)}
@@ -55,7 +55,7 @@ const ReferralStatsBar: React.FC<ReferralStatsBarProps> = ({
     <InfoTooltip
       align="center"
       side="above"
-      className="border-stroke bg-whiteBackground rounded-full border px-4 py-2"
+      className="border-stroke bg-whiteBackground ml-auto shrink-0 rounded-full border px-4 py-2"
       label={<span className="text-secondaryText">Auto Rewards</span>}
     >
       Rewards will be processed automatically

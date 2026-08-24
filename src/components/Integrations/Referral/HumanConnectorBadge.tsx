@@ -10,6 +10,17 @@ import HumanConnectorIcon from "icons/HumanConnector.svg";
 import { Address } from "viem";
 import { useAccount } from "wagmi";
 
+export function HumanConnectorBadgeMark() {
+  return (
+    <div className="mt-8 flex w-[60px] flex-col items-center">
+      <HumanConnectorIcon className="h-12 w-auto" />
+      <span className="text-secondaryText text-center text-xs font-normal leading-[15px]">
+        Human Connector
+      </span>
+    </div>
+  );
+}
+
 /** Atlas referral stats are scoped to the signed-in user's JWT, so the badge
  *  can only be resolved (and shown) on the viewer's own profile. */
 export default function HumanConnectorBadge({
@@ -37,12 +48,5 @@ export default function HumanConnectorBadge({
   )
     return null;
 
-  return (
-    <div className="mt-8 flex w-[60px] flex-col items-center">
-      <HumanConnectorIcon className="h-12 w-auto" />
-      <span className="text-secondaryText text-center text-xs font-normal leading-[15px]">
-        Human Connector
-      </span>
-    </div>
-  );
+  return <HumanConnectorBadgeMark />;
 }

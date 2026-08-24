@@ -146,7 +146,7 @@ const ReferredUserRow: React.FC<ReferredUserRowProps> = ({ user }) => {
         />
       </div>
 
-      <div className="flex shrink-0 flex-col items-start sm:max-w-56 sm:items-end">
+      <div className="flex w-full shrink-0 flex-col items-start sm:w-56 sm:items-end sm:text-right">
         <div
           className={cn(
             "inline-flex items-center gap-2 text-sm font-semibold",
@@ -161,7 +161,7 @@ const ReferredUserRow: React.FC<ReferredUserRowProps> = ({ user }) => {
           {status.label}
         </div>
         {status.description && (
-          <p className="text-secondaryText mt-1 text-xs leading-5">
+          <p className="text-secondaryText mt-1 w-full text-xs leading-5">
             {status.description}
           </p>
         )}
