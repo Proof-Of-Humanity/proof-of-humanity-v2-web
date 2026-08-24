@@ -88,14 +88,14 @@ const MobileMenu = forwardRef(
           </span>
           <ExternalLink
             href="https://frabjous-marigold-8334d9.netlify.app"
-            className="flex items-center gap-2 text-lg"
+            className="flex items-center gap-2 text-lg text-white hover:text-white"
           >
             <DashboardIcon className="h-4 w-4 fill-current text-white dark:text-peach" />
             PoH Dashboard
           </ExternalLink>
           <ExternalLink
             href="https://poh-duplicate-finder.netlify.app"
-            className="flex items-center gap-2 text-lg"
+            className="flex items-center gap-2 text-lg text-white hover:text-white"
           >
             <SearchIcon className="h-4 w-4 fill-current text-white dark:text-peach" />
             PoH Duplicate Finder
