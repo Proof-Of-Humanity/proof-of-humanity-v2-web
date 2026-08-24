@@ -4,19 +4,21 @@ import { useAppKit } from "@reown/appkit/react";
 import type { ReactNode } from "react";
 import { useAccount, useChainId, useSwitchChain } from "wagmi";
 
-import type { SupportedChain, SupportedChainId } from "config/chains";
+import { idToChain, type SupportedChainId } from "config/chains";
 import useWeb3Loaded from "hooks/useWeb3Loaded";
 
 /**
  * Single wallet gate shared by the profile action buttons (Renew + Revoke).
  * Shows one "Connect wallet" / "Switch chain" prompt; once connected on the
  * home chain it renders the actions side by side in one row.
+ * Takes a chain id (not a chain object): viem chain objects carry an
+ * `extend` function and cannot cross the server->client boundary.
  */
 export default function ActionWalletGate({
-  homeChain,
+  homeChainId,
   children,
 }: {
-  homeChain: SupportedChain;
+  homeChainId: SupportedChainId;
   children: ReactNode;
 }) {
   const modal = useAppKit();
@@ -37,13 +39,13 @@ export default function ActionWalletGate({
       </button>
     );
 
-  if (homeChain.id !== connectedChainId)
+  if (homeChainId !== connectedChainId)
     return (
       <button
-        onClick={() => switchChain?.({ chainId: homeChain.id })}
+        onClick={() => switchChain?.({ chainId: homeChainId })}
         className="btn-secondary min-w-[170px] max-w-full whitespace-nowrap md:w-auto"
       >
-        Connect to {homeChain.name}
+        Connect to {idToChain(homeChainId)?.name}
       </button>
     );
 

@@ -30,7 +30,7 @@ export default async function Revoke({
         pohId={pohId}
         cost={BigInt(baseDeposit) + (arbitrationCost as bigint)}
         arbitrationInfo={arbitrationInfo}
-        homeChain={homeChain}
+        homeChainId={homeChain.id}
       />
     );
   } catch {

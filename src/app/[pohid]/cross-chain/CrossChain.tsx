@@ -341,7 +341,7 @@ function CrossChainActions({
       {gatewayId && crossChainState.canTransfer && transferClaimer ? (
         <TransferSection
           claimer={transferClaimer as `0x${string}`}
-          homeChain={homeChain}
+          homeChainId={homeChain.id}
           gatewayId={gatewayId}
           transferCooldownEndsAt={transferCooldownEndsAt}
         />
@@ -349,7 +349,7 @@ function CrossChainActions({
       {gatewayId && crossChainState.canUpdate && !pendingUpdateError ? (
         <UpdateStateSection
           humanity={humanity}
-          homeChain={homeChain}
+          homeChainId={homeChain.id}
           gatewayId={gatewayId}
           pohId={pohId}
         />

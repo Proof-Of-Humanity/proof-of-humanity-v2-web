@@ -12,7 +12,6 @@ import {
   getForeignChain,
   supportedChains,
   SupportedChainId,
-  type SupportedChain,
 } from "config/chains";
 import useCCPoHWrite from "contracts/hooks/useCCPoHWrite";
 import {
@@ -40,12 +39,12 @@ const buildTransferSuccessPatch = ({
 
 export default function TransferSection({
   claimer,
-  homeChain,
+  homeChainId,
   gatewayId,
   transferCooldownEndsAt,
 }: {
   claimer: `0x${string}`;
-  homeChain: SupportedChain;
+  homeChainId: SupportedChainId;
   gatewayId: `0x${string}`;
   transferCooldownEndsAt?: number;
 }) {
@@ -88,7 +87,7 @@ export default function TransferSection({
     transferStatus.write === "pending" ||
     (transferStatus.write === "success" &&
       transferStatus.transaction === "pending");
-  const destinationChain = getForeignChain(homeChain.id);
+  const destinationChain = getForeignChain(homeChainId);
 
   const closeTransferModal = useCallback(() => {
     setIsTransferModalOpen(false);
@@ -99,7 +98,7 @@ export default function TransferSection({
       ? "pending"
       : !web3Loaded ||
           address?.toLowerCase() !== claimer.toLowerCase() ||
-          homeChain.id !== chainId
+          homeChainId !== chainId
         ? "hidden"
         : !!transferCooldownEndsAt && nowSeconds <= transferCooldownEndsAt
           ? "cooldown"
@@ -150,7 +149,7 @@ export default function TransferSection({
             <div className="bg-whiteBackground flex w-full flex-col items-center gap-4 rounded-btn py-4">
               <div className="flex flex-col items-start gap-4">
                 {supportedChains.map((chain) => {
-                  const isCurrent = chain.id === homeChain.id;
+                  const isCurrent = chain.id === homeChainId;
                   return (
                     <label
                       className="text-primaryText flex items-center gap-4 whitespace-nowrap text-sm"

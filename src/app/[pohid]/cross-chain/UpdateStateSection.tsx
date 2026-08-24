@@ -10,9 +10,9 @@ import ChainLogo from "components/ChainLogo";
 import CopyButton from "components/CopyButton";
 import Modal from "components/Modal";
 import {
+  idToChain,
   SupportedChainId,
   supportedChains,
-  type SupportedChain,
 } from "config/chains";
 import useCCPoHWrite from "contracts/hooks/useCCPoHWrite";
 import type { ProfileHumanityQuery } from "generated/graphql";
@@ -39,12 +39,12 @@ const buildUpdateSuccessPatch = () => ({
 
 export default function UpdateStateSection({
   humanity,
-  homeChain,
+  homeChainId,
   gatewayId,
   pohId,
 }: {
   humanity: Record<SupportedChainId, ProfileHumanityQuery>;
-  homeChain: SupportedChain;
+  homeChainId: SupportedChainId;
   gatewayId: `0x${string}`;
   pohId: `0x${string}`;
 }) {
@@ -100,7 +100,7 @@ export default function UpdateStateSection({
       : "action";
   const updateGuardState = !isConnected
     ? "connect-wallet"
-    : homeChain.id !== chainId
+    : homeChainId !== chainId
       ? "switch-chain"
       : "ready";
 
@@ -151,12 +151,12 @@ export default function UpdateStateSection({
                   onClick={
                     updateGuardState === "connect-wallet"
                       ? openConnectWallet
-                      : () => switchChain({ chainId: homeChain.id })
+                      : () => switchChain({ chainId: homeChainId })
                   }
                 >
                   {updateGuardState === "connect-wallet"
                     ? "Connect wallet"
-                    : `Switch to ${homeChain.name}`}
+                    : `Switch to ${idToChain(homeChainId)?.name}`}
                 </button>
               </div>
             </>
@@ -195,7 +195,7 @@ export default function UpdateStateSection({
                       </div>
 
                       <div className="flex shrink-0 items-center gap-2 text-sm">
-                        {chain.id === homeChain.id ? (
+                        {chain.id === homeChainId ? (
                           <>
                             <span>Home Chain</span>
                             <CheckCircleIcon className="text-status-registered h-4 w-4" />
