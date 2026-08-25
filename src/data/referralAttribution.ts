@@ -114,19 +114,26 @@ export const clearReferral = (refereeHumanityId: `0x${string}`) => {
   }
 };
 
-/** `null` = expired / unregistered. Throws on any failed lookup so a partial
- *  outage is not treated as valid or expired. */
+/** `null` = expired / unregistered. A valid referrer on any healthy chain
+ *  wins. Throws when some lookups fail and none returned an active referrer,
+ *  so a partial outage is not treated as expired. */
 export const resolveReferralReferrer = async (
   referrerHumanityId: `0x${string}`,
 ): Promise<StoredReferral | null> => {
-  const lookups = await Promise.all(
+  const lookups = await Promise.allSettled(
     supportedChains.map((chain) =>
       sdk[chain.id].ReferralReferrerProfile({ id: referrerHumanityId }),
     ),
   );
 
   const now = BigInt(Math.floor(Date.now() / 1000));
-  for (const { humanity } of lookups) {
+  let sawRejection = false;
+  for (const lookup of lookups) {
+    if (lookup.status === "rejected") {
+      sawRejection = true;
+      continue;
+    }
+    const { humanity } = lookup.value;
     if (!humanity) continue;
     const { registration } = humanity;
     if (!registration || BigInt(registration.expirationTime) <= now) continue;
@@ -141,6 +148,7 @@ export const resolveReferralReferrer = async (
     };
   }
 
+  if (sawRejection) throw new Error("Referral lookup incomplete");
   return null;
 };
 

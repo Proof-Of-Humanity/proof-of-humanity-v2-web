@@ -216,7 +216,10 @@ export const fetchReferralPage = async (
       },
     });
 
-  const referralRows = (pohReferrals.items ?? []).map(({ item }) => item);
+  const referralRows = (pohReferrals.items ?? []).map(({ item }) => ({
+    ...item,
+    refereeHumanityId: item.refereeHumanityId.toLowerCase(),
+  }));
   const refereeProfiles = await resolveRefereeProfiles(
     referralRows.map((referral) => referral.refereeHumanityId),
   );
