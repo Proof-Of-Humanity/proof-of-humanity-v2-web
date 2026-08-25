@@ -57,15 +57,17 @@ function Item({ number, item, isPending, profile }: ItemInterface) {
     >
       <div className="border-stroke bg-whiteBackground rounded-2xl border p-6">
         <div className="min-w-0">
-          <div className="flex items-start gap-3 text-base font-semibold">
-            <span className="min-w-0 flex-1 break-words leading-snug">
-              #{number} - {title}
-            </span>
-            {isPending && (
-              <span className="text-orange bg-orange/10 shrink-0 animate-pulse rounded-full px-2.5 py-1 text-xs font-medium">
-                Pending
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+            <div className="flex min-w-0 flex-1 items-start gap-3 text-base font-semibold">
+              <span className="min-w-0 flex-1 break-words leading-snug">
+                #{number} - {title}
               </span>
-            )}
+              {isPending && (
+                <span className="text-orange bg-orange/10 shrink-0 animate-pulse rounded-full px-2.5 py-1 text-xs font-medium">
+                  Pending
+                </span>
+              )}
+            </div>
             {ipfsUri && <Attachment uri={ipfsUri} />}
           </div>
           {description && (

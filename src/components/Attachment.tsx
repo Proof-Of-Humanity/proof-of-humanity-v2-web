@@ -12,10 +12,12 @@ const Attachment: React.FC<AttachmentProps> = ({ uri }) => {
 
   return (
     <Link
-      className="inline-flex h-8 w-8 shrink-0 items-center justify-center"
+      className="text-orange inline-flex shrink-0 items-center gap-1.5 text-sm font-semibold hover:opacity-80"
       href={`/attachment?url=${encodeURIComponent(uri)}`}
+      aria-label="View attachment"
     >
-      <AttachmentIcon className="fill-primaryText h-4 w-4" />
+      View Attachment
+      <AttachmentIcon className="h-4 w-4 fill-current" />
     </Link>
   );
 };
