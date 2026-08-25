@@ -182,8 +182,8 @@ export default function SeerCredits({ integration }: SeerCreditsProps) {
 
                 <div className="space-y-4">
                   <p className="text-orange text-base font-semibold md:text-lg">
-                    Get $5 of Seer Credits when you register, with potential
-                    bonus credits after.
+                    Get punctual credits for particular apps and markets when
+                    you register.
                   </p>
 
                   <div className="text-secondaryText space-y-3 text-sm leading-relaxed">
@@ -193,9 +193,8 @@ export default function SeerCredits({ integration }: SeerCreditsProps) {
                     </p>
 
                     <p>
-                      Use your starting credits to take positions in prediction
-                      markets. Bonus credits may be added later, and unused
-                      credits can expire.
+                      Use your credits to take positions in prediction
+                      markets. Unused credits can expire.
                     </p>
                   </div>
                 </div>

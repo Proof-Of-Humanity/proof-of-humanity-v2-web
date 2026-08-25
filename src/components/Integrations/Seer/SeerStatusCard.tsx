@@ -37,7 +37,7 @@ export default function SeerStatusCard({
             />
           ),
           label: "Eligible: Verified Human profile",
-          text: "",
+          text: "Use your Seer Credits now",
           textColor: "text-status-registered",
           buttonLabel: "Go to Seer",
         };
@@ -51,7 +51,7 @@ export default function SeerStatusCard({
             />
           ),
           label: "Not eligible:",
-          text: "Register to unlock $5 of Seer Credits",
+          text: "Register to unlock Seer Credits",
           textColor: "text-red-500",
           buttonLabel: "Register Now",
         };
@@ -113,7 +113,7 @@ export default function SeerStatusCard({
         <div className="text-center">
           <p className="text-orange mb-6 text-sm font-medium">Reward</p>
           <h3 className="text-primaryText mb-6 text-xl font-semibold">
-            Unlock Your $5 Seer Balance
+            Unlock Your Seer Credits
           </h3>
           <div className="my-8 flex items-center justify-center">
             <div className="border-orange h-8 w-8 animate-spin rounded-full border-b-2"></div>

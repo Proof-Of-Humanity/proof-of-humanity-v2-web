@@ -136,9 +136,9 @@ const integrations: Record<string, Integration> = {
   "seer-credits": {
     id: "seer-credits",
     name: "Seer Credits",
-    title: "Claim $5 Welcome Credit",
+    title: "Claim Seer Credits",
     description:
-      "Register on Proof of Humanity to receive $5 of Seer Credits, with potential bonus credits after.",
+      "Register on Proof of Humanity to receive punctual credits for particular apps and markets.",
     logo: "/images/integrations/seer-logo.png",
     // seer-logo-white.png is 862x400; 103x48 keeps its true aspect ratio
     logoWidth: 103,
@@ -146,7 +146,7 @@ const integrations: Record<string, Integration> = {
     darkLogo: "/images/seer-logo-white.png",
     isActive: true,
     startPath: "/app/seer-credits",
-    buttonText: "Claim $5",
+    buttonText: "Claim Credits",
     displayOrder: 3,
     statusLabel: "Live",
     firstInfoSlide: [
@@ -177,12 +177,12 @@ const integrations: Record<string, Integration> = {
       {
         id: "howToUse",
         title: "What are Seer Credits?",
-        description: "~~Get $5 of Seer Credits when you register.~~",
+        description:
+          "Punctual credits for particular apps and markets, granted when you register.",
         bulletPoints: [
           "Rewards for **registered Proof of Humanity users** to use on the Seer platform.",
           "**Use them like trading funds.** Open/close positions on Seer without spending your own crypto.",
           "**They're not tokens.** They're non-transferable, and can't be withdrawn.",
-          "**Potential bonus credits.** More credits may be added after registration.",
           "**Use them before they expire.** Unused credits may not roll over.",
         ],
         image: "/images/integrations/seer-slide3.png",
@@ -193,7 +193,7 @@ const integrations: Record<string, Integration> = {
         id: "howToUseSeerCredits",
         title: "How to use your Seer Credits?",
         description:
-          "~~Register on Proof of Humanity to unlock $5 of Seer Credits, with potential bonus credits after.~~\n\n1. Go to Seer and connect your wallet address that's **registered** with your Proof of Humanity profile.\n2. Once connected, you'll be able to **check** your Seer Credits balance.\n3. Use your Seer Credits to **take positions** in prediction markets.\n\n**Note:** Bonus credits may be added later. Use your credits before they expire.",
+          "Register on Proof of Humanity to unlock punctual credits for particular apps and markets.\n\n1. Go to Seer and connect your wallet address that's **registered** with your Proof of Humanity profile.\n2. Once connected, you'll be able to **check** your Seer Credits balance.\n3. Use your Seer Credits to **take positions** in prediction markets.\n\n**Note:** Use your credits before they expire.",
         image: "/images/integrations/seer-slide4.png",
         imageHeight: 508,
         imageWidth: 425,

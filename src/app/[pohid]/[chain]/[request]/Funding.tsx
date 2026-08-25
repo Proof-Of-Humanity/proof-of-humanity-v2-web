@@ -146,7 +146,6 @@ const FundButton: React.FC<FundButtonProps> = ({
       args: [pohId, BigInt(index)],
     });
   };
-
   const trigger = resolveTxState([
     { active: !!externalDisabled, message: externalTooltip },
     { active: isReconciling, message: "Waiting for indexer" },
