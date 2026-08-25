@@ -40,16 +40,16 @@ const Options: React.FC = () => {
               ["https://gov.proofofhumanity.id/", "Forums"],
               ["https://t.me/pohDebug", "Report Bugs (Telegram)"],
               [
-                "https://github.com/Proof-Of-Humanity/proof-of-humanity-web/issues",
+                "https://github.com/Proof-Of-Humanity/proof-of-humanity-v2-web/issues",
                 "Report Bugs (Github)",
               ],
               [
-                "https://kleros.gitbook.io/docs/products/proof-of-humanity/proof-of-humanity-tutorial",
+                "https://docs.kleros.io/products/proof-of-humanity/proof-of-humanity-tutorial",
                 "Tutorial",
               ],
               ["https://ethereum.org/en/wallets", "Crypto Beginner's Guide"],
               [
-                "https://kleros.gitbook.io/docs/products/proof-of-humanity/poh-faq",
+                "https://docs.kleros.io/products/proof-of-humanity/poh-faq",
                 "FAQ",
               ],
             ] as const

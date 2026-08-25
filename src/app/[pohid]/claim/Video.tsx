@@ -371,7 +371,7 @@ function VideoStep({
       isValid: true,
     },
     {
-      text: `Say exactly: "${phrase}"`,
+      text: `Say the following phrase: "${phrase}"`,
       isValid: true,
     },
     {
