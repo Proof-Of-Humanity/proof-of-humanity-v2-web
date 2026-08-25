@@ -169,7 +169,7 @@ export default function SeerCredits({ integration }: SeerCreditsProps) {
           </div>
         ) : (
           <div className="relative w-full">
-            <div className="border-stroke bg-whiteBackground relative flex flex-col rounded-[30px] border shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] lg:flex-row lg:items-stretch">
+            <div className="border-stroke bg-whiteBackground relative flex flex-col rounded-[30px] border dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] lg:flex-row lg:items-stretch">
               <div className="flex-1 p-6 lg:p-8">
                 <h2 className="text-primaryText mb-4 text-xl font-semibold md:text-2xl">
                   Claim and use your Seer Credits

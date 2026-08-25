@@ -101,7 +101,7 @@ export default function VouchModalContent({
             </span>
           </div>
           <div className="flex items-center gap-3">
-            <AlertTriangleIcon className="h-5 w-5 shrink-0 text-[#FFE16B]" />
+            <AlertTriangleIcon className="h-5 w-5 shrink-0 text-[#D97706] dark:text-[#FFE16B]" />
             <span className="text-primaryText text-sm">
               If this request is rejected as fraudulent (Sybil attack or
               identity theft), your profile will be removed alongside it.

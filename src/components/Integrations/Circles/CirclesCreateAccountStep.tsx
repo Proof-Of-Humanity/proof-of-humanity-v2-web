@@ -30,7 +30,7 @@ export default function CirclesCreateAccountStep({
   return (
     <Accordion
       title="Step 1 - Create your Gnosis App account, and get invited to Circles"
-      className="w-full [&>button:focus-visible]:!shadow-[0_0_0_1px_#3A3E48] [&>button:focus-visible]:!ring-0 [&>button:focus]:!outline-none [&>button]:min-h-20 [&>button]:rounded-[28px] [&>button]:px-8 [&>button]:hover:!border-[#3A3E48]"
+      className="w-full [&>button:focus-visible]:outline-none [&>button:focus-visible]:ring-2 [&>button:focus-visible]:ring-orange [&>button:focus-visible]:ring-offset-2 dark:[&>button:focus-visible]:ring-offset-[#292D35] [&>button]:min-h-20 [&>button]:rounded-[28px] [&>button]:px-8"
       isOpen={isOpen}
       onToggle={onToggle}
     >
@@ -61,7 +61,7 @@ function CreateAccountSlide({
 }) {
   return (
     <div className="border-stroke bg-whiteBackground flex flex-col overflow-hidden rounded-[28px] border md:h-[591px] md:flex-row">
-      <div className="bg-primaryBackground order-2 flex w-full flex-col rounded-[28px] p-6 shadow-[0_4px_32px_12px_rgba(255,255,255,0.16)] md:order-1 md:w-[519px] md:shrink-0 md:p-8">
+      <div className="bg-primaryBackground order-2 flex w-full flex-col rounded-[28px] p-6 shadow-[0_4px_32px_12px_rgba(0,0,0,0.10)] dark:shadow-[0_4px_32px_12px_rgba(255,255,255,0.16)] md:order-1 md:w-[519px] md:shrink-0 md:p-8">
         <div className="flex min-h-[150px] flex-col">
           <p className="text-primaryText text-xl font-semibold md:text-2xl">
             {slide.title}

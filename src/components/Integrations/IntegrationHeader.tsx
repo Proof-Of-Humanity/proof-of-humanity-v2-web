@@ -13,14 +13,15 @@ export default function IntegrationHeader({
   integration,
   className,
 }: IntegrationHeaderProps) {
-  const src = integration.darkLogo || integration.logo;
+  const lightSrc = integration.logo;
+  const darkSrc = integration.darkLogo || integration.logo;
   const logoWidth = integration.logoWidth || 164;
   const logoHeight = integration.logoHeight || 48;
 
   return (
     <div
       className={cn(
-        "border-stroke bg-whiteBackground flex flex-col rounded-card border shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]",
+        "border-stroke bg-whiteBackground flex flex-col rounded-card border dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]",
         className,
       )}
     >
@@ -28,10 +29,18 @@ export default function IntegrationHeader({
         {integration.logo && (
           <div className="mb-4 ml-1">
             <Image
-              src={src}
+              src={lightSrc}
               alt={`${integration.name} logo`}
               width={logoWidth}
               height={logoHeight}
+              className="dark:hidden"
+            />
+            <Image
+              src={darkSrc}
+              alt={`${integration.name} logo`}
+              width={logoWidth}
+              height={logoHeight}
+              className="hidden dark:block"
             />
           </div>
         )}

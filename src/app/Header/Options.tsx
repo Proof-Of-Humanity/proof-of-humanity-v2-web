@@ -4,6 +4,7 @@ import ExternalLink from "components/ExternalLink";
 import Popover from "components/Popover";
 import SocialHelpIcon from "icons/SocialHelp.svg";
 import SocialSnapshotIcon from "icons/SocialSnapshot.svg";
+import ThemeToggle from "components/ThemeToggle";
 import SettingsPopover from "./SettingsPopover";
 
 const Options: React.FC = () => {
@@ -63,6 +64,7 @@ const Options: React.FC = () => {
           ))}
         </div>
       </Popover>
+      <ThemeToggle className="ml-2 h-9 w-9" />
     </div>
   );
 };

@@ -19,7 +19,9 @@ function Switch({ checked, onChange, label, className, small }: SwitchProps) {
       className={cn(
         "relative shrink-0 rounded-full border transition-colors duration-200 ease-premium",
         small ? "h-4 w-8" : "h-6 w-12",
-        checked ? "border-peach bg-peach" : "border-[#3A3E48] bg-[#292D35]",
+        checked
+          ? "border-peach bg-peach"
+          : "border-[#B0AAA2] bg-[#D8D2CB] dark:border-[#3A3E48] dark:bg-[#292D35]",
         className,
       )}
     >

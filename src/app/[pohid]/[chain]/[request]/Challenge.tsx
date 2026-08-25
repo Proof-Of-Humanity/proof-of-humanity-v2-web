@@ -122,7 +122,7 @@ const ReasonCard: React.FC<ReasonCardInterface> = ({
           ? "border-stroke bg-whiteBackground cursor-not-allowed opacity-50 grayscale"
           : isSelected
             ? "border-primaryText bg-grey"
-            : "hover:border-stroke border-transparent bg-[#292D35]",
+            : "hover:border-stroke border-transparent bg-white dark:bg-[#292D35]",
       )}
       onClick={() => !isUsed && current.set(reason)}
     >
@@ -130,10 +130,10 @@ const ReasonCard: React.FC<ReasonCardInterface> = ({
         className={cn(
           "border-stroke absolute right-2 top-2 z-10 h-4 w-4 rounded-full border",
           isSelected &&
-            "border-peach bg-peach shadow-[inset_0_0_0_3px_#292D35]",
+            "border-peach bg-peach shadow-[inset_0_0_0_3px_#FFFFFF] dark:shadow-[inset_0_0_0_3px_#292D35]",
         )}
       />
-      <div className="flex h-[99px] w-full items-center justify-center overflow-hidden bg-[#1E2129]">
+      <div className="flex h-[99px] w-full items-center justify-center overflow-hidden bg-black/10 dark:bg-[#1E2129]">
         {images ? (
           images.map((image) => (
             <Image

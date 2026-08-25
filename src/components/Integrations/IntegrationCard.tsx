@@ -10,7 +10,8 @@ interface IntegrationCardProps {
 
 export default function IntegrationCard({ integration }: IntegrationCardProps) {
   const router = useRouter();
-  const src = integration.darkLogo || integration.logo;
+  const lightSrc = integration.logo;
+  const darkSrc = integration.darkLogo || integration.logo;
   const logoWidth = integration.logoWidth || 164;
   const logoHeight = integration.logoHeight || 48;
 
@@ -28,10 +29,23 @@ export default function IntegrationCard({ integration }: IntegrationCardProps) {
               style={{ height: `${logoHeight}px` }}
             >
               <Image
-                src={src}
+                src={lightSrc}
                 alt={`${integration.name} logo`}
                 width={logoWidth}
                 height={logoHeight}
+                className="dark:hidden"
+                style={{
+                  width: "auto",
+                  height: "100%",
+                  maxHeight: `${logoHeight}px`,
+                }}
+              />
+              <Image
+                src={darkSrc}
+                alt={`${integration.name} logo`}
+                width={logoWidth}
+                height={logoHeight}
+                className="hidden dark:block"
                 style={{
                   width: "auto",
                   height: "100%",

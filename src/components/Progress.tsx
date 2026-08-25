@@ -22,7 +22,7 @@ const Progress: React.FC<ProgressProps> = ({
     </div>
     <div className="h-2 w-full overflow-hidden rounded-full bg-[#DDDDDD]">
       <div
-        className="h-full rounded-full bg-[#79FFDC] transition-[width] duration-200"
+        className="h-full rounded-full bg-[#00D9A1] transition-[width] duration-200 dark:bg-[#79FFDC]"
         style={{ width: `${value}%` }}
       />
     </div>

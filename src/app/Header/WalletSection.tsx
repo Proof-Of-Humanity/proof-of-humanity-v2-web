@@ -20,17 +20,17 @@ const WalletSection = ({
   return (
     <div className="flex items-center">
       {web3Loaded && isConnected && address ? (
-        <div className="flex items-center rounded-full border border-white/[0.08] bg-[#2F333D] shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
+        <div className="header-chip flex items-center rounded-full border">
           <button
-            className="flex items-center gap-1.5 whitespace-nowrap rounded-l-full px-3.5 py-2 text-sm font-semibold text-white transition-colors duration-200 hover:bg-white/5"
+            className="flex items-center gap-1.5 whitespace-nowrap rounded-l-full px-3.5 py-2 text-sm font-semibold transition-colors duration-200 hover:bg-white/10 dark:hover:bg-white/5"
             onClick={() => modal.open({ view: "Networks" })}
           >
             <ChainLogo chainId={chain.id} className="h-4 w-4 fill-current" />
             {chain.name.split(" ").at(-1)}
           </button>
-          <span className="h-5 w-px bg-white/[0.08]" />
+          <span className="h-5 w-px bg-white/[0.35] dark:bg-white/[0.08]" />
           <button
-            className="flex items-center gap-1.5 whitespace-nowrap rounded-r-full px-3.5 py-2 text-sm font-semibold text-white transition-colors duration-200 hover:bg-white/5"
+            className="flex items-center gap-1.5 whitespace-nowrap rounded-r-full px-3.5 py-2 text-sm font-semibold transition-colors duration-200 hover:bg-white/10 dark:hover:bg-white/5"
             onClick={() => modal.open({ view: "Account" })}
           >
             {shortenAddress(address)}
@@ -38,7 +38,7 @@ const WalletSection = ({
         </div>
       ) : (
         <button
-          className="hover:border-orange flex items-center whitespace-nowrap rounded-full border border-white/[0.08] bg-[#2F333D] px-5 py-2 text-sm font-semibold text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] transition-colors duration-200"
+          className="header-chip flex items-center whitespace-nowrap rounded-full border px-5 py-2 text-sm font-semibold transition-colors duration-200"
           onClick={() => modal.open({ view: "Connect" })}
         >
           Connect

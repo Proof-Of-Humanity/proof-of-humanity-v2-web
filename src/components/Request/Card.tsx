@@ -178,8 +178,9 @@ function Card({
   return (
     <Link
       href={`/${prettifyId(pohId)}/${chain.name.toLowerCase()}/${index}`}
+      data-theme="dark"
       className={cn(
-        "request-card-shell group relative block w-full cursor-pointer rounded-card border transition duration-200 ease-premium hover:z-10 hover:-translate-y-[3px]",
+        "dark request-card-shell group relative block w-full cursor-pointer rounded-card border transition duration-200 ease-premium hover:z-10 hover:-translate-y-[3px]",
         aspectRatio === "square" ? "aspect-square" : "aspect-[5/4]",
         enableMediaParallax && "request-card-parallax",
       )}
@@ -205,7 +206,7 @@ function Card({
       </div>
 
       <div className="absolute inset-x-0 top-0 z-20 flex flex-wrap items-start justify-between gap-2 px-4 pt-[9px] font-medium">
-        <StatusBadge status={requestStatus} />
+        <StatusBadge overlay status={requestStatus} />
         <div className="group/info relative flex h-6 w-6 items-center justify-center rounded-full border border-white/[0.08] bg-[#2F333D]/85 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] backdrop-blur-sm">
           <InfoIcon className="h-4 w-4 stroke-current stroke-2 text-white drop-shadow-md" />
           {tooltip && (

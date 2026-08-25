@@ -174,7 +174,7 @@ export default function SubgraphsStatus() {
       aria-label={`${activeStatus.chainLabel} subgraph status: ${
         activeStatus.ok ? "healthy" : "degraded"
       }: ${getStatusDescription(activeStatus)}.`}
-      className="sticky top-0 z-30 mb-4 overflow-hidden rounded-input border border-[rgba(255,138,102,0.28)] bg-[#292D35] shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]"
+      className="sticky top-0 z-30 mb-4 overflow-hidden rounded-input border border-[rgba(255,138,102,0.28)] bg-white dark:bg-[#292D35] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]"
     >
       <div
         aria-hidden="true"
@@ -191,15 +191,15 @@ export default function SubgraphsStatus() {
                 status,
               )}`}
             />
-            <h2 className="m-0 whitespace-nowrap text-sm font-semibold leading-6 text-white sm:text-base">
+            <h2 className="m-0 whitespace-nowrap text-sm font-semibold leading-6 text-[#292D35] dark:text-white sm:text-base">
               {status.chainLabel} subgraph status
             </h2>
-            <span className="hidden h-4 border-l border-white/35 sm:block" />
-            <p className="m-0 min-w-0 truncate text-xs text-white/90 sm:text-sm">
+            <span className="hidden h-4 border-l border-[#292D35]/25 dark:border-white/35 sm:block" />
+            <p className="m-0 min-w-0 truncate text-xs text-[#292D35]/85 dark:text-white/90 sm:text-sm">
               {getStatusDescription(status)}
             </p>
             {visibleStatuses.length > 1 ? (
-              <span className="rounded-full bg-white/15 px-2 py-0.5 text-xs font-semibold text-white">
+              <span className="rounded-full bg-black/8 px-2 py-0.5 text-xs font-semibold text-[#292D35] dark:bg-white/15 dark:text-white">
                 {index + 1}/{visibleStatuses.length}
               </span>
             ) : null}

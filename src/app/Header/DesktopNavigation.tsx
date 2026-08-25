@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useState } from "react";
-import { sepolia } from "viem/chains";
 import cn from "classnames";
 import ExternalLink from "components/ExternalLink";
 import Popover from "components/Popover";
@@ -14,15 +13,13 @@ import RegisterLink from "./RegisterLink";
 import { isRegisterActive } from "utils/identifier";
 
 const navLink = (active: boolean) =>
-  `relative whitespace-nowrap py-2 text-lg font-semibold transition-colors duration-200 after:absolute after:inset-x-0 after:-bottom-0.5 after:h-px after:origin-center after:rounded-full after:bg-peach after:shadow-[0_0_12px_rgba(255,176,138,0.45)] after:transition-transform after:duration-200 ${
+  `nav-underline relative whitespace-nowrap py-2 text-lg font-semibold transition-colors duration-200 after:absolute after:inset-x-0 after:-bottom-0.5 after:h-px after:origin-center after:rounded-full after:transition-transform after:duration-200 ${
     active
-      ? "text-orange after:scale-x-100"
-      : "text-secondaryText after:scale-x-0 hover:text-primaryText"
+      ? "nav-link-active after:scale-x-100"
+      : "nav-link-idle after:scale-x-0"
   }`;
 
 interface DesktopNavigationProps {
-  web3Loaded: boolean;
-  chain: { id: number; name: string };
   pathname: string;
   policy: string;
   me: any;
@@ -32,8 +29,6 @@ interface DesktopNavigationProps {
 }
 
 const DesktopNavigation = ({
-  web3Loaded,
-  chain,
   pathname,
   policy,
   me,
@@ -50,14 +45,6 @@ const DesktopNavigation = ({
 
   return (
     <div className="my-2 hidden items-center gap-x-8 whitespace-nowrap xl:flex">
-      {web3Loaded && chain.id === sepolia.id && (
-        <ExternalLink
-          href="https://docs.scroll.io/en/user-guide/faucet/"
-          className={navLink(false)}
-        >
-          Faucet
-        </ExternalLink>
-      )}
       <Link href="/" className={navLink(pathname === "/")}>
         Profiles
       </Link>
@@ -91,7 +78,7 @@ const DesktopNavigation = ({
             Tools
             <CaretDownIcon
               className={cn(
-                "h-3 w-3 fill-current text-peach transition-transform duration-200 ease-premium",
+                "nav-caret h-3 w-3 fill-current transition-transform duration-200 ease-premium",
                 toolsOpen && "rotate-180",
               )}
             />
