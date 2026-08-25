@@ -44,7 +44,7 @@ interface ReviewProps {
 const reviewChecklist = [
   "The photo must face forward, with no coverings that hide facial features.",
   "No filters, heavy makeup, or adornments that obscure the face. Hats are allowed.",
-  "Your video shows the correct wallet address clearly, and you say the exact required phrase.",
+  "Your video shows the correct wallet address clearly, and you say the required phrase.",
 ];
 
 function Review({

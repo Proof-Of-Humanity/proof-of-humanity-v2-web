@@ -190,8 +190,8 @@ const buildNextSteps = ({
     ),
     title: (
       <>
-        Challenge Period —{" "}
-        <span className="text-orange">{challengePeriod}</span>
+        Challenge Period{" "}
+        <span className="text-orange">({challengePeriod})</span>
       </>
     ),
     description: `Once your deposit is fully funded${

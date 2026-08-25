@@ -31,7 +31,11 @@ const metadata = {
     typeof window !== "undefined"
       ? window.location.origin
       : "https://v2.proofofhumanity.id",
-  icons: ["https://v2.proofofhumanity.id/logo.svg"],
+  icons: [
+    typeof window !== "undefined"
+      ? `${window.location.origin}/logo/poh-colored.svg`
+      : "https://v2.proofofhumanity.id/logo/poh-colored.svg",
+  ],
 };
 
 createAppKit({
