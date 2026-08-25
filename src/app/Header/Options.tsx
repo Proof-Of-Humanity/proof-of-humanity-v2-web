@@ -13,7 +13,6 @@ const Options: React.FC = () => {
   return (
     <div className="mt-[16px] flex flex-row items-center md:mt-0">
       <SettingsPopover key={address} />
-      <ThemeToggle className="ml-2 h-9 w-9" />
       <ExternalLink
         href="https://snapshot.org/#/poh.eth/"
         className="icon-btn ml-2 h-9 w-9"
@@ -65,6 +64,7 @@ const Options: React.FC = () => {
           ))}
         </div>
       </Popover>
+      <ThemeToggle className="ml-2 h-9 w-9" />
     </div>
   );
 };
