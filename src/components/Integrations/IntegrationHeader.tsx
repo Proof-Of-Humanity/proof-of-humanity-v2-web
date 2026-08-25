@@ -13,7 +13,8 @@ export default function IntegrationHeader({
   integration,
   className,
 }: IntegrationHeaderProps) {
-  const src = integration.darkLogo || integration.logo;
+  const lightSrc = integration.logo;
+  const darkSrc = integration.darkLogo || integration.logo;
   const logoWidth = integration.logoWidth || 164;
   const logoHeight = integration.logoHeight || 48;
 
@@ -28,10 +29,18 @@ export default function IntegrationHeader({
         {integration.logo && (
           <div className="mb-4 ml-1">
             <Image
-              src={src}
+              src={lightSrc}
               alt={`${integration.name} logo`}
               width={logoWidth}
               height={logoHeight}
+              className="dark:hidden"
+            />
+            <Image
+              src={darkSrc}
+              alt={`${integration.name} logo`}
+              width={logoWidth}
+              height={logoHeight}
+              className="hidden dark:block"
             />
           </div>
         )}

@@ -21,7 +21,7 @@ function Switch({ checked, onChange, label, className, small }: SwitchProps) {
         small ? "h-4 w-8" : "h-6 w-12",
         checked
           ? "border-peach bg-peach"
-          : "border-[#E5E5E5] bg-[#E9E4DE] dark:border-[#3A3E48] dark:bg-[#292D35]",
+          : "border-[#B0AAA2] bg-[#D8D2CB] dark:border-[#3A3E48] dark:bg-[#292D35]",
         className,
       )}
     >

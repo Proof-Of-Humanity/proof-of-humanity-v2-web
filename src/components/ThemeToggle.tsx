@@ -1,9 +1,12 @@
 "use client";
 
 import cn from "classnames";
-import { useEffect, useState } from "react";
+import { useEffect, useLayoutEffect, useState } from "react";
 
 export const THEME_STORAGE_KEY = "poh-theme";
+
+const useIsomorphicLayoutEffect =
+  typeof window !== "undefined" ? useLayoutEffect : useEffect;
 
 const applyTheme = (isDark: boolean) => {
   const root = document.documentElement;
@@ -14,7 +17,7 @@ const applyTheme = (isDark: boolean) => {
 const ThemeToggle: React.FC<{ className?: string }> = ({ className }) => {
   const [isDark, setIsDark] = useState(true);
 
-  useEffect(() => {
+  useIsomorphicLayoutEffect(() => {
     setIsDark(document.documentElement.classList.contains("dark"));
   }, []);
 

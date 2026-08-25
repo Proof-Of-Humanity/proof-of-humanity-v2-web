@@ -30,7 +30,7 @@ export default function CirclesCreateAccountStep({
   return (
     <Accordion
       title="Step 1 - Create your Gnosis App account, and get invited to Circles"
-      className="w-full [&>button:focus-visible]:!shadow-[0_0_0_1px_#E5E5E5] [&>button:focus-visible]:!ring-0 dark:[&>button:focus-visible]:!shadow-[0_0_0_1px_#3A3E48] [&>button:focus]:!outline-none [&>button]:min-h-20 [&>button]:rounded-[28px] [&>button]:px-8 [&>button]:hover:!border-[#E5E5E5] dark:[&>button]:hover:!border-[#3A3E48]"
+      className="w-full [&>button:focus-visible]:outline-none [&>button:focus-visible]:ring-2 [&>button:focus-visible]:ring-orange [&>button:focus-visible]:ring-offset-2 dark:[&>button:focus-visible]:ring-offset-[#292D35] [&>button]:min-h-20 [&>button]:rounded-[28px] [&>button]:px-8"
       isOpen={isOpen}
       onToggle={onToggle}
     >

@@ -39,12 +39,12 @@ function ProfileMainCardSkeleton() {
           <div className="absolute inset-0 bg-white dark:bg-[#292D35]" />
           <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent" />
           <div className="absolute inset-x-0 top-0 flex items-start justify-between p-3">
-            <div className="h-7 w-28 rounded-full bg-white/10" />
-            <div className="h-8 w-8 rounded-full bg-white/10" />
+            <div className="h-7 w-28 rounded-full bg-black/10 dark:bg-white/10" />
+            <div className="h-8 w-8 rounded-full bg-black/10 dark:bg-white/10" />
           </div>
           <div className="absolute inset-x-0 bottom-0 p-4">
-            <div className="h-5 w-2/3 rounded bg-white/10" />
-            <div className="mt-2 h-4 w-28 rounded bg-white/10" />
+            <div className="h-5 w-2/3 rounded bg-black/10 dark:bg-white/10" />
+            <div className="mt-2 h-4 w-28 rounded bg-black/10 dark:bg-white/10" />
           </div>
         </div>
       </div>
