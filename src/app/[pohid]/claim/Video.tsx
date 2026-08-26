@@ -178,8 +178,7 @@ function VideoStep({
     } catch (err: unknown) {
       if (!isStale()) setGenericProcessingError();
     } finally {
-      // A retake/supersede path owns the loader once this run goes stale.
-      if (!isStale()) loading.stop();
+      loading.stop();
     }
   };
 
@@ -276,8 +275,7 @@ function VideoStep({
       } catch (err: unknown) {
         if (!isStale()) setGenericProcessingError();
       } finally {
-        // A retake/supersede path owns the loader once this run goes stale.
-        if (!isStale()) loading.stop();
+        loading.stop();
       }
     };
 
