@@ -2,6 +2,7 @@
 
 import { useCallback, useMemo, useState } from "react";
 import { TransactionRejectedRpcError, UserRejectedRequestError } from "viem";
+import type { WriteErrorContext, WriteErrorKind } from "contracts/hooks/types";
 
 export const ACTION_STATES = {
   idle: "idle",
@@ -56,10 +57,28 @@ export const WAITING_FOR_INDEXER_TOOLTIP =
 export const isActionStateLoading = (state: ControlledActionState) =>
   state === ACTION_STATES.confirmWallet || state === ACTION_STATES.txPending;
 
-export const isActionStateError = (state: ControlledActionState) =>
-  state === ACTION_STATES.walletRejected ||
-  state === ACTION_STATES.actionUnavailable ||
-  state === ACTION_STATES.error;
+const DEFAULT_WRITE_ERROR_MESSAGE =
+  "Transaction failed. Check your wallet and try again.";
+
+// Kind-specific copy for terminal write outcomes reported by the write hook.
+// "wallet" is absent on purpose: wallet failures fall through to
+// `isWalletRejectedError`, which separates a user rejection from other
+// submission failures.
+const WRITE_ERROR_KIND_MESSAGES: Partial<Record<WriteErrorKind, string>> = {
+  reverted: "Transaction failed on-chain.",
+  unknown:
+    "Could not confirm the transaction. Check the block explorer before retrying.",
+};
+
+export const getWriteErrorMessage = (
+  error: unknown,
+  errorCtx?: WriteErrorContext,
+  fallbackMessage = DEFAULT_WRITE_ERROR_MESSAGE,
+) =>
+  (errorCtx && WRITE_ERROR_KIND_MESSAGES[errorCtx.kind]) ??
+  (isWalletRejectedError(error)
+    ? ACTION_STATE_LABELS[ACTION_STATES.walletRejected]
+    : fallbackMessage);
 
 const getActionFeedbackMessage = ({ state, detail }: ActionFeedback) => {
   if (state === ACTION_STATES.idle) {
@@ -94,20 +113,16 @@ export default function useActionFeedback() {
   const setWriteError = useCallback(
     (
       error: unknown,
-      fallbackMessage = "Transaction failed. Check your wallet and try again.",
+      errorCtx?: WriteErrorContext,
+      fallbackMessage = DEFAULT_WRITE_ERROR_MESSAGE,
     ) => {
-      if (isWalletRejectedError(error)) {
-        setActionFeedback({
-          state: ACTION_STATES.walletRejected,
-        });
-        return ACTION_STATE_LABELS[ACTION_STATES.walletRejected];
-      }
-
-      setActionFeedback({
-        state: ACTION_STATES.error,
-        detail: fallbackMessage,
-      });
-      return fallbackMessage;
+      const message = getWriteErrorMessage(error, errorCtx, fallbackMessage);
+      setActionFeedback(
+        isWalletRejectedError(error)
+          ? { state: ACTION_STATES.walletRejected }
+          : { state: ACTION_STATES.error, detail: message },
+      );
+      return message;
     },
     [],
   );

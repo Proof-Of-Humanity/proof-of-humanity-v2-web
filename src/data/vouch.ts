@@ -4,7 +4,6 @@ import { getClaimerData } from "data/claimer";
 import { OffChainVouch } from "data/request";
 import type { ClaimerQuery, Vouch as VouchQuery } from "generated/graphql";
 import { cache } from "react";
-import { getRegistrationPhoto } from "data/evidence";
 import { Address, Hash } from "viem";
 import type {
   RequestChain,
@@ -75,7 +74,8 @@ export interface RequestVouchStatusItem {
 export interface RequestVouchDisplayItem extends RequestVouchStatusItem {
   name: string | null | undefined;
   pohId: Address | undefined;
-  photo: string | undefined;
+  /** Registration evidence URI; the client resolves the photo from it. */
+  evidenceUri: string | undefined;
 }
 
 export interface RequestVouchData {
@@ -208,14 +208,6 @@ const getVouchProfile = (
 };
 
 /**
- * @notice Fetches the registration photo associated with a claimer evidence URI.
- * @dev Returns undefined when the profile evidence or registration file cannot
- * be loaded, preserving the identicon fallback.
- */
-const getVouchPhoto = async (evidenceUri: string | undefined) =>
-  (await getRegistrationPhoto(evidenceUri)) ?? undefined;
-
-/**
  * @notice Builds one display-ready voucher avatar item.
  * @dev Profile data is fetched per voucher at the leaf component level.
  */
@@ -223,7 +215,17 @@ const getRequestVouchDisplayItem = async (
   chain: RequestChain,
   statusItem: RequestVouchStatusItem,
 ): Promise<RequestVouchDisplayItem> => {
+  const profileStartedAt = Date.now();
   const rawClaimer = await getClaimerData(statusItem.voucher);
+  console.info(
+    "[request-debug]",
+    JSON.stringify({
+      event: "vouch-profile-data-done",
+      chainId: chain.id,
+      voucher: statusItem.voucher,
+      durationMs: Date.now() - profileStartedAt,
+    }),
+  );
   const profile = getVouchProfile(rawClaimer, chain);
 
   return {
@@ -231,7 +233,7 @@ const getRequestVouchDisplayItem = async (
     voucher: profile.voucher ?? statusItem.voucher,
     name: profile.name,
     pohId: profile.pohId,
-    photo: await getVouchPhoto(profile.evidenceUri),
+    evidenceUri: profile.evidenceUri,
   };
 };
 
@@ -243,10 +245,30 @@ const getRequestVouchDisplayItem = async (
 export const getRequestVoucherDisplayItems = cache(
   async (chain: RequestChain, vouchDataPromise: Promise<RequestVouchData>) => {
     const { statusItems } = await vouchDataPromise;
+    const startedAt = Date.now();
+    console.info(
+      "[request-debug]",
+      JSON.stringify({
+        event: "request-voucher-profiles-start",
+        chainId: chain.id,
+        count: statusItems.length,
+      }),
+    );
 
-    return Promise.all(
+    const items = await Promise.all(
       statusItems.map((item) => getRequestVouchDisplayItem(chain, item)),
     );
+    console.info(
+      "[request-debug]",
+      JSON.stringify({
+        event: "request-voucher-profiles-done",
+        chainId: chain.id,
+        count: items.length,
+        durationMs: Date.now() - startedAt,
+      }),
+    );
+
+    return items;
   },
 );
 
@@ -262,9 +284,31 @@ export const getVouchedForDisplayItems = cache(
       isOnChain: true,
       vouchStatus: undefined,
     }));
+    const startedAt = Date.now();
+    console.info(
+      "[request-debug]",
+      JSON.stringify({
+        event: "vouched-for-profiles-start",
+        chainId: chain.id,
+        requestIndex: Number(request.index),
+        count: statusItems.length,
+      }),
+    );
 
-    return Promise.all(
+    const items = await Promise.all(
       statusItems.map((item) => getRequestVouchDisplayItem(chain, item)),
     );
+    console.info(
+      "[request-debug]",
+      JSON.stringify({
+        event: "vouched-for-profiles-done",
+        chainId: chain.id,
+        requestIndex: Number(request.index),
+        count: items.length,
+        durationMs: Date.now() - startedAt,
+      }),
+    );
+
+    return items;
   },
 );

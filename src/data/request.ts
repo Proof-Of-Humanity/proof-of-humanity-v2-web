@@ -9,20 +9,22 @@ import { sdk } from "config/subgraph";
 import { RequestsQuery } from "generated/graphql";
 import { cache } from "react";
 import { Address, Hash, concat, keccak256, toHex } from "viem";
-import { settleChainQueries } from "./chainQuery";
+import { settleChainQueriesWithStatus } from "./chainQuery";
 import { sanitizeHeadRequests } from "./sanitizer";
 
 const emptyRequests = (): RequestsQuery => ({ requests: [] });
 
-const PROFILES_DISPLAY_REQUIRED_REQS = 12 * 4;
+export const PROFILES_DISPLAY_REQUIRED_REQS = 12 * 4;
 
-const completeCrossChains = async (
-  out: Record<SupportedChainId, RequestsQuery["requests"]>,
-) => {
-  function mergeObjectsWithArrays(
-    obj1: Record<SupportedChainId, RequestsQuery["requests"]>,
-    obj2: Record<SupportedChainId, RequestsQuery["requests"]>,
-  ) {
+export type RequestStacks = Record<SupportedChainId, RequestsQuery["requests"]>;
+
+export interface RequestStacksResult {
+  stacks: RequestStacks;
+  failedChainIds: SupportedChainId[];
+}
+
+const completeCrossChains = async (out: RequestStacks) => {
+  function mergeObjectsWithArrays(obj1: RequestStacks, obj2: RequestStacks) {
     const entries = [...Object.entries(obj1), ...Object.entries(obj2)];
     return entries.reduce((acc: any, [key, value]) => {
       acc[key] = acc[key] ? [...acc[key], ...value] : [...value];
@@ -37,7 +39,7 @@ const completeCrossChains = async (
     {} as Record<SupportedChainId, RequestsQuery["requests"]>,
   );
 
-  const res = await settleChainQueries(
+  const { values: res, failedChains } = await settleChainQueriesWithStatus(
     (chain) =>
       sdk[chain.id].Requests({
         where: {
@@ -58,13 +60,16 @@ const completeCrossChains = async (
             )
           : (res[i]?.requests ?? []),
     }),
-    {} as Record<SupportedChainId, RequestsQuery["requests"]>,
+    {} as RequestStacks,
   );
-  return mergeObjectsWithArrays(out, outPlus);
+  return {
+    stacks: mergeObjectsWithArrays(out, outPlus) as RequestStacks,
+    failedChainIds: failedChains.map((chain) => chain.id),
+  };
 };
 
-const _getPagedRequests = async () => {
-  const res = await settleChainQueries(
+const _getPagedRequests = async (): Promise<RequestStacksResult> => {
+  const { values: res, failedChains } = await settleChainQueriesWithStatus(
     (chain) =>
       sdk[chain.id].Requests({
         first: PROFILES_DISPLAY_REQUIRED_REQS,
@@ -81,29 +86,37 @@ const _getPagedRequests = async () => {
             )
           : (res[i]?.requests ?? []),
     }),
-    {} as Record<SupportedChainId, RequestsQuery["requests"]>,
+    {} as RequestStacks,
   );
-  return await completeCrossChains(out);
+  const crossChain = await completeCrossChains(out);
+  return {
+    stacks: crossChain.stacks,
+    failedChainIds: [
+      ...new Set([
+        ...failedChains.map((chain) => chain.id),
+        ...crossChain.failedChainIds,
+      ]),
+    ],
+  };
 };
 
+/**
+ * Fetches one chain's request page. Rejects when the chain's subgraph is
+ * unreachable — callers must treat a rejection as "unknown" (outage), never
+ * as an empty result.
+ */
 export const getRequestsLoadingPromises = async (
   chainId: SupportedChainId,
   where: any,
   skipNumber: number,
 ): Promise<RequestsQuery> => {
-  let result: RequestsQuery;
-  try {
-    result = await sdk[chainId].Requests({
-      where: {
-        ...where,
-      },
-      first: PROFILES_DISPLAY_REQUIRED_REQS,
-      skip: skipNumber,
-    });
-  } catch (err) {
-    console.error(`Subgraph query failed on chain ${chainId}:`, err);
-    return emptyRequests();
-  }
+  const result = await sdk[chainId].Requests({
+    where: {
+      ...where,
+    },
+    first: PROFILES_DISPLAY_REQUIRED_REQS,
+    skip: skipNumber,
+  });
 
   // Manually filter out legacy vouching requests (index <= -1) for legacy chain
   if (chainId === legacyChain.id) {
@@ -115,19 +128,16 @@ export const getRequestsLoadingPromises = async (
   return result;
 };
 
-export const getRequestsInitData = async () => {
+export const getRequestsInitData = async (): Promise<RequestStacksResult> => {
   return await getFilteredRequestsInitData(undefined);
 };
 
 export const getFilteredRequestsInitData = async (
-  filtered: Record<SupportedChainId, RequestsQuery["requests"]> | undefined,
-) => {
-  const all: Record<SupportedChainId, RequestsQuery["requests"]> =
-    await _getPagedRequests();
-  const out: Record<SupportedChainId, RequestsQuery["requests"]> = filtered
-    ? filtered
-    : all;
-  return await sanitizeHeadRequests(all, out);
+  filtered: RequestStacks | undefined,
+): Promise<RequestStacksResult> => {
+  const { stacks: all, failedChainIds } = await _getPagedRequests();
+  const out: RequestStacks = filtered ? filtered : all;
+  return { stacks: await sanitizeHeadRequests(all, out), failedChainIds };
 };
 
 export const genRequestId = (pohId: Hash, index: number) => {

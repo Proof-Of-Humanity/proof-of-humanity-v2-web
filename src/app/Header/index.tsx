@@ -9,6 +9,7 @@ import { useEffect, useRef, useState } from "react";
 import useSWR from "swr";
 import { useAccount, useChainId, useConfig } from "wagmi";
 import useWeb3Loaded from "hooks/useWeb3Loaded";
+import { isRegisterActive } from "utils/identifier";
 import DesktopNavigation from "./DesktopNavigation";
 import MobileMenu from "./MobileMenu";
 import Options from "./Options";
@@ -21,7 +22,6 @@ interface IHeader {
 
 export default function Header({ policy }: IHeader) {
   const [menuOpen, setMenuOpen] = useState<boolean>(false);
-  const [isDarkMode, setIsDarkMode] = useState<boolean>(false);
   const [pendingRegisterIntent, setPendingRegisterIntent] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const pathname = usePathname();
@@ -36,35 +36,6 @@ export default function Header({ policy }: IHeader) {
   const { data: me } = useSWR(address, getMyData);
   const showRewardsCta = Boolean(isConnected && me?.pohId);
   const showRegisterCta = !me?.pohId;
-
-  const detectTheme = () => {
-    const theme = localStorage.getItem("theme");
-    if (theme === "dark") {
-      document.documentElement.classList.add("dark");
-      setIsDarkMode(true);
-    } else {
-      document.documentElement.classList.remove("dark");
-      setIsDarkMode(false);
-    }
-  };
-
-  useEffect(() => {
-    detectTheme();
-
-    const observer = new MutationObserver(() => {
-      const isDark = document.documentElement.classList.contains("dark");
-      setIsDarkMode(isDark);
-    });
-
-    observer.observe(document.documentElement, {
-      attributes: true,
-      attributeFilter: ["class"],
-    });
-
-    return () => {
-      observer.disconnect();
-    };
-  }, []);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -85,69 +56,88 @@ export default function Header({ policy }: IHeader) {
   }, [menuOpen]);
 
   return (
-    <header className="header-background relative flex h-16 w-full items-center justify-between px-6 pb-2 pt-2 text-lg text-white shadow-sm md:h-16 md:px-8">
-      <Link href="/" className="flex w-[156px] items-center">
-        <Image
-          alt="proof of humanity logo"
-          src={
-            isDarkMode
-              ? "/logo/poh-text-orange.svg"
-              : "/logo/poh-text-white.svg"
-          }
-          height={48}
-          width={156}
-        />
-      </Link>
+    <header className="header-background on-brand relative w-full border-b border-black/[0.06] text-lg text-white dark:border-white/[0.08]">
+      <div className="app-container relative flex h-16 items-center justify-between pb-2 pt-2">
+        <Link href="/" className="flex shrink-0 items-center">
+          <Image
+            alt="proof of humanity logo"
+            src="/logo/poh-text-white.svg"
+            height={48}
+            width={185}
+            className="h-12 w-auto dark:hidden"
+            priority
+          />
+          <Image
+            alt="proof of humanity logo"
+            src="/logo/poh.svg"
+            height={48}
+            width={185}
+            className="hidden h-12 w-auto dark:block"
+            priority
+          />
+        </Link>
 
-      <div className="ml-auto flex items-center gap-2 md:hidden">
-        {showRewardsCta ? (
-          <Link
-            href="/app"
-            className={`rounded-full border border-white/50 px-3 py-1 text-sm font-semibold text-white transition hover:bg-white/15 ${
-              pathname.startsWith("/app") ? "bg-white/20" : ""
-            }`}
+        <div className="ml-auto flex items-center gap-2 xl:hidden">
+          {showRewardsCta ? (
+            <Link
+              href="/app"
+              className={`header-chip rounded-full border px-4 py-2 text-sm font-semibold transition ${
+                pathname.startsWith("/app") ? "header-chip-active" : ""
+              }`}
+            >
+              Rewards
+            </Link>
+          ) : showRegisterCta ? (
+            <RegisterLink
+              me={me}
+              address={address}
+              pendingRegisterIntent={pendingRegisterIntent}
+              setPendingRegisterIntent={setPendingRegisterIntent}
+              className={`header-chip rounded-full border px-4 py-2 text-sm font-semibold transition ${
+                isRegisterActive(me?.pohId, pathname) ? "header-chip-active" : ""
+              }`}
+            />
+          ) : null}
+          <button
+            className="hover:border-orange text-primaryText flex h-9 w-9 items-center justify-center rounded-full border border-black/[0.08] bg-black/[0.04] transition duration-200 ease-premium dark:border-white/[0.08] dark:bg-[#2F333D] dark:text-white dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]"
+            onClick={() => setMenuOpen(!menuOpen)}
+            aria-label="Toggle navigation"
           >
-            Rewards
-          </Link>
-        ) : showRegisterCta ? (
-          <RegisterLink
-            me={me}
-            address={address}
-            pendingRegisterIntent={pendingRegisterIntent}
-            setPendingRegisterIntent={setPendingRegisterIntent}
-            className={`rounded-full border border-white/50 px-3 py-1 text-sm font-semibold text-white transition hover:bg-white/15 ${
-              pathname.includes("/claim") ? "bg-white/20" : ""
-            }`}
-          />
-        ) : null}
-        <button
-          className="block text-white"
-          onClick={() => setMenuOpen(!menuOpen)}
-        >
-          <Hamburger />
-        </button>
-      </div>
-
-      {chain && (
-        <div className="lg:absolute lg:left-1/2 lg:-translate-x-1/2 lg:transform">
-          <DesktopNavigation
-            {...{
-              address,
-              me,
-              policy,
-              pathname,
-              chain,
-              web3Loaded,
-              pendingRegisterIntent,
-              setPendingRegisterIntent,
-            }}
-          />
+            <Hamburger />
+          </button>
         </div>
-      )}
+
+        {chain && (
+          <div className="xl:absolute xl:left-1/2 xl:top-1/2 xl:-translate-x-1/2 xl:-translate-y-1/2 xl:transform">
+            <DesktopNavigation
+              {...{
+                address,
+                me,
+                policy,
+                pathname,
+                pendingRegisterIntent,
+                setPendingRegisterIntent,
+              }}
+            />
+          </div>
+        )}
+
+        <div className="flex flex-row items-center gap-3">
+          {chain && (
+            <div className="hidden xl:block">
+              <WalletSection {...{ chain, address, isConnected, web3Loaded }} />
+            </div>
+          )}
+          <div className="hidden xl:block">
+            <Options />
+          </div>
+        </div>
+      </div>
 
       {menuOpen && chain && (
         <MobileMenu
           ref={menuRef}
+          onClose={() => setMenuOpen(false)}
           {...{
             isConnected,
             web3Loaded,
@@ -161,17 +151,6 @@ export default function Header({ policy }: IHeader) {
           }}
         />
       )}
-
-      <div className="flex flex-row items-center">
-        {chain && (
-          <div className="hidden md:block">
-            <WalletSection {...{ chain, address, isConnected, web3Loaded }} />
-          </div>
-        )}
-        <div className="hidden md:block">
-          <Options />
-        </div>
-      </div>
     </header>
   );
 }

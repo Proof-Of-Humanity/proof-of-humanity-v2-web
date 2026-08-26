@@ -20,10 +20,11 @@ const UnsubscribeModal: React.FC<UnsubscribeModalProps> = ({
     open={open}
     onClose={onClose}
     canClose={!isDeleting}
-    formal
-    header="Unsubscribe"
     className="w-[calc(100vw-2rem)] max-w-[30rem] md:w-[30rem]"
   >
+    <h2 className="text-primaryText px-4 pt-5 text-left text-2xl font-semibold">
+      Unsubscribe
+    </h2>
     <div className="p-6">
       <h3 className="text-primaryText mb-3 text-lg font-semibold">
         Unsubscribe from all Kleros apps?

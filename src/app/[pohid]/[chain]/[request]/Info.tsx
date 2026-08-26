@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from "react";
-import Modal from "components/Modal";
+import ActionButton from "components/ActionButton";
+import RequestModal, { RequestModalHeader } from "components/RequestModal";
 import InfoIcon from "icons/info.svg";
-import Image from "next/image";
+import { useState } from "react";
 
 interface InfoProps {
   nbRequests: number;
@@ -11,39 +11,51 @@ interface InfoProps {
 }
 
 export default function Info({ nbRequests, label }: InfoProps) {
-  const [isOpen, setIsOpen] = useState(false);
+  const [open, setOpen] = useState(false);
 
   return (
     <>
-      <span
-        className="flex cursor-pointer gap-x-[4px] text-slate-500 hover:text-slate-700"
-        onClick={() => setIsOpen(true)}
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        className="inline-flex items-center gap-2 text-sm font-normal text-peach hover:opacity-80"
       >
-        {label}&nbsp;
-        <InfoIcon className="h-6 w-6 stroke-slate-500 stroke-2 hover:stroke-slate-700" />
-      </span>
-      <Modal
-        formal
-        className="flex flex-col p-8"
-        open={isOpen}
-        onClose={() => setIsOpen(false)}
-      >
-        <Image
-          alt="poh id"
-          src="/logo/pohid.svg"
-          className="mx-auto mb-8"
-          height={128}
-          width={128}
+        {label}
+        <InfoIcon className="h-4 w-4 shrink-0 stroke-current stroke-2" />
+      </button>
+      <RequestModal open={open} onClose={() => setOpen(false)}>
+        <RequestModalHeader
+          title={
+            <>
+              What is a <span className="text-peach">PoH ID</span>?
+            </>
+          }
+          description={
+            <div className="flex flex-col gap-4 text-center">
+              <p>
+                A PoH ID is a unique, non-transferable identity for a verified
+                human on Proof of Humanity.
+              </p>
+              <p>
+                For a first registration, it is normally derived from the
+                registering wallet address. The identifier stays attached to the
+                human and can be reclaimed from a different wallet when the
+                protocol&apos;s recovery conditions are met.
+              </p>
+              <p>
+                This POH ID had {nbRequests} requests claimed in this chain.
+              </p>
+            </div>
+          }
         />
-        <p className="text-primaryText">
-          The Proof of Humanity ID is a soulbound ID. It corresponds to each
-          unique human registered on Proof of Humanity.
-        </p>
-        <p className="text-primaryText">
-          This POH ID had <strong>{nbRequests} requests</strong> claimed in this
-          chain
-        </p>
-      </Modal>
+        <div className="mt-8 flex justify-center">
+          <ActionButton
+            label="Got it"
+            onClick={() => setOpen(false)}
+            className="w-full sm:w-fit sm:min-w-[170px]"
+          />
+        </div>
+      </RequestModal>
     </>
   );
 }

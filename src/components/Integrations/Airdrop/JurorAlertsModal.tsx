@@ -8,6 +8,7 @@ import ActionButton from "components/ActionButton";
 import AuthGuard from "components/AuthGuard";
 import ExternalLink from "components/ExternalLink";
 import Field from "components/Field";
+import InfoIcon from "icons/info.svg";
 import WarningCircle16Icon from "icons/WarningCircle16.svg";
 import { useSubmitEmail } from "components/Integrations/Airdrop/useSubmitEmail";
 
@@ -15,38 +16,40 @@ import { isValidEmailAddress } from "utils/validators";
 
 type ModalStep = "warning" | "email";
 
-const modalButtonClass =
-  "w-auto max-w-full whitespace-nowrap px-5 py-3 text-[clamp(0.7rem,2.4vw,0.875rem)]";
+const stakeWarningList = (
+  <ul className="mb-6 max-w-sm space-y-3">
+    <li className="flex items-start justify-center gap-2">
+      <InfoIcon className="text-primaryText mt-0.5 h-4 w-4 flex-shrink-0 stroke-current stroke-2" />
+      <span className="text-primaryText text-sm">
+        You&apos;re now staked and may be drawn as a juror.
+      </span>
+    </li>
+    <li className="flex items-start justify-center gap-2">
+      <WarningCircle16Icon
+        width={16}
+        height={16}
+        className="fill-orange mt-0.5 flex-shrink-0"
+      />
+      <span className="text-orange text-sm">
+        If you&apos;re drawn and miss the vote deadline, you can lose locked
+        stake.
+      </span>
+    </li>
+  </ul>
+);
 
 interface JurorAlertsModalProps {
   open: boolean;
   onClose: () => void;
-}
-
-function StakeWarning() {
-  return (
-    <div className="mb-6 space-y-3 text-center">
-      <p className="text-primaryText text-sm leading-relaxed">
-        You&apos;re now staked and may be drawn as a juror.
-      </p>
-      <div className="flex flex-col items-center gap-2">
-        <WarningCircle16Icon
-          width={16}
-          height={16}
-          className="fill-orange flex-shrink-0"
-        />
-        <p className="text-orange max-w-xs text-sm leading-relaxed">
-          If you&apos;re drawn and miss the vote deadline, you can lose locked
-          stake.
-        </p>
-      </div>
-    </div>
-  );
+  alertsEnabled?: boolean;
+  className?: string;
 }
 
 export default function JurorAlertsModal({
   open,
   onClose,
+  alertsEnabled = false,
+  className,
 }: JurorAlertsModalProps) {
   const [step, setStep] = useState<ModalStep>("warning");
   const [acknowledged, setAcknowledged] = useState(false);
@@ -94,28 +97,31 @@ export default function JurorAlertsModal({
     <Modal
       open={open}
       onClose={handleModalClose}
-      formal
-      header="Action required"
-      className="max-w-2xl"
+      title="Action required"
+      className={`max-w-[420px] ${className ?? ""}`}
     >
       {step === "warning" ? (
         <div className="flex flex-col items-center p-6 text-center">
-          <StakeWarning />
+          {stakeWarningList}
 
-          <ActionButton
-            onClick={() => setStep("email")}
-            label="Enable Juror Alerts (important)"
-            variant="primary"
-            className={`mb-4 ${modalButtonClass}`}
-          />
+          {!alertsEnabled && (
+            <>
+              <ActionButton
+                onClick={() => setStep("email")}
+                label="Enable Juror Alerts (important)"
+                variant="primary"
+                className="mb-4 w-full py-3"
+              />
 
-          <div className="mb-4 flex w-full items-center gap-3">
-            <div className="border-stroke h-px flex-1 border-t" />
-            <span className="text-secondaryText text-xs uppercase">or</span>
-            <div className="border-stroke h-px flex-1 border-t" />
-          </div>
+              <div className="mb-4 flex w-full items-center gap-3">
+                <div className="border-stroke h-px flex-1 border-t" />
+                <span className="text-secondaryText text-xs uppercase">or</span>
+                <div className="border-stroke h-px flex-1 border-t" />
+              </div>
+            </>
+          )}
 
-          <label className="mb-4 flex w-full max-w-sm cursor-pointer items-start justify-center gap-2 text-left">
+          <label className="mb-4 flex max-w-sm cursor-pointer items-start justify-center gap-2 text-left">
             <input
               type="checkbox"
               checked={acknowledged}
@@ -136,15 +142,15 @@ export default function JurorAlertsModal({
 
           <ActionButton
             onClick={handleModalClose}
-            label="Continue without alerts"
+            label={alertsEnabled ? "Continue" : "Continue without alerts"}
             variant="secondary"
             disabled={!acknowledged}
-            className={modalButtonClass}
+            className="w-full py-3"
           />
         </div>
       ) : (
         <div className="flex flex-col items-center p-6 text-center">
-          <StakeWarning />
+          {stakeWarningList}
 
           <div className="mb-2 w-full text-left">
             <label className="text-primaryText mb-2 block text-sm font-semibold">
@@ -165,21 +171,18 @@ export default function JurorAlertsModal({
             )}
           </div>
 
-          <AuthGuard
-            signInButtonProps={{ className: `mt-4 ${modalButtonClass}` }}
-          >
+          <AuthGuard signInButtonProps={{ className: "w-full py-3 mt-4" }}>
             <ActionButton
               onClick={handleSubmit}
               label="Enable Alerts"
               disabled={!trimmedEmail || !isEmailValid || isBusy}
               isLoading={isBusy}
               variant="primary"
-              className={`mt-4 ${modalButtonClass}`}
+              className="mt-4 w-full py-3"
             />
           </AuthGuard>
 
           <button
-            type="button"
             onClick={() => setStep("warning")}
             className="text-secondaryText hover:text-primaryText mt-4 w-full text-center text-sm transition"
           >

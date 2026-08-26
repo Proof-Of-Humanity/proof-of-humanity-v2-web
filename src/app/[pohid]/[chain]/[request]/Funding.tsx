@@ -1,17 +1,23 @@
 import { useCallback, useMemo, useState } from "react";
 import { toast } from "react-toastify";
-import Field from "components/Field";
-import Modal from "components/Modal";
+import CurrencyField from "components/CurrencyField";
 import ActionButton from "components/ActionButton";
+import Progress from "components/Progress";
+import RequestModal, {
+  RequestModalActions,
+  RequestModalHeader,
+} from "components/RequestModal";
 import usePoHWrite from "contracts/hooks/usePoHWrite";
 import { useLoading } from "hooks/useLoading";
+import useFundingAmount from "hooks/useFundingAmount";
+import { resolveTxState } from "utils/txState";
 import type { RequestOptimisticOverlay } from "optimistic/types";
-import { Hash, formatEther, parseEther } from "viem";
+import { Hash } from "viem";
 import useChainParam from "hooks/useChainParam";
-import { useAccount, useBalance, useChainId } from "wagmi";
 import { formatEth } from "utils/misc";
 import { idToChain } from "config/chains";
 import { useRequestOptimistic } from "optimistic/request";
+import { getWriteErrorMessage } from "hooks/useActionFeedback";
 
 export const buildFundSuccessPatch = (
   funded: bigint,
@@ -40,16 +46,32 @@ const FundButton: React.FC<FundButtonProps> = ({
 }) => {
   const { effective, pendingAction, applyAction } = useRequestOptimistic();
   const chain = useChainParam()!;
-  const userChainId = useChainId();
-  const [addedFundInput, setAddedFundInput] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const { isConnected, address } = useAccount();
-  const { data: balanceData } = useBalance({ address, chainId: userChainId });
   const loading = useLoading();
   const [isLoading, loadingMessage] = loading.use();
+  const isReconciling = pendingAction !== null;
+  const {
+    input: addedFundInput,
+    setInput: setAddedFundInput,
+    setMax,
+    inputAmount,
+    maxInput: maxFundAmount,
+    unit,
+    isWrongChain,
+    disabled: isDisabled,
+    tooltip: submitTooltip,
+  } = useFundingAmount({
+    chainId: chain.id,
+    funded,
+    totalCost,
+    checks: [
+      { active: isReconciling, message: "Waiting for indexer" },
+      { active: isLoading },
+    ],
+  });
   const closeModal = useCallback(() => {
+    console.info("[funding-modal]", { event: "close" });
     setIsModalOpen(false);
-    setAddedFundInput("");
     loading.stop();
   }, [loading]);
 
@@ -58,18 +80,29 @@ const FundButton: React.FC<FundButtonProps> = ({
     useMemo(
       () => ({
         onReady(fire) {
+          console.info("[funding-modal]", { event: "transaction-ready" });
           fire();
           toast.info("Transaction pending");
         },
         onFail() {
+          console.warn("[funding-modal]", { event: "transaction-failed" });
           loading.stop();
           toast.error("Transaction failed");
         },
-        onError() {
+        onError(error, errorCtx) {
+          console.error("[funding-modal]", {
+            event: "transaction-error",
+            error,
+            errorCtx,
+          });
           loading.stop();
-          toast.error("Transaction rejected");
+          toast.error(getWriteErrorMessage(error, errorCtx));
         },
         onSuccess(ctx) {
+          console.info("[funding-modal]", {
+            event: "transaction-success",
+            value: (ctx.value ?? 0n).toString(),
+          });
           applyAction(
             "fund",
             buildFundSuccessPatch(
@@ -86,130 +119,113 @@ const FundButton: React.FC<FundButtonProps> = ({
     ),
   );
 
-  const remainingAmount = totalCost - funded;
-  const maxFundAmount = formatEther(remainingAmount);
-  const inputAmount = useMemo(() => {
-    if (!addedFundInput) return 0n;
-    try {
-      const parsed = parseEther(addedFundInput);
-      return parsed < 0n ? null : parsed;
-    } catch {
-      return null;
-    }
-  }, [addedFundInput]);
+  const totalCostEth = formatEth(totalCost);
+  const progress =
+    totalCostEth > 0
+      ? Math.min(100, (formatEth(funded) * 100) / totalCostEth)
+      : 0;
 
   const handleSubmit = () => {
-    if (inputAmount === null || inputAmount === 0n) return;
+    if (inputAmount === null || inputAmount <= 0n) {
+      console.warn("[funding-modal]", {
+        event: "submit-blocked",
+        input: addedFundInput,
+      });
+      return;
+    }
 
+    console.info("[funding-modal]", {
+      event: "submit",
+      pohId,
+      requestIndex: index,
+      value: inputAmount.toString(),
+    });
     loading.start("Funding...");
     prepareFund({
       value: inputAmount,
       args: [pohId, BigInt(index)],
     });
   };
-  const isInvalidInput = inputAmount === null;
-  const isZeroInput = inputAmount === 0n;
-  const insufficientFunds = useMemo(() => {
-    const available = balanceData?.value ?? 0n;
-    return inputAmount !== null && inputAmount > available;
-  }, [inputAmount, balanceData]);
-
-  const exceedsRemaining =
-    inputAmount !== null && inputAmount > remainingAmount;
-  const isReconciling = pendingAction !== null;
-
-  const isDisabled =
-    !isConnected ||
-    !addedFundInput ||
-    isInvalidInput ||
-    isZeroInput ||
-    isLoading ||
-    isReconciling ||
-    userChainId !== chain.id ||
-    exceedsRemaining ||
-    insufficientFunds;
-
-  const getTooltipMessage = () => {
-    if (isReconciling) return "Syncing";
-    if (!isConnected) return "Please connect your wallet";
-    if (userChainId !== chain.id)
-      return `Switch your chain above to ${idToChain(chain.id)?.name || "the correct chain"}`;
-    if (!addedFundInput) return "Please enter an amount to fund";
-    if (isInvalidInput) return "Please enter a valid amount";
-    if (isZeroInput) return "Amount must be greater than 0";
-    if (exceedsRemaining)
-      return `Amount exceeds remaining needed (${formatEth(remainingAmount)} ${chain.nativeCurrency.symbol})`;
-    if (insufficientFunds)
-      return `Insufficient balance. You have ${formatEth(balanceData?.value ?? 0n)} ${chain.nativeCurrency.symbol}`;
-    return undefined;
-  };
+  const trigger = resolveTxState([
+    { active: !!externalDisabled, message: externalTooltip },
+    { active: isReconciling, message: "Waiting for indexer" },
+    {
+      active: isWrongChain,
+      message: `Switch your chain above to ${idToChain(chain.id)?.name || "the correct chain"}`,
+    },
+  ]);
 
   return (
     <>
       <ActionButton
-        onClick={() => setIsModalOpen(true)}
+        onClick={() => {
+          setMax();
+          setIsModalOpen(true);
+          console.info("[funding-modal]", {
+            event: "open",
+            pohId,
+            requestIndex: index,
+            funded: funded.toString(),
+            totalCost: totalCost.toString(),
+          });
+        }}
         label="Fund"
+        variant="secondary"
         className="mb-2 w-auto"
-        disabled={externalDisabled || isReconciling || userChainId !== chain.id}
-        tooltip={
-          externalDisabled
-            ? externalTooltip
-            : isReconciling
-              ? "Syncing"
-              : userChainId !== chain.id
-                ? `Switch your chain above to ${idToChain(chain.id)?.name || "the correct chain"}`
-                : undefined
-        }
+        disabled={trigger.disabled}
+        tooltip={trigger.tooltip}
       />
-      <Modal
-        formal
-        header="Fund"
+      <RequestModal
         open={isModalOpen}
         onClose={closeModal}
         canClose={!isLoading}
       >
-        <div className="flex flex-col p-4">
-          <div className="flex w-full justify-center rounded p-4 font-bold">
-            <span
-              onClick={() =>
-                setAddedFundInput(formatEth(remainingAmount).toString())
-              }
-              className="text-orange mx-1 cursor-pointer font-semibold underline underline-offset-2"
-            >
-              {maxFundAmount}
-            </span>{" "}
-            <span className="text-primaryText">
-              {chain.nativeCurrency.symbol} Needed
-            </span>
-          </div>
-          <Field
-            type="number"
-            className="no-spinner"
-            label="Amount funding"
+        <RequestModalHeader
+          title={
+            <>
+              Fund{" "}
+              <span className="text-peach">the profile&apos;s submission</span>
+            </>
+          }
+          description={
+            <>
+              <p>Anyone can help funding the profile&apos;s submission.</p>
+              <p>Type the value you want to contribute below.</p>
+            </>
+          }
+        />
+        <div className="mt-12">
+          <Progress
+            value={progress}
+            label={`${formatEth(funded)} ${unit} out of ${formatEth(totalCost)} ${unit} required`}
+            labelClassName="text-primaryText"
+          />
+        </div>
+        <div className="mt-4">
+          <CurrencyField
+            label={`Amount (${unit})`}
+            labelClassName="!mb-2 !mt-0 text-sm !font-normal normal-case !text-secondaryText"
+            symbol={unit}
             step="any"
             min={0}
             max={maxFundAmount}
             value={addedFundInput}
             onChange={(e) => setAddedFundInput(e.target.value)}
+            onMax={setMax}
             disabled={isLoading}
           />
-          <div className="group relative mt-6 flex justify-center">
-            <ActionButton
-              disabled={isDisabled}
-              isLoading={isLoading}
-              onClick={handleSubmit}
-              label={loadingMessage || "Fund request"}
-              className="w-auto"
-            />
-            {getTooltipMessage() && (
-              <span className="pointer-events-none absolute bottom-full left-1/2 z-10 mb-2 w-max max-w-[240px] -translate-x-1/2 whitespace-normal rounded-md bg-neutral-700 px-3 py-2 text-center text-sm text-white opacity-0 transition-opacity group-hover:opacity-100">
-                {getTooltipMessage()}
-                <span className="absolute left-1/2 top-full h-0 w-0 -translate-x-1/2 border-x-[5px] border-t-[5px] border-x-transparent border-t-neutral-700" />
-              </span>
-            )}
-          </div>
         </div>
-      </Modal>
+        <RequestModalActions onReturn={closeModal} returnDisabled={isLoading}>
+          <ActionButton
+            className="w-full sm:w-auto sm:min-w-[170px]"
+            label={loadingMessage || "Fund"}
+            onClick={handleSubmit}
+            disabled={isDisabled}
+            isLoading={isLoading}
+            tooltip={submitTooltip}
+          />
+        </RequestModalActions>
+      </RequestModal>
     </>
   );
 };

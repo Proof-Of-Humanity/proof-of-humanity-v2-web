@@ -1,6 +1,7 @@
 import {
   SupportedChainId,
   getChainTransport,
+  idToChain,
   supportedChains,
 } from "config/chains";
 import { getContractInfo } from "contracts";
@@ -13,6 +14,7 @@ import { settleChainQueries } from "./chainQuery";
 
 export const getContractData = cache(async (chainId: SupportedChainId) => {
   const publicClient = createPublicClient({
+    chain: idToChain(chainId),
     transport: getChainTransport(chainId),
   });
   const [contract, transferCooldown] = await Promise.all([

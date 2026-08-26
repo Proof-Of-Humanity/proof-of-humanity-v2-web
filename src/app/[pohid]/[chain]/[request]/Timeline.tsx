@@ -3,16 +3,32 @@
 import ChainLogo from "components/ChainLogo";
 import type { TimelineItem } from "data/requestTimeline";
 import { idToChain } from "config/chains";
-import CheckCircleOutlineIcon from "icons/CheckCircleOutline16.svg";
-import CrossCircleIcon from "icons/CrossCircle16.svg";
-import NewTabIcon from "icons/NewTab.svg";
-import TimelineTransferIcon from "icons/TimelineTransfer.svg";
+import ChallengeIcon from "icons/Challenge.svg";
+import CheckCircleOutlineIcon from "icons/CheckCircleOutline.svg";
+import CloseCircleOutlineIcon from "icons/CloseCircleOutline.svg";
+import EyeIcon from "icons/Eye.svg";
+import FlagCheckeredIcon from "icons/FlagCheckered.svg";
+import HourglassIcon from "icons/Hourglass.svg";
+import ExternalLinkIcon from "components/ExternalLinkIcon";
+import TransferIcon from "icons/Transfer.svg";
+import VouchIcon from "icons/Vouch.svg";
 import Link from "next/link";
-import { type ReactNode, useEffect, useRef, useState } from "react";
+import {
+  type ComponentType,
+  type ReactNode,
+  type SVGProps,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
+import { twMerge } from "tailwind-merge";
 
 interface TimelineProps {
   items: TimelineItem[];
   children?: ReactNode;
+  className?: string;
+  compact?: boolean;
+  title?: string;
 }
 
 const TIMELINE_STYLES: Record<
@@ -99,6 +115,25 @@ const TIMELINE_STYLES: Record<
   },
 };
 
+const TIMELINE_ICONS: Partial<
+  Record<
+    TimelineItem["kind"],
+    { Icon: ComponentType<SVGProps<SVGSVGElement>>; color: string }
+  >
+> = {
+  submitted: { Icon: FlagCheckeredIcon, color: "text-primaryText" },
+  inReview: { Icon: EyeIcon, color: "text-status-claim" },
+  challenged: { Icon: ChallengeIcon, color: "text-status-challenged" },
+  vouchReceived: { Icon: VouchIcon, color: "text-status-vouching" },
+  vouchRemoved: { Icon: CloseCircleOutlineIcon, color: "text-status-removed" },
+  verified: { Icon: CheckCircleOutlineIcon, color: "text-status-registered" },
+  removed: { Icon: CloseCircleOutlineIcon, color: "text-status-removed" },
+  rejected: { Icon: CloseCircleOutlineIcon, color: "text-status-rejected" },
+  expired: { Icon: HourglassIcon, color: "text-secondaryText" },
+  transferred: { Icon: TransferIcon, color: "text-secondaryText" },
+  received: { Icon: TransferIcon, color: "text-secondaryText" },
+};
+
 const formatter = new Intl.DateTimeFormat("en-US", {
   month: "long",
   day: "2-digit",
@@ -108,7 +143,13 @@ const formatter = new Intl.DateTimeFormat("en-US", {
 const ITEM_STEP_MS = 340;
 const ITEM_REVEAL_OFFSET_MS = 150;
 
-export default function Timeline({ items, children }: TimelineProps) {
+export default function Timeline({
+  items,
+  children,
+  className = "",
+  compact = false,
+  title = "Timeline History",
+}: TimelineProps) {
   const rootRef = useRef<HTMLDivElement | null>(null);
   const [isVisible, setIsVisible] = useState(false);
 
@@ -136,15 +177,28 @@ export default function Timeline({ items, children }: TimelineProps) {
   return (
     <div
       ref={rootRef}
-      className={`timeline-root mt-8 border-t pt-8 ${isVisible ? "timeline-visible" : "timeline-hidden"}`}
+      className={twMerge(
+        compact
+          ? "timeline-root mt-0 border-0 pt-0"
+          : "timeline-root mt-8 border-t pt-8",
+        className,
+        isVisible ? "timeline-visible" : "timeline-hidden",
+      )}
     >
-      <h2 className="text-primaryText text-xl font-semibold">
-        Timeline History
+      <h2
+        className={
+          compact
+            ? "text-secondaryText text-sm font-normal"
+            : "text-primaryText text-xl font-semibold"
+        }
+      >
+        {title}
       </h2>
       {children}
       <div className="mt-6">
         {items.map((item, index) => {
           const styles = TIMELINE_STYLES[item.kind];
+          const iconSpec = TIMELINE_ICONS[item.kind];
           const isLast = index === items.length - 1;
           const lineDelay = `${index * ITEM_STEP_MS}ms`;
           const itemDelay = `${index * ITEM_STEP_MS + ITEM_REVEAL_OFFSET_MS}ms`;
@@ -154,21 +208,12 @@ export default function Timeline({ items, children }: TimelineProps) {
               <div className="flex w-6 shrink-0 flex-col items-center">
                 <div
                   className={`timeline-dot-shell bg-whiteBackground ${
-                    item.kind === "transferred" ||
-                    item.kind === "verified" ||
-                    item.kind === "rejected"
-                      ? "-mt-0.5 h-5 w-5 border-transparent"
-                      : styles.dot
+                    iconSpec ? "-mt-0.5 h-5 w-5 border-transparent" : styles.dot
                   }`}
                   style={{ animationDelay: itemDelay }}
                 >
-                  {item.kind === "transferred" ? (
-                    <TimelineTransferIcon />
-                  ) : item.kind === "verified" ? (
-                    <CheckCircleOutlineIcon />
-                  ) : item.kind === "rejected" ||
-                    item.kind === "vouchRemoved" ? (
-                    <CrossCircleIcon />
+                  {iconSpec ? (
+                    <iconSpec.Icon className={`h-4 w-4 ${iconSpec.color}`} />
                   ) : (
                     <div className="relative flex h-4 w-4 items-center justify-center">
                       {item.isActive ? (
@@ -198,7 +243,9 @@ export default function Timeline({ items, children }: TimelineProps) {
                 )}
               </div>
               <div
-                className={`timeline-milestone min-w-0 ${isLast ? "pb-0" : "pb-8"}`}
+                className={`timeline-milestone min-w-0 ${
+                  isLast ? "pb-0" : compact ? "pb-4" : "pb-8"
+                }`}
                 style={{ animationDelay: itemDelay }}
               >
                 <div className="flex flex-wrap items-center gap-x-2 gap-y-1 leading-tight">
@@ -207,26 +254,28 @@ export default function Timeline({ items, children }: TimelineProps) {
                       href={item.externalHref}
                       target="_blank"
                       rel="noreferrer"
-                      className="group/timeline-link inline-flex items-center gap-1 font-semibold hover:opacity-80"
+                      className={`group/external-link inline-flex items-center gap-1 font-semibold hover:opacity-80 ${compact ? "text-sm" : ""}`}
                     >
                       <span className={styles.text}>{item.title}</span>
                       <span className="text-secondaryText inline-flex">
-                        <NewTabIcon className="h-4 w-4 fill-current transition-transform duration-200 group-hover/timeline-link:-translate-y-0.5 group-hover/timeline-link:translate-x-0.5" />
+                        <ExternalLinkIcon />
                       </span>
                     </a>
                   ) : item.href ? (
                     <Link
                       href={item.href}
-                      className="group/timeline-link inline-flex items-center gap-1 font-semibold hover:opacity-80"
+                      target="_blank"
+                      rel="noreferrer"
+                      className={`group/external-link inline-flex items-center gap-1 font-semibold hover:opacity-80 ${compact ? "text-sm" : ""}`}
                     >
                       <span className={styles.text}>{item.title}</span>
                       <span className="text-secondaryText inline-flex">
-                        <NewTabIcon className="h-4 w-4 fill-current transition-transform duration-200 group-hover/timeline-link:-translate-y-0.5 group-hover/timeline-link:translate-x-0.5" />
+                        <ExternalLinkIcon />
                       </span>
                     </Link>
                   ) : (
                     <span
-                      className={`inline-flex items-center gap-1 font-semibold ${styles.text}`}
+                      className={`inline-flex items-center gap-1 font-semibold ${styles.text} ${compact ? "text-sm" : ""}`}
                     >
                       {item.title}
                     </span>
@@ -241,7 +290,9 @@ export default function Timeline({ items, children }: TimelineProps) {
                     </span>
                   )}
                 </div>
-                <div className="text-secondaryText text-sm font-normal">
+                <div
+                  className={`text-secondaryText font-normal ${compact ? "text-xs" : "text-sm"}`}
+                >
                   {formatter.format(new Date(item.timestamp * 1000))}
                 </div>
               </div>

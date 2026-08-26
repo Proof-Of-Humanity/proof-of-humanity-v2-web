@@ -15,6 +15,7 @@ import useIsSubscribed from "hooks/useIsSubscribed";
 
 import CheckCircleMinorIcon from "icons/CheckCircleMinor.svg";
 import CheckCircleIcon from "icons/CheckCircle.svg";
+import InfoIcon from "icons/info.svg";
 import WarningCircle16Icon from "icons/WarningCircle16.svg";
 import NewTabIcon from "icons/NewTab.svg";
 
@@ -23,6 +24,7 @@ import { isValidEmailAddress } from "utils/validators";
 interface ClaimedPanelProps {
   amountPerClaim: bigint;
   isTestnet: boolean;
+  justClaimed?: boolean;
 }
 
 type AlertStatus = "checking" | "unknown" | "off" | "unverified" | "on";
@@ -38,6 +40,7 @@ const STEP_BADGES: Record<AlertStatus, { label: string; className: string }> = {
 export default function ClaimedPanel({
   amountPerClaim,
   isTestnet,
+  justClaimed = false,
 }: ClaimedPanelProps) {
   const router = useRouter();
   const { isVerified, user, isFetchingUser, isAddingUser, isUpdatingUser } =
@@ -46,6 +49,7 @@ export default function ClaimedPanel({
     isSubscribed,
     isLoading: isCheckingSubscription,
     isError: isSubscriptionError,
+    refetch: refetchIsSubscribed,
   } = useIsSubscribed();
 
   const [userEmail, setUserEmail] = useState("");
@@ -56,7 +60,6 @@ export default function ClaimedPanel({
   const isEmailValid =
     trimmedEmail.length === 0 ? true : isValidEmailAddress(trimmedEmail);
 
-  // Derived email state
   const hasEmail = !!user?.email;
   const isEmailVerified = user?.isEmailVerified ?? false;
   const parsedEmailUpdateableAt = user?.emailUpdateableAt
@@ -93,8 +96,18 @@ export default function ClaimedPanel({
   const showForm =
     isEditing || alertStatus === "off" || alertStatus === "unknown";
 
+  // A failed lookup should be retried, not "fixed" by submitting an email —
+  // that mutation would overwrite an already-verified address.
+  const showStatusRetry =
+    !isEditing && alertStatus === "unknown" && isSubscriptionError;
+
+  // The stake-risk warning is owed on the claim transition regardless of
+  // subscription state; the nudge additionally reopens on any visit while
+  // alerts are plainly off (but not while a saved email awaits verification).
   const showAlertsPrompt =
-    !alertsModalDismissed && !isCheckingAlerts && isSubscribed === false;
+    !alertsModalDismissed &&
+    !isCheckingAlerts &&
+    (justClaimed || alertStatus === "off");
 
   const { mutate: submitEmail, isPending: isSubmitting } = useSubmitEmail({
     onSuccess: () => {
@@ -149,32 +162,46 @@ export default function ClaimedPanel({
         </div>
       )}
 
-      <div className="border-stroke mb-3 rounded-lg border p-3 text-left">
+      <div className="border-stroke relative mb-3 rounded-2xl border p-3 text-left">
+        <span
+          aria-hidden="true"
+          className="bg-stroke absolute left-[19.5px] top-7 h-2 w-px"
+        />
         <div className="flex items-center gap-1">
-          <CheckCircleIcon
-            width={22}
-            height={22}
-            className="text-status-registered mt-1 flex-shrink-0"
-          />
+          <div className="flex h-4 w-4 flex-shrink-0 items-center justify-center">
+            <CheckCircleIcon
+              width={12}
+              height={12}
+              className="text-status-registered"
+            />
+          </div>
           <span className="text-primaryText text-sm font-medium">
             Claimed &amp; Staked
           </span>
         </div>
 
         <div className="flex items-center gap-1">
-          {alertStatus === "on" ? (
-            <CheckCircleIcon
-              width={22}
-              height={22}
-              className="text-status-registered mt-1 flex-shrink-0"
-            />
-          ) : (
-            <WarningCircle16Icon
-              width={22}
-              height={22}
-              className="fill-orange mt-1 flex-shrink-0"
-            />
-          )}
+          <div className="flex h-4 w-4 flex-shrink-0 items-center justify-center">
+            {alertStatus === "on" ? (
+              <CheckCircleIcon
+                width={12}
+                height={12}
+                className="text-status-registered"
+              />
+            ) : alertStatus === "checking" || alertStatus === "unknown" ? (
+              <InfoIcon
+                width={16}
+                height={16}
+                className="text-purple stroke-current stroke-2"
+              />
+            ) : (
+              <InfoIcon
+                width={16}
+                height={16}
+                className="text-orange stroke-current stroke-2"
+              />
+            )}
+          </div>
           <span className="text-primaryText text-sm font-medium">
             Juror Alerts
           </span>
@@ -186,13 +213,11 @@ export default function ClaimedPanel({
         </div>
       </div>
       {isCheckingAlerts ? (
-        /* State 1: Loading */
-        <div className="border-stroke mb-4 flex items-center justify-center rounded-lg border p-3">
+        <div className="border-stroke mb-4 flex items-center justify-center rounded-2xl border p-3">
           <div className="border-purple h-5 w-5 animate-spin rounded-full border-b-2" />
         </div>
       ) : showForm ? (
-        /* State 2 & 5: No email / Editing */
-        <div className="border-stroke mb-4 rounded-lg border p-3 text-left">
+        <div className="border-stroke mb-4 rounded-2xl border p-3 text-left">
           <div className="mb-2 flex items-start gap-2">
             <WarningCircle16Icon
               width={16}
@@ -212,6 +237,8 @@ export default function ClaimedPanel({
               <p className="text-secondaryText mt-0.5 text-xs leading-relaxed">
                 {isEditing ? (
                   "Enter a new email address for juror alerts."
+                ) : showStatusRetry ? (
+                  "We couldn't check whether alerts are enabled for this wallet."
                 ) : (
                   <>
                     Consider enabling alerts to avoid missing draws and{" "}
@@ -227,35 +254,44 @@ export default function ClaimedPanel({
             </div>
           </div>
 
-          <div className="flex gap-2">
-            <Field
-              type="email"
-              value={userEmail}
-              onChange={(e) => setUserEmail(e.target.value)}
-              disabled={isBusy}
-              placeholder="Enter your email"
-              className={!isEmailValid ? "!border-red-500" : ""}
+          {showStatusRetry ? (
+            <ActionButton
+              onClick={() => refetchIsSubscribed()}
+              label="Retry"
+              variant="secondary"
+              className="whitespace-nowrap px-5 py-2.5 text-sm"
             />
-            <AuthGuard
-              signInButtonProps={{
-                className: "px-4 py-1.5 text-sm whitespace-nowrap",
-              }}
-            >
-              <ActionButton
-                onClick={handleSubmitEmail}
-                label={isEditing ? "Save" : "Enable"}
-                disabled={
-                  !trimmedEmail ||
-                  !isEmailValid ||
-                  isBusy ||
-                  (isEditing && !canUpdateEmail)
-                }
-                isLoading={isBusy}
-                variant="primary"
-                className="whitespace-nowrap px-4 py-1.5 text-sm"
+          ) : (
+            <div className="flex gap-2">
+              <Field
+                type="email"
+                value={userEmail}
+                onChange={(e) => setUserEmail(e.target.value)}
+                disabled={isBusy}
+                placeholder="Enter your email"
+                className={!isEmailValid ? "!border-red-500" : ""}
               />
-            </AuthGuard>
-          </div>
+              <AuthGuard
+                signInButtonProps={{
+                  className: "px-5 py-2.5 text-sm whitespace-nowrap",
+                }}
+              >
+                <ActionButton
+                  onClick={handleSubmitEmail}
+                  label={isEditing ? "Save" : "Enable"}
+                  disabled={
+                    !trimmedEmail ||
+                    !isEmailValid ||
+                    isBusy ||
+                    (isEditing && !canUpdateEmail)
+                  }
+                  isLoading={isBusy}
+                  variant="primary"
+                  className="whitespace-nowrap px-5 py-2.5 text-sm"
+                />
+              </AuthGuard>
+            </div>
+          )}
 
           {!isEmailValid && (
             <p className="mt-1 text-[11px] text-red-500">
@@ -263,10 +299,7 @@ export default function ClaimedPanel({
             </p>
           )}
           {isEditing && !canUpdateEmail && (
-            <p className="text-secondaryText mt-1 text-[11px] italic">
-              You can update again in {minutesUntilUpdateable}{" "}
-              {minutesUntilUpdateable === 1 ? "minute" : "minutes"}.
-            </p>
+            <CooldownNote minutes={minutesUntilUpdateable} />
           )}
 
           {isEditing && (
@@ -280,8 +313,7 @@ export default function ClaimedPanel({
           )}
         </div>
       ) : alertStatus === "unverified" ? (
-        /* State 3: Email set but unverified */
-        <div className="bg-lightOrange border-orange mb-4 rounded-lg border p-3 text-left">
+        <div className="bg-lightOrange border-orange mb-4 rounded-2xl border p-3 text-left">
           <div className="flex items-start gap-2">
             <WarningCircle16Icon
               width={22}
@@ -300,10 +332,7 @@ export default function ClaimedPanel({
                 . Check your inbox and spam folder.
               </p>
               {!canUpdateEmail && (
-                <p className="text-secondaryText mt-1 text-[11px] italic">
-                  You can update again in {minutesUntilUpdateable}{" "}
-                  {minutesUntilUpdateable === 1 ? "minute" : "minutes"}.
-                </p>
+                <CooldownNote minutes={minutesUntilUpdateable} />
               )}
               <div className="mt-2 flex items-center gap-3">
                 <button
@@ -327,8 +356,7 @@ export default function ClaimedPanel({
           </div>
         </div>
       ) : (
-        /* State 4: Email verified */
-        <div className="box-success mb-4 rounded-lg p-3 text-left">
+        <div className="box-success mb-4 rounded-2xl p-3 text-left">
           <div className="flex items-start gap-2">
             <CheckCircleIcon
               width={22}
@@ -357,10 +385,10 @@ export default function ClaimedPanel({
                 </p>
               )}
               {isVerified && !canUpdateEmail && (
-                <p className="text-secondaryText mt-0.5 text-[11px] italic">
-                  Updateable in {minutesUntilUpdateable}{" "}
-                  {minutesUntilUpdateable === 1 ? "minute" : "minutes"}.
-                </p>
+                <CooldownNote
+                  minutes={minutesUntilUpdateable}
+                  className="mt-0.5"
+                />
               )}
             </div>
           </div>
@@ -378,7 +406,7 @@ export default function ClaimedPanel({
 
       <ExternalLink
         href="https://kleros.notion.site/poh-airdrop-faqs"
-        className="text-purple mt-3 flex items-center justify-center gap-1 text-sm transition hover:text-[#7c5cdb]"
+        className="text-purple mt-3 flex items-center justify-center gap-1 text-sm transition hover:opacity-80"
       >
         <span>Trouble claiming?</span>
         <span className="flex items-center gap-1">
@@ -388,8 +416,23 @@ export default function ClaimedPanel({
       </ExternalLink>
       <JurorAlertsModal
         open={showAlertsPrompt}
+        alertsEnabled={alertStatus === "on"}
         onClose={() => setAlertsModalDismissed(true)}
       />
     </>
+  );
+}
+
+function CooldownNote({
+  minutes,
+  className = "mt-1",
+}: {
+  minutes: number;
+  className?: string;
+}) {
+  return (
+    <p className={`text-secondaryText ${className} text-[11px] italic`}>
+      You can update again in {minutes} {minutes === 1 ? "minute" : "minutes"}.
+    </p>
   );
 }

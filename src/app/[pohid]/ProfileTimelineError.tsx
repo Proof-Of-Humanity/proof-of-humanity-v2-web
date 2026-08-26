@@ -12,7 +12,7 @@ export default function ProfileTimelineError({
   return (
     <div className="w-full">
       <div className="text-primaryText mb-4 mt-5 text-2xl font-semibold">
-        History
+        Timeline History
       </div>
       <div className="flex items-start gap-4">
         <div className="flex shrink-0 flex-col items-center">
@@ -32,7 +32,7 @@ export default function ProfileTimelineError({
             <div className="text-secondaryText mt-3 text-sm leading-6">
               {description}
             </div>
-            <RetryButton className="border-stroke bg-whiteBackground text-primaryText mt-4 inline-flex rounded-full border px-4 py-2 text-sm font-semibold" />
+            <RetryButton className="btn-secondary mt-4 px-4 py-2 text-sm" />
           </div>
         </div>
       </div>

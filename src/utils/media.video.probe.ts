@@ -7,7 +7,7 @@ let ffmpegLoadPromise: Promise<void> | null = null;
 
 const UNRECOGNIZED_FORMAT_ERROR = MEDIA_MESSAGES.invalidVideoFile;
 const FFMPEG_ASSET_VERSION = "20260227";
-const FFMPEG_LOAD_TIMEOUT_MS = 15000;
+const FFMPEG_LOAD_TIMEOUT_MS = 60000;
 const FFMPEG_LOAD_ERROR_CODE = "FFMPEG_LOAD_ERROR";
 
 export const isFFmpegLoadError = (

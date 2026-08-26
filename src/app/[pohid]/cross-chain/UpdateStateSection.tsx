@@ -5,25 +5,33 @@ import { useCallback, useMemo, useState } from "react";
 import { toast } from "react-toastify";
 import { useAccount, useChainId, useSwitchChain } from "wagmi";
 
+import ActionButton from "components/ActionButton";
 import ChainLogo from "components/ChainLogo";
+import CopyButton from "components/CopyButton";
 import Modal from "components/Modal";
 import {
+  idToChain,
   SupportedChainId,
   supportedChains,
-  type SupportedChain,
 } from "config/chains";
 import useCCPoHWrite from "contracts/hooks/useCCPoHWrite";
 import type { ProfileHumanityQuery } from "generated/graphql";
-import useActionFeedback, {
-  ACTION_STATES,
-  isActionStateError,
-  isActionStateLoading,
+import {
+  getWriteErrorMessage,
   WAITING_FOR_INDEXER_TOOLTIP,
 } from "hooks/useActionFeedback";
 import useWeb3Loaded from "hooks/useWeb3Loaded";
 import { useProfileOptimistic } from "optimistic/profile";
 import { timeAgo } from "utils/time";
-import ProfileErrorCard from "../ProfileErrorCard";
+import { prettifyId } from "utils/identifier";
+import CheckCircleIcon from "icons/CheckCircleOutline.svg";
+import LoadingIcon from "icons/Loading.svg";
+import Image from "next/image";
+import {
+  CROSS_CHAIN_MODAL_CLASS,
+  CrossChainActionTrigger,
+  CrossChainModalHeading,
+} from "./crossChainUi";
 
 const buildUpdateSuccessPatch = () => ({
   hasPendingUpdateRelay: true,
@@ -31,12 +39,12 @@ const buildUpdateSuccessPatch = () => ({
 
 export default function UpdateStateSection({
   humanity,
-  homeChain,
+  homeChainId,
   gatewayId,
   pohId,
 }: {
   humanity: Record<SupportedChainId, ProfileHumanityQuery>;
-  homeChain: SupportedChain;
+  homeChainId: SupportedChainId;
   gatewayId: `0x${string}`;
   pohId: `0x${string}`;
 }) {
@@ -48,41 +56,26 @@ export default function UpdateStateSection({
   const web3Loaded = useWeb3Loaded();
   const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
   const isReconciling = pendingAction !== null;
-  const {
-    actionState,
-    actionMessage,
-    setIdle,
-    setFeedbackState,
-    setUnavailable,
-    setWriteError,
-  } = useActionFeedback();
   const [prepareUpdate, , updateStatus] = useCCPoHWrite(
     "updateHumanity",
     useMemo(
       () => ({
-        onLoading() {
-          setFeedbackState(ACTION_STATES.txPending);
-        },
         onReady(fire: () => void) {
-          setFeedbackState(ACTION_STATES.confirmWallet);
           fire();
         },
         onSuccess() {
           applyAction("update", buildUpdateSuccessPatch());
           toast.success("Update transaction sent!");
-          setIdle();
           setIsUpdateModalOpen(false);
         },
-        onError(error) {
-          toast.error(setWriteError(error));
+        onError(error, errorCtx) {
+          toast.error(getWriteErrorMessage(error, errorCtx));
         },
         onFail() {
-          const message = "Update is not available right now.";
-          setUnavailable(message);
-          toast.error(message);
+          toast.error("Update is not available right now.");
         },
       }),
-      [applyAction, setFeedbackState, setIdle, setUnavailable, setWriteError],
+      [applyAction],
     ),
   );
 
@@ -93,10 +86,7 @@ export default function UpdateStateSection({
 
   const closeUpdateModal = useCallback(() => {
     setIsUpdateModalOpen(false);
-    if (!hasUpdateInFlight) {
-      setIdle();
-    }
-  }, [hasUpdateInFlight, setIdle]);
+  }, []);
   const openConnectWallet = useCallback(() => {
     setIsUpdateModalOpen(false);
     window.setTimeout(() => {
@@ -110,7 +100,7 @@ export default function UpdateStateSection({
       : "action";
   const updateGuardState = !isConnected
     ? "connect-wallet"
-    : homeChain.id !== chainId
+    : homeChainId !== chainId
       ? "switch-chain"
       : "ready";
 
@@ -120,43 +110,34 @@ export default function UpdateStateSection({
 
   if (sectionState === "pending") {
     return (
-      <div className="group relative">
-        <button className="text-sky-500" disabled>
-          Update state
-        </button>
-        <span className="pointer-events-none absolute bottom-full left-1/2 z-10 mb-2 w-max -translate-x-1/2 rounded-md bg-neutral-700 px-3 py-2 text-center text-sm text-white opacity-0 transition-opacity group-hover:opacity-100">
-          {WAITING_FOR_INDEXER_TOOLTIP}
-          <span className="absolute left-1/2 top-full h-0 w-0 -translate-x-1/2 border-x-[5px] border-t-[5px] border-x-transparent border-t-neutral-700" />
-        </span>
-      </div>
+      <CrossChainActionTrigger
+        label="Update state"
+        icon={LoadingIcon}
+        disabled
+        tooltip={WAITING_FOR_INDEXER_TOOLTIP}
+        className="basis-full text-center"
+      />
     );
   }
 
   return (
     <>
-      <div className="group relative">
-        <button
-          className="text-sky-500"
-          disabled={isReconciling}
-          onClick={() => setIsUpdateModalOpen(true)}
-        >
-          Update state
-        </button>
-        {isReconciling ? (
-          <span className="pointer-events-none absolute bottom-full left-1/2 z-10 mb-2 w-max -translate-x-1/2 rounded-md bg-neutral-700 px-3 py-2 text-center text-sm text-white opacity-0 transition-opacity group-hover:opacity-100">
-            {WAITING_FOR_INDEXER_TOOLTIP}
-            <span className="absolute left-1/2 top-full h-0 w-0 -translate-x-1/2 border-x-[5px] border-t-[5px] border-x-transparent border-t-neutral-700" />
-          </span>
-        ) : null}
-      </div>
+      <CrossChainActionTrigger
+        label="Update state"
+        icon={LoadingIcon}
+        onClick={() => setIsUpdateModalOpen(true)}
+        disabled={isReconciling}
+        tooltip={isReconciling ? WAITING_FOR_INDEXER_TOOLTIP : undefined}
+        className="basis-full text-center"
+      />
       <Modal
-        formal
+        className={CROSS_CHAIN_MODAL_CLASS}
         open={isUpdateModalOpen}
         onClose={closeUpdateModal}
-        canClose={!hasUpdateInFlight && !isActionStateLoading(actionState)}
-        header="Update"
+        canClose={!hasUpdateInFlight}
       >
-        <div className="p-4">
+        <div className="flex flex-col items-center gap-8 p-8 text-center">
+          <CrossChainModalHeading title="Update your POH ID state on another chain" />
           {updateGuardState !== "ready" ? (
             <>
               <span className="txt text-primaryText m-2 text-center">
@@ -166,106 +147,85 @@ export default function UpdateStateSection({
               </span>
               <div className="mt-4 flex justify-center">
                 <button
-                  className="btn-main"
+                  className="btn-primary"
                   onClick={
                     updateGuardState === "connect-wallet"
                       ? openConnectWallet
-                      : () => switchChain({ chainId: homeChain.id })
+                      : () => switchChain({ chainId: homeChainId })
                   }
                 >
                   {updateGuardState === "connect-wallet"
                     ? "Connect wallet"
-                    : `Switch to ${homeChain.name}`}
+                    : `Switch to ${idToChain(homeChainId)?.name}`}
                 </button>
               </div>
             </>
           ) : (
             <>
-              <span className="txt text-primaryText m-2">
-                Update humanity state on another chain. If you use wallet
-                contract make sure it has same address on both chains.
-              </span>
-              {isActionStateLoading(actionState) ? (
-                <div className="paper border-stroke bg-whiteBackground mt-4 px-3 py-2">
-                  <span className="text-secondaryText text-sm font-medium">
-                    {actionMessage}
-                  </span>
-                </div>
-              ) : null}
-              {isActionStateError(actionState) ? (
-                <div className="mt-4">
-                  <ProfileErrorCard title={actionMessage ?? ""} />
-                </div>
-              ) : null}
-
-              <div className="mt-4">
+              <div className="flex w-full flex-col gap-4">
                 {supportedChains.map((chain) => {
                   const crossChainReg =
                     humanity[chain.id].crossChainRegistration;
                   const isExpired = crossChainReg
                     ? Number(crossChainReg.expirationTime) < Date.now() / 1000
                     : true;
-                  const isValid =
-                    chain.id === homeChain.id || (crossChainReg && !isExpired);
-
                   return (
                     <div
                       key={chain.id}
-                      className="text-primaryText m-2 flex items-center justify-between gap-4 border p-3"
+                      className="border-stroke bg-whiteBackground text-primaryText flex min-h-12 items-center justify-between gap-4 rounded-btn border px-4 py-1"
                     >
-                      <div className="min-w-0">
-                        <div className="flex items-center">
-                          <ChainLogo
-                            chainId={chain.id}
-                            className="fill-primaryText mr-1 h-4 w-4"
-                          />
-                          {chain.name} {isValid ? "✔" : "❌"}
+                      <div className="flex min-w-0 items-center gap-2">
+                        <Image
+                          alt="POH ID"
+                          className="h-10 w-10 shrink-0"
+                          height={40}
+                          src="/logo/pohid.svg"
+                          width={40}
+                        />
+                        <div className="flex shrink-0 items-center">
+                          <ChainLogo chainId={chain.id} className="h-6 w-6" />
                         </div>
-                        <div className="text-secondaryText mt-1 text-sm">
-                          {chain.id === homeChain.id ? (
-                            <span>Home chain</span>
-                          ) : crossChainReg ? (
-                            <span
-                              className={isExpired ? "text-orange-500" : ""}
-                            >
-                              {isExpired ? "Expired " : "Expires "}
-                              {timeAgo(crossChainReg.expirationTime)}
-                            </span>
-                          ) : (
-                            <span>No cross-chain registration yet.</span>
-                          )}
-                        </div>
+                        <span className="truncate text-sm text-peach">
+                          {prettifyId(pohId)}
+                        </span>
+                        <CopyButton
+                          value={prettifyId(pohId)}
+                          label="Copy POH ID"
+                        />
                       </div>
 
-                      {chain.id === homeChain.id ? (
-                        <div className="text-secondaryText text-sm font-medium">
-                          Source
-                        </div>
-                      ) : (
-                        <button
-                          className="disabled:text-secondaryText shrink-0 text-blue-500 underline underline-offset-2 disabled:cursor-not-allowed disabled:no-underline"
-                          disabled={
-                            isActionStateLoading(actionState) ||
-                            hasUpdateInFlight
-                          }
-                          onClick={() => {
-                            setIdle();
-
-                            prepareUpdate({
-                              args: [gatewayId, pohId],
-                            });
-                          }}
-                        >
-                          {isActionStateLoading(actionState) ||
-                          hasUpdateInFlight
-                            ? "Processing..."
-                            : "Update state"}
-                        </button>
-                      )}
+                      <div className="flex shrink-0 items-center gap-2 text-sm">
+                        {chain.id === homeChainId ? (
+                          <>
+                            <span>Home Chain</span>
+                            <CheckCircleIcon className="text-status-registered h-4 w-4" />
+                          </>
+                        ) : crossChainReg ? (
+                          <span
+                            className={
+                              isExpired ? "text-orange" : "text-secondaryText"
+                            }
+                          >
+                            {isExpired ? "Expired " : "Expires "}
+                            {timeAgo(crossChainReg.expirationTime)}
+                          </span>
+                        ) : (
+                          <span className="text-secondaryText">
+                            Not registered
+                          </span>
+                        )}
+                      </div>
                     </div>
                   );
                 })}
               </div>
+              <ActionButton
+                className="w-fit min-w-[170px]"
+                disabled={hasUpdateInFlight}
+                isLoading={hasUpdateInFlight}
+                label={hasUpdateInFlight ? "Updating..." : "Update"}
+                onClick={() => prepareUpdate({ args: [gatewayId, pohId] })}
+              />
             </>
           )}
         </div>

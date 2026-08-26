@@ -18,18 +18,19 @@ const WalletSection = ({
   const modal = useAppKit();
 
   return (
-    <div className="col-span-2 flex flex-wrap items-center gap-y-[12px] justify-self-center md:col-span-1 md:flex md:w-fit md:gap-y-0 md:justify-self-end">
+    <div className="flex items-center">
       {web3Loaded && isConnected && address ? (
-        <div className="flex">
+        <div className="header-chip flex items-center rounded-full border">
           <button
-            className="centered h-8 rounded-l border-2 border-r-0 border-white/20 bg-white/10 px-2 text-white hover:bg-white/40"
+            className="flex items-center gap-1.5 whitespace-nowrap rounded-l-full px-3.5 py-2 text-sm font-semibold transition-colors duration-200 hover:bg-white/10 dark:hover:bg-white/5"
             onClick={() => modal.open({ view: "Networks" })}
           >
-            <ChainLogo chainId={chain.id} className="mr-1 h-4 w-4 fill-white" />
+            <ChainLogo chainId={chain.id} className="h-4 w-4 fill-current" />
             {chain.name.split(" ").at(-1)}
           </button>
+          <span className="h-5 w-px bg-white/[0.35] dark:bg-white/[0.08]" />
           <button
-            className="centered mr-2 h-8 rounded-r border-2 border-white/50 bg-white/10 px-2 text-white hover:bg-white/40"
+            className="flex items-center gap-1.5 whitespace-nowrap rounded-r-full px-3.5 py-2 text-sm font-semibold transition-colors duration-200 hover:bg-white/10 dark:hover:bg-white/5"
             onClick={() => modal.open({ view: "Account" })}
           >
             {shortenAddress(address)}
@@ -37,7 +38,7 @@ const WalletSection = ({
         </div>
       ) : (
         <button
-          className="centered mr-2 h-8 rounded border-2 border-white bg-white/10 px-2 text-white"
+          className="header-chip flex items-center whitespace-nowrap rounded-full border px-5 py-2 text-sm font-semibold transition-colors duration-200"
           onClick={() => modal.open({ view: "Connect" })}
         >
           Connect

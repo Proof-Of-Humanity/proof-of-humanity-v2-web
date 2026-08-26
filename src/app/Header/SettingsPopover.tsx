@@ -1,8 +1,8 @@
 import React from "react";
-import Image from "next/image";
 import Popover from "components/Popover";
 import ActionButton from "components/ActionButton";
 import SignInButton from "components/SignInButton";
+import NotificationsIcon from "icons/Notifications.svg";
 import EmailField from "./EmailField";
 import EmailVerificationNotice from "./EmailVerificationNotice";
 import UnsubscribeModal from "./UnsubscribeModal";
@@ -18,7 +18,6 @@ const SettingsPopover: React.FC = () => {
     email,
     setEmail,
     showEmailError,
-    hasSavedEmail,
     hasVerifiedEmail,
     handleKeyDown,
     showVerificationNotice,
@@ -42,26 +41,23 @@ const SettingsPopover: React.FC = () => {
   const showUnreadDot = isSubscribed === false;
 
   return (
-    <div className="flex h-5 items-center">
+    <div className="flex h-9 items-center">
       <Popover
         trigger={
-          <span
+          <button
+            type="button"
             onClick={toggleSettingsPopover}
-            className="relative mx-2 inline-flex h-5 w-5 cursor-pointer items-center justify-center"
+            className="icon-btn relative ml-2 h-9 w-9"
+            aria-label="Open notification settings"
           >
-            <Image
-              alt="notifications"
-              src="/logo/notifications.svg"
-              height={20}
-              width={20}
-            />
+            <NotificationsIcon />
             {showUnreadDot && (
               <span
                 aria-hidden="true"
-                className="bg-status-removed absolute -right-1 -top-1 h-2.5 w-2.5 rounded-full border-2 border-white"
+                className="bg-status-removed absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-full border-2 border-white"
               />
             )}
-          </span>
+          </button>
         }
         open={isOpen}
         onClose={closeAndDiscardChanges}
@@ -90,7 +86,7 @@ const SettingsPopover: React.FC = () => {
                   <EmailField
                     value={email}
                     isInvalid={showEmailError}
-                    autoFocus={!hasSavedEmail}
+                    autoFocus={false}
                     onChange={setEmail}
                     onKeyDown={handleKeyDown}
                   />

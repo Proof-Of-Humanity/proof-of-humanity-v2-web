@@ -10,6 +10,8 @@ import ActionButton from "components/ActionButton";
 import { useRequestOptimistic } from "optimistic/request";
 import type { RequestOptimisticOverlay } from "optimistic/types";
 import { useAccount } from "wagmi";
+import { resolveTxState } from "utils/txState";
+import { getWriteErrorMessage } from "hooks/useActionFeedback";
 
 enableReactUse();
 
@@ -61,8 +63,8 @@ export default function RemoveVouch({
     "removeVouch",
     useMemo(
       () => ({
-        onError() {
-          toast.error("Transaction rejected");
+        onError(error, errorCtx) {
+          toast.error(getWriteErrorMessage(error, errorCtx));
         },
         onLoading() {
           loading.start();
@@ -95,31 +97,33 @@ export default function RemoveVouch({
     prepareRemoveVouch({ args: [requester, pohId] });
   });
 
+  // Covers both the wallet-confirmation and tx-mining phases, matching the
+  // other action buttons; `status.write` alone re-enables while still mining.
+  const isRemoveVouchLoading =
+    status.write === "pending" ||
+    (status.write === "success" && status.transaction === "pending");
+
+  const trigger = resolveTxState([
+    { active: isReconciling, message: "Waiting for indexer" },
+    { active: !!disabled, message: tooltip },
+    {
+      active: userChainId !== chain.id,
+      message: `Switch your chain above to ${idToChain(chain.id)?.name || "the correct chain"}`,
+    },
+    { active: isRemoveVouchLoading },
+  ]);
+
   return (
     web3Loaded &&
     (userChainId === chain.id || disabled) && (
-      <div className="flex gap-4">
-        <ActionButton
-          onClick={removeOnchainVouch}
-          label="Remove Vouch"
-          className="mb-2 w-auto"
-          isLoading={status.write === "pending"}
-          disabled={
-            status.write === "pending" ||
-            isReconciling ||
-            disabled ||
-            userChainId !== chain.id
-          }
-          tooltip={
-            isReconciling
-              ? "Syncing"
-              : tooltip ||
-                (userChainId !== chain.id
-                  ? `Switch your chain above to ${idToChain(chain.id)?.name || "the correct chain"}`
-                  : undefined)
-          }
-        />
-      </div>
+      <ActionButton
+        onClick={removeOnchainVouch}
+        label="Remove Vouch"
+        className="mb-2 w-auto"
+        isLoading={isRemoveVouchLoading}
+        disabled={trigger.disabled}
+        tooltip={trigger.tooltip}
+      />
     )
   );
 }

@@ -27,9 +27,29 @@ export interface WriteSuccessContext {
   receipt?: TransactionReceipt;
 }
 
+/**
+ * Why a submitted write terminally failed:
+ * - `wallet`: rejected or failed at submission, never reached the chain.
+ * - `reverted`: mined and reverted on-chain.
+ * - `unknown`: the receipt lookup kept failing after retries; the outcome is
+ *   unverified and the tx may still have confirmed. Verify via `txHash`
+ *   before retrying — the UI converges through the normal data refetch.
+ */
+export type WriteErrorKind = "wallet" | "reverted" | "unknown";
+
+export interface WriteErrorContext {
+  kind: WriteErrorKind;
+  txHash?: Hash;
+}
+
 export interface Effects {
   onLoading?: () => void;
-  onError?: (error?: unknown) => void;
+  /**
+   * Terminal notification for every write that does not reach `onSuccess`.
+   * Exactly one of `onSuccess`/`onError` fires per submitted transaction, so
+   * callers can rely on it to release loading/lock state.
+   */
+  onError?: (error?: unknown, errorCtx?: WriteErrorContext) => void;
   onFail?: (error?: unknown) => void;
   onSuccess?: (ctx: WriteSuccessContext) => void;
   onReady?: (fire: () => void) => void;

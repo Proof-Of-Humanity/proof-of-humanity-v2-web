@@ -3,49 +3,99 @@ import {
   InputHTMLAttributes,
   ReactNode,
   TextareaHTMLAttributes,
-  useState,
+  useId,
 } from "react";
+import CloseCircleOutlineIcon from "icons/CloseCircleOutline.svg";
 import Label from "./Label";
 
-type FieldProps = TextareaHTMLAttributes<HTMLTextAreaElement> &
-  InputHTMLAttributes<HTMLInputElement> & {
-    textarea?: boolean;
-    label?: ReactNode;
-  };
+type FieldStatus = "error";
 
-function Field({ label, textarea = false, className, ...props }: FieldProps) {
-  const [focused, setFocused] = useState(false);
+type FieldCommonProps = {
+  label?: ReactNode;
+  labelClassName?: string;
+  status?: FieldStatus;
+  message?: ReactNode;
+  trailing?: ReactNode;
+};
+
+type FieldProps =
+  | (InputHTMLAttributes<HTMLInputElement> &
+      FieldCommonProps & { textarea?: false })
+  | (TextareaHTMLAttributes<HTMLTextAreaElement> &
+      FieldCommonProps & { textarea: true });
+
+const statusControl: Record<FieldStatus, string> = {
+  error: "flat-control-error",
+};
+
+const statusMessage: Record<FieldStatus, string> = {
+  error: "text-status-rejected",
+};
+
+function Field({
+  label,
+  labelClassName,
+  textarea = false,
+  status,
+  message,
+  trailing,
+  className,
+  ...props
+}: FieldProps) {
+  const messageId = useId();
+  const describedBy = status && message ? messageId : undefined;
 
   return (
     <div className="flex w-full flex-col">
-      {label && <Label>{label}</Label>}
+      {label && <Label className={labelClassName}>{label}</Label>}
       <div
-        className={cn("bordered w-full", {
-          "ring-theme/60 ring-2 ring-offset-2": focused,
-        })}
+        className={cn(
+          "flat-control w-full overflow-hidden rounded-input transition duration-200 ease-premium",
+          status && statusControl[status],
+          !textarea && "flex min-h-12 items-center",
+        )}
       >
         {textarea ? (
           <textarea
             className={cn(
-              "bg-whiteBackgroundWithOpacity text-primaryText block w-full rounded-sm border-none px-4 py-2 font-medium bg-blend-lighten transition ease-in-out",
+              "text-primaryText block w-full border-none bg-transparent px-4 py-3 font-medium transition ease-in-out",
               "focus:ring-0",
               className,
             )}
-            {...props}
+            aria-invalid={status === "error" || undefined}
+            aria-describedby={describedBy}
+            {...(props as TextareaHTMLAttributes<HTMLTextAreaElement>)}
           />
         ) : (
-          <input
-            className={cn(
-              "bg-whiteBackgroundWithOpacity text-primaryText block w-full rounded-sm border-none px-4 py-2 font-medium bg-blend-overlay",
-              "focus-visible:outline-none",
-              className,
+          <>
+            <input
+              className={cn(
+                "text-primaryText min-h-12 min-w-0 flex-1 border-none bg-transparent px-4 py-3 font-medium",
+                "focus:ring-0 focus-visible:outline-none",
+                className,
+              )}
+              aria-invalid={status === "error" || undefined}
+              aria-describedby={describedBy}
+              {...(props as InputHTMLAttributes<HTMLInputElement>)}
+            />
+            {trailing}
+            {status === "error" && (
+              <CloseCircleOutlineIcon
+                aria-hidden
+                className="text-status-rejected mr-4 h-4 w-4 shrink-0 fill-current"
+              />
             )}
-            onFocus={() => setFocused(true)}
-            onBlur={() => setFocused(false)}
-            {...props}
-          />
+          </>
         )}
       </div>
+      {status && message && (
+        <span
+          id={messageId}
+          className={cn("mt-1.5 text-xs", statusMessage[status])}
+        >
+          {message}
+        </span>
+      )}
     </div>
   );
 }

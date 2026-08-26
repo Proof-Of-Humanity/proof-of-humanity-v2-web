@@ -1,0 +1,23 @@
+<svg viewBox="0 0 440 440" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="vcoRing" x1="220" y1="95" x2="220" y2="345" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#A9FFE9"/>
+      <stop offset="1" stop-color="#34C79A"/>
+    </linearGradient>
+  </defs>
+
+  <circle cx="220" cy="220" r="212" stroke="#F7F3EF" stroke-opacity="0.10"/>
+  <circle cx="220" cy="220" r="180" stroke="#F7F3EF" stroke-opacity="0.06"/>
+
+  <circle cx="220" cy="220" r="114" stroke="url(#vcoRing)" stroke-width="21"/>
+  <path d="M175.08 222.62l31.12 31.12 58.71-65.66" stroke="url(#vcoRing)" stroke-width="24.1" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <circle cx="432" cy="220" r="7" fill="#FF7F8F"/>
+  <circle cx="220" cy="8" r="6" fill="#FFE16B"/>
+  <circle cx="46" cy="342" r="6" fill="#FF7F8F"/>
+  <circle cx="370" cy="70" r="5" fill="#8CEAFF"/>
+  <circle cx="40" cy="220" r="5.5" fill="#D09BFF"/>
+  <circle cx="347" cy="347" r="5" fill="#FFB08A"/>
+  <circle cx="93" cy="93" r="4.5" fill="#8CEAFF"/>
+  <circle cx="220" cy="400" r="5" fill="#D09BFF"/>
+</svg>

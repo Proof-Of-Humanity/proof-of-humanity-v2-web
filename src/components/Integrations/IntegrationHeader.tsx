@@ -1,32 +1,46 @@
 "use client";
 import React from "react";
 import Image from "next/image";
+import cn from "classnames";
 import { Integration } from "types/integrations";
-import { useIsDarkMode } from "hooks/useDarkMode";
 
 interface IntegrationHeaderProps {
   integration: Integration;
+  className?: string;
 }
 
 export default function IntegrationHeader({
   integration,
+  className,
 }: IntegrationHeaderProps) {
-  const isDark = useIsDarkMode();
-  const src =
-    isDark && integration.darkLogo ? integration.darkLogo : integration.logo;
+  const lightSrc = integration.logo;
+  const darkSrc = integration.darkLogo || integration.logo;
   const logoWidth = integration.logoWidth || 164;
   const logoHeight = integration.logoHeight || 48;
 
   return (
-    <div className="paper flex flex-col">
+    <div
+      className={cn(
+        "border-stroke bg-whiteBackground flex flex-col rounded-card border dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]",
+        className,
+      )}
+    >
       <div className="p-4 md:p-6">
         {integration.logo && (
           <div className="mb-4 ml-1">
             <Image
-              src={src}
+              src={lightSrc}
               alt={`${integration.name} logo`}
               width={logoWidth}
               height={logoHeight}
+              className="dark:hidden"
+            />
+            <Image
+              src={darkSrc}
+              alt={`${integration.name} logo`}
+              width={logoWidth}
+              height={logoHeight}
+              className="hidden dark:block"
             />
           </div>
         )}

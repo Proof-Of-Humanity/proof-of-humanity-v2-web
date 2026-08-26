@@ -1,5 +1,5 @@
-import cn from "classnames";
 import React from "react";
+import { twMerge } from "tailwind-merge";
 
 interface LabelProps {
   className?: string;
@@ -8,7 +8,10 @@ interface LabelProps {
 
 const Label: React.FC<LabelProps> = ({ children, className }) => (
   <legend
-    className={cn("text-orange mb-2 mt-8 font-medium uppercase", className)}
+    className={twMerge(
+      "text-orange mb-2 mt-8 font-medium uppercase",
+      className,
+    )}
   >
     {children}
   </legend>

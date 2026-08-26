@@ -7,6 +7,11 @@ import { Hash, toBytes, zeroAddress } from "viem";
 export const prettifyId = (id: Hash) => id?.slice(2).toUpperCase();
 // base58.encode(hexToBytes(id));
 
+export const isRegisterActive = (
+  pohId: Hash | null | undefined,
+  pathname: string,
+) => (pohId ? pathname === `/${prettifyId(pohId)}` : pathname.includes("/claim"));
+
 export const machinifyId = (s: string) => {
   const id = `0x${zeroAddress.concat(s.toLowerCase()).slice(-40)}` as Hash;
   // const id = `0x${base58.decode(s)}` as Hash;
