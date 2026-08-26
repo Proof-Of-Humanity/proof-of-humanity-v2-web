@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-import NewTabIcon from "components/NewTabIcon";
+import ExternalLinkIcon from "components/ExternalLinkIcon";
 import TimeAgo from "components/TimeAgo";
 
 type RequestPunishedVouchNoticeProps = {
@@ -17,13 +17,13 @@ export default function RequestPunishedVouchNotice({
   const punishedAt = timestamp ? Number(timestamp) : null;
 
   return (
-    <div className="border-stroke bg-whiteBackground mb-1 rounded border shadow">
-      <div className="flex flex-col gap-4 px-[24px] py-[18px] sm:flex-row sm:items-start lg:px-[32px]">
+    <div className="border-stroke bg-whiteBackground mb-1 rounded-card border shadow-soft-inset">
+      <div className="flex flex-col items-center gap-4 px-[24px] py-[18px] sm:flex-row sm:items-start lg:px-[32px]">
         <div className="border-status-removed/30 bg-status-removed/10 text-status-removed flex h-10 w-10 shrink-0 items-center justify-center rounded-full border text-lg font-bold">
           !
         </div>
-        <div className="min-w-0 flex-1">
-          <div className="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
+        <div className="min-w-0 flex-1 text-center sm:text-left">
+          <div className="flex flex-col items-center gap-2 md:flex-row md:items-start md:justify-between">
             <div className="text-status-removed text-base font-semibold leading-6">
               Punished vouch removal
             </div>
@@ -36,11 +36,11 @@ export default function RequestPunishedVouchNotice({
           <p className="text-secondaryText mt-1 text-sm font-normal leading-6">
             This profile was removed for aiding {reason}.{" "}
             <Link
-              className="group/source-request text-orange inline-flex items-center gap-1 font-semibold transition-opacity hover:opacity-80"
+              className="group/external-link text-orange inline-flex items-center gap-1 font-semibold transition-opacity hover:opacity-80"
               href={sourceRequestHref}
             >
               View source request
-              <NewTabIcon className="h-4 w-4 fill-current transition-transform duration-200 group-hover/source-request:-translate-y-0.5 group-hover/source-request:translate-x-0.5" />
+              <ExternalLinkIcon />
             </Link>
           </p>
         </div>

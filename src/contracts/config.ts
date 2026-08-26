@@ -9,7 +9,7 @@ export const configSets = {
 };
 
 export const configSetSelection =
-  process.env.DEPLOYED_APP ==
+  process.env.DEPLOYED_APP ===
   "https://testnets--proof-of-humanity-v2.netlify.app"
     ? configSets.testnet
     : configSets.main;

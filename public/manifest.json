@@ -4,7 +4,7 @@
   "homepage_url": "https://poh.vercel.app",
   "name": "Proof of Humanity",
   "description": "Proof of Humanity",
-  "iconPath": "./poh-logo-colored.svg",
+  "iconPath": "/logo/poh-colored.svg",
   "short_name": "PoH",
   "start_url": ".",
   "theme_color": "#FF9966"

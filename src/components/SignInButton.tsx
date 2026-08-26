@@ -1,4 +1,5 @@
 import { useAtlasProvider } from "@kleros/kleros-app";
+import { useAppKit } from "@reown/appkit/react";
 import { toast } from "react-toastify";
 import ActionButton, { ActionButtonProps } from "./ActionButton";
 import { useAccount } from "wagmi";
@@ -14,8 +15,18 @@ const SignInButton: React.FC<SignInButtonProps> = ({
 }) => {
   const { isSigningIn, authoriseUser } = useAtlasProvider();
   const { isConnected } = useAccount();
+  const modal = useAppKit();
 
   const handleSignIn = async () => {
+    if (!isConnected) {
+      try {
+        await modal.open({ view: "Connect" });
+      } catch {
+        // Modal dismissed or failed to open; no action needed.
+      }
+      return;
+    }
+
     try {
       await authoriseUser();
       toast.success("Successfully Signed In");
@@ -29,8 +40,11 @@ const SignInButton: React.FC<SignInButtonProps> = ({
       {...{
         ...restProps,
         isLoading: isSigningIn,
-        disabled: !isConnected,
-        label: isSigningIn ? "Signing In..." : label,
+        label: !isConnected
+          ? "Connect Wallet"
+          : isSigningIn
+            ? "Signing In..."
+            : label,
         onClick: handleSignIn,
       }}
     />

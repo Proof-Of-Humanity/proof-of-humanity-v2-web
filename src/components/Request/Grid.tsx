@@ -7,7 +7,6 @@ import {
   useObservable,
   useSelector,
 } from "@legendapp/state/react";
-import cn from "classnames";
 import {
   SupportedChain,
   SupportedChainId,
@@ -20,11 +19,14 @@ import {
   getFilteredRequestsInitData,
   getRequestsInitData,
   getRequestsLoadingPromises,
+  PROFILES_DISPLAY_REQUIRED_REQS,
 } from "data/request";
 import { useEffect, useState } from "react";
 import ChainLogo from "components/ChainLogo";
 import DropdownItem from "components/Dropdown/Item";
 import Dropdown from "components/Dropdown/Menu";
+import SearchBar from "components/SearchBar";
+import StatusIcon from "components/StatusIcon";
 import { RequestsQuery } from "generated/graphql";
 import { useLoading } from "hooks/useLoading";
 import { getRequestSearchFilter } from "utils/requestSearch";
@@ -34,16 +36,16 @@ import {
   getRequestStatusFilter,
   STATUS_FILTER_OPTIONS,
   getStatusLabel,
-  getStatusColor,
 } from "utils/status";
 
 import Card from "./Card";
-import Loading from "components/Loading";
+import OutageNotice from "./OutageNotice";
 
 enableReactUse();
 
 const REQUESTS_BATCH_SIZE = 12;
-var humanityLifespanAllChains: Record<SupportedChainId, string | undefined>;
+const allChainIds = supportedChains.map((chain) => chain.id);
+let humanityLifespanAllChains: Record<SupportedChainId, string | undefined>;
 
 export type RequestsQueryItem = ArrayElement<RequestsQuery["requests"]>;
 
@@ -71,7 +73,7 @@ const sortRequests = (request: RequestInterface[]): RequestInterface[] => {
   pohIdGrouped.forEach((val, key) => {
     val.sort((req1, req2) => req2.lastStatusChange - req1.lastStatusChange);
   });
-  let requestsOut: RequestInterface[] = new Array<RequestInterface>();
+  const requestsOut: RequestInterface[] = new Array<RequestInterface>();
   pohIdGrouped.forEach((val, key) => {
     // We keep only the head request of each pohIdGrouped array which is the one representing the current status of the personhood
     const latestRequest = val[0];
@@ -104,7 +106,7 @@ const normalize = (
               },
               {
                 humanityLifespan:
-                  humanityLifespanAllChains[
+                  humanityLifespanAllChains?.[
                     Number(chainId) as SupportedChainId
                   ],
               },
@@ -142,6 +144,7 @@ interface RequestFilter {
   status: RequestStatus;
   chainId: SupportedChainId | 0;
   cursor: number;
+  retry: number;
 }
 
 const filter$ = observable<RequestFilter>({
@@ -149,7 +152,21 @@ const filter$ = observable<RequestFilter>({
   status: RequestStatus.ALL,
   chainId: 0,
   cursor: 1,
+  retry: 0,
 });
+
+const SkeletonCard = () => (
+  <div className="border-stroke bg-whiteBackground relative aspect-[5/4] w-full animate-pulse overflow-hidden rounded-card border shadow-soft-inset">
+    <div className="absolute inset-x-0 top-0 flex justify-between px-4 pt-[9px]">
+      <div className="bg-grey h-6 w-24 rounded-full" />
+      <div className="bg-grey h-6 w-6 rounded-full" />
+    </div>
+    <div className="absolute inset-x-0 bottom-0 px-4 pb-[21px]">
+      <div className="bg-grey h-6 w-2/3 rounded" />
+      <div className="bg-grey mt-2 h-4 w-1/3 rounded" />
+    </div>
+  </div>
+);
 
 function RequestsGrid() {
   const filter = filter$.use();
@@ -178,45 +195,77 @@ function RequestsGrid() {
   const [pending, loadingType] = loading.use();
 
   const [loadError, setLoadError] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
+  const [failedChainIds, setFailedChainIds] = useState<SupportedChainId[]>([]);
+  // seeded from filter$ because it outlives the component (back navigation)
+  const [searchQuery, setSearchQuery] = useState(() => filter$.search.peek());
   useEffect(() => {
+    if (searchQuery === filter$.search.peek()) return;
     const timer = setTimeout(
       () => filter$.assign({ search: searchQuery, cursor: 1 }),
-      100,
+      300,
     );
     return () => clearTimeout(timer);
   }, [searchQuery]);
 
-  useMountOnce(() => {
-    (async () => {
-      try {
-        const contractData = await Promise.resolve(getContractDataAllChains());
-        humanityLifespanAllChains = Object.keys(contractData).reduce(
-          (acc, chainId) => {
-            acc[Number(chainId) as SupportedChainId] =
-              contractData[
-                Number(chainId) as SupportedChainId
-              ]?.humanityLifespan;
-            return acc;
-          },
-          {} as Record<SupportedChainId, string | undefined>,
-        );
+  const [hasMore, setHasMore] = useState(true);
+  // a chain whose raw page came back full probably has a next page;
+  // all pages short of the raw batch size means the backend is exhausted
+  const anyFullPage = (
+    stacks: Partial<Record<SupportedChainId, RequestsQuery["requests"]>>,
+  ) =>
+    Object.values(stacks).some(
+      (reqs) => (reqs?.length ?? 0) >= PROFILES_DISPLAY_REQUIRED_REQS,
+    );
 
-        chainStacks$.set(await getRequestsInitData());
-      } catch (err) {
-        console.error("Failed to load requests:", err);
-        setLoadError(true);
-      } finally {
-        loading.stop();
-      }
-    })();
+  const ensureContractData = async () => {
+    if (humanityLifespanAllChains) return;
+    const contractData = await getContractDataAllChains();
+    humanityLifespanAllChains = Object.keys(contractData).reduce(
+      (acc, chainId) => {
+        acc[Number(chainId) as SupportedChainId] =
+          contractData[Number(chainId) as SupportedChainId]?.humanityLifespan;
+        return acc;
+      },
+      {} as Record<SupportedChainId, string | undefined>,
+    );
+  };
 
-    /* (async () => {
-      chainStacks$.set(await getRequestsInitData());
+  const loadInit = async () => {
+    loading.start("init");
+    setLoadError(false);
+    try {
+      await ensureContractData();
+      const { stacks, failedChainIds: failed } = await getRequestsInitData();
+      setHasMore(anyFullPage(stacks));
+      chainStacks$.set(stacks);
+      setFailedChainIds(failed);
+    } catch (err) {
+      console.error("Failed to load requests:", err);
+      setLoadError(true);
+      setFailedChainIds(allChainIds);
+    } finally {
       loading.stop();
-    })(); */
+    }
+  };
 
-    filter$.onChange(
+  const retryLoad = () => {
+    // if init never succeeded we need contract data too, else re-run the current filter fetch
+    if (!humanityLifespanAllChains) loadInit();
+    else filter$.assign({ retry: filter$.retry.peek() + 1 });
+  };
+
+  const clearFilters = () => {
+    setSearchQuery("");
+    filter$.assign({
+      search: "",
+      status: RequestStatus.ALL,
+      chainId: 0,
+      cursor: 1,
+    });
+  };
+
+  useMountOnce(() => {
+    const dispose = filter$.onChange(
       async ({
         value: { chainId: chainFilter, search, status, cursor },
         getPrevious,
@@ -224,6 +273,7 @@ function RequestsGrid() {
         loading.start();
         setLoadError(false);
         try {
+          await ensureContractData();
           const loadContinued = cursor > getPrevious().cursor;
           const fetchChains: SupportedChain[] = [];
           const fetchPromises: Promise<RequestsQuery>[] = [];
@@ -266,8 +316,27 @@ function RequestsGrid() {
           if (!fetchChains.length) {
             chainStacks$.set(chainStacks);
           } else {
-            const res = await Promise.all(fetchPromises);
-            chainStacks$.set(
+            const settled = await Promise.allSettled(fetchPromises);
+            const fetchFailedChainIds: SupportedChainId[] = [];
+            const res: RequestsQuery[] = settled.map((result, i) => {
+              if (result.status === "fulfilled") return result.value;
+              const chain = fetchChains[i];
+              if (chain) {
+                console.error(
+                  `Subgraph query failed on ${chain.name}:`,
+                  result.reason,
+                );
+                fetchFailedChainIds.push(chain.id);
+              }
+              return { requests: [] };
+            });
+            setHasMore(
+              res.some(
+                (r) =>
+                  (r?.requests ?? []).length >= PROFILES_DISPLAY_REQUIRED_REQS,
+              ),
+            );
+            const { stacks, failedChainIds: initFailed } =
               await getFilteredRequestsInitData(
                 fetchChains.reduce(
                   (acc, chain, i) => ({
@@ -279,40 +348,61 @@ function RequestsGrid() {
                   }),
                   chainStacks,
                 ),
-              ),
-            );
+              );
+            chainStacks$.set(stacks);
+            setFailedChainIds([
+              ...new Set([...fetchFailedChainIds, ...initFailed]),
+            ]);
+            if (fetchFailedChainIds.length === fetchChains.length)
+              setLoadError(true);
           }
         } catch (err) {
           console.error("Failed to load requests:", err);
           setLoadError(true);
+          setFailedChainIds(chainFilter ? [chainFilter] : allChainIds);
         } finally {
           loading.stop();
         }
       },
     );
+
+    const { search, status, chainId } = filter$.peek();
+    if (search || status !== RequestStatus.ALL || chainId)
+      filter$.assign({ cursor: 1, retry: filter$.retry.peek() + 1 });
+    else loadInit();
+
+    return dispose;
   });
 
-  if (pending && loadingType === "init") return <Loading />;
-
-  if (loadError && requests.length === 0)
-    return (
-      <div className="text-primaryText flex flex-col items-center gap-2 py-16 text-center">
-        <span className="font-semibold">
-          Unable to load profiles right now.
-        </span>
-        <span className="text-secondaryText text-sm">
-          Our data services appear to be unavailable. Please try again later.
-        </span>
-      </div>
-    );
+  const settling = searchQuery !== filter.search;
+  const showSkeleton =
+    settling || (pending && (loadingType === "init" || filter.cursor === 1));
+  const showError = !showSkeleton && loadError && requests.length === 0;
+  const showEmpty =
+    !showSkeleton && !pending && !loadError && requests.length === 0;
+  const hasActiveFilter =
+    !!filter.search || filter.status !== RequestStatus.ALL || !!filter.chainId;
+  const showLoadMore =
+    !showSkeleton && !showError && !showEmpty && requests.length > 0 && hasMore;
 
   return (
     <>
+      <div className="mb-6">
+        <h1 className="text-primaryText text-2xl font-semibold md:text-3xl">
+          Explore the Proof of Humanity Registry
+        </h1>
+        <p className="text-secondaryText mt-2 max-w-3xl">
+          Browse verified humans and registration profiles. Search by name,
+          wallet address, or Humanity ID, filter by status or network, and view
+          public registration details.
+        </p>
+      </div>
       <div className="my-4 flex flex-col gap-2 py-2 sm:flex-row sm:gap-1 md:gap-2">
-        <input
-          className="border-stroke text-primaryText bg-whiteBackground w-full rounded border p-2 md:mr-2"
+        <SearchBar
+          className="md:mr-2"
+          value={searchQuery}
           placeholder="Search by name, address, or POH ID"
-          onChange={(e) => setSearchQuery(e.target.value)}
+          onSearch={setSearchQuery}
         />
         <Dropdown
           title={
@@ -320,20 +410,15 @@ function RequestsGrid() {
               ? "Status"
               : getStatusLabel(filter.status)
           }
+          active={filter.status !== RequestStatus.ALL}
+          onClear={() =>
+            filter$.assign({ status: RequestStatus.ALL, cursor: 1 })
+          }
         >
           {STATUS_FILTER_OPTIONS.map((status) => (
             <DropdownItem
               key={status}
-              icon={
-                <div
-                  className={cn(
-                    "dot mr-2",
-                    status === RequestStatus.ALL
-                      ? "bg-white"
-                      : `bg-status-${getStatusColor(status)}`,
-                  )}
-                />
-              }
+              icon={<StatusIcon status={status} className="mr-2" />}
               selected={filter.status === status}
               onSelect={() => filter$.assign({ status, cursor: 1 })}
               name={getStatusLabel(status)}
@@ -346,6 +431,8 @@ function RequestsGrid() {
               ? idToChain(filter.chainId as SupportedChainId)!.name
               : "Chain"
           }
+          active={!!filter.chainId}
+          onClear={() => filter$.assign({ chainId: 0, cursor: 1 })}
         >
           <DropdownItem
             selected={!filter.chainId}
@@ -369,31 +456,90 @@ function RequestsGrid() {
         </Dropdown>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4">
-        {requests.map((request, i) => (
-          <Card
-            key={i}
-            chainId={request.chainId}
-            index={request.index}
-            humanity={request.humanity}
-            requester={request.requester}
-            claimer={request.claimer}
-            requestStatus={request.requestStatus}
-            revocation={request.revocation}
-            registrationEvidenceRevokedReq={
-              request.registrationEvidenceRevokedReq
-            }
-            evidence={request.evidenceGroup.evidence}
-          />
-        ))}
-      </div>
+      {!showSkeleton && !showError && failedChainIds.length > 0 && (
+        <OutageNotice chainIds={failedChainIds} onRetry={retryLoad} />
+      )}
 
-      {!pending && (
+      {showSkeleton ? (
+        <div
+          className="request-grid"
+          role="status"
+          aria-label="Loading profiles"
+        >
+          {Array.from({ length: 8 }, (_, i) => (
+            <SkeletonCard key={i} />
+          ))}
+        </div>
+      ) : showError ? (
+        <div className="text-primaryText flex flex-col items-center gap-2 py-16 text-center">
+          <span className="font-semibold">
+            Unable to load profiles right now.
+          </span>
+          <span className="text-secondaryText text-sm">
+            Our data services appear to be unavailable.
+          </span>
+          <button
+            type="button"
+            className="btn-primary gradient mt-4 px-8 py-3"
+            onClick={retryLoad}
+          >
+            Retry
+          </button>
+        </div>
+      ) : showEmpty ? (
+        <div className="text-primaryText flex flex-col items-center gap-2 py-16 text-center">
+          <span className="font-semibold">No profiles found.</span>
+          <span className="text-secondaryText text-sm">
+            {hasActiveFilter
+              ? "Try adjusting your search or filters."
+              : "No profiles have been submitted yet."}
+          </span>
+          {hasActiveFilter && (
+            <button
+              type="button"
+              className="btn-primary gradient mt-4 px-8 py-3"
+              onClick={clearFilters}
+            >
+              Clear filters
+            </button>
+          )}
+        </div>
+      ) : (
+        <div className="request-grid">
+          {requests.map((request, i) => (
+            <div
+              key={`${request.chainId}-${request.humanity.id}-${request.index}`}
+              className="motion-safe:animate-cardIn"
+              style={{
+                animationDelay: `${(i % REQUESTS_BATCH_SIZE) * 30}ms`,
+              }}
+            >
+              <Card
+                aspectRatio="wide"
+                chainId={request.chainId}
+                index={request.index}
+                humanity={request.humanity}
+                requester={request.requester}
+                claimer={request.claimer}
+                requestStatus={request.requestStatus}
+                revocation={request.revocation}
+                registrationEvidenceRevokedReq={
+                  request.registrationEvidenceRevokedReq
+                }
+                evidence={request.evidenceGroup.evidence}
+              />
+            </div>
+          ))}
+        </div>
+      )}
+
+      {showLoadMore && (
         <button
-          className="btn-main gradient my-8 px-8 py-4 md:mx-auto"
+          className="btn-primary gradient my-8 px-8 py-4 disabled:opacity-60 md:mx-auto"
+          disabled={pending}
           onClick={() => filter$.cursor.set((c) => c + 1)}
         >
-          Load More
+          {pending ? "Loading…" : "Load More"}
         </button>
       )}
     </>

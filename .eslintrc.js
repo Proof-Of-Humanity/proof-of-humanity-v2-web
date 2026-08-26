@@ -10,11 +10,11 @@ module.exports = {
   rules: {
     "react/no-unescaped-entities": 0,
     "react/display-name": "off",
-    "react-hooks/exhaustive-deps": "warn",
-    "no-var": "warn",
-    "prefer-const": "warn",
-    eqeqeq: ["warn", "always", { null: "ignore" }],
-    "object-shorthand": ["warn", "always"],
+    "react-hooks/exhaustive-deps": "error",
+    "no-var": "error",
+    "prefer-const": "error",
+    eqeqeq: ["error", "always", { null: "ignore" }],
+    "object-shorthand": ["error", "always"],
     "no-restricted-syntax": [
       "warn",
       {

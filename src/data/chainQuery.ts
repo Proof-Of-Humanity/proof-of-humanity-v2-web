@@ -17,19 +17,15 @@ export class SubgraphUnavailableError extends Error {
   }
 }
 
-/**
- * Runs a query against every supported chain, tolerating per-chain failures.
- * A chain whose subgraph is down resolves to the provided fallback instead of
- * rejecting the whole batch, so live chains can still be displayed.
- * The returned array is aligned with `supportedChains`.
- *
- * If *all* chains fail, there is nothing left to display, so a
- * `SubgraphUnavailableError` is thrown for callers to handle.
- */
-export const settleChainQueries = async <T>(
+export interface ChainQueryResults<T> {
+  values: T[];
+  failedChains: SupportedChain[];
+}
+
+export const settleChainQueriesWithStatus = async <T>(
   query: (chain: SupportedChain) => Promise<T>,
   fallback: (chain: SupportedChain) => T,
-): Promise<T[]> => {
+): Promise<ChainQueryResults<T>> => {
   const results = await Promise.allSettled(
     supportedChains.map((chain) => query(chain)),
   );
@@ -47,10 +43,41 @@ export const settleChainQueries = async <T>(
       results.map((result) => (result as PromiseRejectedResult).reason),
     );
 
-  return supportedChains.map((chain, i) => {
-    const result = results[i]!;
-    return result.status === "fulfilled" ? result.value : fallback(chain);
+  return {
+    values: supportedChains.map((chain, i) => {
+      const result = results[i]!;
+      return result.status === "fulfilled" ? result.value : fallback(chain);
+    }),
+    failedChains: supportedChains.filter(
+      (_, i) => results[i]!.status === "rejected",
+    ),
+  };
+};
+
+export const settleChainQueries = async <T>(
+  query: (chain: SupportedChain) => Promise<T>,
+  fallback: (chain: SupportedChain) => T,
+): Promise<T[]> => (await settleChainQueriesWithStatus(query, fallback)).values;
+
+export const settleChainQueriesStrict = async <T>(
+  query: (chain: SupportedChain) => Promise<T>,
+): Promise<T[]> => {
+  const results = await Promise.allSettled(
+    supportedChains.map((chain) => query(chain)),
+  );
+
+  const failureReasons = results.flatMap((result, i) => {
+    if (result.status !== "rejected") return [];
+    console.error(
+      `Subgraph query failed on ${supportedChains[i]!.name}:`,
+      result.reason,
+    );
+    return [result.reason];
   });
+  if (failureReasons.length > 0)
+    throw new SubgraphUnavailableError(failureReasons);
+
+  return results.map((result) => (result as PromiseFulfilledResult<T>).value);
 };
 
 const META_QUERY = `query { _meta { block { number } } }`;

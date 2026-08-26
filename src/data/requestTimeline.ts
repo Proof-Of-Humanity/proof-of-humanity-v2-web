@@ -532,6 +532,16 @@ export const getRequestTimelineData = async (
   humanityEventsPromise: Promise<HumanityEventRecord[]>,
   humanityLifespan?: string,
 ) => {
+  const startedAt = Date.now();
+  console.info(
+    "[request-debug]",
+    JSON.stringify({
+      event: "request-timeline-start",
+      pohId,
+      chainId,
+      requestIndex: Number(request.index),
+    }),
+  );
   const currentRequest: CurrentRequestWithChain = {
     ...request,
     chainId,
@@ -558,13 +568,26 @@ export const getRequestTimelineData = async (
     {} as Record<SupportedChainId, number>,
   );
 
-  return {
+  const timelineData = {
     timelineItems: markLatestActiveTimelineItem([
       ...eventTimelineItems,
       ...resolvedOffChainVouchTimelineItems,
     ]),
     requestCounts,
   };
+  console.info(
+    "[request-debug]",
+    JSON.stringify({
+      event: "request-timeline-done",
+      pohId,
+      chainId,
+      requestIndex: Number(request.index),
+      itemCount: timelineData.timelineItems.length,
+      durationMs: Date.now() - startedAt,
+    }),
+  );
+
+  return timelineData;
 };
 
 export const getProfileTimelineData = async (

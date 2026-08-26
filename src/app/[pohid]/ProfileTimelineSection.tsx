@@ -60,7 +60,7 @@ export default async function ProfileTimelineSection({
       : latestNonTransferRequest;
 
     return (
-      <Timeline items={timelineItems}>
+      <Timeline className="mt-4 border-0 pt-0" items={timelineItems}>
         <ProfileTimelineHeaderSection pohId={pohId} request={headerRequest} />
       </Timeline>
     );

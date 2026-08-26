@@ -2,24 +2,19 @@
 
 import { useAtlasProvider, Roles } from "@kleros/kleros-app";
 import { enableReactUse } from "@legendapp/state/config/enableReactUse";
-import {
-  Show,
-  Switch,
-  useEffectOnce,
-  useObservable,
-} from "@legendapp/state/react";
+import { Show, Switch, useObservable } from "@legendapp/state/react";
 import cn from "classnames";
 import { SupportedChain, SupportedChainId } from "config/chains";
-import { getContractInfo } from "contracts";
 import { Effects } from "contracts/hooks/types";
 import usePoHWrite from "contracts/hooks/usePoHWrite";
 import { ContractData } from "data/contract";
+import { getMyDataStrict } from "data/user";
 import { RegistrationQuery } from "generated/graphql";
 import { useLoading } from "hooks/useLoading";
-import { redirect, RedirectType, useParams } from "next/navigation";
+import Link from "next/link";
+import { useParams, useRouter } from "next/navigation";
 import {
   Fragment,
-  MutableRefObject,
   useCallback,
   useEffect,
   useMemo,
@@ -28,22 +23,59 @@ import {
 } from "react";
 import { toast } from "react-toastify";
 import { machinifyId } from "utils/identifier";
-import { Abi, Hash, parseEther } from "viem";
-import { useAccount, useChainId, useReadContract } from "wagmi";
+import { Hash, formatEther } from "viem";
+import { useAccount, useChainId, useConfig } from "wagmi";
+import { useQuery } from "@tanstack/react-query";
+import { useTotalCost } from "./useTotalCost";
+import { getAccount, getChainId } from "wagmi/actions";
 import ActionButton from "components/ActionButton";
 import { useSubmitEmail } from "components/Integrations/Airdrop/useSubmitEmail";
 import { isValidEmailAddress } from "utils/validators";
 import Connect from "./Connect";
 import Finalized from "./Finalized";
-import InfoStep from "./Info";
+import FormSkeleton from "./FormSkeleton";
+import { resolveFunding } from "utils/funding";
+import InfoStep, { InfoState } from "./Info";
+import { ClaimGate, resolveClaimIntent, resolveRenewalGate } from "./intent";
 import PhotoStep from "./Photo";
 import ReviewStep from "./Review";
 import VideoStep from "./Video";
-import { formatEth } from "utils/misc";
+import { getWriteErrorMessage } from "hooks/useActionFeedback";
 
 enableReactUse();
 
-const steps = ["Info", "Photo", "Video", "Review"];
+const steps = ["Start", "Photo", "Video", "Review"];
+
+const Stepper: React.FC<{
+  step: number;
+  onStepClick?: (i: number) => void;
+}> = ({ step, onStepClick }) => (
+  <div className="mb-6 flex w-full cursor-default select-none items-center justify-center gap-2">
+    {steps.map((item, i) => (
+      <Fragment key={item}>
+        <button
+          type="button"
+          disabled={!onStepClick || step <= i}
+          aria-current={step === i ? "step" : undefined}
+          aria-label={item}
+          className={cn(
+            "centered h-8 whitespace-nowrap rounded-full text-sm",
+            step === i
+              ? "border border-peach px-4 font-medium text-peach"
+              : "border-stroke text-secondaryText w-8 border",
+            !!onStepClick && step > i && "cursor-pointer",
+          )}
+          onClick={() => onStepClick?.(i)}
+        >
+          {step === i ? item : i + 1}
+        </button>
+        {i !== steps.length - 1 && (
+          <span className="text-secondaryText text-sm">&rsaquo;</span>
+        )}
+      </Fragment>
+    ))}
+  </div>
+);
 
 export enum Step {
   info,
@@ -67,21 +99,24 @@ export interface MediaState {
 }
 
 export interface SubmissionState {
-  pohId: Hash;
   name: string;
-  uri: string;
 }
 
 export interface FormProps {
   contractData: Record<SupportedChainId, ContractData | null>;
-  fallbackTotalCosts: Record<SupportedChainId, string>;
   renewal?: RegistrationQuery["registration"] & {
     chain: SupportedChain;
   };
   hasPastVerifiedClaim?: boolean;
+  humanityActiveOnAnyChain?: boolean;
+  pendingClaimers?: string[];
 }
 
+/** An IPFS upload keyed by its inputs; an unchanged re-submit reuses the pin. */
+type PinnedUpload = { key: unknown; uri: string };
+
 export default function Form(props: FormProps) {
+  const params = useParams();
   const chainId = useChainId() as SupportedChainId;
 
   if (!props.contractData[chainId])
@@ -96,83 +131,122 @@ export default function Form(props: FormProps) {
       </span>
     );
 
-  return <FormContent {...props} />;
+  return <FormContent key={String(params.pohid)} {...props} />;
 }
 
 function FormContent({
   contractData,
-  fallbackTotalCosts,
   renewal,
   hasPastVerifiedClaim = false,
+  humanityActiveOnAnyChain = false,
+  pendingClaimers,
 }: FormProps) {
   const params = useParams();
+  const urlPohId = machinifyId(params.pohid as string)!;
   const { address, isConnected } = useAccount();
-  const initiatingAddress: MutableRefObject<typeof address> = useRef(undefined);
+  const router = useRouter();
   const chainId = useChainId() as SupportedChainId;
+  const wagmiConfig = useConfig();
 
   const { uploadFile: uploadToIPFS } = useAtlasProvider();
-  // Off-chain notification email opt-in.
   const { mutateAsync: submitEmail } = useSubmitEmail();
   const currentContractData = contractData[chainId]!;
-  const currentBaseDeposit = BigInt(currentContractData.baseDeposit);
   const isRenewal = !!renewal;
-  const syncedFundingChainId = useRef<SupportedChainId | null>(null);
 
-  const { data: currentArbitrationCost } = useReadContract({
-    address: currentContractData.arbitrationInfo.arbitrator as `0x${string}`,
-    abi: getContractInfo("KlerosLiquid", chainId).abi as Abi,
-    functionName: "arbitrationCost",
-    args: [currentContractData.arbitrationInfo.extraData as Hash],
-    chainId,
-  });
+  const { data: totalCost } = useTotalCost(chainId, contractData);
 
   const step$ = useObservable(Step.info);
   const step = step$.use();
   const media$ = useObservable<MediaState>({ photo: null, video: null });
-  const media = media$.use();
-  const state$ = useObservable<SubmissionState>({
-    pohId: machinifyId(params.pohid as string)!,
-    name: "",
-    uri: "",
+  // Held here (not in Info) so consents/radio/sub-screen survive step changes.
+  const infoState$ = useObservable<InfoState>({
+    stage: "details",
+    dataConsent: false,
+    requestNotice: false,
+    recoverMode: hasPastVerifiedClaim ? null : false,
   });
+  const media = media$.use();
+  const state$ = useObservable<SubmissionState>({ name: "" });
   const state = state$.use();
   const email$ = useObservable("");
-  const currentTotalCost =
-    typeof currentArbitrationCost === "bigint"
-      ? currentBaseDeposit + currentArbitrationCost
-      : fallbackTotalCosts[chainId]
-        ? BigInt(fallbackTotalCosts[chainId])
-        : null;
-  const selfFunded$ = useObservable(0);
-  const submitForFree$ = useObservable(false);
-  const submitForFree = submitForFree$.use();
+  const funding$ = useObservable("");
+  useEffect(() => {
+    funding$.set(totalCost != null ? formatEther(totalCost) : "");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [chainId, totalCost]);
   const loading = useLoading();
   const [, loadingMessage] = loading.use();
   const [registrationComplete, setRegistrationComplete] = useState(false);
   const [emailStatus, setEmailStatus] = useState<EmailSubmissionStatus>("idle");
-  const stepHistoryReady = useRef(false);
-  const previousStepRef = useRef(Step.info);
-  const uploadCache = useRef<{
-    photo: { content: Blob; uri: string } | null;
-    video: { content: Blob; uri: string } | null;
-    file: { json: string; uri: string } | null;
-    registration: { fileURI: string; uri: string } | null;
-  }>({
+  // Null until the mount-time replaceState has run.
+  const syncedStep = useRef<Step | null>(null);
+  const uploadCache = useRef<
+    Record<"photo" | "video" | "file" | "registration", PinnedUpload | null>
+  >({
     photo: null,
     video: null,
     file: null,
     registration: null,
   });
+  // Never move backwards while a transaction is in flight (or succeeded).
+  const navigationLocked = !!loadingMessage || registrationComplete;
   const canGoBack =
-    step > Step.info &&
-    step < Step.finalized &&
-    !loadingMessage &&
-    !registrationComplete;
+    step > Step.info && step < Step.finalized && !navigationLocked;
 
-  const goBack = () => {
-    if (!canGoBack) return;
-    step$.set(step - 1);
+  const {
+    data: me,
+    error: meError,
+    refetch: retryMe,
+  } = useQuery({
+    queryKey: ["myDataStrict", address],
+    queryFn: () => getMyDataStrict(address!),
+    // Renewal never consults the preflight, so don't let it fetch (or fail).
+    enabled: !!address && isConnected && !renewal,
+  });
+
+  const recoverMode = infoState$.recoverMode.use();
+  const wallet = address && isConnected ? { address, chainId } : null;
+  const gate: ClaimGate | null = renewal
+    ? resolveRenewalGate({
+        urlPohId,
+        connectedWallet: wallet,
+        registrationToRenew: {
+          claimer: String(renewal.claimer.id),
+          chainId: renewal.chain.id,
+        },
+      })
+    : !wallet
+      ? { type: "connect" }
+      : me
+        ? resolveClaimIntent({
+            urlPohId,
+            connectedWallet: wallet,
+            hasPastVerifiedClaim,
+            selectedMode:
+              recoverMode === null ? null : recoverMode ? "recover" : "create",
+            walletActivePohId: (me.pohId as Hash | undefined) ?? null,
+            humanityActiveOnAnyChain,
+          })
+        : null; // preflight still in flight (or failed — handled at render)
+  const intent = gate?.type === "proceed" ? gate.intent : null;
+
+  const competingClaims = (pendingClaimers ?? []).filter(
+    (claimer) => claimer.toLowerCase() !== address?.toLowerCase(),
+  ).length;
+
+  // Single navigation effect; frozen while a transaction is in flight.
+  const navigateTo =
+    !navigationLocked && gate?.type === "navigate" ? gate.to : null;
+  useEffect(() => {
+    if (navigateTo) router.replace(navigateTo);
+  }, [navigateTo, router]);
+
+  const goToStep = (target: Step) => {
+    if (!canGoBack || target >= step) return;
+    window.history.go(target - step);
   };
+
+  const goBack = () => goToStep(step - 1);
 
   const saveNotificationEmail = useCallback(async () => {
     const email = email$.peek().trim();
@@ -195,37 +269,29 @@ function FormContent({
     }
   }, [email$, loading, submitEmail]);
 
+  const settleEmail = useCallback(
+    async ({ skip = false } = {}) => {
+      if (skip || !email$.peek().trim()) {
+        setEmailStatus("skipped");
+        step$.set(Step.finalized);
+        return;
+      }
+      if (await saveNotificationEmail()) step$.set(Step.finalized);
+    },
+    [email$, saveNotificationEmail, step$],
+  );
+
   const finishRegistration = useCallback(async () => {
     setRegistrationComplete(true);
     toast.success("Request created");
-
-    const email = email$.peek().trim();
-    if (!email) {
-      setEmailStatus("skipped");
-      step$.set(Step.finalized);
-      return;
-    }
-
-    const emailSaved = await saveNotificationEmail();
-    if (emailSaved) step$.set(Step.finalized);
-  }, [email$, saveNotificationEmail, step$]);
-
-  const retryNotificationEmail = useCallback(async () => {
-    const emailSaved = await saveNotificationEmail();
-    if (emailSaved) step$.set(Step.finalized);
-  }, [saveNotificationEmail, step$]);
-
-  const skipNotificationEmail = useCallback(() => {
-    setEmailStatus("skipped");
-    step$.set(Step.finalized);
-  }, [step$]);
+    await settleEmail();
+  }, [settleEmail]);
 
   const events = useMemo<Effects>(
     () => ({
-      onError() {
-        state$.uri.set("");
+      onError(error, errorCtx) {
         loading.stop();
-        toast.error("Transaction rejected");
+        toast.error(getWriteErrorMessage(error, errorCtx));
       },
       onLoading() {
         toast.info("Transaction pending");
@@ -235,7 +301,6 @@ function FormContent({
         finishRegistration();
       },
       onFail() {
-        state$.uri.set("");
         loading.stop();
         toast.error(
           "Transaction preparation failed. You may have insufficient funds or are on the wrong network.",
@@ -245,268 +310,234 @@ function FormContent({
         fire();
       },
     }),
-    [loading, state$, finishRegistration],
+    [loading, finishRegistration],
   );
 
   const [prepareClaimHumanity] = usePoHWrite("claimHumanity", events);
   const [prepareRenewHumanity] = usePoHWrite("renewHumanity", events);
 
-  useEffect(() => {
-    if (!currentTotalCost) return;
-    if (syncedFundingChainId.current === chainId) return;
-
-    selfFunded$.set(submitForFree ? 0 : formatEth(currentTotalCost));
-    syncedFundingChainId.current = chainId;
-  }, [chainId, currentTotalCost, selfFunded$, submitForFree]);
-
-  const getUploadedMediaUri = async (
-    type: keyof MediaState,
-    mediaItem: NonNullable<MediaState[keyof MediaState]>,
-    role: Roles,
+  // Reuses the last pin when `key` is unchanged.
+  const pinOnce = async (
+    slot: keyof typeof uploadCache.current,
+    key: unknown,
+    upload: () => Promise<string | null | undefined>,
   ) => {
-    const cached = uploadCache.current[type];
-    if (cached?.content === mediaItem.content) return cached.uri;
-
-    const uri = await uploadToIPFS(mediaItem.content as File, role);
-    if (uri) {
-      uploadCache.current[type] = {
-        content: mediaItem.content,
-        uri,
-      };
-    }
-
+    const cached = uploadCache.current[slot];
+    if (cached && cached.key === key) return cached.uri;
+    const uri = await upload();
+    if (uri) uploadCache.current[slot] = { key, uri };
     return uri;
   };
 
   const submit = async () => {
-    if (!media.photo || !media.video) return;
-    if (!currentTotalCost) {
+    const { photo, video } = media;
+    if (!photo || !video) return;
+    // Snapshot at click time; re-checked against live wagmi state before the write.
+    if (!intent || !address) return;
+    const snapshot = { address, chainId, intent };
+    const infoState = infoState$.peek();
+    if (
+      !state$.name.peek().trim() ||
+      !infoState.dataConsent ||
+      !infoState.requestNotice
+    ) {
+      toast.error("Complete the Start step before submitting.");
+      goToStep(Step.info);
+      return;
+    }
+    if (totalCost === undefined) {
       toast.error("Unable to load the deposit amount. Please try again.");
       return;
     }
 
-    const requestType = isRenewal ? "renewal" : "registration";
-    state$.uri.set("");
+    const abort = (message: string) => {
+      toast.error(message);
+      loading.stop();
+    };
+    const requestType =
+      snapshot.intent.kind === "renew" ? "renewal" : "registration";
     loading.start("Uploading media");
     try {
       const [photoUri, videoUri] = await Promise.all([
-        getUploadedMediaUri("photo", media.photo, Roles.Photo),
-        getUploadedMediaUri("video", media.video, Roles.IdentificationVideo),
+        pinOnce("photo", photo.content, () =>
+          uploadToIPFS(photo.content as File, Roles.Photo),
+        ),
+        pinOnce("video", video.content, () =>
+          uploadToIPFS(video.content as File, Roles.IdentificationVideo),
+        ),
       ]);
-
-      if (!photoUri || !videoUri) {
-        toast.error("Failed to upload media.");
-        loading.stop();
-        return;
-      }
+      if (!photoUri || !videoUri) return abort("Failed to upload media.");
 
       const fileJson = JSON.stringify({
         name: state.name,
         photo: photoUri,
         video: videoUri,
       });
-      const fileURI =
-        uploadCache.current.file?.json === fileJson
-          ? uploadCache.current.file.uri
-          : await uploadToIPFS(
-              new File([fileJson], "file", { type: "text/plain" }),
-              Roles.Evidence,
-            );
-      if (fileURI) uploadCache.current.file = { json: fileJson, uri: fileURI };
-
-      if (!fileURI) {
-        toast.error("Failed to upload media metadata.");
-        loading.stop();
-        return;
-      }
+      const fileURI = await pinOnce("file", fileJson, () =>
+        uploadToIPFS(
+          new File([fileJson], "file", { type: "text/plain" }),
+          Roles.Evidence,
+        ),
+      );
+      if (!fileURI) return abort("Failed to upload media metadata.");
 
       loading.start("Uploading evidence files");
-
       const registrationJson = JSON.stringify({
         name: "Registration",
         fileURI,
       });
-      const registrationUri =
-        uploadCache.current.registration?.fileURI === fileURI
-          ? uploadCache.current.registration.uri
-          : await uploadToIPFS(
-              new File([registrationJson], "registration", {
-                type: "text/plain",
-              }),
-              Roles.Evidence,
-            );
-      if (registrationUri)
-        uploadCache.current.registration = {
-          fileURI,
-          uri: registrationUri,
-        };
-
-      if (!registrationUri) {
-        toast.error(`Failed to upload ${requestType}.`);
-        loading.stop();
-        return;
-      }
-
-      state$.uri.set(registrationUri);
-    } catch (error) {
-      toast.error(
-        `Failed to upload ${requestType}: ${error instanceof Error ? error.message : "Unknown error"}`,
+      const registrationUri = await pinOnce("registration", fileURI, () =>
+        uploadToIPFS(
+          new File([registrationJson], "registration", {
+            type: "text/plain",
+          }),
+          Roles.Evidence,
+        ),
       );
-      loading.stop();
-      return;
-    }
-  };
+      if (!registrationUri) return abort(`Failed to upload ${requestType}.`);
 
-  useEffect(() => {
-    const unsubscribe = state$.onChange(({ value }) => {
-      if (!value.uri) return;
-      if (!currentTotalCost) return;
-      const selfFundedWei = BigInt(parseEther(selfFunded$.get().toString()));
-      const funded =
-        selfFundedWei > currentTotalCost ? currentTotalCost : selfFundedWei;
       loading.start("Submitting...");
-      if (renewal)
+      // Uploads take a while — refuse to write if the wallet or network moved since the click.
+      const liveAddress = getAccount(wagmiConfig).address;
+      if (liveAddress?.toLowerCase() !== snapshot.address.toLowerCase())
+        return abort("Wallet changed. Please review and submit again.");
+      if (getChainId(wagmiConfig) !== snapshot.chainId)
+        return abort("Network changed. Please submit again.");
+      const { wei: funded, overCap } = resolveFunding(
+        funding$.peek(),
+        totalCost ?? null,
+      );
+      if (funded === null)
+        return abort(
+          "Invalid deposit amount. Please review the deposit field.",
+        );
+      // Review already blocks this, but never silently send an amount that
+      // differs from the one on screen.
+      if (overCap)
+        return abort(
+          "Deposit amount exceeds the required deposit. Please review the deposit field.",
+        );
+      if (snapshot.intent.kind === "renew")
         prepareRenewHumanity({
           value: funded,
-          args: [value.uri],
+          args: [registrationUri],
         });
       else
         prepareClaimHumanity({
           value: funded,
-          args: [value.pohId, value.uri, value.name],
+          args: [snapshot.intent.urlPohId, registrationUri, state$.name.peek()],
         });
-    });
-
-    return () => unsubscribe();
-  }, [
-    currentTotalCost,
-    loading,
-    prepareClaimHumanity,
-    prepareRenewHumanity,
-    renewal,
-    selfFunded$,
-    state$,
-  ]);
-
-  useEffectOnce(() => {
-    initiatingAddress.current = address;
-  });
+    } catch (error) {
+      abort(
+        `Failed to upload ${requestType}: ${error instanceof Error ? error.message : "Unknown error"}`,
+      );
+    }
+  };
 
   useEffect(() => {
-    if (typeof window === "undefined") return;
-
-    if (!stepHistoryReady.current) {
+    if (syncedStep.current === null) {
       window.history.replaceState(
         { ...(window.history.state ?? {}), claimStep: step },
         "",
       );
-      stepHistoryReady.current = true;
-      previousStepRef.current = step;
-      return;
-    }
-
-    if (step !== previousStepRef.current) {
+    } else if (step !== syncedStep.current) {
       window.history.pushState(
         { ...(window.history.state ?? {}), claimStep: step },
         "",
       );
-      previousStepRef.current = step;
     }
+    syncedStep.current = step;
   }, [step]);
 
   useEffect(() => {
-    if (typeof window === "undefined") return;
-
     const onPopState = (event: PopStateEvent) => {
-      const previousStep = event.state?.claimStep;
-      if (typeof previousStep === "number") {
-        previousStepRef.current = previousStep;
-        step$.set(previousStep);
+      const targetStep = event.state?.claimStep;
+      if (typeof targetStep !== "number") return;
+
+      const currentStep = step$.peek();
+      if (navigationLocked && targetStep < currentStep) {
+        // Undo the pop so history stays aligned with the locked wizard.
+        window.history.go(currentStep - targetStep);
+        return;
       }
+
+      syncedStep.current = targetStep;
+      step$.set(targetStep);
     };
 
     window.addEventListener("popstate", onPopState);
     return () => window.removeEventListener("popstate", onPopState);
-  }, [step$]);
+  }, [step$, navigationLocked]);
 
-  useEffect(() => {
-    if (initiatingAddress.current) {
-      if (
-        !renewal &&
-        address &&
-        initiatingAddress.current.toLowerCase() !== address.toLowerCase()
-      ) {
-        redirect(`/${address}`, RedirectType.replace);
-      } else if (!address) {
-        redirect("/", RedirectType.replace);
-      }
-    }
-  }, [address, initiatingAddress, renewal]);
-
-  useEffect(() => {
-    if (
-      renewal ||
-      hasPastVerifiedClaim ||
-      !address ||
-      state.pohId.toLowerCase() === address.toLowerCase()
-    )
-      return;
-    redirect(`/${address}/claim`, RedirectType.replace);
-  }, [renewal, hasPastVerifiedClaim, address, state.pohId]);
-
-  if (
-    !isConnected ||
-    (renewal &&
-      (renewal.claimer.id !== address!.toLowerCase() ||
-        renewal.chain.id !== chainId))
-  )
-    return (
-      <Connect
-        renewalAddress={renewal?.claimer.id}
-        renewalChain={renewal?.chain}
-      />
-    );
+  // Frozen once a transaction is in flight (or done); never tear down the receipt UI.
+  if (!navigationLocked) {
+    if (gate?.type === "connect")
+      return (
+        <>
+          <Stepper step={0} />
+          <Connect
+            renewalAddress={renewal?.claimer.id}
+            renewalChain={renewal?.chain}
+          />
+        </>
+      );
+    if (meError)
+      return (
+        <div className="text-primaryText m-auto flex flex-col items-center gap-2 py-16 text-center">
+          <span className="font-semibold">
+            We couldn&apos;t check this wallet&apos;s registration status.
+          </span>
+          <span className="text-secondaryText text-sm">
+            The check protects your deposit. Please retry.
+          </span>
+          <ActionButton
+            onClick={() => retryMe()}
+            label="Retry"
+            variant="secondary"
+            className="mt-4 min-w-[170px]"
+          />
+        </div>
+      );
+    // Neutral placeholder — never flash a foreign Humanity ID in a create wizard.
+    if (!gate || gate.type === "navigate") return <FormSkeleton />;
+    if (gate.type === "blocked")
+      return (
+        <div className="text-primaryText m-auto flex flex-col items-center gap-2 py-16 text-center">
+          {gate.reason === "already-registered" ? (
+            <>
+              <span className="font-semibold">
+                This wallet already has an active Proof of Humanity profile.
+              </span>
+              <span className="text-secondaryText text-sm">
+                A wallet can only hold one Humanity ID at a time.
+              </span>
+              <Link
+                href={`/${gate.profileId}`}
+                className="text-orange mt-2 text-sm font-semibold hover:underline"
+              >
+                View your profile
+              </Link>
+            </>
+          ) : (
+            <>
+              <span className="font-semibold">
+                This Humanity ID can&apos;t be recovered right now.
+              </span>
+              <span className="text-secondaryText text-sm">
+                Its registration is still active. A Humanity ID can only be
+                recovered after it expires.
+              </span>
+            </>
+          )}
+        </div>
+      );
+  }
 
   return (
     <>
       <Show if={() => step !== Step.finalized}>
         {() => (
-          <div className="flex w-full cursor-default select-none items-center">
-            {steps.map((item, i) => (
-              <Fragment key={i}>
-                <div className="m-1 flex items-center">
-                  <div
-                    className={cn(
-                      "centered h-6 whitespace-nowrap rounded-full text-sm",
-                      {
-                        "w-6 border border-slate-200 font-bold text-slate-400":
-                          step < i,
-                        "gradient px-2 font-bold uppercase text-white":
-                          step === i,
-                        "gradient w-6 cursor-pointer font-bold text-white":
-                          step > i && !registrationComplete,
-                        "gradient w-6 font-bold text-white":
-                          step > i && registrationComplete,
-                      },
-                    )}
-                    onClick={() =>
-                      !registrationComplete && step > i && step$.set(i)
-                    }
-                  >
-                    {`${i + 1}${step === i ? `. ${item}` : ""}`}
-                  </div>
-                </div>
-                {i !== steps.length - 1 && (
-                  <div
-                    className={cn(
-                      "h-px w-full",
-                      step > i ? "gradient" : "bg-slate-200",
-                    )}
-                  />
-                )}
-              </Fragment>
-            ))}
-          </div>
+          <Stepper step={step} onStepClick={canGoBack ? goToStep : undefined} />
         )}
       </Show>
 
@@ -514,21 +545,30 @@ function FormContent({
         {{
           [Step.info]: () => (
             <InfoStep
-              advance={() => step$.set(Step.photo)}
+              advance={() => {
+                state$.name.set(state$.name.peek().trim());
+                step$.set(Step.photo);
+              }}
               state$={state$}
               email$={email$}
+              infoState$={infoState$}
+              pohId={urlPohId}
+              competingClaims={competingClaims}
               isRenewal={isRenewal}
+              isRecovery={hasPastVerifiedClaim}
             />
           ),
           [Step.photo]: () => (
             <PhotoStep
               advance={() => step$.set(Step.video)}
+              onBack={canGoBack ? goBack : undefined}
               photo$={media$.photo}
             />
           ),
           [Step.video]: () => (
             <VideoStep
               advance={() => step$.set(Step.review)}
+              onBack={canGoBack ? goBack : undefined}
               video$={media$.video}
               isRenewal={!!renewal}
               videoError={(ErrMsg) => toast.error(ErrMsg)}
@@ -536,20 +576,20 @@ function FormContent({
           ),
           [Step.review]: () => (
             <ReviewStep
-              totalCost={currentTotalCost}
               contractData={contractData}
+              pohId={urlPohId}
               state$={state$}
               arbitrationInfo={currentContractData.arbitrationInfo}
               media$={media$}
-              selfFunded$={selfFunded$}
-              submitForFree$={submitForFree$}
+              funding$={funding$}
               loadingMessage={loadingMessage}
+              goBack={goBack}
               submit={submit}
               registrationComplete={registrationComplete}
               email$={email$}
               emailStatus={emailStatus}
-              retryEmail={retryNotificationEmail}
-              skipEmail={skipNotificationEmail}
+              retryEmail={() => settleEmail()}
+              skipEmail={() => settleEmail({ skip: true })}
               isRenewal={isRenewal}
             />
           ),
@@ -567,25 +607,6 @@ function FormContent({
           ),
         }}
       </Switch>
-
-      {(canGoBack || (registrationComplete && emailStatus === "failed")) && (
-        <div className="mt-6 flex justify-center">
-          <ActionButton
-            onClick={
-              registrationComplete && emailStatus === "failed"
-                ? skipNotificationEmail
-                : goBack
-            }
-            label={
-              registrationComplete && emailStatus === "failed"
-                ? "Skip for now"
-                : "Back"
-            }
-            variant="secondary"
-            className="w-full max-w-xs"
-          />
-        </div>
-      )}
     </>
   );
 }

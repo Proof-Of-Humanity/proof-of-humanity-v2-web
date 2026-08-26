@@ -3,7 +3,7 @@ import { type ContractData } from "data/contract";
 import { getArbitrationCost } from "data/costs";
 import { type Hash } from "viem";
 
-import RevokeClient from "./RevokeClient";
+import RevokeClient, { RevokeUnavailable } from "./RevokeClient";
 
 interface RevokeProps {
   pohId: Hash;
@@ -30,17 +30,12 @@ export default async function Revoke({
         pohId={pohId}
         cost={BigInt(baseDeposit) + (arbitrationCost as bigint)}
         arbitrationInfo={arbitrationInfo}
-        homeChain={homeChain}
+        homeChainId={homeChain.id}
       />
     );
   } catch {
     return (
-      <RevokeClient
-        pohId={pohId}
-        arbitrationInfo={arbitrationInfo}
-        homeChain={homeChain}
-        unavailableReason="Unable to load the arbitration cost. Try again in a moment."
-      />
+      <RevokeUnavailable reason="Unable to load the arbitration cost. Try again in a moment." />
     );
   }
 }

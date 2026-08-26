@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import {
   useAccount,
   useChainId,
@@ -29,7 +29,6 @@ export default function useCirclesIntegration() {
   const { connect } = useConnect();
 
   const [currentCreateAccountStep, setCurrentCreateAccountStep] = useState(0);
-  const [currentMintStep, setCurrentMintStep] = useState(0);
 
   const [walletAddress, setWalletAddress] = useState("");
   const [disableButton, setDisableButton] = useState(false);
@@ -80,11 +79,17 @@ export default function useCirclesIntegration() {
     [walletAddress],
   );
 
-  const [writeLink] = usePOHCirclesWrite(
-    "register",
-    useMemo(
-      () => ({
-        onReady: (fire) => {
+  const latestLinkInputsRef = useRef({ walletAddress, currentHumanityId });
+  latestLinkInputsRef.current = { walletAddress, currentHumanityId };
+
+  const txCallbacks = useCallback(
+    (successMsg: string, failMsg: string) => {
+      const fail = () => {
+        loading.stop();
+        toast.error(failMsg);
+      };
+      return {
+        onReady: (fire: () => void) => {
           fire();
           toast.info("Transaction pending");
         },
@@ -94,47 +99,32 @@ export default function useCirclesIntegration() {
           setTimeout(() => {
             refetchCirclesData();
           }, 1000);
-          toast.success("Successfully linked Circles account!");
+          toast.success(successMsg);
         },
-        onFail: () => {
-          loading.stop();
-          toast.error("Failed to link account");
-        },
-        onError: () => {
-          loading.stop();
-          toast.error("Failed to link account");
-        },
-      }),
-      [loading, refetchCirclesData],
+        onFail: fail,
+        onError: fail,
+      };
+    },
+    [loading, refetchCirclesData],
+  );
+
+  const [writeLink] = usePOHCirclesWrite(
+    "register",
+    useMemo(
+      () =>
+        txCallbacks(
+          "Successfully linked Circles account!",
+          "Failed to link account",
+        ),
+      [txCallbacks],
     ),
   );
 
   const [writeRenew] = usePOHCirclesWrite(
     "renewTrust",
     useMemo(
-      () => ({
-        onReady(fire) {
-          fire();
-          toast.info("Transaction pending");
-        },
-        onSuccess: () => {
-          loading.stop();
-          setDisableButton(true);
-          setTimeout(() => {
-            refetchCirclesData();
-          }, 1000);
-          toast.success("Successfully renewed trust!");
-        },
-        onFail: () => {
-          loading.stop();
-          toast.error("Failed to renew trust");
-        },
-        onError: () => {
-          loading.stop();
-          toast.error("Failed to renew trust");
-        },
-      }),
-      [loading, refetchCirclesData],
+      () => txCallbacks("Successfully renewed trust!", "Failed to renew trust"),
+      [txCallbacks],
     ),
   );
 
@@ -144,8 +134,20 @@ export default function useCirclesIntegration() {
         toast.error("Please enter a valid wallet address");
         return;
       }
+      const submittedAddress = walletAddress.trim();
+      const submittedHumanityId = currentHumanityId;
       loading.start();
-      const isHuman = await validateCirclesHumanity(walletAddress);
+      const isHuman = await validateCirclesHumanity(submittedAddress);
+      if (
+        latestLinkInputsRef.current.walletAddress.trim() !== submittedAddress ||
+        latestLinkInputsRef.current.currentHumanityId !== submittedHumanityId
+      ) {
+        loading.stop();
+        toast.error(
+          "The address or account changed while validating. Please try again.",
+        );
+        return;
+      }
       if (!isHuman) {
         loading.stop();
         toast.error("The provided address is not a human in Circles.");
@@ -154,8 +156,8 @@ export default function useCirclesIntegration() {
 
       writeLink({
         args: [
-          currentHumanityId as `0x${string}`,
-          walletAddress.trim() as `0x${string}`,
+          submittedHumanityId as `0x${string}`,
+          submittedAddress as `0x${string}`,
         ],
       });
     } catch (error) {
@@ -171,7 +173,6 @@ export default function useCirclesIntegration() {
     loading,
     currentHumanityId,
     writeLink,
-    circlesChain.id,
   ]);
 
   const handleRenewTrust = useCallback(async () => {
@@ -215,7 +216,7 @@ export default function useCirclesIntegration() {
           disabled: false,
         };
       }
-      let disabled = disableButton || !isWalletAddressValid;
+      const disabled = disableButton || !isWalletAddressValid;
       if (humanityStatus === "invalid") {
         return {
           onClick: () =>
@@ -223,7 +224,7 @@ export default function useCirclesIntegration() {
               "Verification required. Become a verified human on PoH, then paste your Circles wallet to link.",
             ),
           label: defaultLabel,
-          disabled: disabled,
+          disabled,
         };
       }
 
@@ -237,6 +238,8 @@ export default function useCirclesIntegration() {
       disableButton,
       isWalletAddressValid,
       humanityStatus,
+      connect,
+      switchChain,
     ],
   );
 
@@ -251,7 +254,6 @@ export default function useCirclesIntegration() {
     humanityStatus,
     isCirclesDataQueryError,
     currentCreateAccountStep,
-    currentMintStep,
     isWalletAddressValid,
     pending,
     isLoadingCirclesData,
@@ -259,7 +261,6 @@ export default function useCirclesIntegration() {
 
     setWalletAddress,
     setCurrentCreateAccountStep,
-    setCurrentMintStep,
     handleLinkAccount,
     handleRenewTrust,
     getActionButtonProps,

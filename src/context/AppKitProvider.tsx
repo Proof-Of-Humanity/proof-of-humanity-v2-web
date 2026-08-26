@@ -31,7 +31,11 @@ const metadata = {
     typeof window !== "undefined"
       ? window.location.origin
       : "https://v2.proofofhumanity.id",
-  icons: ["https://v2.proofofhumanity.id/logo.svg"],
+  icons: [
+    typeof window !== "undefined"
+      ? `${window.location.origin}/logo/poh-colored.svg`
+      : "https://v2.proofofhumanity.id/logo/poh-colored.svg",
+  ],
 };
 
 createAppKit({
@@ -40,6 +44,13 @@ createAppKit({
   defaultNetwork: gnosis,
   projectId,
   metadata,
+  themeMode: "dark",
+  themeVariables: {
+    "--w3m-accent": "#FF8A66",
+    "--w3m-color-mix": "#20232B",
+    "--w3m-color-mix-strength": 12,
+    "--w3m-border-radius-master": "3px",
+  },
   features: {
     analytics: true,
   },

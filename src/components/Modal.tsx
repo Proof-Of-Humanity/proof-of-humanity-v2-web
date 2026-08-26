@@ -1,6 +1,7 @@
 "use client";
 
 import cn from "classnames";
+import { twMerge } from "tailwind-merge";
 import { useEffect, useState } from "react";
 import { Popup } from "reactjs-popup";
 import type { ComponentType } from "react";
@@ -13,20 +14,18 @@ interface ModalProps extends React.HTMLAttributes<HTMLDivElement> {
   onClose: () => void;
   canClose?: boolean;
   className?: string;
-  formal?: boolean;
-  header?: string;
+  title?: string;
 }
 
 const ANIMATION_MS = 260;
 
 const Modal: React.FC<ModalProps> = ({
-  formal,
-  header,
   className,
   children,
   open,
   onClose,
   canClose = true,
+  title,
 }) => {
   const [isRendered, setIsRendered] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
@@ -81,20 +80,20 @@ const Modal: React.FC<ModalProps> = ({
             onClick={handleCloseRequest}
           />
           <div
-            className={cn(
-              "modal-shell fixed left-1/2 top-1/2 z-30 w-4/5 md:w-3/5 xl:w-2/5",
-              {
-                "bg-whiteBackground border-stroke overflow-clip rounded border":
-                  formal,
-                "modal-shell-open": isVisible,
-              },
-              className,
+            className={twMerge(
+              cn(
+                "modal-shell modal-surface fixed left-1/2 top-1/2 z-30 w-4/5 md:w-3/5 xl:w-2/5",
+                {
+                  "modal-shell-open": isVisible,
+                },
+                className,
+              ),
             )}
           >
-            {header && (
-              <div className="gradient py-2 text-center font-semibold uppercase text-white">
-                {header}
-              </div>
+            {title && (
+              <h2 className="text-primaryText pt-6 text-center text-xl font-semibold">
+                {title}
+              </h2>
             )}
             {children}
           </div>

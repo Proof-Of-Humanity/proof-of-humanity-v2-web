@@ -4,6 +4,8 @@ import type { ComponentType } from "react";
 
 const PopupComponent = Popup as ComponentType<any>;
 
+type PopoverPosition = "bottom right" | "bottom left" | "bottom center";
+
 interface PopoverInterface {
   trigger: JSX.Element;
   children: React.ReactNode;
@@ -11,6 +13,7 @@ interface PopoverInterface {
   open?: boolean;
   onOpen?: () => void;
   onClose?: () => void;
+  desktopPosition?: PopoverPosition;
 }
 
 const Popover: React.FC<PopoverInterface> = ({
@@ -20,17 +23,16 @@ const Popover: React.FC<PopoverInterface> = ({
   open,
   onOpen,
   onClose,
+  desktopPosition = "bottom right",
 }) => {
-  const [position, setPosition] = useState<"bottom right" | "bottom center">(
-    "bottom right",
-  );
+  const [position, setPosition] = useState<PopoverPosition>(desktopPosition);
 
   useEffect(() => {
     const updatePosition = () => {
       if (window.innerWidth < 768) {
         setPosition("bottom center");
       } else {
-        setPosition("bottom right");
+        setPosition(desktopPosition);
       }
     };
 
@@ -40,7 +42,7 @@ const Popover: React.FC<PopoverInterface> = ({
     return () => {
       window.removeEventListener("resize", updatePosition);
     };
-  }, []);
+  }, [desktopPosition]);
 
   return (
     <PopupComponent
@@ -54,7 +56,7 @@ const Popover: React.FC<PopoverInterface> = ({
       }}
     >
       <div
-        className={`bg-whiteBackground border-stroke text-secondaryText mt-1 rounded border shadow-md shadow-slate-500/20 ${className || "w-48"}`}
+        className={`bg-whiteBackground text-secondaryText border-stroke mt-2 overflow-hidden rounded-2xl border shadow-soft ${className || "w-48"}`}
       >
         {children}
       </div>

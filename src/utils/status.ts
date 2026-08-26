@@ -192,14 +192,18 @@ export const getRequestStatusFilter = (
 /**
  * List of all status filter options for UI dropdowns.
  */
-export const STATUS_FILTER_OPTIONS = Object.values(RequestStatus).filter(
-  (status) =>
-    ![
-      RequestStatus.PUNISHED_VOUCH,
-      RequestStatus.TRANSFERRING,
-      RequestStatus.TRANSFERRED,
-    ].includes(status),
-);
+export const STATUS_FILTER_OPTIONS = [
+  RequestStatus.ALL,
+  ...Object.values(RequestStatus).filter(
+    (status) =>
+      ![
+        RequestStatus.ALL,
+        RequestStatus.PUNISHED_VOUCH,
+        RequestStatus.TRANSFERRING,
+        RequestStatus.TRANSFERRED,
+      ].includes(status),
+  ),
+];
 
 const isRejectedRequest = (request: RawRequestData): boolean => {
   return (

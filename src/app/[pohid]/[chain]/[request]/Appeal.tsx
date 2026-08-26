@@ -1,19 +1,26 @@
 "use client";
 
-import { useEffectOnce } from "@legendapp/state/react";
-import Arrow from "components/Arrow";
-import BulletedNumber from "components/BulletedNumber";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import ExternalLink from "components/ExternalLink";
-import Field from "components/Field";
-import Identicon from "components/Identicon";
-import Modal from "components/Modal";
+import ExternalLinkIcon from "components/ExternalLinkIcon";
+import InfoTooltip from "components/InfoTooltip";
+import CurrencyField, { CurrencyIcon } from "components/CurrencyField";
 import Progress from "components/Progress";
 import TimeAgo from "components/TimeAgo";
 import ActionButton from "components/ActionButton";
-import { SupportedChainId, idToChain } from "config/chains";
+import RequestModal, {
+  RequestModalActions,
+  RequestAmountPill,
+  RequestModalHeader,
+} from "components/RequestModal";
+import {
+  SupportedChainId,
+  explorerTxLink,
+  idToChain,
+  nativeCurrencyLabel,
+} from "config/chains";
 import {
   APIArbitrator,
-  ArbitratorsData,
   DisputeStatusEnum,
   SideEnum,
 } from "contracts/apis/APIArbitrator";
@@ -21,108 +28,133 @@ import { APIPoH, StakeMultipliers } from "contracts/apis/APIPoH";
 import usePoHWrite from "contracts/hooks/usePoHWrite";
 import { RequestQuery } from "generated/graphql";
 import { useLoading } from "hooks/useLoading";
-import Image from "next/image";
+import useFundingAmount from "hooks/useFundingAmount";
+import { resolveTxState } from "utils/txState";
 import { useRequestOptimistic } from "optimistic/request";
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "react-toastify";
-import { RequestStatus } from "utils/status";
 import { formatEth } from "utils/misc";
-import { Address, parseEther } from "viem";
-import { useAccount, useBalance, useChainId } from "wagmi";
+import { shortenAddress } from "utils/address";
+import { Address, Hash } from "viem";
 import { useRouter } from "next/navigation";
+import { getWriteErrorMessage } from "hooks/useActionFeedback";
 
-const toWeiBigInt = (amount: bigint | string | number | null | undefined) =>
+type AppealChallenge = ArrayElement<
+  NonNullable<NonNullable<RequestQuery>["request"]>["challenges"]
+>;
+
+const toBigIntOrZero = (amount: bigint | string | number | null | undefined) =>
   BigInt(amount ?? 0);
+
+// Stake multipliers are expressed in basis points on the PoH contract.
+const MULTIPLIER_DIVISOR = 10_000n;
+
+// Total amount a side must raise: the raw appeal cost plus that side's stake.
+// The stake depends on whether the side is currently winning or losing; on a
+// shared ruling ("neither side") both sides pay the shared stake.
+const getSideAppealCosts = (
+  appealCost: bigint,
+  currentRulingSide: SideEnum,
+  {
+    winnerStakeMultiplier,
+    loserStakeMultiplier,
+    sharedStakeMultiplier,
+  }: StakeMultipliers,
+) => {
+  const withStake = (multiplier: bigint | undefined) =>
+    appealCost + (appealCost * toBigIntOrZero(multiplier)) / MULTIPLIER_DIVISOR;
+
+  if (currentRulingSide === SideEnum.shared) {
+    const sharedCost = withStake(sharedStakeMultiplier);
+    return { claimerCost: sharedCost, challengerCost: sharedCost };
+  }
+
+  const winnerCost = withStake(winnerStakeMultiplier);
+  const loserCost = withStake(loserStakeMultiplier);
+  return currentRulingSide === SideEnum.claimer
+    ? { claimerCost: winnerCost, challengerCost: loserCost }
+    : { claimerCost: loserCost, challengerCost: winnerCost };
+};
+
+// The subgraph appends a new round as soon as appeal funding starts, while
+// nbRounds only counts completed rounds — an extra entry in `rounds` therefore
+// means the last round is the in-progress (partially funded) appeal round.
+const getPendingAppealRoundFunds = (challenge: AppealChallenge) => {
+  const hasInProgressAppealRound =
+    Number(challenge.nbRounds) + 1 === challenge.rounds.length;
+  if (!hasInProgressAppealRound)
+    return { claimerFunds: 0n, challengerFunds: 0n };
+
+  const currentRound = challenge.rounds.at(-1); //latest round
+  return {
+    claimerFunds: toBigIntOrZero(currentRound?.requesterFund?.amount),
+    challengerFunds: toBigIntOrZero(currentRound?.challengerFund?.amount),
+  };
+};
 
 interface SideFundingProps {
   side: SideEnum;
   arbitrator: Address;
   disputeId: bigint;
-  requester: Address;
-  requesterFunds: bigint;
+  /** The party being crowdfunded (submitter or challenger). */
+  partyAddress: Address;
+  partyFunds: bigint;
   appealCost: bigint;
   chainId: SupportedChainId;
-  loosingSideHasEnd: boolean;
-  onSuccess?: () => void;
-  disabled?: boolean;
+  losingSideDeadlinePassed: boolean;
+  onSuccess?: (amount: bigint, txHash?: Hash) => void;
+  onLoadingChange?: (loading: boolean) => void;
+  isReconciling?: boolean;
+  fundingPending?: boolean;
 }
 
 const SideFunding: React.FC<SideFundingProps> = ({
   side,
   disputeId,
   arbitrator,
-  requester,
-  requesterFunds,
+  partyAddress,
+  partyFunds,
   appealCost,
   chainId,
-  loosingSideHasEnd,
+  losingSideDeadlinePassed,
   onSuccess,
-  disabled = false,
+  onLoadingChange,
+  isReconciling = false,
+  fundingPending = false,
 }) => {
-  const userChainId = useChainId();
-  const { isConnected, address } = useAccount();
-  const { data: balanceData } = useBalance({ address, chainId: userChainId });
-  const title = side === SideEnum.claimer ? "Claimer" : "Challenger";
-  const shrunkAddress: string =
-    requester.substring(0, 6) + " ... " + requester.slice(-4);
-  const [requesterInput, setRequesterInput] = useState("");
+  const title = side === SideEnum.claimer ? "Submitter" : "Challenger";
+  const shrunkAddress = shortenAddress(partyAddress);
   const loading = useLoading();
   const [isLoading, loadingMessage] = loading.use();
-  const errorRef = useRef(false);
+  const errorToastShownRef = useRef(false);
 
-  const value = (formatEth(requesterFunds) * 100) / formatEth(appealCost);
-  const valueProgress = value > 100 ? 100 : value;
-  const unit = idToChain(chainId)?.nativeCurrency.symbol;
-
-  const remainingAmount =
-    appealCost > requesterFunds ? appealCost - requesterFunds : 0n;
-  const inputAmount = useMemo(() => {
-    if (!requesterInput) return 0n;
-    try {
-      const parsed = parseEther(requesterInput);
-      return parsed < 0n ? 0n : parsed;
-    } catch {
-      return null;
-    }
-  }, [requesterInput]);
-
-  const isInvalidInput = inputAmount === null;
-  const isZeroInput = inputAmount === 0n;
-  const insufficientFunds =
-    !isInvalidInput &&
-    balanceData !== undefined &&
-    inputAmount! > balanceData.value;
-  const exceedsRemaining = !isInvalidInput && inputAmount! > remainingAmount;
-
-  const isDisabled =
-    disabled ||
-    errorRef.current ||
-    loosingSideHasEnd ||
-    userChainId !== chainId ||
-    !isConnected ||
-    !requesterInput ||
-    isInvalidInput ||
-    isZeroInput ||
-    isLoading ||
-    exceedsRemaining ||
-    insufficientFunds;
-
-  const getTooltipMessage = () => {
-    if (disabled) return "Syncing";
-    if (loosingSideHasEnd) return "Appeal time has ended for this side";
-    if (!isConnected) return "Please connect your wallet";
-    if (userChainId !== chainId)
-      return `Switch your chain above to ${idToChain(chainId)?.name || "the correct chain"}`;
-    if (!requesterInput) return "Please enter an amount to fund";
-    if (isInvalidInput) return "Please enter a valid amount";
-    if (isZeroInput) return "Amount must be greater than 0";
-    if (exceedsRemaining)
-      return `Amount exceeds remaining needed (${formatEth(remainingAmount)} ${unit})`;
-    if (insufficientFunds)
-      return `Insufficient balance. You have ${formatEth(balanceData?.value ?? 0n)} ${unit}`;
-    return undefined;
-  };
-
+  const appealCostEth = formatEth(appealCost);
+  const fundedPercent =
+    appealCostEth > 0 ? (formatEth(partyFunds) * 100) / appealCostEth : 0;
+  const progressPercent = fundedPercent > 100 ? 100 : fundedPercent;
+  const isFullyFunded = appealCost > 0n && partyFunds >= appealCost;
+  const {
+    input: fundInput,
+    setInput: setFundInput,
+    setMax,
+    inputAmount,
+    maxInput,
+    unit,
+    disabled: isDisabled,
+    tooltip: submitTooltip,
+  } = useFundingAmount({
+    chainId,
+    funded: partyFunds,
+    totalCost: appealCost,
+    checks: [
+      { active: isFullyFunded, message: "Already funded" },
+      { active: isReconciling, message: "Waiting for indexer" },
+      {
+        active: losingSideDeadlinePassed,
+        message: "Appeal time has ended for this side",
+      },
+    ],
+  });
   const [prepareFundAppeal] = usePoHWrite(
     "fundAppeal",
     useMemo(
@@ -130,93 +162,108 @@ const SideFunding: React.FC<SideFundingProps> = ({
         onReady(fire) {
           fire();
         },
-        onError() {
+        onError(error, errorCtx) {
           loading.stop();
-          toast.error("Transaction rejected");
+          onLoadingChange?.(false);
+          toast.error(getWriteErrorMessage(error, errorCtx));
         },
-        onSuccess() {
+        onSuccess(ctx) {
           loading.stop();
+          onLoadingChange?.(false);
           toast.success("Funded appeal successfully");
-          onSuccess?.();
+          onSuccess?.(ctx.value ?? 0n, ctx.txHash);
         },
         onFail() {
           loading.stop();
-          !errorRef.current &&
+          onLoadingChange?.(false);
+          // Only surface the failure toast once per mount.
+          !errorToastShownRef.current &&
             toast.info(
               "Transaction is not possible! Do you have enough funds?",
             );
-          errorRef.current = true;
+          errorToastShownRef.current = true;
         },
       }),
-      [loading],
+      [loading, onLoadingChange, onSuccess],
     ),
   );
 
   return (
-    <div className="w-full min-w-0 border p-4">
-      <div className="mb-2 flex gap-2">
-        <Identicon diameter={32} address={requester} />
-        <div className="flex flex-col">
-          <span>{title}</span>
-          <span className="text-sm">{shrunkAddress}</span>
-        </div>
+    <div className="border-stroke bg-whiteBackground w-full min-w-0 rounded-card border p-4">
+      <div className="mb-4 flex flex-col gap-3">
+        <span className="text-base font-semibold">{title}</span>
+        <span className="text-secondaryText text-sm font-normal">
+          {shrunkAddress}
+        </span>
       </div>
-      <div className="flex flex-col gap-2 sm:flex-row sm:gap-1">
-        <Field
-          type="number"
-          className="no-spinner"
+      <div className="flex min-w-0 flex-col gap-2">
+        <CurrencyField
+          symbol={unit}
           step="any"
           min={0}
-          max={formatEth(remainingAmount)}
-          value={requesterInput}
-          onChange={(v) => setRequesterInput(v.target.value)}
-          disabled={isLoading}
+          max={maxInput}
+          value={fundInput}
+          onChange={(v) => setFundInput(v.target.value)}
+          onMax={setMax}
+          disabled={isLoading || isFullyFunded}
         />
         <ActionButton
           onClick={async () => {
             if (inputAmount === null || inputAmount === 0n) return;
             loading.start("Funding...");
+            onLoadingChange?.(true);
             prepareFundAppeal({
-              args: [arbitrator as Address, BigInt(disputeId), side],
+              args: [arbitrator, BigInt(disputeId), side],
               value: inputAmount,
             });
           }}
           label={loadingMessage || "Fund"}
-          className="sm:w-auto"
-          disabled={isDisabled}
+          className="w-full px-5"
+          fullWidth
+          disabled={isDisabled || fundingPending}
           isLoading={isLoading}
-          tooltip={getTooltipMessage()}
+          tooltip={submitTooltip}
         />
       </div>
       <Progress
-        value={valueProgress}
-        label={`${formatEth(requesterFunds)} ${unit} out of ${formatEth(appealCost)} ${unit}`}
+        value={progressPercent}
+        label={`${formatEth(partyFunds)} ${unit} out of ${formatEth(appealCost)} ${unit} required`}
       />
     </div>
   );
 };
 
 interface AppealProps {
-  pohId: Address;
-  requestIndex: number;
   arbitrator: Address;
   extraData: any;
   claimer: Address;
   challenger: Address;
   disputeId: bigint;
   chainId: SupportedChainId;
-  currentChallenge: ArrayElement<
-    NonNullable<NonNullable<RequestQuery>["request"]>["challenges"]
-  >;
-  revocation: boolean;
-  requestStatus: RequestStatus;
+  currentChallenge: AppealChallenge;
   disabled?: boolean;
   tooltip?: string;
+  onAppealableChange?: (appealable: boolean) => void;
+}
+
+// Everything read from the arbitrator/PoH contracts. Fetched once on mount —
+// this is a snapshot, not live data.
+interface AppealSnapshot {
+  status: DisputeStatusEnum;
+  /** End of the appeal period, in unix seconds. */
+  appealPeriodEnd: number;
+  currentRulingSide: SideEnum;
+  /**
+   * Midpoint of the appeal period, in unix seconds. The contract only lets the
+   * currently losing side fund before this point; compared against a live clock
+   * so the gate closes while the page stays open.
+   */
+  losingSideDeadline: number;
+  claimerCost: bigint;
+  challengerCost: bigint;
 }
 
 const Appeal: React.FC<AppealProps> = ({
-  pohId,
-  requestIndex,
   disputeId,
   arbitrator,
   extraData,
@@ -224,315 +271,291 @@ const Appeal: React.FC<AppealProps> = ({
   claimer,
   challenger,
   currentChallenge,
-  revocation,
-  requestStatus,
   disabled: externalDisabled,
   tooltip: externalTooltip,
+  onAppealableChange,
 }) => {
   const { pendingAction } = useRequestOptimistic();
   const isReconciling = pendingAction !== null;
-  const [totalClaimerCost, setTotalClaimerCost] = useState(0n);
-  const [totalChallengerCost, setTotalChallengerCost] = useState(0n);
-  const [formatedCurrentRuling, setFormatedCurrentRuling] = useState("");
-  const defaultPeriod = [0n, 0n];
-  const [period, setPeriod] = useState(defaultPeriod);
-  const [loosingSideHasEnd, setLoosingSideHasEnd] = useState(false);
-  const [loosingSideDeadline, setLoosingSideDeadline] = useState(0);
-  const [currentRulingFormatted, setCurrentRulingFormatted] = useState(0);
-
-  const [disputeStatus, setDisputeStatus] = useState(
-    DisputeStatusEnum.Appealable,
-  );
-  const [error, setError] = useState(false);
-  const errorRef = useRef(false);
-  const [loading, setLoading] = useState(true);
-  const [claimerFunds, setClaimerFunds] = useState(0n);
-  const [challengerFunds, setChallengerFunds] = useState(0n);
   const router = useRouter();
-  const [isAppealModalOpen, setAppealModalOpen] = useState(false);
+  const queryClient = useQueryClient();
+  const appealSnapshotQueryKey = [
+    "appealSnapshot",
+    chainId,
+    arbitrator,
+    disputeId.toString(),
+  ] as const;
 
-  const handleFundSuccess = () => {
-    setAppealModalOpen(false);
-    router.refresh();
+  const [isAppealModalOpen, setAppealModalOpen] = useState(false);
+  const [appealFundingPending, setAppealFundingPending] = useState(false);
+  const [fundSuccess, setFundSuccess] = useState<{
+    amount: bigint;
+    txHash?: Hash;
+  } | null>(null);
+
+  // Funds already committed to the pending appeal round, from the subgraph.
+  const { claimerFunds, challengerFunds } = useMemo(
+    () => getPendingAppealRoundFunds(currentChallenge),
+    [currentChallenge],
+  );
+
+  const handleFundSuccess = (amount: bigint, txHash?: Hash) => {
+    setFundSuccess({ amount, txHash });
   };
 
-  useEffectOnce(() => {
-    const formatCurrentRuling = (currentRuling: SideEnum) => {
-      var text = "Undecided";
-      switch (currentRuling) {
-        case SideEnum.claimer:
-          text = "Claimer wins";
-          break;
-        case SideEnum.challenger:
-          text = "Challenger wins";
-          break;
-        case SideEnum.shared:
-          text = "Shared";
-      }
-      setFormatedCurrentRuling(text);
-    };
+  const closeAppealModal = () => {
+    setAppealModalOpen(false);
+    setFundSuccess(null);
+    if (fundSuccess) {
+      void queryClient.invalidateQueries({ queryKey: appealSnapshotQueryKey });
+      router.refresh();
+    }
+  };
 
-    const calculateTotalCost = (
-      appealCost: bigint,
-      currentRuling: SideEnum,
-      winnerMult: number,
-      loserMult: number,
-      sharedMult: number,
-    ) => {
-      const getSideTotalCost = (sideMultiplier: number) => {
-        return (
-          Number(appealCost) +
-          (Number(appealCost) * sideMultiplier) / MULTIPLIER_DIVISOR
+  // bigint is not JSON-serializable, so the dispute id goes in as a string.
+  const { data: snapshot, isError: loadFailed } = useQuery({
+    queryKey: appealSnapshotQueryKey,
+    queryFn: async (): Promise<AppealSnapshot> => {
+      const stakeMultipliers = await APIPoH.getStakeMultipliers(chainId);
+      const { status, cost, period, currentRuling } =
+        await APIArbitrator.getArbitratorsData(
+          chainId,
+          arbitrator,
+          disputeId,
+          extraData,
         );
+
+      const currentRulingSide = Number(currentRuling) as SideEnum;
+      const periodStart = Number(period![0]);
+      const periodEnd = Number(period![1]);
+      // Mirror the contract's integer division so the UI gate closes on the
+      // exact second the contract stops accepting the losing side's funds.
+      const losingSideDeadline =
+        periodStart + Math.floor((periodEnd - periodStart) / 2);
+
+      return {
+        status: Number(status) as DisputeStatusEnum,
+        appealPeriodEnd: periodEnd,
+        currentRulingSide,
+        losingSideDeadline,
+        ...getSideAppealCosts(cost!, currentRulingSide, stakeMultipliers),
       };
-      const MULTIPLIER_DIVISOR = 10000;
-
-      const claimerMultiplier =
-        currentRuling === SideEnum.shared
-          ? sharedMult
-          : currentRuling === SideEnum.claimer
-            ? winnerMult
-            : loserMult;
-      const totalClaimerCost = getSideTotalCost(Number(claimerMultiplier));
-      setTotalClaimerCost(BigInt(totalClaimerCost));
-
-      const challengerMultiplier =
-        currentRuling === SideEnum.shared
-          ? sharedMult
-          : currentRuling === SideEnum.claimer
-            ? loserMult
-            : winnerMult;
-      const totalChallengerCost = getSideTotalCost(
-        Number(challengerMultiplier),
-      );
-      setTotalChallengerCost(BigInt(totalChallengerCost));
-    };
-
-    const getAppealData = async () => {
-      try {
-        const isPartiallyFunded =
-          Number(currentChallenge.nbRounds) + 1 ===
-          currentChallenge.rounds.length;
-        const claimerFunds = isPartiallyFunded
-          ? toWeiBigInt(currentChallenge.rounds.at(-1)?.requesterFund.amount)
-          : 0n;
-        const challengerFunds = isPartiallyFunded
-          ? currentChallenge.rounds.at(-1)?.challengerFund
-            ? toWeiBigInt(
-                currentChallenge.rounds.at(-1)?.challengerFund?.amount,
-              )
-            : 0n
-          : 0n;
-        setClaimerFunds(claimerFunds);
-        setChallengerFunds(challengerFunds);
-
-        const stakeMultipliers: StakeMultipliers =
-          await APIPoH.getStakeMultipliers(chainId);
-        const winnerMult = stakeMultipliers.winnerStakeMultiplier;
-        const loserMult = stakeMultipliers.loserStakeMultiplier;
-        const sharedMult = stakeMultipliers.sharedStakeMultiplier;
-
-        const arbitratorsData: ArbitratorsData =
-          await APIArbitrator.getArbitratorsData(
-            chainId,
-            arbitrator,
-            disputeId,
-            extraData,
-          );
-        const status = arbitratorsData.status;
-        const cost = arbitratorsData.cost;
-        const period = arbitratorsData.period;
-        const currentRuling = arbitratorsData.currentRuling;
-
-        setPeriod(period!);
-        const loosingSideDeadline =
-          (parseInt(String(period![0])) + parseInt(String(period![1]))) / 2;
-
-        setLoosingSideHasEnd(loosingSideDeadline < Date.now() / 1000);
-        setLoosingSideDeadline(loosingSideDeadline);
-        setDisputeStatus(Number(status) as DisputeStatusEnum);
-        const currentRulingFormatted = Number(currentRuling) as SideEnum;
-        setCurrentRulingFormatted(currentRulingFormatted);
-        formatCurrentRuling(currentRulingFormatted);
-        calculateTotalCost(
-          cost!,
-          currentRulingFormatted,
-          Number(winnerMult),
-          Number(loserMult),
-          Number(sharedMult),
-        );
-
-        setLoading(false);
-      } catch (e) {
-        !errorRef.current &&
-          toast.info(
-            "Unexpected error while reading appelate round info. Come back later",
-          );
-        setError(true);
-        errorRef.current = true;
-      }
-    };
-    getAppealData();
+    },
   });
-  return disputeStatus === DisputeStatusEnum.Appealable &&
-    !error &&
-    !loading ? (
-    <>
-      <div className="group relative w-[150px] md:w-auto">
-        <button
-          onClick={() => setAppealModalOpen(true)}
-          disabled={externalDisabled || isReconciling}
-          className="btn-sec w-[150px] rounded py-2 md:w-auto"
-        >
-          <span className="flex-inline flex flex-wrap items-center whitespace-nowrap md:flex-nowrap">
-            Appeal (ends&nbsp;
-            <TimeAgo time={parseInt(String(period[1]))} />)
-          </span>
-        </button>
-        {(externalDisabled || isReconciling) && (
-          <span className="pointer-events-none absolute bottom-full left-1/2 z-10 mb-2 w-max -translate-x-1/2 rounded-md bg-neutral-700 px-3 py-2 text-center text-sm text-white opacity-0 transition-opacity group-hover:opacity-100">
-            {externalDisabled ? (externalTooltip ?? "Disabled") : "Syncing"}
-            <span className="absolute left-1/2 top-full h-0 w-0 -translate-x-1/2 border-x-[5px] border-t-[5px] border-x-transparent border-t-neutral-700" />
-          </span>
-        )}
-      </div>
-      <Modal
-        header={`Appeal case #${disputeId}`}
-        open={isAppealModalOpen}
-        onClose={() => setAppealModalOpen(false)}
-        className="max-h-[calc(100vh-2rem)] !w-[calc(100vw-2rem)] max-w-[1020px] overflow-y-auto md:!w-[88vw] xl:!w-[1020px]"
-      >
-        <div className="paper w-full px-4 py-6 sm:px-8 lg:px-16 lg:py-8">
-          <h1 className="mb-4 text-xl">
-            Appeal the decision: {formatedCurrentRuling}
-          </h1>
-          <div className="gradient-border relative overflow-hidden">
-            <div className="absolute inset-0 bg-gradient-to-r from-[#FF9966] to-[#FF8CA9]"></div>
-            <div className="absolute inset-0 border-2 border-solid border-transparent"></div>
-            <div className="mb-1"></div>
-          </div>
-          <div className="mt-4 space-y-2">
-            <div className="flex items-start">
-              <BulletedNumber number={1} />
-              {!revocation ? (
-                <span className="mx-2 mt-2 text-sm">
-                  The profile was challenged for{" "}
-                  <strong className="text-status-challenged capitalize">
-                    {currentChallenge.reason.id}
-                  </strong>
-                  .
-                </span>
-              ) : (
-                <span className="mx-2 mt-2 text-sm">
-                  The profile was challenged.
-                </span>
-              )}
-            </div>
-            <div className="flex items-start">
-              <BulletedNumber number={2} />
 
-              <div className="mx-2 mt-2 min-w-0 text-sm">
-                <span className="inline">
-                  Independent jurors evaluated the evidence, policy compliance,
-                  and voted in favor of:{" "}
-                  {currentRulingFormatted === SideEnum.challenger
-                    ? "Challenger"
-                    : currentRulingFormatted === SideEnum.claimer
-                      ? "Claimer"
-                      : "Shared"}
-                  .{" "}
-                </span>
+  // Surface the load failure once.
+  useEffect(() => {
+    if (loadFailed)
+      toast.info(
+        "Unexpected error while reading appellate round info. Come back later",
+      );
+  }, [loadFailed]);
+
+  // Deadlines are snapshot timestamps; tick a live clock so the appealability
+  // and funding gates close when the midpoint / full period elapses while the
+  // page stays open.
+  const [nowSec, setNowSec] = useState(() => Math.floor(Date.now() / 1000));
+  useEffect(() => {
+    const id = setInterval(
+      () => setNowSec(Math.floor(Date.now() / 1000)),
+      5_000,
+    );
+    return () => clearInterval(id);
+  }, []);
+
+  const appealTrigger = resolveTxState([
+    { active: !!externalDisabled, message: externalTooltip ?? "Disabled" },
+    { active: isReconciling, message: "Waiting for indexer" },
+  ]);
+
+  // Once the full period ends, no side can fund; before that only the losing
+  // side is cut off at the midpoint.
+  const appealEnded = !!snapshot && nowSec >= snapshot.appealPeriodEnd;
+  const isAppealable =
+    !loadFailed &&
+    snapshot?.status === DisputeStatusEnum.Appealable &&
+    !appealEnded;
+
+  useEffect(() => {
+    onAppealableChange?.(isAppealable);
+  }, [isAppealable, onAppealableChange]);
+
+  // Keep an already-open modal mounted past the deadline: unmounting it would
+  // discard a possibly in-flight funding tx (the write hook drops callbacks
+  // after unmount), leaving the user with no success/failure feedback. The
+  // forms inside disable themselves via the deadline gates instead.
+  if (!snapshot || (!isAppealable && !isAppealModalOpen)) return null;
+
+  const { currentRulingSide } = snapshot;
+  const losingSideDeadlinePassed = nowSec >= snapshot.losingSideDeadline;
+  const rulingParty =
+    currentRulingSide === SideEnum.challenger
+      ? "Challenger"
+      : currentRulingSide === SideEnum.claimer
+        ? "Submitter"
+        : "neither side";
+
+  return (
+    <>
+      {isAppealable && (
+        <>
+          <InfoTooltip
+            label={
+              <>
+                Appeal ends&nbsp;
+                <TimeAgo time={snapshot.appealPeriodEnd} />
+              </>
+            }
+          >
+            <p>
+              When someone challenges a profile, a case is opened in Kleros
+              Court.
+            </p>
+            <p>
+              A group of random jurors is selected to review the case. They look
+              at the evidence from both sides and vote. The side with the most
+              votes wins the dispute.
+            </p>
+            <p>
+              If either side disagrees with the decision, they can appeal. The
+              case is reviewed again by a new group of jurors.
+            </p>
+            <p>
+              Providing clear evidence is important. It helps the jurors
+              understand the case and make a fair decision.
+            </p>
+          </InfoTooltip>
+          <ActionButton
+            onClick={() => setAppealModalOpen(true)}
+            disabled={appealTrigger.disabled}
+            tooltip={appealTrigger.tooltip}
+            label="Appeal"
+            variant="secondary"
+            className="w-fit min-w-[170px]"
+          />
+        </>
+      )}
+      <RequestModal
+        open={isAppealModalOpen}
+        onClose={closeAppealModal}
+        canClose={!appealFundingPending}
+      >
+        {fundSuccess ? (
+          <>
+            <RequestModalHeader
+              title={
+                <>
+                  Thanks for helping{" "}
+                  <span className="text-peach">fund the appeal</span>!
+                </>
+              }
+              description="You contributed with"
+            />
+            <div className="mt-4 flex justify-center">
+              <RequestAmountPill
+                amount={`${formatEth(fundSuccess.amount)} ${nativeCurrencyLabel(chainId)}`}
+                icon={<CurrencyIcon symbol={nativeCurrencyLabel(chainId)} />}
+              />
+            </div>
+            {fundSuccess.txHash && idToChain(chainId) && (
+              <div className="mt-4 flex justify-center">
                 <ExternalLink
-                  className="text-orange inline-flex max-w-full flex-wrap items-center gap-x-2 gap-y-1 align-baseline text-sm font-semibold leading-snug hover:text-orange-500"
-                  href={`https://klerosboard.com/${chainId}/cases/${currentChallenge.disputeId}`}
+                  className="group/external-link inline-flex items-center gap-2 text-sm text-peach hover:opacity-80"
+                  href={explorerTxLink(fundSuccess.txHash, idToChain(chainId)!)}
                 >
-                  <span className="text-sm font-semibold leading-snug">
-                    Check how the jury voted
-                  </span>
-                  <Arrow />
+                  View the transaction
+                  <ExternalLinkIcon />
                 </ExternalLink>
               </div>
+            )}
+            <RequestModalActions onReturn={closeAppealModal} />
+          </>
+        ) : (
+          <>
+            <div className="flex flex-col items-center gap-2 text-center">
+              <span className="text-base font-semibold">Case #{disputeId}</span>
+              <h1 className="text-2xl font-semibold">
+                Appeal <span className="text-peach">the Decision</span>
+              </h1>
+              <p className="text-secondaryText text-sm font-normal">
+                The jury decided in favor of {rulingParty}.
+              </p>
+              <ExternalLink
+                className="group/external-link inline-flex items-center gap-2 text-sm font-normal text-peach hover:opacity-80"
+                href={`https://klerosboard.com/${chainId}/cases/${currentChallenge.disputeId}`}
+              >
+                Check how the jury voted
+                <ExternalLinkIcon />
+              </ExternalLink>
             </div>
-            <div className="flex items-start">
-              <BulletedNumber number={3} current={!loosingSideHasEnd} />
-              {loosingSideHasEnd ? (
-                <span className="mx-2 mt-2 text-sm">
-                  The losing party's appeal time ended&nbsp;
-                  <TimeAgo time={loosingSideDeadline} />.
+            <div className="mt-8 flex flex-col items-center gap-4 text-center">
+              <p className="text-secondaryText max-w-2xl text-sm font-normal leading-5">
+                Each side has its own crowdfunding target. A new appeal is
+                created only after both the submitter and challenger sides are
+                fully funded. If only one side reaches its target before the
+                deadline, the final ruling is set in favor of that funded side.
+              </p>
+              <div className="text-secondaryText flex items-start gap-2 text-left text-xs font-normal">
+                <span className="text-status-claim" aria-hidden>
+                  ⓘ
                 </span>
-              ) : (
-                <span className="mx-2 mt-2 text-sm">
-                  The losing party's appeal time ends&nbsp;
-                  <TimeAgo time={loosingSideDeadline} />.
-                </span>
-              )}
-            </div>
-            <div className="flex items-start">
-              <BulletedNumber number={4} current />
-              <span className="mx-2 mt-2 text-sm">
-                Appeal timeframe ends&nbsp;
-                <TimeAgo time={parseInt(String(period[1]))} />.
-              </span>
-            </div>
-            <div className="mb-4 mt-4">
-              <span className="text-sm">
-                In order to appeal the decision, you need to fully fund the
-                crowdfunding deposit. The dispute will be sent to the jurors
-                when the full deposit is reached. Note that if the previous
-                round loser funds its side, the previous round winner should
-                also fully fund its side, in order not to lose the case.
-              </span>
-              <div className="mt-4 flex items-center opacity-75">
-                <Image
-                  alt="warning"
-                  src="/logo/exclamation.svg"
-                  height={24}
-                  width={24}
-                />
-                <span className="mx-2 min-w-0 text-sm opacity-75">
+                <span>
                   External contributors can also crowdfund the appeal.
                 </span>
               </div>
             </div>
-          </div>
-          <div className="mt-8 grid grid-cols-1 md:grid-cols-2">
-            <SideFunding
-              side={SideEnum.claimer}
-              disputeId={disputeId}
-              arbitrator={arbitrator!}
-              requester={claimer}
-              requesterFunds={claimerFunds}
-              appealCost={totalClaimerCost}
-              chainId={chainId}
-              loosingSideHasEnd={
-                currentRulingFormatted === SideEnum.challenger
-                  ? loosingSideHasEnd
-                  : false
-              }
-              onSuccess={handleFundSuccess}
-              disabled={isReconciling}
+            {/* The half-period funding cutoff only applies to whichever side
+                the jury ruled against; on a shared ruling neither side is
+                losing, so both get the full period. */}
+            <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
+              <SideFunding
+                side={SideEnum.claimer}
+                disputeId={disputeId}
+                arbitrator={arbitrator}
+                partyAddress={claimer}
+                partyFunds={claimerFunds}
+                appealCost={snapshot.claimerCost}
+                chainId={chainId}
+                losingSideDeadlinePassed={
+                  appealEnded ||
+                  (currentRulingSide === SideEnum.challenger
+                    ? losingSideDeadlinePassed
+                    : false)
+                }
+                onSuccess={handleFundSuccess}
+                onLoadingChange={setAppealFundingPending}
+                isReconciling={isReconciling}
+                fundingPending={appealFundingPending}
+              />
+              <SideFunding
+                side={SideEnum.challenger}
+                disputeId={disputeId}
+                arbitrator={arbitrator}
+                partyAddress={challenger}
+                partyFunds={challengerFunds}
+                appealCost={snapshot.challengerCost}
+                chainId={chainId}
+                losingSideDeadlinePassed={
+                  appealEnded ||
+                  (currentRulingSide === SideEnum.claimer
+                    ? losingSideDeadlinePassed
+                    : false)
+                }
+                onSuccess={handleFundSuccess}
+                onLoadingChange={setAppealFundingPending}
+                isReconciling={isReconciling}
+                fundingPending={appealFundingPending}
+              />
+            </div>
+            <RequestModalActions
+              onReturn={closeAppealModal}
+              returnDisabled={appealFundingPending}
             />
-            <SideFunding
-              side={SideEnum.challenger}
-              disputeId={disputeId}
-              arbitrator={arbitrator!}
-              requester={challenger}
-              requesterFunds={challengerFunds}
-              appealCost={totalChallengerCost}
-              chainId={chainId}
-              loosingSideHasEnd={
-                currentRulingFormatted === SideEnum.claimer
-                  ? loosingSideHasEnd
-                  : false
-              }
-              onSuccess={handleFundSuccess}
-              disabled={isReconciling}
-            />
-          </div>
-        </div>
-      </Modal>
+          </>
+        )}
+      </RequestModal>
     </>
-  ) : null;
+  );
 };
 
 export default Appeal;

@@ -159,7 +159,6 @@ export const useEmailSettings = () => {
     email,
     setEmail,
     showEmailError,
-    hasSavedEmail: Boolean(savedEmail),
     hasVerifiedEmail,
     handleKeyDown,
     // verification notice

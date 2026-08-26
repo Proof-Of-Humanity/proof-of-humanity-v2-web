@@ -1,3 +1,4 @@
+import humanizeDuration from "humanize-duration";
 import { format } from "timeago.js";
 
 interface PohRequest {
@@ -8,6 +9,18 @@ interface PohRequest {
 }
 
 export const timeAgo = (s: number) => format(s * 1000);
+
+/**
+ * Exact duration from integer seconds. Do not round or collapse units:
+ * 302400 -> "3 days and 12 hours", not "4 days" / "3 days".
+ * Days/hours/minutes/seconds only — week/month units are 7d / 30d approximations.
+ */
+export const formatDuration = (seconds: number) =>
+  humanizeDuration(seconds * 1000, {
+    units: ["d", "h", "m", "s"],
+    conjunction: " and ",
+    serialComma: false,
+  });
 
 const LEGACY_REQUEST_LIFESPAN = 63115200; // 2 years in seconds
 

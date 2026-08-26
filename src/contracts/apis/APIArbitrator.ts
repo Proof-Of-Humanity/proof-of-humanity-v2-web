@@ -1,8 +1,4 @@
-import {
-  SupportedChainId,
-  getChainTransport,
-  supportedChains,
-} from "config/chains";
+import { SupportedChainId, getChainTransport, idToChain } from "config/chains";
 import { Address, createPublicClient } from "viem";
 import Error from "next/error";
 import { KlerosLiquid } from "../deployments/KlerosLiquid";
@@ -37,7 +33,7 @@ export class APIArbitrator {
     this.chainId = _chainId;
     this.address = _arbitrator;
     this.publicClient = createPublicClient({
-      chain: supportedChains[_chainId],
+      chain: idToChain(_chainId),
       transport: getChainTransport(_chainId),
     });
   }
@@ -60,7 +56,7 @@ export class APIArbitrator {
         address: this.address,
         abi: KlerosLiquid.abi,
         functionName: func,
-        args: args,
+        args,
       })
       .catch(() => {
         throw new Error({

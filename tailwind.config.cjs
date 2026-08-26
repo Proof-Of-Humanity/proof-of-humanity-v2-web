@@ -36,60 +36,83 @@ module.exports = {
           purple: "#BE75FF",
         },
         dark: {
-          whiteBackground: "#2D0050",
-          primaryBackground: "#1B003F",
-          stroke: "#42498F",
-          theme: "#1b003f",
-          primaryText: "#DAF0FF",
-          secondaryText: "#BECCE5",
-          orange: "#FFBE66",
-          lightOrange: "#480c54",
-          grey: "#666666",
+          whiteBackground: "#292D35",
+          primaryBackground: "#1E2129",
+          stroke: "#3A3E48",
+          theme: "#FF8A66",
+          primaryText: "#F7F3EF",
+          secondaryText: "#B8B1C2",
+          orange: "#FF8A66",
+          lightOrange: "#2F333D",
+          grey: "#2F333D",
           status: {
             vouching: "#D09BFF",
             registered: "#79FFDC",
-            removed: "#FF8DBD",
-            revocation: "#FF9966",
+            removed: "#FF8A66",
+            revocation: "#FF8A66",
             claim: "#8CEAFF",
-            challenged: "#FFBE66",
-            withdrawn: "#BECCE5",
-            expired: "#DAF0FF",
-            transferred: "#8BC34A",
-            transferring: "#795548",
-            rejected: "#F25F5F",
+            challenged: "#FFE16B",
+            withdrawn: "#F7F3EF",
+            expired: "#F7F3EF",
+            transferred: "#9BD157",
+            transferring: "#A6816E",
+            rejected: "#F60C6E",
           },
           purple: "#D09BFF",
         },
+        peach: "#FFB08A",
+      },
+      borderRadius: {
+        card: "26px",
+        input: "16px",
+        btn: "16px",
+      },
+      boxShadow: {
+        soft: "0 20px 50px rgba(0,0,0,0.28)",
+        "soft-inset":
+          "0 20px 50px rgba(0,0,0,0.28), inset 0 1px 0 rgba(255,255,255,0.045)",
+      },
+      transitionTimingFunction: {
+        premium: "cubic-bezier(0.22, 0.61, 0.36, 1)",
       },
       animation: {
+        banner: "banner 30s linear infinite",
         flip: "flip 5s linear infinite",
-        slideInFromRight: "slideInFromRight 0.3s ease-out forwards",
-        slideInFromLeft: "slideInFromLeft 0.3s ease-out forwards",
-        slideOutLeft: "slideOutLeft 0.25s ease-in forwards",
-        slideOutRight: "slideOutRight 0.25s ease-in forwards",
+        dropdownIn: "dropdownIn 0.2s cubic-bezier(0.22, 0.61, 0.36, 1) both",
+        cardIn:
+          "accordionItemIn 0.4s cubic-bezier(0.22, 0.61, 0.36, 1) backwards",
         fadeOut: "fadeOut 0.4s ease-out forwards",
         fadeIn: "fadeIn 0.3s ease-out forwards",
+        accordionItemIn:
+          "accordionItemIn 0.6s cubic-bezier(0.22, 0.61, 0.36, 1) both",
+        mediaResolve:
+          "mediaResolve 0.6s cubic-bezier(0.22, 0.61, 0.36, 1) both",
+        wizardOutLeft: "wizardOutLeft 0.16s ease-in both",
+        wizardOutRight: "wizardOutRight 0.16s ease-in both",
+        wizardInLeft:
+          "wizardInLeft 0.3s cubic-bezier(0.22, 0.61, 0.36, 1) both",
+        wizardInRight:
+          "wizardInRight 0.3s cubic-bezier(0.22, 0.61, 0.36, 1) both",
       },
       keyframes: {
+        banner: {
+          "0%": { transform: "translateX(0)" },
+          "100%": { transform: "translateX(-50%)" },
+        },
+        dropdownIn: {
+          "0%": {
+            opacity: "0",
+            transform: "translateY(-6px) scale(0.97)",
+          },
+          "100%": { opacity: "1", transform: "translateY(0) scale(1)" },
+        },
+        shimmer: {
+          "0%": { transform: "translateX(-100%)" },
+          "100%": { transform: "translateX(100%)" },
+        },
         flip: {
           "0%, 100%": { transform: "rotateY(0deg)" },
           "50%": { transform: "rotateY(360deg)" },
-        },
-        slideInFromRight: {
-          "0%": { opacity: "0", transform: "translateX(20px)" },
-          "100%": { opacity: "1", transform: "translateX(0)" },
-        },
-        slideInFromLeft: {
-          "0%": { opacity: "0", transform: "translateX(-20px)" },
-          "100%": { opacity: "1", transform: "translateX(0)" },
-        },
-        slideOutLeft: {
-          "0%": { opacity: "1", transform: "translateX(0)" },
-          "100%": { opacity: "0", transform: "translateX(-20px)" },
-        },
-        slideOutRight: {
-          "0%": { opacity: "1", transform: "translateX(0)" },
-          "100%": { opacity: "0", transform: "translateX(20px)" },
         },
         fadeOut: {
           "0%": { opacity: "1" },
@@ -99,13 +122,41 @@ module.exports = {
           "0%": { opacity: "0" },
           "100%": { opacity: "1" },
         },
+        accordionItemIn: {
+          "0%": { opacity: "0", transform: "translateY(12px)" },
+          "100%": { opacity: "1", transform: "translateY(0)" },
+        },
+        mediaResolve: {
+          "0%": {
+            opacity: "0",
+            filter: "blur(12px)",
+            transform: "scale(1.02)",
+          },
+          "100%": { opacity: "1", filter: "blur(0)", transform: "scale(1)" },
+        },
         // progress: {
         //   "0%": { transform: "scaleX(1)" },
         //   "100%": { transform: "scaleX(0)" },
         // },
+        wizardOutLeft: {
+          "0%": { opacity: "1", transform: "translateX(0)" },
+          "100%": { opacity: "0", transform: "translateX(-24px)" },
+        },
+        wizardOutRight: {
+          "0%": { opacity: "1", transform: "translateX(0)" },
+          "100%": { opacity: "0", transform: "translateX(24px)" },
+        },
+        wizardInLeft: {
+          "0%": { opacity: "0", transform: "translateX(-24px)" },
+          "100%": { opacity: "1", transform: "translateX(0)" },
+        },
+        wizardInRight: {
+          "0%": { opacity: "0", transform: "translateX(24px)" },
+          "100%": { opacity: "1", transform: "translateX(0)" },
+        },
       },
       fontFamily: {
-        sans: ["Open Sans", ...defaultTheme.fontFamily.sans],
+        sans: ["Inter", ...defaultTheme.fontFamily.sans],
       },
     },
   },

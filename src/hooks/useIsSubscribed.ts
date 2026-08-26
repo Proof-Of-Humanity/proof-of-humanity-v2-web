@@ -6,12 +6,12 @@ export default function useIsSubscribed() {
   const { address } = useAccount();
   const { checkIsSubscribed } = useAtlasProvider();
 
-  const { data, isLoading, isError } = useQuery({
+  const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ["isSubscribed", address],
     queryFn: address ? () => checkIsSubscribed(address) : skipToken,
     staleTime: 5 * 60 * 1000,
     retry: 1,
   });
 
-  return { isSubscribed: data, isLoading, isError };
+  return { isSubscribed: data, isLoading, isError, refetch };
 }

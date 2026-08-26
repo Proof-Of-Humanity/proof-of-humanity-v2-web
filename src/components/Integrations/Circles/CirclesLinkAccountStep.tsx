@@ -47,16 +47,16 @@ export default function CirclesLinkAccountStep({
   return (
     <Accordion
       title="Step 2 - Link Your Gnosis App (Circles) Account"
-      className="w-full"
+      className="bg-primaryBackground w-full rounded-[28px] [&>button:focus-visible]:outline-none [&>button:focus-visible]:ring-2 [&>button:focus-visible]:ring-orange [&>button:focus-visible]:ring-offset-2 dark:[&>button:focus-visible]:ring-offset-[#292D35] [&>button]:min-h-20 [&>button]:rounded-[28px] [&>button]:px-8"
       isOpen={isOpen}
       onToggle={onToggle}
     >
       {isLoading ? (
-        <div className="my-5 flex items-center justify-center p-4 md:p-6">
+        <div className="my-5 flex items-center justify-center pt-3 md:pt-4">
           <LoadingSpinner message="Loading Circles account info..." />
         </div>
       ) : isError ? (
-        <div className="flex w-full flex-col p-4 md:p-6">
+        <div className="flex w-full flex-col pt-3 md:pt-4">
           <Label className="mt-0 normal-case" aria-live="assertive">
             Error fetching Circles account
           </Label>
@@ -67,17 +67,38 @@ export default function CirclesLinkAccountStep({
       ) : (
         <>
           {linkStatus === "idle" && (
-            <div className="flex w-full flex-col p-4 md:p-6">
-              <Label className="mt-0 normal-case">
+            <div className="mx-auto flex w-[calc(100%-60px)] max-w-[1095px] flex-col pb-2 pt-3 md:pt-4">
+              <Label className="text-secondaryText -mt-1 mb-1 normal-case">
                 Paste your Gnosis App (Circles) Wallet Address
               </Label>
-              <Field
-                value={walletAddress}
-                onChange={onAddressChange}
-                placeholder="0x..."
-                aria-label="Circles Wallet Address"
-              />
-              <div className="mt-2 flex items-start text-sm">
+              <div className="mt-4 flex flex-col gap-2 md:flex-row md:items-stretch">
+                <div className="min-w-0 flex-1">
+                  <Field
+                    value={walletAddress}
+                    onChange={onAddressChange}
+                    placeholder="0x..."
+                    aria-label="Circles Wallet Address"
+                  />
+                </div>
+                {(() => {
+                  const { onClick, label, disabled } = getActionButtonProps(
+                    onLinkAccount,
+                    "Link",
+                  );
+                  return (
+                    <ActionButton
+                      onClick={onClick}
+                      label={label}
+                      ariaLabel="Link Circles account"
+                      disabled={disabled}
+                      isLoading={pending}
+                      className="min-w-[170px] shrink-0 self-center whitespace-nowrap px-8"
+                      variant={label === "Link" ? "primary" : "secondary"}
+                    />
+                  );
+                })()}
+              </div>
+              <div className="mt-2 flex items-start text-xs">
                 <InfoIcon
                   width={16}
                   height={16}
@@ -94,27 +115,10 @@ export default function CirclesLinkAccountStep({
                   .
                 </span>
               </div>
-              {(() => {
-                const { onClick, label, disabled } = getActionButtonProps(
-                  onLinkAccount,
-                  "Link",
-                );
-                return (
-                  <ActionButton
-                    onClick={onClick}
-                    label={label}
-                    ariaLabel="Link Circles account"
-                    disabled={disabled}
-                    isLoading={pending}
-                    className="mt-4 self-start"
-                    variant={label === "Link" ? "primary" : "secondary"}
-                  />
-                );
-              })()}
             </div>
           )}
           {linkStatus === "linked" && (
-            <div className="flex w-full flex-col space-y-4 p-4 md:p-6">
+            <div className="mx-auto flex w-[calc(100%-60px)] max-w-[1095px] flex-col space-y-4 pt-3 md:pt-4">
               <div className="flex items-center">
                 <span className="text-primaryText">
                   Circles account successfully linked to POHID
@@ -128,7 +132,7 @@ export default function CirclesLinkAccountStep({
             </div>
           )}
           {linkStatus === "expired" && (
-            <div className="flex w-full flex-col space-y-4 p-4 md:p-6">
+            <div className="mx-auto flex w-[calc(100%-60px)] max-w-[1095px] flex-col space-y-4 pt-3 md:pt-4">
               <div className="flex items-center">
                 <span className="text-orange-400">
                   The humanity expired. Please renew trust on POH Group.

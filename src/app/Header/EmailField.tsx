@@ -1,4 +1,5 @@
 import React from "react";
+import cn from "classnames";
 
 interface EmailFieldProps {
   value: string;
@@ -24,15 +25,16 @@ const EmailField: React.FC<EmailFieldProps> = ({
       onChange={(e) => onChange(e.target.value)}
       placeholder="Email"
       autoFocus={autoFocus}
-      className={`bg-whiteBackgroundWithOpacity text-primaryText placeholder:text-secondaryText min-h-[44px] w-full rounded-sm border px-4 py-2 text-center text-base font-medium transition-colors duration-200 focus:outline-none focus:ring-0 ${
-        isInvalid
-          ? "border-red-500 focus:border-red-600"
-          : "border-stroke focus:border-stroke"
-      }`}
+      className={cn(
+        "flat-control text-primaryText placeholder:text-secondaryText min-h-12 w-full rounded-input px-4 py-2 text-center text-base font-medium transition-colors duration-200 focus:outline-none focus:ring-0",
+        isInvalid && "flat-control-error",
+      )}
     />
 
     {isInvalid && (
-      <p className="mt-2 text-sm text-red-500">Please enter a valid email</p>
+      <p className="text-status-rejected mt-2 text-xs">
+        Please enter a valid email
+      </p>
     )}
   </>
 );

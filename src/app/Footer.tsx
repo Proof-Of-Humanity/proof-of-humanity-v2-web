@@ -1,29 +1,60 @@
 import Image from "next/image";
 import ExternalLink from "components/ExternalLink";
+import SocialGitHubIcon from "icons/SocialGitHub.svg";
+import SocialSnapshotIcon from "icons/SocialSnapshot.svg";
+import SocialTelegramIcon from "icons/SocialTelegram.svg";
+import SocialXIcon from "icons/SocialX.svg";
+
+const SOCIALS = [
+  {
+    alt: "Snapshot",
+    href: "https://snapshot.org/#/poh.eth/",
+    Icon: SocialSnapshotIcon,
+  },
+  {
+    alt: "GitHub",
+    href: "https://github.com/proof-of-humanity",
+    Icon: SocialGitHubIcon,
+  },
+  {
+    alt: "X",
+    href: "https://twitter.com/proofofhumanity",
+    Icon: SocialXIcon,
+  },
+  {
+    alt: "Telegram",
+    href: "https://t.me/proofhumanity",
+    Icon: SocialTelegramIcon,
+  },
+] as const;
 
 const Footer: React.FC = () => (
-  <div className="header-background bottom-0 flex w-full flex-wrap items-center justify-center gap-x-4 gap-y-[20px] px-8 py-4 text-lg text-white shadow-sm sm:justify-between sm:gap-x-[240px]">
-    <ExternalLink
-      className="flex items-center gap-2 text-sm"
-      href="https://kleros.io/"
-    >
-      BUILT BY{" "}
-      <Image alt="kleros" src="/logo/kleros.svg" width={96} height={24} />
-    </ExternalLink>
+  <div className="footer-background on-brand w-full border-t border-black/[0.06] text-lg text-white dark:border-white/[0.08]">
+    <div className="app-container flex flex-wrap items-center justify-center gap-x-4 gap-y-[20px] py-4 sm:justify-between">
+      <ExternalLink
+        className="flex items-center gap-2 text-sm"
+        href="https://kleros.io/"
+      >
+        <Image
+          alt="built by kleros"
+          src="/logo/built-by-kleros.svg"
+          width={153}
+          height={24}
+        />
+      </ExternalLink>
 
-    <div className="flex items-center gap-4">
-      <ExternalLink href="https://snapshot.org/#/poh.eth/">
-        <Image alt="snapshot" src="/logo/snapshot.svg" width={20} height={20} />
-      </ExternalLink>
-      <ExternalLink href="https://github.com/proof-of-humanity">
-        <Image alt="github" src="/logo/github.svg" width={20} height={20} />
-      </ExternalLink>
-      <ExternalLink href="https://twitter.com/proofofhumanity">
-        <Image alt="twitter" src="/logo/twitter.svg" width={20} height={20} />
-      </ExternalLink>
-      <ExternalLink href="https://t.me/proofhumanity">
-        <Image alt="telegram" src="/logo/telegram.svg" width={20} height={20} />
-      </ExternalLink>
+      <div className="flex items-center gap-3">
+        {SOCIALS.map(({ alt, href, Icon }) => (
+          <ExternalLink
+            key={alt}
+            href={href}
+            className="icon-btn h-9 w-9"
+            aria-label={alt}
+          >
+            <Icon />
+          </ExternalLink>
+        ))}
+      </div>
     </div>
   </div>
 );
