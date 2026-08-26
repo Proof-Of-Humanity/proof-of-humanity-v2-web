@@ -44,14 +44,10 @@ const Options: React.FC = () => {
                 "Report Bugs (Github)",
               ],
               [
-                "https://docs.kleros.io/products/proof-of-humanity/proof-of-humanity-tutorial",
+                "https://docs.kleros.io/tutorials/poh-register-and-vouch",
                 "Tutorial",
               ],
-              ["https://ethereum.org/en/wallets", "Crypto Beginner's Guide"],
-              [
-                "https://docs.kleros.io/products/proof-of-humanity/poh-faq",
-                "FAQ",
-              ],
+              ["https://ethereum.org/en/wallets", "Crypto Beginner's Guide"]
             ] as const
           ).map(([href, label]) => (
             <ExternalLink
