@@ -19,7 +19,6 @@ import {
   IS_IOS,
   MEDIA_MESSAGES,
   processVideoInput,
-  warmVideoPipeline,
   VIDEO_LIMITS,
 } from "utils/media";
 import { useAccount } from "wagmi";
@@ -71,10 +70,6 @@ function VideoStep({
 
   const loading = useLoading();
   const [pending, loadingMessage] = loading.use();
-
-  useEffect(() => {
-    warmVideoPipeline();
-  }, []);
 
   const setValidationError = (message: string) => {
     setVideoValidationErrors([message]);

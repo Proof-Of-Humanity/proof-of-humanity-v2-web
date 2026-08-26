@@ -23,6 +23,7 @@ import {
 } from "react";
 import { toast } from "react-toastify";
 import { machinifyId } from "utils/identifier";
+import { warmVideoPipeline } from "utils/media";
 import { Hash, formatEther } from "viem";
 import { useAccount, useChainId, useConfig } from "wagmi";
 import { useQuery } from "@tanstack/react-query";
@@ -118,6 +119,10 @@ type PinnedUpload = { key: unknown; uri: string };
 export default function Form(props: FormProps) {
   const params = useParams();
   const chainId = useChainId() as SupportedChainId;
+
+  useEffect(() => {
+    warmVideoPipeline();
+  }, []);
 
   if (!props.contractData[chainId])
     return (
