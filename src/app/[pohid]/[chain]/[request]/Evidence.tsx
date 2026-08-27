@@ -10,18 +10,13 @@ import Identicon from "components/Identicon";
 import MarkdownText from "components/MarkdownText";
 import TimeAgo from "components/TimeAgo";
 import { explorerLink, idToChain } from "config/chains";
-import type { EvidenceSubmitterProfile } from "data/evidence";
 import useChainParam from "hooks/useChainParam";
 import useIPFS from "hooks/useIPFS";
-import Image from "next/image";
-import Link from "next/link";
 import type { OptimisticEvidenceItem } from "optimistic/types";
 import { useRequestOptimistic } from "optimistic/request";
 import { useEffect, useState } from "react";
 import { EvidenceFile } from "types/docs";
 import { shortenAddress } from "utils/address";
-import { prettifyId } from "utils/identifier";
-import { safeIpfsUrl } from "utils/ipfs";
 import { resolveTxState } from "utils/txState";
 import { Hash } from "viem";
 import { useChainId } from "wagmi";
@@ -30,10 +25,9 @@ interface ItemInterface {
   number: number;
   item: OptimisticEvidenceItem;
   isPending?: boolean;
-  profile?: EvidenceSubmitterProfile;
 }
 
-function Item({ number, item, isPending, profile }: ItemInterface) {
+function Item({ number, item, isPending }: ItemInterface) {
   const chain = useChainParam();
   const [evidence] = useIPFS<EvidenceFile>(item.uri);
   const ipfsUri = evidence?.fileURI
@@ -47,7 +41,6 @@ function Item({ number, item, isPending, profile }: ItemInterface) {
   if (!chain) return null;
 
   const shortAddress = shortenAddress(item.submitter);
-  const photoUrl = safeIpfsUrl(profile?.photo);
 
   return (
     <div
@@ -78,37 +71,14 @@ function Item({ number, item, isPending, profile }: ItemInterface) {
           )}
         </div>
         <div className="bg-grey mt-4 flex min-h-12 flex-wrap items-center gap-x-4 gap-y-2 rounded-2xl px-4 py-2 text-sm font-normal">
-          {photoUrl ? (
-            <Image
-              className="h-8 w-8 rounded-full object-cover"
-              alt="profile"
-              src={photoUrl}
-              width={64}
-              height={64}
-              unoptimized // IPFS photos bypass the image optimizer, same as vouch avatars
-            />
-          ) : (
-            <Identicon diameter={32} address={item.submitter} />
-          )}
-          {profile ? (
-            <Link
-              className="text-primaryText group/external-link inline-flex items-center gap-1.5 font-semibold hover:opacity-80"
-              href={`/${prettifyId(profile.pohId as Hash)}`}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              {profile.name || shortAddress}
-              <ExternalLinkIcon className="text-orange" />
-            </Link>
-          ) : (
-            <ExternalLink
-              className="text-primaryText group/external-link inline-flex items-center gap-1.5 font-semibold hover:opacity-80"
-              href={explorerLink(item.submitter, chain)}
-            >
-              {shortAddress}
-              <ExternalLinkIcon className="text-orange" />
-            </ExternalLink>
-          )}
+          <Identicon diameter={32} address={item.submitter} />
+          <ExternalLink
+            className="text-primaryText group/external-link inline-flex items-center gap-1.5 font-semibold hover:opacity-80"
+            href={explorerLink(item.submitter, chain)}
+          >
+            {shortAddress}
+            <ExternalLinkIcon className="text-orange" />
+          </ExternalLink>
           <span className="text-secondaryText">
             <TimeAgo time={item.creationTime} />
           </span>
@@ -121,14 +91,9 @@ function Item({ number, item, isPending, profile }: ItemInterface) {
 interface EvidenceProps {
   pohId: Hash;
   requestIndex: number;
-  submitterProfiles: Record<string, EvidenceSubmitterProfile>;
 }
 
-export default function Evidence({
-  pohId,
-  requestIndex,
-  submitterProfiles,
-}: EvidenceProps) {
+export default function Evidence({ pohId, requestIndex }: EvidenceProps) {
   const { effective, pendingAction, pendingEvidenceItem } =
     useRequestOptimistic();
   const isReconciling = pendingAction !== null;
@@ -283,12 +248,7 @@ export default function Evidence({
                   : undefined
             }
           >
-            <Item
-              number={number}
-              item={item}
-              isPending={isPending}
-              profile={submitterProfiles[item.submitter.toLowerCase()]}
-            />
+            <Item number={number} item={item} isPending={isPending} />
           </div>
         );
       })}
