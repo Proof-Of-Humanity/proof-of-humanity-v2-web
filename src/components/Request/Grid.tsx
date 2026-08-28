@@ -177,7 +177,7 @@ function RequestsGrid() {
     ),
   );
 
-  const requests = useSelector(() =>
+  const loadedRequests = useSelector(() =>
     normalize(
       supportedChains.reduce(
         (acc, chain) => ({
@@ -188,8 +188,9 @@ function RequestsGrid() {
         }),
         {} as Record<SupportedChainId, RequestsQuery["requests"]>,
       ),
-    ).slice(0, REQUESTS_BATCH_SIZE * filter.cursor),
+    ),
   );
+  const requests = loadedRequests.slice(0, REQUESTS_BATCH_SIZE * filter.cursor);
 
   const loading = useLoading(true, "init");
   const [pending, loadingType] = loading.use();
@@ -383,7 +384,11 @@ function RequestsGrid() {
   const hasActiveFilter =
     !!filter.search || filter.status !== RequestStatus.ALL || !!filter.chainId;
   const showLoadMore =
-    !showSkeleton && !showError && !showEmpty && requests.length > 0 && hasMore;
+    !showSkeleton &&
+    !showError &&
+    !showEmpty &&
+    requests.length > 0 &&
+    (hasMore || loadedRequests.length > requests.length);
 
   return (
     <>
