@@ -47,7 +47,7 @@ const CopyButton: React.FC<CopyButtonProps> = ({
       className={cn("btn-primary px-6 py-2.5 text-sm", className)}
     >
       <CopyIcon className="mr-2 h-4 w-4" />
-      Copy Link
+      Invite &amp; Earn
     </button>
   );
 };

@@ -12,7 +12,11 @@ query ReferralRefereeProfiles($ids: [Bytes!]) {
       first: 1
       orderBy: creationTime
       orderDirection: desc
-      where: { revocation: true, status: "resolved", winnerParty_: { id: "requester" } }
+      where: {
+        revocation: true
+        status: "resolved"
+        winnerParty_: { id: "requester" }
+      }
     ) {
       creationTime
     }

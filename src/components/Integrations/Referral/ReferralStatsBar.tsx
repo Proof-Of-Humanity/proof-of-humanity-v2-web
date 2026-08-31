@@ -15,9 +15,11 @@ const Stat: React.FC<{
   value: string;
   tag?: React.ReactNode;
 }> = ({ label, value, tag }) => (
-  <div className="flex items-center gap-2 whitespace-nowrap">
-    <span className="text-secondaryText">{label}:</span>
-    <span className="text-primaryText font-semibold">{value}</span>
+  <div className="flex flex-wrap items-center gap-2">
+    <span className="text-secondaryText whitespace-nowrap">{label}:</span>
+    <span className="text-primaryText whitespace-nowrap font-semibold">
+      {value}
+    </span>
     {tag}
   </div>
 );
@@ -32,9 +34,9 @@ const ReferralStatsBar: React.FC<ReferralStatsBarProps> = ({
   stats,
   rewardsOnHold,
 }) => (
-  <div className="flex flex-nowrap items-center gap-x-4 overflow-visible rounded-2xl bg-white/[0.03] px-4 py-2 text-sm">
+  <div className="flex flex-wrap items-center gap-x-4 gap-y-1 overflow-visible rounded-2xl bg-white/[0.03] px-4 py-2 text-sm lg:flex-nowrap">
     <Stat
-      label="Total verified referrals"
+      label="Successful referrals"
       value={String(stats.verifiedReferrals)}
     />
     <Divider />
@@ -51,12 +53,17 @@ const ReferralStatsBar: React.FC<ReferralStatsBarProps> = ({
         )
       }
     />
+    {/* TODO(referral): monthly cap meter ("Payouts this month: N/25" + "Cap
+        reached" tag). The data layer is ready — `fetchMonthlyPayoutUsage` in
+        data/referral.ts and the `MonthlyPayoutUsage` type — deliberately not
+        rendered yet. When adding it back, keep the Stat wrappable so the tag
+        can break to its own line on mobile. */}
     <Divider />
     <InfoTooltip
       align="center"
       side="above"
-      className="border-stroke bg-whiteBackground ml-auto shrink-0 rounded-full border px-4 py-2"
-      label={<span className="text-secondaryText">Auto Rewards</span>}
+      className="ml-auto shrink-0"
+      label={<span className="text-secondaryText">Auto Payouts</span>}
     >
       Rewards will be processed automatically
     </InfoTooltip>

@@ -1,3 +1,4 @@
+import { ChainSet, configSetSelection } from "contracts";
 import {
   PohReferralPayoutTransactionStatus,
   PohReferralReviewStatus,
@@ -5,21 +6,30 @@ import {
 import {
   ReferralStep,
   ReferredUser,
-  ReferredVerification,
+  ReferredRegistryStatus,
 } from "types/referral";
 
 export const formatPnk = (amount: number) =>
   `${amount.toLocaleString("en-US")} PNK`;
 
-/** Display-only; the full link is what gets copied. */
+const IS_MAINNET = configSetSelection.chainSet === ChainSet.MAINNETS;
+export const REFERRAL_EXPIRY_WINDOW_DAYS = 30;
+export const REFERRAL_EXPIRY_WINDOW_MS =
+  REFERRAL_EXPIRY_WINDOW_DAYS * 24 * 60 * 60 * 1000;
+export const REFERRAL_MONTHLY_PAYOUT_CAP = 25;
+
+/** Display default for marketing copy; the authoritative per-referral amount
+ *  is `rewardAmount` from the API. */
+export const REFERRAL_REWARD_PNK = IS_MAINNET ? 250 : 2;
+
 export const shortenReferralLink = (link: string) => {
   const [base, ref] = link.split("?ref=");
   if (!ref) return link;
   return `${base}?ref=${ref.slice(0, 5)}...`;
 };
 
-export const VERIFICATION_META: Record<
-  ReferredVerification,
+export const REGISTRY_STATUS_META: Record<
+  ReferredRegistryStatus,
   { label: string; text: string; description?: string }
 > = {
   "not-registered": {
@@ -37,38 +47,36 @@ export const VERIFICATION_META: Record<
   "revocation-pending": {
     label: "Revocation Pending",
     text: "text-status-revocation",
-    description:
-      "Someone requested this referee's removal from the registry.",
+    description: "This referee's removal from the registry has been requested.",
   },
   removed: {
     label: "Removed from Registry",
     text: "text-status-rejected",
     description:
-      "This referee was verified but has since been removed from the registry.",
+      "This referee was previously verified but has since been removed from the PoH registry.",
   },
   expired: {
     label: "Registration Expired",
     text: "text-secondaryText",
-    description: "This referee's registration lapsed and can be renewed.",
+    description: "This referee's registration has expired and can be renewed.",
   },
 };
 
-export const getVerificationDescription = (
+export const getRegistryStatusDescription = (
   user: ReferredUser,
 ): string | undefined => {
-  const base = VERIFICATION_META[user.verification].description;
-  if (base === undefined) return undefined;
-  if (user.payoutStatus === PohReferralPayoutTransactionStatus.Confirmed)
-    return user.verification === "removed" || user.verification === "expired"
-      ? `${base} The reward already paid is unaffected.`
-      : base;
-  if (user.verification === "revocation-pending")
-    // A broadcast payout can no longer be stopped; only an unsent reward is
-    // actually held back by the pending revocation.
-    return user.payoutStatus === PohReferralPayoutTransactionStatus.NotSent
-      ? `${base} The reward is on hold until the request resolves.`
-      : `${base} The payout already in flight is unaffected.`;
-  return base;
+  if (user.payoutStatus === PohReferralPayoutTransactionStatus.Confirmed) {
+    if (user.registryStatus === "removed")
+      return "This referee was verified but has since been removed from the registry. The reward already paid is unaffected.";
+    if (user.registryStatus === "expired")
+      return "This referee's registration has expired and can be renewed. The reward already paid is unaffected.";
+    return REGISTRY_STATUS_META[user.registryStatus].description;
+  }
+  if (user.registryStatus === "revocation-pending")
+    return isPayoutInFlight(user)
+      ? "This referee's removal from the registry has been requested. The payout already in flight is unaffected."
+      : "A request has been made to remove this referee from the registry. The reward is on hold until the request is resolved.";
+  return REGISTRY_STATUS_META[user.registryStatus].description;
 };
 
 export const REFERRAL_STEPS: ReferralStep[] = [
@@ -87,49 +95,73 @@ export const REFERRAL_STEP_LABELS: Record<ReferralStep, string> = {
   paid: "Paid",
 };
 
-/**
- * The funnel is stopped (flagged or rejected/awaiting admin review) and the
- * stepper should render frozen at its current step rather than implying
- * progress. Paid rows are never halted — the reward already went out — and
- * neither are broadcast (Pending) payouts: the transaction is in flight and
- * nothing shown here can stop it.
- */
+export const REFERRAL_STEP_TOOLTIPS: Record<ReferralStep, string> = {
+  started: `This user joined through your referral link. They have ${REFERRAL_EXPIRY_WINDOW_DAYS} days to get verified, and the reward must clear a review window before that deadline.`,
+  "in-progress": "This user has started their PoH registration.",
+  verified:
+    "This user completed their registration and is now verified on PoH. The reward is released after a review window.",
+  "reward-pending":
+    "Your referral is eligible for a reward. Payouts are released automatically once the review window has passed.",
+  paid: "Your referral reward has been sent to your wallet.",
+};
+
+const hasReservedPayout = (user: ReferredUser): boolean =>
+  user.payoutTxHash !== null;
+
+/** Reserved but not yet confirmed on chain. NotSent already carries the signed
+ *  transaction, so it is in flight exactly like Pending. */
+export const isPayoutInFlight = (user: ReferredUser): boolean =>
+  hasReservedPayout(user) &&
+  user.payoutStatus !== PohReferralPayoutTransactionStatus.Confirmed;
+
+export const isReferralExpired = (
+  user: ReferredUser,
+  nowMs = Date.now(),
+): boolean =>
+  !hasReservedPayout(user) &&
+  user.reviewStatus === PohReferralReviewStatus.Active &&
+  nowMs - user.createdAtMs > REFERRAL_EXPIRY_WINDOW_MS;
+
+export const isRewardAwaitingReview = (user: ReferredUser): boolean =>
+  user.registryStatus === "verified" &&
+  !hasReservedPayout(user) &&
+  !isReferralHalted(user);
+
 export const isReferralHalted = (user: ReferredUser): boolean =>
-  user.payoutStatus === PohReferralPayoutTransactionStatus.NotSent &&
-  (user.refereeFlagged ||
+  !hasReservedPayout(user) &&
+  (isReferralExpired(user) ||
+    user.refereeFlagged ||
     user.reviewStatus === PohReferralReviewStatus.Rejected ||
     user.reviewStatus === PohReferralReviewStatus.NeedsReview ||
-    user.verification === "rejected" ||
-    user.verification === "revocation-pending" ||
-    user.verification === "removed");
+    user.registryStatus === "rejected" ||
+    user.registryStatus === "revocation-pending" ||
+    user.registryStatus === "removed" ||
+    user.registryStatus === "expired");
 
-/** Payout progress wins over verification (it's the later half of the funnel). */
+/** Payout progress wins over registry status (it's the later half of the funnel). */
 export const deriveStep = (user: ReferredUser): ReferralStep => {
   if (user.payoutStatus === PohReferralPayoutTransactionStatus.Confirmed)
     return "paid";
   // Reward is locked in and pays automatically: referee verified, review
   // clean, nobody flagged.
   const rewardLocked =
-    user.verification === "verified" &&
+    user.registryStatus === "verified" &&
     !user.refereeFlagged &&
+    !isReferralExpired(user) &&
     user.reviewStatus !== PohReferralReviewStatus.NeedsReview &&
     user.reviewStatus !== PohReferralReviewStatus.Rejected;
+  if (isPayoutInFlight(user) || rewardLocked) return "reward-pending";
   if (
-    user.payoutStatus === PohReferralPayoutTransactionStatus.Pending ||
-    rewardLocked
-  )
-    return "reward-pending";
-  if (
-    user.verification === "verified" ||
-    user.verification === "revocation-pending" ||
-    user.verification === "removed" ||
-    user.verification === "expired"
+    user.registryStatus === "verified" ||
+    user.registryStatus === "revocation-pending" ||
+    user.registryStatus === "removed" ||
+    user.registryStatus === "expired"
   )
     return "verified";
   if (
-    user.verification === "in-review" ||
-    user.verification === "needs-vouch" ||
-    user.verification === "rejected"
+    user.registryStatus === "in-review" ||
+    user.registryStatus === "needs-vouch" ||
+    user.registryStatus === "rejected"
   )
     return "in-progress";
   return "started";

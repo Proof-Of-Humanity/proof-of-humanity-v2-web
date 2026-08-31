@@ -3,7 +3,8 @@ import {
   PohReferralReviewStatus,
 } from "generated/atlas";
 
-export type ReferredVerification =
+/** Referee's PoH registry state, resolved from the subgraph — not Atlas review. */
+export type ReferredRegistryStatus =
   | "not-registered"
   | "needs-vouch"
   | "in-review"
@@ -31,8 +32,10 @@ export interface ReferredUser {
   chainId?: number;
   reviewStatus: PohReferralReviewStatus;
   payoutStatus: PohReferralPayoutTransactionStatus;
-  verification: ReferredVerification;
+  registryStatus: ReferredRegistryStatus;
   refereeFlagged: boolean;
+  /** Attribution time in epoch ms; the expiry window counts from this. */
+  createdAtMs: number;
   /** PNK locked for this referral (display units; API returns wei). */
   rewardAmount: number;
   /** Payout transaction hash once the bot has sent it; null before. */
@@ -45,6 +48,14 @@ export interface ReferralStats {
   paidRewards: number;
   /** PNK pending payout (display units). */
   pendingRewards: number;
+}
+
+export interface MonthlyPayoutUsage {
+  /** Referrals assigned to a payout batch this UTC month. */
+  used: number;
+  cap: number;
+  /** True when the caller has more referrals than one page (100) can count. */
+  approximate: boolean;
 }
 
 export interface ReferrerSummary {

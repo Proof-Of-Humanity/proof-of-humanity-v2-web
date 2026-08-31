@@ -6,12 +6,17 @@ import { useQuery } from "@tanstack/react-query";
 import {
   fetchReferralPage,
   fetchReferrerSummary,
+  HUMAN_CONNECTOR_THRESHOLD,
   REFERRALS_PAGE_SIZE,
 } from "data/referral";
+import { REFERRAL_REWARD_PNK } from "data/referralPresentation";
 import ReferralIcon from "icons/Referral.svg";
 import { useEffect, useState } from "react";
 import { useAccount } from "wagmi";
-import ReferralCard from "./ReferralCard";
+import CopyButton from "./CopyButton";
+import ReferralCard, { SHARE_MESSAGE } from "./ReferralCard";
+import ReferralLinkRow from "./ReferralLinkRow";
+import ShareButtons from "./ShareButtons";
 
 const CardShell: React.FC<{ children: React.ReactNode }> = ({ children }) => (
   <div className="paper p-5 md:p-7">
@@ -20,11 +25,18 @@ const CardShell: React.FC<{ children: React.ReactNode }> = ({ children }) => (
       <h2 className="text-xl font-semibold">Referral</h2>
     </div>
 
-    <h3 className="text-primaryText font-semibold">Invite Humans</h3>
+    <h3 className="text-primaryText font-semibold">
+      Invite Humans &amp; Earn PNK
+    </h3>
     <p className="text-secondaryText mt-1 max-w-3xl text-sm">
-      Earn 250 PNK when someone you invite becomes verified on PoH. Completing 5
-      successful verified referrals, you get the exclusive Human Connector
-      badge.
+      Earn {REFERRAL_REWARD_PNK} PNK per successful referral. Complete{" "}
+      {HUMAN_CONNECTOR_THRESHOLD} successful referrals to unlock the Human
+      Connector badge.
+    </p>
+    <p className="text-secondaryText mt-2 max-w-3xl text-sm">
+      <span className="text-primaryText font-medium">How referrals work:</span>{" "}
+      invite someone to PoH → they register → they become verified → you earn
+      your reward.
     </p>
 
     {children}
@@ -37,18 +49,19 @@ const ReferralDashboard = () => {
   const account = address?.toLowerCase() as `0x${string}` | undefined;
   const [currentPage, setCurrentPage] = useState(0);
 
-  const canFetch = Boolean(account && isSignedIn);
-
+  // The referral link only needs the subgraph, so a connected wallet is
+  // enough; stats and the referred list are JWT-scoped Atlas reads and stay
+  // behind sign-in.
   const referrer = useQuery({
     queryKey: ["referral-referrer", account],
     queryFn: () => fetchReferrerSummary(account!),
-    enabled: canFetch,
+    enabled: Boolean(account),
   });
 
   const referralPage = useQuery({
     queryKey: ["referral-page", account, currentPage],
     queryFn: () => fetchReferralPage(currentPage),
-    enabled: canFetch && Boolean(referrer.data),
+    enabled: Boolean(account && isSignedIn) && Boolean(referrer.data),
     // Keep the previous page rendered during a page switch, but never carry
     // another wallet's data across an account change.
     placeholderData: (previousData, previousQuery) =>
@@ -68,21 +81,19 @@ const ReferralDashboard = () => {
 
   // No hooks below — the early returns inside this closure are safe.
   const body = (() => {
-    if (!canFetch)
+    if (!account)
       return (
         <CardShell>
           <div className="mt-5 flex flex-col items-start gap-3">
             <p className="text-secondaryText text-sm">
-              {address
-                ? "Sign in to get your referral link and track your rewards."
-                : "Connect your wallet and sign in to get your referral link."}
+              Connect your wallet and sign in to get your referral link.
             </p>
             <SignInButton />
           </div>
         </CardShell>
       );
 
-    if (referrer.error || referralPage.error)
+    if (referrer.error || (referralPage.error && isSignedIn))
       return (
         <CardShell>
           <div className="mt-5 flex flex-col items-start gap-3">
@@ -110,6 +121,34 @@ const ReferralDashboard = () => {
             Only verified humans can invite others. Claim your humanity to get
             your referral link.
           </p>
+        </CardShell>
+      );
+
+    // Wallet connected but not signed in to Atlas: the link and share
+    // actions work; only reward tracking is locked.
+    if (referrer.data && !isSignedIn)
+      return (
+        <CardShell>
+          <div className="mt-5">
+            <ReferralLinkRow
+              link={referrer.data.referralLink}
+              avatarAddress={referrer.data.humanityId}
+              photo={referrer.data.photo}
+            />
+          </div>
+          <div className="mt-4 flex flex-col items-start gap-4 sm:flex-row sm:items-center">
+            <CopyButton value={referrer.data.referralLink} />
+            <ShareButtons
+              link={referrer.data.referralLink}
+              message={SHARE_MESSAGE}
+            />
+          </div>
+          <div className="mt-5 flex flex-col items-start gap-3">
+            <p className="text-secondaryText text-sm">
+              Sign in to track your rewards.
+            </p>
+            <SignInButton />
+          </div>
         </CardShell>
       );
 

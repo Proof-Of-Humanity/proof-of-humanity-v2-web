@@ -1,6 +1,7 @@
 "use client";
 
 import cn from "classnames";
+import { REFERRAL_EXPIRY_WINDOW_DAYS } from "data/referralPresentation";
 import WarningIcon from "icons/WarningCircle16.svg";
 import { ReferralPage, ReferrerSummary } from "types/referral";
 import CopyButton from "./CopyButton";
@@ -10,7 +11,7 @@ import ReferralStatsBar from "./ReferralStatsBar";
 import ReferredList from "./ReferredList";
 import ShareButtons from "./ShareButtons";
 
-const SHARE_MESSAGE =
+export const SHARE_MESSAGE =
   "Join Proof of Humanity, the registry of real humans, and claim your rewards:";
 
 const HoldNotice: React.FC<{ title: string; children: React.ReactNode }> = ({
@@ -67,28 +68,43 @@ const ReferralCard: React.FC<ReferralCardProps> = ({
         <ShareButtons link={link} message={SHARE_MESSAGE} />
       </div>
 
+      <p className="text-secondaryText mt-2 text-xs">
+        Referees must get verified within {REFERRAL_EXPIRY_WINDOW_DAYS} days of
+        using your link. Rewards are released automatically once they clear a
+        review window.
+      </p>
+
       {referralPage.humanityFlagged ? (
         <HoldNotice title="Rewards on hold">
-          Your profile is under review. Referral payouts are paused until it
-          clears — pending rewards stay reserved and pay out automatically
-          after.
+          Your profile is under review. Referral rewards are paused and will be
+          paid automatically once your profile is cleared.
         </HoldNotice>
       ) : (
         referrer.pendingRevocation && (
-          <HoldNotice title="Your registration is being challenged">
-            A revocation request is pending against your profile. If it
-            succeeds, referral payouts stop — pending rewards resume
-            automatically if you keep your registration.
+          <HoldNotice title="Your profile has a pending removal request">
+            A removal request is pending against your profile. Referral rewards
+            are paused until the request is resolved.
           </HoldNotice>
         )
       )}
 
-      <div className="mt-5">
-        <ReferralStatsBar
-          stats={referralPage.stats}
-          rewardsOnHold={referralPage.humanityFlagged}
-        />
-      </div>
+      {referralPage.totalCount === 0 ? (
+        <div className="mt-5">
+          <p className="text-primaryText font-semibold">
+            You haven&apos;t invited anyone yet.
+          </p>
+          <p className="text-secondaryText mt-1 text-sm">
+            Share your referral link to earn your first reward.
+          </p>
+        </div>
+      ) : (
+        <div className="mt-5">
+          <ReferralStatsBar
+            stats={referralPage.stats}
+            rewardsOnHold={referralPage.humanityFlagged}
+          />
+        </div>
+      )}
 
       <div
         className={cn(

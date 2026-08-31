@@ -3,10 +3,10 @@
   "version": "1.0.0",
   "license": "MIT",
   "devDependencies": {
-    "@graphql-codegen/cli": "2.6.2",
-    "@graphql-codegen/typescript": "2.4.9",
+    "@graphql-codegen/cli": "^5.0.7",
+    "@graphql-codegen/typescript": "^4.1.6",
     "@graphql-codegen/typescript-graphql-request": "^6.3.0",
-    "@graphql-codegen/typescript-operations": "2.3.6",
+    "@graphql-codegen/typescript-operations": "^4.6.1",
     "@netlify/functions": "^5.1.2",
     "@supabase/supabase-js": "^2.36.0",
     "@svgr/webpack": "^8.1.0",

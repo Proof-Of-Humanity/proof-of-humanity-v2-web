@@ -1,4 +1,4 @@
-query PohReferralDashboard($pagination: PaginationArgs) {
+query PohReferralDashboard($pagination: ReferralPaginationInput) {
   humanityFlag
   pohReferralStats {
     verifiedReferrals
@@ -12,9 +12,11 @@ query PohReferralDashboard($pagination: PaginationArgs) {
         refereeHumanityId
         reviewStatus
         rewardAmount
+        createdAt
         payoutTransaction {
           status
           txHash
+          createdAt
         }
         refereeFlag {
           isFlagged

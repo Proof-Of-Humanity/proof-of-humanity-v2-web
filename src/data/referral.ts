@@ -3,16 +3,19 @@ import { supportedChains } from "config/chains";
 import { sdk } from "config/subgraph";
 import {
   PohReferralPayoutTransactionStatus,
-  SortByTimeStamp,
+  PohReferralSortField,
+  SortDirection,
 } from "generated/atlas";
 import {
+  MonthlyPayoutUsage,
   ReferralPage,
   ReferredUser,
-  ReferredVerification,
+  ReferredRegistryStatus,
   ReferrerSummary,
 } from "types/referral";
 import { formatUnits } from "viem";
 import { getRegistrationPhoto } from "./evidence";
+import { REFERRAL_MONTHLY_PAYOUT_CAP } from "./referralPresentation";
 
 interface ReferrerProfile {
   humanityId: `0x${string}`;
@@ -55,7 +58,7 @@ interface RefereeProfile {
   name?: string;
   photo?: string | null;
   chainId?: number;
-  verification: ReferredVerification;
+  registryStatus: ReferredRegistryStatus;
 }
 
 const resolveRefereeProfiles = async (
@@ -98,35 +101,34 @@ const resolveRefereeProfiles = async (
     const removedAfterLatestClaim =
       latestRemoval !== undefined &&
       (latestClaim === undefined ||
-        BigInt(latestRemoval.creationTime) >=
-          BigInt(latestClaim.creationTime));
+        BigInt(latestRemoval.creationTime) >= BigInt(latestClaim.creationTime));
     const transferredToAnotherChain =
       latestClaim?.status.id === "transferred" && !removedAfterLatestClaim;
 
-    let verification: ReferredVerification;
+    let registryStatus: ReferredRegistryStatus;
     if (isRegistered)
-      verification = humanity.pendingRevocation
+      registryStatus = humanity.pendingRevocation
         ? "revocation-pending"
         : "verified";
-    else if (claimRejected) verification = "rejected";
+    else if (claimRejected) registryStatus = "rejected";
     else if (claimWon) {
       // A revocation dispute can outlive the registration's expiry; keep the
       // dispute (and its reward hold) visible until the request resolves.
       if (registrationLapsed)
-        verification = humanity.pendingRevocation
+        registryStatus = humanity.pendingRevocation
           ? "revocation-pending"
           : "expired";
-      else if (transferredToAnotherChain) verification = "verified";
-      else verification = "removed";
+      else if (transferredToAnotherChain) registryStatus = "verified";
+      else registryStatus = "removed";
     } else if (latestClaim?.status.id === "vouching")
-      verification = "needs-vouch";
+      registryStatus = "needs-vouch";
     else if (
       latestClaim?.status.id === "resolving" ||
       latestClaim?.status.id === "disputed"
     )
-      verification = "in-review";
+      registryStatus = "in-review";
     // No live claim (never claimed, or withdrawn).
-    else verification = "not-registered";
+    else registryStatus = "not-registered";
 
     // Rank how "alive" this chain's record is, so a transfer's stale source
     // entry never shadows the destination chain's record. A transferred-away
@@ -146,7 +148,7 @@ const resolveRefereeProfiles = async (
         latestClaim?.claimer.name?.trim() ||
         undefined,
       chainId,
-      verification,
+      registryStatus,
       evidenceUri: latestClaim?.evidenceGroup.evidence[0]?.uri,
       liveliness,
     };
@@ -189,6 +191,30 @@ export const fetchVerifiedReferralCount = async (): Promise<number> => {
   return pohReferralStats.verifiedReferrals;
 };
 
+export const fetchMonthlyPayoutUsage =
+  async (): Promise<MonthlyPayoutUsage> => {
+    const { pohReferrals } = await getAuthedAtlasSdk().PohReferralDashboard({
+      pagination: {
+        skip: 0,
+        take: 100,
+        orderBy: PohReferralSortField.CreatedAt,
+        orderDirection: SortDirection.Desc,
+      },
+    });
+    const now = new Date();
+    const monthStartMs = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1);
+    const used = (pohReferrals.items ?? []).filter(
+      ({ item }) =>
+        item.payoutTransaction &&
+        Date.parse(item.payoutTransaction.createdAt) >= monthStartMs,
+    ).length;
+    return {
+      used,
+      cap: REFERRAL_MONTHLY_PAYOUT_CAP,
+      approximate: pohReferrals.count > 100,
+    };
+  };
+
 export const fetchReferrerSummary = async (
   address: `0x${string}`,
 ): Promise<ReferrerSummary | null> => {
@@ -212,7 +238,8 @@ export const fetchReferralPage = async (
       pagination: {
         skip: pageIndex * REFERRALS_PAGE_SIZE,
         take: REFERRALS_PAGE_SIZE,
-        sortByTimeStamp: SortByTimeStamp.Desc,
+        orderBy: PohReferralSortField.CreatedAt,
+        orderDirection: SortDirection.Desc,
       },
     });
 
@@ -236,8 +263,9 @@ export const fetchReferralPage = async (
         referral.payoutTransaction?.status ??
         PohReferralPayoutTransactionStatus.NotSent,
       // Attribution can exist before the referee even starts a claim.
-      verification: refereeProfile?.verification ?? "not-registered",
+      registryStatus: refereeProfile?.registryStatus ?? "not-registered",
       refereeFlagged: referral.refereeFlag?.isFlagged ?? false,
+      createdAtMs: Date.parse(referral.createdAt),
       rewardAmount: toPnk(referral.rewardAmount),
       payoutTxHash: referral.payoutTransaction?.txHash ?? null,
     };

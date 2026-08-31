@@ -11,35 +11,20 @@ import {
   fetchVerifiedReferralCount,
 } from "data/referral";
 import ReferralIcon from "icons/Referral.svg";
+import { ReferrerSummary } from "types/referral";
 import { safeIpfsUrl } from "utils/ipfs";
 import { Address } from "viem";
 import { useAccount } from "wagmi";
 
-export default function InviteHumansBanner({
-  claimerId,
+export function InviteHumansBannerView({
+  referrer,
+  verifiedInvites,
   className,
 }: {
-  claimerId: Address;
+  referrer: ReferrerSummary;
+  verifiedInvites?: number;
   className?: string;
 }) {
-  const { address } = useAccount();
-  const { isVerified: isSignedIn } = useAtlasProvider();
-  const isOwnProfile =
-    !!address && address.toLowerCase() === claimerId.toLowerCase();
-
-  const { data: referrer = null } = useQuery({
-    queryKey: ["referrer-summary", address?.toLowerCase()],
-    queryFn: () => fetchReferrerSummary(address as `0x${string}`),
-    enabled: isOwnProfile,
-  });
-
-  const { data: verifiedInvites } = useQuery({
-    queryKey: ["verified-referral-count", address?.toLowerCase()],
-    queryFn: fetchVerifiedReferralCount,
-    enabled: isOwnProfile && isSignedIn,
-  });
-
-  if (!isOwnProfile || !referrer) return null;
   const photoUrl = safeIpfsUrl(referrer.photo);
 
   return (
@@ -80,7 +65,7 @@ export default function InviteHumansBanner({
               {referrer.name || "Your profile"}
             </span>
             <span className="text-orange inline-flex shrink-0 items-center gap-2 text-sm">
-              Copy Link
+              Invite &amp; Earn
               <CopyButton
                 value={referrer.referralLink}
                 label="Copy Link"
@@ -100,5 +85,40 @@ export default function InviteHumansBanner({
         </div>
       </div>
     </div>
+  );
+}
+
+export default function InviteHumansBanner({
+  claimerId,
+  className,
+}: {
+  claimerId: Address;
+  className?: string;
+}) {
+  const { address } = useAccount();
+  const { isVerified: isSignedIn } = useAtlasProvider();
+  const isOwnProfile =
+    !!address && address.toLowerCase() === claimerId.toLowerCase();
+
+  const { data: referrer = null } = useQuery({
+    queryKey: ["referrer-summary", address?.toLowerCase()],
+    queryFn: () => fetchReferrerSummary(address as `0x${string}`),
+    enabled: isOwnProfile,
+  });
+
+  const { data: verifiedInvites } = useQuery({
+    queryKey: ["verified-referral-count", address?.toLowerCase()],
+    queryFn: fetchVerifiedReferralCount,
+    enabled: isOwnProfile && isSignedIn,
+  });
+
+  if (!isOwnProfile || !referrer) return null;
+
+  return (
+    <InviteHumansBannerView
+      referrer={referrer}
+      verifiedInvites={verifiedInvites}
+      className={className}
+    />
   );
 }
