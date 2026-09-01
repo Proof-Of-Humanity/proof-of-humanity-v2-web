@@ -28,7 +28,7 @@ import PageNumbers from "components/Integrations/Referral/PageNumbers";
 // ShareModal was dead code and is being deleted in the cleanup pass — not imported here.
 import CopyButton from "components/Integrations/Referral/CopyButton";
 import ReferralDashboard from "components/Integrations/Referral/ReferralDashboard";
-import InviteHumansBanner from "components/Integrations/Referral/InviteHumansBanner";
+import { InviteHumansBannerView } from "components/Integrations/Referral/InviteHumansBanner";
 import InfoTooltip from "components/InfoTooltip";
 
 // ---------------------------------------------------------------- boundary
@@ -97,11 +97,12 @@ const CHIADO = 10200;
 const base: Omit<ReferredUser, "refereeHumanityId"> = {
   reviewStatus: Review.Active,
   payoutStatus: Payout.NotSent,
-  verification: "not-registered",
+  registryStatus: "not-registered",
   refereeFlagged: false,
   rewardAmount: 250,
   photo: null,
   payoutTxHash: null,
+  createdAtMs: Date.now() - 2 * 24 * 60 * 60 * 1000,
 };
 
 const rows: ReferredUser[] = [
@@ -111,7 +112,7 @@ const rows: ReferredUser[] = [
   {
     ...base,
     refereeHumanityId: addr(0x22),
-    verification: "needs-vouch",
+    registryStatus: "needs-vouch",
     chainId: SEPOLIA,
   },
   // 3. in-review -> "In Review", step "in-progress"
@@ -119,7 +120,7 @@ const rows: ReferredUser[] = [
     ...base,
     refereeHumanityId: addr(0x33),
     name: "Chen Wu",
-    verification: "in-review",
+    registryStatus: "in-review",
     chainId: CHIADO,
   },
   // 4. verified / payout NOT_SENT -> "Verified Human", step "reward-pending"
@@ -127,7 +128,7 @@ const rows: ReferredUser[] = [
     ...base,
     refereeHumanityId: addr(0x44),
     name: "Dara Okoye",
-    verification: "verified",
+    registryStatus: "verified",
     chainId: SEPOLIA,
   },
   // 5. verified / payout PENDING + txHash -> "Payout pending · View transaction"
@@ -135,7 +136,7 @@ const rows: ReferredUser[] = [
     ...base,
     refereeHumanityId: addr(0x55),
     name: "Eli Novak",
-    verification: "verified",
+    registryStatus: "verified",
     payoutStatus: Payout.Pending,
     payoutTxHash: TX,
     chainId: CHIADO,
@@ -145,24 +146,24 @@ const rows: ReferredUser[] = [
     ...base,
     refereeHumanityId: addr(0x66),
     name: "Farrah Idris",
-    verification: "verified",
+    registryStatus: "verified",
     payoutStatus: Payout.Confirmed,
     payoutTxHash: TX,
     chainId: SEPOLIA,
   },
-  // 7. verification rejected -> "Claim Rejected" + description, halted
+  // 7. registry claim rejected -> "Claim Rejected" + description, halted
   {
     ...base,
     refereeHumanityId: addr(0x77),
     name: "Gus Halvorsen",
-    verification: "rejected",
+    registryStatus: "rejected",
   },
   // 8. revocation-pending -> "Revocation Pending" + description, halted
   {
     ...base,
     refereeHumanityId: addr(0x88),
     name: "Hana Brenner",
-    verification: "revocation-pending",
+    registryStatus: "revocation-pending",
     chainId: SEPOLIA,
   },
   // 8a. revocation-pending AFTER the payout broadcast -> "payout in flight
@@ -171,7 +172,7 @@ const rows: ReferredUser[] = [
     ...base,
     refereeHumanityId: addr(0x8a),
     name: "Hakim Diallo",
-    verification: "revocation-pending",
+    registryStatus: "revocation-pending",
     payoutStatus: Payout.Pending,
     payoutTxHash: TX,
     chainId: SEPOLIA,
@@ -181,7 +182,7 @@ const rows: ReferredUser[] = [
     ...base,
     refereeHumanityId: addr(0x8b),
     name: "Hugo Lindqvist",
-    verification: "removed",
+    registryStatus: "removed",
     chainId: SEPOLIA,
   },
   // 8c. removed AFTER a confirmed payout -> badge shows removal, step stays "paid"
@@ -189,7 +190,7 @@ const rows: ReferredUser[] = [
     ...base,
     refereeHumanityId: addr(0x8c),
     name: "Ida Castellanos",
-    verification: "removed",
+    registryStatus: "removed",
     payoutStatus: Payout.Confirmed,
     payoutTxHash: TX,
     chainId: CHIADO,
@@ -199,7 +200,7 @@ const rows: ReferredUser[] = [
     ...base,
     refereeHumanityId: addr(0x8d),
     name: "Imre Farkas",
-    verification: "expired",
+    registryStatus: "expired",
     payoutStatus: Payout.Confirmed,
     payoutTxHash: TX,
     chainId: SEPOLIA,
@@ -209,7 +210,7 @@ const rows: ReferredUser[] = [
     ...base,
     refereeHumanityId: addr(0x8e),
     name: "Ines Barbosa",
-    verification: "expired",
+    registryStatus: "expired",
     chainId: CHIADO,
   },
   // 9. reviewStatus NEEDS_REVIEW -> "Needs Review", halted
@@ -217,7 +218,7 @@ const rows: ReferredUser[] = [
     ...base,
     refereeHumanityId: addr(0x99),
     name: "Iris Kovacs",
-    verification: "verified",
+    registryStatus: "verified",
     reviewStatus: Review.NeedsReview,
   },
   // 9b. reviewStatus APPROVED -> same as active (reward pending if verified)
@@ -225,7 +226,7 @@ const rows: ReferredUser[] = [
     ...base,
     refereeHumanityId: addr(0x9a),
     name: "Ivo Petrov",
-    verification: "verified",
+    registryStatus: "verified",
     reviewStatus: Review.Approved,
   },
   // 10. reviewStatus REJECTED -> "Referral Rejected", halted
@@ -233,7 +234,7 @@ const rows: ReferredUser[] = [
     ...base,
     refereeHumanityId: addr(0xaa),
     name: "Jonas Meier",
-    verification: "verified",
+    registryStatus: "verified",
     reviewStatus: Review.Rejected,
   },
   // 11. refereeFlagged -> "Referee Flagged", halted (wins over everything)
@@ -241,7 +242,7 @@ const rows: ReferredUser[] = [
     ...base,
     refereeHumanityId: addr(0xbb),
     name: "Kira Solberg",
-    verification: "verified",
+    registryStatus: "verified",
     refereeFlagged: true,
   },
   // 11b. flagged AFTER payout broadcast — badge must not claim the in-flight
@@ -250,7 +251,7 @@ const rows: ReferredUser[] = [
     ...base,
     refereeHumanityId: addr(0xb2),
     name: "Noor Haddad",
-    verification: "verified",
+    registryStatus: "verified",
     refereeFlagged: true,
     payoutStatus: Payout.Pending,
   },
@@ -259,9 +260,49 @@ const rows: ReferredUser[] = [
     ...base,
     refereeHumanityId: addr(0xcc),
     name: "Maximilian-Alexander Von Hohenzollern-Sigmaringen",
-    verification: "verified",
+    registryStatus: "verified",
     payoutStatus: Payout.Confirmed,
     payoutTxHash: TX,
+  },
+  // 13. attributed 40 days ago, verified but never paid -> "Referral Expired", halted
+  {
+    ...base,
+    refereeHumanityId: addr(0xdd),
+    name: "Lena Kovacs",
+    registryStatus: "verified",
+    createdAtMs: Date.now() - 40 * 24 * 60 * 60 * 1000,
+  },
+  // 14. in review, attributed 25 days ago -> no countdown, plain "In Review"
+  {
+    ...base,
+    refereeHumanityId: addr(0xee),
+    name: "Milan Sato",
+    registryStatus: "in-review",
+    createdAtMs: Date.now() - 25 * 24 * 60 * 60 * 1000,
+  },
+  // 15. verified, nothing reserved -> "Reward is in the review window"
+  {
+    ...base,
+    refereeHumanityId: addr(0xef),
+    name: "Ola Fernandes",
+    registryStatus: "verified",
+  },
+  // 16. reserved but not broadcast: a signed tx exists, so the referee flag must
+  // NOT claim the reward is paused, and the stepper must not halt.
+  {
+    ...base,
+    refereeHumanityId: addr(0xf1),
+    name: "Priya Nair",
+    registryStatus: "verified",
+    refereeFlagged: true,
+    payoutTxHash: TX,
+  },
+  // 17. registration lapsed -> halted, since the backend cannot pay a lapsed owner
+  {
+    ...base,
+    refereeHumanityId: addr(0xf2),
+    name: "Quentin Baros",
+    registryStatus: "expired",
   },
 ];
 
@@ -347,7 +388,6 @@ const SECTION_IDS = [
   "s3",
   "s4",
   "s5",
-  "s6",
   "s7",
   "s8",
   "s9",
@@ -392,7 +432,7 @@ export default function DevReferralPage() {
 
         <Section
           id="s1"
-          title="1. ReferralCard — fully populated (12 referees, paged 10 + 2)"
+          title="1. ReferralCard — fully populated (22 referees, paged 10 + 10 + 2)"
           note="stats: 3 verified / 750 PNK paid / 1500 PNK pending; page numbers bottom right"
         >
           <PagedCardDemo />
@@ -584,7 +624,7 @@ export default function DevReferralPage() {
                 ...base,
                 refereeHumanityId: addr(0xed),
                 name: "Precomputed Hash",
-                verification: "verified",
+                registryStatus: "verified",
                 payoutStatus: Payout.NotSent,
                 payoutTxHash: TX,
               }}
@@ -603,7 +643,7 @@ export default function DevReferralPage() {
                 ...base,
                 refereeHumanityId: addr(0xde),
                 name: "Polygon Pete",
-                verification: "verified",
+                registryStatus: "verified",
                 chainId: 137,
               }}
             />
@@ -615,7 +655,11 @@ export default function DevReferralPage() {
           title="16. InviteHumansBanner — profile-page strip (with / without invite count)"
         >
           <div className="flex flex-col gap-4">
-            <InviteHumansBanner claimerId={addr(0xb0b1e)} />
+            <InviteHumansBannerView referrer={referrer()} />
+            <InviteHumansBannerView
+              referrer={referrer({ name: "Alice Rivera" })}
+              verifiedInvites={12}
+            />
           </div>
         </Section>
 
