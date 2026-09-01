@@ -9,6 +9,7 @@ import {
   HUMAN_CONNECTOR_THRESHOLD,
   REFERRALS_PAGE_SIZE,
 } from "data/referral";
+import { ChainSet, configSetSelection } from "contracts";
 import { REFERRAL_REWARD_PNK } from "data/referralPresentation";
 import ReferralIcon from "icons/Referral.svg";
 import { useEffect, useState } from "react";
@@ -29,9 +30,12 @@ const CardShell: React.FC<{ children: React.ReactNode }> = ({ children }) => (
       Invite Humans &amp; Earn PNK
     </h3>
     <p className="text-secondaryText mt-1 max-w-3xl text-sm">
-      Earn {REFERRAL_REWARD_PNK} PNK per successful referral. Complete{" "}
-      {HUMAN_CONNECTOR_THRESHOLD} successful referrals to unlock the Human
-      Connector badge.
+      Earn {REFERRAL_REWARD_PNK} PNK per successful referral after{" "}
+      {configSetSelection.chainSet === ChainSet.MAINNETS
+        ? "a 2 day safety window"
+        : "a 30 minute safety window"}
+      . Complete {HUMAN_CONNECTOR_THRESHOLD} successful referrals to unlock the
+      Human Connector badge.
     </p>
     <p className="text-secondaryText mt-2 max-w-3xl text-sm">
       <span className="text-primaryText font-medium">How referrals work:</span>{" "}
