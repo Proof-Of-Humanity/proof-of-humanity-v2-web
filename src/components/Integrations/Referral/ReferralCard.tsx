@@ -14,6 +14,21 @@ import ShareButtons from "./ShareButtons";
 export const SHARE_MESSAGE =
   "Join Proof of Humanity, the registry of real humans, and claim your rewards:";
 
+export const ReferralCtaNotes = () => (
+  <>
+    <p className="text-secondaryText mt-2 max-w-3xl text-xs">
+      Invitees must get verified within {REFERRAL_EXPIRY_WINDOW_DAYS} days of
+      using your link. Rewards are released automatically once they clear a
+      review window.
+    </p>
+    <p className="text-secondaryText mt-2 max-w-3xl text-sm">
+      <span className="text-primaryText font-medium">How referrals work:</span>{" "}
+      invite someone to PoH → they register → they become verified → you earn
+      your reward.
+    </p>
+  </>
+);
+
 const HoldNotice: React.FC<{ title: string; children: React.ReactNode }> = ({
   title,
   children,
@@ -67,12 +82,7 @@ const ReferralCard: React.FC<ReferralCardProps> = ({
         <CopyButton value={link} />
         <ShareButtons link={link} message={SHARE_MESSAGE} />
       </div>
-
-      <p className="text-secondaryText mt-2 text-xs">
-        Referees must get verified within {REFERRAL_EXPIRY_WINDOW_DAYS} days of
-        using your link. Rewards are released automatically once they clear a
-        review window.
-      </p>
+      <ReferralCtaNotes />
 
       {referralPage.humanityFlagged ? (
         <HoldNotice title="Rewards on hold">

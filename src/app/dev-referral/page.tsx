@@ -27,7 +27,9 @@ import ShareButtons from "components/Integrations/Referral/ShareButtons";
 import PageNumbers from "components/Integrations/Referral/PageNumbers";
 // ShareModal was dead code and is being deleted in the cleanup pass — not imported here.
 import CopyButton from "components/Integrations/Referral/CopyButton";
-import ReferralDashboard from "components/Integrations/Referral/ReferralDashboard";
+import ReferralDashboard, {
+  CardShell,
+} from "components/Integrations/Referral/ReferralDashboard";
 import { InviteHumansBannerView } from "components/Integrations/Referral/InviteHumansBanner";
 import InfoTooltip from "components/InfoTooltip";
 
@@ -237,7 +239,7 @@ const rows: ReferredUser[] = [
     registryStatus: "verified",
     reviewStatus: Review.Rejected,
   },
-  // 11. refereeFlagged -> "Referee Flagged", halted (wins over everything)
+  // 11. refereeFlagged -> "Invitee Flagged", halted (wins over everything)
   {
     ...base,
     refereeHumanityId: addr(0xbb),
@@ -345,7 +347,7 @@ const PagedCardDemo: React.FC<{
     (currentPage + 1) * PAGE_SIZE,
   );
   return (
-    <Shell>
+    <CardShell>
       <ReferralCard
         referrer={referrer(referrerOverrides)}
         referralPage={{
@@ -357,7 +359,7 @@ const PagedCardDemo: React.FC<{
         pageCount={Math.ceil(merged.referred.length / PAGE_SIZE)}
         onPageChange={setCurrentPage}
       />
-    </Shell>
+    </CardShell>
   );
 };
 
@@ -432,7 +434,7 @@ export default function DevReferralPage() {
 
         <Section
           id="s1"
-          title="1. ReferralCard — fully populated (22 referees, paged 10 + 10 + 2)"
+          title="1. ReferralCard — fully populated (22 invitees, paged 10 + 10 + 2)"
           note="stats: 3 verified / 750 PNK paid / 1500 PNK pending; page numbers bottom right"
         >
           <PagedCardDemo />
@@ -441,7 +443,7 @@ export default function DevReferralPage() {
         <Section
           id="s2"
           title="2. ReferralCard — empty state (0 referrals)"
-          note="ReferredList and page numbers should be omitted entirely"
+          note="Invitee list and page numbers should be omitted entirely"
         >
           <PagedCardDemo
             pageOverrides={{

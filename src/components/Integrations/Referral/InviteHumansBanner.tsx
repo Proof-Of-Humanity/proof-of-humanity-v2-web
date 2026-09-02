@@ -65,7 +65,7 @@ export function InviteHumansBannerView({
               {referrer.name || "Your profile"}
             </span>
             <span className="text-orange inline-flex shrink-0 items-center gap-2 text-sm">
-              Invite &amp; Earn
+              Invite Humans
               <CopyButton
                 value={referrer.referralLink}
                 label="Copy Link"

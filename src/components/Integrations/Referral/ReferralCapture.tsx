@@ -28,7 +28,7 @@ const ISSUE_COPY = {
     description: "Oops, seems like you followed an invalid referral link.",
   },
   expired: {
-    title: "The referrer has expired.",
+    title: "The inviter has expired.",
     description: "This referral can no longer be used.",
   },
   unavailable: {
@@ -161,7 +161,7 @@ const ReferralCapture = () => {
         </div>
 
         <h2 className="text-primaryText text-2xl font-semibold">
-          You&apos;ve been referred
+          You&apos;ve been invited
         </h2>
 
         {storedReferral && (
@@ -172,7 +172,7 @@ const ReferralCapture = () => {
               className="h-16 w-16 rounded-full object-cover"
             />
             <p className="text-primaryText text-lg">
-              You&apos;ve been referred by{" "}
+              You&apos;ve been invited by{" "}
               <span className="font-semibold">{storedReferral.name}</span>.
             </p>
           </div>

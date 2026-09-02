@@ -15,20 +15,23 @@ import ReferralIcon from "icons/Referral.svg";
 import { useEffect, useState } from "react";
 import { useAccount } from "wagmi";
 import CopyButton from "./CopyButton";
-import ReferralCard, { SHARE_MESSAGE } from "./ReferralCard";
+import ReferralCard, {
+  ReferralCtaNotes,
+  SHARE_MESSAGE,
+} from "./ReferralCard";
 import ReferralLinkRow from "./ReferralLinkRow";
 import ShareButtons from "./ShareButtons";
 
-const CardShell: React.FC<{ children: React.ReactNode }> = ({ children }) => (
+export const CardShell: React.FC<{ children: React.ReactNode }> = ({
+  children,
+}) => (
   <div className="paper p-5 md:p-7">
     <div className="text-orange mb-4 flex items-center gap-2">
       <ReferralIcon className="h-8 w-auto" />
       <h2 className="text-xl font-semibold">Referral</h2>
     </div>
 
-    <h3 className="text-primaryText font-semibold">
-      Invite Humans &amp; Earn PNK
-    </h3>
+    <h3 className="text-primaryText font-semibold">Invite Humans</h3>
     <p className="text-secondaryText mt-1 max-w-3xl text-sm">
       Earn {REFERRAL_REWARD_PNK} PNK per successful referral after{" "}
       {configSetSelection.chainSet === ChainSet.MAINNETS
@@ -36,11 +39,6 @@ const CardShell: React.FC<{ children: React.ReactNode }> = ({ children }) => (
         : "a 30 minute safety window"}
       . Complete {HUMAN_CONNECTOR_THRESHOLD} successful referrals to unlock the
       Human Connector badge.
-    </p>
-    <p className="text-secondaryText mt-2 max-w-3xl text-sm">
-      <span className="text-primaryText font-medium">How referrals work:</span>{" "}
-      invite someone to PoH → they register → they become verified → you earn
-      your reward.
     </p>
 
     {children}
@@ -147,6 +145,7 @@ const ReferralDashboard = () => {
               message={SHARE_MESSAGE}
             />
           </div>
+          <ReferralCtaNotes />
           <div className="mt-5 flex flex-col items-start gap-3">
             <p className="text-secondaryText text-sm">
               Sign in to track your rewards.

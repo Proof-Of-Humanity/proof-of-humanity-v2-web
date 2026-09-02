@@ -67,12 +67,12 @@ const getRowStatus = (user: ReferredUser) => {
 
   if (user.refereeFlagged)
     return {
-      label: "Referee Flagged",
+      label: "Invitee Flagged",
       text: "text-status-rejected",
       Icon: WarningIcon,
       description: payoutInFlight
-        ? "This referred profile has been flagged. The payout already in flight is unaffected; future rewards are paused."
-        : "Referral rewards are paused while this referred profile is flagged.",
+        ? "This invitee's profile has been flagged. The payout already in flight is unaffected; future rewards are paused."
+        : "Referral rewards are paused while this invitee's profile is flagged.",
     };
 
   if (user.reviewStatus === PohReferralReviewStatus.Rejected)

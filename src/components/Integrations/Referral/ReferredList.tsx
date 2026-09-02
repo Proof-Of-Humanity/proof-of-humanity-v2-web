@@ -15,7 +15,7 @@ const ReferredList: React.FC<ReferredListProps> = ({ users }) => {
 
   return (
     <div className="mt-6 flex flex-col">
-      <h3 className="text-primaryText font-semibold">Your Referrals</h3>
+      <h3 className="text-primaryText font-semibold">Your Invitees</h3>
       <p className="text-secondaryText mt-1 text-sm">
         Earn {REFERRAL_REWARD_PNK} PNK when someone you invite becomes verified
         on PoH.

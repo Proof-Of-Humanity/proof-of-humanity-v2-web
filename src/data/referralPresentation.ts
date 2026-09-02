@@ -41,24 +41,24 @@ export const REGISTRY_STATUS_META: Record<
   rejected: {
     label: "Claim Rejected",
     text: "text-status-rejected",
-    description: "The referee's claim was challenged and rejected.",
+    description: "The invitee's claim was challenged and rejected.",
   },
   verified: { label: "Verified Human", text: "text-status-registered" },
   "revocation-pending": {
     label: "Revocation Pending",
     text: "text-status-revocation",
-    description: "This referee's removal from the registry has been requested.",
+    description: "This invitee's removal from the registry has been requested.",
   },
   removed: {
     label: "Removed from Registry",
     text: "text-status-rejected",
     description:
-      "This referee was previously verified but has since been removed from the PoH registry.",
+      "This invitee was previously verified but has since been removed from the PoH registry.",
   },
   expired: {
     label: "Registration Expired",
     text: "text-secondaryText",
-    description: "This referee's registration has expired and can be renewed.",
+    description: "This invitee's registration has expired and can be renewed.",
   },
 };
 
@@ -67,15 +67,15 @@ export const getRegistryStatusDescription = (
 ): string | undefined => {
   if (user.payoutStatus === PohReferralPayoutTransactionStatus.Confirmed) {
     if (user.registryStatus === "removed")
-      return "This referee was verified but has since been removed from the registry. The reward already paid is unaffected.";
+      return "This invitee was verified but has since been removed from the registry. The reward already paid is unaffected.";
     if (user.registryStatus === "expired")
-      return "This referee's registration has expired and can be renewed. The reward already paid is unaffected.";
+      return "This invitee's registration has expired and can be renewed. The reward already paid is unaffected.";
     return REGISTRY_STATUS_META[user.registryStatus].description;
   }
   if (user.registryStatus === "revocation-pending")
     return isPayoutInFlight(user)
-      ? "This referee's removal from the registry has been requested. The payout already in flight is unaffected."
-      : "A request has been made to remove this referee from the registry. The reward is on hold until the request is resolved.";
+      ? "This invitee's removal from the registry has been requested. The payout already in flight is unaffected."
+      : "A request has been made to remove this invitee from the registry. The reward is on hold until the request is resolved.";
   return REGISTRY_STATUS_META[user.registryStatus].description;
 };
 

@@ -76,7 +76,7 @@ const PageNumbers: React.FC<PageNumbersProps> = ({
 
   return (
     <nav
-      aria-label="Referred list pages"
+      aria-label="Invitee list pages"
       className="mt-5 flex flex-wrap items-center justify-center gap-1.5"
     >
       <ChevronButton
