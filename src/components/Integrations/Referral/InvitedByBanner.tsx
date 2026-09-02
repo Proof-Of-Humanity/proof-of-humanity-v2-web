@@ -45,7 +45,9 @@ const InvitedByBanner: React.FC<{
           </span>
           <span className="inline-flex items-center gap-2">
             <ReferralAvatar
-              referral={referral}
+              address={referral.referrerHumanityId}
+              evidenceUri={referral.evidenceUri}
+              alt={referral.name}
               diameter={24}
               className="h-6 w-6 rounded-full object-cover"
             />

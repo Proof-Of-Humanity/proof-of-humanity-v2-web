@@ -14,14 +14,13 @@ import {
   ReferrerSummary,
 } from "types/referral";
 import { formatUnits } from "viem";
-import { getRegistrationPhoto } from "./evidence";
 import { REFERRAL_MONTHLY_PAYOUT_CAP } from "./referralPresentation";
 
 interface ReferrerProfile {
   humanityId: `0x${string}`;
   name?: string;
   pendingRevocation: boolean;
-  photo: string | null;
+  evidenceUri?: string;
 }
 
 /** Throws on subgraph error so react-query shows the retry card, not a false
@@ -45,18 +44,17 @@ const resolveReferrerProfile = async (
   if (!registration) return null;
 
   const { humanity } = registration;
-  const evidenceUri = humanity.winnerClaim[0]?.evidenceGroup.evidence[0]?.uri;
   return {
     humanityId: String(humanity.id).toLowerCase() as `0x${string}`,
     name: humanity.winnerClaim[0]?.claimer.name?.trim() || undefined,
     pendingRevocation: humanity.pendingRevocation,
-    photo: await getRegistrationPhoto(evidenceUri),
+    evidenceUri: humanity.winnerClaim[0]?.evidenceGroup.evidence[0]?.uri,
   };
 };
 
 interface RefereeProfile {
   name?: string;
-  photo?: string | null;
+  evidenceUri?: string;
   chainId?: number;
   registryStatus: ReferredRegistryStatus;
 }
@@ -66,7 +64,7 @@ const resolveRefereeProfiles = async (
 ): Promise<Map<string, RefereeProfile>> => {
   const profilesByHumanityId = new Map<
     string,
-    RefereeProfile & { evidenceUri?: string; liveliness: number }
+    RefereeProfile & { liveliness: number }
   >();
   if (refereeHumanityIds.length === 0) return profilesByHumanityId;
 
@@ -153,7 +151,7 @@ const resolveRefereeProfiles = async (
       liveliness,
     };
     // Status follows the most-alive chain, but a bridged destination request
-    // has no claim evidence of its own — name/photo fall back to whichever
+    // has no claim evidence of its own — name/evidence URI fall back to whichever
     // chain still holds the original claim metadata.
     if (alreadyResolved && alreadyResolved.liveliness >= liveliness) {
       alreadyResolved.name ??= resolvedProfile.name;
@@ -166,12 +164,6 @@ const resolveRefereeProfiles = async (
     }
     profilesByHumanityId.set(humanityKey, resolvedProfile);
   }
-
-  await Promise.all(
-    [...profilesByHumanityId.values()].map(async (profile) => {
-      profile.photo = await getRegistrationPhoto(profile.evidenceUri);
-    }),
-  );
 
   return profilesByHumanityId;
 };
@@ -223,7 +215,7 @@ export const fetchReferrerSummary = async (
   return {
     humanityId: referrerProfile.humanityId,
     name: referrerProfile.name,
-    photo: referrerProfile.photo,
+    evidenceUri: referrerProfile.evidenceUri ?? null,
     referralLink: `${window.location.origin}/?ref=${referrerProfile.humanityId}`,
     pendingRevocation: referrerProfile.pendingRevocation,
   };
@@ -256,7 +248,7 @@ export const fetchReferralPage = async (
     return {
       refereeHumanityId: referral.refereeHumanityId as `0x${string}`,
       name: refereeProfile?.name,
-      photo: refereeProfile?.photo ?? null,
+      evidenceUri: refereeProfile?.evidenceUri ?? null,
       chainId: refereeProfile?.chainId,
       reviewStatus: referral.reviewStatus,
       payoutStatus:

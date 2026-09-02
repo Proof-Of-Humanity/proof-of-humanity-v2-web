@@ -102,14 +102,19 @@ const base: Omit<ReferredUser, "refereeHumanityId"> = {
   registryStatus: "not-registered",
   refereeFlagged: false,
   rewardAmount: 250,
-  photo: null,
+  evidenceUri: "/ipfs/QmZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ",
   payoutTxHash: null,
   createdAtMs: Date.now() - 2 * 24 * 60 * 60 * 1000,
 };
 
 const rows: ReferredUser[] = [
   // 1. not-registered / ACTIVE / NOT_SENT  -> "Not Registered Yet", step "started"
-  { ...base, refereeHumanityId: addr(0x11), name: "Alice Rivera" },
+  {
+    ...base,
+    refereeHumanityId: addr(0x11),
+    name: "Alice Rivera",
+    evidenceUri: "/ipfs/QmPLsvCBBXA13tsrH6RKA8ghzcHyQSHNZaMWj566e3cKJT",
+  },
   // 2. needs-vouch -> "Needs Vouch", step "in-progress"
   {
     ...base,
@@ -312,7 +317,7 @@ const LINK = "https://app.proofofhumanity.id/?ref=0xbadc0ffee0ddf00dfeed";
 
 const referrer = (over: Partial<ReferrerSummary> = {}): ReferrerSummary => ({
   humanityId: addr(0xf0),
-  photo: null,
+  evidenceUri: "/ipfs/QmPLsvCBBXA13tsrH6RKA8ghzcHyQSHNZaMWj566e3cKJT",
   referralLink: LINK,
   pendingRevocation: false,
   ...over,
@@ -573,24 +578,24 @@ export default function DevReferralPage() {
 
         <Section
           id="s10"
-          title="10. ReferralLinkRow — identicon, long link, no avatar"
+          title="10. ReferralLinkRow — identicon, long link, no profile photo"
         >
           <Shell>
             <div className="flex flex-col gap-4">
               <ReferralLinkRow
                 link={LINK}
                 avatarAddress={addr(0xf0)}
-                photo={null}
+                evidenceUri={null}
               />
               <ReferralLinkRow
                 link={`https://app.proofofhumanity.id/?ref=${addr(0xf0)}`}
                 avatarAddress={addr(0xf0)}
-                photo={null}
+                evidenceUri={null}
               />
               <ReferralLinkRow
                 link="https://app.proofofhumanity.id/"
                 avatarAddress={addr(0xf0)}
-                photo={null}
+                evidenceUri={null}
               />
             </div>
           </Shell>

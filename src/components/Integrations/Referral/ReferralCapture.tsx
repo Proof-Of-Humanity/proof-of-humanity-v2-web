@@ -167,7 +167,9 @@ const ReferralCapture = () => {
         {storedReferral && (
           <div className="mt-5 flex flex-col items-center gap-3">
             <ReferralAvatar
-              referral={storedReferral}
+              address={storedReferral.referrerHumanityId}
+              evidenceUri={storedReferral.evidenceUri}
+              alt={storedReferral.name}
               diameter={64}
               className="h-16 w-16 rounded-full object-cover"
             />

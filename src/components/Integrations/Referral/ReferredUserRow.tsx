@@ -1,10 +1,8 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import cn from "classnames";
 import ChainLogo from "components/ChainLogo";
-import Identicon from "components/Identicon";
 import { defaultChain, explorerTxLink } from "config/chains";
 import NewTabIcon from "icons/NewTab.svg";
 import NeedsVouchIcon from "icons/NeedsVouch.svg";
@@ -31,8 +29,8 @@ import {
 } from "generated/atlas";
 import { ReferredUser, ReferredRegistryStatus } from "types/referral";
 import { shortenAddress } from "utils/address";
-import { safeIpfsUrl } from "utils/ipfs";
 import { prettifyId } from "utils/identifier";
+import ReferralAvatar from "./ReferralAvatar";
 import ReferralSteps from "./ReferralSteps";
 
 interface ReferredUserRowProps {
@@ -122,25 +120,19 @@ const ReferredUserRow: React.FC<ReferredUserRowProps> = ({ user }) => {
   const status = getRowStatus(user);
   const StatusIcon = status.Icon;
   const displayName = user.name ?? shortenAddress(user.refereeHumanityId);
-  // Referee-controlled evidence; an invalid URI falls back to the identicon.
-  const photoUrl = user.photo ? safeIpfsUrl(user.photo) : null;
 
   return (
     <div className="flex flex-col gap-3 border-b border-white/10 py-4 last:border-b-0 sm:flex-row sm:items-start sm:justify-between sm:gap-6">
       <div className="flex min-w-0 flex-col gap-2">
         <div className="flex flex-wrap items-center gap-2">
-          {photoUrl ? (
-            <Image
-              className="h-6 w-6 shrink-0 rounded-full object-cover"
-              alt={displayName}
-              src={photoUrl}
-              width={24}
-              height={24}
-              unoptimized
-            />
-          ) : (
-            <Identicon address={user.refereeHumanityId} diameter={24} />
-          )}
+          <ReferralAvatar
+            address={user.refereeHumanityId}
+            evidenceUri={user.evidenceUri}
+            alt={displayName}
+            diameter={24}
+            className="h-6 w-6 shrink-0 rounded-full object-cover"
+          />
+
           <span className="text-primaryText min-w-0 max-w-full break-words font-semibold">
             {displayName}
           </span>

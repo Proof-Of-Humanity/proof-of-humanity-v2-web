@@ -26,8 +26,8 @@ export interface ReferredUser {
   refereeHumanityId: `0x${string}`;
   /** Resolved from the humanity profile (not part of the referral API). */
   name?: string;
-  /** IPFS photo from the humanity profile; falls back to an identicon. */
-  photo: string | null;
+  /** Registration evidence URI; the avatar resolves the photo from it lazily. */
+  evidenceUri: string | null;
   /** Chain the referee's humanity lives on (profile-resolved), for the token icon. */
   chainId?: number;
   reviewStatus: PohReferralReviewStatus;
@@ -61,8 +61,8 @@ export interface MonthlyPayoutUsage {
 export interface ReferrerSummary {
   humanityId: `0x${string}`;
   name?: string;
-  /** Referrer's registration photo (IPFS path); null → identicon fallback. */
-  photo: string | null;
+  /** Registration evidence URI; the avatar resolves the photo from it lazily. */
+  evidenceUri: string | null;
   /** Shareable invite URL, `…/?ref=<humanityId>`. */
   referralLink: string;
   pendingRevocation: boolean;

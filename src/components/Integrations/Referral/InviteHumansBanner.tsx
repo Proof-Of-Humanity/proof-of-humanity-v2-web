@@ -3,18 +3,16 @@
 import { useAtlasProvider } from "@kleros/kleros-app";
 import { useQuery } from "@tanstack/react-query";
 import cn from "classnames";
-import Image from "next/image";
 import CopyButton from "components/CopyButton";
-import Identicon from "components/Identicon";
 import {
   fetchReferrerSummary,
   fetchVerifiedReferralCount,
 } from "data/referral";
 import ReferralIcon from "icons/Referral.svg";
 import { ReferrerSummary } from "types/referral";
-import { safeIpfsUrl } from "utils/ipfs";
 import { Address } from "viem";
 import { useAccount } from "wagmi";
+import ReferralAvatar from "./ReferralAvatar";
 
 export function InviteHumansBannerView({
   referrer,
@@ -25,8 +23,6 @@ export function InviteHumansBannerView({
   verifiedInvites?: number;
   className?: string;
 }) {
-  const photoUrl = safeIpfsUrl(referrer.photo);
-
   return (
     <div
       className={cn(
@@ -47,20 +43,15 @@ export function InviteHumansBannerView({
         </span>
         <div className="flex min-w-0 flex-1 basis-full flex-wrap items-center gap-x-6 gap-y-2 md:basis-auto md:flex-nowrap md:justify-end">
           <div className="flex min-w-0 items-center gap-2">
-            {photoUrl ? (
-              <Image
-                className="h-6 w-6 shrink-0 rounded-full object-cover"
+            <span className="shrink-0">
+              <ReferralAvatar
+                address={referrer.humanityId}
+                evidenceUri={referrer.evidenceUri}
                 alt="Your profile photo"
-                src={photoUrl}
-                width={24}
-                height={24}
-                unoptimized
+                diameter={24}
+                className="h-6 w-6 rounded-full object-cover"
               />
-            ) : (
-              <span className="shrink-0">
-                <Identicon address={referrer.humanityId} diameter={24} />
-              </span>
-            )}
+            </span>
             <span className="text-primaryText max-w-32 truncate whitespace-nowrap">
               {referrer.name || "Your profile"}
             </span>

@@ -357,7 +357,7 @@ function FormContent({
       return true;
     }
     if (referral.referrerHumanityId === urlPohId) {
-      toast.error("You can't refer yourself. Remove the referral to continue.");
+      toast.error("You can't invite yourself. Remove the referral to continue.");
       return false;
     }
 

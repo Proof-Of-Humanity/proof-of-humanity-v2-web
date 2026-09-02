@@ -74,7 +74,7 @@ const ReferralCard: React.FC<ReferralCardProps> = ({
         <ReferralLinkRow
           link={link}
           avatarAddress={referrer.humanityId}
-          photo={referrer.photo}
+          evidenceUri={referrer.evidenceUri}
         />
       </div>
 

@@ -20,7 +20,7 @@ export const REFERRAL_MONTHLY_PAYOUT_CAP = 25;
 
 /** Display default for marketing copy; the authoritative per-referral amount
  *  is `rewardAmount` from the API. */
-export const REFERRAL_REWARD_PNK = IS_MAINNET ? 250 : 2;
+export const REFERRAL_REWARD_PNK = IS_MAINNET ? 250 : 5;
 
 export const shortenReferralLink = (link: string) => {
   const [base, ref] = link.split("?ref=");

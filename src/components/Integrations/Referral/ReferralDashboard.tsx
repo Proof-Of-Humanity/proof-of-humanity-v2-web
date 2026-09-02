@@ -15,10 +15,7 @@ import ReferralIcon from "icons/Referral.svg";
 import { useEffect, useState } from "react";
 import { useAccount } from "wagmi";
 import CopyButton from "./CopyButton";
-import ReferralCard, {
-  ReferralCtaNotes,
-  SHARE_MESSAGE,
-} from "./ReferralCard";
+import ReferralCard, { ReferralCtaNotes, SHARE_MESSAGE } from "./ReferralCard";
 import ReferralLinkRow from "./ReferralLinkRow";
 import ShareButtons from "./ShareButtons";
 
@@ -135,7 +132,7 @@ const ReferralDashboard = () => {
             <ReferralLinkRow
               link={referrer.data.referralLink}
               avatarAddress={referrer.data.humanityId}
-              photo={referrer.data.photo}
+              evidenceUri={referrer.data.evidenceUri}
             />
           </div>
           <div className="mt-4 flex flex-col items-start gap-4 sm:flex-row sm:items-center">
