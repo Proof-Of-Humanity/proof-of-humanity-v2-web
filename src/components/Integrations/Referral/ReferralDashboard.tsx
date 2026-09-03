@@ -9,8 +9,10 @@ import {
   HUMAN_CONNECTOR_THRESHOLD,
   REFERRALS_PAGE_SIZE,
 } from "data/referral";
-import { ChainSet, configSetSelection } from "contracts";
-import { REFERRAL_REWARD_PNK } from "data/referralPresentation";
+import {
+  REFERRAL_REVIEW_WINDOW,
+  REFERRAL_REWARD_PNK,
+} from "data/referralPresentation";
 import ReferralIcon from "icons/Referral.svg";
 import { useEffect, useState } from "react";
 import { useAccount } from "wagmi";
@@ -30,11 +32,9 @@ export const CardShell: React.FC<{ children: React.ReactNode }> = ({
 
     <h3 className="text-primaryText font-semibold">Invite Humans</h3>
     <p className="text-secondaryText mt-1 max-w-3xl text-sm">
-      Earn {REFERRAL_REWARD_PNK} PNK per successful referral after{" "}
-      {configSetSelection.chainSet === ChainSet.MAINNETS
-        ? "a 2 day safety window"
-        : "a 30 minute safety window"}
-      . Complete {HUMAN_CONNECTOR_THRESHOLD} successful referrals to unlock the
+      Earn {REFERRAL_REWARD_PNK} PNK per successful referral after a{" "}
+      {REFERRAL_REVIEW_WINDOW} review window. Complete{" "}
+      {HUMAN_CONNECTOR_THRESHOLD} successful referrals to unlock the
       Human Connector badge.
     </p>
 

@@ -1,7 +1,10 @@
 "use client";
 
 import cn from "classnames";
-import { REFERRAL_EXPIRY_WINDOW_DAYS } from "data/referralPresentation";
+import {
+  REFERRAL_EXPIRY_WINDOW_DAYS,
+  REFERRAL_REVIEW_WINDOW,
+} from "data/referralPresentation";
 import WarningIcon from "icons/WarningCircle16.svg";
 import { ReferralPage, ReferrerSummary } from "types/referral";
 import CopyButton from "./CopyButton";
@@ -18,8 +21,8 @@ export const ReferralCtaNotes = () => (
   <>
     <p className="text-secondaryText mt-2 max-w-3xl text-xs">
       Invitees must get verified within {REFERRAL_EXPIRY_WINDOW_DAYS} days of
-      using your link. Rewards are released automatically once they clear a
-      review window.
+      using your link. Rewards are released automatically once they clear a{" "}
+      {REFERRAL_REVIEW_WINDOW} review window.
     </p>
     <p className="text-secondaryText mt-2 max-w-3xl text-sm">
       <span className="text-primaryText font-medium">How referrals work:</span>{" "}

@@ -13,6 +13,8 @@ export const formatPnk = (amount: number) =>
   `${amount.toLocaleString("en-US")} PNK`;
 
 const IS_MAINNET = configSetSelection.chainSet === ChainSet.MAINNETS;
+/** Payout hold after verification: 2 days on mainnet, 30 minutes on testnet. */
+export const REFERRAL_REVIEW_WINDOW = IS_MAINNET ? "2 day" : "30 minute";
 export const REFERRAL_EXPIRY_WINDOW_DAYS = 30;
 export const REFERRAL_EXPIRY_WINDOW_MS =
   REFERRAL_EXPIRY_WINDOW_DAYS * 24 * 60 * 60 * 1000;
@@ -96,12 +98,10 @@ export const REFERRAL_STEP_LABELS: Record<ReferralStep, string> = {
 };
 
 export const REFERRAL_STEP_TOOLTIPS: Record<ReferralStep, string> = {
-  started: `This user joined through your referral link. They have ${REFERRAL_EXPIRY_WINDOW_DAYS} days to get verified, and the reward must clear a review window before that deadline.`,
+  started: `This user joined through your referral link. They have ${REFERRAL_EXPIRY_WINDOW_DAYS} days to get verified, and the reward must clear a ${REFERRAL_REVIEW_WINDOW} review window before that deadline.`,
   "in-progress": "This user has started their PoH registration.",
-  verified:
-    "This user completed their registration and is now verified on PoH. The reward is released after a review window.",
-  "reward-pending":
-    "Your referral is eligible for a reward. Payouts are released automatically once the review window has passed.",
+  verified: `This user completed their registration and is now verified on PoH. The reward is released after a ${REFERRAL_REVIEW_WINDOW} review window.`,
+  "reward-pending": `Your referral is eligible for a reward. Payouts are released automatically once the ${REFERRAL_REVIEW_WINDOW} review window has passed.`,
   paid: "Your referral reward has been sent to your wallet.",
 };
 

@@ -14,6 +14,7 @@ import RemovedIcon from "icons/CrossCircle16.svg";
 import HourglassIcon from "icons/Hourglass.svg";
 import {
   REFERRAL_EXPIRY_WINDOW_DAYS,
+  REFERRAL_REVIEW_WINDOW,
   REGISTRY_STATUS_META,
   deriveStep,
   formatPnk,
@@ -112,7 +113,7 @@ const getRowStatus = (user: ReferredUser) => {
 const ReviewWindowNote: React.FC<{ user: ReferredUser }> = ({ user }) =>
   isRewardAwaitingReview(user) ? (
     <p className="text-secondaryText mt-1 w-full text-xs">
-      Reward is in the review window
+      Reward is in the {REFERRAL_REVIEW_WINDOW} review window
     </p>
   ) : null;
 
