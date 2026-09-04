@@ -50,6 +50,7 @@ createAppKit({
     "--w3m-color-mix": "#20232B",
     "--w3m-color-mix-strength": 12,
     "--w3m-border-radius-master": "3px",
+    "--w3m-z-index": 10000,
   },
   features: {
     analytics: true,
