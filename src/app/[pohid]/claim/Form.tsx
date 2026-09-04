@@ -4,10 +4,16 @@ import { useAtlasProvider, Roles } from "@kleros/kleros-app";
 import { enableReactUse } from "@legendapp/state/config/enableReactUse";
 import { Show, Switch, useObservable } from "@legendapp/state/react";
 import cn from "classnames";
+import { getAtlasError, getAuthedAtlasSdk } from "config/atlas";
 import { SupportedChain, SupportedChainId } from "config/chains";
 import { Effects } from "contracts/hooks/types";
 import usePoHWrite from "contracts/hooks/usePoHWrite";
 import { ContractData } from "data/contract";
+import {
+  clearReferral,
+  getStoredReferral,
+  refereeHasClaimRequest,
+} from "data/referralAttribution";
 import { getMyDataStrict } from "data/user";
 import { RegistrationQuery } from "generated/graphql";
 import { useLoading } from "hooks/useLoading";
@@ -183,6 +189,7 @@ function FormContent({
   const [, loadingMessage] = loading.use();
   const [registrationComplete, setRegistrationComplete] = useState(false);
   const [emailStatus, setEmailStatus] = useState<EmailSubmissionStatus>("idle");
+  const claimingOwnHumanity = !!address && urlPohId === address.toLowerCase();
   // Null until the mount-time replaceState has run.
   const syncedStep = useRef<Step | null>(null);
   const uploadCache = useRef<
@@ -289,8 +296,9 @@ function FormContent({
   const finishRegistration = useCallback(async () => {
     setRegistrationComplete(true);
     toast.success("Request created");
+    clearReferral(urlPohId);
     await settleEmail();
-  }, [settleEmail]);
+  }, [settleEmail, urlPohId]);
 
   const events = useMemo<Effects>(
     () => ({
@@ -334,6 +342,56 @@ function FormContent({
     return uri;
   };
 
+  /**
+   * Links the stored referral on Atlas before the registration tx.
+   * @returns whether submit may continue. `false` keeps the pin. `true` keeps
+   *   it until the claim tx succeeds (retry still has it). Prior claim clears.
+   */
+  const attributeReferral = async () => {
+    if (isRenewal || !claimingOwnHumanity) return true;
+    const referral = getStoredReferral(urlPohId);
+    if (!referral) return true;
+    // First claim already exists: Atlas would link, payout would still reject.
+    if (await refereeHasClaimRequest(urlPohId)) {
+      clearReferral(urlPohId);
+      return true;
+    }
+    if (referral.referrerHumanityId === urlPohId) {
+      toast.error("You can't invite yourself. Remove the referral to continue.");
+      return false;
+    }
+
+    loading.start("Linking referral");
+    try {
+      await getAuthedAtlasSdk().LinkReferralAttribution({
+        referrerHumanityId: referral.referrerHumanityId,
+      });
+      return true;
+    } catch (error) {
+      loading.stop();
+      const { message, code } = getAtlasError(error);
+      if (code === "PohReferralAlreadyAttributedError") {
+        toast.info(
+          "This account already has a referral attribution. Continuing registration.",
+        );
+        return true;
+      }
+      if (
+        code === "PohReferralSelfReferralError" ||
+        code === "PohReferralReferrerNotHumanError"
+      ) {
+        toast.error(
+          message ?? "This referral can't be used. Remove it to continue.",
+        );
+        return false;
+      }
+      toast.error(
+        "Referral isn't available right now. Remove the referral to register now, or come back later to keep it.",
+      );
+      return false;
+    }
+  };
+
   const submit = async () => {
     const { photo, video } = media;
     if (!photo || !video) return;
@@ -354,6 +412,7 @@ function FormContent({
       toast.error("Unable to load the deposit amount. Please try again.");
       return;
     }
+    if (!(await attributeReferral())) return;
 
     const abort = (message: string) => {
       toast.error(message);
@@ -488,53 +547,62 @@ function FormContent({
       );
     if (meError)
       return (
-        <div className="text-primaryText m-auto flex flex-col items-center gap-2 py-16 text-center">
-          <span className="font-semibold">
-            We couldn&apos;t check this wallet&apos;s registration status.
-          </span>
-          <span className="text-secondaryText text-sm">
-            The check protects your deposit. Please retry.
-          </span>
-          <ActionButton
-            onClick={() => retryMe()}
-            label="Retry"
-            variant="secondary"
-            className="mt-4 min-w-[170px]"
-          />
-        </div>
+        <>
+          <div className="text-primaryText m-auto flex flex-col items-center gap-2 py-16 text-center">
+            <span className="font-semibold">
+              We couldn&apos;t check this wallet&apos;s registration status.
+            </span>
+            <span className="text-secondaryText text-sm">
+              The check protects your deposit. Please retry.
+            </span>
+            <ActionButton
+              onClick={() => retryMe()}
+              label="Retry"
+              variant="secondary"
+              className="mt-4 min-w-[170px]"
+            />
+          </div>
+        </>
       );
     // Neutral placeholder — never flash a foreign Humanity ID in a create wizard.
-    if (!gate || gate.type === "navigate") return <FormSkeleton />;
+    if (!gate || gate.type === "navigate")
+      return (
+        <>
+          <FormSkeleton />
+        </>
+      );
     if (gate.type === "blocked")
       return (
-        <div className="text-primaryText m-auto flex flex-col items-center gap-2 py-16 text-center">
-          {gate.reason === "already-registered" ? (
-            <>
-              <span className="font-semibold">
-                This wallet already has an active Proof of Humanity profile.
-              </span>
-              <span className="text-secondaryText text-sm">
-                A wallet can only hold one Humanity ID at a time.
-              </span>
-              <Link
-                href={`/${gate.profileId}`}
-                className="text-orange mt-2 text-sm font-semibold hover:underline"
-              >
-                View your profile
-              </Link>
-            </>
-          ) : (
-            <>
-              <span className="font-semibold">
-                This Humanity ID can&apos;t be recovered right now.
-              </span>
-              <span className="text-secondaryText text-sm">
-                Its registration is still active. A Humanity ID can only be
-                recovered after it expires.
-              </span>
-            </>
-          )}
-        </div>
+        <>
+          <div className="text-primaryText m-auto flex flex-col items-center gap-2 py-16 text-center">
+            {gate.reason === "already-registered" ? (
+              <>
+                <span className="font-semibold">
+                  This wallet already has an active Proof of Humanity profile.
+                </span>
+                <span className="text-secondaryText text-sm">
+                  A wallet can only hold one Humanity ID at a time.
+                </span>
+                <Link
+                  href={`/${gate.profileId}`}
+                  className="text-orange mt-2 text-sm font-semibold hover:underline"
+                >
+                  View your profile
+                </Link>
+              </>
+            ) : (
+              <>
+                <span className="font-semibold">
+                  This Humanity ID can&apos;t be recovered right now.
+                </span>
+                <span className="text-secondaryText text-sm">
+                  Its registration is still active. A Humanity ID can only be
+                  recovered after it expires.
+                </span>
+              </>
+            )}
+          </div>
+        </>
       );
   }
 
@@ -575,7 +643,7 @@ function FormContent({
               advance={() => step$.set(Step.review)}
               onBack={canGoBack ? goBack : undefined}
               video$={media$.video}
-              isRenewal={!!renewal}
+              isRenewal={isRenewal}
               videoError={(ErrMsg) => toast.error(ErrMsg)}
             />
           ),
