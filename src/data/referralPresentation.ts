@@ -20,6 +20,10 @@ export const REFERRAL_EXPIRY_WINDOW_MS =
   REFERRAL_EXPIRY_WINDOW_DAYS * 24 * 60 * 60 * 1000;
 export const REFERRAL_MONTHLY_PAYOUT_CAP = 25;
 
+/** Humanity Court stake both sides must hold for a referral to pay out.
+ *  Mirrors the backend's POH_REFERRAL_MIN_REFERRER_STAKE_WEI. */
+export const REFERRAL_MIN_STAKE_PNK = 1200;
+
 /** Display default for marketing copy; the authoritative per-referral amount
  *  is `rewardAmount` from the API. */
 export const REFERRAL_REWARD_PNK = IS_MAINNET ? 250 : 5;

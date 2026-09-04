@@ -2,12 +2,13 @@
 
 import cn from "classnames";
 import {
+  formatPnk,
   REFERRAL_EXPIRY_WINDOW_DAYS,
+  REFERRAL_MIN_STAKE_PNK,
   REFERRAL_REVIEW_WINDOW,
 } from "data/referralPresentation";
 import WarningIcon from "icons/WarningCircle16.svg";
 import { ReferralPage, ReferrerSummary } from "types/referral";
-import CopyButton from "./CopyButton";
 import PageNumbers from "./PageNumbers";
 import ReferralLinkRow from "./ReferralLinkRow";
 import ReferralStatsBar from "./ReferralStatsBar";
@@ -28,6 +29,10 @@ export const ReferralCtaNotes = () => (
       <span className="text-primaryText font-medium">How referrals work:</span>{" "}
       invite someone to PoH → they register → they become verified → you earn
       your reward.
+    </p>
+    <p className="text-secondaryText mt-1 max-w-4xl text-sm">
+      Both the Inviter and the Invitee must claim the PNK airdrop and stake{" "}
+      {formatPnk(REFERRAL_MIN_STAKE_PNK)} in the Kleros Gnosis Humanity Court to recieve reward.
     </p>
   </>
 );
@@ -82,7 +87,6 @@ const ReferralCard: React.FC<ReferralCardProps> = ({
       </div>
 
       <div className="mt-4 flex flex-col items-start gap-4 sm:flex-row sm:items-center">
-        <CopyButton value={link} />
         <ShareButtons link={link} message={SHARE_MESSAGE} />
       </div>
       <ReferralCtaNotes />
