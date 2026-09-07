@@ -1,6 +1,8 @@
 import { getAuthedAtlasSdk } from "config/atlas";
 import { supportedChains } from "config/chains";
 import { sdk } from "config/subgraph";
+import { getCurrentStake } from "data/airdrop";
+import { getHumanitySubCourtId } from "data/kleros";
 import {
   PohReferralPayoutTransactionStatus,
   PohReferralSortField,
@@ -13,8 +15,11 @@ import {
   ReferredRegistryStatus,
   ReferrerSummary,
 } from "types/referral";
-import { formatUnits } from "viem";
-import { REFERRAL_MONTHLY_PAYOUT_CAP } from "./referralPresentation";
+import { formatUnits, parseUnits } from "viem";
+import {
+  REFERRAL_MIN_STAKE_PNK,
+  REFERRAL_MONTHLY_PAYOUT_CAP,
+} from "./referralPresentation";
 
 interface ReferrerProfile {
   humanityId: `0x${string}`;
@@ -57,8 +62,21 @@ interface RefereeProfile {
   evidenceUri?: string;
   chainId?: number;
   registryStatus: ReferredRegistryStatus;
+  claimerAddress?: `0x${string}`;
 }
 
+export const fetchMeetsReferralMinStake = async (
+  address: `0x${string}`,
+): Promise<boolean> => {
+  const chain = supportedChains.find((c) => c.id === 100 || c.id === 10200);
+  if (!chain) throw new Error("Humanity Court chain is not configured");
+  const stake = await getCurrentStake(
+    address,
+    chain.id,
+    getHumanitySubCourtId(chain.id),
+  );
+  return stake >= parseUnits(String(REFERRAL_MIN_STAKE_PNK), 18);
+};
 const resolveRefereeProfiles = async (
   refereeHumanityIds: string[],
 ): Promise<Map<string, RefereeProfile>> => {
@@ -148,6 +166,9 @@ const resolveRefereeProfiles = async (
       chainId,
       registryStatus,
       evidenceUri: latestClaim?.evidenceGroup.evidence[0]?.uri,
+      claimerAddress: (
+        registration ?? latestClaim
+      )?.claimer.id.toLowerCase() as `0x${string}` | undefined,
       liveliness,
     };
     // Status follows the most-alive chain, but a bridged destination request
@@ -156,11 +177,13 @@ const resolveRefereeProfiles = async (
     if (alreadyResolved && alreadyResolved.liveliness >= liveliness) {
       alreadyResolved.name ??= resolvedProfile.name;
       alreadyResolved.evidenceUri ??= resolvedProfile.evidenceUri;
+      alreadyResolved.claimerAddress ??= resolvedProfile.claimerAddress;
       continue;
     }
     if (alreadyResolved) {
       resolvedProfile.name ??= alreadyResolved.name;
       resolvedProfile.evidenceUri ??= alreadyResolved.evidenceUri;
+      resolvedProfile.claimerAddress ??= alreadyResolved.claimerAddress;
     }
     profilesByHumanityId.set(humanityKey, resolvedProfile);
   }
@@ -243,6 +266,22 @@ export const fetchReferralPage = async (
     referralRows.map((referral) => referral.refereeHumanityId),
   );
 
+  // A failed stake lookup leaves meetsMinStake undefined (unknown), not false.
+  const claimers = new Set(
+    [...refereeProfiles.values()].flatMap((p) => p.claimerAddress ?? []),
+  );
+  const meetsMinStakeByClaimer = new Map(
+    await Promise.all(
+      [...claimers].map(
+        async (claimer) =>
+          [
+            claimer,
+            await fetchMeetsReferralMinStake(claimer).catch(() => undefined),
+          ] as const,
+      ),
+    ),
+  );
+
   const referredUsers: ReferredUser[] = referralRows.map((referral) => {
     const refereeProfile = refereeProfiles.get(referral.refereeHumanityId);
     return {
@@ -260,6 +299,9 @@ export const fetchReferralPage = async (
       createdAtMs: Date.parse(referral.createdAt),
       rewardAmount: toPnk(referral.rewardAmount),
       payoutTxHash: referral.payoutTransaction?.txHash ?? null,
+      meetsMinStake:
+        refereeProfile?.claimerAddress &&
+        meetsMinStakeByClaimer.get(refereeProfile.claimerAddress),
     };
   });
 

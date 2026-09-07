@@ -8,7 +8,11 @@ import {
   REFERRAL_REVIEW_WINDOW,
 } from "data/referralPresentation";
 import WarningIcon from "icons/WarningCircle16.svg";
-import { ReferralPage, ReferrerSummary } from "types/referral";
+import {
+  MonthlyPayoutUsage,
+  ReferralPage,
+  ReferrerSummary,
+} from "types/referral";
 import PageNumbers from "./PageNumbers";
 import ReferralLinkRow from "./ReferralLinkRow";
 import ReferralStatsBar from "./ReferralStatsBar";
@@ -32,7 +36,8 @@ export const ReferralCtaNotes = () => (
     </p>
     <p className="text-secondaryText mt-1 max-w-4xl text-sm">
       Both the Inviter and the Invitee must claim the PNK airdrop and stake{" "}
-      {formatPnk(REFERRAL_MIN_STAKE_PNK)} in the Kleros Gnosis Humanity Court to recieve reward.
+      {formatPnk(REFERRAL_MIN_STAKE_PNK)} in the Kleros Gnosis Humanity Court to
+      receive the reward.
     </p>
   </>
 );
@@ -53,6 +58,10 @@ const HoldNotice: React.FC<{ title: string; children: React.ReactNode }> = ({
 interface ReferralCardProps {
   referrer: ReferrerSummary;
   referralPage: ReferralPage;
+  /** Undefined while loading or on error; the stats bar hides the meter. */
+  monthlyUsage?: MonthlyPayoutUsage;
+  /** False when the connected wallet is under the Humanity Court min stake. */
+  referrerMeetsMinStake?: boolean;
   /** 0-based index of the referred-list page being shown. */
   currentPage: number;
   pageCount: number;
@@ -69,12 +78,30 @@ interface ReferralCardProps {
 const ReferralCard: React.FC<ReferralCardProps> = ({
   referrer,
   referralPage,
+  monthlyUsage,
+  referrerMeetsMinStake,
   currentPage,
   pageCount,
   onPageChange,
   isPageLoading,
 }) => {
   const { referralLink: link } = referrer;
+  const hold = referralPage.humanityFlagged
+    ? {
+        title: "Rewards on hold",
+        body: "Your profile is under review. Referral rewards are paused and will be paid automatically once your profile is cleared.",
+      }
+    : referrer.pendingRevocation
+      ? {
+          title: "Your profile has a pending removal request",
+          body: "A removal request is pending against your profile. Referral rewards are paused until the request is resolved.",
+        }
+      : referrerMeetsMinStake === false
+        ? {
+            title: "Stake required for payout",
+            body: `You need ${formatPnk(REFERRAL_MIN_STAKE_PNK)} staked in the Gnosis Humanity Court. Pending rewards wait until you stake.`,
+          }
+        : null;
 
   return (
     <>
@@ -91,19 +118,7 @@ const ReferralCard: React.FC<ReferralCardProps> = ({
       </div>
       <ReferralCtaNotes />
 
-      {referralPage.humanityFlagged ? (
-        <HoldNotice title="Rewards on hold">
-          Your profile is under review. Referral rewards are paused and will be
-          paid automatically once your profile is cleared.
-        </HoldNotice>
-      ) : (
-        referrer.pendingRevocation && (
-          <HoldNotice title="Your profile has a pending removal request">
-            A removal request is pending against your profile. Referral rewards
-            are paused until the request is resolved.
-          </HoldNotice>
-        )
-      )}
+      {hold && <HoldNotice title={hold.title}>{hold.body}</HoldNotice>}
 
       {referralPage.totalCount === 0 ? (
         <div className="mt-5">
@@ -118,7 +133,9 @@ const ReferralCard: React.FC<ReferralCardProps> = ({
         <div className="mt-5">
           <ReferralStatsBar
             stats={referralPage.stats}
+            monthlyUsage={monthlyUsage}
             rewardsOnHold={referralPage.humanityFlagged}
+            needsStake={referrerMeetsMinStake === false}
           />
         </div>
       )}
