@@ -5,6 +5,7 @@ query ReferralRefereeProfiles($ids: [Bytes!]) {
     registration {
       expirationTime
       claimer {
+        id
         name
       }
     }
@@ -34,6 +35,7 @@ query ReferralRefereeProfiles($ids: [Bytes!]) {
         id
       }
       claimer {
+        id
         name
       }
       evidenceGroup {
