@@ -20,7 +20,7 @@ import ReferredList from "./ReferredList";
 import ShareButtons from "./ShareButtons";
 
 export const SHARE_MESSAGE =
-  "Join Proof of Humanity, the registry of real humans, and claim your rewards:";
+  "Human? Prove it. 👤\nGet verified on Proof of Humanity and explore benefits and opportunities available to verified humans.\n\nJoin through my invite:";
 
 export const ReferralCtaNotes = () => (
   <>
