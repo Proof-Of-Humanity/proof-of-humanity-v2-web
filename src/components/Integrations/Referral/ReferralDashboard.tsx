@@ -4,6 +4,8 @@ import { useAtlasProvider } from "@kleros/kleros-app";
 import SignInButton from "components/SignInButton";
 import { useQuery } from "@tanstack/react-query";
 import {
+  fetchMeetsReferralMinStake,
+  fetchMonthlyPayoutUsage,
   fetchReferralPage,
   fetchReferrerSummary,
   HUMAN_CONNECTOR_THRESHOLD,
@@ -64,6 +66,20 @@ const ReferralDashboard = () => {
     // another wallet's data across an account change.
     placeholderData: (previousData, previousQuery) =>
       previousQuery?.queryKey[1] === account ? previousData : undefined,
+  });
+
+  // Informational only: the stats bar omits the meter until it resolves, and
+  // a failure here must not replace the whole card with the retry state.
+  const monthlyUsage = useQuery({
+    queryKey: ["referral-monthly-usage", account],
+    queryFn: fetchMonthlyPayoutUsage,
+    enabled: Boolean(account && isSignedIn) && Boolean(referrer.data),
+  });
+
+  const referrerStake = useQuery({
+    queryKey: ["referral-referrer-min-stake", account],
+    queryFn: () => fetchMeetsReferralMinStake(account!),
+    enabled: Boolean(account && isSignedIn) && Boolean(referrer.data),
   });
 
   const totalCount = referralPage.data?.totalCount;
@@ -193,6 +209,8 @@ const ReferralDashboard = () => {
         <ReferralCard
           referrer={referrer.data}
           referralPage={referralPage.data}
+          monthlyUsage={monthlyUsage.data}
+          referrerMeetsMinStake={referrerStake.data}
           currentPage={currentPage}
           pageCount={pageCount}
           onPageChange={setCurrentPage}

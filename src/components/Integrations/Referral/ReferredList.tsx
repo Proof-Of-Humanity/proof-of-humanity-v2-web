@@ -8,14 +8,14 @@ interface ReferredListProps {
   users: ReferredUser[];
 }
 
-// "Your Referrals" section. The whole section (heading, subtitle,
+// "Your Invites" section. The whole section (heading, subtitle,
 // rows) is omitted while the user hasn't referred anyone yet.
 const ReferredList: React.FC<ReferredListProps> = ({ users }) => {
   if (users.length === 0) return null;
 
   return (
     <div className="mt-6 flex flex-col">
-      <h3 className="text-primaryText font-semibold">Your Invitees</h3>
+      <h3 className="text-primaryText font-semibold">Your Invites</h3>
       <p className="text-secondaryText mt-1 text-sm">
         Earn {REFERRAL_REWARD_PNK} PNK when someone you invite becomes verified
         on PoH.

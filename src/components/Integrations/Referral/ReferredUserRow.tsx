@@ -14,6 +14,7 @@ import RemovedIcon from "icons/CrossCircle16.svg";
 import HourglassIcon from "icons/Hourglass.svg";
 import {
   REFERRAL_EXPIRY_WINDOW_DAYS,
+  REFERRAL_MIN_STAKE_PNK,
   REFERRAL_REVIEW_WINDOW,
   REGISTRY_STATUS_META,
   deriveStep,
@@ -102,6 +103,16 @@ const getRowStatus = (user: ReferredUser) => {
       description: `This referral was not completed within ${REFERRAL_EXPIRY_WINDOW_DAYS} days and is no longer eligible for a reward.`,
     };
 
+  if (isRewardAwaitingReview(user) && user.meetsMinStake === false)
+    return {
+      label: "Invitee not staked",
+      text: "text-status-challenged",
+      Icon: WarningIcon,
+      description: `This invitee must claim the airdrop and stake ${formatPnk(
+        REFERRAL_MIN_STAKE_PNK,
+      )} in the Gnosis Humanity Court before the reward can be paid.`,
+    };
+
   const status = REGISTRY_STATUS_META[user.registryStatus];
   return {
     ...status,
@@ -111,7 +122,7 @@ const getRowStatus = (user: ReferredUser) => {
 };
 
 const ReviewWindowNote: React.FC<{ user: ReferredUser }> = ({ user }) =>
-  isRewardAwaitingReview(user) ? (
+  isRewardAwaitingReview(user) && user.meetsMinStake !== false ? (
     <p className="text-secondaryText mt-1 w-full text-xs">
       Reward is in the {REFERRAL_REVIEW_WINDOW} review window
     </p>

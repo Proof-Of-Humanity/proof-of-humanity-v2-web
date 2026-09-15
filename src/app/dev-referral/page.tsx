@@ -31,6 +31,7 @@ import ReferralDashboard, {
   CardShell,
 } from "components/Integrations/Referral/ReferralDashboard";
 import { InviteHumansBannerView } from "components/Integrations/Referral/InviteHumansBanner";
+import { HumanConnectorBadgeMark } from "components/Integrations/Referral/HumanConnectorBadge";
 import InfoTooltip from "components/InfoTooltip";
 
 // ---------------------------------------------------------------- boundary
@@ -337,7 +338,8 @@ const PAGE_SIZE = 10;
 const PagedCardDemo: React.FC<{
   referrerOverrides?: Partial<ReferrerSummary>;
   pageOverrides?: Partial<ReferralPage>;
-}> = ({ referrerOverrides, pageOverrides }) => {
+  referrerMeetsMinStake?: boolean;
+}> = ({ referrerOverrides, pageOverrides, referrerMeetsMinStake }) => {
   const [currentPage, setCurrentPage] = React.useState(0);
   // `?page=N` opens the demo on a later page (headless screenshot capture).
   React.useEffect(() => {
@@ -360,6 +362,8 @@ const PagedCardDemo: React.FC<{
           totalCount: merged.referred.length,
           referred: pageRows,
         }}
+        monthlyUsage={{ used: 9, cap: 25, approximate: false }}
+        referrerMeetsMinStake={referrerMeetsMinStake}
         currentPage={currentPage}
         pageCount={Math.ceil(merged.referred.length / PAGE_SIZE)}
         onPageChange={setCurrentPage}
@@ -406,6 +410,10 @@ const SECTION_IDS = [
   "s15",
   "s16",
   "s17",
+  "s18",
+  "s19",
+  "s20",
+  "s21",
 ];
 
 export default function DevReferralPage() {
@@ -512,7 +520,7 @@ export default function DevReferralPage() {
 
         <Section
           id="s7"
-          title="7. ReferralStatsBar — isolated, plain + rewardsOnHold"
+          title="7. ReferralStatsBar — isolated, plain + monthly cap + rewardsOnHold"
         >
           <div className="flex flex-col gap-4">
             <ReferralStatsBar
@@ -521,6 +529,31 @@ export default function DevReferralPage() {
                 paidRewards: 3000,
                 pendingRewards: 1250,
               }}
+            />
+            <ReferralStatsBar
+              stats={{
+                verifiedReferrals: 12,
+                paidRewards: 3000,
+                pendingRewards: 1250,
+              }}
+              monthlyUsage={{ used: 7, cap: 25, approximate: false }}
+            />
+            <ReferralStatsBar
+              stats={{
+                verifiedReferrals: 40,
+                paidRewards: 10000,
+                pendingRewards: 1250,
+              }}
+              monthlyUsage={{ used: 25, cap: 25, approximate: false }}
+            />
+            <ReferralStatsBar
+              stats={{
+                verifiedReferrals: 140,
+                paidRewards: 35000,
+                pendingRewards: 1250,
+              }}
+              monthlyUsage={{ used: 18, cap: 25, approximate: true }}
+              rewardsOnHold
             />
             <ReferralStatsBar
               stats={{
@@ -537,6 +570,15 @@ export default function DevReferralPage() {
                 pendingRewards: 987654,
               }}
               rewardsOnHold
+            />
+            <ReferralStatsBar
+              stats={{
+                verifiedReferrals: 12,
+                paidRewards: 3000,
+                pendingRewards: 1250,
+              }}
+              monthlyUsage={{ used: 7, cap: 25, approximate: false }}
+              needsStake
             />
           </div>
         </Section>
@@ -745,6 +787,101 @@ export default function DevReferralPage() {
               </div>
             </Shell>
           </div>
+        </Section>
+
+        <Section
+          id="s18"
+          title="18. ReferralCard — you are under the min Humanity Court stake"
+          note="hold notice + Needs stake pill; verified row keeps the review-window note"
+        >
+          <PagedCardDemo
+            referrerMeetsMinStake={false}
+            pageOverrides={{
+              referred: [
+                {
+                  ...base,
+                  refereeHumanityId: addr(0xf3),
+                  name: "Rafael Costa",
+                  registryStatus: "verified",
+                  meetsMinStake: true,
+                  chainId: SEPOLIA,
+                },
+                {
+                  ...base,
+                  refereeHumanityId: addr(0xf4),
+                  name: "Sofia Berg",
+                  registryStatus: "in-review",
+                  chainId: CHIADO,
+                },
+              ],
+            }}
+          />
+        </Section>
+
+        <Section
+          id="s19"
+          title="19. ReferralCard — invitee under min stake (you are staked)"
+          note="row badge Invitee not staked; in-review row unchanged"
+        >
+          <PagedCardDemo
+            referrerMeetsMinStake={true}
+            pageOverrides={{
+              referred: [
+                {
+                  ...base,
+                  refereeHumanityId: addr(0xf5),
+                  name: "Tomas Nguyen",
+                  registryStatus: "verified",
+                  meetsMinStake: false,
+                  chainId: SEPOLIA,
+                },
+                {
+                  ...base,
+                  refereeHumanityId: addr(0xf6),
+                  name: "Uma Shah",
+                  registryStatus: "in-review",
+                  chainId: CHIADO,
+                },
+              ],
+            }}
+          />
+        </Section>
+
+        <Section
+          id="s20"
+          title="20. ReferralCard — both under min stake"
+          note="your notice plus invitee row badge"
+        >
+          <PagedCardDemo
+            referrerMeetsMinStake={false}
+            pageOverrides={{
+              referred: [
+                {
+                  ...base,
+                  refereeHumanityId: addr(0xf7),
+                  name: "Vera Okonkwo",
+                  registryStatus: "verified",
+                  meetsMinStake: false,
+                  chainId: SEPOLIA,
+                },
+              ],
+            }}
+          />
+        </Section>
+
+        <Section
+          id="s21"
+          title="21. HumanConnectorBadge — request identity mark (isolated)"
+          note="static mark as on RequestIdentityCard; gated HumanConnectorBadge needs own profile + sign-in + ≥5 verified referrals"
+        >
+          <Shell>
+            <div className="flex flex-col items-center text-center">
+              <p className="text-primaryText text-2xl font-semibold">
+                Alice Rivera
+              </p>
+              <HumanConnectorBadgeMark />
+            </div>
+          </Shell>
         </Section>
       </div>
     </OnlyContext.Provider>

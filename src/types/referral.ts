@@ -40,6 +40,8 @@ export interface ReferredUser {
   rewardAmount: number;
   /** Payout transaction hash once the bot has sent it; null before. */
   payoutTxHash: string | null;
+  /** Whether the invitee's owner holds the min Humanity Court stake. Omitted while unknown. */
+  meetsMinStake?: boolean;
 }
 
 export interface ReferralStats {
