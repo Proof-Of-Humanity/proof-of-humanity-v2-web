@@ -1,21 +1,27 @@
 import { getSdk as getAtlasSdk, SdkFunctionWrapper } from "generated/atlas";
 import { ClientError, GraphQLClient } from "graphql-request";
 
-const keepPartialDataOnFieldErrors: SdkFunctionWrapper = async <T,>(
+const keepPartialDataOnFieldErrors: SdkFunctionWrapper = async <T>(
   action: () => Promise<T>,
   operationName: string,
+  operationType?: string,
 ) => {
   try {
     return await action();
   } catch (error) {
-    if (error instanceof ClientError && error.response.data) {
-      console.warn(
-        `Atlas ${operationName}: rendering partial data, some fields errored`,
-        error.response.errors,
-      );
-      return error.response.data as T;
-    }
-    throw error;
+    if (
+      operationType !== "query" ||
+      !(error instanceof ClientError) ||
+      !error.response.data ||
+      isAtlasApiUnavailable(error)
+    )
+      throw error;
+
+    console.warn(
+      `Atlas ${operationName}: rendering partial data, some fields errored`,
+      error.response.errors,
+    );
+    return error.response.data as T;
   }
 };
 
@@ -51,3 +57,12 @@ export const getAtlasError = (error: unknown) => {
     httpStatus: extensions?.equivalentHTTPStatusCode as number | undefined,
   };
 };
+
+export const isAtlasApiUnavailable = (error: unknown): boolean =>
+  error instanceof ClientError &&
+  (error.response.status === 503 ||
+    error.response.errors?.some(
+      ({ extensions }) =>
+        extensions?.code === "ApiTemporarilyUnavailableError" ||
+        extensions?.equivalentHTTPStatusCode === 503,
+    ) === true);

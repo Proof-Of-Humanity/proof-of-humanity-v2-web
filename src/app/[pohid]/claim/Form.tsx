@@ -4,7 +4,11 @@ import { useAtlasProvider, Roles } from "@kleros/kleros-app";
 import { enableReactUse } from "@legendapp/state/config/enableReactUse";
 import { Show, Switch, useObservable } from "@legendapp/state/react";
 import cn from "classnames";
-import { getAtlasError, getAuthedAtlasSdk } from "config/atlas";
+import {
+  getAtlasError,
+  getAuthedAtlasSdk,
+  isAtlasApiUnavailable,
+} from "config/atlas";
 import { SupportedChain, SupportedChainId } from "config/chains";
 import { Effects } from "contracts/hooks/types";
 import usePoHWrite from "contracts/hooks/usePoHWrite";
@@ -357,7 +361,9 @@ function FormContent({
       return true;
     }
     if (referral.referrerHumanityId === urlPohId) {
-      toast.error("You can't invite yourself. Remove the referral to continue.");
+      toast.error(
+        "You can't invite yourself. Remove the referral to continue.",
+      );
       return false;
     }
 
@@ -369,6 +375,12 @@ function FormContent({
       return true;
     } catch (error) {
       loading.stop();
+      if (isAtlasApiUnavailable(error)) {
+        toast.error(
+          "Referrals are temporarily unavailable. Your referral is saved. Try again later, or remove it to register without a referral.",
+        );
+        return false;
+      }
       const { message, code } = getAtlasError(error);
       if (code === "PohReferralAlreadyAttributedError") {
         toast.info(
