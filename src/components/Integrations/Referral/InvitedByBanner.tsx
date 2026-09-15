@@ -2,6 +2,7 @@
 
 import cn from "classnames";
 import ExternalLink from "components/ExternalLink";
+import { explorerLink, referralPayoutChain } from "config/chains";
 import type { StoredReferral } from "data/referralAttribution";
 import ExternalLinkIcon from "icons/ExternalLink.svg";
 import GnosisIcon from "icons/GnosisToken.svg";
@@ -60,7 +61,10 @@ const InvitedByBanner: React.FC<{
             </Link>
           </span>
           <ExternalLink
-            href={`https://gnosis.blockscout.com/address/${referral.referrerHumanityId}`}
+            href={explorerLink(
+              referral.referrerHumanityId,
+              referralPayoutChain,
+            )}
             className="text-secondaryText hover:text-orange inline-flex items-center gap-2 whitespace-nowrap"
           >
             <GnosisIcon className="h-4 w-4" />

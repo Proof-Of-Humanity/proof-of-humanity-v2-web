@@ -3,7 +3,7 @@
 import Link from "next/link";
 import cn from "classnames";
 import ChainLogo from "components/ChainLogo";
-import { defaultChain, explorerTxLink } from "config/chains";
+import { explorerTxLink, referralPayoutChain } from "config/chains";
 import NewTabIcon from "icons/NewTab.svg";
 import NeedsVouchIcon from "icons/NeedsVouch.svg";
 import EyeIcon from "icons/Eye.svg";
@@ -201,7 +201,7 @@ const ReferredUserRow: React.FC<ReferredUserRowProps> = ({ user }) => {
         {user.payoutTxHash &&
           user.payoutStatus !== PohReferralPayoutTransactionStatus.NotSent && (
             <a
-              href={explorerTxLink(user.payoutTxHash, defaultChain)}
+              href={explorerTxLink(user.payoutTxHash, referralPayoutChain)}
               target="_blank"
               rel="noopener noreferrer"
               className="text-secondaryText hover:text-primaryText mt-1 flex flex-wrap items-center gap-1 text-xs transition-colors sm:justify-end"
