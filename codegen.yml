@@ -2,7 +2,10 @@ require:
   - dotenv/config
 overwrite: true
 schema: "${GNOSIS_SUBGRAPH_URL}"
-documents: "schemas/**/*.gql"
+documents:
+  - "schemas/**/*.gql"
+  # Atlas documents are generated separately via codegen.atlas.yml.
+  - "!schemas/atlas/**"
 generates:
   ./src/generated/graphql.ts:
     plugins:

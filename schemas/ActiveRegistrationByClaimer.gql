@@ -1,0 +1,12 @@
+query ActiveRegistrationByClaimer($address: String!, $now: BigInt!) {
+  registrations(
+    where: { claimer: $address, expirationTime_gt: $now }
+    first: 1
+  ) {
+    humanity {
+      id
+      pendingRevocation
+      ...winnerClaim
+    }
+  }
+}

@@ -39,7 +39,7 @@ function FileUploadZone({
         className={cn(
           "flex min-h-16 w-full items-center justify-center gap-2 rounded-btn border border-dashed px-4 py-3 text-sm transition-colors duration-200 ease-premium",
           uploaded
-            ? "border-[#00D9A1] bg-white text-[#00A87E] dark:border-[#79FFDC] dark:bg-[#2F333D] dark:text-[#79FFDC]"
+            ? "border-[#00D9A1] bg-white text-[#007A5A] dark:border-[#79FFDC] dark:bg-[#2F333D] dark:text-[#79FFDC]"
             : "border-[#FFB08A] bg-white text-[#E2703A] hover:bg-[#FFF7F0] dark:bg-[#292D35] dark:text-[#FFB08A] dark:hover:bg-[#2F333D]",
         )}
       >

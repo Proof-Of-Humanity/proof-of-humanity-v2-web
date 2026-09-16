@@ -57,6 +57,10 @@ export const supportedChains =
 
 export const defaultChain = supportedChains[0]!;
 
+/** Referral rewards are paid in PNK on Gnosis (Chiado on testnets), never on the legacy chain. */
+export const referralPayoutChain: SupportedChain =
+  configSetSelection.chainSet === ChainSet.MAINNETS ? gnosis : gnosisChiado;
+
 export const legacyChain =
   configSetSelection.chainSet === ChainSet.MAINNETS
     ? legacyChainMain

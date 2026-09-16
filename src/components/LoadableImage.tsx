@@ -1,7 +1,7 @@
 "use client";
 
 /* eslint-disable @next/next/no-img-element */
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { twMerge } from "tailwind-merge";
 import MediaFallback from "./MediaFallback";
 
@@ -10,6 +10,7 @@ interface LoadableImageProps {
   alt: string;
   className?: string;
   fallbackLabel?: string;
+  errorFallback?: ReactNode;
 }
 
 export default function LoadableImage({
@@ -17,6 +18,7 @@ export default function LoadableImage({
   alt,
   className,
   fallbackLabel = "Image unavailable",
+  errorFallback,
 }: LoadableImageProps) {
   const imageRef = useRef<HTMLImageElement>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -38,7 +40,9 @@ export default function LoadableImage({
     <>
       {isLoading && !hasError ? <MediaFallback className={className} /> : null}
       {hasError ? (
-        <MediaFallback error label={fallbackLabel} className={className} />
+        (errorFallback ?? (
+          <MediaFallback error label={fallbackLabel} className={className} />
+        ))
       ) : null}
       <img
         ref={imageRef}

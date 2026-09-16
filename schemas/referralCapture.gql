@@ -1,0 +1,19 @@
+query ReferralReferrerProfile($id: ID!) {
+  humanity(id: $id) {
+    registration {
+      expirationTime
+      claimer {
+        name
+      }
+    }
+    ...winnerClaim
+  }
+}
+
+query ReferralRefereePriorClaim($id: ID!) {
+  humanity(id: $id) {
+    requests(first: 1, where: { index: "0", revocation: false }) {
+      id
+    }
+  }
+}

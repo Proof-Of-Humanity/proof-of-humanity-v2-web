@@ -1,6 +1,7 @@
 import Image from "next/image";
 import { Suspense } from "react";
 import CopyButton from "components/CopyButton";
+import InviteHumansBanner from "components/Integrations/Referral/InviteHumansBanner";
 import { machinifyId, prettifyId } from "utils/identifier";
 import { TimelineHistorySectionSkeleton } from "../[chain]/[request]/TimelineSection";
 import ProfileActionsLoading from "../ProfileActionsLoading";
@@ -8,9 +9,23 @@ import ProfileActionsSection from "../ProfileActionsSection";
 import ProfileSummaryLoading from "../ProfileSummaryLoading";
 import ProfileSummarySection from "../ProfileSummarySection";
 import ProfileTimelineSection from "../ProfileTimelineSection";
+import { getProfileBaseData } from "../profilePageData";
 
 interface PageProps {
   params: Promise<{ pohid: string }>;
+}
+
+async function ProfileReferralBanner({ pohId }: { pohId: `0x${string}` }) {
+  const { claimedRegistration } = await getProfileBaseData(pohId);
+
+  if (!claimedRegistration) return null;
+
+  return (
+    <InviteHumansBanner
+      claimerId={claimedRegistration.claimer.id as `0x${string}`}
+      className="mt-4"
+    />
+  );
 }
 
 async function Profile({ params }: PageProps) {
@@ -23,6 +38,9 @@ async function Profile({ params }: PageProps) {
 
   return (
     <div className="content max-w-[1156px]">
+      <Suspense fallback={null}>
+        <ProfileReferralBanner pohId={pohId} />
+      </Suspense>
       <div className="paper relative mt-24 flex flex-col items-center px-2 pb-6 pt-20 sm:px-8">
         <div className="bg-whiteBackground absolute -top-16 left-1/2 h-32 w-32 -translate-x-1/2 rounded-full shadow">
           <Image
