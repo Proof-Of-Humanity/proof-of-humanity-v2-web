@@ -2256,10 +2256,10 @@
   dependencies:
     jose "^5.9.6"
 
-"@legendapp/state@^1.11.1":
-  version "1.11.3"
-  resolved "https://registry.yarnpkg.com/@legendapp/state/-/state-1.11.3.tgz#fc3d8aafae6c4bf24a054b24432b2e070a95251e"
-  integrity sha512-PxhugsvKbsG6gEgG+yCtO8rOrnu9uQrwmXal+P3rIAw1XYukpbxhfmwigVnyJkrbwg/49/tHQtSjLJbS4oN2Qg==
+"@legendapp/state@^2.1.15":
+  version "2.1.15"
+  resolved "https://registry.yarnpkg.com/@legendapp/state/-/state-2.1.15.tgz#a9398b4fdd6d955a3f90a7dac6cb601545f27fe6"
+  integrity sha512-7/8Rgg7m38eznupr36QJeSkrtbhVxaRtQvRMjdBigSm+HW3ZIFgMtUX1DqZ2hJxbPqqAJamw5s+TLs8dRstUNw==
   dependencies:
     use-sync-external-store "^1.2.0"
 
