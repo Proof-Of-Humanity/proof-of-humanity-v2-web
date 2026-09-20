@@ -6,7 +6,7 @@
     "@graphql-codegen/cli": "^5.0.7",
     "@graphql-codegen/typescript": "^4.1.6",
     "@graphql-codegen/typescript-graphql-request": "^6.3.0",
-    "@graphql-codegen/typescript-operations": "^4.6.1",
+    "@graphql-codegen/typescript-operations": "^6.1.6",
     "@netlify/functions": "^5.1.2",
     "@supabase/supabase-js": "^2.36.0",
     "@svgr/webpack": "^8.1.0",
