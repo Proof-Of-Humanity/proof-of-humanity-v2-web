@@ -1,7 +1,9 @@
 "use client";
 
 import Image from "next/image";
+import ActionButton from "components/ActionButton";
 import { useRouter } from "next/navigation";
+import { useTransition } from "react";
 import { Integration } from "types/integrations";
 
 interface IntegrationCardProps {
@@ -10,13 +12,14 @@ interface IntegrationCardProps {
 
 export default function IntegrationCard({ integration }: IntegrationCardProps) {
   const router = useRouter();
+  const [isNavigating, startNavigation] = useTransition();
   const lightSrc = integration.logo;
   const darkSrc = integration.darkLogo || integration.logo;
   const logoWidth = integration.logoWidth || 164;
   const logoHeight = integration.logoHeight || 48;
 
   const handleNavigation = () => {
-    router.push(integration.startPath);
+    startNavigation(() => router.push(integration.startPath));
   };
 
   return (
@@ -66,13 +69,13 @@ export default function IntegrationCard({ integration }: IntegrationCardProps) {
           {integration.description}
         </p>
 
-        <button
-          className="btn-primary mt-auto w-full self-start px-5 py-2.5 text-sm dark:hover:bg-opacity-80 sm:w-auto"
-          aria-label={`Start connecting your ${integration.name}`}
+        <ActionButton
+          className="mt-auto w-full self-start px-5 py-2.5 text-sm dark:hover:bg-opacity-80 sm:w-auto"
+          ariaLabel={`Start connecting your ${integration.name}`}
+          label={integration.buttonText}
+          isLoading={isNavigating}
           onClick={handleNavigation}
-        >
-          {integration.buttonText}
-        </button>
+        />
       </div>
     </div>
   );
